@@ -129,4 +129,3 @@ export function BookmarksModal({ open, onClose }: { open: boolean; onClose: () =
     </Modal>
   );
 }
-

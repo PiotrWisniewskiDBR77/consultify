@@ -315,7 +315,8 @@ const databaseInitPromise: Promise<void> =
                   logger.warn('[Server] Database health check failed - schema may be incomplete');
                   await sendSystemAlert({
                     title: 'Database schema health degraded',
-                    message: 'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
+                    message:
+                      'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
                     severity: 'WARNING',
                     source: 'Database',
                     throttleKey: 'database_schema_health_failed',
@@ -480,9 +481,8 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       // Ensure purpose routing schema + seed baseline assignments so model routing has coverage.
       // This prevents "Purpose coverage missing" alerts on fresh/legacy DBs.
       try {
-        const { ensureRoutingSchemaAndSeedDefaults } = await import(
-          './services/ai/aiRoutingBootstrapService.js'
-        );
+        const { ensureRoutingSchemaAndSeedDefaults } =
+          await import('./services/ai/aiRoutingBootstrapService.js');
         await ensureRoutingSchemaAndSeedDefaults();
         logger.info('[Server] ✅ AI purpose routing bootstrap complete');
       } catch (err: any) {
@@ -1255,9 +1255,7 @@ if (startServer && shouldStartHttpServer) {
       const { startArtifactPruner } = await import('./services/feedbackArtifacts.js');
       const maxAgeDays = Number(process.env.FEEDBACK_ARTIFACTS_RETENTION_DAYS || 30);
       startArtifactPruner({ maxAgeDays });
-      logger.info(
-        `[Server] Feedback artifact pruner started (retention: ${maxAgeDays} days).`
-      );
+      logger.info(`[Server] Feedback artifact pruner started (retention: ${maxAgeDays} days).`);
     } catch (err: any) {
       logger.warn('[Server] Feedback artifact pruner not started:', err?.message);
     }

@@ -451,7 +451,10 @@ function createMockDatabase(): MockDatabase {
         });
       });
 
-      if (!equalityMatches.length && (s.includes('organization_id = ?') || s.includes('organization_id = $1'))) {
+      if (
+        !equalityMatches.length &&
+        (s.includes('organization_id = ?') || s.includes('organization_id = $1'))
+      ) {
         const orgId = params?.[0];
         rows = rows.filter(
           (r) => r.organization_id != null && String(r.organization_id) === String(orgId)

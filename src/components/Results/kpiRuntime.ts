@@ -1,11 +1,7 @@
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 
-import {
-  mapResultsKpis,
-  type ResultsKPI,
-  type ResultsTrackedInitiative,
-} from './kpiDomain';
+import { mapResultsKpis, type ResultsKPI, type ResultsTrackedInitiative } from './kpiDomain';
 import {
   createResultsShowcaseInitiatives,
   createResultsShowcaseKpis,

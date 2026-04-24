@@ -119,11 +119,15 @@ function uniq<T>(items: T[]): T[] {
 
 function safeSlice(text: string, maxChars: number): string {
   const value = String(text || '').trim();
-  return value.length <= maxChars ? value : `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
+  return value.length <= maxChars
+    ? value
+    : `${value.slice(0, Math.max(0, maxChars - 1)).trimEnd()}…`;
 }
 
 function normalizeLanguage(value?: string | null): 'pl' | 'en' | null {
-  const normalized = String(value || '').trim().toLowerCase();
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase();
   if (!normalized) return null;
   if (normalized.startsWith('pl')) return 'pl';
   if (normalized.startsWith('en')) return 'en';
@@ -137,13 +141,16 @@ function resolveKnowledgeLanguage(locale?: string): 'pl' | 'en' {
 function detectProducts(query: string): string[] {
   const matched: string[] = [];
   for (const product of PRODUCT_ORDER) {
-    if ((PRODUCT_MATCHERS[product] || []).some((pattern) => pattern.test(query))) matched.push(product);
+    if ((PRODUCT_MATCHERS[product] || []).some((pattern) => pattern.test(query)))
+      matched.push(product);
   }
   return matched;
 }
 
 function prioritizeProducts(explicitProducts: string[], baseProducts: string[]): string[] {
-  return explicitProducts.length > 0 ? uniq([...explicitProducts, ...baseProducts]) : uniq(baseProducts);
+  return explicitProducts.length > 0
+    ? uniq([...explicitProducts, ...baseProducts])
+    : uniq(baseProducts);
 }
 
 function isDbR77PortfolioQuestion(query: string): boolean {
@@ -332,11 +339,18 @@ function searchPillHits(
   for (const { pill, assignment } of assignedPills) {
     const sections = selectSections(pill, assignment);
     for (const section of sections) {
-      const corpus = `${pill.title} ${pill.summary || ''} ${section.title} ${section.content}`.toLowerCase();
-      const tokenMatches = tokens.reduce((count, token) => count + (corpus.includes(token) ? 1 : 0), 0);
+      const corpus =
+        `${pill.title} ${pill.summary || ''} ${section.title} ${section.content}`.toLowerCase();
+      const tokenMatches = tokens.reduce(
+        (count, token) => count + (corpus.includes(token) ? 1 : 0),
+        0
+      );
       const productBoost = pill.product_slug && primaryProducts.includes(pill.product_slug) ? 1 : 0;
       const coverage = tokens.length > 0 ? tokenMatches / tokens.length : 0.25;
-      const score = Math.min(0.99, coverage + productBoost * 0.2 + assignment.priority_weight * 0.08);
+      const score = Math.min(
+        0.99,
+        coverage + productBoost * 0.2 + assignment.priority_weight * 0.08
+      );
       const excerpt =
         assignment.max_context_chars && assignment.max_context_chars > 0
           ? safeSlice(section.content, assignment.max_context_chars)
@@ -495,13 +509,20 @@ export async function buildWorkerKnowledgeContext(opts: {
   const portfolioMode = forceFullPortfolio || isDbR77PortfolioQuestion(originalQuery);
   const detectedProducts = detectProducts(originalQuery);
   const assignedProductSlugs = uniq(
-    assignments.filter((assignment) => assignment.product_slug).map((assignment) => assignment.product_slug!)
+    assignments
+      .filter((assignment) => assignment.product_slug)
+      .map((assignment) => assignment.product_slug!)
   );
-  const allKnownProducts = uniq([...assignedProductSlugs, ...(PRODUCT_ORDER as unknown as string[])]);
+  const allKnownProducts = uniq([
+    ...assignedProductSlugs,
+    ...(PRODUCT_ORDER as unknown as string[]),
+  ]);
   const defaultProduct = assignedProductSlugs.includes('consultify')
     ? 'consultify'
     : assignedProductSlugs[0] || undefined;
-  const explicitAssignedProducts = detectedProducts.filter((product) => assignedProductSlugs.includes(product));
+  const explicitAssignedProducts = detectedProducts.filter((product) =>
+    assignedProductSlugs.includes(product)
+  );
   const baseLimit = Math.min(Math.max(opts.limit || 6, 2), 10);
   const limit = portfolioMode ? Math.min(Math.max(baseLimit, 8), 10) : baseLimit;
 
@@ -577,7 +598,11 @@ export async function buildWorkerKnowledgeContext(opts: {
               const productDocs = docsByProduct.get(product) || [];
               const scoped = splitDocsByLanguagePreference(productDocs, opts.locale);
               const hint = productQueryHints[product] || product;
-              const preferred = await searchScoped(`${hint} ${originalQuery}`, scoped.preferredDocs, 1);
+              const preferred = await searchScoped(
+                `${hint} ${originalQuery}`,
+                scoped.preferredDocs,
+                1
+              );
               return preferred.length > 0
                 ? preferred
                 : searchScoped(`${hint} ${originalQuery}`, scoped.fallbackDocs, 1);
@@ -590,9 +615,13 @@ export async function buildWorkerKnowledgeContext(opts: {
       const scopedPrimary = splitDocsByLanguagePreference(primaryDocs, opts.locale);
       const scopedAll = splitDocsByLanguagePreference(allDocs, opts.locale);
       const preferredDocs =
-        scopedPrimary.preferredDocs.length > 0 ? scopedPrimary.preferredDocs : scopedAll.preferredDocs;
+        scopedPrimary.preferredDocs.length > 0
+          ? scopedPrimary.preferredDocs
+          : scopedAll.preferredDocs;
       const fallbackDocs =
-        scopedPrimary.preferredDocs.length > 0 ? scopedPrimary.fallbackDocs : scopedAll.fallbackDocs;
+        scopedPrimary.preferredDocs.length > 0
+          ? scopedPrimary.fallbackDocs
+          : scopedAll.fallbackDocs;
 
       const preferredHits = await searchScoped(query, preferredDocs, limit);
       const explicitCrossProduct = detectedProducts.some((product) => product !== 'consultify');
@@ -600,9 +629,13 @@ export async function buildWorkerKnowledgeContext(opts: {
 
       if (shouldExpandBeyondPrimary && preferredHits.length < limit) {
         const secondaryHits =
-          scopedAll.preferredDocs.length > 0 ? await searchScoped(query, scopedAll.preferredDocs, limit) : [];
+          scopedAll.preferredDocs.length > 0
+            ? await searchScoped(query, scopedAll.preferredDocs, limit)
+            : [];
         const fallbackHits =
-          preferredHits.length === 0 && secondaryHits.length === 0 && scopedAll.fallbackDocs.length > 0
+          preferredHits.length === 0 &&
+          secondaryHits.length === 0 &&
+          scopedAll.fallbackDocs.length > 0
             ? await searchScoped(query, scopedAll.fallbackDocs, limit)
             : [];
         ragHits = dedupeHits([...ragHits, ...preferredHits, ...secondaryHits, ...fallbackHits]);
@@ -647,10 +680,12 @@ export async function buildWorkerKnowledgeContext(opts: {
       })
       .slice(0, limit);
 
-    const { contextText: rawContextText, sources, usedPillIds, usedPillSections } = buildContextText(
-      sorted,
-      defaultProduct
-    );
+    const {
+      contextText: rawContextText,
+      sources,
+      usedPillIds,
+      usedPillSections,
+    } = buildContextText(sorted, defaultProduct);
 
     const contextText = portfolioMode
       ? `${rawContextText}\n\nPORTFOLIO ANSWER RULE\n- If the user asks what DBR77 products you know / what the DBR77 ecosystem includes, explicitly list all public products you can describe: Consultify, DBR77 Vector, IRIS, Digital Twin, IIoT, Marketplace.\n- Keep it concise: 1 line per product.\n- Do not omit products from the list above.${
@@ -667,12 +702,11 @@ export async function buildWorkerKnowledgeContext(opts: {
       sources,
       usedPillIds,
       usedPillSections,
-      fallbackReason:
-        sorted.some((hit) => !hit.source.endsWith('-fallback'))
-          ? null
-          : sorted.some((hit) => hit.source.endsWith('-fallback'))
-            ? 'fallback_context_only'
-            : null,
+      fallbackReason: sorted.some((hit) => !hit.source.endsWith('-fallback'))
+        ? null
+        : sorted.some((hit) => hit.source.endsWith('-fallback'))
+          ? 'fallback_context_only'
+          : null,
     };
   } catch (error: unknown) {
     logger.warn('[VWKnowledge] Failed:', error instanceof Error ? error.message : String(error));
@@ -707,7 +741,11 @@ export async function buildWorkerVoiceBootstrap(
     fallbackReason: 'policy_refused',
   };
 
-  const lang = String(locale || '').toLowerCase().startsWith('pl') ? 'pl' : 'en';
+  const lang = String(locale || '')
+    .toLowerCase()
+    .startsWith('pl')
+    ? 'pl'
+    : 'en';
   const bootstrapQuery =
     lang === 'pl'
       ? 'Consultify czym jest wartosc biznesowa demo trial ROI security DBR77 Vector IRIS Digital Twin IIoT Marketplace ekosystem'

@@ -1,4 +1,11 @@
-export const LIBRARY_FOLDERS = ['Drafts', 'Review', 'Approved', 'Templates', 'Published', 'Archived'] as const;
+export const LIBRARY_FOLDERS = [
+  'Drafts',
+  'Review',
+  'Approved',
+  'Templates',
+  'Published',
+  'Archived',
+] as const;
 export type LibraryFolder = (typeof LIBRARY_FOLDERS)[number];
 
 export const LIBRARY_FOLDER_TRANSITION_EVENTS = [
@@ -58,4 +65,3 @@ export function assertFolderTransitionSound(
     throw new Error(`Invalid folder transition: ${key}`);
   }
 }
-

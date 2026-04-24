@@ -39,17 +39,17 @@ import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
 import {
   buildDeepThinkingConfirmCardContent,
-  buildDeepThinkingConfirmMessageMetadata,
   buildDeepThinkingConfirmedContext,
+  buildDeepThinkingConfirmMessageMetadata,
   buildDeepThinkingReportMetadata,
-  shouldOpenDeepThinkingClarification,
   type DeepThinkingPendingConfirmBase,
+  shouldOpenDeepThinkingClarification,
 } from '../components/AIChat/deepThinkingRuntime';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
-import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
-import { ResearchClarification } from '../components/AIChat/ResearchClarification';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
+import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
+import { ResearchClarification } from '../components/AIChat/ResearchClarification';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
@@ -62,8 +62,8 @@ import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
 import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
-import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useTeresaVoiceContext } from '../contexts/TeresaVoiceContext';
+import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
 import { useAppStore } from '../store/useAppStore';
@@ -71,8 +71,8 @@ import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { ChatCitation, ChatMessage, ChatResponseAction, TeresaChatProposal } from '../types';
 import { MessageFeedback } from '../types';
-import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
 import { readPreferredChatLanguage } from '../utils/chatLanguagePreference';
+import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
 import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
 import { isRtlLanguage, textDirection } from '../utils/textDirection';
@@ -875,8 +875,6 @@ For example: REMEMBER: preferred_language: Polish`;
     },
     [dtPendingConfirm, isStreaming, startDeepThinkingRun]
   );
-
-  
 
   // Handle sending a message
   const handleSend = useCallback(
@@ -1735,14 +1733,18 @@ When citing knowledge base articles, always reference them by article_id (slug).
                     )}
 
                     {/* Retry status line - only show when the stream is retrying */}
-                    {isAiMessage && isStreamingThis && !displayContent && streamStartedAt && retryInfo && (
-                      <div className="mb-2 max-w-[85%]">
-                        <ThinkingStatusLine
-                          label={`Reconnecting to the response stream (${retryInfo.attempt}/${retryInfo.maxRetries})...`}
-                          compact
-                        />
-                      </div>
-                    )}
+                    {isAiMessage &&
+                      isStreamingThis &&
+                      !displayContent &&
+                      streamStartedAt &&
+                      retryInfo && (
+                        <div className="mb-2 max-w-[85%]">
+                          <ThinkingStatusLine
+                            label={`Reconnecting to the response stream (${retryInfo.attempt}/${retryInfo.maxRetries})...`}
+                            compact
+                          />
+                        </div>
+                      )}
 
                     <div
                       className={`inline-block max-w-[85%] ${
@@ -2095,7 +2097,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
           onClose={() => setShowExportModal(false)}
           onExport={handleExportFormat}
         />
-
       </div>
     );
   }
@@ -2414,7 +2415,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
       {/* TTS Indicator - shows when speaking */}
       <TTSIndicator />
-
     </div>
   );
 };

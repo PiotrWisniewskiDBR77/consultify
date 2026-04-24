@@ -64,16 +64,18 @@ export function resolvePersonaFromProfile(input: PersonaInferenceInput): Persona
     .trim()
     .toLowerCase();
   const groups = Array.isArray(input.groups)
-    ? input.groups.map((group) => String(group || '').trim().toLowerCase())
+    ? input.groups.map((group) =>
+        String(group || '')
+          .trim()
+          .toLowerCase()
+      )
     : [];
 
-  let best:
-    | {
-        persona: OnboardingPersona;
-        score: number;
-        confidence: PersonaConfidence;
-      }
-    | null = null;
+  let best: {
+    persona: OnboardingPersona;
+    score: number;
+    confidence: PersonaConfidence;
+  } | null = null;
 
   for (const candidate of PERSONA_KEYWORDS) {
     const titleScore = candidate.titleKeywords.filter((keyword) => title.includes(keyword)).length;
@@ -82,8 +84,7 @@ export function resolvePersonaFromProfile(input: PersonaInferenceInput): Persona
     }, 0);
     const score = titleScore * 3 + groupScore * 2;
     if (score <= 0) continue;
-    const confidence: PersonaConfidence =
-      titleScore > 0 && groupScore > 0 ? 'high' : 'medium';
+    const confidence: PersonaConfidence = titleScore > 0 && groupScore > 0 ? 'high' : 'medium';
     if (!best || score > best.score) {
       best = {
         persona: candidate.persona,

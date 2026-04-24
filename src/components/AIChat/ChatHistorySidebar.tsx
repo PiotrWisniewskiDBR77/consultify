@@ -773,7 +773,11 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
                   {searchScopeBlocked > 0 && (
                     <div className="mb-2 px-2.5 py-1.5 rounded-md bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/40">
                       <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                        {t('aiChat.scopeBlocked', '{{count}} result(s) hidden due to access restrictions.', { count: searchScopeBlocked })}
+                        {t(
+                          'aiChat.scopeBlocked',
+                          '{{count}} result(s) hidden due to access restrictions.',
+                          { count: searchScopeBlocked }
+                        )}
                       </p>
                     </div>
                   )}

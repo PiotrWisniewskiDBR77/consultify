@@ -16,4 +16,3 @@ const DEFAULT_POLICIES: Record<Severity, SeverityPolicy> = {
 export function getSeverityPolicy(severity: Severity): SeverityPolicy {
   return DEFAULT_POLICIES[severity];
 }
-

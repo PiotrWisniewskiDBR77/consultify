@@ -1,11 +1,11 @@
-import type {
-  LearningIngestRequest,
-  LearningIngestResponse,
-} from '../../../types/v10/learning-runtime.js';
 import {
   runLearningFeedbackPipeline,
   unsafeLearningFeedbackPipelineRunId,
 } from '../../../models/v10/pipelines/LearningFeedbackPipeline.js';
+import type {
+  LearningIngestRequest,
+  LearningIngestResponse,
+} from '../../../types/v10/learning-runtime.js';
 
 export class LearningRuntimeService {
   ingest(input: LearningIngestRequest): LearningIngestResponse {
@@ -20,4 +20,3 @@ export class LearningRuntimeService {
 }
 
 export const learningRuntimeService = new LearningRuntimeService();
-

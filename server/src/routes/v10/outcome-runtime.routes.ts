@@ -6,8 +6,8 @@ import verifyToken, { requireOrganization } from '../../middleware/auth.middlewa
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
   mapOutcomeRuntimeError,
-  outcomeRuntimeService,
   type OutcomeRuntimeService,
+  outcomeRuntimeService,
 } from '../../services/v10/outcome/outcomeRuntimeService.js';
 import {
   OutcomeAcceptancePreviewBodySchema,
@@ -26,7 +26,9 @@ async function createResponder(res: Response, operation: () => unknown): Promise
     await respondWithData(res, V10_OUTCOME_RUNTIME_CONTRACT, operation);
   } catch (error) {
     const mapped = mapOutcomeRuntimeError(error);
-    res.status(mapped.status).json({ ...(mapped.body as object), meta: runtimeMeta(V10_OUTCOME_RUNTIME_CONTRACT) });
+    res
+      .status(mapped.status)
+      .json({ ...(mapped.body as object), meta: runtimeMeta(V10_OUTCOME_RUNTIME_CONTRACT) });
   }
 }
 
@@ -72,7 +74,9 @@ export function createOutcomeRuntimeRouter(service: OutcomeRuntimeService = outc
     '/analysis/business-link',
     validateBody(OutcomeBusinessLinkBodySchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      await createResponder(res, () => service.linkAnalysisToBusinessOutcome(withRuntimeScope(req)));
+      await createResponder(res, () =>
+        service.linkAnalysisToBusinessOutcome(withRuntimeScope(req))
+      );
     })
   );
 
@@ -87,4 +91,3 @@ export function createOutcomeRuntimeRouter(service: OutcomeRuntimeService = outc
 }
 
 export default createOutcomeRuntimeRouter();
-

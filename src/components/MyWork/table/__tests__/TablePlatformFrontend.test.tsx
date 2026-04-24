@@ -4,26 +4,30 @@
  * Table Platform frontend contract tests (TableDataProvider, ViewRouter, GridView,
  * and degraded posture scenarios §2.3.11).
  */
-import React, { useEffect } from 'react';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import React, { useEffect } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { TablePlatformBase, TablePlatformField, TablePlatformTable } from '@/types/tablePlatform';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
-import OrgMemberSyncService from '../../../../../server/src/services/tablePlatform/OrgMemberSyncService.js';
+import type {
+  TablePlatformBase,
+  TablePlatformField,
+  TablePlatformTable,
+} from '@/types/tablePlatform';
 
+import OrgMemberSyncService from '../../../../../server/src/services/tablePlatform/OrgMemberSyncService.js';
+import { EmptyStateInline } from '../../../shared/NModeBlocks/EmptyStateInline';
 import { ActivityFeed } from '../ActivityFeed';
 import { CellEditor } from '../CellEditor';
-import { EmptyStateInline } from '../../../shared/NModeBlocks/EmptyStateInline';
 import { ExecutionProgress } from '../ExecutionProgress';
 import { FieldManager } from '../FieldManager';
-import { RowDetailPanel } from '../RowDetailPanel';
 import { GridView } from '../GridView';
 import { PlatformCellRenderer } from '../PlatformCellRenderer';
+import { RowDetailPanel } from '../RowDetailPanel';
 import { SchemaProposalCard, type SchemaProposalCardProposal } from '../SchemaProposalCard';
-import { TableDataProvider, useTableData, type TableDataContextValue } from '../TableDataProvider';
-import type { ColumnDef, TableNode } from '../tableTypes';
+import { type TableDataContextValue, TableDataProvider, useTableData } from '../TableDataProvider';
 import { TableTabStrip } from '../TableTabStrip';
+import type { ColumnDef, TableNode } from '../tableTypes';
 import { useSchemaProposal } from '../useSchemaProposal';
 import type { UseTablePlatformIntegrationReturn } from '../useTablePlatformIntegration';
 import { ViewErrorBoundary } from '../ViewErrorBoundary';
@@ -270,6 +274,8 @@ function makeIntegration(
     loadMore: vi.fn(async () => {}),
     hasMore: false,
     totalRecords: FIXTURE_ROWS.length,
+    base: null,
+    table: null,
     platformFields: FIXTURE_FIELDS,
     platformViews: [
       {
@@ -294,11 +300,7 @@ function makeIntegration(
 
 // ── Test helpers ─────────────────────────────────────────────────────────────
 
-function TableCtxConsumer({
-  onSnapshot,
-}: {
-  onSnapshot?: (v: TableDataContextValue) => void;
-}) {
+function TableCtxConsumer({ onSnapshot }: { onSnapshot?: (v: TableDataContextValue) => void }) {
   const ctx = useTableData();
   useEffect(() => {
     onSnapshot?.(ctx);
@@ -354,7 +356,12 @@ function PlatformTableContextEffectHarness({
       fieldCount: platformIntegration.platformFields?.length || 0,
       recordCount: platformIntegration.totalRecords || 0,
     });
-  }, [usePlatform, platformIntegration.table?.id, platformIntegration.activeViewId, onTableContextChange]);
+  }, [
+    usePlatform,
+    platformIntegration.table?.id,
+    platformIntegration.activeViewId,
+    onTableContextChange,
+  ]);
   return null;
 }
 
@@ -788,6 +795,7 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
 
     const Harness: React.FC = () => {
       const { error, loading, proposal, generateProposal, clearError } = useSchemaProposal();
+      const proposalSummary = (proposal as { summary?: string } | null)?.summary ?? '';
       return (
         <div>
           {loading && <span data-testid="loading">loading</span>}
@@ -799,9 +807,7 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
               </button>
             </div>
           )}
-          {proposal && (
-            <div data-testid="proposal-summary">{(proposal as { summary?: string }).summary}</div>
-          )}
+          {proposal ? <div data-testid="proposal-summary">{proposalSummary}</div> : null}
           <button
             type="button"
             onClick={() =>
@@ -818,7 +824,9 @@ describe('Degraded posture scenarios (§2.3.11)', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'run-generate' }));
     await waitFor(() => {
-      expect(screen.getByTestId('proposal-error')).toHaveTextContent('Rejected: unsafe schema mutation');
+      expect(screen.getByTestId('proposal-error')).toHaveTextContent(
+        'Rejected: unsafe schema mutation'
+      );
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'clear-error' }));

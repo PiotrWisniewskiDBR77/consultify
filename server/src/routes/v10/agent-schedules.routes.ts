@@ -62,7 +62,10 @@ router.post(
   asyncHandler(async (req: TenantScopedRequest, res: Response) => {
     try {
       return await respondWithData(res, V10_AGENT_SCHEDULES_CONTRACT, () =>
-        agentScheduleRegistryService.planSchedule(resolveTenantId(req), req.body as unknown as AgentScheduleDraftInput)
+        agentScheduleRegistryService.planSchedule(
+          resolveTenantId(req),
+          req.body as unknown as AgentScheduleDraftInput
+        )
       );
     } catch (error) {
       return handleError(res, error, 'Failed to build schedule plan');
@@ -74,8 +77,14 @@ router.post(
   '/preview',
   asyncHandler(async (req: TenantScopedRequest, res: Response) => {
     try {
-      return await respondWithData(res, V10_AGENT_SCHEDULES_CONTRACT, () =>
-        agentScheduleRegistryService.previewSchedule(resolveTenantId(req), req.body as unknown as AgentScheduleDraftInput).preview
+      return await respondWithData(
+        res,
+        V10_AGENT_SCHEDULES_CONTRACT,
+        () =>
+          agentScheduleRegistryService.previewSchedule(
+            resolveTenantId(req),
+            req.body as unknown as AgentScheduleDraftInput
+          ).preview
       );
     } catch (error) {
       return handleError(res, error, 'Failed to preview schedule');
@@ -90,7 +99,11 @@ router.post(
       return await respondWithData(
         res,
         V10_AGENT_SCHEDULES_CONTRACT,
-        () => agentScheduleRegistryService.createSchedule(resolveTenantId(req), req.body as unknown as AgentScheduleDraftInput),
+        () =>
+          agentScheduleRegistryService.createSchedule(
+            resolveTenantId(req),
+            req.body as unknown as AgentScheduleDraftInput
+          ),
         201
       );
     } catch (error) {

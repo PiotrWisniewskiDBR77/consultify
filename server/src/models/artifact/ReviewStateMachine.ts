@@ -8,7 +8,13 @@ export const REVIEW_EVENTS = [
 
 export type ReviewEvent = (typeof REVIEW_EVENTS)[number];
 
-export type ReviewState = 'draft' | 'ready_for_review' | 'rejected' | 'approved' | 'published' | 'archived';
+export type ReviewState =
+  | 'draft'
+  | 'ready_for_review'
+  | 'rejected'
+  | 'approved'
+  | 'published'
+  | 'archived';
 
 export function nextReviewState(current: ReviewState, event: ReviewEvent): ReviewState {
   switch (event) {
@@ -24,4 +30,3 @@ export function nextReviewState(current: ReviewState, event: ReviewEvent): Revie
       return 'archived';
   }
 }
-

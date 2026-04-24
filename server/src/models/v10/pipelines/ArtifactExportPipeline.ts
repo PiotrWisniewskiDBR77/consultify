@@ -1,6 +1,10 @@
 import type { Artifact } from '../../artifact/Artifact.js';
 import type { LineageNode } from '../../artifact/ArtifactVersionLineage.js';
-import type { ExportDestination, ExportManifest, EvidenceRef } from '../../artifact/ExportManifest.js';
+import type {
+  EvidenceRef,
+  ExportDestination,
+  ExportManifest,
+} from '../../artifact/ExportManifest.js';
 import type {
   FooterTarget,
   ProvenanceFooter,
@@ -59,4 +63,3 @@ export function runArtifactExportPipeline(input: {
     lineageRootId,
   };
 }
-

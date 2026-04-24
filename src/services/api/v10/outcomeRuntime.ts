@@ -69,7 +69,12 @@ export type OutcomeAcceptancePreviewResponse = {
 };
 
 export type OutcomeSignalIngestRequest = {
-  source: 'kpi_accept' | 'analysis_link' | 'user_confirmation' | 'artifact_ship' | 'research_mission';
+  source:
+    | 'kpi_accept'
+    | 'analysis_link'
+    | 'user_confirmation'
+    | 'artifact_ship'
+    | 'research_mission';
   kind: OutcomeSignalKind;
   magnitude: { value: number; unit: string };
   confidence?: OutcomeConfidence;
@@ -124,12 +129,17 @@ export type OutcomeBusinessLinkResponse = {
 };
 
 export const OutcomeRuntimeApi = {
-  previewAcceptance: async (body: OutcomeAcceptancePreviewRequest): Promise<OutcomeAcceptancePreviewResponse> => {
+  previewAcceptance: async (
+    body: OutcomeAcceptancePreviewRequest
+  ): Promise<OutcomeAcceptancePreviewResponse> => {
     const res = await fetchWithRetry('/api/v10/outcome-runtime/acceptance/preview', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<OutcomeAcceptancePreviewResponse>(res, 'Failed to preview KPI acceptance');
+    return handleDataResponse<OutcomeAcceptancePreviewResponse>(
+      res,
+      'Failed to preview KPI acceptance'
+    );
   },
 
   ingestSignal: async (body: OutcomeSignalIngestRequest): Promise<OutcomeSignalIngestResponse> => {
@@ -140,7 +150,9 @@ export const OutcomeRuntimeApi = {
     return handleDataResponse<OutcomeSignalIngestResponse>(res, 'Failed to ingest outcome signal');
   },
 
-  resolveAcceptance: async (body: OutcomeAcceptanceResolveRequest): Promise<OutcomeAcceptanceResolveResponse> => {
+  resolveAcceptance: async (
+    body: OutcomeAcceptanceResolveRequest
+  ): Promise<OutcomeAcceptanceResolveResponse> => {
     const res = await fetchWithRetry('/api/v10/outcome-runtime/acceptance/resolve', {
       method: 'POST',
       body: JSON.stringify(body),
@@ -151,11 +163,16 @@ export const OutcomeRuntimeApi = {
     );
   },
 
-  linkAnalysisToBusinessOutcome: async (body: OutcomeBusinessLinkRequest): Promise<OutcomeBusinessLinkResponse> => {
+  linkAnalysisToBusinessOutcome: async (
+    body: OutcomeBusinessLinkRequest
+  ): Promise<OutcomeBusinessLinkResponse> => {
     const res = await fetchWithRetry('/api/v10/outcome-runtime/analysis/business-link', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<OutcomeBusinessLinkResponse>(res, 'Failed to link analysis to business effect');
+    return handleDataResponse<OutcomeBusinessLinkResponse>(
+      res,
+      'Failed to link analysis to business effect'
+    );
   },
 };

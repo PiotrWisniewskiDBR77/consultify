@@ -13,15 +13,22 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const FEATURE_KEYS = ['aiCore', 'economics', 'execution', 'deliverables', 'chat', 'results'] as const;
+const FEATURE_KEYS = [
+  'aiCore',
+  'economics',
+  'execution',
+  'deliverables',
+  'chat',
+  'results',
+] as const;
 
 const FEATURE_VISUALS = [
-  { icon: Brain,          accentColor: '#7c3aed', glowColor: 'rgba(124,58,237,0.25)' },
-  { icon: BarChart3,      accentColor: '#0891b2', glowColor: 'rgba(8,145,178,0.22)' },
-  { icon: Layers,         accentColor: '#059669', glowColor: 'rgba(5,150,105,0.22)' },
-  { icon: FileText,       accentColor: '#c026d3', glowColor: 'rgba(192,38,211,0.22)' },
-  { icon: MessageSquare,  accentColor: '#d97706', glowColor: 'rgba(217,119,6,0.20)' },
-  { icon: TrendingUp,     accentColor: '#0d9488', glowColor: 'rgba(13,148,136,0.22)' },
+  { icon: Brain, accentColor: '#7c3aed', glowColor: 'rgba(124,58,237,0.25)' },
+  { icon: BarChart3, accentColor: '#0891b2', glowColor: 'rgba(8,145,178,0.22)' },
+  { icon: Layers, accentColor: '#059669', glowColor: 'rgba(5,150,105,0.22)' },
+  { icon: FileText, accentColor: '#c026d3', glowColor: 'rgba(192,38,211,0.22)' },
+  { icon: MessageSquare, accentColor: '#d97706', glowColor: 'rgba(217,119,6,0.20)' },
+  { icon: TrendingUp, accentColor: '#0d9488', glowColor: 'rgba(13,148,136,0.22)' },
 ];
 
 export const WhereItHappensSection: React.FC = () => {
@@ -75,7 +82,8 @@ export const WhereItHappensSection: React.FC = () => {
             const visual = FEATURE_VISUALS[idx];
             const Icon = visual.icon;
             const prefix = `landing.whereItHappens.features.${key}`;
-            const highlights = (t(`${prefix}.highlights`, { returnObjects: true }) || []) as string[];
+            const highlights = (t(`${prefix}.highlights`, { returnObjects: true }) ||
+              []) as string[];
             return (
               <motion.div
                 key={key}
@@ -88,8 +96,7 @@ export const WhereItHappensSection: React.FC = () => {
                   shadow-sm dark:shadow-none"
                 onMouseEnter={(e) => {
                   const el = e.currentTarget as HTMLDivElement;
-                  el.style.boxShadow =
-                    `0 0 40px -12px ${visual.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
+                  el.style.boxShadow = `0 0 40px -12px ${visual.glowColor}, inset 0 0 0 1px rgba(255,255,255,0.06)`;
                   el.style.borderColor = `${visual.accentColor}40`;
                 }}
                 onMouseLeave={(e) => {
@@ -124,7 +131,9 @@ export const WhereItHappensSection: React.FC = () => {
                   {t(`${prefix}.title`)}
                 </h3>
 
-                <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-4">{t(`${prefix}.description`)}</p>
+                <p className="text-sm text-slate-500 dark:text-white/45 leading-relaxed mb-4">
+                  {t(`${prefix}.description`)}
+                </p>
 
                 <div className="space-y-1.5">
                   {(Array.isArray(highlights) ? highlights : []).map((h, i) => (
@@ -134,7 +143,9 @@ export const WhereItHappensSection: React.FC = () => {
                         style={{ color: visual.accentColor }}
                         className="shrink-0"
                       />
-                      <span className="text-xs text-slate-500 dark:text-white/50 font-medium">{h}</span>
+                      <span className="text-xs text-slate-500 dark:text-white/50 font-medium">
+                        {h}
+                      </span>
                     </div>
                   ))}
                 </div>

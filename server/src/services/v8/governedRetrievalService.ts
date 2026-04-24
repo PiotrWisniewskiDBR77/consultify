@@ -149,7 +149,8 @@ export async function createRetrievalRequest(
     requestId,
     organizationId: validated.organizationId,
     contextSnapshotId: validated.contextSnapshotId ?? null,
-    retrievalScopeToken: (validated.retrievalScopeToken ?? null) as RetrievalRequest['retrievalScopeToken'],
+    retrievalScopeToken: (validated.retrievalScopeToken ??
+      null) as RetrievalRequest['retrievalScopeToken'],
     consumerClass: validated.consumerClass,
     query: validated.query,
     searchPreset: validated.searchPreset,
@@ -376,7 +377,8 @@ export async function logRetrievalTrace(params: LogRetrievalTraceParams): Promis
     conversationId: validated.conversationId ?? null,
     consumerClass: validated.consumerClass,
     presetUsed: validated.presetUsed,
-    scopeResolutionSummary: validated.scopeResolutionSummary as RetrievalTrace['scopeResolutionSummary'],
+    scopeResolutionSummary:
+      validated.scopeResolutionSummary as RetrievalTrace['scopeResolutionSummary'],
     pipelineStages: validated.pipelineStages as RetrievalTrace['pipelineStages'],
     candidatesConsidered: validated.candidatesConsidered,
     resultsReturned: validated.resultsReturned,

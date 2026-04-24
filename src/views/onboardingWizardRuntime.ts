@@ -38,13 +38,16 @@ const REVERSE_STEP_MAP: Record<string, OnboardingWizardStep> = {
 };
 
 export function normalizeOnboardingPersona(input: string | null | undefined): string {
-  const value = String(input || '').trim().toLowerCase();
+  const value = String(input || '')
+    .trim()
+    .toLowerCase();
   if (!value) return 'Transformation Officer';
   if (value.includes('partner')) return 'Partner';
   if (value.includes('cfo') || value.includes('finance') || value.includes('finans')) return 'CFO';
   if (value.includes('ceo')) return 'CEO';
   if (value.includes('coo') || value.includes('operations') || value.includes('oper')) return 'COO';
-  if (value.includes('ciso') || value.includes('security') || value.includes('bezpiec')) return 'CISO';
+  if (value.includes('ciso') || value.includes('security') || value.includes('bezpiec'))
+    return 'CISO';
   return 'Transformation Officer';
 }
 
@@ -52,16 +55,15 @@ export function buildOnboardingWizardSnapshot(
   state: OnboardingWizardRuntimeState,
   persona: string
 ): OnboardingResumeSnapshot {
-  const currentStep =
-    !state.trustAcknowledged
-      ? 'trust_banner'
-      : state.selectedPersona && !state.personaConfirmed
-        ? 'persona_capture'
-        : state.selectedPersona &&
-            resolveFirstOnboardingSurface(state.selectedPersona) === 'admin_console' &&
-            !state.adminConsoleAcknowledged
-          ? 'admin_console'
-          : STEP_MAP[state.step];
+  const currentStep = !state.trustAcknowledged
+    ? 'trust_banner'
+    : state.selectedPersona && !state.personaConfirmed
+      ? 'persona_capture'
+      : state.selectedPersona &&
+          resolveFirstOnboardingSurface(state.selectedPersona) === 'admin_console' &&
+          !state.adminConsoleAcknowledged
+        ? 'admin_console'
+        : STEP_MAP[state.step];
   return {
     persona,
     personaConfidence: state.personaConfidence || 'high',

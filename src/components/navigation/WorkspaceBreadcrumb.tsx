@@ -73,7 +73,6 @@ import { isWorkspaceBreadcrumbEnabled } from '../../utils/workspaceBreadcrumbFla
 import { isWorkspaceBreadcrumbRecentsEnabled } from '../../utils/workspaceBreadcrumbRecentsFlag';
 import { isWorkspaceBreadcrumbRecentsPinnedEnabled } from '../../utils/workspaceBreadcrumbRecentsPinnedFlag';
 import { isWorkspaceBreadcrumbRecentsViewAllEnabled } from '../../utils/workspaceBreadcrumbRecentsViewAllFlag';
-
 import { RecentConversationsDropdown } from './RecentConversationsDropdown';
 
 export interface WorkspaceBreadcrumbProps {
@@ -127,7 +126,7 @@ export interface WorkspaceBreadcrumbProps {
    * callers never set this.
    */
   build?: (input: {
-    view: ReturnType<typeof useAppStore>['currentView'];
+    view: ReturnType<typeof useAppStore.getState>['currentView'];
     hasActiveConversation: boolean;
     conversationTitle?: string | null;
     conversationSegmentEnabled?: boolean;
@@ -187,13 +186,7 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
       activeConversationId,
       pinnedEnabled: recentsPinnedEnabled,
     });
-  }, [
-    recentsEnabled,
-    recentsPinnedEnabled,
-    buildRecents,
-    conversations,
-    activeConversationId,
-  ]);
+  }, [recentsEnabled, recentsPinnedEnabled, buildRecents, conversations, activeConversationId]);
 
   // Only compute the eligibility count when the "View all"
   // footer has a chance of rendering — skips the loop entirely
@@ -271,8 +264,7 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
   // siblings. When every eligible sibling already fits in the
   // cap, the "View all" row would point the user at a sidebar
   // list identical to what they just saw — so we suppress it.
-  const showViewAll =
-    showRecents && recentsViewAllEnabled && eligibleCount > recentEntries.length;
+  const showViewAll = showRecents && recentsViewAllEnabled && eligibleCount > recentEntries.length;
 
   return (
     <nav
@@ -286,10 +278,7 @@ export const WorkspaceBreadcrumb: React.FC<WorkspaceBreadcrumbProps> = ({
           return (
             <React.Fragment key={`${segment.role}-${idx}`}>
               {idx > 0 && (
-                <li
-                  aria-hidden
-                  className="text-slate-400 dark:text-slate-600 select-none"
-                >
+                <li aria-hidden className="text-slate-400 dark:text-slate-600 select-none">
                   ›
                 </li>
               )}

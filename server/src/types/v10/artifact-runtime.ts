@@ -2,14 +2,8 @@ import { z } from 'zod';
 
 import type { ApprovalMode } from '../../models/agent/ApprovalMode.js';
 import { APPROVAL_MODES } from '../../models/agent/ApprovalMode.js';
-import type {
-  ArtifactType,
-  ExportFormat,
-} from '../../models/artifact/ArtifactTypeRegistry.js';
-import {
-  ARTIFACT_TYPES,
-  EXPORT_FORMATS,
-} from '../../models/artifact/ArtifactTypeRegistry.js';
+import type { ArtifactType, ExportFormat } from '../../models/artifact/ArtifactTypeRegistry.js';
+import { ARTIFACT_TYPES, EXPORT_FORMATS } from '../../models/artifact/ArtifactTypeRegistry.js';
 import type {
   ReattachOutcome,
   TypedComment,
@@ -26,10 +20,7 @@ import {
   type LibraryFolder,
   type LibraryFolderTransitionEvent,
 } from '../../models/artifact/LibraryFolders.js';
-import {
-  FOOTER_TARGETS,
-  type FooterTarget,
-} from '../../models/artifact/ProvenanceFooter.js';
+import { FOOTER_TARGETS, type FooterTarget } from '../../models/artifact/ProvenanceFooter.js';
 import type { ReviewEvent } from '../../models/artifact/ReviewStateMachine.js';
 import { REVIEW_EVENTS } from '../../models/artifact/ReviewStateMachine.js';
 import {

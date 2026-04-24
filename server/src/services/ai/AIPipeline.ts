@@ -938,7 +938,9 @@ export class AIPipeline {
     // Dedicated system instruction mode: when a caller provides systemInstruction
     // AND sets dedicatedSystemPrompt=true, use ONLY that instruction as the system
     // prompt (skip persona, org context, etc.). Used by WorkbookGeneratorService, etc.
-    const dedicatedMode = !!(request.options as any)?.dedicatedSystemPrompt && (request.options as any)?.systemInstruction;
+    const dedicatedMode =
+      !!(request.options as any)?.dedicatedSystemPrompt &&
+      (request.options as any)?.systemInstruction;
 
     let systemPrompt: string;
     if (dedicatedMode) {
@@ -1336,8 +1338,12 @@ export class AIPipeline {
       '## ORGANIZACJA',
       `- Nazwa: ${org.organizationName || p?.companyName || 'Nieznana'}`,
       p?.organizationType ? `- Typ organizacji: ${p.organizationType}` : '',
-      org.industry || p?.industry ? `- Branża: ${org.industry || p?.industry}${p?.industrySubsector ? ` / ${p.industrySubsector}` : ''}` : '',
-      p?.companySize ? `- Skala: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} pracowników)` : ''}${p.annualRevenue ? `, przychód: ${p.annualRevenue}` : ''}` : '',
+      org.industry || p?.industry
+        ? `- Branża: ${org.industry || p?.industry}${p?.industrySubsector ? ` / ${p.industrySubsector}` : ''}`
+        : '',
+      p?.companySize
+        ? `- Skala: ${p.companySize}${p.employeeCount ? ` (${p.employeeCount} pracowników)` : ''}${p.annualRevenue ? `, przychód: ${p.annualRevenue}` : ''}`
+        : '',
       s?.growthStage ? `- Etap wzrostu: ${s.growthStage}` : '',
       s?.competitivePosition ? `- Pozycja konkurencyjna: ${s.competitivePosition}` : '',
       `- Aktywne projekty: ${org.activeProjectCount || 0}`,
@@ -1432,7 +1438,10 @@ export class AIPipeline {
         }
       | undefined;
     if (snap) {
-      const snapLines: string[] = ['', '### Dane zebrane od organizacji (wywiady, dowody, notatki)'];
+      const snapLines: string[] = [
+        '',
+        '### Dane zebrane od organizacji (wywiady, dowody, notatki)',
+      ];
       if (Array.isArray(snap.interviewAnswers) && snap.interviewAnswers.length > 0) {
         snapLines.push('#### Ostatnie odpowiedzi z wywiadów:');
         for (const qa of snap.interviewAnswers) {
@@ -1826,7 +1835,7 @@ export class AIPipeline {
       '2. Jeśli użytkownik pyta o swoje zadania lub inicjatywy, odwołuj się do danych z sekcji KONTEKST UŻYTKOWNIKA.',
       '3. Proponuj konkretne działania bazując na aktualnym stanie pracy użytkownika.',
       '4. Jeśli są blokery lub problemy, proaktywnie oferuj pomoc w ich rozwiązaniu.',
-      '5. LANGUAGE POLICY: You support Polish (pl), English (en), German (de), Spanish (es), Arabic (ar) and Japanese (ja). ALWAYS respond in the single language specified by the final [LANGUAGE INSTRUCTION] block — do NOT auto-detect from the user\'s input and do NOT mix languages within one response. Natural, idiomatic output in the selected language is required.',
+      "5. LANGUAGE POLICY: You support Polish (pl), English (en), German (de), Spanish (es), Arabic (ar) and Japanese (ja). ALWAYS respond in the single language specified by the final [LANGUAGE INSTRUCTION] block — do NOT auto-detect from the user's input and do NOT mix languages within one response. Natural, idiomatic output in the selected language is required.",
     ];
 
     // Chat runtime modes (ToolsMenu)

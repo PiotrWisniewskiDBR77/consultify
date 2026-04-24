@@ -194,11 +194,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                           </div>
                         </div>
                         <div className="shrink-0 text-slate-400 dark:text-slate-500">
-                          {isExpanded ? (
-                            <ChevronDown size={16} />
-                          ) : (
-                            <ChevronRight size={16} />
-                          )}
+                          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         </div>
                       </div>
                     </button>

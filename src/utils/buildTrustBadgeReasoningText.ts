@@ -63,9 +63,7 @@ export function buildTrustBadgeReasoningText(
 ): string {
   const modelLabel = sanitiseModelLabel(options.modelLabel);
   const headerBase = 'Why this answer?';
-  const header = modelLabel
-    ? `${headerBase} (answered by ${modelLabel}):`
-    : `${headerBase}:`;
+  const header = modelLabel ? `${headerBase} (answered by ${modelLabel}):` : `${headerBase}:`;
 
   if (!Array.isArray(observations) || observations.length === 0) {
     return `${header}\n\nNo reasoning recorded.`;
@@ -77,8 +75,7 @@ export function buildTrustBadgeReasoningText(
   const lines: string[] = [];
   for (const obs of observations) {
     if (!obs || typeof obs !== 'object') continue;
-    const headline =
-      typeof obs.headline === 'string' ? obs.headline.trim() : '';
+    const headline = typeof obs.headline === 'string' ? obs.headline.trim() : '';
     const body = typeof obs.body === 'string' ? obs.body.trim() : '';
     if (!headline || !body) continue;
     lines.push(`${lines.length + 1}. ${headline} — ${body}`);

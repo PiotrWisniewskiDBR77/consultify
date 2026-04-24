@@ -1,46 +1,3 @@
-import type { NodeId } from './ArtifactCanonicalContent.js';
-
-export type CellId = string & { readonly __brand: 'CellId' };
-export type ChartId = string & { readonly __brand: 'ChartId' };
-
-export function unsafeCellId(value: string): CellId {
-  return String(value) as CellId;
-}
-
-export function unsafeChartId(value: string): ChartId {
-  return String(value) as ChartId;
-}
-
-export type ArtifactOp =
-  | { readonly kind: 'json_patch'; readonly path: string; readonly before?: unknown; readonly after: unknown }
-  | { readonly kind: 'replace_text'; readonly nodeId: string | NodeId; readonly before: string; readonly after: string }
-  | { readonly kind: 'move_block'; readonly nodeId: string | NodeId; readonly parentId: string; readonly fromIndex: number; readonly toIndex: number }
-  | { readonly kind: 'update_cell_formula'; readonly cellId: string | CellId; readonly before: string; readonly after: string; readonly dependencies: readonly string[] }
-  | {
-      readonly kind: 'update_chart_binding';
-      readonly chartId: string | ChartId;
-      readonly before: { readonly sheetId: string; readonly start: string; readonly end: string };
-      readonly after: { readonly sheetId: string; readonly start: string; readonly end: string };
-    };
-
-export function assertArtifactOp(op: unknown): asserts op is ArtifactOp {
-  if (!op || typeof op !== 'object') throw new Error('Artifact op must be an object');
-  const kind = (op as any).kind;
-  if (typeof kind !== 'string') throw new Error('Artifact op kind missing');
-}
-
-export function reverseArtifactOps(ops: readonly ArtifactOp[]): ArtifactOp[] {
-  return ops.map((op) => {
-    if (op.kind === 'replace_text') {
-      return { ...op, before: op.after, after: op.before };
-    }
-    if (op.kind === 'json_patch') {
-      return { ...op, before: op.after, after: op.before };
-    }
-    return op;
-  });
-}
-
 /**
  * V10-ART-008 — typed ArtifactOp list (Wave A seed, schema + reverse).
  *
@@ -259,7 +216,7 @@ export function reverseArtifactOp(op: ArtifactOp): ArtifactOp {
     default: {
       const _exhaustive: never = op;
       throw new Error(
-        `reverseArtifactOp: unknown op kind ${String((_exhaustive as { kind: string }).kind)}`,
+        `reverseArtifactOp: unknown op kind ${String((_exhaustive as { kind: string }).kind)}`
       );
     }
   }
@@ -271,9 +228,7 @@ export function reverseArtifactOp(op: ArtifactOp): ArtifactOp {
  * forward then `reverseArtifactOps([a, b, c])` returns the content
  * to its starting state (the inverse of `c` runs first). Pure.
  */
-export function reverseArtifactOps(
-  ops: readonly ArtifactOp[],
-): readonly ArtifactOp[] {
+export function reverseArtifactOps(ops: readonly ArtifactOp[]): readonly ArtifactOp[] {
   const out: ArtifactOp[] = [];
   for (let i = ops.length - 1; i >= 0; i -= 1) {
     out.push(reverseArtifactOp(ops[i]!));
@@ -298,11 +253,7 @@ export class InvalidArtifactOpError extends Error {
   public readonly reason: InvalidArtifactOpReason;
   public readonly opKind: ArtifactOpKind;
 
-  constructor(
-    reason: InvalidArtifactOpReason,
-    opKind: ArtifactOpKind,
-    detail: string,
-  ) {
+  constructor(reason: InvalidArtifactOpReason, opKind: ArtifactOpKind, detail: string) {
     super(`InvalidArtifactOp[${reason}] kind=${opKind}: ${detail}`);
     this.name = 'InvalidArtifactOpError';
     this.reason = reason;
@@ -314,7 +265,7 @@ function requireNonEmpty(
   value: string,
   reason: InvalidArtifactOpReason,
   kind: ArtifactOpKind,
-  field: string,
+  field: string
 ): void {
   if (typeof value !== 'string' || value.length === 0) {
     throw new InvalidArtifactOpError(reason, kind, `${field} must be non-empty`);
@@ -337,17 +288,13 @@ export function assertArtifactOp(op: ArtifactOp): void {
   switch (op.kind) {
     case 'json_patch': {
       if (typeof op.path !== 'string' || op.path.length === 0) {
-        throw new InvalidArtifactOpError(
-          'json_patch_bad_path',
-          op.kind,
-          'path must be non-empty',
-        );
+        throw new InvalidArtifactOpError('json_patch_bad_path', op.kind, 'path must be non-empty');
       }
       if (op.path[0] !== '/') {
         throw new InvalidArtifactOpError(
           'json_patch_bad_path',
           op.kind,
-          `path must start with '/' (RFC 6902); got '${op.path}'`,
+          `path must start with '/' (RFC 6902); got '${op.path}'`
         );
       }
       return;
@@ -358,7 +305,7 @@ export function assertArtifactOp(op: ArtifactOp): void {
         throw new InvalidArtifactOpError(
           'text_noop',
           op.kind,
-          'replace_text.before === after (no-op)',
+          'replace_text.before === after (no-op)'
         );
       }
       return;
@@ -370,14 +317,14 @@ export function assertArtifactOp(op: ArtifactOp): void {
         throw new InvalidArtifactOpError(
           'move_negative_index',
           op.kind,
-          `indices must be ≥ 0 (got fromIndex=${op.fromIndex}, toIndex=${op.toIndex})`,
+          `indices must be ≥ 0 (got fromIndex=${op.fromIndex}, toIndex=${op.toIndex})`
         );
       }
       if (op.fromIndex === op.toIndex) {
         throw new InvalidArtifactOpError(
           'move_noop',
           op.kind,
-          `fromIndex === toIndex === ${op.fromIndex} (no-op)`,
+          `fromIndex === toIndex === ${op.fromIndex} (no-op)`
         );
       }
       return;
@@ -388,7 +335,7 @@ export function assertArtifactOp(op: ArtifactOp): void {
         throw new InvalidArtifactOpError(
           'formula_noop',
           op.kind,
-          'update_cell_formula.before === after (no-op)',
+          'update_cell_formula.before === after (no-op)'
         );
       }
       return;
@@ -401,7 +348,7 @@ export function assertArtifactOp(op: ArtifactOp): void {
         throw new InvalidArtifactOpError(
           'chart_noop',
           op.kind,
-          'update_chart_binding.before === after (no-op)',
+          'update_chart_binding.before === after (no-op)'
         );
       }
       return;
@@ -409,7 +356,7 @@ export function assertArtifactOp(op: ArtifactOp): void {
     default: {
       const _exhaustive: never = op;
       throw new Error(
-        `assertArtifactOp: unknown op kind ${String((_exhaustive as { kind: string }).kind)}`,
+        `assertArtifactOp: unknown op kind ${String((_exhaustive as { kind: string }).kind)}`
       );
     }
   }

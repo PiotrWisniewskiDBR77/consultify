@@ -13,4 +13,3 @@ export type ExportManifest = {
   readonly sha256: string;
   readonly sources: readonly EvidenceRef[];
 };
-

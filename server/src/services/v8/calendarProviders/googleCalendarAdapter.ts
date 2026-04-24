@@ -7,19 +7,20 @@
  */
 
 // @ts-ignore — optional dependency, may not have type declarations
-import { google, type calendar_v3 } from 'googleapis';
+import { type calendar_v3, google } from 'googleapis';
 import { v4 as uuidv4 } from 'uuid';
+
+import logger from '../../../utils/Logger.js';
 import type {
+  CalendarItemPayload,
   CalendarProviderAdapter,
   ConnectionRef,
-  ProviderCalendarRef,
-  ProviderEvent,
-  ProviderConflictError,
-  CalendarItemPayload,
-  WatchSubscription,
   FetchEventsResult,
+  ProviderCalendarRef,
+  ProviderConflictError,
+  ProviderEvent,
+  WatchSubscription,
 } from './types.js';
-import logger from '../../../utils/Logger.js';
 
 const LOG_PREFIX = '[P02-GoogleCalendar]';
 
@@ -37,7 +38,9 @@ function parseCursorMap(cursor: string): Record<string, string> {
   try {
     const parsed = JSON.parse(cursor);
     if (typeof parsed === 'object' && parsed !== null) return parsed as Record<string, string>;
-  } catch { /* not JSON — treat as legacy single token */ }
+  } catch {
+    /* not JSON — treat as legacy single token */
+  }
   return {};
 }
 
@@ -126,7 +129,9 @@ function mapGoogleEvent(event: calendar_v3.Schema$Event, calendarId: string): Pr
   };
 }
 
-function isGaxiosError(err: unknown): err is { code: number; message: string; response?: { data?: unknown } } {
+function isGaxiosError(
+  err: unknown
+): err is { code: number; message: string; response?: { data?: unknown } } {
   return typeof err === 'object' && err !== null && 'code' in err;
 }
 
@@ -168,7 +173,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
   async fetchEvents(
     connection: ConnectionRef,
     window: { startAt: string; endAt: string },
-    cursor?: string | null,
+    cursor?: string | null
   ): Promise<FetchEventsResult> {
     const auth = buildAuth(connection);
     const cal = google.calendar({ version: 'v3', auth });
@@ -180,7 +185,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
     for (const calendarId of connection.selectedCalendars) {
       const calCursor = cursorMap[calendarId] ?? null;
       logger.debug(
-        `${LOG_PREFIX} fetchEvents calendar=${calendarId} cursor=${calCursor ? 'sync' : 'initial'}`,
+        `${LOG_PREFIX} fetchEvents calendar=${calendarId} cursor=${calCursor ? 'sync' : 'initial'}`
       );
 
       try {
@@ -219,7 +224,9 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
         if (nextSyncToken) nextCursorMap[calendarId] = nextSyncToken;
       } catch (err) {
         if (isGaxiosError(err) && err.code === 410) {
-          logger.warn(`${LOG_PREFIX} syncToken expired (410 Gone) for calendar=${calendarId}, full sync required`);
+          logger.warn(
+            `${LOG_PREFIX} syncToken expired (410 Gone) for calendar=${calendarId}, full sync required`
+          );
           return { events: [], nextCursor: null, fullSyncRequired: true };
         }
         logger.error(`${LOG_PREFIX} fetchEvents failed for calendar=${calendarId}`, err);
@@ -227,19 +234,14 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
       }
     }
 
-    const serialized = Object.keys(nextCursorMap).length > 0
-      ? JSON.stringify(nextCursorMap)
-      : null;
+    const serialized = Object.keys(nextCursorMap).length > 0 ? JSON.stringify(nextCursorMap) : null;
     return { events: allEvents, nextCursor: serialized, fullSyncRequired: false };
   },
 
   // -----------------------------------------------------------------------
   // createEvent
   // -----------------------------------------------------------------------
-  async createEvent(
-    connection: ConnectionRef,
-    item: CalendarItemPayload,
-  ): Promise<ProviderEvent> {
+  async createEvent(connection: ConnectionRef, item: CalendarItemPayload): Promise<ProviderEvent> {
     logger.info(`${LOG_PREFIX} createEvent on calendar=${item.calendarId}`);
     const auth = buildAuth(connection);
     const cal = google.calendar({ version: 'v3', auth });
@@ -275,9 +277,11 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
   async updateEvent(
     connection: ConnectionRef,
     item: CalendarItemPayload,
-    providerEtag: string,
+    providerEtag: string
   ): Promise<ProviderEvent | ProviderConflictError> {
-    logger.info(`${LOG_PREFIX} updateEvent id=${item.providerEventId} on calendar=${item.calendarId}`);
+    logger.info(
+      `${LOG_PREFIX} updateEvent id=${item.providerEventId} on calendar=${item.calendarId}`
+    );
     const auth = buildAuth(connection);
     const cal = google.calendar({ version: 'v3', auth });
 
@@ -324,7 +328,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
   async deleteEvent(
     connection: ConnectionRef,
     providerEventId: string,
-    providerEtag: string,
+    providerEtag: string
   ): Promise<void | ProviderConflictError> {
     logger.info(`${LOG_PREFIX} deleteEvent id=${providerEventId}`);
     const auth = buildAuth(connection);
@@ -355,10 +359,7 @@ export const googleCalendarAdapter: CalendarProviderAdapter = {
   // -----------------------------------------------------------------------
   // watchChanges
   // -----------------------------------------------------------------------
-  async watchChanges(
-    connection: ConnectionRef,
-    callbackUrl: string,
-  ): Promise<WatchSubscription> {
+  async watchChanges(connection: ConnectionRef, callbackUrl: string): Promise<WatchSubscription> {
     logger.info(`${LOG_PREFIX} watchChanges callback=${callbackUrl}`);
     const auth = buildAuth(connection);
     const cal = google.calendar({ version: 'v3', auth });

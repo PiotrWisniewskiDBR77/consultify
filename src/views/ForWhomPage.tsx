@@ -77,7 +77,10 @@ export const ForWhomPage: React.FC = () => {
             transition={{ delay: 0.14 }}
             className="text-lg text-white/55 max-w-2xl mx-auto mb-10"
           >
-            {t('pages.forWhom.hero.subtitle', "If results matter to you — Consultify is built for you. Whether you're scaling a startup, leading transformation, running a consulting firm, or building the AI future.")}
+            {t(
+              'pages.forWhom.hero.subtitle',
+              "If results matter to you — Consultify is built for you. Whether you're scaling a startup, leading transformation, running a consulting firm, or building the AI future."
+            )}
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 10 }}

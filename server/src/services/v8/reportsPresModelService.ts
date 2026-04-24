@@ -842,7 +842,9 @@ export async function recordCompletedExport(
     [exportId, artifactId, organizationId, format, requestedBy, 'completed', now, now]
   );
 
-  logger.info(`${LOG_PREFIX} Recorded completed ${format} export ${exportId} for artifact ${artifactId}`);
+  logger.info(
+    `${LOG_PREFIX} Recorded completed ${format} export ${exportId} for artifact ${artifactId}`
+  );
   return record;
 }
 

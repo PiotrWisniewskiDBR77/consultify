@@ -3,7 +3,17 @@
  * Full article display with content, video, and navigation
  */
 
-import { AlertTriangle, ArrowLeft, BookOpen, ChevronRight, Clock, Eye, Play, Share2, Star } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  BookOpen,
+  ChevronRight,
+  Clock,
+  Eye,
+  Play,
+  Share2,
+  Star,
+} from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -11,6 +21,7 @@ import ReactMarkdown from 'react-markdown';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
+
 import {
   useKnowledgeArticle,
   useKnowledgeRedirect,
@@ -97,7 +108,9 @@ interface KnowledgeArticleViewProps {
 }
 
 function fallbackRouteForModule(moduleId?: string): string {
-  const raw = String(moduleId || '').trim().toLowerCase();
+  const raw = String(moduleId || '')
+    .trim()
+    .toLowerCase();
   if (!raw) return '';
   if (raw === 'tools' || raw === 'discovery-tools') return '/discovery-tools';
   if (raw === 'interview') return '/interview';
@@ -174,7 +187,9 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
     if (typeof raw === 'string') {
       try {
         const parsed = JSON.parse(raw);
-        return typeof parsed === 'object' && parsed ? String((parsed as any).route || '').trim() : '';
+        return typeof parsed === 'object' && parsed
+          ? String((parsed as any).route || '').trim()
+          : '';
       } catch {
         return '';
       }
@@ -223,7 +238,9 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-900 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200 flex items-start gap-2">
             <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold">{t('help.knowledge.deprecated', 'This article has been deprecated')}</p>
+              <p className="font-semibold">
+                {t('help.knowledge.deprecated', 'This article has been deprecated')}
+              </p>
               <p className="mt-0.5">{redirectInfo.deprecationReason}</p>
               {redirectInfo.redirectSlug ? (
                 <button
@@ -257,7 +274,10 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
         {/* Stale translation banner */}
         {isStale && (
           <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-            {t('help.knowledge.staleTranslation', 'This translation may be outdated — the original article has been updated since.')}
+            {t(
+              'help.knowledge.staleTranslation',
+              'This translation may be outdated — the original article has been updated since.'
+            )}
           </div>
         )}
 
@@ -447,7 +467,10 @@ export const KnowledgeArticleView: React.FC<KnowledgeArticleViewProps> = ({
                       <Clock size={10} /> {rel.reading_time_minutes} min
                     </p>
                   </div>
-                  <ChevronRight size={14} className="text-slate-400 group-hover:text-purple-500 flex-shrink-0" />
+                  <ChevronRight
+                    size={14}
+                    className="text-slate-400 group-hover:text-purple-500 flex-shrink-0"
+                  />
                 </button>
               ))}
             </div>

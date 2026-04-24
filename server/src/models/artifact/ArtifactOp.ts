@@ -12,10 +12,32 @@ export function unsafeChartId(value: string): ChartId {
 }
 
 export type ArtifactOp =
-  | { readonly kind: 'json_patch'; readonly path: string; readonly before?: unknown; readonly after: unknown }
-  | { readonly kind: 'replace_text'; readonly nodeId: string | NodeId; readonly before: string; readonly after: string }
-  | { readonly kind: 'move_block'; readonly nodeId: string | NodeId; readonly parentId: string; readonly fromIndex: number; readonly toIndex: number }
-  | { readonly kind: 'update_cell_formula'; readonly cellId: string | CellId; readonly before: string; readonly after: string; readonly dependencies: readonly string[] }
+  | {
+      readonly kind: 'json_patch';
+      readonly path: string;
+      readonly before?: unknown;
+      readonly after: unknown;
+    }
+  | {
+      readonly kind: 'replace_text';
+      readonly nodeId: string | NodeId;
+      readonly before: string;
+      readonly after: string;
+    }
+  | {
+      readonly kind: 'move_block';
+      readonly nodeId: string | NodeId;
+      readonly parentId: string;
+      readonly fromIndex: number;
+      readonly toIndex: number;
+    }
+  | {
+      readonly kind: 'update_cell_formula';
+      readonly cellId: string | CellId;
+      readonly before: string;
+      readonly after: string;
+      readonly dependencies: readonly string[];
+    }
   | {
       readonly kind: 'update_chart_binding';
       readonly chartId: string | ChartId;
@@ -40,4 +62,3 @@ export function reverseArtifactOps(ops: readonly ArtifactOp[]): ArtifactOp[] {
     return op;
   });
 }
-

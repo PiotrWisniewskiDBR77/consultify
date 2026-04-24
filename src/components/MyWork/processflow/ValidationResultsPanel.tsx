@@ -1,6 +1,8 @@
+import { AlertCircle, AlertTriangle, CheckCircle2, ChevronRight } from 'lucide-react';
 import React, { useMemo } from 'react';
-import { AlertTriangle, AlertCircle, ChevronRight, CheckCircle2 } from 'lucide-react';
+
 import { Button } from '@/components/ui/Button';
+
 import type { ValidationIssue, ValidationResult } from './useProcessFlowValidation';
 
 export type { ValidationIssue, ValidationResult };
@@ -62,12 +64,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
           </h2>
           {validBadge}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onValidate}
-          disabled={isValidating}
-        >
+        <Button variant="outline" size="sm" onClick={onValidate} disabled={isValidating}>
           {isPl ? 'Uruchom walidację' : 'Run validation'}
         </Button>
       </div>
@@ -89,9 +86,7 @@ export const ValidationResultsPanel: React.FC<ValidationResultsPanelProps> = ({
         ) : result.issues.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-8 text-center text-emerald-600 dark:text-emerald-400">
             <CheckCircle2 className="h-10 w-10" strokeWidth={1.5} />
-            <p className="text-sm font-medium">
-              {isPl ? 'Brak problemów' : 'No issues found'}
-            </p>
+            <p className="text-sm font-medium">{isPl ? 'Brak problemów' : 'No issues found'}</p>
             {result.validated_at && (
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {new Date(result.validated_at).toLocaleString(isPl ? 'pl-PL' : 'en-US')}

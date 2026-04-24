@@ -22,11 +22,13 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
     req.user = { id: 'route-user', organizationId: 'route-org', role: 'ADMIN' };
     next();
   }) satisfies RequestHandler,
-  requireOrganization: ((_req: unknown, _res: unknown, next: () => void) => next()) satisfies RequestHandler,
+  requireOrganization: ((_req: unknown, _res: unknown, next: () => void) =>
+    next()) satisfies RequestHandler,
 }));
 
 vi.mock('../../../middleware/rbac.middleware.js', () => ({
-  requireRole: () => (((_req: unknown, _res: unknown, next: () => void) => next()) satisfies RequestHandler),
+  requireRole: () =>
+    ((_req: unknown, _res: unknown, next: () => void) => next()) satisfies RequestHandler,
 }));
 
 import { LearningLoopInputError } from '../../../services/v10/learning/learningLoopService.js';
@@ -99,20 +101,29 @@ describe('learning-loop.routes', () => {
       listStewardship: vi.fn(async () => ({ now: '2026-04-21T10:00:00.000Z', items: [] })),
       resolveStewardship: vi.fn(),
       coverage: vi.fn(async () => ({ now: '2026-04-21T10:00:00.000Z', coverage: 1 })),
-      dashboard: vi.fn(async () => ({ now: '2026-04-21T10:00:00.000Z', incidents: { open: 0, total: 0 } })),
+      dashboard: vi.fn(async () => ({
+        now: '2026-04-21T10:00:00.000Z',
+        incidents: { open: 0, total: 0 },
+      })),
       reportIncident: vi.fn(),
       listIncidents: vi.fn(async () => ({ now: '2026-04-21T10:00:00.000Z', incidents: [] })),
     };
 
-    const queueRes = await request(createApp(service)).get('/api/v10/learning-loop/stewardship/queue');
+    const queueRes = await request(createApp(service)).get(
+      '/api/v10/learning-loop/stewardship/queue'
+    );
     expect(queueRes.status).toBe(200);
     expect(service.listStewardship).toHaveBeenCalledWith({ tenantId: 'route-org' });
 
-    const coverageRes = await request(createApp(service)).get('/api/v10/learning-loop/coverage/summary');
+    const coverageRes = await request(createApp(service)).get(
+      '/api/v10/learning-loop/coverage/summary'
+    );
     expect(coverageRes.status).toBe(200);
     expect(service.coverage).toHaveBeenCalledWith({ tenantId: 'route-org' });
 
-    const dashboardRes = await request(createApp(service)).get('/api/v10/learning-loop/quality/dashboard');
+    const dashboardRes = await request(createApp(service)).get(
+      '/api/v10/learning-loop/quality/dashboard'
+    );
     expect(dashboardRes.status).toBe(200);
     expect(service.dashboard).toHaveBeenCalledWith({ tenantId: 'route-org' });
 
@@ -184,4 +195,3 @@ describe('learning-loop.routes', () => {
     expect(res.body.meta.contract).toBe('learning_loop_wave_b_v1');
   });
 });
-

@@ -26,15 +26,6 @@ vi.mock('@/models/artifact/ArtifactTypeRegistry', () => ({
   EXPORT_FORMATS: [],
 }));
 
-vi.mock('@/hooks/v10/useArtifactRuntime', () => ({
-  useArtifactRuntime: () => ({
-    artifacts: [],
-    isLoading: false,
-    error: null,
-    loadArtifacts: vi.fn(),
-  }),
-}));
-
 vi.mock('@/services/api/v10/artifactRuntime', () => ({
   ArtifactRuntimeApi: {},
 }));

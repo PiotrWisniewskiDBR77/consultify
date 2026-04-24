@@ -6,8 +6,8 @@ import {
   setChatV10FlagOverride,
 } from '../chatV10FeatureFlags';
 import {
-  CHAT_V10_ROLLOUT_BLOCKS,
   buildChatV10FlagSnapshotText,
+  CHAT_V10_ROLLOUT_BLOCKS,
   getChatV10RolloutMissingFlagIds,
   getChatV10RolloutSnapshot,
   getChatV10RolloutSummary,
@@ -22,7 +22,9 @@ describe('chatV10Rollout', () => {
   });
 
   it('defines rollout metadata for all 8 V10 blocks', () => {
-    expect(new Set(CHAT_V10_ROLLOUT_BLOCKS.map((block) => block.block))).toEqual(new Set(CHAT_V10_BLOCKS));
+    expect(new Set(CHAT_V10_ROLLOUT_BLOCKS.map((block) => block.block))).toEqual(
+      new Set(CHAT_V10_BLOCKS)
+    );
   });
 
   it('references only registered V10 flag ids', () => {
@@ -75,7 +77,9 @@ describe('chatV10Rollout', () => {
     });
 
     expect(text).toContain('Chat V10 flags snapshot · runtime rollout · 2026-04-21T10:00:00.000Z');
-    expect(text).toContain('| Ticket | ID | Block | State | Default | Matches default | Storage key | Test ID |');
+    expect(text).toContain(
+      '| Ticket | ID | Block | State | Default | Matches default | Storage key | Test ID |'
+    );
     expect(text).toContain('`artifact-unified-model`');
     expect(text).toContain('`ff.artifact_unified_model`');
   });

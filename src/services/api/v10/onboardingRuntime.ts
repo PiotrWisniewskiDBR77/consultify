@@ -1,6 +1,9 @@
 import type { OnboardingKpiDashboard } from '@/models/onboarding/ActivationKpiDashboard';
+import type {
+  OnboardTelemetryEventName,
+  OnboardTelemetryProps,
+} from '@/models/onboarding/OnboardTelemetry';
 import type { OnboardingResumeSnapshot } from '@/models/onboarding/ResumeOnAbandonment';
-import type { OnboardTelemetryEventName, OnboardTelemetryProps } from '@/models/onboarding/OnboardTelemetry';
 
 import { fetchWithRetry, handleDataResponse } from '../baseClient';
 
@@ -38,7 +41,10 @@ export const OnboardingRuntimeApi = {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<OnboardingPersonaCaptureResponse>(res, 'Failed to capture onboarding persona');
+    return handleDataResponse<OnboardingPersonaCaptureResponse>(
+      res,
+      'Failed to capture onboarding persona'
+    );
   },
 
   saveSnapshot: async (body: {
@@ -79,7 +85,12 @@ export const OnboardingRuntimeApi = {
   },
 
   getKpiSummary: async (): Promise<OnboardingKpiDashboard> => {
-    const response = await fetchWithRetry('/api/v10/onboarding-runtime/kpis/summary', { method: 'GET' });
-    return handleDataResponse<OnboardingKpiDashboard>(response, 'Failed to load onboarding KPI summary');
+    const response = await fetchWithRetry('/api/v10/onboarding-runtime/kpis/summary', {
+      method: 'GET',
+    });
+    return handleDataResponse<OnboardingKpiDashboard>(
+      response,
+      'Failed to load onboarding KPI summary'
+    );
   },
 };

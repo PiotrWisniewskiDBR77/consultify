@@ -33,13 +33,36 @@ export type EffectiveMode = (typeof EffectiveModeValues)[number];
 export const PermissionGradientValues = ['free_busy', 'read', 'write', 'delegate'] as const;
 export type PermissionGradient = (typeof PermissionGradientValues)[number];
 
-export const SourceLifecycleStateValues = ['connected', 'degraded', 'requires_action', 'blocked', 'recoverable'] as const;
+export const SourceLifecycleStateValues = [
+  'connected',
+  'degraded',
+  'requires_action',
+  'blocked',
+  'recoverable',
+] as const;
 export type SourceLifecycleState = (typeof SourceLifecycleStateValues)[number];
 
-export const ItemTypeValues = ['task_due', 'task_window', 'initiative_milestone', 'decision_deadline', 'meeting', 'external_event', 'assignment', 'adjustment', 'approval_window', 'escalation_window', 'focus_block'] as const;
+export const ItemTypeValues = [
+  'task_due',
+  'task_window',
+  'initiative_milestone',
+  'decision_deadline',
+  'meeting',
+  'external_event',
+  'assignment',
+  'adjustment',
+  'approval_window',
+  'escalation_window',
+  'focus_block',
+] as const;
 export type ItemType = (typeof ItemTypeValues)[number];
 
-export const SourceSystemValues = ['consultify', 'google_calendar', 'outlook_calendar', 'caldav'] as const;
+export const SourceSystemValues = [
+  'consultify',
+  'google_calendar',
+  'outlook_calendar',
+  'caldav',
+] as const;
 export type SourceSystem = (typeof SourceSystemValues)[number];
 
 export const VisibilityClassValues = ['free_busy_only', 'details'] as const;
@@ -91,7 +114,11 @@ export interface RecurrenceModel {
   rrule: string | null;
   rdate: string[] | null;
   exdate: string[] | null;
-  exceptions: Array<{ recurrenceId: string; action: 'modified' | 'cancelled'; overrides?: Record<string, unknown> }>;
+  exceptions: Array<{
+    recurrenceId: string;
+    action: 'modified' | 'cancelled';
+    overrides?: Record<string, unknown>;
+  }>;
   materializationRule: 'window_only';
 }
 
@@ -241,7 +268,9 @@ export interface CreateCalendarSourceParams {
   connectionId?: string;
 }
 
-export async function createCalendarSource(params: CreateCalendarSourceParams): Promise<CalendarSource> {
+export async function createCalendarSource(
+  params: CreateCalendarSourceParams
+): Promise<CalendarSource> {
   const id = uuidv4();
   const now = nowISO();
   const permGradient = params.permissionGradient ?? 'read';
@@ -279,7 +308,7 @@ export async function createCalendarSource(params: CreateCalendarSourceParams): 
       params.connectionId ?? null,
       now,
       now,
-    ],
+    ]
   );
 
   logger.info(`${LOG_PREFIX} Created calendar source ${id} for org ${params.organizationId}`);
@@ -291,7 +320,10 @@ export async function createCalendarSource(params: CreateCalendarSourceParams): 
   return created;
 }
 
-export async function getCalendarSources(organizationId: string, userId?: string): Promise<CalendarSource[]> {
+export async function getCalendarSources(
+  organizationId: string,
+  userId?: string
+): Promise<CalendarSource[]> {
   let sql = `SELECT * FROM v8_calendar_sources WHERE organization_id = ?`;
   const params: unknown[] = [organizationId];
 
@@ -306,11 +338,14 @@ export async function getCalendarSources(organizationId: string, userId?: string
   return (rows || []).map(rowToCalendarSource);
 }
 
-export async function getCalendarSource(sourceId: string, organizationId: string): Promise<CalendarSource | null> {
+export async function getCalendarSource(
+  sourceId: string,
+  organizationId: string
+): Promise<CalendarSource | null> {
   const row = await dbGet<Record<string, unknown>>(
     `SELECT * FROM v8_calendar_sources WHERE calendar_source_id = ? AND organization_id = ?`,
     [sourceId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) return null;
   return rowToCalendarSource(row);
@@ -320,7 +355,7 @@ export async function updateSourceLifecycle(
   sourceId: string,
   organizationId: string,
   newState: SourceLifecycleState,
-  reason?: string,
+  reason?: string
 ): Promise<CalendarSource | null> {
   const now = nowISO();
 
@@ -340,20 +375,25 @@ export async function updateSourceLifecycle(
            last_ok_at = CASE WHEN ? = 'connected' THEN ? ELSE last_ok_at END,
            updated_at = ?
      WHERE calendar_source_id = ? AND organization_id = ?`,
-    [newState, reason ?? null, effectiveMode, newState, now, now, sourceId, organizationId],
+    [newState, reason ?? null, effectiveMode, newState, now, now, sourceId, organizationId]
   );
 
-  logger.info(`${LOG_PREFIX} Source ${sourceId} lifecycle → ${newState}${reason ? ` (${reason})` : ''}`);
+  logger.info(
+    `${LOG_PREFIX} Source ${sourceId} lifecycle → ${newState}${reason ? ` (${reason})` : ''}`
+  );
   return getCalendarSource(sourceId, organizationId);
 }
 
-export async function deleteCalendarSource(sourceId: string, organizationId: string): Promise<boolean> {
+export async function deleteCalendarSource(
+  sourceId: string,
+  organizationId: string
+): Promise<boolean> {
   const existing = await getCalendarSource(sourceId, organizationId);
   if (!existing) return false;
 
   await dbRun(
     `DELETE FROM v8_calendar_sources WHERE calendar_source_id = ? AND organization_id = ?`,
-    [sourceId, organizationId],
+    [sourceId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Deleted calendar source ${sourceId}`);
@@ -412,10 +452,12 @@ export async function createCalendarItem(params: CreateCalendarItemParams): Prom
       etag,
       now,
       now,
-    ],
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Created calendar item ${id} (${params.itemType}) for org ${params.organizationId}`);
+  logger.info(
+    `${LOG_PREFIX} Created calendar item ${id} (${params.itemType}) for org ${params.organizationId}`
+  );
 
   const created = await getCalendarItem(id, params.organizationId);
   if (!created) {
@@ -434,7 +476,7 @@ export interface CalendarItemFilters {
 
 export async function getCalendarItems(
   organizationId: string,
-  filters: CalendarItemFilters = {},
+  filters: CalendarItemFilters = {}
 ): Promise<CalendarItem[]> {
   const conditions: string[] = ['organization_id = ?'];
   const params: unknown[] = [organizationId];
@@ -465,11 +507,14 @@ export async function getCalendarItems(
   return (rows || []).map(rowToCalendarItem);
 }
 
-export async function getCalendarItem(itemId: string, organizationId: string): Promise<CalendarItem | null> {
+export async function getCalendarItem(
+  itemId: string,
+  organizationId: string
+): Promise<CalendarItem | null> {
   const row = await dbGet<Record<string, unknown>>(
     `SELECT * FROM v8_calendar_items WHERE calendar_item_id = ? AND organization_id = ?`,
     [itemId, organizationId],
-    { fallback: true },
+    { fallback: true }
   );
   if (!row) return null;
   return rowToCalendarItem(row);
@@ -491,13 +536,15 @@ export async function updateCalendarItem(
   itemId: string,
   organizationId: string,
   updates: CalendarItemUpdates,
-  etag?: string,
+  etag?: string
 ): Promise<CalendarItem | null> {
   const existing = await getCalendarItem(itemId, organizationId);
   if (!existing) return null;
 
   if (etag && existing.etag && etag !== existing.etag) {
-    logger.warn(`${LOG_PREFIX} Etag mismatch on item ${itemId}: expected ${etag}, got ${existing.etag}`);
+    logger.warn(
+      `${LOG_PREFIX} Etag mismatch on item ${itemId}: expected ${etag}, got ${existing.etag}`
+    );
     return null;
   }
 
@@ -554,7 +601,7 @@ export async function updateCalendarItem(
 
   await dbRun(
     `UPDATE v8_calendar_items SET ${setClauses.join(', ')} WHERE calendar_item_id = ? AND organization_id = ?`,
-    params,
+    params
   );
 
   logger.info(`${LOG_PREFIX} Updated calendar item ${itemId}`);
@@ -567,7 +614,7 @@ export async function updateCalendarItem(
 
 export async function performIncrementalSync(
   sourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SyncResult> {
   const source = await getCalendarSource(sourceId, organizationId);
   if (!source) {
@@ -610,18 +657,20 @@ export async function performIncrementalSync(
            lifecycle_state = CASE WHEN lifecycle_state = 'degraded' THEN 'connected' ELSE lifecycle_state END,
            updated_at = ?
      WHERE calendar_source_id = ? AND organization_id = ?`,
-    [JSON.stringify(updatedCheckpoint), now, now, now, sourceId, organizationId],
+    [JSON.stringify(updatedCheckpoint), now, now, now, sourceId, organizationId]
   );
 
   const items = await getCalendarItems(organizationId, { sourceId, syncState: 'pending' });
   for (const item of items) {
     await dbRun(
       `UPDATE v8_calendar_items SET sync_state = 'in_sync', updated_at = ? WHERE calendar_item_id = ? AND organization_id = ?`,
-      [now, item.calendarItemId, organizationId],
+      [now, item.calendarItemId, organizationId]
     );
   }
 
-  logger.info(`${LOG_PREFIX} Incremental sync completed for source ${sourceId}: ${items.length} items processed`);
+  logger.info(
+    `${LOG_PREFIX} Incremental sync completed for source ${sourceId}: ${items.length} items processed`
+  );
 
   return {
     sourceId,
@@ -634,7 +683,7 @@ export async function performIncrementalSync(
 
 export async function performFullResync(
   sourceId: string,
-  organizationId: string,
+  organizationId: string
 ): Promise<SyncResult> {
   const source = await getCalendarSource(sourceId, organizationId);
   if (!source) {
@@ -669,18 +718,20 @@ export async function performFullResync(
            requires_action_reason = NULL,
            updated_at = ?
      WHERE calendar_source_id = ? AND organization_id = ?`,
-    [JSON.stringify(resetCheckpoint), now, now, now, sourceId, organizationId],
+    [JSON.stringify(resetCheckpoint), now, now, now, sourceId, organizationId]
   );
 
   const allItems = await getCalendarItems(organizationId, { sourceId });
   for (const item of allItems) {
     await dbRun(
       `UPDATE v8_calendar_items SET sync_state = 'in_sync', etag = ?, updated_at = ? WHERE calendar_item_id = ? AND organization_id = ?`,
-      [uuidv4(), now, item.calendarItemId, organizationId],
+      [uuidv4(), now, item.calendarItemId, organizationId]
     );
   }
 
-  logger.info(`${LOG_PREFIX} Full resync completed for source ${sourceId}: ${allItems.length} items reset`);
+  logger.info(
+    `${LOG_PREFIX} Full resync completed for source ${sourceId}: ${allItems.length} items reset`
+  );
 
   return {
     sourceId,
@@ -694,7 +745,7 @@ export async function performFullResync(
 export async function handleSyncError(
   sourceId: string,
   organizationId: string,
-  errorType: string,
+  errorType: string
 ): Promise<CalendarSource | null> {
   const mapping = mapProviderError(errorType);
   const now = nowISO();
@@ -715,18 +766,28 @@ export async function handleSyncError(
            last_error = ?,
            updated_at = ?
      WHERE calendar_source_id = ? AND organization_id = ?`,
-    [mapping.sourceState, newEffectiveMode, mapping.recovery, errorType, now, sourceId, organizationId],
+    [
+      mapping.sourceState,
+      newEffectiveMode,
+      mapping.recovery,
+      errorType,
+      now,
+      sourceId,
+      organizationId,
+    ]
   );
 
   const pendingItems = await getCalendarItems(organizationId, { sourceId, syncState: 'pending' });
   for (const item of pendingItems) {
     await dbRun(
       `UPDATE v8_calendar_items SET sync_state = ?, updated_at = ? WHERE calendar_item_id = ? AND organization_id = ?`,
-      [mapping.itemState, now, item.calendarItemId, organizationId],
+      [mapping.itemState, now, item.calendarItemId, organizationId]
     );
   }
 
-  logger.warn(`${LOG_PREFIX} Sync error on source ${sourceId}: ${errorType} → ${mapping.sourceState}`);
+  logger.warn(
+    `${LOG_PREFIX} Sync error on source ${sourceId}: ${errorType} → ${mapping.sourceState}`
+  );
   return getCalendarSource(sourceId, organizationId);
 }
 
@@ -738,7 +799,7 @@ export async function conditionalWriteItem(
   itemId: string,
   organizationId: string,
   updates: CalendarItemUpdates,
-  etag: string,
+  etag: string
 ): Promise<CalendarItem | ConflictInfo> {
   const existing = await getCalendarItem(itemId, organizationId);
   if (!existing) {
@@ -749,7 +810,7 @@ export async function conditionalWriteItem(
     const now = nowISO();
     await dbRun(
       `UPDATE v8_calendar_items SET sync_state = 'conflict', updated_at = ? WHERE calendar_item_id = ? AND organization_id = ?`,
-      [now, itemId, organizationId],
+      [now, itemId, organizationId]
     );
 
     logger.warn(`${LOG_PREFIX} Conflict on item ${itemId}: etag ${etag} vs ${existing.etag}`);
@@ -772,13 +833,15 @@ export async function conditionalWriteItem(
 export async function resolveConflict(
   itemId: string,
   organizationId: string,
-  resolution: 'accept_local' | 'accept_remote' | 'merge',
+  resolution: 'accept_local' | 'accept_remote' | 'merge'
 ): Promise<CalendarItem | null> {
   const existing = await getCalendarItem(itemId, organizationId);
   if (!existing) return null;
 
   if (existing.syncState !== 'conflict') {
-    logger.warn(`${LOG_PREFIX} resolveConflict called on item ${itemId} but syncState is ${existing.syncState}`);
+    logger.warn(
+      `${LOG_PREFIX} resolveConflict called on item ${itemId} but syncState is ${existing.syncState}`
+    );
     return existing;
   }
 
@@ -800,7 +863,7 @@ export async function resolveConflict(
 
   await dbRun(
     `UPDATE v8_calendar_items SET sync_state = ?, etag = ?, updated_at = ? WHERE calendar_item_id = ? AND organization_id = ?`,
-    [newSyncState, newEtag, now, itemId, organizationId],
+    [newSyncState, newEtag, now, itemId, organizationId]
   );
 
   logger.info(`${LOG_PREFIX} Conflict resolved on item ${itemId}: ${resolution} → ${newSyncState}`);
@@ -818,7 +881,9 @@ const PERMISSION_RANK: Record<PermissionGradient, number> = {
   delegate: 3,
 };
 
-export function computeEffectiveMode(source: Pick<CalendarSource, 'declaredMode' | 'permissionGradient' | 'lifecycleState'>): EffectiveMode {
+export function computeEffectiveMode(
+  source: Pick<CalendarSource, 'declaredMode' | 'permissionGradient' | 'lifecycleState'>
+): EffectiveMode {
   if (source.lifecycleState === 'blocked') return 'read';
   if (source.lifecycleState === 'requires_action') return 'read';
 

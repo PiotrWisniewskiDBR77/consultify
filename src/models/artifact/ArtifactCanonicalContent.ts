@@ -1,14 +1,3 @@
-export type NodeId = string & { readonly __brand: 'NodeId' };
-
-export function unsafeNodeId(value: string): NodeId {
-  return String(value) as NodeId;
-}
-
-export type ArtifactCanonicalContent = {
-  readonly __opaqueType: string;
-  readonly blob: unknown;
-};
-
 /**
  * V10-ART-006 — per-type canonical content schema (Wave A seed).
  *
@@ -95,13 +84,7 @@ export const SCHEMA_VERSION_BY_TYPE: Readonly<Record<ArtifactType, number>> = {
 // §3 — Slide deck (tree of Slide nodes).
 // ---------------------------------------------------------------------------
 
-export type SlideBlockKind =
-  | 'text'
-  | 'image'
-  | 'chart'
-  | 'table'
-  | 'shape'
-  | 'notes';
+export type SlideBlockKind = 'text' | 'image' | 'chart' | 'table' | 'shape' | 'notes';
 
 export interface SlideBlock {
   readonly id: NodeId;
@@ -173,14 +156,7 @@ export interface SpreadsheetContent {
 // §5 — Memo / rich-note (block list).
 // ---------------------------------------------------------------------------
 
-export type DocBlockKind =
-  | 'paragraph'
-  | 'heading'
-  | 'list'
-  | 'quote'
-  | 'code'
-  | 'image'
-  | 'table';
+export type DocBlockKind = 'paragraph' | 'heading' | 'list' | 'quote' | 'code' | 'image' | 'table';
 
 export interface DocBlock {
   readonly id: NodeId;
@@ -303,9 +279,7 @@ export type ArtifactCanonicalContent =
 export class DuplicateNodeIdError extends Error {
   public readonly duplicates: readonly NodeId[];
   constructor(duplicates: readonly NodeId[]) {
-    super(
-      `Duplicate NodeIds in canonical content: ${duplicates.map(String).join(', ')}`,
-    );
+    super(`Duplicate NodeIds in canonical content: ${duplicates.map(String).join(', ')}`);
     this.name = 'DuplicateNodeIdError';
     this.duplicates = duplicates;
   }
@@ -316,9 +290,7 @@ export class DuplicateNodeIdError extends Error {
  * deterministic order. Used by `assertNodeIdsUnique`, mutation diff
  * generators, and the export-integrity hasher.
  */
-export function collectNodeIds(
-  content: ArtifactCanonicalContent,
-): readonly NodeId[] {
+export function collectNodeIds(content: ArtifactCanonicalContent): readonly NodeId[] {
   const out: NodeId[] = [];
   switch (content.kind) {
     case 'slide_deck': {
@@ -401,9 +373,7 @@ export function assertNodeIdsUnique(content: ArtifactCanonicalContent): void {
   }
 }
 
-function collectOwnedNodeIds(
-  content: ArtifactCanonicalContent,
-): readonly NodeId[] {
+function collectOwnedNodeIds(content: ArtifactCanonicalContent): readonly NodeId[] {
   const out: NodeId[] = [];
   switch (content.kind) {
     case 'slide_deck': {
@@ -443,9 +413,7 @@ function collectOwnedNodeIds(
   return out;
 }
 
-export function schemaVersionForContent(
-  content: ArtifactCanonicalContent,
-): number {
+export function schemaVersionForContent(content: ArtifactCanonicalContent): number {
   return content.schemaVersion;
 }
 
@@ -465,11 +433,11 @@ export function currentSchemaVersionForType(type: ArtifactType): number {
  */
 export function assertContentMatchesType(
   type: ArtifactType,
-  content: ArtifactCanonicalContent,
+  content: ArtifactCanonicalContent
 ): void {
   if (type !== content.kind) {
     throw new Error(
-      `Artifact type/content mismatch: artifact.type="${type}" but content.kind="${content.kind}"`,
+      `Artifact type/content mismatch: artifact.type="${type}" but content.kind="${content.kind}"`
     );
   }
 }

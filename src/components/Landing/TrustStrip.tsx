@@ -138,9 +138,7 @@ export const TrustStrip: React.FC = () => {
           viewport={{ once: true }}
           className="mt-8 flex flex-col items-center gap-2"
         >
-          <div
-            className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full text-xs bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10"
-          >
+          <div className="inline-flex items-center gap-3 px-5 py-2.5 rounded-full text-xs bg-slate-50 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10">
             <span className="flex items-center gap-1.5">
               <span className="text-sm">🇪🇺</span>
               <span className="text-sm">🇺🇸</span>

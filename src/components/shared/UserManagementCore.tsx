@@ -550,7 +550,9 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
       ? Array.from(
           new Set(
             [UserRole.OWNER, UserRole.ADMIN, UserRole.USER, UserRole.MANAGER, UserRole.SUPERADMIN]
-              .concat(users.map((user) => String(user.role || '').trim()))
+              .concat(
+                users.map((user) => String(user.role || '').trim()).filter(Boolean) as UserRole[]
+              )
               .filter(Boolean)
           )
         )
@@ -781,7 +783,10 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           {selectedOrganizationName ? (
             <>
               {' '}
-              for <span className="font-medium text-slate-900 dark:text-white">{selectedOrganizationName}</span>
+              for{' '}
+              <span className="font-medium text-slate-900 dark:text-white">
+                {selectedOrganizationName}
+              </span>
             </>
           ) : null}
           {selectedRole ? ` with role ${selectedRole}` : ''}

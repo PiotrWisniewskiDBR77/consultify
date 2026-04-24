@@ -105,8 +105,8 @@ import {
 } from './ideaWorkspaceState';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
-import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyIdeasListContent } from './MyIdeasListContent';
+import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
@@ -264,6 +264,7 @@ type ItemStatus =
   | 'in_progress'
   | 'completed'
   | 'blocked'
+  | 'draft'
   | 'idea'
   | 'pending'
   | 'approved'
@@ -298,7 +299,7 @@ interface DecisionFilterCounts {
 // Open Document interface for dynamic tabs
 interface OpenDocument {
   id: string;
-  type: 'task' | 'idea' | 'decision' | 'notification';
+  type: 'task' | 'idea' | 'decision' | 'notification' | 'notebook';
   name: string;
   status: ItemStatus;
   data?: any;
@@ -365,6 +366,8 @@ function getDocumentTab(type: OpenDocument['type']): ModuleTab {
       return 'decisions';
     case 'notification':
       return 'inbox';
+    case 'notebook':
+      return 'notebook';
   }
 }
 
@@ -515,6 +518,7 @@ const TYPE_COLORS = {
   idea: 'border-l-violet-500',
   decision: 'border-l-amber-500',
   notification: 'border-l-red-500',
+  notebook: 'border-l-sky-500',
 };
 
 const STATUS_COLORS: Record<ItemStatus, string> = {
@@ -522,6 +526,7 @@ const STATUS_COLORS: Record<ItemStatus, string> = {
   in_progress: 'bg-blue-400',
   completed: 'bg-emerald-400',
   blocked: 'bg-red-400',
+  draft: 'bg-sky-400',
   idea: 'bg-amber-400',
   pending: 'bg-amber-400',
   approved: 'bg-emerald-400',
@@ -1090,7 +1095,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               ? 'Decision'
               : o.type === 'idea'
                 ? 'Idea'
-                : 'Task'),
+                : o.type === 'notebook'
+                  ? 'Notebook'
+                  : 'Task'),
         status:
           o.type === 'notification'
             ? ('unread' as const)
@@ -1098,7 +1105,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               ? ('pending' as const)
               : o.type === 'idea'
                 ? ('idea' as const)
-                : ('todo' as const),
+                : o.type === 'notebook'
+                  ? ('draft' as const)
+                  : ('todo' as const),
         data: o.data,
       };
 
@@ -3160,7 +3169,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     }}
                     className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
                     data-testid={`mywork-tab-${tab.id}`}
-                    title={tab.isLocked ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message : undefined}
+                    title={
+                      tab.isLocked
+                        ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                        : undefined
+                    }
                   >
                     {tab.icon}
                     <span>{tab.label}</span>

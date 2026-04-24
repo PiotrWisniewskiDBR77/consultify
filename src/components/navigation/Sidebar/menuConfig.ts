@@ -49,6 +49,13 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(MessageSquare, { size: 20 }),
       viewId: AppView.AI_CHAT,
     },
+    {
+      id: 'AI_CHAT_V10_RUNTIME',
+      label: t('sidebar.aiChatV10Runtime', 'Chat V10'),
+      icon: React.createElement(Brain, { size: 20 }),
+      viewId: AppView.AI_CHAT_V10_RUNTIME,
+      badge: 'new',
+    },
     // 2. My Work - moja praca, zadania, inbox
     {
       id: 'MY_WORK',

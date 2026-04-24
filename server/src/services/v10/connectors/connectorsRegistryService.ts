@@ -3,8 +3,8 @@ import type {
   ConnectorsCatalogItem,
   ConnectorsCatalogResponse,
   ConnectorsCatalogSummary,
-  ConnectorsConnectorAvailability,
   ConnectorsConnectorAuthStrategy,
+  ConnectorsConnectorAvailability,
   ConnectorsConnectorCapabilityFlag,
   ConnectorsConnectorCategory,
   ConnectorsConnectorKind,
@@ -76,7 +76,14 @@ const CONNECTOR_REGISTRY: readonly RegistryEntry[] = [
     description: 'Workspace conversations, channels, and evidence snippets.',
     category: 'communication',
     authStrategy: 'oauth2_pkce',
-    capabilities: ['search', 'read_doc', 'list_recent', 'sync_delta', 'acl_probe', 'webhook_ingest'],
+    capabilities: [
+      'search',
+      'read_doc',
+      'list_recent',
+      'sync_delta',
+      'acl_probe',
+      'webhook_ingest',
+    ],
     readScopes: ['channels:history', 'groups:history', 'users:read'],
     writeScopes: ['chat:write'],
     aliases: ['team_chat', 'communication_hub'],
@@ -185,7 +192,8 @@ const CONNECTOR_REGISTRY: readonly RegistryEntry[] = [
     availability: 'available',
     wave: 'wave_a',
     name: 'Manual Upload',
-    description: 'Fallback ingestion path for files and evidence when no live connector is attached.',
+    description:
+      'Fallback ingestion path for files and evidence when no live connector is attached.',
     category: 'manual_input',
     authStrategy: 'manual_upload',
     capabilities: ['read_doc'],
@@ -226,8 +234,9 @@ export class ConnectorsRegistryService {
   listCatalog(options: ListCatalogOptions = {}): ConnectorsCatalogResponse {
     const persona = options.persona?.trim() || null;
     const includePlanned = options.includePlanned ?? true;
-    const connectors = CONNECTOR_REGISTRY
-      .filter((item) => includePlanned || item.availability === 'available')
+    const connectors = CONNECTOR_REGISTRY.filter(
+      (item) => includePlanned || item.availability === 'available'
+    )
       .map<ConnectorsCatalogItem>((item) => ({
         ...item,
         recommended: byPersonaMatch(persona, item) === 1,
@@ -252,7 +261,9 @@ export class ConnectorsRegistryService {
   getConnector(connectorId: string): ConnectorsCatalogDetailResponse {
     const normalized = normalizeKey(connectorId);
     const connector = CONNECTOR_REGISTRY.find(
-      (item) => normalizeKey(item.id) === normalized || item.aliases.some((alias) => normalizeKey(alias) === normalized)
+      (item) =>
+        normalizeKey(item.id) === normalized ||
+        item.aliases.some((alias) => normalizeKey(alias) === normalized)
     );
     if (!connector) {
       throw new ConnectorsRegistryNotFoundError(connectorId);

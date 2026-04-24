@@ -58,11 +58,7 @@ function buildDefaultThinkingSteps(
 ): ThinkingStep[] {
   // AI thinking steps are always displayed in English regardless of UI language
   const labelVariants = {
-    analyzing: [
-      'Thinking…',
-      'Preparing a response…',
-      'Working on your answer…',
-    ],
+    analyzing: ['Thinking…', 'Preparing a response…', 'Working on your answer…'],
     context: [
       'Checking the most relevant context…',
       'Pulling in the details that matter most…',
@@ -78,11 +74,7 @@ function buildDefaultThinkingSteps(
       'Verifying the final answer…',
       'Making sure everything is consistent…',
     ],
-    composing: [
-      'Finalizing the answer…',
-      'Putting it all together…',
-      'Wrapping up the response…',
-    ],
+    composing: ['Finalizing the answer…', 'Putting it all together…', 'Wrapping up the response…'],
   };
 
   const variants = labelVariants;
@@ -287,6 +279,7 @@ type StreamOptions = {
       policyDecision?: any;
       policyNotices?: any[];
       sourceLedger?: any;
+      trustBundle?: unknown;
       proposal?: TeresaChatProposal | null;
     }
   ) => void;
@@ -1113,8 +1106,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
       const uiLang = (i18n.resolvedLanguage || i18n.language || 'en').split('-')[0];
       const resolvedLanguage =
         (
-          readPreferredChatLanguage(language || context?.conversationLanguage || uiLang) ||
-          uiLang
+          readPreferredChatLanguage(language || context?.conversationLanguage || uiLang) || uiLang
         ).split('-')[0] || uiLang;
       const resolvedKnowledgeSources = {
         pmoDocuments: aiConfig?.knowledgeSources?.pmoDocuments ?? true,

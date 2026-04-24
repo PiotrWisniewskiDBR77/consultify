@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
-import logger from '../../utils/Logger.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import logger from '../../utils/Logger.js';
 import { EXECUTIVE_USE_CASES, getRoutingPurposeKeys } from './aiTaskCatalog.js';
 import llmConfigService from './llmConfigService.js';
 
@@ -26,7 +26,11 @@ async function getColumnType(table: string, column: string): Promise<DbFlagType>
   }
 }
 
-async function coerceActiveValue(table: string, column: string, value: boolean): Promise<boolean | number> {
+async function coerceActiveValue(
+  table: string,
+  column: string,
+  value: boolean
+): Promise<boolean | number> {
   const t = await getColumnType(table, column);
   if (t === 'integer') return value ? 1 : 0;
   return value;
@@ -128,7 +132,9 @@ async function seedPurposeAssignments(): Promise<{ seeded: number; purposes: str
   const availableProviders = await llmConfigService.getAllProviders(false);
   const preferredOrder = ['openrouter', 'openai', 'anthropic', 'google', 'deepseek'];
   const providerCandidates = preferredOrder
-    .map((id) => availableProviders.find((p) => String((p as any).provider || '').toLowerCase() === id))
+    .map((id) =>
+      availableProviders.find((p) => String((p as any).provider || '').toLowerCase() === id)
+    )
     .filter((p) => p && (p as any).apiKey) as any[];
 
   const selectedProviders =
@@ -148,7 +154,9 @@ async function seedPurposeAssignments(): Promise<{ seeded: number; purposes: str
   purposes.add('chat');
 
   let seeded = 0;
-  for (const p of Array.from(purposes).map((x) => String(x).trim()).filter(Boolean)) {
+  for (const p of Array.from(purposes)
+    .map((x) => String(x).trim())
+    .filter(Boolean)) {
     await ensurePurposeExists(p, activeValue);
     for (let i = 0; i < selectedProviders.length; i++) {
       const sp = selectedProviders[i];
@@ -205,4 +213,3 @@ export async function ensureRoutingSchemaAndSeedDefaults(): Promise<{
 }
 
 export default { ensureRoutingSchemaAndSeedDefaults };
-

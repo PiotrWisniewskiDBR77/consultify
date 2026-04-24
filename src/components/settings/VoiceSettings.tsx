@@ -110,10 +110,7 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
     setTesting(false);
   };
 
-  const update = <K extends keyof AIVoicePreferences>(
-    key: K,
-    value: AIVoicePreferences[K]
-  ) => {
+  const update = <K extends keyof AIVoicePreferences>(key: K, value: AIVoicePreferences[K]) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -151,10 +148,7 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
             checked={preferences.ttsEnabled}
             onChange={(checked) => update('ttsEnabled', checked)}
             label={t('settings.voice.enableTTS', 'Text-to-Speech')}
-            description={t(
-              'settings.voice.enableTTSDesc',
-              'Enable voice output for AI responses.'
-            )}
+            description={t('settings.voice.enableTTSDesc', 'Enable voice output for AI responses.')}
           />
 
           {/* Auto-speak */}

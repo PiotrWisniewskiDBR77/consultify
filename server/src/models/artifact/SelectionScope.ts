@@ -66,4 +66,3 @@ export function assertOpsWithinSelection(ops: readonly ArtifactOp[], selection: 
     }
   }
 }
-

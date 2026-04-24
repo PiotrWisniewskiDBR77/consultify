@@ -156,17 +156,29 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await Api.getDeveloperSettings();
+        const response = (await Api.getDeveloperSettings()) as
+          | {
+              settings?: {
+                developerMode?: boolean;
+                apiLogging?: boolean;
+                showDebugInfo?: boolean;
+                verboseErrors?: boolean;
+                betaFeatures?: string[];
+              };
+            }
+          | null
+          | undefined;
         if (response?.settings) {
+          const betaFeatures = response.settings.betaFeatures ?? [];
           setDeveloperMode(response.settings.developerMode || false);
           setApiLogging(response.settings.apiLogging || false);
           setShowDebugInfo(response.settings.showDebugInfo || false);
           setVerboseErrors(response.settings.verboseErrors || false);
-          if (response.settings.betaFeatures?.length) {
+          if (betaFeatures.length > 0) {
             setBetaFeatures((prev) =>
               prev.map((f) => ({
                 ...f,
-                enabled: response.settings.betaFeatures.includes(f.id),
+                enabled: betaFeatures.includes(f.id),
               }))
             );
           }

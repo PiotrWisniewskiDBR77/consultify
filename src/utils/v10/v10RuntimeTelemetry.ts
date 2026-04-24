@@ -1,5 +1,8 @@
+import type {
+  OnboardTelemetryEventName,
+  OnboardTelemetryProps,
+} from '@/models/onboarding/OnboardTelemetry';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
-import type { OnboardTelemetryEventName, OnboardTelemetryProps } from '@/models/onboarding/OnboardTelemetry';
 
 import { isConnectorsTelemetryFullEnabled } from './connectorsTelemetryFullFlag';
 import { isLearningTelemetryEnabled } from './learningTelemetryFlag';
@@ -85,7 +88,9 @@ type EmitArgsBase = {
 // Reasoning Runtime (V10-RSN-023)
 // ---------------------------------------------------------------------------
 
-export function emitReasoningRuntimeStarted(payload: { readonly source: V10RuntimeTelemetrySource }): boolean {
+export function emitReasoningRuntimeStarted(payload: {
+  readonly source: V10RuntimeTelemetrySource;
+}): boolean {
   return safeTrack(isReasoningTelemetryEnabled(), 'reasoning_runtime_started', { ...payload });
 }
 
@@ -93,7 +98,9 @@ export function emitReasoningRuntimeSucceeded(payload: EmitArgsBase): boolean {
   return safeTrack(isReasoningTelemetryEnabled(), 'reasoning_runtime_succeeded', { ...payload });
 }
 
-export function emitReasoningRuntimeFailed(payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }): boolean {
+export function emitReasoningRuntimeFailed(
+  payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }
+): boolean {
   return safeTrack(isReasoningTelemetryEnabled(), 'reasoning_runtime_failed', { ...payload });
 }
 
@@ -101,7 +108,9 @@ export function emitReasoningRuntimeFailed(payload: EmitArgsBase & { readonly re
 // Research Runtime (V10-RSR-024)
 // ---------------------------------------------------------------------------
 
-export function emitResearchRuntimeStarted(payload: { readonly source: V10RuntimeTelemetrySource }): boolean {
+export function emitResearchRuntimeStarted(payload: {
+  readonly source: V10RuntimeTelemetrySource;
+}): boolean {
   return safeTrack(isResearchTelemetryEnabled(), 'research_runtime_started', { ...payload });
 }
 
@@ -109,7 +118,9 @@ export function emitResearchRuntimeSucceeded(payload: EmitArgsBase): boolean {
   return safeTrack(isResearchTelemetryEnabled(), 'research_runtime_succeeded', { ...payload });
 }
 
-export function emitResearchRuntimeFailed(payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }): boolean {
+export function emitResearchRuntimeFailed(
+  payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }
+): boolean {
   return safeTrack(isResearchTelemetryEnabled(), 'research_runtime_failed', { ...payload });
 }
 
@@ -117,15 +128,23 @@ export function emitResearchRuntimeFailed(payload: EmitArgsBase & { readonly rea
 // Connectors Runtime (V10-CON-023)
 // ---------------------------------------------------------------------------
 
-export function emitConnectorsRuntimeStarted(payload: { readonly source: V10RuntimeTelemetrySource }): boolean {
-  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connectors_runtime_started', { ...payload });
+export function emitConnectorsRuntimeStarted(payload: {
+  readonly source: V10RuntimeTelemetrySource;
+}): boolean {
+  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connectors_runtime_started', {
+    ...payload,
+  });
 }
 
 export function emitConnectorsRuntimeSucceeded(payload: EmitArgsBase): boolean {
-  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connectors_runtime_succeeded', { ...payload });
+  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connectors_runtime_succeeded', {
+    ...payload,
+  });
 }
 
-export function emitConnectorsRuntimeFailed(payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }): boolean {
+export function emitConnectorsRuntimeFailed(
+  payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }
+): boolean {
   return safeTrack(isConnectorsTelemetryFullEnabled(), 'connectors_runtime_failed', { ...payload });
 }
 
@@ -135,7 +154,9 @@ export function emitConnectorsRegistryLoaded(payload: {
   readonly available: number;
   readonly planned: number;
 }): boolean {
-  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connectors_registry_loaded', { ...payload });
+  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connectors_registry_loaded', {
+    ...payload,
+  });
 }
 
 export function emitConnectorSessionConnected(payload: {
@@ -143,7 +164,9 @@ export function emitConnectorSessionConnected(payload: {
   readonly connectorId: string;
   readonly status: V10ConnectorLifecycleStatus;
 }): boolean {
-  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connector_session_connected', { ...payload });
+  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connector_session_connected', {
+    ...payload,
+  });
 }
 
 export function emitConnectorAuthStarted(payload: {
@@ -188,14 +211,18 @@ export function emitConnectorSessionDisconnected(payload: {
   readonly source: V10RuntimeTelemetrySource;
   readonly connectorId: string;
 }): boolean {
-  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connector_session_disconnected', { ...payload });
+  return safeTrack(isConnectorsTelemetryFullEnabled(), 'connector_session_disconnected', {
+    ...payload,
+  });
 }
 
 // ---------------------------------------------------------------------------
 // Learning Runtime (V10-LRN-012)
 // ---------------------------------------------------------------------------
 
-export function emitLearningRuntimeStarted(payload: { readonly source: V10RuntimeTelemetrySource }): boolean {
+export function emitLearningRuntimeStarted(payload: {
+  readonly source: V10RuntimeTelemetrySource;
+}): boolean {
   return safeTrack(isLearningTelemetryEnabled(), 'learning_runtime_started', { ...payload });
 }
 
@@ -203,7 +230,9 @@ export function emitLearningRuntimeSucceeded(payload: EmitArgsBase): boolean {
   return safeTrack(isLearningTelemetryEnabled(), 'learning_runtime_succeeded', { ...payload });
 }
 
-export function emitLearningRuntimeFailed(payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }): boolean {
+export function emitLearningRuntimeFailed(
+  payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }
+): boolean {
   return safeTrack(isLearningTelemetryEnabled(), 'learning_runtime_failed', { ...payload });
 }
 
@@ -211,7 +240,9 @@ export function emitLearningRuntimeFailed(payload: EmitArgsBase & { readonly rea
 // Outcome Runtime (V10-OUT-018)
 // ---------------------------------------------------------------------------
 
-export function emitOutcomeRuntimeStarted(payload: { readonly source: V10RuntimeTelemetrySource }): boolean {
+export function emitOutcomeRuntimeStarted(payload: {
+  readonly source: V10RuntimeTelemetrySource;
+}): boolean {
   return safeTrack(isOutcomeTelemetryEnabled(), 'outcome_runtime_started', { ...payload });
 }
 
@@ -219,7 +250,9 @@ export function emitOutcomeRuntimeSucceeded(payload: EmitArgsBase): boolean {
   return safeTrack(isOutcomeTelemetryEnabled(), 'outcome_runtime_succeeded', { ...payload });
 }
 
-export function emitOutcomeRuntimeFailed(payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }): boolean {
+export function emitOutcomeRuntimeFailed(
+  payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }
+): boolean {
   return safeTrack(isOutcomeTelemetryEnabled(), 'outcome_runtime_failed', { ...payload });
 }
 
@@ -227,7 +260,9 @@ export function emitOutcomeRuntimeFailed(payload: EmitArgsBase & { readonly reas
 // Onboarding Runtime (V10-ONB-023)
 // ---------------------------------------------------------------------------
 
-export function emitOnboardRuntimeStarted(payload: { readonly source: V10RuntimeTelemetrySource }): boolean {
+export function emitOnboardRuntimeStarted(payload: {
+  readonly source: V10RuntimeTelemetrySource;
+}): boolean {
   return safeTrack(isOnboardTelemetryEnabled(), 'onboard_runtime_started', { ...payload });
 }
 
@@ -235,7 +270,9 @@ export function emitOnboardRuntimeSucceeded(payload: EmitArgsBase): boolean {
   return safeTrack(isOnboardTelemetryEnabled(), 'onboard_runtime_succeeded', { ...payload });
 }
 
-export function emitOnboardRuntimeFailed(payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }): boolean {
+export function emitOnboardRuntimeFailed(
+  payload: EmitArgsBase & { readonly reason: V10RuntimeTelemetryFailReason }
+): boolean {
   return safeTrack(isOnboardTelemetryEnabled(), 'onboard_runtime_failed', { ...payload });
 }
 
@@ -246,7 +283,9 @@ export function emitOnboardTelemetryEvent(
   return safeTrack(isOnboardTelemetryEnabled(), eventName, payload);
 }
 
-export function emitOnboardArtifactBlocked(payload: OnboardTelemetryProps & { readonly reasonCode?: string }): boolean {
+export function emitOnboardArtifactBlocked(
+  payload: OnboardTelemetryProps & { readonly reasonCode?: string }
+): boolean {
   return safeTrack(isOnboardTelemetryEnabled(), 'onboard.artifact_blocked', payload);
 }
 
@@ -257,4 +296,3 @@ export function inferFailReason(args: {
 }): V10RuntimeTelemetryFailReason {
   return normalizeFailReason({ enabled: args.enabled, status: args.httpStatus, error: args.error });
 }
-

@@ -117,7 +117,10 @@ async function ensureDeepThinkingConfirmTable(): Promise<void> {
 }
 
 function hashDeepThinkingMessage(message: unknown): string {
-  return crypto.createHash('sha256').update(String(message || '').trim()).digest('hex');
+  return crypto
+    .createHash('sha256')
+    .update(String(message || '').trim())
+    .digest('hex');
 }
 
 // Apply rate limiting to all AI routes
@@ -848,7 +851,8 @@ router.post(
         parsedMetadata?.deepThinkingConfirm?.understanding?.expectedOutput ||
         'FullReport';
       const content =
-        String(parsedMetadata?.deepThinkingReport || '').trim() || String(reportMessage?.content || '');
+        String(parsedMetadata?.deepThinkingReport || '').trim() ||
+        String(reportMessage?.content || '');
       const exportFormat = format || 'markdown';
 
       return res.json({
@@ -1448,9 +1452,10 @@ router.post(
           code: 'DEEP_THINKING_CONFIRM_INVALID',
         });
       }
-      await dbRun(`UPDATE ai_deep_thinking_confirms SET consumed_at = CURRENT_TIMESTAMP WHERE token = ?`, [
-        confirmTokenRaw,
-      ]);
+      await dbRun(
+        `UPDATE ai_deep_thinking_confirms SET consumed_at = CURRENT_TIMESTAMP WHERE token = ?`,
+        [confirmTokenRaw]
+      );
     }
 
     const streamSessionId = conversationId || `stream-${req.userId}-${Date.now()}`;
@@ -2025,9 +2030,13 @@ router.post(
           }
         }
       } catch (polErr: any) {
-        logger.error('[AI Stream] Policy gateway unavailable (fail-closed):', polErr?.message || String(polErr));
+        logger.error(
+          '[AI Stream] Policy gateway unavailable (fail-closed):',
+          polErr?.message || String(polErr)
+        );
 
-        const degradedMsg = 'Policy gateway unavailable — request blocked for safety. Please try again.';
+        const degradedMsg =
+          'Policy gateway unavailable — request blocked for safety. Please try again.';
 
         emitSSE({
           type: 'policy_refusal',
@@ -2442,7 +2451,10 @@ router.post(
             } as any;
           }
         } catch (kbErr: any) {
-          logger.warn('[AI Stream] KB docs retrieval failed, continuing without it:', kbErr?.message);
+          logger.warn(
+            '[AI Stream] KB docs retrieval failed, continuing without it:',
+            kbErr?.message
+          );
         }
       }
 
@@ -2547,10 +2559,7 @@ router.post(
           }
         }
 
-        if (
-          shouldAttemptWebSearch &&
-          webPolicy?.internetEnabled
-        ) {
+        if (shouldAttemptWebSearch && webPolicy?.internetEnabled) {
           try {
             const { RuntimeWebSearchService } =
               await import('../services/ai/runtimeWebSearchService.js');
@@ -2918,11 +2927,10 @@ router.post(
           const nbSearch = ((nbSearchMod as any).default || nbSearchMod) as any;
           const searchFn = nbSearch.searchNotebook || nbSearch.default?.searchNotebook;
           if (searchFn) {
-            const results = await searchFn(
-              req.organizationId,
-              (req as any).userId || '',
-              { q: message.slice(0, 300), limit: 5 } as any
-            );
+            const results = await searchFn(req.organizationId, (req as any).userId || '', {
+              q: message.slice(0, 300),
+              limit: 5,
+            } as any);
             const notes = Array.isArray(results?.results) ? results.results : [];
             if (notes.length > 0) {
               const notesText = notes
@@ -3652,7 +3660,9 @@ router.post(
                   // Fire and forget — don't block the stream
                   kgService
                     .processConversation(req.organizationId, message, accumulatedContent)
-                    .catch((err: unknown) => logger.warn('[AI] knowledge graph processing failed', err));
+                    .catch((err: unknown) =>
+                      logger.warn('[AI] knowledge graph processing failed', err)
+                    );
                 }
               }
             } catch {
@@ -4802,9 +4812,8 @@ router.get(
   validateParams(z.object({ id: z.string().uuid() })),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { getConversationProposals } = await import(
-        '../services/v8/proposalUnificationService.js'
-      );
+      const { getConversationProposals } =
+        await import('../services/v8/proposalUnificationService.js');
       const proposals = await getConversationProposals({
         conversationId: req.params.id,
         organizationId: req.organizationId || undefined,

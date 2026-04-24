@@ -86,9 +86,7 @@ export function buildLineageGraph(nodes: readonly LineageNode[]): LineageGraph {
   const nodesById = new Map<ArtifactId, LineageNode>();
   for (const node of nodes) {
     if (nodesById.has(node.id)) {
-      throw new LineageInvariantError(
-        `Duplicate node id in lineage graph: ${String(node.id)}`,
-      );
+      throw new LineageInvariantError(`Duplicate node id in lineage graph: ${String(node.id)}`);
     }
     nodesById.set(node.id, node);
   }
@@ -111,10 +109,7 @@ export function buildLineageGraph(nodes: readonly LineageNode[]): LineageGraph {
 // §3 — Resolvers.
 // ---------------------------------------------------------------------------
 
-export function resolveLineageRoot(
-  node: LineageNode,
-  graph: LineageGraph,
-): ArtifactId {
+export function resolveLineageRoot(node: LineageNode, graph: LineageGraph): ArtifactId {
   if (node.lineageRootId !== null) return node.lineageRootId;
   return walkToRootId(node, graph);
 }
@@ -125,7 +120,7 @@ function walkToRootId(node: LineageNode, graph: LineageGraph): ArtifactId {
   while (cursor) {
     if (seen.has(cursor.id)) {
       throw new LineageInvariantError(
-        `Cycle detected while resolving lineage root at ${String(cursor.id)}`,
+        `Cycle detected while resolving lineage root at ${String(cursor.id)}`
       );
     }
     seen.add(cursor.id);
@@ -140,19 +135,14 @@ function walkToRootId(node: LineageNode, graph: LineageGraph): ArtifactId {
  * Yields ancestors in order from immediate parent to root. Does NOT
  * include `node` itself.
  */
-export function* getAncestors(
-  node: LineageNode,
-  graph: LineageGraph,
-): Iterable<LineageNode> {
+export function* getAncestors(node: LineageNode, graph: LineageGraph): Iterable<LineageNode> {
   const seen = new Set<ArtifactId>([node.id]);
   let cursor: LineageNode | undefined =
-    node.parentArtifactId === null
-      ? undefined
-      : graph.nodesById.get(node.parentArtifactId);
+    node.parentArtifactId === null ? undefined : graph.nodesById.get(node.parentArtifactId);
   while (cursor) {
     if (seen.has(cursor.id)) {
       throw new LineageInvariantError(
-        `Cycle detected walking ancestors of ${String(node.id)} at ${String(cursor.id)}`,
+        `Cycle detected walking ancestors of ${String(node.id)} at ${String(cursor.id)}`
       );
     }
     seen.add(cursor.id);
@@ -166,17 +156,14 @@ export function* getAncestors(
  * Depth-first walk from `node` downward via the children index.
  * Yields descendants in DFS-pre order. Does NOT include `node` itself.
  */
-export function* getDescendants(
-  node: LineageNode,
-  graph: LineageGraph,
-): Iterable<LineageNode> {
+export function* getDescendants(node: LineageNode, graph: LineageGraph): Iterable<LineageNode> {
   const seen = new Set<ArtifactId>([node.id]);
   const stack: ArtifactId[] = [...(graph.childrenByParent.get(node.id) ?? [])];
   while (stack.length > 0) {
     const nextId = stack.pop()!;
     if (seen.has(nextId)) {
       throw new LineageInvariantError(
-        `Cycle detected walking descendants of ${String(node.id)} at ${String(nextId)}`,
+        `Cycle detected walking descendants of ${String(node.id)} at ${String(nextId)}`
       );
     }
     seen.add(nextId);
@@ -189,11 +176,7 @@ export function* getDescendants(
   }
 }
 
-export function sharesLineageRoot(
-  a: LineageNode,
-  b: LineageNode,
-  graph: LineageGraph,
-): boolean {
+export function sharesLineageRoot(a: LineageNode, b: LineageNode, graph: LineageGraph): boolean {
   return resolveLineageRoot(a, graph) === resolveLineageRoot(b, graph);
 }
 
@@ -234,20 +217,24 @@ export function assertLineageInvariant(graph: LineageGraph): void {
 function assertDerivedFromVersionCoherence(node: LineageNode): void {
   if (node.parentArtifactId !== null && node.derivedFromVersionId === null) {
     throw new LineageInvariantError(
-      `Node ${String(node.id)} has parentArtifactId but no derivedFromVersionId`,
+      `Node ${String(node.id)} has parentArtifactId but no derivedFromVersionId`
     );
   }
   if (node.parentArtifactId === null && node.derivedFromVersionId !== null) {
     throw new LineageInvariantError(
-      `Node ${String(node.id)} has derivedFromVersionId but no parentArtifactId ("derived from whom?")`,
+      `Node ${String(node.id)} has derivedFromVersionId but no parentArtifactId ("derived from whom?")`
     );
   }
 }
 
 function assertRootCoherence(node: LineageNode): void {
-  if (node.parentArtifactId === null && node.lineageRootId !== null && node.lineageRootId !== node.id) {
+  if (
+    node.parentArtifactId === null &&
+    node.lineageRootId !== null &&
+    node.lineageRootId !== node.id
+  ) {
     throw new LineageInvariantError(
-      `Root node ${String(node.id)} declares lineageRootId=${String(node.lineageRootId)} (must be null or self)`,
+      `Root node ${String(node.id)} declares lineageRootId=${String(node.lineageRootId)} (must be null or self)`
     );
   }
 }
@@ -261,12 +248,16 @@ function assertNoSelfCycle(node: LineageNode): void {
 function assertResolvableParent(node: LineageNode, graph: LineageGraph): void {
   if (node.parentArtifactId !== null && !graph.nodesById.has(node.parentArtifactId)) {
     throw new LineageInvariantError(
-      `Node ${String(node.id)} has dangling parentArtifactId=${String(node.parentArtifactId)}`,
+      `Node ${String(node.id)} has dangling parentArtifactId=${String(node.parentArtifactId)}`
     );
   }
-  if (node.lineageRootId !== null && !graph.nodesById.has(node.lineageRootId) && node.lineageRootId !== node.id) {
+  if (
+    node.lineageRootId !== null &&
+    !graph.nodesById.has(node.lineageRootId) &&
+    node.lineageRootId !== node.id
+  ) {
     throw new LineageInvariantError(
-      `Node ${String(node.id)} has dangling lineageRootId=${String(node.lineageRootId)}`,
+      `Node ${String(node.id)} has dangling lineageRootId=${String(node.lineageRootId)}`
     );
   }
 }

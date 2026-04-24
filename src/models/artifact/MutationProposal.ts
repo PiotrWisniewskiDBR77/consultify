@@ -103,11 +103,9 @@ export type TrustBundleHash = string & {
   readonly [TRUST_BUNDLE_HASH_BRAND]: void;
 };
 
-export const unsafeMutationProposalId = (v: string): MutationProposalId =>
-  v as MutationProposalId;
+export const unsafeMutationProposalId = (v: string): MutationProposalId => v as MutationProposalId;
 export const unsafeTxnId = (v: string): TxnId => v as TxnId;
-export const unsafeTrustBundleHash = (v: string): TrustBundleHash =>
-  v as TrustBundleHash;
+export const unsafeTrustBundleHash = (v: string): TrustBundleHash => v as TrustBundleHash;
 
 // ---------------------------------------------------------------------------
 // §2 — Intent union.
@@ -122,11 +120,7 @@ export const unsafeTrustBundleHash = (v: string): TrustBundleHash =>
  *                      points at the source; independent version chain
  * `archive`          — soft-delete flow; source & ops MAY be empty
  */
-export type MutationIntent =
-  | 'create_artifact'
-  | 'update_artifact'
-  | 'derive_artifact'
-  | 'archive';
+export type MutationIntent = 'create_artifact' | 'update_artifact' | 'derive_artifact' | 'archive';
 
 export const MUTATION_INTENTS: readonly MutationIntent[] = [
   'create_artifact',
@@ -287,8 +281,7 @@ export const MUTATION_PROPOSAL_REQUIRED_KEYS = [
   'approvalMode',
 ] as const satisfies ReadonlyArray<keyof MutationProposal>;
 
-export type MutationProposalRequiredKey =
-  (typeof MUTATION_PROPOSAL_REQUIRED_KEYS)[number];
+export type MutationProposalRequiredKey = (typeof MUTATION_PROPOSAL_REQUIRED_KEYS)[number];
 
 // ---------------------------------------------------------------------------
 // §5 — Invariant thresholds.
@@ -324,11 +317,9 @@ export class InvalidMutationProposalError extends Error {
   constructor(
     reason: InvalidMutationProposalReason,
     proposalId: MutationProposalId,
-    detail: string,
+    detail: string
   ) {
-    super(
-      `InvalidMutationProposal[${reason}] proposal=${String(proposalId)}: ${detail}`,
-    );
+    super(`InvalidMutationProposal[${reason}] proposal=${String(proposalId)}: ${detail}`);
     this.name = 'InvalidMutationProposalError';
     this.reason = reason;
     this.proposalId = proposalId;
@@ -356,7 +347,7 @@ export function assertMutationProposal(proposal: MutationProposal): void {
       'rationale_too_short',
       proposal.id,
       `rationale must be ≥ ${MIN_RATIONALE_LENGTH} non-whitespace chars ` +
-        `(got ${proposal.rationale.trim().length})`,
+        `(got ${proposal.rationale.trim().length})`
     );
   }
 
@@ -365,14 +356,14 @@ export function assertMutationProposal(proposal: MutationProposal): void {
     throw new InvalidMutationProposalError(
       'base_version_unexpected',
       proposal.id,
-      "intent='create_artifact' requires baseVersionId=null",
+      "intent='create_artifact' requires baseVersionId=null"
     );
   }
   if (proposal.intent !== 'create_artifact' && proposal.baseVersionId === null) {
     throw new InvalidMutationProposalError(
       'base_version_missing',
       proposal.id,
-      `intent='${proposal.intent}' requires a non-null baseVersionId`,
+      `intent='${proposal.intent}' requires a non-null baseVersionId`
     );
   }
 
@@ -382,14 +373,14 @@ export function assertMutationProposal(proposal: MutationProposal): void {
       throw new InvalidMutationProposalError(
         'source_set_empty',
         proposal.id,
-        `intent='${proposal.intent}' requires at least one EvidenceRef`,
+        `intent='${proposal.intent}' requires at least one EvidenceRef`
       );
     }
     if (proposal.ops.length === 0) {
       throw new InvalidMutationProposalError(
         'ops_empty',
         proposal.id,
-        `intent='${proposal.intent}' requires at least one ArtifactOp`,
+        `intent='${proposal.intent}' requires at least one ArtifactOp`
       );
     }
   }
@@ -401,7 +392,7 @@ export function assertMutationProposal(proposal: MutationProposal): void {
       throw new InvalidMutationProposalError(
         'empty_op_kind',
         proposal.id,
-        `ops[${i}].kind must be a non-empty string`,
+        `ops[${i}].kind must be a non-empty string`
       );
     }
   }
@@ -411,11 +402,7 @@ export function assertMutationProposal(proposal: MutationProposal): void {
     assertContentMatchesType(proposal.declaredArtifactType, proposal.preview);
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
-    throw new InvalidMutationProposalError(
-      'preview_type_mismatch',
-      proposal.id,
-      detail,
-    );
+    throw new InvalidMutationProposalError('preview_type_mismatch', proposal.id, detail);
   }
 
   // §7.6 — approvalRequired ↔ approvalMode coherence.
@@ -423,7 +410,7 @@ export function assertMutationProposal(proposal: MutationProposal): void {
     throw new InvalidMutationProposalError(
       'approval_mode_inconsistent',
       proposal.id,
-      "approvalRequired=true forbids approvalMode='implicit'",
+      "approvalRequired=true forbids approvalMode='implicit'"
     );
   }
   if (!proposal.approvalRequired && proposal.approvalMode !== 'implicit') {
@@ -431,7 +418,7 @@ export function assertMutationProposal(proposal: MutationProposal): void {
       'approval_mode_inconsistent',
       proposal.id,
       "approvalRequired=false requires approvalMode='implicit' " +
-        `(got '${proposal.approvalMode}')`,
+        `(got '${proposal.approvalMode}')`
     );
   }
 
@@ -448,7 +435,7 @@ export function assertMutationProposal(proposal: MutationProposal): void {
           'citation_not_in_source_set',
           proposal.id,
           `citations[${i}].trustBundleSha256=${cit.trustBundleSha256} ` +
-            'does not appear in sourceSet',
+            'does not appear in sourceSet'
         );
       }
     }

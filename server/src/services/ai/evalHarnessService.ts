@@ -1328,16 +1328,24 @@ function computeGroundednessScore(response: string, context: string): number {
       .toLowerCase()
       .split(/\s+/)
       .filter((w) => w.length > 3);
-    const overlap = keywords.filter((w) => ctxLower.includes(w)).length / Math.max(keywords.length, 1);
+    const overlap =
+      keywords.filter((w) => ctxLower.includes(w)).length / Math.max(keywords.length, 1);
     if (overlap > 0.3) grounded++;
   }
   return Math.round((grounded / sentences.length) * 10000) / 10000;
 }
 
 const HALLUC_INDICATORS = [
-  'as everyone knows', 'it is well known', 'studies show', 'research proves',
-  'jak powszechnie wiadomo', 'badania dowodzą', 'jak wynika z badań',
-  'according to experts', 'scientists agree', 'eksperci twierdzą',
+  'as everyone knows',
+  'it is well known',
+  'studies show',
+  'research proves',
+  'jak powszechnie wiadomo',
+  'badania dowodzą',
+  'jak wynika z badań',
+  'according to experts',
+  'scientists agree',
+  'eksperci twierdzą',
 ];
 
 function computeHallucinationRate(response: string): number {

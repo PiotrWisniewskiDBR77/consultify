@@ -89,10 +89,7 @@ export const AIPrivacySettings: React.FC<{ className?: string }> = ({ className 
     }
   }, [preferences, t]);
 
-  const update = <K extends keyof AIPrivacyPreferences>(
-    key: K,
-    value: AIPrivacyPreferences[K]
-  ) => {
+  const update = <K extends keyof AIPrivacyPreferences>(key: K, value: AIPrivacyPreferences[K]) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 

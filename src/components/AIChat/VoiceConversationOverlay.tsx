@@ -9,11 +9,20 @@
  * Props interface is unchanged from the full-screen version.
  */
 
-import { ChevronDown, ChevronUp, Loader2, Mic, PhoneOff, RefreshCw, Sparkles, X } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  Mic,
+  PhoneOff,
+  RefreshCw,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useTeresaVoice, type TeresaVoiceStatus } from '../../hooks/useTeresaVoice';
+import { type TeresaVoiceStatus, useTeresaVoice } from '../../hooks/useTeresaVoice';
 import { useAppStore } from '../../store/useAppStore';
 import { useConversationStore } from '../../store/useConversationStore';
 import { usePMOStore } from '../../store/usePMOStore';
@@ -72,7 +81,7 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
     () => ({
       language: chatLanguage,
       organizationName: currentOrganization?.name || currentUser?.organizationName,
-      organizationId: (currentOrganization?.id ?? currentUser?.organizationId) ?? undefined,
+      organizationId: currentOrganization?.id ?? currentUser?.organizationId ?? undefined,
       userName: currentUser?.firstName,
       activeProject: projectName ?? undefined,
       workspaceType: workspaceContext?.type,
@@ -97,7 +106,10 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
           if (last?.role === 'user' && Date.now() - last.timestamp < 3000) {
             return [...prev.slice(0, -1), { ...last, text: trimmed, timestamp: Date.now() }];
           }
-          return [...prev, { id: `u-${Date.now()}`, role: 'user', text: trimmed, timestamp: Date.now() }];
+          return [
+            ...prev,
+            { id: `u-${Date.now()}`, role: 'user', text: trimmed, timestamp: Date.now() },
+          ];
         });
         onTranscriptMessage?.('user', trimmed);
         if (!hasAutoExpandedRef.current) {
@@ -116,9 +128,15 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
         setTranscripts((prev) => {
           const last = prev[prev.length - 1];
           if (last?.role === 'ai' && Date.now() - last.timestamp < 3000) {
-            return [...prev.slice(0, -1), { ...last, text: last.text + ' ' + trimmed, timestamp: Date.now() }];
+            return [
+              ...prev.slice(0, -1),
+              { ...last, text: last.text + ' ' + trimmed, timestamp: Date.now() },
+            ];
           }
-          return [...prev, { id: `a-${Date.now()}`, role: 'ai', text: trimmed, timestamp: Date.now() }];
+          return [
+            ...prev,
+            { id: `a-${Date.now()}`, role: 'ai', text: trimmed, timestamp: Date.now() },
+          ];
         });
         onTranscriptMessage?.('ai', trimmed);
         if (!hasAutoExpandedRef.current) {
@@ -130,19 +148,14 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
     [onTranscriptMessage]
   );
 
-  const {
-    voiceStatus,
-    voiceError,
-    voiceAvailable,
-    startVoiceConversation,
-    stopVoiceConversation,
-  } = useTeresaVoice({
-    enabled: isOpen,
-    language: chatLanguage,
-    systemInstruction,
-    onTranscriptUpdate: handleTranscript,
-    onModelAudioText: handleModelText,
-  });
+  const { voiceStatus, voiceError, voiceAvailable, startVoiceConversation, stopVoiceConversation } =
+    useTeresaVoice({
+      enabled: isOpen,
+      language: chatLanguage,
+      systemInstruction,
+      onTranscriptUpdate: handleTranscript,
+      onModelAudioText: handleModelText,
+    });
 
   // Auto-start voice session when opened
   useEffect(() => {
@@ -224,7 +237,9 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
         <div className="flex items-center gap-2">
           <Sparkles size={14} className="text-primary-400" />
           <span className="text-sm font-semibold text-primary-300">Teresa</span>
-          <span className={`w-2 h-2 rounded-full ${STATUS_COLORS[voiceStatus]} ${voiceStatus === 'live' ? 'animate-pulse' : ''}`} />
+          <span
+            className={`w-2 h-2 rounded-full ${STATUS_COLORS[voiceStatus]} ${voiceStatus === 'live' ? 'animate-pulse' : ''}`}
+          />
           <span className="text-[11px] text-slate-400">{statusLabel[voiceStatus]}</span>
         </div>
         <div className="flex items-center gap-1">
@@ -287,9 +302,7 @@ export const VoiceConversationOverlay: React.FC<VoiceConversationOverlayProps> =
           <div
             key={entry.id}
             className={`text-[13px] leading-relaxed ${
-              entry.role === 'user'
-                ? 'text-right'
-                : 'text-left'
+              entry.role === 'user' ? 'text-right' : 'text-left'
             }`}
           >
             {entry.role === 'ai' ? (

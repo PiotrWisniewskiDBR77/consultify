@@ -73,14 +73,22 @@ export const CHAT_V10_ROLLOUT_BLOCKS: readonly ChatV10RolloutBlockDefinition[] =
         title: 'Review and preflight',
         description: 'Validation, approval flow and no-silent-write safety rails.',
         phase: 2,
-        flagIds: ['artifact-no-silent-writes', 'artifact-approve-edit-reject', 'artifact-partial-acceptance'],
+        flagIds: [
+          'artifact-no-silent-writes',
+          'artifact-approve-edit-reject',
+          'artifact-partial-acceptance',
+        ],
       },
       {
         id: 'artifact-materialization',
         title: 'Materialization and handoff',
         description: 'Export/materialization path into downstream outputs surfaces.',
         phase: 3,
-        flagIds: ['pipelines-artifact-export', 'artifact-export-manifest', 'artifact-template-fingerprint'],
+        flagIds: [
+          'pipelines-artifact-export',
+          'artifact-export-manifest',
+          'artifact-template-fingerprint',
+        ],
       },
     ],
   },
@@ -88,7 +96,11 @@ export const CHAT_V10_ROLLOUT_BLOCKS: readonly ChatV10RolloutBlockDefinition[] =
     block: 'agent_runtime',
     title: 'Agent',
     description: 'Schedule definitions, execution controls and operator pipeline.',
-    gateFlagIds: ['agent-schedule-definition', 'agent-schedule-registry', 'pipelines-agent-schedule'],
+    gateFlagIds: [
+      'agent-schedule-definition',
+      'agent-schedule-registry',
+      'pipelines-agent-schedule',
+    ],
     functions: [
       {
         id: 'agent-scheduling',
@@ -218,7 +230,11 @@ export const CHAT_V10_ROLLOUT_BLOCKS: readonly ChatV10RolloutBlockDefinition[] =
         title: 'Live research ops',
         description: 'Mission execution, watch pipeline and delta reporting.',
         phase: 2,
-        flagIds: ['pipelines-research-mission', 'pipelines-research-watch', 'research-watch-delta-report'],
+        flagIds: [
+          'pipelines-research-mission',
+          'pipelines-research-watch',
+          'research-watch-delta-report',
+        ],
       },
       {
         id: 'research-telemetry-ops',
@@ -247,7 +263,11 @@ export const CHAT_V10_ROLLOUT_BLOCKS: readonly ChatV10RolloutBlockDefinition[] =
         title: 'Ingest and freshness',
         description: 'Ingest pipeline, incremental sync and freshness SLOs.',
         phase: 2,
-        flagIds: ['pipelines-connectors-ingest', 'connectors-incremental-sync', 'connectors-freshness-slo'],
+        flagIds: [
+          'pipelines-connectors-ingest',
+          'connectors-incremental-sync',
+          'connectors-freshness-slo',
+        ],
       },
       {
         id: 'connectors-ops',
@@ -307,7 +327,7 @@ function resolveReadiness(entries: readonly ChatV10FlagSnapshotEntry[]): ChatV10
 
 function pickSnapshotEntries(
   snapshotById: ReadonlyMap<string, ChatV10FlagSnapshotEntry>,
-  flagIds: readonly string[],
+  flagIds: readonly string[]
 ): ChatV10FlagSnapshotEntry[] {
   return flagIds
     .map((flagId) => snapshotById.get(flagId))
@@ -360,7 +380,9 @@ export function getChatV10RolloutSummary(): ChatV10RolloutSummary {
   };
 }
 
-export function findChatV10RolloutBlock(block: ChatV10Block): ChatV10RolloutBlockDefinition | undefined {
+export function findChatV10RolloutBlock(
+  block: ChatV10Block
+): ChatV10RolloutBlockDefinition | undefined {
   return CHAT_V10_ROLLOUT_BLOCKS.find((entry) => entry.block === block);
 }
 
@@ -374,12 +396,14 @@ export interface BuildChatV10FlagSnapshotTextOptions {
 }
 
 export function buildChatV10FlagSnapshotText(
-  options: BuildChatV10FlagSnapshotTextOptions = {},
+  options: BuildChatV10FlagSnapshotTextOptions = {}
 ): string {
   const now = options.now ?? new Date();
   const snapshot = getChatV10FlagSnapshot();
   const snapshotById = new Map(snapshot.map((entry) => [entry.id, entry]));
-  const labelPrefix = options.label ? `Chat V10 flags snapshot · ${options.label}` : 'Chat V10 flags snapshot';
+  const labelPrefix = options.label
+    ? `Chat V10 flags snapshot · ${options.label}`
+    : 'Chat V10 flags snapshot';
   const header = `${labelPrefix} · ${now.toISOString()}`;
   const overridesCount = snapshot.filter((entry) => !entry.matchesDefault).length;
   const summary = `${CHAT_V10_FLAGS.length} flags, ${overridesCount} overrides, ${

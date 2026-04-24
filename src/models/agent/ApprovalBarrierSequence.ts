@@ -22,7 +22,11 @@ export type BarrierPauseState = {
 
 export type BarrierResumeResult =
   | { readonly outcome: 'resumed'; readonly resumedAt: string; readonly pause: BarrierPauseState }
-  | { readonly outcome: 'cancelled'; readonly resumedAt: string; readonly pause: BarrierPauseState };
+  | {
+      readonly outcome: 'cancelled';
+      readonly resumedAt: string;
+      readonly pause: BarrierPauseState;
+    };
 
 export function simulateBarrierSequence(
   sequence: ApprovalBarrierSequence,
@@ -48,7 +52,9 @@ export function simulateBarrierSequence(
   };
 }
 
-export function assertBarrierEventEmitted(simulation: ReturnType<typeof simulateBarrierSequence>): void {
+export function assertBarrierEventEmitted(
+  simulation: ReturnType<typeof simulateBarrierSequence>
+): void {
   if (simulation.outcome === 'paused') {
     if (!simulation.pause?.barrierId) {
       throw new Error('Barrier pause missing barrierId');
@@ -71,4 +77,3 @@ export function assertResumePoint(pause: BarrierPauseState, resume: BarrierResum
     throw new Error('Resume pause mismatch');
   }
 }
-

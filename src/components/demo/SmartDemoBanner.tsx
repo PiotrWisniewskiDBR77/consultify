@@ -242,7 +242,10 @@ export const SmartDemoBanner: React.FC<SmartDemoBannerProps> = ({
                 {/* CTA */}
                 <div className="text-xs text-slate-400">
                   {isWorkspaceDemo
-                    ? t('demo.banner.readyForMoreWorkspace', 'Ready to try the same flow in your own workspace?')
+                    ? t(
+                        'demo.banner.readyForMoreWorkspace',
+                        'Ready to try the same flow in your own workspace?'
+                      )
                     : t('demo.banner.readyForMore', 'Ready for your own data?')}{' '}
                   <button
                     onClick={() => onUpgradeClick?.()}

@@ -41,12 +41,8 @@ describe('InputHintStrip', () => {
 
     // DOM order check — compareDocumentPosition returns
     // FOLLOWING (4) when the argument is after `this`.
-    expect(send.compareDocumentPosition(newline)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING
-    );
-    expect(newline.compareDocumentPosition(clear)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING
-    );
+    expect(send.compareDocumentPosition(newline)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(newline.compareDocumentPosition(clear)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it('each hint contains a <kbd> with the key chord and an action label', () => {

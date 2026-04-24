@@ -15,4 +15,3 @@ export type ProvenanceFooter = {
   readonly footerTarget: FooterTarget;
   readonly watermarkText: string | null;
 };
-

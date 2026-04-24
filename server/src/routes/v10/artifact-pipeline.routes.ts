@@ -3,7 +3,6 @@ import { type Request, type Response, Router } from 'express';
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { requireV8OrgContext } from '../../middleware/v8Auth.middleware.js';
 import { v8OutputsGate } from '../../middleware/v8FeatureGate.middleware.js';
-import { asyncHandler } from '../../utils/asyncHandler.js';
 import artifactPipelineService, {
   mapArtifactPipelineError,
 } from '../../services/v10/artifact/artifactPipelineService.js';
@@ -11,6 +10,7 @@ import type {
   ArtifactPipelinePreflightRequest,
   ArtifactPipelineRunRequest,
 } from '../../types/v10/artifact-pipeline.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 
 type ArtifactPipelineAuthRequest = Request & {
   user?: {
@@ -39,12 +39,14 @@ function withScope<T extends Record<string, unknown>>(req: Request): T {
   };
 }
 
-function normalizeTenantAndIds<T extends ArtifactPipelinePreflightRequest | ArtifactPipelineRunRequest>(
-  input: T
-): T {
+function normalizeTenantAndIds<
+  T extends ArtifactPipelinePreflightRequest | ArtifactPipelineRunRequest,
+>(input: T): T {
   const scopeTenantId = String(input?.scope?.tenantId || '').trim();
-  const artifact = input?.artifact && typeof input.artifact === 'object' ? (input.artifact as any) : null;
-  const proposal = input?.proposal && typeof input.proposal === 'object' ? (input.proposal as any) : null;
+  const artifact =
+    input?.artifact && typeof input.artifact === 'object' ? (input.artifact as any) : null;
+  const proposal =
+    input?.proposal && typeof input.proposal === 'object' ? (input.proposal as any) : null;
   const artifactId = artifact?.id ? String(artifact.id) : null;
 
   const next: any = { ...input };
@@ -125,7 +127,9 @@ export function createArtifactPipelineRouter(): Router {
     asyncHandler(async (req: Request, res: Response) => {
       const scope = getRequestScope(req as ArtifactPipelineAuthRequest);
       const runId = String(req.params.runId || '');
-      createResponder(res, () => artifactPipelineService.publishRunToOutputsLibrary({ scope, runId }));
+      createResponder(res, () =>
+        artifactPipelineService.publishRunToOutputsLibrary({ scope, runId })
+      );
     })
   );
 
@@ -133,4 +137,3 @@ export function createArtifactPipelineRouter(): Router {
 }
 
 export default createArtifactPipelineRouter();
-

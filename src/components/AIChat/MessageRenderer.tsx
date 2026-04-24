@@ -39,16 +39,19 @@ import { formatExecutiveBrief } from '../../utils/textCleaning';
 import { ArtifactBadge } from './ArtifactBadge';
 import { ChatTableProposalCard } from './ChatTableProposalCard';
 import { CitationList, CitationMarker } from './CitationList';
+import {
+  type DeepThinkingPendingConfirmBase,
+  shouldOpenDeepThinkingClarification,
+} from './deepThinkingRuntime';
 import { ExecutionProposalMessage } from './ExecutionProposalMessage';
 import { InlineResponseFeedback } from './InlineResponseFeedback';
-import { ResearchProgress } from './ResearchProgress';
 import { ResearchClarification } from './ResearchClarification';
+import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
-import { shouldOpenDeepThinkingClarification, type DeepThinkingPendingConfirmBase } from './deepThinkingRuntime';
 
 // V8 governed proposal / execution message family (CHAT_V8_ACTIONS_AND_APPROVALS)
 const V8_EXECUTION_MESSAGE_TYPES = new Set<string>([
@@ -200,23 +203,25 @@ export interface MessageRendererProps {
   // Deep Thinking state
   deepThinkingHint: { reason: string; confidence: 'low' | 'medium' | 'high' } | null;
   dtHintDismissed: boolean;
-  dtPendingConfirm: (DeepThinkingPendingConfirmBase & {
-    attachments?: any[];
-    agentAudit?: {
-      suggested?: any;
-      orchestratorRunId?: string;
-      selectedAgentIds: string[];
-      userIntent: 'validate' | 'stress_test' | 'approve';
-      maxAgents: 2 | 3 | 4;
-      decisionContext?: {
-        topic: string;
-        industry?: string;
-        horizon?: string;
-        functions?: string[];
-        riskFocus?: string[];
-      };
-    };
-  }) | null;
+  dtPendingConfirm:
+    | (DeepThinkingPendingConfirmBase & {
+        attachments?: any[];
+        agentAudit?: {
+          suggested?: any;
+          orchestratorRunId?: string;
+          selectedAgentIds: string[];
+          userIntent: 'validate' | 'stress_test' | 'approve';
+          maxAgents: 2 | 3 | 4;
+          decisionContext?: {
+            topic: string;
+            industry?: string;
+            horizon?: string;
+            functions?: string[];
+            riskFocus?: string[];
+          };
+        };
+      })
+    | null;
   setDtPendingConfirm: React.Dispatch<
     React.SetStateAction<MessageRendererProps['dtPendingConfirm']>
   >;
@@ -443,27 +448,27 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       {/* Cursor-like thinking log: plain dim text, no background, no panel */}
       {/* Only show for the LAST streaming AI message to avoid duplicated lines */}
       {msg.role === 'ai' && msg.isStreaming && isLastMessage && thinkingSteps.length > 0 && (
-          <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
-            <ThinkingStatusLine
-              compact={isCompact}
-              show
-              showSpinner={false}
-              steps={thinkingSteps
-                .filter((s) => String((s as any)?.label || '').trim())
-                .map((s) => ({
-                  label: String((s as any)?.label || '').trim(),
-                  status:
-                    s.status === 'done' || s.status === 'completed'
-                      ? ('done' as const)
-                      : s.status === 'in_progress'
-                        ? ('in_progress' as const)
-                        : ('pending' as const),
-                }))
-                .slice(-6)}
-              label={t('thinking.processing', 'Processing live steps…') as string}
-            />
-          </div>
-        )}
+        <div className={`${isCompact ? 'ml-7' : 'ml-9'} max-w-[85%]`}>
+          <ThinkingStatusLine
+            compact={isCompact}
+            show
+            showSpinner={false}
+            steps={thinkingSteps
+              .filter((s) => String((s as any)?.label || '').trim())
+              .map((s) => ({
+                label: String((s as any)?.label || '').trim(),
+                status:
+                  s.status === 'done' || s.status === 'completed'
+                    ? ('done' as const)
+                    : s.status === 'in_progress'
+                      ? ('in_progress' as const)
+                      : ('pending' as const),
+              }))
+              .slice(-6)}
+            label={t('thinking.processing', 'Processing live steps…') as string}
+          />
+        </div>
+      )}
 
       <div
         className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'} ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
@@ -1035,11 +1040,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                             const verdict = audit?.verdict || {};
                             const reviews = Array.isArray(audit?.reviews) ? audit.reviews : [];
                             const runtimeRunId =
-                              String(audit?.runtimeRunId || audit?.orchestratorRunId || '').trim() || null;
-                            const runtimeSummary =
-                              (runtimeRunId && runtimeSummaryByRunId?.[runtimeRunId]?.run) ||
-                              runtimeSummaryByRunId?.[runtimeRunId] ||
-                              null;
+                              String(
+                                audit?.runtimeRunId || audit?.orchestratorRunId || ''
+                              ).trim() || null;
+                            const runtimeSummary = runtimeRunId
+                              ? runtimeSummaryByRunId?.[runtimeRunId]?.run ||
+                                runtimeSummaryByRunId?.[runtimeRunId] ||
+                                null
+                              : null;
                             const gates = Array.isArray(verdict?.gatesTriggered)
                               ? verdict.gatesTriggered
                               : [];
@@ -1728,27 +1736,25 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               )}
             </button>
           </div>
-                        {dtPendingConfirm.clarificationRequested ? (
-                          <ResearchClarification
-                            message={
-                              dtPendingConfirm.editedMessage || dtPendingConfirm.originalMessage
-                            }
-                            onComplete={handleDeepThinkingClarificationComplete}
-                            onCancel={() =>
-                              setDtPendingConfirm((prev) =>
-                                prev
-                                  ? {
-                                      ...prev,
-                                      clarificationRequested: false,
-                                      clarificationHandled: true,
-                                      clarificationAnswers: null,
-                                    }
-                                  : prev
-                              )
-                            }
-                            className="mt-2"
-                          />
-                        ) : null}
+          {dtPendingConfirm?.clarificationRequested ? (
+            <ResearchClarification
+              message={dtPendingConfirm?.editedMessage || dtPendingConfirm?.originalMessage || ''}
+              onComplete={handleDeepThinkingClarificationComplete}
+              onCancel={() =>
+                setDtPendingConfirm((prev) =>
+                  prev
+                    ? {
+                        ...prev,
+                        clarificationRequested: false,
+                        clarificationHandled: true,
+                        clarificationAnswers: null,
+                      }
+                    : prev
+                )
+              }
+              className="mt-2"
+            />
+          ) : null}
         </div>
       )}
 

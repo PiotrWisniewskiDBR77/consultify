@@ -1,4 +1,6 @@
-export type ConnectorsFetchPipelineRunId = string & { readonly __brand: 'ConnectorsFetchPipelineRunId' };
+export type ConnectorsFetchPipelineRunId = string & {
+  readonly __brand: 'ConnectorsFetchPipelineRunId';
+};
 
 export function unsafeConnectorsFetchPipelineRunId(value: string): ConnectorsFetchPipelineRunId {
   return String(value) as ConnectorsFetchPipelineRunId;
@@ -92,7 +94,8 @@ export async function runConnectorsFetchPipeline(input: {
       },
     });
     const text = await response.text();
-    const snippet = text.trim().slice(0, 500) || `Fetched ${parsedUrl.toString()} (${response.status})`;
+    const snippet =
+      text.trim().slice(0, 500) || `Fetched ${parsedUrl.toString()} (${response.status})`;
 
     if ([404, 405, 501].includes(response.status)) {
       return {
@@ -134,7 +137,10 @@ export async function runConnectorsFetchPipeline(input: {
       snippet,
     };
   } catch (error) {
-    if (error instanceof ConnectorsRuntimeInputError || error instanceof ConnectorsRuntimeBackendError) {
+    if (
+      error instanceof ConnectorsRuntimeInputError ||
+      error instanceof ConnectorsRuntimeBackendError
+    ) {
       throw error;
     }
     if (error instanceof Error && error.name === 'AbortError') {
@@ -155,4 +161,3 @@ export async function runConnectorsFetchPipeline(input: {
     clearTimeout(timer);
   }
 }
-

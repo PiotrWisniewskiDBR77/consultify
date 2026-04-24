@@ -108,9 +108,7 @@ export const AdminCollaborationControlsPanel: React.FC = () => {
                     <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                       {card.description}
                     </p>
-                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-                      {card.denial}
-                    </p>
+                    <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">{card.denial}</p>
                   </div>
                   <label className="relative inline-flex cursor-pointer items-center">
                     <input

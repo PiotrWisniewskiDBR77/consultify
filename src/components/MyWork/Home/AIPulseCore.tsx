@@ -99,8 +99,12 @@ export const AIPulseCore: React.FC<AIPulseCoreProps> = ({ block, onAction }) => 
                 )}
               />
             </div>
-            <div className="mt-1.5 text-sm font-semibold leading-snug text-white">{primaryFocus.title}</div>
-            <div className="mt-1 text-[11px] leading-relaxed text-slate-300/75">{primaryFocus.meta}</div>
+            <div className="mt-1.5 text-sm font-semibold leading-snug text-white">
+              {primaryFocus.title}
+            </div>
+            <div className="mt-1 text-[11px] leading-relaxed text-slate-300/75">
+              {primaryFocus.meta}
+            </div>
           </button>
         ) : null}
 

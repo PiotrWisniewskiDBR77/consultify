@@ -53,8 +53,8 @@ import { buildTrustBadgeCitationsText } from '../../utils/buildTrustBadgeCitatio
 import { buildTrustBadgeReasoning } from '../../utils/buildTrustBadgeReasoning';
 import { buildTrustBadgeReasoningText } from '../../utils/buildTrustBadgeReasoningText';
 import {
-  copyTextToClipboard as defaultCopyToClipboard,
   type ClipboardWriteResult,
+  copyTextToClipboard as defaultCopyToClipboard,
 } from '../../utils/chatV9FlagsSnapshotText';
 import { extractCitationDomain } from '../../utils/extractCitationDomain';
 import { formatTrustBadgeModelLabel } from '../../utils/formatTrustBadgeModelLabel';
@@ -194,11 +194,8 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
   // copy button so the two affordances never clobber each other.
   // They share the same tone scheme but the user may trigger both
   // in rapid succession and expect each to reflect its own result.
-  const [reasoningCopyFeedback, setReasoningCopyFeedback] =
-    useState<CopyFeedback>('idle');
-  const reasoningCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  const [reasoningCopyFeedback, setReasoningCopyFeedback] = useState<CopyFeedback>('idle');
+  const reasoningCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const safeCitations = useMemo(() => normalizeCitations(citations), [citations]);
@@ -412,9 +409,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
               <span className="uppercase tracking-wide text-[10px] font-semibold text-slate-400 dark:text-slate-500">
                 {t('trust.badge.answeredBy', 'Answered by')}
               </span>
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {modelLabel}
-              </span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">{modelLabel}</span>
             </div>
           )}
 
@@ -431,9 +426,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                   // text so the popover never renders a broken <a> and
                   // never becomes an XSS vector through a stray
                   // `javascript:` URL.
-                  const safeLink = citationLinksEnabled
-                    ? isSafeCitationLink(c.link)
-                    : null;
+                  const safeLink = citationLinksEnabled ? isSafeCitationLink(c.link) : null;
                   // T-TR3.4 — extract the hostname from the raw link
                   // *independently* of `citationLinksEnabled`. The domain
                   // pill is a provenance signal, not a navigation control,
@@ -472,20 +465,16 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                           {c.title}
                         </a>
                       ) : (
-                        <span data-testid={`trust-badge-citation-plain-${idx}`}>
-                          {c.title}
-                        </span>
+                        <span data-testid={`trust-badge-citation-plain-${idx}`}>{c.title}</span>
                       )}
                       {citationDomain && (
                         <span
                           data-testid={`trust-badge-citation-domain-${idx}`}
                           data-citation-domain={citationDomain}
                           className="ml-1.5 inline-flex items-center text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400"
-                          aria-label={t(
-                            'trust.badge.citationDomain',
-                            'Source domain: {{domain}}',
-                            { domain: citationDomain }
-                          )}
+                          aria-label={t('trust.badge.citationDomain', 'Source domain: {{domain}}', {
+                            domain: citationDomain,
+                          })}
                         >
                           <span aria-hidden="true" className="text-slate-300 dark:text-navy-600">
                             ·
@@ -546,15 +535,10 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                 ) : (
                   <ChevronRight size={12} strokeWidth={2} aria-hidden />
                 )}
-                <span>
-                  {t('trust.badge.reasoningToggle', 'Why this answer?')}
-                </span>
+                <span>{t('trust.badge.reasoningToggle', 'Why this answer?')}</span>
               </button>
               {reasoningExpanded && (
-                <div
-                  id="trust-badge-reasoning-body"
-                  data-testid="trust-badge-reasoning-body"
-                >
+                <div id="trust-badge-reasoning-body" data-testid="trust-badge-reasoning-body">
                   <ul className="mt-2 space-y-1.5">
                     {reasoningObservations.map((obs) => (
                       <li

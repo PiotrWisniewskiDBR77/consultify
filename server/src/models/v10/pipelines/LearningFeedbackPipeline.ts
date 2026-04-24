@@ -1,4 +1,6 @@
-export type LearningFeedbackPipelineRunId = string & { readonly __brand: 'LearningFeedbackPipelineRunId' };
+export type LearningFeedbackPipelineRunId = string & {
+  readonly __brand: 'LearningFeedbackPipelineRunId';
+};
 
 export function unsafeLearningFeedbackPipelineRunId(value: string): LearningFeedbackPipelineRunId {
   return String(value) as LearningFeedbackPipelineRunId;
@@ -18,4 +20,3 @@ export function runLearningFeedbackPipeline(input: {
   void input.signal;
   return { ingestionId: input.ingestionId, now: input.now, accepted: true };
 }
-

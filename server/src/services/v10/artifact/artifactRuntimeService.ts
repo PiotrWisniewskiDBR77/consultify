@@ -73,10 +73,7 @@ import {
   assertTenantOverrideDoesNotWeakenBaseline,
   resolveRequiredReviewer,
 } from '../../../models/artifact/RoleBasedApprovalGates.js';
-import type {
-  ScopeVerdict,
-  SelectionContext,
-} from '../../../models/artifact/SelectionScope.js';
+import type { ScopeVerdict, SelectionContext } from '../../../models/artifact/SelectionScope.js';
 import {
   assertOpsWithinSelection,
   resolveOpScope,

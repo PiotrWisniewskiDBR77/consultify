@@ -141,7 +141,8 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({
     }
   };
 
-  const sectionLabel = 'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+  const sectionLabel =
+    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   return (
     <SettingsSection
@@ -172,18 +173,23 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({
               checked={prefs.desktopEnabled}
               onChange={(val) => setPrefs((prev) => ({ ...prev, desktopEnabled: val }))}
               label={t('settings.desktopSounds.showDesktop', 'Show desktop notifications')}
-              description={t('settings.desktopSounds.showDesktopDesc', 'Display notifications in your browser')}
+              description={t(
+                'settings.desktopSounds.showDesktopDesc',
+                'Display notifications in your browser'
+              )}
             />
 
-            {!prefs.pushEnabled && 'Notification' in window && Notification.permission !== 'granted' && (
-              <button
-                onClick={requestPushPermission}
-                className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors text-sm"
-              >
-                <Bell size={14} />
-                {t('settings.desktopSounds.enablePush', 'Enable Push Notifications')}
-              </button>
-            )}
+            {!prefs.pushEnabled &&
+              'Notification' in window &&
+              Notification.permission !== 'granted' && (
+                <button
+                  onClick={requestPushPermission}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors text-sm"
+                >
+                  <Bell size={14} />
+                  {t('settings.desktopSounds.enablePush', 'Enable Push Notifications')}
+                </button>
+              )}
 
             {prefs.desktopEnabled && (
               <>
@@ -197,7 +203,9 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({
                     {POSITION_OPTIONS.map((opt) => (
                       <button
                         key={opt.value}
-                        onClick={() => setPrefs((prev) => ({ ...prev, desktopPosition: opt.value }))}
+                        onClick={() =>
+                          setPrefs((prev) => ({ ...prev, desktopPosition: opt.value }))
+                        }
                         className={cn(
                           'px-3 py-2 rounded-lg border-2 transition-all text-sm',
                           prefs.desktopPosition === opt.value
@@ -223,7 +231,9 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({
                       max="10000"
                       step="500"
                       value={prefs.desktopDuration}
-                      onChange={(e) => setPrefs((prev) => ({ ...prev, desktopDuration: Number(e.target.value) }))}
+                      onChange={(e) =>
+                        setPrefs((prev) => ({ ...prev, desktopDuration: Number(e.target.value) }))
+                      }
                       className="flex-1 accent-violet-500"
                     />
                     <span className="text-sm text-slate-400 w-12 text-right tabular-nums">
@@ -261,7 +271,10 @@ export const DesktopSoundsSettings: React.FC<DesktopSoundsSettingsProps> = ({
                     {t('settings.desktopSounds.enableSounds', 'Enable Sounds')}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {t('settings.desktopSounds.enableSoundsDesc', 'Play sound alerts for notifications')}
+                    {t(
+                      'settings.desktopSounds.enableSoundsDesc',
+                      'Play sound alerts for notifications'
+                    )}
                   </p>
                 </div>
               </div>

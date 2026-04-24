@@ -349,7 +349,9 @@ Be concise, professional, and solution-oriented. Focus on value, not fluff.`;
                   <h3 className="text-sm font-bold text-slate-900 dark:text-white">
                     AI Consultant
                   </h3>
-                  <p className="text-[10px] text-slate-600 dark:text-slate-400">Twój asystent transformacji</p>
+                  <p className="text-[10px] text-slate-600 dark:text-slate-400">
+                    Twój asystent transformacji
+                  </p>
                 </div>
               </div>
               <button

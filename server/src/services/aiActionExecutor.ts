@@ -11,12 +11,12 @@ import { all, get, run } from '../utils/DbPromise.js';
 let dbAll = all;
 let dbGet = get;
 let dbRun = run;
-import logger from '../utils/Logger.js';
-import AIPolicyEngine from './aiPolicyEngine.js';
 import {
   mapDbActionStatusToV8Lifecycle,
   V8LifecycleState,
 } from '../types/chatExecutionIntegration.js';
+import logger from '../utils/Logger.js';
+import AIPolicyEngine from './aiPolicyEngine.js';
 
 // Enums and Constants
 export const ACTION_TYPES = {
@@ -128,10 +128,7 @@ async function emitChatExecutionMessage(input: EmitChatExecutionMessageInput): P
       ]
     );
   } catch (err: any) {
-    logger.warn(
-      '[AIActionExecutor] emitChatExecutionMessage failed:',
-      err?.message || String(err)
-    );
+    logger.warn('[AIActionExecutor] emitChatExecutionMessage failed:', err?.message || String(err));
   }
 }
 

@@ -1,75 +1,3 @@
-import type { Severity, TenantId } from './ExecutionProposalV1.js';
-
-export type { TenantId } from './ExecutionProposalV1.js';
-
-export type RunId = string & { readonly __brand: 'RunId' };
-export type RunStatus = 'pending' | 'running' | 'paused' | 'succeeded' | 'failed' | 'cancelled';
-
-export function unsafeRunId(value: string): RunId {
-  return String(value) as RunId;
-}
-
-export type RunRow = {
-  readonly id: RunId;
-  readonly tenantId: TenantId;
-  readonly correlationId: string;
-  readonly status: RunStatus;
-  readonly severity: Severity;
-  readonly startedAt: string | null;
-  readonly finishedAt: string | null;
-  readonly budgetUsed: {
-    readonly wallMs: number;
-    readonly costCents: number;
-    readonly toolCalls: number;
-    readonly tokens: number;
-  };
-};
-
-export type LedgerQuery = {
-  readonly tenantId: TenantId;
-  readonly limit?: number;
-  readonly id?: RunId;
-  readonly correlationId?: string;
-  readonly status?: RunStatus;
-  readonly severity?: Severity;
-  readonly startedAtFrom?: string;
-  readonly startedAtTo?: string;
-};
-
-export function assertTenantScoped(
-  entity: { readonly tenantId: TenantId },
-  tenantId: TenantId
-): void {
-  if (entity.tenantId !== tenantId) {
-    throw new Error(`Tenant scope mismatch: ${String(entity.tenantId)} !== ${String(tenantId)}`);
-  }
-}
-
-export function assertLedgerQueryWhitelisted(query: Record<string, unknown>): void {
-  const allowed = new Set([
-    'tenantId',
-    'limit',
-    'id',
-    'correlationId',
-    'status',
-    'severity',
-    'startedAtFrom',
-    'startedAtTo',
-  ]);
-  for (const key of Object.keys(query)) {
-    if (!allowed.has(key)) {
-      throw new Error(`Ledger query key not allowed: ${key}`);
-    }
-  }
-}
-
-export function assertRunTransition(from: RunStatus, to: RunStatus): void {
-  const terminal = new Set<RunStatus>(['succeeded', 'failed', 'cancelled']);
-  if (terminal.has(from) && from !== to) {
-    throw new Error(`Illegal run transition: ${from} -> ${to}`);
-  }
-}
-
 /**
  * V10-AGT-014 — Run Ledger core schema (Wave A seed, typed).
  *
@@ -143,8 +71,7 @@ export type TraceId = string & { readonly [LEDGER_TRACE_ID_BRAND]: void };
 
 export const unsafeRunId = (v: string): RunId => v as RunId;
 export const unsafeStepId = (v: string): StepId => v as StepId;
-export const unsafeCheckpointId = (v: string): CheckpointId =>
-  v as CheckpointId;
+export const unsafeCheckpointId = (v: string): CheckpointId => v as CheckpointId;
 export const unsafeTraceId = (v: string): TraceId => v as TraceId;
 
 // ---------------------------------------------------------------------------
@@ -164,20 +91,10 @@ export type RunStatus = (typeof RUN_STATUSES)[number];
 export const RUN_TERMINAL_STATUSES = ['succeeded', 'failed', 'cancelled'] as const;
 export type RunTerminalStatus = (typeof RUN_TERMINAL_STATUSES)[number];
 
-export const STEP_STATUSES = [
-  'pending',
-  'running',
-  'succeeded',
-  'failed',
-  'skipped',
-] as const;
+export const STEP_STATUSES = ['pending', 'running', 'succeeded', 'failed', 'skipped'] as const;
 export type StepStatus = (typeof STEP_STATUSES)[number];
 
-export const STEP_TERMINAL_STATUSES = [
-  'succeeded',
-  'failed',
-  'skipped',
-] as const;
+export const STEP_TERMINAL_STATUSES = ['succeeded', 'failed', 'skipped'] as const;
 export type StepTerminalStatus = (typeof STEP_TERMINAL_STATUSES)[number];
 
 /**
@@ -190,9 +107,7 @@ export type StepTerminalStatus = (typeof STEP_TERMINAL_STATUSES)[number];
  *   failed    → ∅ (sink)
  *   cancelled → ∅ (sink)
  */
-export const RUN_STATUS_TRANSITIONS: Readonly<
-  Record<RunStatus, readonly RunStatus[]>
-> = {
+export const RUN_STATUS_TRANSITIONS: Readonly<Record<RunStatus, readonly RunStatus[]>> = {
   pending: ['running', 'cancelled'],
   running: ['paused', 'succeeded', 'failed', 'cancelled'],
   paused: ['running', 'cancelled'],
@@ -210,9 +125,7 @@ export const RUN_STATUS_TRANSITIONS: Readonly<
  *   failed    → ∅ (sink)
  *   skipped   → ∅ (sink)
  */
-export const STEP_STATUS_TRANSITIONS: Readonly<
-  Record<StepStatus, readonly StepStatus[]>
-> = {
+export const STEP_STATUS_TRANSITIONS: Readonly<Record<StepStatus, readonly StepStatus[]>> = {
   pending: ['running', 'skipped'],
   running: ['succeeded', 'failed'],
   succeeded: [],
@@ -381,9 +294,7 @@ export class LedgerError extends Error {
     const detailStr = Object.entries(details)
       .map(([k, v]) => `${k}=${v}`)
       .join(' ');
-    super(
-      `LedgerError[${reason}]${detailStr.length > 0 ? ` ${detailStr}` : ''}`,
-    );
+    super(`LedgerError[${reason}]${detailStr.length > 0 ? ` ${detailStr}` : ''}`);
     this.name = 'LedgerError';
     this.reason = reason;
     this.details = Object.freeze({ ...details });
@@ -426,9 +337,10 @@ export function assertStepTransition(from: StepStatus, to: StepStatus): void {
  * and rows from a different tenant. This is the runtime mirror of the
  * Postgres row-level security policy that V10-AGT-015 installs.
  */
-export function assertTenantScoped<
-  Row extends { readonly tenantId: TenantId },
->(row: Row, callerTenantId: TenantId): void {
+export function assertTenantScoped<Row extends { readonly tenantId: TenantId }>(
+  row: Row,
+  callerTenantId: TenantId
+): void {
   if (typeof row.tenantId !== 'string' || row.tenantId.length === 0) {
     throw new LedgerError('tenant_scope_missing');
   }
@@ -446,9 +358,7 @@ export function assertTenantScoped<
  * shape) but boundary-deserialised queries from services / CLIs pass
  * through here.
  */
-export function assertLedgerQueryWhitelisted(
-  query: Readonly<Record<string, unknown>>,
-): void {
+export function assertLedgerQueryWhitelisted(query: Readonly<Record<string, unknown>>): void {
   const allowed = new Set<string>(LEDGER_QUERY_FIELDS);
   allowed.add('limit');
   for (const key of Object.keys(query)) {

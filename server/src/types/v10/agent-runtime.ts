@@ -16,12 +16,7 @@ import type {
   NextStateDecision,
   RunState,
 } from '../../models/agent/InterruptVerbs.js';
-import type {
-  LedgerQuery,
-  RunId,
-  RunRow,
-  RunStatus,
-} from '../../models/agent/RunLedger.js';
+import type { LedgerQuery, RunId, RunRow, RunStatus } from '../../models/agent/RunLedger.js';
 import type { AgentExecutionPipelineOutput } from '../../models/v10/pipelines/AgentExecutionPipeline.js';
 
 export type AgentRuntimeLedgerEventCategory =
@@ -165,7 +160,12 @@ export interface SummarizeRunLedgerInput {
 export interface AgentRuntimeLedgerStore {
   upsertRun(run: RunRow): Promise<RunRow>;
   getRun(runId: RunId, tenantId: TenantId): Promise<RunRow | null>;
-  transitionRun(runId: RunId, tenantId: TenantId, status: RunStatus, at: string): Promise<RunRow | null>;
+  transitionRun(
+    runId: RunId,
+    tenantId: TenantId,
+    status: RunStatus,
+    at: string
+  ): Promise<RunRow | null>;
   appendEvent(event: AgentRuntimeLedgerEvent): Promise<AgentRuntimeLedgerEvent>;
   query(query: LedgerQuery): Promise<AgentRuntimeLedgerQueryResult>;
   summarize(runId: RunId, tenantId: TenantId): Promise<AgentRuntimeLedgerSummary>;

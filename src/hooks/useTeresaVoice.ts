@@ -129,9 +129,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
         const data = payload?.data ?? payload;
         return {
           apiKey:
-            typeof data?.apiKey === 'string' && data.apiKey.trim()
-              ? data.apiKey.trim()
-              : null,
+            typeof data?.apiKey === 'string' && data.apiKey.trim() ? data.apiKey.trim() : null,
           voiceName:
             typeof data?.voiceName === 'string' && data.voiceName.trim()
               ? data.voiceName.trim()

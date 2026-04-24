@@ -221,7 +221,10 @@ function normalizeRole(value: unknown): string {
     .replace(/\s+/g, '_');
 }
 
-function roleSatisfies(requiredRoles: readonly string[], actorRole: string | null | undefined): boolean {
+function roleSatisfies(
+  requiredRoles: readonly string[],
+  actorRole: string | null | undefined
+): boolean {
   const normalized = normalizeRole(actorRole);
   if (!normalized) return false;
   if (normalized === 'superadmin' || normalized === 'super_admin' || normalized === 'owner') {
@@ -360,7 +363,9 @@ export class AgentRuntimeService {
         );
       }
       if (!roleSatisfies(contract.requiredRoles, input.actorRole || null)) {
-        throw new Error(`Role ${String(input.actorRole || 'unknown')} cannot resume ${run.severity}`);
+        throw new Error(
+          `Role ${String(input.actorRole || 'unknown')} cannot resume ${run.severity}`
+        );
       }
     }
     if (contract.requiresAdminSignature && !String(input.adminSignature || '').trim()) {
@@ -369,7 +374,12 @@ export class AgentRuntimeService {
 
     let syncedRun: RunRow | null = null;
     if (resume.outcome === 'resumed') {
-      syncedRun = await this.trySyncRunStatus(input.runId, input.tenantId, 'running', input.resumedAt);
+      syncedRun = await this.trySyncRunStatus(
+        input.runId,
+        input.tenantId,
+        'running',
+        input.resumedAt
+      );
       await this.store.setRuntimeState(input.runId, input.tenantId, 'running');
     } else {
       syncedRun = await this.trySyncRunStatus(

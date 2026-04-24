@@ -352,8 +352,8 @@ export const AssignInterviewModal: React.FC<AssignInterviewModalProps> = ({
       toast.success(
         (result as any)?.splitAssignments
           ? isPolish
-            ? `Utworzono ${((result as any)?.createdCount || selectedUserIds.length)} osobne przydziały`
-            : `Created ${((result as any)?.createdCount || selectedUserIds.length)} separate assignments`
+            ? `Utworzono ${(result as any)?.createdCount || selectedUserIds.length} osobne przydziały`
+            : `Created ${(result as any)?.createdCount || selectedUserIds.length} separate assignments`
           : isPolish
             ? `Wywiad przydzielony do ${selectedUserIds.length} osób`
             : `Interview assigned to ${selectedUserIds.length} user(s)`

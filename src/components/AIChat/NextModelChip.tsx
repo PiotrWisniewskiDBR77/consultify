@@ -74,9 +74,7 @@ export function resolveNextModelLabel(aiConfig: unknown): string | null {
 
   const privateMatch = Array.isArray(cfg.privateModels)
     ? cfg.privateModels.find(
-        (pm) =>
-          (selected && pm?.id === selected) ||
-          (modelId && pm?.modelId === modelId)
+        (pm) => (selected && pm?.id === selected) || (modelId && pm?.modelId === modelId)
       )
     : undefined;
 

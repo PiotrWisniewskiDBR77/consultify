@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   AlertTriangle,
   BarChart3,
@@ -9,15 +8,16 @@ import {
   Loader2,
   MessageSquare,
   Plus,
-  Rocket,
   Redo2,
+  Rocket,
   Save,
   Trash2,
   Undo2,
 } from 'lucide-react';
+import React from 'react';
 
-import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
 import { type ProcessFlowSemanticKit } from '../canvas/canvasOsContract';
+import { type FlowShape, SHAPE_CONFIG } from './FlowNodeComponent';
 
 // ── Re-export types ──────────────────────────────────────────────────────────
 
@@ -57,7 +57,12 @@ export const FLOW_MODE_GUIDANCE: Record<
 
 export const CLASSIC_SHAPES: FlowShape[] = ['start', 'end', 'action', 'decision'];
 export const BPMN_SHAPES: FlowShape[] = ['bpmn_event', 'bpmn_task', 'bpmn_gateway', 'start', 'end'];
-export const SYSTEM_SHAPES: FlowShape[] = ['system_actor', 'system_service', 'system_db', 'decision'];
+export const SYSTEM_SHAPES: FlowShape[] = [
+  'system_actor',
+  'system_service',
+  'system_db',
+  'decision',
+];
 export const ORG_SHAPES: FlowShape[] = ['org_role', 'org_team', 'org_handoff', 'decision'];
 export const AUTOMATION_SHAPES: FlowShape[] = [
   'start',
@@ -100,7 +105,7 @@ export interface ProcessFlowToolbarProps {
   setFlowMode: (mode: ProcessFlowMode) => void;
   semanticKit: string;
   availableShapes: FlowShape[];
-  addNode: (shape: string) => void;
+  addNode: (shape: FlowShape) => void;
   addLane: () => void;
   insertBetween: () => void;
   splitPath: () => void;
@@ -356,11 +361,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               }`}
               title="AI Coach"
             >
-              {coachLoading ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Bot size={14} />
-              )}
+              {coachLoading ? <Loader2 size={14} className="animate-spin" /> : <Bot size={14} />}
               AI Coach
             </button>
             <button
@@ -452,9 +453,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
               {saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
             </button>
-            <span className="text-[11px] text-slate-500 dark:text-slate-400">
-              {syncLabel}
-            </span>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400">{syncLabel}</span>
             {onOpenChat && (
               <button
                 type="button"
@@ -477,16 +476,32 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
                   {isPl ? 'Konwertuj' : 'Convert'}
                 </button>
                 <div className="absolute right-0 top-full mt-1 hidden group-hover:flex flex-col w-44 rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900 shadow-xl py-1 z-50">
-                  <button type="button" onClick={() => onConvert('pf_convert_initiative')} className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800">
+                  <button
+                    type="button"
+                    onClick={() => onConvert('pf_convert_initiative')}
+                    className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  >
                     {isPl ? 'Inicjatywa' : 'Initiative'}
                   </button>
-                  <button type="button" onClick={() => onConvert('pf_convert_task_set')} className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800">
+                  <button
+                    type="button"
+                    onClick={() => onConvert('pf_convert_task_set')}
+                    className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  >
                     {isPl ? 'Zadania' : 'Task set'}
                   </button>
-                  <button type="button" onClick={() => onConvert('pf_convert_report')} className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800">
+                  <button
+                    type="button"
+                    onClick={() => onConvert('pf_convert_report')}
+                    className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  >
                     {isPl ? 'Raport' : 'Report'}
                   </button>
-                  <button type="button" onClick={() => onConvert('pf_convert_analysis')} className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800">
+                  <button
+                    type="button"
+                    onClick={() => onConvert('pf_convert_analysis')}
+                    className="px-3 py-1.5 text-left text-[11px] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800"
+                  >
                     {isPl ? 'Analiza' : 'Analysis'}
                   </button>
                 </div>

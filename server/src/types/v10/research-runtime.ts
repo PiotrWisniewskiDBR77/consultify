@@ -100,4 +100,3 @@ export interface ResearchMissionSummaryResponse {
   readonly summary: string;
   readonly status: 'planned' | 'running' | 'completed' | 'unknown';
 }
-

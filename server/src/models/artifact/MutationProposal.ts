@@ -49,4 +49,3 @@ export function assertMutationProposal(proposal: MutationProposal): void {
     throw new Error('Mutation proposal ops must be an array');
   }
 }
-

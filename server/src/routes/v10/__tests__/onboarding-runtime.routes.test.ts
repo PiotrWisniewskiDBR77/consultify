@@ -105,25 +105,27 @@ describe('onboarding-runtime.routes', () => {
   it('injects auth scope into snapshot, resume and event requests', async () => {
     const service = createServiceStub();
 
-    const snapshotRes = await request(createApp(service)).post('/api/v10/onboarding-runtime/snapshot').send({
-      onboardingId: 'onb-1',
-      snapshot: {
-        persona: 'CFO',
-        personaConfidence: 'high',
-        overrideHistory: [],
-        connectorTarget: null,
-        connectorScopes: [],
-        uploadedFiles: [],
-        currentDraft: null,
-        approvalHistory: [],
-        trustBanner: {
-          viewedAt: null,
-          acknowledged: false,
+    const snapshotRes = await request(createApp(service))
+      .post('/api/v10/onboarding-runtime/snapshot')
+      .send({
+        onboardingId: 'onb-1',
+        snapshot: {
+          persona: 'CFO',
+          personaConfidence: 'high',
+          overrideHistory: [],
+          connectorTarget: null,
+          connectorScopes: [],
+          uploadedFiles: [],
+          currentDraft: null,
+          approvalHistory: [],
+          trustBanner: {
+            viewedAt: null,
+            acknowledged: false,
+          },
+          unresolvedValidationBlockers: [],
+          currentStep: 'persona',
         },
-        unresolvedValidationBlockers: [],
-        currentStep: 'persona',
-      },
-    });
+      });
     expect(snapshotRes.status).toBe(200);
     expect(service.saveSnapshot).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -132,9 +134,11 @@ describe('onboarding-runtime.routes', () => {
       })
     );
 
-    const resumeRes = await request(createApp(service)).post('/api/v10/onboarding-runtime/resume').send({
-      onboardingId: 'onb-1',
-    });
+    const resumeRes = await request(createApp(service))
+      .post('/api/v10/onboarding-runtime/resume')
+      .send({
+        onboardingId: 'onb-1',
+      });
     expect(resumeRes.status).toBe(200);
     expect(service.resume).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -143,23 +147,25 @@ describe('onboarding-runtime.routes', () => {
       })
     );
 
-    const eventRes = await request(createApp(service)).post('/api/v10/onboarding-runtime/events').send({
-      onboardingId: 'onb-1',
-      eventName: 'onboard.started',
-      props: {
-        persona: 'CFO',
-        sourceType: 'workspace',
-        dataClassification: 'internal',
-        trustMode: 'guarded',
-        residencyRegion: 'eu',
-        secondsSinceStart: 0,
-        artifactType: 'brief',
-        citationCount: 0,
-        validationStatus: 'pending',
-        approvalRequired: true,
-        ahaReached: false,
-      },
-    });
+    const eventRes = await request(createApp(service))
+      .post('/api/v10/onboarding-runtime/events')
+      .send({
+        onboardingId: 'onb-1',
+        eventName: 'onboard.started',
+        props: {
+          persona: 'CFO',
+          sourceType: 'workspace',
+          dataClassification: 'internal',
+          trustMode: 'guarded',
+          residencyRegion: 'eu',
+          secondsSinceStart: 0,
+          artifactType: 'brief',
+          citationCount: 0,
+          validationStatus: 'pending',
+          approvalRequired: true,
+          ahaReached: false,
+        },
+      });
     expect(eventRes.status).toBe(200);
     expect(service.recordEvent).toHaveBeenCalledWith(
       expect.objectContaining({

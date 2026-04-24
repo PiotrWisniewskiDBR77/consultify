@@ -47,7 +47,10 @@ export type LedgerQuery = {
   readonly startedAtTo?: string;
 };
 
-export function assertTenantScoped(entity: { readonly tenantId: TenantId }, tenantId: TenantId): void {
+export function assertTenantScoped(
+  entity: { readonly tenantId: TenantId },
+  tenantId: TenantId
+): void {
   if (entity.tenantId !== tenantId) {
     throw new Error(`Tenant scope mismatch: ${String(entity.tenantId)} !== ${String(tenantId)}`);
   }
@@ -82,4 +85,3 @@ export function assertRunTransition(from: RunStatus, to: RunStatus): void {
     throw new Error(`Illegal run transition: ${from} -> ${to}`);
   }
 }
-

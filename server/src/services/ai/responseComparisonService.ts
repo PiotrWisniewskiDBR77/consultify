@@ -67,7 +67,8 @@ class ResponseComparisonService {
   async compare(request: ComparisonRequest): Promise<ComparisonResult> {
     const variantPromises = request.variants.map(async (variant) => {
       const startMs = Date.now();
-      const client = this.llmClients.get(variant.model || 'default') || this.llmClients.values().next().value;
+      const client =
+        this.llmClients.get(variant.model || 'default') || this.llmClients.values().next().value;
 
       if (!client) {
         return {
@@ -80,16 +81,19 @@ class ResponseComparisonService {
         };
       }
 
-      const systemPrompt = variant.systemPromptOverride
-        || STYLE_PROMPTS[variant.style || '']
-        || 'You are a helpful AI assistant.';
+      const systemPrompt =
+        variant.systemPromptOverride ||
+        STYLE_PROMPTS[variant.style || ''] ||
+        'You are a helpful AI assistant.';
 
       try {
         const result = await client.chat.completions.create({
           model: variant.model || 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
-            ...(request.context ? [{ role: 'system' as const, content: `Context: ${request.context.slice(0, 2000)}` }] : []),
+            ...(request.context
+              ? [{ role: 'system' as const, content: `Context: ${request.context.slice(0, 2000)}` }]
+              : []),
             { role: 'user' as const, content: request.question },
           ],
           temperature: 0.5,

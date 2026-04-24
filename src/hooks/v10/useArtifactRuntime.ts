@@ -29,7 +29,6 @@ export type {
   ArtifactMutationApplyResponse,
   ArtifactMutationPlanRequest,
   ArtifactMutationPlanResponse,
-  ArtifactTemplateLibraryEntry,
   ArtifactTemplateReuseRequest,
   ArtifactTemplateReuseResponse,
 } from '@/services/api/v10/artifactRuntime';

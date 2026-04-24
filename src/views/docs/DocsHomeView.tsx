@@ -216,7 +216,10 @@ export const DocsHomeView: React.FC = () => {
                 icon: Brain,
               },
               {
-                title: t('docs.home.helpRuntime.cards.contextual.title', 'Use contextual in-app support'),
+                title: t(
+                  'docs.home.helpRuntime.cards.contextual.title',
+                  'Use contextual in-app support'
+                ),
                 description: t(
                   'docs.home.helpRuntime.cards.contextual.description',
                   'Inside the product you get screen-specific help, quick guides, FAQs, and handoff into AI with the right context.'
@@ -245,10 +248,15 @@ export const DocsHomeView: React.FC = () => {
                 <h3 className="mt-4 font-semibold group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
                   {item.title}
                 </h3>
-                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{item.description}</p>
+                <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                  {item.description}
+                </p>
                 <div className="mt-4 flex items-center text-sm font-medium text-purple-600 dark:text-purple-400">
                   {t('docs.home.helpRuntime.cards.cta', 'Open')}
-                  <ArrowRight size={14} className="ml-1 group-hover:translate-x-1 transition-transform" />
+                  <ArrowRight
+                    size={14}
+                    className="ml-1 group-hover:translate-x-1 transition-transform"
+                  />
                 </div>
               </Link>
             ))}
@@ -394,7 +402,10 @@ export const DocsHomeView: React.FC = () => {
             <div className="rounded-xl border border-slate-200 dark:border-navy-800 bg-slate-50/80 dark:bg-navy-950/40 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white">
                 <GraduationCap size={16} className="text-blue-500" />
-                {t('docs.home.educationScope.educationTitle', 'Inside standalone Education / Academy')}
+                {t(
+                  'docs.home.educationScope.educationTitle',
+                  'Inside standalone Education / Academy'
+                )}
               </div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-400">
                 <li>

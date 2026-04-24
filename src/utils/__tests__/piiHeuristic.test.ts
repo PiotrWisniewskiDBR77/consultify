@@ -76,9 +76,7 @@ describe('detectPiiCategories', () => {
 
   // ------------------------ IBAN -------------------------
   it('detects a space-grouped PL IBAN as users paste it', () => {
-    expect(
-      detectPiiCategories('account: PL27 1140 2004 0000 3002 0135 5387')
-    ).toEqual(['iban']);
+    expect(detectPiiCategories('account: PL27 1140 2004 0000 3002 0135 5387')).toEqual(['iban']);
   });
 
   it('detects a contiguous DE IBAN', () => {

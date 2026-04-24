@@ -184,10 +184,7 @@ describe('ChatV9FlagsPanel', () => {
       .fn()
       .mockResolvedValue({ ok: true as const, via: 'async' as const });
     render(
-      <ChatV9FlagsPanel
-        isCopySnapshotEnabled={() => true}
-        writeToClipboard={writeToClipboard}
-      />
+      <ChatV9FlagsPanel isCopySnapshotEnabled={() => true} writeToClipboard={writeToClipboard} />
     );
     await act(async () => {
       fireEvent.click(screen.getByTestId('chat-v9-flags-copy-snapshot'));
@@ -206,10 +203,7 @@ describe('ChatV9FlagsPanel', () => {
       .fn()
       .mockResolvedValue({ ok: true as const, via: 'async' as const });
     render(
-      <ChatV9FlagsPanel
-        isCopySnapshotEnabled={() => true}
-        writeToClipboard={writeToClipboard}
-      />
+      <ChatV9FlagsPanel isCopySnapshotEnabled={() => true} writeToClipboard={writeToClipboard} />
     );
     await act(async () => {
       fireEvent.click(screen.getByTestId('chat-v9-flags-copy-snapshot'));
@@ -226,10 +220,7 @@ describe('ChatV9FlagsPanel', () => {
       .fn()
       .mockResolvedValue({ ok: false as const, reason: 'denied' as const });
     render(
-      <ChatV9FlagsPanel
-        isCopySnapshotEnabled={() => true}
-        writeToClipboard={writeToClipboard}
-      />
+      <ChatV9FlagsPanel isCopySnapshotEnabled={() => true} writeToClipboard={writeToClipboard} />
     );
     await act(async () => {
       fireEvent.click(screen.getByTestId('chat-v9-flags-copy-snapshot'));
@@ -244,10 +235,7 @@ describe('ChatV9FlagsPanel', () => {
   it('AG1 v1.2: a thrown clipboard error falls back to the "Copy failed" state without crashing', async () => {
     const writeToClipboard = vi.fn().mockRejectedValue(new Error('sink exploded'));
     render(
-      <ChatV9FlagsPanel
-        isCopySnapshotEnabled={() => true}
-        writeToClipboard={writeToClipboard}
-      />
+      <ChatV9FlagsPanel isCopySnapshotEnabled={() => true} writeToClipboard={writeToClipboard} />
     );
     await act(async () => {
       fireEvent.click(screen.getByTestId('chat-v9-flags-copy-snapshot'));
@@ -405,9 +393,7 @@ describe('ChatV9FlagsPanel', () => {
     // No group headers for any block that exists in the registry.
     const registeredBlocks = Array.from(new Set(CHAT_V9_FLAGS.map((f) => f.block)));
     for (const block of registeredBlocks) {
-      expect(
-        screen.queryByTestId(`chat-v9-flags-group-header-${block}`)
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId(`chat-v9-flags-group-header-${block}`)).not.toBeInTheDocument();
     }
   });
 
@@ -496,9 +482,9 @@ describe('ChatV9FlagsPanel', () => {
       });
     });
     const trustTotal = CHAT_V9_FLAGS.filter((f) => f.block === 'trust').length;
-    expect(
-      screen.getByTestId('chat-v9-flags-group-count-trust').textContent
-    ).toBe(`1/${trustTotal}`);
+    expect(screen.getByTestId('chat-v9-flags-group-count-trust').textContent).toBe(
+      `1/${trustTotal}`
+    );
   });
 
   // ---------------------------------------------------------------
@@ -507,43 +493,30 @@ describe('ChatV9FlagsPanel', () => {
   it('AG1 v1.7: renders no docs breadcrumb when the flag is OFF', () => {
     render(<ChatV9FlagsPanel isDocLinksEnabled={() => false} />);
     // Pick any flag with real specDocs to make the negative assertion meaningful.
-    const sampled = CHAT_V9_FLAGS.find(
-      (f) => Array.isArray(f.specDocs) && f.specDocs.length > 0
-    );
+    const sampled = CHAT_V9_FLAGS.find((f) => Array.isArray(f.specDocs) && f.specDocs.length > 0);
     expect(sampled).toBeDefined();
     if (!sampled) return;
-    expect(
-      screen.queryByTestId(`chat-v9-flag-docs-${sampled.id}`)
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId(`chat-v9-flag-docs-empty-${sampled.id}`)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`chat-v9-flag-docs-${sampled.id}`)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(`chat-v9-flag-docs-empty-${sampled.id}`)).not.toBeInTheDocument();
   });
 
   it('AG1 v1.7: renders a docs breadcrumb with the first specDocs entry when ON', () => {
     render(<ChatV9FlagsPanel isDocLinksEnabled={() => true} />);
-    const sampled = CHAT_V9_FLAGS.find(
-      (f) => Array.isArray(f.specDocs) && f.specDocs.length > 0
-    );
+    const sampled = CHAT_V9_FLAGS.find((f) => Array.isArray(f.specDocs) && f.specDocs.length > 0);
     expect(sampled).toBeDefined();
     if (!sampled) return;
-    expect(
-      screen.getByTestId(`chat-v9-flag-docs-${sampled.id}`)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId(`chat-v9-flag-docs-primary-${sampled.id}`).textContent
-    ).toBe(sampled.specDocs[0]);
+    expect(screen.getByTestId(`chat-v9-flag-docs-${sampled.id}`)).toBeInTheDocument();
+    expect(screen.getByTestId(`chat-v9-flag-docs-primary-${sampled.id}`).textContent).toBe(
+      sampled.specDocs[0]
+    );
   });
 
   it('AG1 v1.7: surfaces the full newline-joined specDocs list as the tooltip', () => {
-    const multi = CHAT_V9_FLAGS.find(
-      (f) => Array.isArray(f.specDocs) && f.specDocs.length >= 2
-    );
+    const multi = CHAT_V9_FLAGS.find((f) => Array.isArray(f.specDocs) && f.specDocs.length >= 2);
     // If no multi-doc flag exists in the registry right now, fall back to
     // asserting the tooltip matches the single-entry path for a known flag.
     const sampled =
-      multi ??
-      CHAT_V9_FLAGS.find((f) => Array.isArray(f.specDocs) && f.specDocs.length === 1);
+      multi ?? CHAT_V9_FLAGS.find((f) => Array.isArray(f.specDocs) && f.specDocs.length === 1);
     expect(sampled).toBeDefined();
     if (!sampled) return;
     render(<ChatV9FlagsPanel isDocLinksEnabled={() => true} />);
@@ -552,9 +525,7 @@ describe('ChatV9FlagsPanel', () => {
   });
 
   it('AG1 v1.7: shows the "+N more" hint when a flag has multiple specDocs', () => {
-    const multi = CHAT_V9_FLAGS.find(
-      (f) => Array.isArray(f.specDocs) && f.specDocs.length >= 2
-    );
+    const multi = CHAT_V9_FLAGS.find((f) => Array.isArray(f.specDocs) && f.specDocs.length >= 2);
     if (!multi) {
       // Registry currently has no multi-doc flag — skip silently rather
       // than fail an unrelated migration. The helper-level test in
@@ -577,9 +548,7 @@ describe('ChatV9FlagsPanel', () => {
     render(<ChatV9FlagsPanel isDocLinksEnabled={() => true} />);
     for (const flag of CHAT_V9_FLAGS) {
       if (Array.isArray(flag.specDocs) && flag.specDocs.length > 0) {
-        expect(
-          screen.queryByTestId(`chat-v9-flag-docs-empty-${flag.id}`)
-        ).not.toBeInTheDocument();
+        expect(screen.queryByTestId(`chat-v9-flag-docs-empty-${flag.id}`)).not.toBeInTheDocument();
       }
     }
   });
@@ -602,9 +571,7 @@ describe('ChatV9FlagsPanel', () => {
     expect(pill).toBeInTheDocument();
     expect(pill.textContent).toMatch(/^1\s+override$/);
     // Blocks with zero overrides don't render a pill.
-    expect(
-      screen.queryByTestId('chat-v9-flags-group-overrides-admin')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('chat-v9-flags-group-overrides-admin')).not.toBeInTheDocument();
   });
 
   // ---------------- AG1 v1.8 — description expansion toggle --------
@@ -632,9 +599,7 @@ describe('ChatV9FlagsPanel', () => {
     const btn = screen.getByTestId(`chat-v9-flag-description-expand-${longFlag.id}`);
     expect(btn.textContent).toBe('Show more');
     expect(btn.getAttribute('aria-expanded')).toBe('false');
-    expect(btn.getAttribute('aria-controls')).toBe(
-      `chat-v9-flag-description-${longFlag.id}`
-    );
+    expect(btn.getAttribute('aria-controls')).toBe(`chat-v9-flag-description-${longFlag.id}`);
   });
 
   it('AG1 v1.8: clicking the button expands the row and swaps the label to Show less', () => {
@@ -670,9 +635,7 @@ describe('ChatV9FlagsPanel', () => {
 
   it('AG1 v1.8: expanding one flag does not expand the others', () => {
     render(<ChatV9FlagsPanel isDescriptionExpandEnabled={() => true} />);
-    const longFlags = CHAT_V9_FLAGS.filter(
-      (f) => f.description.trim().length >= 220
-    ).slice(0, 2);
+    const longFlags = CHAT_V9_FLAGS.filter((f) => f.description.trim().length >= 220).slice(0, 2);
     expect(longFlags.length).toBeGreaterThanOrEqual(2);
 
     const [first, second] = longFlags;
@@ -680,9 +643,7 @@ describe('ChatV9FlagsPanel', () => {
     fireEvent.click(btnFirst);
 
     expect(btnFirst.getAttribute('aria-expanded')).toBe('true');
-    const btnSecond = screen.getByTestId(
-      `chat-v9-flag-description-expand-${second.id}`
-    );
+    const btnSecond = screen.getByTestId(`chat-v9-flag-description-expand-${second.id}`);
     expect(btnSecond.getAttribute('aria-expanded')).toBe('false');
   });
 
@@ -695,10 +656,7 @@ describe('ChatV9FlagsPanel', () => {
   // header, plus the AG1 v1.6 > AG1 v1.9 gating rule.
   it('AG1 v1.9: sticky ON + grouping ON marks every group header data-sticky="true"', () => {
     render(
-      <ChatV9FlagsPanel
-        isGroupingEnabled={() => true}
-        isStickyGroupHeadersEnabled={() => true}
-      />
+      <ChatV9FlagsPanel isGroupingEnabled={() => true} isStickyGroupHeadersEnabled={() => true} />
     );
     const headers = screen.getAllByTestId(/^chat-v9-flags-group-header-/);
     expect(headers.length).toBeGreaterThan(0);
@@ -711,10 +669,7 @@ describe('ChatV9FlagsPanel', () => {
 
   it('AG1 v1.9: sticky OFF + grouping ON marks every group header data-sticky="false"', () => {
     render(
-      <ChatV9FlagsPanel
-        isGroupingEnabled={() => true}
-        isStickyGroupHeadersEnabled={() => false}
-      />
+      <ChatV9FlagsPanel isGroupingEnabled={() => true} isStickyGroupHeadersEnabled={() => false} />
     );
     const headers = screen.getAllByTestId(/^chat-v9-flags-group-header-/);
     expect(headers.length).toBeGreaterThan(0);
@@ -726,20 +681,14 @@ describe('ChatV9FlagsPanel', () => {
 
   it('AG1 v1.9: grouping OFF makes sticky moot — no group headers render at all', () => {
     render(
-      <ChatV9FlagsPanel
-        isGroupingEnabled={() => false}
-        isStickyGroupHeadersEnabled={() => true}
-      />
+      <ChatV9FlagsPanel isGroupingEnabled={() => false} isStickyGroupHeadersEnabled={() => true} />
     );
     expect(screen.queryAllByTestId(/^chat-v9-flags-group-header-/)).toHaveLength(0);
   });
 
   it('AG1 v1.9: sticky headers keep the opaque background class instead of the translucent one', () => {
     render(
-      <ChatV9FlagsPanel
-        isGroupingEnabled={() => true}
-        isStickyGroupHeadersEnabled={() => true}
-      />
+      <ChatV9FlagsPanel isGroupingEnabled={() => true} isStickyGroupHeadersEnabled={() => true} />
     );
     const headers = screen.getAllByTestId(/^chat-v9-flags-group-header-/);
     headers.forEach((h) => {
@@ -750,10 +699,7 @@ describe('ChatV9FlagsPanel', () => {
 
   it('AG1 v1.9: non-sticky headers keep the AG1 v1.6 translucent background', () => {
     render(
-      <ChatV9FlagsPanel
-        isGroupingEnabled={() => true}
-        isStickyGroupHeadersEnabled={() => false}
-      />
+      <ChatV9FlagsPanel isGroupingEnabled={() => true} isStickyGroupHeadersEnabled={() => false} />
     );
     const headers = screen.getAllByTestId(/^chat-v9-flags-group-header-/);
     headers.forEach((h) => {
@@ -765,20 +711,14 @@ describe('ChatV9FlagsPanel', () => {
     let enabled = true;
     const seam = () => enabled;
     const { rerender } = render(
-      <ChatV9FlagsPanel
-        isGroupingEnabled={() => true}
-        isStickyGroupHeadersEnabled={seam}
-      />
+      <ChatV9FlagsPanel isGroupingEnabled={() => true} isStickyGroupHeadersEnabled={seam} />
     );
     let firstHeader = screen.getAllByTestId(/^chat-v9-flags-group-header-/)[0];
     expect(firstHeader.getAttribute('data-sticky')).toBe('true');
 
     enabled = false;
     rerender(
-      <ChatV9FlagsPanel
-        isGroupingEnabled={() => true}
-        isStickyGroupHeadersEnabled={seam}
-      />
+      <ChatV9FlagsPanel isGroupingEnabled={() => true} isStickyGroupHeadersEnabled={seam} />
     );
     firstHeader = screen.getAllByTestId(/^chat-v9-flags-group-header-/)[0];
     expect(firstHeader.getAttribute('data-sticky')).toBe('false');
@@ -900,9 +840,7 @@ describe('ChatV9FlagsPanel', () => {
   });
 
   it('AG1 v1.10: shortcut is ignored when focus is inside an <input> (typing-safe)', () => {
-    const { container } = render(
-      <ChatV9FlagsPanel isRowShortcutsEnabled={() => true} />
-    );
+    const { container } = render(<ChatV9FlagsPanel isRowShortcutsEnabled={() => true} />);
     const row = screen.getByTestId(`chat-v9-flag-row-${firstFlag.id}`);
     // Graft an input into the row to simulate a future inline
     // edit field. The handler must see this and back off.
@@ -960,11 +898,7 @@ describe('ChatV9FlagsPanel', () => {
     );
     const pill = screen.getByTestId('chat-v9-flags-shortcut-cheat-sheet');
     const kbds = pill.querySelectorAll('kbd');
-    expect(Array.from(kbds).map((k) => k.textContent?.trim())).toEqual([
-      'o',
-      'f',
-      'd',
-    ]);
+    expect(Array.from(kbds).map((k) => k.textContent?.trim())).toEqual(['o', 'f', 'd']);
     expect(pill.textContent).toContain('ON');
     expect(pill.textContent).toContain('OFF');
     expect(pill.textContent).toContain('default');
@@ -991,9 +925,7 @@ describe('ChatV9FlagsPanel', () => {
         isShortcutCheatSheetEnabled={() => false}
       />
     );
-    expect(
-      screen.queryByTestId('chat-v9-flags-shortcut-cheat-sheet')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('chat-v9-flags-shortcut-cheat-sheet')).not.toBeInTheDocument();
   });
 
   it('AG1 v1.11: pill is hidden when v1.10 is OFF (shortcut handler not live)', () => {
@@ -1003,9 +935,7 @@ describe('ChatV9FlagsPanel', () => {
         isShortcutCheatSheetEnabled={() => true}
       />
     );
-    expect(
-      screen.queryByTestId('chat-v9-flags-shortcut-cheat-sheet')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('chat-v9-flags-shortcut-cheat-sheet')).not.toBeInTheDocument();
   });
 
   it('AG1 v1.11: pill is hidden when both kill-switches are OFF', () => {
@@ -1015,9 +945,7 @@ describe('ChatV9FlagsPanel', () => {
         isShortcutCheatSheetEnabled={() => false}
       />
     );
-    expect(
-      screen.queryByTestId('chat-v9-flags-shortcut-cheat-sheet')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('chat-v9-flags-shortcut-cheat-sheet')).not.toBeInTheDocument();
   });
 
   it('AG1 v1.11: pill does not attach its own keydown handler (label-only)', () => {
@@ -1062,12 +990,8 @@ describe('ChatV9FlagsPanel', () => {
     }));
 
   it('AG1 v1.12: button is hidden when the kill-switch is OFF', () => {
-    render(
-      <ChatV9FlagsPanel isOverrideUrlCopyEnabled={() => false} />
-    );
-    expect(
-      screen.queryByTestId('chat-v9-flags-copy-override-url')
-    ).not.toBeInTheDocument();
+    render(<ChatV9FlagsPanel isOverrideUrlCopyEnabled={() => false} />);
+    expect(screen.queryByTestId('chat-v9-flags-copy-override-url')).not.toBeInTheDocument();
   });
 
   it('AG1 v1.12: button renders and is DISABLED when there are zero overrides', () => {
@@ -1080,17 +1004,15 @@ describe('ChatV9FlagsPanel', () => {
   it('AG1 v1.12: button enables when the snapshot reports any override', () => {
     vi.mocked(getChatV9FlagSnapshot).mockImplementation(overriddenSnapshot);
     render(<ChatV9FlagsPanel isOverrideUrlCopyEnabled={() => true} />);
-    expect(
-      screen.getByTestId('chat-v9-flags-copy-override-url')
-    ).not.toBeDisabled();
+    expect(screen.getByTestId('chat-v9-flags-copy-override-url')).not.toBeDisabled();
   });
 
   it('AG1 v1.12: click invokes the injected builder and writes its output to the clipboard', async () => {
     vi.mocked(getChatV9FlagSnapshot).mockImplementation(overriddenSnapshot);
-    const writeToClipboard = vi.fn().mockResolvedValue({ ok: true as const, via: 'async' as const });
-    const buildOverrideUrl = vi
+    const writeToClipboard = vi
       .fn()
-      .mockReturnValue('https://admin.test/app?ff_trustBadge=0');
+      .mockResolvedValue({ ok: true as const, via: 'async' as const });
+    const buildOverrideUrl = vi.fn().mockReturnValue('https://admin.test/app?ff_trustBadge=0');
 
     render(
       <ChatV9FlagsPanel
@@ -1106,12 +1028,10 @@ describe('ChatV9FlagsPanel', () => {
 
     expect(buildOverrideUrl).toHaveBeenCalledTimes(1);
     expect(writeToClipboard).toHaveBeenCalledTimes(1);
-    expect(writeToClipboard.mock.calls[0][0]).toBe(
-      'https://admin.test/app?ff_trustBadge=0'
+    expect(writeToClipboard.mock.calls[0][0]).toBe('https://admin.test/app?ff_trustBadge=0');
+    expect(screen.getByTestId('chat-v9-flags-copy-override-url').getAttribute('data-state')).toBe(
+      'copied'
     );
-    expect(
-      screen.getByTestId('chat-v9-flags-copy-override-url').getAttribute('data-state')
-    ).toBe('copied');
   });
 
   it('AG1 v1.12: `idle → copied → idle` transition respects the 2 s window', async () => {
@@ -1161,9 +1081,9 @@ describe('ChatV9FlagsPanel', () => {
       fireEvent.click(screen.getByTestId('chat-v9-flags-copy-override-url'));
     });
 
-    expect(
-      screen.getByTestId('chat-v9-flags-copy-override-url').getAttribute('data-state')
-    ).toBe('failed');
+    expect(screen.getByTestId('chat-v9-flags-copy-override-url').getAttribute('data-state')).toBe(
+      'failed'
+    );
   });
 
   it('AG1 v1.12: builder throw transitions to "failed" without swallowing the writer', async () => {
@@ -1184,9 +1104,9 @@ describe('ChatV9FlagsPanel', () => {
     });
 
     expect(writeToClipboard).not.toHaveBeenCalled();
-    expect(
-      screen.getByTestId('chat-v9-flags-copy-override-url').getAttribute('data-state')
-    ).toBe('failed');
+    expect(screen.getByTestId('chat-v9-flags-copy-override-url').getAttribute('data-state')).toBe(
+      'failed'
+    );
   });
 
   it('AG1 v1.12: feedback state is independent from the AG1 v1.2 snapshot copy button', async () => {
@@ -1270,10 +1190,7 @@ describe('ChatV9FlagsPanel', () => {
 
   it('AG1 v1.13: kill-switch OFF lets Escape bubble even when the filter has text', () => {
     render(
-      <ChatV9FlagsPanel
-        isFilterEnabled={() => true}
-        isFilterEscapeClearEnabled={() => false}
-      />
+      <ChatV9FlagsPanel isFilterEnabled={() => true} isFilterEscapeClearEnabled={() => false} />
     );
     const input = screen.getByTestId('chat-v9-flags-filter-input') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'trust' } });
@@ -1285,10 +1202,7 @@ describe('ChatV9FlagsPanel', () => {
 
   it('AG1 v1.13: kill-switch ON advertises `aria-keyshortcuts="Escape"`', () => {
     render(
-      <ChatV9FlagsPanel
-        isFilterEnabled={() => true}
-        isFilterEscapeClearEnabled={() => true}
-      />
+      <ChatV9FlagsPanel isFilterEnabled={() => true} isFilterEscapeClearEnabled={() => true} />
     );
     const input = screen.getByTestId('chat-v9-flags-filter-input');
     expect(input.getAttribute('aria-keyshortcuts')).toBe('Escape');
@@ -1297,10 +1211,7 @@ describe('ChatV9FlagsPanel', () => {
 
   it('AG1 v1.13: kill-switch OFF removes `aria-keyshortcuts` and marks the input `data-escape-clear="false"`', () => {
     render(
-      <ChatV9FlagsPanel
-        isFilterEnabled={() => true}
-        isFilterEscapeClearEnabled={() => false}
-      />
+      <ChatV9FlagsPanel isFilterEnabled={() => true} isFilterEscapeClearEnabled={() => false} />
     );
     const input = screen.getByTestId('chat-v9-flags-filter-input');
     expect(input.hasAttribute('aria-keyshortcuts')).toBe(false);

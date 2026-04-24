@@ -55,11 +55,7 @@ export default function PublicViewPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-navy-950 p-4 md:p-8">
       <div className="mx-auto max-w-7xl">
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-navy-700 dark:bg-navy-900 overflow-hidden">
-          <GridView
-            rows={data.rows}
-            columns={data.columns}
-            locked={true}
-          />
+          <GridView rows={data.rows} columns={data.columns} locked={true} />
         </div>
         <p className="mt-4 text-center text-xs text-slate-400 dark:text-slate-500">
           Shared view — read only

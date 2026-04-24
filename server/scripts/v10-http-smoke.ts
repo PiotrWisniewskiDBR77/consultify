@@ -232,6 +232,19 @@ function expectArtifactPreflight(body: unknown): string | null {
   return null;
 }
 
+function expectDataKeys(keys: readonly string[]) {
+  return (body: unknown): string | null => {
+    const data = asRecord(asRecord(body)?.data);
+    if (!data) return 'Missing data payload';
+    for (const key of keys) {
+      if (!(key in data)) {
+        return `Missing data.${key}`;
+      }
+    }
+    return null;
+  };
+}
+
 function createArtifactPreflightBody() {
   const now = new Date().toISOString();
   const artifactId = 'artifact_demo_001';
@@ -298,6 +311,59 @@ function createArtifactPreflightBody() {
   };
 }
 
+function createArtifactApprovalEvaluateBody() {
+  return {
+    context: { contentTags: ['legal'] },
+    routingTable: {
+      tenantId: 'tenant_demo',
+      rules: [{ id: 'legal-review', priority: 1, match: { kind: 'content_tag', value: 'legal' }, requires: 'legal' }],
+      defaultRoute: 'admin',
+    },
+  };
+}
+
+function createAgentSchedulePreviewBody() {
+  return {
+    displayName: 'V10 smoke schedule',
+    description: 'Smoke preview for V10 schedule runtime.',
+    agentDefinitionRef: 'reasoning.research.preview',
+    cronOrInterval: '0 */6 * * *',
+    overlapPolicy: 'skip',
+    retentionDays: 14,
+    approvalMode: 'inline',
+  };
+}
+
+function createResearchPlanBody() {
+  return {
+    query: 'Assess procurement workflow automation opportunities for a mid-market manufacturer.',
+    depth: 'standard',
+    maxSources: 8,
+  };
+}
+
+function createOutcomePreviewBody() {
+  return {
+    analysisSummary: 'Workflow automation can reduce manual review latency in finance and operations.',
+    businessGoal: 'Reduce cycle time',
+    metrics: [
+      {
+        id: 'kpi-cycle-time',
+        label: 'Cycle time',
+        domain: 'time',
+        unit: 'hours',
+        baselineValue: 10,
+        targetValue: 6,
+        observedValue: 8,
+      },
+    ],
+    evidence: {
+      analysisId: 'analysis-smoke-1',
+      artifactId: 'artifact-smoke-1',
+    },
+  };
+}
+
 const checks: SmokeCheck[] = [
   {
     name: 'Artifact Pipeline preflight',
@@ -305,6 +371,13 @@ const checks: SmokeCheck[] = [
     path: '/api/v10/artifact-pipeline/preflight',
     body: createArtifactPreflightBody(),
     validate: expectArtifactPreflight,
+  },
+  {
+    name: 'Artifact Runtime approvals evaluate',
+    method: 'POST',
+    path: '/api/v10/artifact-runtime/approvals/evaluate',
+    body: createArtifactApprovalEvaluateBody(),
+    validate: expectDataKeys(['requiredReviewer', 'matchedRuleIds', 'invariants']),
   },
   {
     name: 'Agent schedules list',
@@ -319,6 +392,13 @@ const checks: SmokeCheck[] = [
     validate: expectContract('agent_schedules_v1'),
   },
   {
+    name: 'Agent schedule preview',
+    method: 'POST',
+    path: '/api/v10/agent-schedules/preview',
+    body: createAgentSchedulePreviewBody(),
+    validate: expectDataKeys(['expressionKind', 'projectedRunTimes']),
+  },
+  {
     name: 'Onboarding KPI summary',
     method: 'GET',
     path: '/api/v10/onboarding-runtime/kpis/summary',
@@ -329,6 +409,13 @@ const checks: SmokeCheck[] = [
     method: 'GET',
     path: '/api/v10/reasoning-runtime/contract',
     validate: expectContract('reasoning_runtime_wave_a_v1'),
+  },
+  {
+    name: 'Reasoning fast chat',
+    method: 'POST',
+    path: '/api/v10/reasoning-runtime/fast-chat',
+    body: { prompt: 'Summarize the top operational risk in one sentence.' },
+    validate: expectDataKeys(['runId', 'answer']),
   },
   {
     name: 'Learning loop coverage',
@@ -343,10 +430,24 @@ const checks: SmokeCheck[] = [
     validate: expectContract('learning_runtime_wave_a_v1'),
   },
   {
+    name: 'Learning runtime ingest',
+    method: 'POST',
+    path: '/api/v10/learning-runtime/ingest',
+    body: { signal: 'smoke:user_feedback: thumbs_up' },
+    validate: expectDataKeys(['accepted', 'now']),
+  },
+  {
     name: 'Research runtime contract',
     method: 'GET',
     path: '/api/v10/research-runtime/contract',
     validate: expectContract('research_runtime_wave_a_v1'),
+  },
+  {
+    name: 'Research mission plan',
+    method: 'POST',
+    path: '/api/v10/research-runtime/missions/plan',
+    body: createResearchPlanBody(),
+    validate: expectDataKeys(['missionId', 'plan', 'missionSummary']),
   },
   {
     name: 'Connectors catalog',
@@ -365,6 +466,13 @@ const checks: SmokeCheck[] = [
     method: 'GET',
     path: '/api/v10/outcome-runtime/contract',
     validate: expectContract('outcome_runtime_wave_b_v1'),
+  },
+  {
+    name: 'Outcome acceptance preview',
+    method: 'POST',
+    path: '/api/v10/outcome-runtime/acceptance/preview',
+    body: createOutcomePreviewBody(),
+    validate: expectDataKeys(['previewId', 'acceptanceContract', 'metrics']),
   },
 ];
 

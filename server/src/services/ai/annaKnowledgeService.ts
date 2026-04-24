@@ -180,7 +180,9 @@ function detectRequestedProducts(query: string): {
 }
 
 function prioritizeProducts(explicitProducts: string[], baseProducts: string[]): string[] {
-  return explicitProducts.length > 0 ? uniq([...explicitProducts, ...baseProducts]) : uniq(baseProducts);
+  return explicitProducts.length > 0
+    ? uniq([...explicitProducts, ...baseProducts])
+    : uniq(baseProducts);
 }
 
 async function loadIndexedProductDocs(): Promise<AnnaIndexedDoc[]> {
@@ -359,7 +361,8 @@ export async function buildAnnaKnowledgeContext(opts: {
     if (!decision.allowed) {
       return {
         ...EMPTY_RESULT,
-        contextText: decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
+        contextText:
+          decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
       };
     }
   } catch (gatewayError: unknown) {
@@ -432,7 +435,11 @@ export async function buildAnnaKnowledgeContext(opts: {
                   1
                 );
                 if (preferred.length > 0) return preferred;
-                return await searchScopedKnowledge(`${hint} ${originalQuery}`, scoped.fallbackDocs, 1);
+                return await searchScopedKnowledge(
+                  `${hint} ${originalQuery}`,
+                  scoped.fallbackDocs,
+                  1
+                );
               })
           )
         ).flat()
@@ -555,7 +562,8 @@ export async function buildAnnaVoiceBootstrap(
     if (!decision.allowed) {
       return {
         ...EMPTY_RESULT,
-        contextText: decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
+        contextText:
+          decision.refusal?.userMessage || 'This query was refused by the policy gateway.',
       };
     }
   } catch (gatewayError: unknown) {

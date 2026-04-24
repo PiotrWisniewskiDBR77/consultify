@@ -64,4 +64,3 @@ export function bucketItemsCount(count: unknown): '0' | '1_5' | '6_20' | '21_plu
   if (n <= 20) return '6_20';
   return '21_plus';
 }
-

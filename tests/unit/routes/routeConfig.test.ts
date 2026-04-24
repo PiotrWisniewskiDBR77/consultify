@@ -29,7 +29,8 @@ describe('routeConfig helpers', () => {
 
   it('keeps the dedicated V10 runtime route under the AI chat app branch', () => {
     expect(ROUTES.AI_CHAT_V10_RUNTIME).toBe('/chat/v10-runtime');
-    expect(getAppViewFromPath('/chat/v10-runtime')).toBe(AppView.AI_CHAT);
+    expect(getAppViewFromPath('/chat/v10-runtime')).toBe(AppView.AI_CHAT_V10_RUNTIME);
+    expect(getRouteFromAppView(AppView.AI_CHAT_V10_RUNTIME)).toBe('/chat/v10-runtime');
   });
 
   it('knowledge routes resolve to the docs-backed knowledge base view', () => {

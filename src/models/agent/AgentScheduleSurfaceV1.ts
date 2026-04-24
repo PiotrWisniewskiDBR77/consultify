@@ -169,3 +169,7 @@ export function formatRunStatusLabel(status: AgentRunStatus | null | undefined):
       return 'No runs yet';
   }
 }
+
+export function isLongRunningRunStatus(status: AgentRunStatus | null | undefined): boolean {
+  return status === 'pending' || status === 'running' || status === 'paused';
+}

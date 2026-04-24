@@ -5,8 +5,10 @@ import { ChatV10RuntimesPanel } from '@/components/Admin/ChatV10RuntimesPanel';
 import { getChatV10RolloutSnapshot, getChatV10RolloutSummary } from '@/utils/chatV10Rollout';
 
 function readinessBadge(readiness: 'ready' | 'partial' | 'flagged_off') {
-  if (readiness === 'ready') return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300';
-  if (readiness === 'partial') return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300';
+  if (readiness === 'ready')
+    return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300';
+  if (readiness === 'partial')
+    return 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300';
   return 'bg-slate-200 text-slate-700 dark:bg-white/10 dark:text-slate-300';
 }
 
@@ -19,10 +21,12 @@ export function V10RuntimeWorkspaceView() {
     <div className="space-y-6 p-4 lg:p-6" data-testid="v10-runtime-entrypoint">
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="max-w-4xl">
-          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">Chat V10 Runtime Workspace</h1>
+          <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+            Chat V10 Runtime Workspace
+          </h1>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-            Aplikacyjny entrypoint do sprawdzania V10 jako calego systemu: host 8 blokow, readiness, flagi i
-            smoke surface pod testy integracyjne.
+            Aplikacyjny entrypoint do sprawdzania V10 jako calego systemu: host 8 blokow, readiness,
+            flagi i smoke surface pod testy integracyjne.
           </p>
         </div>
 
@@ -35,15 +39,17 @@ export function V10RuntimeWorkspaceView() {
             <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
               Route
             </div>
-            <div className="mt-1 font-mono text-sm text-slate-800 dark:text-slate-100">{location.pathname}</div>
+            <div className="mt-1 font-mono text-sm text-slate-800 dark:text-slate-100">
+              {location.pathname}
+            </div>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
             <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">
               Block rollout
             </div>
             <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">
-              {rolloutSummary.totalBlocks} total · {rolloutSummary.readyBlocks} ready · {rolloutSummary.partialBlocks}{' '}
-              partial
+              {rolloutSummary.totalBlocks} total · {rolloutSummary.readyBlocks} ready ·{' '}
+              {rolloutSummary.partialBlocks} partial
             </div>
           </div>
           <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
@@ -78,7 +84,9 @@ export function V10RuntimeWorkspaceView() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="font-medium text-slate-900 dark:text-white">{block.title}</div>
-                    <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">{block.description}</div>
+                    <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                      {block.description}
+                    </div>
                   </div>
                   <span
                     className={`rounded-full px-2 py-1 text-[11px] font-medium uppercase tracking-wide ${readinessBadge(

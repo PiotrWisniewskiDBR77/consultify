@@ -25,7 +25,8 @@ export const AIOsProductMapSection: React.FC = () => {
         },
         {
           badge: 'Agents',
-          title: 'Agents plan, propose, and coordinate work instead of acting like isolated tricks.',
+          title:
+            'Agents plan, propose, and coordinate work instead of acting like isolated tricks.',
           description:
             'The AI work model follows a governed lifecycle from ask to plan to approve to apply to audit.',
         },
@@ -79,8 +80,12 @@ export const AIOsProductMapSection: React.FC = () => {
                 <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary-600 dark:text-primary-300">
                   {item.badge}
                 </div>
-                <h3 className="text-lg font-black text-slate-900 dark:text-white leading-snug">{item.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-white/58">{item.description}</p>
+                <h3 className="text-lg font-black text-slate-900 dark:text-white leading-snug">
+                  {item.title}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-500 dark:text-white/58">
+                  {item.description}
+                </p>
               </div>
             );
           })}

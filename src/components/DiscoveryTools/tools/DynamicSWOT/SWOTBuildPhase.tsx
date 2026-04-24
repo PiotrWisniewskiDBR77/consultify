@@ -250,11 +250,7 @@ function QuadrantCard({
   );
 }
 
-export function SWOTBuildPhase({
-  session,
-  isPolish,
-  isGeneratingAI = false,
-}: BuildPhaseProps) {
+export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: BuildPhaseProps) {
   const { addSWOTItem, removeSWOTItem, updateSWOTItem } = useToolStore();
   const swotData = session.inputData as SWOTData;
   const signals = swotData.signals || [];

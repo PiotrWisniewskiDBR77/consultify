@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -78,6 +78,8 @@ export function ArtifactExportPlannerPanel({
     defaultWatermarkText ?? tenantWatermarkPolicy.defaultText ?? ''
   );
   const [tags, setTags] = useState(defaultTags.join(', '));
+  const supportedFormats = lastPlan?.supportedFormats ?? [];
+  const exportWarnings = lastPlan?.warnings ?? [];
 
   const handlePlan = () =>
     onPlan({
@@ -214,14 +216,14 @@ export function ArtifactExportPlannerPanel({
       {lastPlan ? (
         <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
           <div className="flex flex-wrap gap-2">
-            <Badge>{lastPlan.manifest.format}</Badge>
-            <Badge variant="outline">{lastPlan.manifest.destination}</Badge>
-            <Badge variant="outline">{lastPlan.provenanceFooter.target}</Badge>
+            <Badge>{lastPlan.manifest.format ?? format}</Badge>
+            <Badge variant="outline">{lastPlan.manifest.destination ?? destination}</Badge>
+            <Badge variant="outline">{lastPlan.provenanceFooter.target ?? footerTarget}</Badge>
           </div>
-          <p>{lastPlan.supportedFormats.join(', ')}</p>
-          {lastPlan.warnings.length > 0 ? (
+          <p>{supportedFormats.join(', ')}</p>
+          {exportWarnings.length > 0 ? (
             <ul className="list-disc space-y-1 pl-5">
-              {lastPlan.warnings.map((warning) => (
+              {exportWarnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
             </ul>

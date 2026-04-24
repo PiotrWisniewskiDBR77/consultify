@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -52,6 +52,8 @@ export function ArtifactCommentPlannerPanel({
   const [kind, setKind] = useState<AnnotationKind>(defaultKind);
   const [body, setBody] = useState(defaultBody);
   const [mentions, setMentions] = useState(defaultMentions.join(', '));
+  const plannedWarnings = lastPlan?.warnings ?? [];
+  const mentionNotifications = lastPlan?.mentionNotifications ?? [];
 
   const handlePlan = () =>
     onPlan({
@@ -130,16 +132,16 @@ export function ArtifactCommentPlannerPanel({
       {lastPlan ? (
         <div className="space-y-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
           <div className="flex flex-wrap gap-2">
-            <Badge>{lastPlan.comment.kind}</Badge>
-            <Badge variant="outline">{lastPlan.comment.state}</Badge>
+            <Badge>{lastPlan.comment?.kind ?? 'comment'}</Badge>
+            <Badge variant="outline">{lastPlan.comment?.state ?? 'planned'}</Badge>
             {lastPlan.anchorOutcome ? (
               <Badge variant="outline">{lastPlan.anchorOutcome}</Badge>
             ) : null}
           </div>
-          <p>{lastPlan.mentionNotifications.length} mention notification intents created.</p>
-          {lastPlan.warnings.length > 0 ? (
+          <p>{mentionNotifications.length} mention notification intents created.</p>
+          {plannedWarnings.length > 0 ? (
             <ul className="list-disc space-y-1 pl-5">
-              {lastPlan.warnings.map((warning) => (
+              {plannedWarnings.map((warning) => (
                 <li key={warning}>{warning}</li>
               ))}
             </ul>

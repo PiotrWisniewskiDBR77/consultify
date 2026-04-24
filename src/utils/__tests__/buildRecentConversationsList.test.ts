@@ -51,9 +51,7 @@ describe('buildRecentConversationsList', () => {
   });
 
   it('returns [] when maxItems is 0 or negative', () => {
-    const conversations = [
-      { id: 'a', title: 'A', lastMessageAt: '2026-04-18T10:00:00Z' },
-    ];
+    const conversations = [{ id: 'a', title: 'A', lastMessageAt: '2026-04-18T10:00:00Z' }];
     expect(
       buildRecentConversationsList({
         conversations,
@@ -225,9 +223,7 @@ describe('buildRecentConversationsList', () => {
   it('truncates titles above RECENT_CONVERSATION_TITLE_MAX and flags them', () => {
     const longTitle = 'A'.repeat(RECENT_CONVERSATION_TITLE_MAX + 10);
     const result = buildRecentConversationsList({
-      conversations: [
-        { id: 'a', title: longTitle, lastMessageAt: '2026-04-18T10:00:00Z' },
-      ],
+      conversations: [{ id: 'a', title: longTitle, lastMessageAt: '2026-04-18T10:00:00Z' }],
       activeConversationId: null,
     });
 
@@ -241,9 +237,7 @@ describe('buildRecentConversationsList', () => {
   it('does not truncate a title at exactly the cap', () => {
     const justRight = 'B'.repeat(RECENT_CONVERSATION_TITLE_MAX);
     const result = buildRecentConversationsList({
-      conversations: [
-        { id: 'a', title: justRight, lastMessageAt: '2026-04-18T10:00:00Z' },
-      ],
+      conversations: [{ id: 'a', title: justRight, lastMessageAt: '2026-04-18T10:00:00Z' }],
       activeConversationId: null,
     });
 
@@ -583,9 +577,7 @@ describe('countEligibleRecentConversations', () => {
     // Same behaviour as `buildRecentConversationsList`.
     expect(
       countEligibleRecentConversations({
-        conversations: [
-          { id: 'a', title: 'A', lastMessageAt: '2026-04-18T10:00:00Z' },
-        ],
+        conversations: [{ id: 'a', title: 'A', lastMessageAt: '2026-04-18T10:00:00Z' }],
         // @ts-expect-error - deliberate runtime misuse
         activeConversationId: 42,
       })

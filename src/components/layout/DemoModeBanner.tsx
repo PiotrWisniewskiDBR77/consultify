@@ -118,10 +118,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                         ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                         : 'bg-navy-800/50 text-slate-400 border-white/5'
                     }`}
-                    title={t(
-                      'demo.banner.aiUsageTooltip',
-                      'AI calls used today / daily limit'
-                    )}
+                    title={t('demo.banner.aiUsageTooltip', 'AI calls used today / daily limit')}
                   >
                     {/*
                       Feedback #a26d96f3: the old "AI: 25/25" label was read by
@@ -130,10 +127,8 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                       direction explicitly with a "used" suffix and keep the
                       tooltip for the full explanation.
                     */}
-                    {t('demo.banner.aiUsageLabel', 'AI')}{' '}
-                    {snapshot.usageToday.aiCalls ?? 0}/
-                    {snapshot.limits.maxAICallsPerDay ?? 10}{' '}
-                    {t('demo.banner.used', 'used')}
+                    {t('demo.banner.aiUsageLabel', 'AI')} {snapshot.usageToday.aiCalls ?? 0}/
+                    {snapshot.limits.maxAICallsPerDay ?? 10} {t('demo.banner.used', 'used')}
                   </span>
                 )}
                 {snapshot?.limits &&
@@ -145,10 +140,7 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                           ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                           : 'bg-navy-800/50 text-slate-400 border-white/5'
                       }`}
-                      title={t(
-                        'demo.banner.tokenUsageTooltip',
-                        'Tokens used today / daily limit'
-                      )}
+                      title={t('demo.banner.tokenUsageTooltip', 'Tokens used today / daily limit')}
                     >
                       {(snapshot.usageToday.tokensUsed ?? 0) / 1000}k/
                       {(snapshot.limits.maxTotalTokens ?? 10000) / 1000}k{' '}
@@ -225,7 +217,10 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                             {t('demo.banner.readOnlyTitle', 'Read-only mode')}
                           </p>
                           <p className="text-slate-400 text-xs">
-                            {t('demo.banner.readOnlyDesc', 'Changes are not saved and the sample can be explored safely')}
+                            {t(
+                              'demo.banner.readOnlyDesc',
+                              'Changes are not saved and the sample can be explored safely'
+                            )}
                           </p>
                         </div>
                       </div>
@@ -238,7 +233,10 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                             {t('demo.banner.exploreTitle', 'Understand the workflow')}
                           </p>
                           <p className="text-slate-400 text-xs">
-                            {t('demo.banner.exploreDesc', 'See how dashboards, initiatives, and AI fit together')}
+                            {t(
+                              'demo.banner.exploreDesc',
+                              'See how dashboards, initiatives, and AI fit together'
+                            )}
                           </p>
                         </div>
                       </div>
@@ -252,7 +250,10 @@ export const DemoModeBanner: React.FC<DemoModeBannerProps> = ({ className = '' }
                           </p>
                           <p className="text-slate-400 text-xs">
                             {demoHints?.[0] ||
-                              t('demo.banner.defaultHint', 'Open one initiative and trace the linked tasks, decisions, and AI context')}
+                              t(
+                                'demo.banner.defaultHint',
+                                'Open one initiative and trace the linked tasks, decisions, and AI context'
+                              )}
                           </p>
                         </div>
                       </div>

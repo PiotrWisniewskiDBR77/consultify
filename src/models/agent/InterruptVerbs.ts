@@ -36,11 +36,12 @@ export function applyInterrupt(current: RunState, verb: InterruptVerb): NextStat
       if (current !== 'paused') return { reason: 'illegal', nextState: current };
       return { reason: 'ok', nextState: 'running' };
     case 'cancel':
-      if (current === 'completed' || current === 'failed') return { reason: 'illegal', nextState: current };
+      if (current === 'completed' || current === 'failed')
+        return { reason: 'illegal', nextState: current };
       return { reason: 'ok', nextState: 'cancelled' };
     case 'abort':
-      if (current === 'completed' || current === 'failed') return { reason: 'illegal', nextState: current };
+      if (current === 'completed' || current === 'failed')
+        return { reason: 'illegal', nextState: current };
       return { reason: 'ok', nextState: 'aborted' };
   }
 }
-

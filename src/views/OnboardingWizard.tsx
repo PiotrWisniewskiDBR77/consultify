@@ -14,34 +14,34 @@ import { toast } from 'react-hot-toast';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
-import { buildDefaultOnboardTelemetryProps } from '@/models/onboarding/OnboardTelemetry';
 import { PersonaPicker } from '@/components/Onboarding/PersonaPicker';
+import { buildDefaultOnboardTelemetryProps } from '@/models/onboarding/OnboardTelemetry';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import { OnboardingRuntimeApi } from '@/services/api/v10/onboardingRuntime';
+import {
+  type OnboardingPersona,
+  type PersonaConfidence,
+  resolvePersonaFromProfile,
+} from '@/services/onboarding/personaInference';
 import {
   personaToRouteSlug,
   resolveFirstOnboardingSurface,
   resolvePersonaJourney,
   routeSlugToPersona,
 } from '@/services/onboarding/personaJourneys';
-import {
-  resolvePersonaFromProfile,
-  type OnboardingPersona,
-  type PersonaConfidence,
-} from '@/services/onboarding/personaInference';
 import { isOnboardPersonaCaptureEnabled } from '@/utils/v10/onboardPersonaCaptureFlag';
 import { isOnboardPersonaInferenceOverrideEnabled } from '@/utils/v10/onboardPersonaInferenceOverrideFlag';
 import { isOnboardPersonaJourneyEnabled } from '@/utils/v10/onboardPersonaJourneyFlag';
 import { emitOnboardTelemetryEvent } from '@/utils/v10/v10RuntimeTelemetry';
-import { ROUTES } from '@/routes/routeConfig';
 
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 import {
   buildOnboardingWizardSnapshot,
   normalizeOnboardingPersona,
-  restoreOnboardingWizardState,
   type OnboardingWizardContext,
+  restoreOnboardingWizardState,
 } from './onboardingWizardRuntime';
 
 const ONBOARDING_RUNTIME_STORAGE_KEY = 'consultify.onboardingWizard.runtime';
@@ -126,7 +126,9 @@ export const OnboardingWizard = () => {
   const [selectedPersona, setSelectedPersona] = useState<OnboardingPersona | null>(
     personaCaptureEnabled ? initialInference.persona : null
   );
-  const [personaConfidence, setPersonaConfidence] = useState<PersonaConfidence>(initialInference.confidence);
+  const [personaConfidence, setPersonaConfidence] = useState<PersonaConfidence>(
+    initialInference.confidence
+  );
   const [personaConfirmed, setPersonaConfirmed] = useState<boolean>(!personaCaptureEnabled);
   const [adminConsoleAcknowledged, setAdminConsoleAcknowledged] = useState(false);
 
@@ -137,7 +139,9 @@ export const OnboardingWizard = () => {
   const resolvePersona = useCallback(
     () =>
       selectedPersona ||
-      (normalizeOnboardingPersona(context.role || String(currentUser?.role || '')) as OnboardingPersona),
+      (normalizeOnboardingPersona(
+        context.role || String(currentUser?.role || '')
+      ) as OnboardingPersona),
     [context.role, currentUser?.role, selectedPersona]
   );
   const currentJourney = resolvePersonaJourney(resolvePersona());
@@ -182,33 +186,37 @@ export const OnboardingWizard = () => {
     [currentJourney.primaryArtifactType, resolvePersona, runtimeSession]
   );
 
-  const ensureRuntimeSession = useCallback(async (
-    personaOverride?: { persona: OnboardingPersona; confidence: PersonaConfidence }
-  ): Promise<RuntimeSessionState | null> => {
-    if (runtimeSession && !personaOverride) return runtimeSession;
-    try {
-      const response = await OnboardingRuntimeApi.capturePersona({
-        onboardingId: runtimeSession?.onboardingId,
-        persona: personaOverride?.persona || resolvePersona(),
-        personaConfidence: personaOverride?.confidence || personaConfidence || 'high',
-        sourceType: 'manual_context',
-        trustMode: 'guardrailed',
-        residencyRegion: 'unknown',
-        approvalRequired: true,
-      });
-      const nextSession: RuntimeSessionState = {
-        onboardingId: response.onboardingId,
-        resumeToken: response.resumeToken,
-        resumeExpiresAt: response.resumeExpiresAt || null,
-        startedAt: response.now,
-      };
-      setRuntimeSession(nextSession);
-      writeStoredRuntimeSession(nextSession);
-      return nextSession;
-    } catch {
-      return null;
-    }
-  }, [personaConfidence, resolvePersona, runtimeSession]);
+  const ensureRuntimeSession = useCallback(
+    async (personaOverride?: {
+      persona: OnboardingPersona;
+      confidence: PersonaConfidence;
+    }): Promise<RuntimeSessionState | null> => {
+      if (runtimeSession && !personaOverride) return runtimeSession;
+      try {
+        const response = await OnboardingRuntimeApi.capturePersona({
+          onboardingId: runtimeSession?.onboardingId,
+          persona: personaOverride?.persona || resolvePersona(),
+          personaConfidence: personaOverride?.confidence || personaConfidence || 'high',
+          sourceType: 'manual_context',
+          trustMode: 'guardrailed',
+          residencyRegion: 'unknown',
+          approvalRequired: true,
+        });
+        const nextSession: RuntimeSessionState = {
+          onboardingId: response.onboardingId,
+          resumeToken: response.resumeToken,
+          resumeExpiresAt: response.resumeExpiresAt || null,
+          startedAt: response.now,
+        };
+        setRuntimeSession(nextSession);
+        writeStoredRuntimeSession(nextSession);
+        return nextSession;
+      } catch {
+        return null;
+      }
+    },
+    [personaConfidence, resolvePersona, runtimeSession]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -259,7 +267,12 @@ export const OnboardingWizard = () => {
     return () => {
       cancelled = true;
     };
-  }, [currentUser?.role, initialInference.confidence, initialInference.persona, personaCaptureEnabled]);
+  }, [
+    currentUser?.role,
+    initialInference.confidence,
+    initialInference.persona,
+    personaCaptureEnabled,
+  ]);
 
   useEffect(() => {
     if (!personaJourneyEnabled || !routePersona) return;
@@ -641,7 +654,9 @@ export const OnboardingWizard = () => {
             confidence={personaConfidence}
             onSelect={(persona) => {
               setSelectedPersona(persona);
-              setPersonaConfidence(persona === initialInference.persona ? initialInference.confidence : 'high');
+              setPersonaConfidence(
+                persona === initialInference.persona ? initialInference.confidence : 'high'
+              );
             }}
             onConfirm={() => {
               void handlePersonaConfirm();
@@ -870,10 +885,13 @@ export const OnboardingWizard = () => {
           </div>
         </div>
         <h2 className="text-2xl font-bold text-navy-900 dark:text-white mb-2">
-          {personaJourneyEnabled ? `Preparing your ${currentJourney.primaryArtifactType}...` : 'Analyzing your context...'}
+          {personaJourneyEnabled
+            ? `Preparing your ${currentJourney.primaryArtifactType}...`
+            : 'Analyzing your context...'}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 animate-pulse">
-          Designing a high-impact intervention plan for {resolvePersona()} in {context.industry || 'your context'}...
+          Designing a high-impact intervention plan for {resolvePersona()} in{' '}
+          {context.industry || 'your context'}...
         </p>
       </div>
     );
@@ -1008,7 +1026,9 @@ export const OnboardingWizard = () => {
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-purple-500/30 flex items-center justify-center gap-2 transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100"
                 >
                   {loading ? <Loader2 className="animate-spin" /> : <ArrowRight />}
-                  {isConsultant ? 'Read-Only Mode' : `Accept & start ${currentJourney.reviewGateLanguage.toLowerCase()}`}
+                  {isConsultant
+                    ? 'Read-Only Mode'
+                    : `Accept & start ${currentJourney.reviewGateLanguage.toLowerCase()}`}
                 </button>
                 <p className="text-center text-xs text-slate-400 dark:text-slate-500 mt-3">
                   {isConsultant

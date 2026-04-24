@@ -59,7 +59,9 @@ export const AdminOrganizationOperationsPanel: React.FC = () => {
             )}
           >
             <div className="text-sm font-semibold text-slate-900 dark:text-white">{item.label}</div>
-            <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{item.description}</div>
+            <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              {item.description}
+            </div>
           </button>
         ))}
       </div>

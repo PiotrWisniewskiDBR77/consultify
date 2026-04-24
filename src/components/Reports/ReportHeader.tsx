@@ -216,7 +216,10 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
                 {/* Unsaved indicator */}
                 {hasUnsavedChanges && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-amber-900 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-full">
-                    <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" aria-hidden="true" />
+                    <span
+                      className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"
+                      aria-hidden="true"
+                    />
                     {t('common.unsaved', 'Unsaved')}
                   </span>
                 )}

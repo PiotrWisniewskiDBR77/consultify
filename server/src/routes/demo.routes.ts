@@ -18,20 +18,20 @@ import {
 } from '../middleware/demoGuard.middleware.js';
 import { authRateLimiter } from '../middleware/rateLimiting.middleware.js';
 import {
-  DEMO_TRIAL_EVENT_TYPES,
-  recordDemoTrialEvent,
-} from '../services/demoTrialTelemetryService.js';
-import {
   getAtelierToysDemoScenarios,
   getAtelierToysToolCoverage,
 } from '../services/demo/atelierToysDemoTemplate.js';
+import { normalizeDemoLocale } from '../services/demo/demoLocale.js';
 import {
   cleanupExpiredDemoSessions,
   endDemoSession,
   getActiveDemoSession,
   resolveOrCreateDemoSession,
 } from '../services/demo/demoSessionService.js';
-import { normalizeDemoLocale } from '../services/demo/demoLocale.js';
+import {
+  DEMO_TRIAL_EVENT_TYPES,
+  recordDemoTrialEvent,
+} from '../services/demoTrialTelemetryService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
 

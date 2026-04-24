@@ -1,4 +1,4 @@
-import { Router, type Response } from 'express';
+import { type Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from 'zod';
 
@@ -160,7 +160,9 @@ router.post(
   asyncHandler(async (req, res: Response) => {
     const parsed = PublicContactSchema.safeParse(req.body);
     if (!parsed.success) {
-      return res.status(400).json({ error: 'Invalid contact request', details: parsed.error.flatten() });
+      return res
+        .status(400)
+        .json({ error: 'Invalid contact request', details: parsed.error.flatten() });
     }
 
     await ensureSchema();

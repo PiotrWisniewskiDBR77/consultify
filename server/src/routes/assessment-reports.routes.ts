@@ -1755,7 +1755,9 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
     // Best-effort cascade
     await run(`DELETE FROM assessment_report_section_history WHERE report_id = ?`, [
       reportId,
-    ]).catch((err: unknown) => logger.warn('[AssessmentReports] cascade delete section_history failed', err));
+    ]).catch((err: unknown) =>
+      logger.warn('[AssessmentReports] cascade delete section_history failed', err)
+    );
     await run(`DELETE FROM assessment_report_sections WHERE report_id = ?`, [reportId]).catch(
       (err: unknown) => logger.warn('[AssessmentReports] cascade delete sections failed', err)
     );
@@ -1770,7 +1772,9 @@ router.delete('/:reportId', async (req: AuthRequest, res: Response) => {
       await run(`DELETE FROM report_builder_reports WHERE id = ? AND organization_id = ?`, [
         builderReportId,
         organizationId,
-      ]).catch((err: unknown) => logger.warn('[AssessmentReports] cascade delete builder report failed', err));
+      ]).catch((err: unknown) =>
+        logger.warn('[AssessmentReports] cascade delete builder report failed', err)
+      );
     }
 
     return res.json({ success: true });

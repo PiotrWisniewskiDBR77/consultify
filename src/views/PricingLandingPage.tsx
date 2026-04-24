@@ -1,5 +1,16 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, Building2, CheckCircle2, Coins, FileText, Layers3, MessageSquare, Scale, ShieldCheck, Sparkles } from 'lucide-react';
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  Coins,
+  FileText,
+  Layers3,
+  MessageSquare,
+  Scale,
+  ShieldCheck,
+  Sparkles,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -34,15 +45,18 @@ const BUDGET_LAYER_KEYS = [
 const LICENSED_TOOL_KEYS = [
   {
     key: 'pricing.licensedTools.items.0',
-    fallback: 'Selected assessments and frameworks such as SIR or DRD can require separate licensing.',
+    fallback:
+      'Selected assessments and frameworks such as SIR or DRD can require separate licensing.',
   },
   {
     key: 'pricing.licensedTools.items.1',
-    fallback: 'Licensed tools are sold as add-ons or handled as pricing on request, not mixed into the base seat price.',
+    fallback:
+      'Licensed tools are sold as add-ons or handled as pricing on request, not mixed into the base seat price.',
   },
   {
     key: 'pricing.licensedTools.items.2',
-    fallback: 'This keeps the core platform readable while preserving room for specialized enterprise configurations.',
+    fallback:
+      'This keeps the core platform readable while preserving room for specialized enterprise configurations.',
   },
 ] as const;
 
@@ -170,7 +184,10 @@ export const PricingLandingPage: React.FC = () => {
         >
           {t('pricing.heading', 'Commercial model for real rollout.')}
           <span className="block bg-gradient-to-r from-violet-300 to-cyan-300 bg-clip-text text-transparent">
-            {t('pricing.headingAccent', 'Seats, shared AI budget, licensed tools, and enterprise control.')}
+            {t(
+              'pricing.headingAccent',
+              'Seats, shared AI budget, licensed tools, and enterprise control.'
+            )}
           </span>
         </motion.h1>
 
@@ -203,7 +220,9 @@ export const PricingLandingPage: React.FC = () => {
                   <p className="text-sm font-black uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300">
                     {pack.name}
                   </p>
-                  <p className="mt-3 text-4xl font-black text-slate-900 dark:text-white">{pack.price}</p>
+                  <p className="mt-3 text-4xl font-black text-slate-900 dark:text-white">
+                    {pack.price}
+                  </p>
                   <p className="mt-1 text-sm text-slate-500 dark:text-white/45">{pack.subtitle}</p>
                 </div>
                 {pack.featured ? (
@@ -217,12 +236,17 @@ export const PricingLandingPage: React.FC = () => {
                 ) : null}
               </div>
 
-              <p className="mt-6 min-h-[72px] text-sm leading-6 text-slate-600 dark:text-white/65">{pack.description}</p>
+              <p className="mt-6 min-h-[72px] text-sm leading-6 text-slate-600 dark:text-white/65">
+                {pack.description}
+              </p>
 
               <div className="mt-6 space-y-3">
                 {pack.features.map((bullet) => (
                   <div key={bullet} className="flex items-start gap-3">
-                    <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-violet-500 dark:text-violet-300" />
+                    <CheckCircle2
+                      size={16}
+                      className="mt-0.5 shrink-0 text-violet-500 dark:text-violet-300"
+                    />
                     <span className="text-sm text-slate-600 dark:text-white/68">{bullet}</span>
                   </div>
                 ))}
@@ -267,9 +291,16 @@ export const PricingLandingPage: React.FC = () => {
 
             <div className="mt-8 space-y-5">
               {BUDGET_LAYER_KEYS.map((layer) => (
-                <div key={layer.titleKey} className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-navy-700 dark:bg-navy-950/50">
-                  <p className="text-sm font-black text-slate-900 dark:text-white">{t(layer.titleKey, layer.titleFallback)}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{t(layer.bodyKey, layer.bodyFallback)}</p>
+                <div
+                  key={layer.titleKey}
+                  className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-navy-700 dark:bg-navy-950/50"
+                >
+                  <p className="text-sm font-black text-slate-900 dark:text-white">
+                    {t(layer.titleKey, layer.titleFallback)}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                    {t(layer.bodyKey, layer.bodyFallback)}
+                  </p>
                 </div>
               ))}
             </div>
@@ -292,13 +323,27 @@ export const PricingLandingPage: React.FC = () => {
 
             <div className="mt-8 space-y-4">
               {[
-                t('pricing.overLimit.items.0', 'After the AI budget is exhausted, users keep access to existing data, workspaces, and prior outputs.'),
-                t('pricing.overLimit.items.1', 'What stops is AI assistance: generation, AI-guided support, and token-consuming actions.'),
-                t('pricing.overLimit.items.2', 'Teams can continue through pay-as-you-go, upgrade the package, or contact sales for a larger commercial setup.'),
+                t(
+                  'pricing.overLimit.items.0',
+                  'After the AI budget is exhausted, users keep access to existing data, workspaces, and prior outputs.'
+                ),
+                t(
+                  'pricing.overLimit.items.1',
+                  'What stops is AI assistance: generation, AI-guided support, and token-consuming actions.'
+                ),
+                t(
+                  'pricing.overLimit.items.2',
+                  'Teams can continue through pay-as-you-go, upgrade the package, or contact sales for a larger commercial setup.'
+                ),
               ].map((item, idx) => (
-                <div key={idx} className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-navy-700 dark:bg-navy-950/50">
+                <div
+                  key={idx}
+                  className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-navy-700 dark:bg-navy-950/50"
+                >
                   <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-amber-500" />
-                  <span className="text-sm leading-6 text-slate-600 dark:text-slate-400">{item}</span>
+                  <span className="text-sm leading-6 text-slate-600 dark:text-slate-400">
+                    {item}
+                  </span>
                 </div>
               ))}
             </div>
@@ -318,7 +363,10 @@ export const PricingLandingPage: React.FC = () => {
                   {t('pricing.licensedTools.badge', 'Licensed tools and frameworks')}
                 </p>
                 <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-white">
-                  {t('pricing.licensedTools.heading', 'Specialized modules stay outside the base seat price')}
+                  {t(
+                    'pricing.licensedTools.heading',
+                    'Specialized modules stay outside the base seat price'
+                  )}
                 </h2>
               </div>
             </div>
@@ -327,7 +375,9 @@ export const PricingLandingPage: React.FC = () => {
               {LICENSED_TOOL_KEYS.map((item) => (
                 <div key={item.key} className="flex items-start gap-3">
                   <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-cyan-500" />
-                  <span className="text-sm leading-6 text-slate-600 dark:text-slate-400">{t(item.key, item.fallback)}</span>
+                  <span className="text-sm leading-6 text-slate-600 dark:text-slate-400">
+                    {t(item.key, item.fallback)}
+                  </span>
                 </div>
               ))}
             </div>
@@ -385,7 +435,10 @@ export const PricingLandingPage: React.FC = () => {
                 {t('pricing.legalDocs.badge', 'Commercial documentation')}
               </p>
               <h2 className="mt-2 text-2xl font-black text-slate-900 dark:text-white">
-                {t('pricing.legalDocs.heading', 'Review the legal and procurement materials behind the price')}
+                {t(
+                  'pricing.legalDocs.heading',
+                  'Review the legal and procurement materials behind the price'
+                )}
               </h2>
               <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600 dark:text-slate-400">
                 {t(
@@ -400,25 +453,37 @@ export const PricingLandingPage: React.FC = () => {
             {[
               {
                 title: t('pricing.legalDocs.items.subscription.title', 'Subscription terms'),
-                body: t('pricing.legalDocs.items.subscription.body', 'Plans, billing, seats, and AI budget rules.'),
+                body: t(
+                  'pricing.legalDocs.items.subscription.body',
+                  'Plans, billing, seats, and AI budget rules.'
+                ),
                 icon: FileText,
                 href: ROUTES.LEGAL.SUBSCRIPTION,
               },
               {
                 title: t('pricing.legalDocs.items.dpa.title', 'Data Processing Addendum'),
-                body: t('pricing.legalDocs.items.dpa.body', 'Processor terms for compliance and customer procurement.'),
+                body: t(
+                  'pricing.legalDocs.items.dpa.body',
+                  'Processor terms for compliance and customer procurement.'
+                ),
                 icon: ShieldCheck,
                 href: ROUTES.LEGAL.DPA,
               },
               {
                 title: t('pricing.legalDocs.items.sla.title', 'SLA and security'),
-                body: t('pricing.legalDocs.items.sla.body', 'Service commitments, support expectations, and security review entry point.'),
+                body: t(
+                  'pricing.legalDocs.items.sla.body',
+                  'Service commitments, support expectations, and security review entry point.'
+                ),
                 icon: Scale,
                 href: ROUTES.LEGAL.SLA,
               },
               {
                 title: t('pricing.legalDocs.items.center.title', 'Full legal center'),
-                body: t('pricing.legalDocs.items.center.body', 'Browse all policies, compliance references, and supporting documents.'),
+                body: t(
+                  'pricing.legalDocs.items.center.body',
+                  'Browse all policies, compliance references, and supporting documents.'
+                ),
                 icon: Sparkles,
                 href: ROUTES.LEGAL.CENTER,
               },
@@ -436,8 +501,12 @@ export const PricingLandingPage: React.FC = () => {
                       <Icon size={18} />
                     </div>
                     <div>
-                      <p className="text-sm font-black text-slate-900 dark:text-white">{item.title}</p>
-                      <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">{item.body}</p>
+                      <p className="text-sm font-black text-slate-900 dark:text-white">
+                        {item.title}
+                      </p>
+                      <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">
+                        {item.body}
+                      </p>
                     </div>
                   </div>
                 </button>
@@ -454,7 +523,10 @@ export const PricingLandingPage: React.FC = () => {
             {t('pricing.salesNote.badge', 'Sales note')}
           </div>
           <p className="mx-auto mt-4 max-w-4xl text-sm leading-7 text-slate-600 dark:text-slate-400">
-            {t('pricing.salesNote.body', 'AI budget is sold as budget, not as a public token-rate promise, because different actions consume different model resources. Anna and Teresa can help explain which package and budget shape fit the workload before purchase.')}
+            {t(
+              'pricing.salesNote.body',
+              'AI budget is sold as budget, not as a public token-rate promise, because different actions consume different model resources. Anna and Teresa can help explain which package and budget shape fit the workload before purchase.'
+            )}
           </p>
         </div>
       </section>

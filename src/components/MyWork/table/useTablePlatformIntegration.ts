@@ -11,7 +11,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import type {
   FilterGroup as TPFilterGroup,
+  TablePlatformBase,
   TablePlatformField,
+  TablePlatformTable,
   TablePlatformView,
   ViewConfig,
 } from '@/types/tablePlatform';
@@ -135,6 +137,8 @@ export interface UseTablePlatformIntegrationReturn {
   loadMore: () => Promise<void>;
   hasMore: boolean;
   totalRecords: number;
+  base: TablePlatformBase | null;
+  table: TablePlatformTable | null;
 
   platformFields: TablePlatformField[];
   platformViews: TablePlatformView[];
@@ -272,7 +276,11 @@ export function useTablePlatformIntegration(
     }
   }, [isActive, bridge.nodes]);
 
-  const columns = isActive ? (localColumns.length > 0 ? localColumns : derivedColumns) : EMPTY_COLUMNS;
+  const columns = isActive
+    ? localColumns.length > 0
+      ? localColumns
+      : derivedColumns
+    : EMPTY_COLUMNS;
   const nodes = isActive ? (localNodes.length > 0 ? localNodes : bridge.nodes) : EMPTY_NODES;
 
   const { processed: processedRows, grouped: groupedRows } = useMemo(() => {
@@ -435,7 +443,9 @@ export function useTablePlatformIntegration(
       if (!v) return;
       try {
         const cfg: Record<string, unknown> = { ...((v.config ?? {}) as Record<string, unknown>) };
-        const prevMissing = Array.isArray(cfg.missing_fields) ? (cfg.missing_fields as string[]) : [];
+        const prevMissing = Array.isArray(cfg.missing_fields)
+          ? (cfg.missing_fields as string[])
+          : [];
         cfg.missing_fields = prevMissing.filter((x) => x !== fieldId);
         const mfn = { ...((cfg.missing_field_names as Record<string, string>) ?? {}) };
         delete mfn[fieldId];
@@ -497,6 +507,8 @@ export function useTablePlatformIntegration(
       loadMore: NOOP_ASYNC,
       hasMore: false,
       totalRecords: 0,
+      base: null,
+      table: null,
       platformFields: [],
       platformViews: [],
       applyPlatformFilters: NOOP_ASYNC,
@@ -551,6 +563,8 @@ export function useTablePlatformIntegration(
     loadMore: bridge.loadMore,
     hasMore: bridge.hasMore,
     totalRecords: bridge.totalRecords,
+    base: bridge.base,
+    table: bridge.table,
     platformFields: bridge.fields,
     platformViews: bridge.views,
     applyPlatformFilters: bridge.applyFilters,

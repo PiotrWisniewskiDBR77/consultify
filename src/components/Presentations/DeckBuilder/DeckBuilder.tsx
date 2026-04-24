@@ -13,7 +13,6 @@ import { useParams } from 'react-router-dom';
 import { getSourceDisplayLabel } from '@/components/Initiatives/InitiativeSourceLink';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
-
 import { useAppStore } from '@/store/useAppStore';
 
 import type { CardBlock, Deck, DeckCard } from '../wizard/types';
@@ -310,7 +309,11 @@ export const DeckBuilder: React.FC = () => {
   const currentUser = useMemo(
     () => ({
       userId: authUser?.id || 'current-user',
-      name: authUser?.name || authUser?.email || 'You',
+      name:
+        authUser?.displayName ||
+        [authUser?.firstName, authUser?.lastName].filter(Boolean).join(' ') ||
+        authUser?.email ||
+        'You',
     }),
     [authUser]
   );
@@ -438,11 +441,15 @@ export const DeckBuilder: React.FC = () => {
           setLoadingDeck(false);
           setLoadError(null);
           hasLoadedInitialRef.current = true;
-          toast.error(t('presentations.builder.noContent', 'Deck has no content yet. Generate slides first.'));
+          toast.error(
+            t('presentations.builder.noContent', 'Deck has no content yet. Generate slides first.')
+          );
         }
       } catch (e: any) {
         if (!cancelled) {
-          const message = e?.message ? String(e.message) : t('presentations.builder.loadFailed', 'Failed to load presentation deck');
+          const message = e?.message
+            ? String(e.message)
+            : t('presentations.builder.loadFailed', 'Failed to load presentation deck');
           toast.error(message);
           setDeck(null);
           setLoadingDeck(false);
@@ -507,7 +514,11 @@ export const DeckBuilder: React.FC = () => {
     if (!targetDeckId) return;
     setDeckBacklinksLoading(true);
 
-    const linkGraphP = Api.getLinkGraphBacklinks({ type: 'presentation', id: targetDeckId, limit: 50 })
+    const linkGraphP = Api.getLinkGraphBacklinks({
+      type: 'presentation',
+      id: targetDeckId,
+      limit: 50,
+    })
       .then((rows: any) =>
         (Array.isArray(rows) ? rows : [])
           .map((x: any) => ({
@@ -635,7 +646,9 @@ export const DeckBuilder: React.FC = () => {
           try {
             const errorBody = await response.json();
             errorMsg = errorBody?.error || errorMsg;
-          } catch { /* ignore parse errors */ }
+          } catch {
+            /* ignore parse errors */
+          }
           throw new Error(errorMsg);
         }
         const blob = await response.blob();
@@ -645,7 +658,11 @@ export const DeckBuilder: React.FC = () => {
         a.download = `${deck.title || 'presentation'}.${request.extension}`;
         a.click();
         window.URL.revokeObjectURL(url);
-        toast.success(isPolish ? `Wyeksportowano jako ${format.toUpperCase()}` : `Exported as ${format.toUpperCase()}`);
+        toast.success(
+          isPolish
+            ? `Wyeksportowano jako ${format.toUpperCase()}`
+            : `Exported as ${format.toUpperCase()}`
+        );
       } catch (err: any) {
         const message = err?.message || (isPolish ? 'Eksport nie powiódł się' : 'Export failed');
         toast.error(message);
@@ -684,8 +701,11 @@ export const DeckBuilder: React.FC = () => {
       const payload =
         res?.data && typeof res.data === 'object' && 'data' in res.data ? res.data.data : res?.data;
       const nextDeck = payload?.deck;
-      const reply = payload?.reply ||
-        (isPolish ? 'Zastosowałem zmiany w decku.' : 'I applied the requested changes to the deck.');
+      const reply =
+        payload?.reply ||
+        (isPolish
+          ? 'Zastosowałem zmiany w decku.'
+          : 'I applied the requested changes to the deck.');
       const actions = Array.isArray(payload?.appliedActions) ? payload.appliedActions : [];
       if (nextDeck) {
         setPendingAgentEdit({ deck: nextDeck, reply, actions });
@@ -718,7 +738,9 @@ export const DeckBuilder: React.FC = () => {
 
     return (
       <div className="h-screen flex items-center justify-center bg-white dark:bg-navy-950">
-        <div className="animate-pulse text-slate-400">{t('presentations.builder.loading', 'Loading deck...')}</div>
+        <div className="animate-pulse text-slate-400">
+          {t('presentations.builder.loading', 'Loading deck...')}
+        </div>
       </div>
     );
   }
@@ -736,7 +758,10 @@ export const DeckBuilder: React.FC = () => {
   }
 
   return (
-    <DeckThemeProvider initialColorSetId={deck.color_set_id || 'midnight_navy'} initialBrandKit={brandKit}>
+    <DeckThemeProvider
+      initialColorSetId={deck.color_set_id || 'midnight_navy'}
+      initialBrandKit={brandKit}
+    >
       <div className="h-screen flex flex-col bg-white dark:bg-navy-950 overflow-hidden">
         {/* Top Bar */}
         <div className="relative">

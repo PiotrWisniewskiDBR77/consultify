@@ -45,7 +45,8 @@ export function emitReasoningDelegatedResearchPlan(payload: {
 }
 
 export function bucketMaxSources(maxSources: unknown): '1_5' | '6_10' | '11_20' | '21_plus' {
-  const n = typeof maxSources === 'number' && Number.isFinite(maxSources) ? maxSources : Number(maxSources);
+  const n =
+    typeof maxSources === 'number' && Number.isFinite(maxSources) ? maxSources : Number(maxSources);
   if (!Number.isFinite(n) || n <= 5) return '1_5';
   if (n <= 10) return '6_10';
   if (n <= 20) return '11_20';
@@ -59,4 +60,3 @@ export function bucketEventsCount(count: unknown): '0' | '1_3' | '4_10' | '11_pl
   if (n <= 10) return '4_10';
   return '11_plus';
 }
-

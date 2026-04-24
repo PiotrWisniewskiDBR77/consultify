@@ -24,4 +24,3 @@ export function assertLineageInvariant(graph: LineageGraph): void {
     throw new Error('Lineage nodes must be unique by id');
   }
 }
-

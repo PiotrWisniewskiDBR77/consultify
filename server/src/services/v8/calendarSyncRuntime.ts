@@ -5,22 +5,22 @@
  * provider adapters, manages checkpoints, maps errors → lifecycle states.
  */
 
+import { run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import {
-  getCalendarSources,
-  getCalendarSource,
-  handleSyncError,
-  createCalendarItem,
-  getCalendarItems,
-  updateCalendarItem,
   type CalendarSource,
-  type SyncCheckpoint,
+  createCalendarItem,
   type CreateCalendarItemParams,
+  getCalendarItems,
+  getCalendarSource,
+  getCalendarSources,
+  handleSyncError,
+  type SyncCheckpoint,
   type SyncResult,
+  updateCalendarItem,
 } from './calendarInteropService.js';
 import { getCalendarAdapter } from './calendarProviders/index.js';
 import type { ConnectionRef, ProviderEvent } from './calendarProviders/types.js';
-import { run as dbRun } from '../../utils/DbPromise.js';
 
 const LOG_PREFIX = '[P02-SyncRuntime]';
 
@@ -42,9 +42,9 @@ export async function syncAllSources(organizationId?: string): Promise<void> {
     const rows = await dbAll<Record<string, unknown>>(
       `SELECT DISTINCT organization_id FROM v8_calendar_sources WHERE lifecycle_state IN ('connected', 'degraded')`,
       [],
-      { fallback: true },
+      { fallback: true }
     );
-    const orgIds = (rows || []).map(r => r.organization_id as string);
+    const orgIds = (rows || []).map((r) => r.organization_id as string);
     sources = [];
     for (const oid of orgIds) {
       const orgSources = await getCalendarSources(oid);
@@ -52,8 +52,8 @@ export async function syncAllSources(organizationId?: string): Promise<void> {
     }
   }
 
-  const syncableSources = sources.filter(s =>
-    s.lifecycleState === 'connected' || s.lifecycleState === 'degraded',
+  const syncableSources = sources.filter(
+    (s) => s.lifecycleState === 'connected' || s.lifecycleState === 'degraded'
   );
 
   for (const source of syncableSources) {
@@ -65,7 +65,9 @@ export async function syncAllSources(organizationId?: string): Promise<void> {
     try {
       await syncSource(source);
     } catch (err) {
-      logger.error(`${LOG_PREFIX} Sync failed for source ${source.calendarSourceId}: ${(err as Error).message}`);
+      logger.error(
+        `${LOG_PREFIX} Sync failed for source ${source.calendarSourceId}: ${(err as Error).message}`
+      );
       try {
         await handleSyncError(source.calendarSourceId, source.organizationId, classifyError(err));
       } catch (innerErr) {
@@ -96,7 +98,9 @@ export async function syncSource(source: CalendarSource): Promise<SyncResult> {
 
   const window = getDefaultSyncWindow();
 
-  logger.info(`${LOG_PREFIX} Syncing source ${source.calendarSourceId} (${source.provider}, cursor=${cursor ? 'present' : 'none'})`);
+  logger.info(
+    `${LOG_PREFIX} Syncing source ${source.calendarSourceId} (${source.provider}, cursor=${cursor ? 'present' : 'none'})`
+  );
 
   const result = await adapter.fetchEvents(connection, window, cursor);
 
@@ -112,7 +116,9 @@ export async function syncSource(source: CalendarSource): Promise<SyncResult> {
       await upsertCalendarItem(source, providerEvent);
       itemsProcessed++;
     } catch (err) {
-      logger.error(`${LOG_PREFIX} Failed to upsert event ${providerEvent.providerEventId}: ${(err as Error).message}`);
+      logger.error(
+        `${LOG_PREFIX} Failed to upsert event ${providerEvent.providerEventId}: ${(err as Error).message}`
+      );
     }
   }
 
@@ -132,10 +138,19 @@ export async function syncSource(source: CalendarSource): Promise<SyncResult> {
            last_error = NULL,
            updated_at = ?
      WHERE calendar_source_id = ? AND organization_id = ?`,
-    [JSON.stringify(updatedCheckpoint), now, now, now, source.calendarSourceId, source.organizationId],
+    [
+      JSON.stringify(updatedCheckpoint),
+      now,
+      now,
+      now,
+      source.calendarSourceId,
+      source.organizationId,
+    ]
   );
 
-  logger.info(`${LOG_PREFIX} Incremental sync done: ${itemsProcessed} events for source ${source.calendarSourceId}`);
+  logger.info(
+    `${LOG_PREFIX} Incremental sync done: ${itemsProcessed} events for source ${source.calendarSourceId}`
+  );
 
   return {
     sourceId: source.calendarSourceId,
@@ -150,7 +165,7 @@ async function performAdapterFullResync(
   source: CalendarSource,
   adapter: ReturnType<typeof getCalendarAdapter>,
   connection: ConnectionRef,
-  window: { startAt: string; endAt: string },
+  window: { startAt: string; endAt: string }
 ): Promise<SyncResult> {
   if (!adapter) throw new Error('Adapter required for full resync');
 
@@ -185,10 +200,12 @@ async function performAdapterFullResync(
            last_error = NULL,
            updated_at = ?
      WHERE calendar_source_id = ? AND organization_id = ?`,
-    [JSON.stringify(resetCheckpoint), now, now, now, source.calendarSourceId, source.organizationId],
+    [JSON.stringify(resetCheckpoint), now, now, now, source.calendarSourceId, source.organizationId]
   );
 
-  logger.info(`${LOG_PREFIX} Full resync done: ${itemsProcessed} events for source ${source.calendarSourceId}`);
+  logger.info(
+    `${LOG_PREFIX} Full resync done: ${itemsProcessed} events for source ${source.calendarSourceId}`
+  );
 
   return {
     sourceId: source.calendarSourceId,
@@ -202,9 +219,12 @@ async function performAdapterFullResync(
 async function upsertCalendarItem(source: CalendarSource, event: ProviderEvent): Promise<void> {
   const existing = await findExistingItem(source, event.providerEventId);
 
-  const sourceSystem = source.provider === 'google' ? 'google_calendar'
-    : source.provider === 'microsoft' ? 'outlook_calendar'
-    : 'caldav';
+  const sourceSystem =
+    source.provider === 'google'
+      ? 'google_calendar'
+      : source.provider === 'microsoft'
+        ? 'outlook_calendar'
+        : 'caldav';
 
   if (existing) {
     if (event.status === 'cancelled') {
@@ -262,7 +282,7 @@ async function upsertCalendarItem(source: CalendarSource, event: ProviderEvent):
 
 function deriveEditAuthority(
   source: CalendarSource,
-  event: ProviderEvent,
+  event: ProviderEvent
 ): 'none' | 'local_only' | 'remote_owner' | 'delegate' {
   if (source.effectiveMode === 'read') return 'none';
   if (event.organizer?.self) return 'remote_owner';
@@ -275,7 +295,7 @@ async function findExistingItem(source: CalendarSource, providerEventId: string)
   const items = await getCalendarItems(source.organizationId, {
     sourceId: source.calendarSourceId,
   });
-  return items.find(i => i.sourceObjectRef === providerEventId) ?? null;
+  return items.find((i) => i.sourceObjectRef === providerEventId) ?? null;
 }
 
 async function buildConnectionRef(source: CalendarSource): Promise<ConnectionRef> {
@@ -287,15 +307,21 @@ async function buildConnectionRef(source: CalendarSource): Promise<ConnectionRef
       const row = await dbGet<Record<string, unknown>>(
         `SELECT access_token, credentials, server_url FROM integrations WHERE id = ?`,
         [source.connectionId],
-        { fallback: true },
+        { fallback: true }
       );
       if (row) {
         accessToken = (row.access_token as string) || '';
         if (!accessToken && row.credentials) {
           try {
-            const creds = typeof row.credentials === 'string' ? JSON.parse(row.credentials) : row.credentials;
-            accessToken = (creds as Record<string, string>).access_token || (creds as Record<string, string>).password || '';
-          } catch { /* credentials not JSON */ }
+            const creds =
+              typeof row.credentials === 'string' ? JSON.parse(row.credentials) : row.credentials;
+            accessToken =
+              (creds as Record<string, string>).access_token ||
+              (creds as Record<string, string>).password ||
+              '';
+          } catch {
+            /* credentials not JSON */
+          }
         }
         return {
           connectionId: source.connectionId,
@@ -307,7 +333,9 @@ async function buildConnectionRef(source: CalendarSource): Promise<ConnectionRef
         };
       }
     } catch (err) {
-      logger.warn(`${LOG_PREFIX} Failed to resolve token for connection ${source.connectionId}: ${(err as Error).message}`);
+      logger.warn(
+        `${LOG_PREFIX} Failed to resolve token for connection ${source.connectionId}: ${(err as Error).message}`
+      );
     }
   }
 
@@ -319,18 +347,23 @@ async function buildConnectionRef(source: CalendarSource): Promise<ConnectionRef
          WHERE connector_id = ? AND organization_id = ?
          ORDER BY created_at DESC LIMIT 1`,
         [source.provider, source.organizationId || ''],
-        { fallback: true },
+        { fallback: true }
       );
       if (v8Row?.encrypted_credentials) {
         try {
-          const creds = typeof v8Row.encrypted_credentials === 'string'
-            ? JSON.parse(v8Row.encrypted_credentials)
-            : v8Row.encrypted_credentials;
+          const creds =
+            typeof v8Row.encrypted_credentials === 'string'
+              ? JSON.parse(v8Row.encrypted_credentials)
+              : v8Row.encrypted_credentials;
           accessToken = (creds as Record<string, string>).access_token || '';
-        } catch { /* not JSON */ }
+        } catch {
+          /* not JSON */
+        }
       }
     } catch {
-      logger.debug(`${LOG_PREFIX} v8_connection_credentials fallback unavailable for ${source.provider}`);
+      logger.debug(
+        `${LOG_PREFIX} v8_connection_credentials fallback unavailable for ${source.provider}`
+      );
     }
   }
 
@@ -364,11 +397,21 @@ function shouldSkipDueToBackoff(source: CalendarSource): boolean {
 function classifyError(err: unknown): string {
   if (err instanceof Error) {
     const msg = err.message.toLowerCase();
-    if (msg.includes('401') || msg.includes('unauthorized') || msg.includes('auth')) return 'token_expired';
-    if (msg.includes('403') || msg.includes('forbidden') || msg.includes('scope')) return 'insufficient_permissions';
-    if (msg.includes('429') || msg.includes('rate') || msg.includes('throttl')) return 'rate_limited';
-    if (msg.includes('410') || msg.includes('gone') || msg.includes('sync token') || msg.includes('delta')) return 'sync_token_invalid';
-    if (msg.includes('network') || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT')) return 'network_error';
+    if (msg.includes('401') || msg.includes('unauthorized') || msg.includes('auth'))
+      return 'token_expired';
+    if (msg.includes('403') || msg.includes('forbidden') || msg.includes('scope'))
+      return 'insufficient_permissions';
+    if (msg.includes('429') || msg.includes('rate') || msg.includes('throttl'))
+      return 'rate_limited';
+    if (
+      msg.includes('410') ||
+      msg.includes('gone') ||
+      msg.includes('sync token') ||
+      msg.includes('delta')
+    )
+      return 'sync_token_invalid';
+    if (msg.includes('network') || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT'))
+      return 'network_error';
     if (msg.includes('unavailable') || msg.includes('503')) return 'provider_unavailable';
   }
   return 'network_error';
@@ -380,13 +423,13 @@ function classifyError(err: unknown): string {
  */
 export async function handleWebhookNotification(
   provider: 'google' | 'microsoft',
-  resourceId: string,
+  resourceId: string
 ): Promise<void> {
   const { all: dbAll } = await import('../../utils/DbPromise.js');
   const rows = await dbAll<Record<string, unknown>>(
     `SELECT * FROM v8_calendar_sources WHERE provider = ? AND lifecycle_state IN ('connected', 'degraded')`,
     [provider],
-    { fallback: true },
+    { fallback: true }
   );
 
   if (!rows || rows.length === 0) {
@@ -402,7 +445,9 @@ export async function handleWebhookNotification(
       try {
         await syncSource(source);
       } catch (err) {
-        logger.error(`${LOG_PREFIX} Webhook-triggered sync failed for source ${sourceId}: ${(err as Error).message}`);
+        logger.error(
+          `${LOG_PREFIX} Webhook-triggered sync failed for source ${sourceId}: ${(err as Error).message}`
+        );
       }
     }
   }

@@ -53,9 +53,14 @@ export function requireConfirmation(actionType: string, riskLevel: RiskLevel = '
         ]
       );
     } catch (err) {
-      logger.error('[ConfirmAction] FAIL-CLOSED: Audit write failed, blocking action', { err, actionType, adminId });
+      logger.error('[ConfirmAction] FAIL-CLOSED: Audit write failed, blocking action', {
+        err,
+        actionType,
+        adminId,
+      });
       res.status(503).json({
-        error: 'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
+        error:
+          'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
         code: 'AUDIT_UNAVAILABLE',
         actionType,
         guidance: 'Retry the action. If the problem persists, contact platform support.',

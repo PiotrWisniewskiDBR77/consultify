@@ -28,9 +28,7 @@ import { useTranslation } from 'react-i18next';
 import type { InitiativeLevel } from '@/components/Initiatives/templates/types';
 import type { PortfolioInitiative } from '@/types';
 
-import {
-  getMenu3AiButtonClass,
-} from './menu3ActionButtonStyles';
+import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   OrgUser,
@@ -53,7 +51,13 @@ export interface InitiativeCompletenessRow {
   gateReady: boolean;
 }
 
-type SortCol = 'initiative' | 'level' | 'status' | 'completeness' | 'missingCritical' | 'missingTotal';
+type SortCol =
+  | 'initiative'
+  | 'level'
+  | 'status'
+  | 'completeness'
+  | 'missingCritical'
+  | 'missingTotal';
 type SortDir = 'asc' | 'desc';
 
 interface AutoFillSuggestion {
@@ -138,9 +142,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
 
   const gateReadyCount = initiatives.filter((i) => i.gateReady).length;
   const notReadyCount = initiatives.length - gateReadyCount;
-  const avgCompleteness = initiatives.length > 0
-    ? Math.round(initiatives.reduce((s, i) => s + i.completeness, 0) / initiatives.length)
-    : 0;
+  const avgCompleteness =
+    initiatives.length > 0
+      ? Math.round(initiatives.reduce((s, i) => s + i.completeness, 0) / initiatives.length)
+      : 0;
   const totalMissingCritical = initiatives.reduce((s, i) => s + i.missingCritical, 0);
 
   /* ---------- sort ---------- */
@@ -148,7 +153,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
   const handleSort = useCallback(
     (col: SortCol) => {
       if (sortCol === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-      else { setSortCol(col); setSortDir(col === 'completeness' ? 'asc' : 'desc'); }
+      else {
+        setSortCol(col);
+        setSortDir(col === 'completeness' ? 'asc' : 'desc');
+      }
     },
     [sortCol]
   );
@@ -158,12 +166,24 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     list.sort((a, b) => {
       let cmp = 0;
       switch (sortCol) {
-        case 'initiative': cmp = a.initiativeName.localeCompare(b.initiativeName); break;
-        case 'level': cmp = (a.level ?? '').localeCompare(b.level ?? ''); break;
-        case 'status': cmp = a.status.localeCompare(b.status); break;
-        case 'completeness': cmp = a.completeness - b.completeness; break;
-        case 'missingCritical': cmp = a.missingCritical - b.missingCritical; break;
-        case 'missingTotal': cmp = a.missingTotal - b.missingTotal; break;
+        case 'initiative':
+          cmp = a.initiativeName.localeCompare(b.initiativeName);
+          break;
+        case 'level':
+          cmp = (a.level ?? '').localeCompare(b.level ?? '');
+          break;
+        case 'status':
+          cmp = a.status.localeCompare(b.status);
+          break;
+        case 'completeness':
+          cmp = a.completeness - b.completeness;
+          break;
+        case 'missingCritical':
+          cmp = a.missingCritical - b.missingCritical;
+          break;
+        case 'missingTotal':
+          cmp = a.missingTotal - b.missingTotal;
+          break;
       }
       return sortDir === 'asc' ? cmp : -cmp;
     });
@@ -250,17 +270,32 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     const noBudget = rawInitiatives.filter((i) => !i.budget || i.budget === 0);
 
     if (noOwner.length > 0)
-      groups.push({ label: 'Missing owner', count: noOwner.length, field: 'ownerBusinessId', ids: noOwner.map((i) => i.id) });
+      groups.push({
+        label: 'Missing owner',
+        count: noOwner.length,
+        field: 'ownerBusinessId',
+        ids: noOwner.map((i) => i.id),
+      });
     if (noDates.length > 0)
-      groups.push({ label: 'Missing dates', count: noDates.length, field: 'dates', ids: noDates.map((i) => i.id) });
+      groups.push({
+        label: 'Missing dates',
+        count: noDates.length,
+        field: 'dates',
+        ids: noDates.map((i) => i.id),
+      });
     if (noBudget.length > 0)
-      groups.push({ label: 'Missing/zero budget', count: noBudget.length, field: 'budget', ids: noBudget.map((i) => i.id) });
+      groups.push({
+        label: 'Missing/zero budget',
+        count: noBudget.length,
+        field: 'budget',
+        ids: noBudget.map((i) => i.id),
+      });
 
     return groups;
   }, [rawInitiatives]);
 
   const handleBulkFix = useCallback(
-    async (group: typeof bulkFixGroups[number]) => {
+    async (group: (typeof bulkFixGroups)[number]) => {
       if (!onQuickUpdate) return;
       setBulkFixRunning(true);
       let ok = 0;
@@ -277,7 +312,9 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             await onQuickUpdate(id, { ownerBusinessId: user.id });
           }
           ok++;
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       }
       toast.success(`Fixed ${ok} initiative(s) — ${group.label}`);
       setBulkFixRunning(false);
@@ -350,75 +387,87 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
     return hints;
   };
 
-  const autoFillPanel = autoFillSuggestions !== null ? (
-    <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-          <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-            AI Auto-Fill suggestions
-          </h3>
-          <span className="text-xs text-purple-500">({autoFillSuggestions.length})</span>
-        </div>
-        <button onClick={closeWorkspacePanels} className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30">
-          <X size={14} />
-        </button>
-      </div>
-      <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
-        {autoFillSuggestions.length === 0 ? (
-          <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
-            All fillable fields are already populated
+  const autoFillPanel =
+    autoFillSuggestions !== null ? (
+      <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
+        <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+              AI Auto-Fill suggestions
+            </h3>
+            <span className="text-xs text-purple-500">({autoFillSuggestions.length})</span>
           </div>
-        ) : (
-          autoFillSuggestions.map((s, idx) => (
-            <div key={`${s.initiativeId}-${s.field}-${idx}`} className="flex items-center gap-3 px-4 py-3 text-sm">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
-                    {s.initiativeName}
-                  </span>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-purple-200/50 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400">
-                    {s.field}
-                  </span>
-                  <span className="text-xs text-slate-500">→ {s.suggestedValue}</span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.reason}</p>
-              </div>
-              {s.autoPayload && onQuickUpdate ? (
-                <button
-                  onClick={() => handleApplyAutoFill(s, idx)}
-                  disabled={applyingAutoFill === idx}
-                  className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
-                >
-                  {applyingAutoFill === idx ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                  Apply
-                </button>
-              ) : (
-                <button
-                  onClick={() => onOpenInitiative(s.initiativeId)}
-                  className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
-                >
-                  <ExternalLink size={12} />
-                  Open
-                </button>
-              )}
+          <button
+            onClick={closeWorkspacePanels}
+            className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+          >
+            <X size={14} />
+          </button>
+        </div>
+        <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+          {autoFillSuggestions.length === 0 ? (
+            <div className="px-4 py-6 text-center text-sm text-slate-600 dark:text-slate-400">
+              All fillable fields are already populated
             </div>
-          ))
-        )}
+          ) : (
+            autoFillSuggestions.map((s, idx) => (
+              <div
+                key={`${s.initiativeId}-${s.field}-${idx}`}
+                className="flex items-center gap-3 px-4 py-3 text-sm"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
+                      {s.initiativeName}
+                    </span>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-purple-200/50 dark:bg-purple-800/50 text-purple-600 dark:text-purple-400">
+                      {s.field}
+                    </span>
+                    <span className="text-xs text-slate-500">→ {s.suggestedValue}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.reason}</p>
+                </div>
+                {s.autoPayload && onQuickUpdate ? (
+                  <button
+                    onClick={() => handleApplyAutoFill(s, idx)}
+                    disabled={applyingAutoFill === idx}
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                  >
+                    {applyingAutoFill === idx ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Check size={12} />
+                    )}
+                    Apply
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onOpenInitiative(s.initiativeId)}
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                  >
+                    <ExternalLink size={12} />
+                    Open
+                  </button>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
-    </div>
-  ) : null;
+    ) : null;
 
   const bulkFixPanel = showBulkFix ? (
     <div className="m-4 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10 overflow-hidden">
       <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Zap size={16} className="text-amber-600 dark:text-amber-400" />
-          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-            Bulk Fix
-          </h3>
+          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">Bulk Fix</h3>
         </div>
-        <button onClick={closeWorkspacePanels} className="p-1 rounded text-amber-500 hover:bg-amber-200/30">
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-amber-500 hover:bg-amber-200/30"
+        >
           <X size={14} />
         </button>
       </div>
@@ -440,7 +489,11 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 disabled={bulkFixRunning}
                 className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 disabled:opacity-50 transition-colors"
               >
-                {bulkFixRunning ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                {bulkFixRunning ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Zap size={12} />
+                )}
                 Fix all
               </button>
             </div>
@@ -459,7 +512,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             AI Priority Triage
           </h3>
         </div>
-        <button onClick={closeWorkspacePanels} className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30">
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30"
+        >
           <X size={14} />
         </button>
       </div>
@@ -477,7 +533,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       : 'bg-red-500'
               }`}
             />
-            <button onClick={() => onOpenInitiative(item.initiativeId)} className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]">
+            <button
+              onClick={() => onOpenInitiative(item.initiativeId)}
+              className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]"
+            >
               {item.initiativeName}
             </button>
             <span className="text-xs font-semibold tabular-nums text-slate-600 dark:text-slate-300">
@@ -513,7 +572,11 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
             disabled={autoFillRunning}
             className={getMenu3AiButtonClass(autoFillSuggestions !== null)}
           >
-            {autoFillRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+            {autoFillRunning ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <Sparkles size={12} />
+            )}
             AI Auto-Fill
           </button>
         )}
@@ -593,28 +656,44 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
       <div className="flex items-center gap-4">
         <div className="flex-1 grid grid-cols-4 gap-3">
           <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3">
-            <div className="text-xl font-semibold text-slate-900 dark:text-white">{initiatives.length}</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Total initiatives</div>
+            <div className="text-xl font-semibold text-slate-900 dark:text-white">
+              {initiatives.length}
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Total initiatives
+            </div>
           </div>
-          <div className={`rounded-xl border p-3 ${
-            gateReadyCount > 0
-              ? 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
-              : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
-          }`}>
-            <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">{gateReadyCount}</div>
+          <div
+            className={`rounded-xl border p-3 ${
+              gateReadyCount > 0
+                ? 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
+                : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+            }`}
+          >
+            <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+              {gateReadyCount}
+            </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Gate-ready</div>
           </div>
-          <div className={`rounded-xl border p-3 ${
-            notReadyCount > 0
-              ? 'border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10'
-              : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
-          }`}>
-            <div className="text-xl font-semibold text-amber-600 dark:text-amber-400">{notReadyCount}</div>
+          <div
+            className={`rounded-xl border p-3 ${
+              notReadyCount > 0
+                ? 'border-amber-200 dark:border-amber-900/50 bg-amber-500/5 dark:bg-amber-500/10'
+                : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+            }`}
+          >
+            <div className="text-xl font-semibold text-amber-600 dark:text-amber-400">
+              {notReadyCount}
+            </div>
             <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Not ready</div>
           </div>
           <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3">
-            <div className="text-xl font-semibold text-slate-900 dark:text-white">{avgCompleteness}%</div>
-            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Avg completeness</div>
+            <div className="text-xl font-semibold text-slate-900 dark:text-white">
+              {avgCompleteness}%
+            </div>
+            <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Avg completeness
+            </div>
           </div>
         </div>
       </div>
@@ -630,20 +709,27 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
               </h3>
               <span className="text-xs text-purple-500">({autoFillSuggestions.length})</span>
             </div>
-            <button onClick={() => setAutoFillSuggestions(null)}
-              className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30">
+            <button
+              onClick={() => setAutoFillSuggestions(null)}
+              className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+            >
               <X size={14} />
             </button>
           </div>
           {autoFillSuggestions.length === 0 ? (
             <div className="px-4 py-6 text-center">
               <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-              <p className="text-sm text-slate-600 dark:text-slate-400">All fillable fields are already populated</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                All fillable fields are already populated
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
               {autoFillSuggestions.map((s, idx) => (
-                <div key={`${s.initiativeId}-${s.field}-${idx}`} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <div
+                  key={`${s.initiativeId}-${s.field}-${idx}`}
+                  className="flex items-center gap-3 px-4 py-3 text-sm"
+                >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-medium text-slate-900 dark:text-white truncate max-w-[200px]">
@@ -657,17 +743,25 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.reason}</p>
                   </div>
                   {s.autoPayload && onQuickUpdate ? (
-                    <button onClick={() => handleApplyAutoFill(s, idx)}
+                    <button
+                      onClick={() => handleApplyAutoFill(s, idx)}
                       disabled={applyingAutoFill === idx}
                       className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                        bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors">
-                      {applyingAutoFill === idx ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                        bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                    >
+                      {applyingAutoFill === idx ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Check size={12} />
+                      )}
                       Apply
                     </button>
                   ) : (
-                    <button onClick={() => onOpenInitiative(s.initiativeId)}
+                    <button
+                      onClick={() => onOpenInitiative(s.initiativeId)}
                       className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
-                        bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors">
+                        bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                    >
                       <ExternalLink size={12} />
                       Preview
                     </button>
@@ -689,7 +783,10 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 Bulk Fix — fix common gaps in one click
               </h3>
             </div>
-            <button onClick={() => setShowBulkFix(false)} className="p-1 rounded text-amber-500 hover:bg-amber-200/30">
+            <button
+              onClick={() => setShowBulkFix(false)}
+              className="p-1 rounded text-amber-500 hover:bg-amber-200/30"
+            >
               <X size={14} />
             </button>
           </div>
@@ -704,7 +801,9 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 <div key={group.field} className="flex items-center gap-3 px-4 py-3 text-sm">
                   <AlertTriangle size={14} className="text-amber-500 shrink-0" />
                   <div className="flex-1">
-                    <span className="font-medium text-slate-900 dark:text-white">{group.label}</span>
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {group.label}
+                    </span>
                     <span className="ml-2 text-xs text-slate-500">{group.count} initiative(s)</span>
                   </div>
                   <button
@@ -713,7 +812,11 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                     className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
                       bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 disabled:opacity-50 transition-colors"
                   >
-                    {bulkFixRunning ? <Loader2 size={12} className="animate-spin" /> : <Zap size={12} />}
+                    {bulkFixRunning ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Zap size={12} />
+                    )}
                     Fix all
                   </button>
                 </div>
@@ -733,35 +836,53 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                 AI Priority Triage — where to focus effort
               </h3>
             </div>
-            <button onClick={() => setShowTriage(false)} className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30">
+            <button
+              onClick={() => setShowTriage(false)}
+              className="p-1 rounded text-indigo-500 hover:bg-indigo-200/30"
+            >
               <X size={14} />
             </button>
           </div>
           <div className="divide-y divide-indigo-200/50 dark:divide-indigo-900/30">
             {triageItems.map((item) => (
               <div key={item.initiativeId} className="flex items-center gap-3 px-4 py-2.5 text-sm">
-                <span className={`shrink-0 w-2.5 h-2.5 rounded-full ${
-                  item.gateReady ? 'bg-emerald-500'
-                    : item.effort === 'low' ? 'bg-blue-500'
-                    : item.effort === 'medium' ? 'bg-amber-500'
-                    : 'bg-red-500'
-                }`} />
-                <button onClick={() => onOpenInitiative(item.initiativeId)}
-                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]">
+                <span
+                  className={`shrink-0 w-2.5 h-2.5 rounded-full ${
+                    item.gateReady
+                      ? 'bg-emerald-500'
+                      : item.effort === 'low'
+                        ? 'bg-blue-500'
+                        : item.effort === 'medium'
+                          ? 'bg-amber-500'
+                          : 'bg-red-500'
+                  }`}
+                />
+                <button
+                  onClick={() => onOpenInitiative(item.initiativeId)}
+                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors truncate max-w-[200px]"
+                >
                   {item.initiativeName}
                 </button>
-                <span className={`text-xs font-semibold tabular-nums ${
-                  item.completeness === 100 ? 'text-emerald-600 dark:text-emerald-400'
-                    : item.completeness >= 50 ? 'text-amber-600 dark:text-amber-400'
-                    : 'text-red-600 dark:text-red-400'
-                }`}>
+                <span
+                  className={`text-xs font-semibold tabular-nums ${
+                    item.completeness === 100
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : item.completeness >= 50
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-red-600 dark:text-red-400'
+                  }`}
+                >
                   {item.completeness}%
                 </span>
-                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
-                  item.effort === 'low' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
-                    : item.effort === 'medium' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                    : 'bg-red-500/15 text-red-600 dark:text-red-400'
-                }`}>
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                    item.effort === 'low'
+                      ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                      : item.effort === 'medium'
+                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                        : 'bg-red-500/15 text-red-600 dark:text-red-400'
+                  }`}
+                >
                   {item.effort} effort
                 </span>
                 <span className="flex-1 text-xs text-slate-500 dark:text-slate-400 truncate">
@@ -781,36 +902,56 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
               <tr className="bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
                 <th className="w-8 px-4 py-2.5" />
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('initiative')} className="inline-flex items-center gap-1 hover:text-primary-600">
+                  <button
+                    onClick={() => handleSort('initiative')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600"
+                  >
                     Initiative <SortIcon col="initiative" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('level')} className="inline-flex items-center gap-1 hover:text-primary-600">
+                  <button
+                    onClick={() => handleSort('level')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600"
+                  >
                     Level <SortIcon col="level" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('status')} className="inline-flex items-center gap-1 hover:text-primary-600">
+                  <button
+                    onClick={() => handleSort('status')}
+                    className="inline-flex items-center gap-1 hover:text-primary-600"
+                  >
                     Status <SortIcon col="status" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('completeness')} className="inline-flex items-center gap-1 ml-auto hover:text-primary-600">
+                  <button
+                    onClick={() => handleSort('completeness')}
+                    className="inline-flex items-center gap-1 ml-auto hover:text-primary-600"
+                  >
                     Completeness <SortIcon col="completeness" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('missingCritical')} className="inline-flex items-center gap-1 ml-auto hover:text-primary-600">
+                  <button
+                    onClick={() => handleSort('missingCritical')}
+                    className="inline-flex items-center gap-1 ml-auto hover:text-primary-600"
+                  >
                     Missing critical <SortIcon col="missingCritical" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
                 <th className="text-right px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort('missingTotal')} className="inline-flex items-center gap-1 ml-auto hover:text-primary-600">
+                  <button
+                    onClick={() => handleSort('missingTotal')}
+                    className="inline-flex items-center gap-1 ml-auto hover:text-primary-600"
+                  >
                     Missing total <SortIcon col="missingTotal" cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
-                <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">Actions</th>
+                <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -829,30 +970,47 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                       <td className="px-4 py-3 text-slate-400">
                         {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                       </td>
-                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">{row.initiativeName}</td>
-                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{row.level || '—'}</td>
+                      <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                        {row.initiativeName}
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                        {row.level || '—'}
+                      </td>
                       <td className="px-4 py-3 text-slate-600 dark:text-slate-400">{row.status}</td>
                       <td className="px-4 py-3 text-right">
-                        <span className={
-                          row.completeness < 50 ? 'font-semibold text-red-600 dark:text-red-400'
-                            : row.completeness < 100 ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-emerald-600 dark:text-emerald-400'
-                        }>
+                        <span
+                          className={
+                            row.completeness < 50
+                              ? 'font-semibold text-red-600 dark:text-red-400'
+                              : row.completeness < 100
+                                ? 'text-amber-600 dark:text-amber-400'
+                                : 'text-emerald-600 dark:text-emerald-400'
+                          }
+                        >
                           {row.completeness}%
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
                         {row.missingCritical > 0 ? (
-                          <span className="font-medium text-red-600 dark:text-red-400">{row.missingCritical}</span>
+                          <span className="font-medium text-red-600 dark:text-red-400">
+                            {row.missingCritical}
+                          </span>
                         ) : (
                           <span className="text-slate-500">0</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">{row.missingTotal}</td>
+                      <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">
+                        {row.missingTotal}
+                      </td>
                       <td className="px-4 py-3">
-                        <button onClick={(e) => { e.stopPropagation(); onOpenInitiative(row.initiativeId); }}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenInitiative(row.initiativeId);
+                          }}
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium
-                            bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors">
+                            bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                        >
                           <ExternalLink size={12} />
                           Preview
                         </button>
@@ -888,11 +1046,19 @@ export const CompletenessAnalysis: React.FC<CompletenessAnalysisProps> = ({
                                     ) : (
                                       <X size={12} className="text-red-500 shrink-0" />
                                     )}
-                                    <span className={h.status === 'ok' ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white font-medium'}>
+                                    <span
+                                      className={
+                                        h.status === 'ok'
+                                          ? 'text-slate-600 dark:text-slate-400'
+                                          : 'text-slate-900 dark:text-white font-medium'
+                                      }
+                                    >
                                       {h.field}
                                     </span>
                                     {h.impact && (
-                                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">{h.impact}</span>
+                                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">
+                                        {h.impact}
+                                      </span>
                                     )}
                                   </div>
                                 ))}

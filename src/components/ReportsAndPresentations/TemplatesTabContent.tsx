@@ -4,7 +4,17 @@
  * Canonical source: /api/artifacts?artifactFamily=template (P24 Outputs artifacts)
  */
 
-import { BookTemplate, Copy, Edit, FileSpreadsheet, FileText, Loader2, MessageSquare, Play, Presentation } from 'lucide-react';
+import {
+  BookTemplate,
+  Copy,
+  Edit,
+  FileSpreadsheet,
+  FileText,
+  Loader2,
+  MessageSquare,
+  Play,
+  Presentation,
+} from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -20,7 +30,11 @@ import {
 } from '../shared/ModuleHub';
 import type { RowAction } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
-import { resolveTemplateClonePath, resolveTemplateEditPath, resolveTemplateUsePath } from './artifactNavigation';
+import {
+  resolveTemplateClonePath,
+  resolveTemplateEditPath,
+  resolveTemplateUsePath,
+} from './artifactNavigation';
 import { TemplatePreviewBody, TemplatePreviewFooter } from './previews/TemplatePreview';
 import { TEMPLATE_STATUS_META, TEMPLATE_TYPE_META, type TemplateItem } from './types';
 
@@ -361,7 +375,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
               key={f.key}
               className="rounded-xl border border-slate-200/70 dark:border-navy-700/50 bg-white/60 dark:bg-navy-800/40 p-4"
             >
-              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">{f.title}</h4>
+              <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {f.title}
+              </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{f.desc}</p>
               <div className="flex gap-1 mt-2">
                 {f.categories.map((c) => (
@@ -391,10 +407,9 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
     const gridItems: GridItem[] = filteredData.map((item) => ({
       id: item.id,
       name: item.title,
-      type: isPolish
-        ? TEMPLATE_TYPE_META[item.type].labelPl
-        : TEMPLATE_TYPE_META[item.type].label,
-      typeColor: item.type === 'report' ? 'operational' : item.type === 'sheet' ? 'financial' : 'digital',
+      type: isPolish ? TEMPLATE_TYPE_META[item.type].labelPl : TEMPLATE_TYPE_META[item.type].label,
+      typeColor:
+        item.type === 'report' ? 'operational' : item.type === 'sheet' ? 'financial' : 'digital',
       status: gridStatusMap[item.status] || 'DRAFT',
       progress: 0,
       updatedAt: item.updatedAt,
@@ -408,7 +423,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         items={gridItems}
         selectedItemId={selectedId}
         onItemClick={(item) => setSelectedId(item.id)}
-        onItemAction={(item, actionId) => {
+        onItemAction={(actionId, item) => {
           const tpl = filteredData.find((t) => t.id === item.id);
           if (!tpl) return;
           if (actionId === 'open') navigate(resolveTemplateUsePath(tpl.id, tpl.type));

@@ -1,6 +1,12 @@
 import { fetchWithRetry, handleDataResponse } from '../baseClient';
 
-export type ResearchMissionPlanStepKind = 'scope' | 'sources' | 'extract' | 'synthesize' | 'qa' | 'deliver';
+export type ResearchMissionPlanStepKind =
+  | 'scope'
+  | 'sources'
+  | 'extract'
+  | 'synthesize'
+  | 'qa'
+  | 'deliver';
 
 export type ResearchMissionPlanRequest = {
   query: string;
@@ -20,8 +26,17 @@ export type ResearchMissionStartRequest = { missionId?: string; query: string; n
 export type ResearchMissionStartResponse = { missionId: string; now: string; summary: string };
 
 export type ResearchMissionWatchRequest = { missionId: string; cursor?: number; now?: string };
-export type ResearchMissionEventKind = 'mission_planned' | 'mission_started' | 'delta' | 'mission_completed';
-export type ResearchMissionEvent = { seq: number; at: string; kind: ResearchMissionEventKind; message: string };
+export type ResearchMissionEventKind =
+  | 'mission_planned'
+  | 'mission_started'
+  | 'delta'
+  | 'mission_completed';
+export type ResearchMissionEvent = {
+  seq: number;
+  at: string;
+  kind: ResearchMissionEventKind;
+  message: string;
+};
 export type ResearchMissionWatchResponse = {
   missionId: string;
   now: string;
@@ -47,31 +62,48 @@ export const ResearchRuntimeApi = {
     return handleDataResponse<ResearchMissionPlanResponse>(res, 'Failed to plan research mission');
   },
 
-  startMission: async (body: ResearchMissionStartRequest): Promise<ResearchMissionStartResponse> => {
+  startMission: async (
+    body: ResearchMissionStartRequest
+  ): Promise<ResearchMissionStartResponse> => {
     const res = await fetchWithRetry('/api/v10/research-runtime/missions/start', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<ResearchMissionStartResponse>(res, 'Failed to start research mission');
+    return handleDataResponse<ResearchMissionStartResponse>(
+      res,
+      'Failed to start research mission'
+    );
   },
 
-  watchMission: async (body: ResearchMissionWatchRequest): Promise<ResearchMissionWatchResponse> => {
+  watchMission: async (
+    body: ResearchMissionWatchRequest
+  ): Promise<ResearchMissionWatchResponse> => {
     const res = await fetchWithRetry('/api/v10/research-runtime/missions/watch', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<ResearchMissionWatchResponse>(res, 'Failed to watch research mission');
+    return handleDataResponse<ResearchMissionWatchResponse>(
+      res,
+      'Failed to watch research mission'
+    );
   },
 
-  getSummary: async (body: ResearchMissionSummaryRequest): Promise<ResearchMissionSummaryResponse> => {
+  getSummary: async (
+    body: ResearchMissionSummaryRequest
+  ): Promise<ResearchMissionSummaryResponse> => {
     const res = await fetchWithRetry('/api/v10/research-runtime/missions/summary', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<ResearchMissionSummaryResponse>(res, 'Failed to load research mission summary');
+    return handleDataResponse<ResearchMissionSummaryResponse>(
+      res,
+      'Failed to load research mission summary'
+    );
   },
 
-  delegatePlanFromReasoning: async (body: ResearchMissionPlanRequest): Promise<ResearchMissionPlanResponse> => {
+  delegatePlanFromReasoning: async (
+    body: ResearchMissionPlanRequest
+  ): Promise<ResearchMissionPlanResponse> => {
     const res = await fetchWithRetry('/api/v10/reasoning-runtime/delegate/research/plan', {
       method: 'POST',
       body: JSON.stringify(body),
@@ -82,4 +114,3 @@ export const ResearchRuntimeApi = {
     );
   },
 };
-

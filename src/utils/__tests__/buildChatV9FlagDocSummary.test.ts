@@ -14,8 +14,8 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { ChatV9FlagDescriptor } from '../chatV9FeatureFlags';
 import { buildChatV9FlagDocSummary } from '../buildChatV9FlagDocSummary';
+import type { ChatV9FlagDescriptor } from '../chatV9FeatureFlags';
 
 function mk(specDocs: unknown): Pick<ChatV9FlagDescriptor, 'specDocs'> {
   return { specDocs: specDocs as ChatV9FlagDescriptor['specDocs'] };
@@ -92,17 +92,13 @@ describe('buildChatV9FlagDocSummary — happy path', () => {
   });
 
   it('trims surrounding whitespace from each entry', () => {
-    const result = buildChatV9FlagDocSummary(
-      mk(['  docs/a.md  ', '\tdocs/b.md\n'])
-    );
+    const result = buildChatV9FlagDocSummary(mk(['  docs/a.md  ', '\tdocs/b.md\n']));
     expect(result.primary).toBe('docs/a.md');
     expect(result.tooltip).toBe('docs/a.md\ndocs/b.md');
   });
 
   it('skips blanks but keeps real entries, renumbering extraCount', () => {
-    const result = buildChatV9FlagDocSummary(
-      mk(['   ', 'docs/a.md', '', 'docs/b.md', null])
-    );
+    const result = buildChatV9FlagDocSummary(mk(['   ', 'docs/a.md', '', 'docs/b.md', null]));
     expect(result.primary).toBe('docs/a.md');
     expect(result.extraCount).toBe(1);
     expect(result.totalCount).toBe(2);

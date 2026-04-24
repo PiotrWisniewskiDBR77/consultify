@@ -1,4 +1,13 @@
-import { CheckCircle, Copy, Download, Eye, MessageCircle, RefreshCw, Trash2, TrendingUp } from 'lucide-react';
+import {
+  CheckCircle,
+  Copy,
+  Download,
+  Eye,
+  MessageCircle,
+  RefreshCw,
+  Trash2,
+  TrendingUp,
+} from 'lucide-react';
 import { useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';

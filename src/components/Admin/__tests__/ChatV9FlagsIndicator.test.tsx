@@ -23,11 +23,11 @@ describe('ChatV9FlagsIndicator', () => {
 
   beforeEach(() => {
     openListener = vi.fn();
-    window.addEventListener('chat-v9-flags:open', openListener);
+    window.addEventListener('chat-v9-flags:open', openListener as EventListener);
   });
 
   afterEach(() => {
-    window.removeEventListener('chat-v9-flags:open', openListener);
+    window.removeEventListener('chat-v9-flags:open', openListener as EventListener);
   });
 
   it('returns null when unauthorised (even with overrides)', () => {

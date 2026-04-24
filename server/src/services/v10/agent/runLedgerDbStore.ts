@@ -138,7 +138,9 @@ function inferRunPatchFromEvent(event: AgentRuntimeLedgerEvent): Partial<RunRow>
       approvalState:
         typeof payload.approvalState === 'string' ? String(payload.approvalState) : undefined,
       latestBarrierState:
-        typeof payload.latestBarrierState === 'string' ? String(payload.latestBarrierState) : undefined,
+        typeof payload.latestBarrierState === 'string'
+          ? String(payload.latestBarrierState)
+          : undefined,
       latestInterruptState:
         typeof payload.latestInterruptState === 'string'
           ? String(payload.latestInterruptState)

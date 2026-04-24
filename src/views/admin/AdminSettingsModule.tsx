@@ -1,9 +1,9 @@
 import { Menu, MoveRight, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
+import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
 import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
 import { AdminEnterpriseOverviewPanel } from '../../components/Admin/AdminEnterpriseOverviewPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
@@ -37,7 +37,10 @@ const PRIMARY_SECTIONS: AdminSettingsSection[] = [
   'operations',
 ];
 
-const LEGACY_HANDOFFS: Record<string, { title: string; description: string; targetPath: string; targetLabel: string }> = {
+const LEGACY_HANDOFFS: Record<
+  string,
+  { title: string; description: string; targetPath: string; targetLabel: string }
+> = {
   organization: {
     title: 'Deep organization profile stays available outside Admin',
     description:
@@ -47,7 +50,8 @@ const LEGACY_HANDOFFS: Record<string, { title: string; description: string; targ
   },
   feedback: {
     title: 'Feedback is outside the tenant admin command center',
-    description: 'Operational tenant administration is handled in P32, while feedback remains a separate product workflow.',
+    description:
+      'Operational tenant administration is handled in P32, while feedback remains a separate product workflow.',
     targetPath: ROUTES.ADMIN.OVERVIEW,
     targetLabel: 'Open Admin overview',
   },
@@ -56,15 +60,18 @@ const LEGACY_HANDOFFS: Record<string, { title: string; description: string; targ
 const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
   overview: {
     title: 'Overview',
-    subtitle: 'Enterprise command center for tenant posture across people, security, billing, AI, and risk.',
+    subtitle:
+      'Enterprise command center for tenant posture across people, security, billing, AI, and risk.',
   },
   people: {
     title: 'People & Access',
-    subtitle: 'Membership operations, role changes, ownership transfer, and tenant access governance.',
+    subtitle:
+      'Membership operations, role changes, ownership transfer, and tenant access governance.',
   },
   security: {
     title: 'Security & Identity',
-    subtitle: 'Tenant-level MFA, SSO, collaboration controls, API access, and delegated IAM posture.',
+    subtitle:
+      'Tenant-level MFA, SSO, collaboration controls, API access, and delegated IAM posture.',
   },
   billing: {
     title: 'Billing, Limits & FinOps',
@@ -158,7 +165,10 @@ const LegacyAdminHandoffPanel: React.FC<{
   );
 };
 
-export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initialTab, currentUser }) => {
+export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
+  initialTab,
+  currentUser,
+}) => {
   const { setCurrentView } = useAppStore();
   const location = useLocation();
   const navigate = useNavigate();
@@ -250,7 +260,9 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({ initia
           <div className="space-y-4 p-3 lg:p-4">
             {!resolvedState.legacyKey && (
               <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{meta.title}</h1>
+                <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
+                  {meta.title}
+                </h1>
                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{meta.subtitle}</p>
               </div>
             )}

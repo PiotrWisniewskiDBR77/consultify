@@ -133,7 +133,9 @@ export const ConnectorsAuthCompleteRequestSchema = z.object({
 });
 
 export type ConnectorsSessionConnectRequest = z.infer<typeof ConnectorsSessionConnectRequestSchema>;
-export type ConnectorsSessionDisconnectRequest = z.infer<typeof ConnectorsSessionDisconnectRequestSchema>;
+export type ConnectorsSessionDisconnectRequest = z.infer<
+  typeof ConnectorsSessionDisconnectRequestSchema
+>;
 export type ConnectorsAuthStartRequest = z.infer<typeof ConnectorsAuthStartRequestSchema>;
 export type ConnectorsAuthCompleteRequest = z.infer<typeof ConnectorsAuthCompleteRequestSchema>;
 
@@ -204,7 +206,12 @@ export interface ConnectorsSessionMutationResponse {
   readonly session: ConnectorsSessionRecord;
 }
 
-export type ConnectorsAuthChallengeStatus = 'pending' | 'completed' | 'denied' | 'failed' | 'expired';
+export type ConnectorsAuthChallengeStatus =
+  | 'pending'
+  | 'completed'
+  | 'denied'
+  | 'failed'
+  | 'expired';
 
 export interface ConnectorsAuthChallenge {
   readonly challengeId: string;
@@ -282,4 +289,3 @@ export interface ConnectorsTokenRefreshResponse {
   readonly tokenExpiresAt: string | null;
   readonly tokenLastRotatedAt: string | null;
 }
-

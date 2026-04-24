@@ -44,8 +44,7 @@ vi.mock('../../../store/useAppStore', () => ({
 }));
 
 vi.mock('../../../store/useConversationStore', () => ({
-  useConversationStore: (selector: (state: ConvStoreState) => unknown) =>
-    selector(mockConvState),
+  useConversationStore: (selector: (state: ConvStoreState) => unknown) => selector(mockConvState),
 }));
 
 const trackFunnelEventMock = vi.fn();
@@ -77,9 +76,9 @@ describe('BackToChatShortcut — helpers', () => {
     expect(matchesShortcut(new KeyboardEvent('keydown', { ...base, shiftKey: false }))).toBe(false);
     expect(matchesShortcut(new KeyboardEvent('keydown', { ...base, ctrlKey: true }))).toBe(false);
     expect(matchesShortcut(new KeyboardEvent('keydown', { ...base, metaKey: true }))).toBe(false);
-    expect(
-      matchesShortcut(new KeyboardEvent('keydown', { ...base, key: 'b', code: 'KeyB' }))
-    ).toBe(false);
+    expect(matchesShortcut(new KeyboardEvent('keydown', { ...base, key: 'b', code: 'KeyB' }))).toBe(
+      false
+    );
   });
 
   it('matchesShortcut falls back to event.code when Alt+C produces a glyph (macOS ç)', () => {

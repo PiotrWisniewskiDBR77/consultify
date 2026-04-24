@@ -331,9 +331,7 @@ async function routingCoverageSchemaReady(): Promise<boolean> {
         dbColumnExists('llm_providers', 'health_status'),
       ]);
 
-    return (
-      hasAssignments && hasProviders && hasPurpose && hasProviderId && hasProviderHealthStatus
-    );
+    return hasAssignments && hasProviders && hasPurpose && hasProviderId && hasProviderHealthStatus;
   } catch {
     return false;
   }
@@ -344,9 +342,12 @@ async function evaluateUseCaseCoverage(): Promise<void> {
   const graceMs = Number(process.env.AI_PURPOSE_COVERAGE_GRACE_MS || 120_000);
   if (Number.isFinite(graceMs) && graceMs > 0 && Date.now() - coverageStartAtMs < graceMs) {
     if (!hasLoggedCoverageGraceSkip) {
-      logger.info('[ProviderSentinel] Skipping purpose coverage check during startup grace window', {
-        graceMs,
-      });
+      logger.info(
+        '[ProviderSentinel] Skipping purpose coverage check during startup grace window',
+        {
+          graceMs,
+        }
+      );
       hasLoggedCoverageGraceSkip = true;
     }
     return;
@@ -430,10 +431,15 @@ class ProviderSentinel {
   start(intervalMs = 120_000): void {
     if (this.intervalId) return;
     this.intervalId = setInterval(
-      () => void this.runOnce().catch((err: unknown) => logger.warn('[ProviderSentinel] health check failed', err)),
+      () =>
+        void this.runOnce().catch((err: unknown) =>
+          logger.warn('[ProviderSentinel] health check failed', err)
+        ),
       Math.max(30_000, intervalMs)
     );
-    void this.runOnce().catch((err: unknown) => logger.warn('[ProviderSentinel] initial health check failed', err));
+    void this.runOnce().catch((err: unknown) =>
+      logger.warn('[ProviderSentinel] initial health check failed', err)
+    );
     logger.info('[ProviderSentinel] Started', { intervalMs });
   }
 
@@ -492,7 +498,7 @@ class ProviderSentinel {
             providerId: p.id,
             status: statusToWrite,
             checkedAtIso,
-            errorCategory: available ? null : (cat || 'unknown'),
+            errorCategory: available ? null : cat || 'unknown',
             errorHttpStatus: available ? null : (r.httpStatus ?? null),
             errorMessage: available ? null : errorMsg,
           });

@@ -1,3 +1,7 @@
+import {
+  runOutcomeRollupPipeline,
+  unsafeOutcomeRollupPipelineRunId,
+} from '../../../models/v10/pipelines/OutcomeRollupPipeline.js';
 import type {
   OutcomeAcceptancePreviewRequest,
   OutcomeAcceptancePreviewResponse,
@@ -14,10 +18,6 @@ import type {
   OutcomeSignalIngestResponse,
   OutcomeSignalKind,
 } from '../../../types/v10/outcome-runtime.js';
-import {
-  runOutcomeRollupPipeline,
-  unsafeOutcomeRollupPipelineRunId,
-} from '../../../models/v10/pipelines/OutcomeRollupPipeline.js';
 
 type OutcomeRuntimeErrorCode = 'not_found' | 'scope_mismatch' | 'validation';
 
@@ -114,7 +114,9 @@ function inferPreviewState(metric: OutcomeMetric): 'ready' | 'needs_review' | 'a
   return 'at_risk';
 }
 
-function confidenceFromStates(states: Array<'ready' | 'needs_review' | 'at_risk'>): OutcomeConfidence {
+function confidenceFromStates(
+  states: Array<'ready' | 'needs_review' | 'at_risk'>
+): OutcomeConfidence {
   if (states.every((state) => state === 'ready')) return 'high';
   if (states.some((state) => state === 'at_risk')) return 'low';
   return 'medium';
@@ -122,7 +124,11 @@ function confidenceFromStates(states: Array<'ready' | 'needs_review' | 'at_risk'
 
 function assertTenantMatch(expectedTenantId: string, actualTenantId: string): void {
   if (expectedTenantId !== actualTenantId) {
-    throw new OutcomeRuntimeError('scope_mismatch', 'Outcome resource is outside current tenant scope.', 403);
+    throw new OutcomeRuntimeError(
+      'scope_mismatch',
+      'Outcome resource is outside current tenant scope.',
+      403
+    );
   }
 }
 
@@ -183,7 +189,9 @@ export class OutcomeRuntimeService {
         ...metric,
         projectedDelta: metric.targetValue - metric.baselineValue,
         deltaToTarget:
-          metric.observedValue === undefined ? metric.targetValue - metric.baselineValue : metric.targetValue - metric.observedValue,
+          metric.observedValue === undefined
+            ? metric.targetValue - metric.baselineValue
+            : metric.targetValue - metric.observedValue,
         previewState: inferPreviewState(metric),
         suggestedSignalKind: metricToSignalKind(metric.domain),
       })),
@@ -240,16 +248,26 @@ export class OutcomeRuntimeService {
 
     const preview = this.previewStore.get(contract.previewId);
     if (!preview) {
-      throw new OutcomeRuntimeError('not_found', 'Outcome preview for the acceptance contract was not found.', 404);
+      throw new OutcomeRuntimeError(
+        'not_found',
+        'Outcome preview for the acceptance contract was not found.',
+        404
+      );
     }
 
     const now = nowIso(input.now);
     const acceptedMetricIds =
       input.acceptedMetricIds.length > 0 ? input.acceptedMetricIds : contract.linkedMetricIds;
     const allowedMetricIds = new Set(contract.linkedMetricIds);
-    const hasUnknownMetricId = acceptedMetricIds.some((metricId) => !allowedMetricIds.has(metricId));
+    const hasUnknownMetricId = acceptedMetricIds.some(
+      (metricId) => !allowedMetricIds.has(metricId)
+    );
     if (hasUnknownMetricId) {
-      throw new OutcomeRuntimeError('validation', 'Acceptance includes an unknown KPI metric id.', 422);
+      throw new OutcomeRuntimeError(
+        'validation',
+        'Acceptance includes an unknown KPI metric id.',
+        422
+      );
     }
 
     contract.status = input.decision;
@@ -334,4 +352,3 @@ export function mapOutcomeRuntimeError(error: unknown): {
     },
   };
 }
-

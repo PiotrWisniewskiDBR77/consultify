@@ -329,12 +329,7 @@ export const CollaborationOverlay: React.FC<CollaborationOverlayProps> = ({
 }) => {
   const { t } = useTranslation();
   const { connected, connectionState, users, sessionState, sendCursor, sendMessage } =
-    useCollaboration(
-    ideaId,
-    currentUserId,
-    currentUserName,
-    selectedNodeIds
-  );
+    useCollaboration(ideaId, currentUserId, currentUserName, selectedNodeIds);
 
   useEffect(() => {
     if (connected && onRegisterSend) {

@@ -24,9 +24,9 @@ import permissionsMatrixService from '../../services/permissionsMatrixService.js
 import refreshTokenService from '../../services/RefreshTokenService.js';
 import securityIncidentService from '../../services/securityIncidentService.js';
 import threatIntelligenceService from '../../services/threatIntelligenceService.js';
+import usageService from '../../services/usageService.js';
 import userActivityService from '../../services/userActivityService.js';
 import userAdoptionService from '../../services/userAdoptionService.js';
-import usageService from '../../services/usageService.js';
 import webhookService from '../../services/WebhookService.js';
 import { AppError, asyncHandler as catchAsync } from '../../utils/ErrorHandler.js';
 

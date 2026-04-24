@@ -22,9 +22,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useConversationStore } from '@/store/useConversationStore';
+
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
+import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
 import { ReportsTabContent } from './ReportsTabContent';
 import { SheetsTabContent } from './SheetsTabContent';
@@ -37,7 +39,6 @@ import type {
   TemplateStatus,
 } from './types';
 import { PRESENTATION_STATUS_META, REPORT_STATUS_META, SOURCE_TYPE_META } from './types';
-import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import {
   useArtifactOutputsList,
   usePresentations,
@@ -52,8 +53,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isPolish = i18n.language?.startsWith('pl');
-  const { setOpen: setHelpOpen, setActiveTab: setHelpTab, setKnowledgeModuleIdOverride } =
-    useHelpSidePanel();
+  const {
+    setOpen: setHelpOpen,
+    setActiveTab: setHelpTab,
+    setKnowledgeModuleIdOverride,
+  } = useHelpSidePanel();
 
   const { initialTab, initialArtifactId } = useMemo(() => {
     const params = new URLSearchParams(location.search || '');
@@ -593,7 +597,9 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                           <button
                             key={o.value}
                             type="button"
-                            onClick={() => toggleFilter('publishState', o.value, o.label, 'bg-purple-400')}
+                            onClick={() =>
+                              toggleFilter('publishState', o.value, o.label, 'bg-purple-400')
+                            }
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
                                 ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
@@ -763,10 +769,14 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     if (activeTab === 'outputs_sheets') {
       return (
         <div className="flex items-center gap-2">
-          <span className={`${chipBase} bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 border-emerald-500/40`}>
+          <span
+            className={`${chipBase} bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 border-emerald-500/40`}
+          >
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span>{t('rap.outputs.kind.sheet', 'Sheets')}</span>
-            <span className={`${badgeBase} bg-emerald-500/30 text-emerald-700 dark:text-emerald-200`}>
+            <span
+              className={`${badgeBase} bg-emerald-500/30 text-emerald-700 dark:text-emerald-200`}
+            >
               {sheetRows.length}
             </span>
           </span>

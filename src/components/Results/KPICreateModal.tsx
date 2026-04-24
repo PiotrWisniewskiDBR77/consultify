@@ -136,7 +136,9 @@ export const KPICreateModal: React.FC<KPICreateModalProps> = ({
         toast.success(t('results.createModal.created', 'KPI created'));
         onSuccess();
       } catch (error: any) {
-        toast.error(error?.message || t('results.createModal.createFailed', 'Failed to create KPI'));
+        toast.error(
+          error?.message || t('results.createModal.createFailed', 'Failed to create KPI')
+        );
       } finally {
         setSaving(false);
       }

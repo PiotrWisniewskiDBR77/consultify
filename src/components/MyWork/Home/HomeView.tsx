@@ -1,15 +1,24 @@
 import { motion } from 'framer-motion';
-import { AlertTriangle, ArrowRight, ChevronDown, ChevronRight, ExternalLink, Info, Lightbulb, Sparkles } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowRight,
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  Info,
+  Lightbulb,
+  Sparkles,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
-import { useV8 } from '@/providers/V8Provider';
 import { useV8MyWorkRoofSummary } from '@/hooks/useV8MyWorkRoof';
 import { cn } from '@/lib/utils';
-import { V8ResultsApi } from '@/services/api/v8/results';
+import { useV8 } from '@/providers/V8Provider';
 import { V8InterviewApi, type V8InterviewInsight } from '@/services/api/v8/interview';
+import { V8ResultsApi } from '@/services/api/v8/results';
 import { getArtifactPath } from '@/utils/artifactLinks';
 
 import { AIPulseCore } from './AIPulseCore';
@@ -74,7 +83,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
       .catch(() => setRecentInsights([]));
   }, [isV8Enabled, refreshTrigger]);
 
-  const [kpiAlerts, setKpiAlerts] = useState<Array<{ signalId: string; kpiId: string; severity: string; description: string; createdAt: string; kpiName?: string }>>([]);
+  const [kpiAlerts, setKpiAlerts] = useState<
+    Array<{
+      signalId: string;
+      kpiId: string;
+      severity: string;
+      description: string;
+      createdAt: string;
+      kpiName?: string;
+    }>
+  >([]);
   useEffect(() => {
     if (!isV8Enabled) {
       setKpiAlerts([]);
@@ -192,10 +210,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
           ) : null}
         </div>
         <span className="shrink-0 font-mono text-[10px] tabular-nums text-slate-500 dark:text-slate-500">
-          {new Date(screen.updatedAt).toLocaleTimeString(lang === 'ar' ? 'ar-SA' : `${lang}-${lang.toUpperCase()}`, {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
+          {new Date(screen.updatedAt).toLocaleTimeString(
+            lang === 'ar' ? 'ar-SA' : `${lang}-${lang.toUpperCase()}`,
+            {
+              hour: '2-digit',
+              minute: '2-digit',
+            }
+          )}
         </span>
       </div>
 
@@ -258,7 +279,9 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                 <AlertTriangle size={14} className="text-amber-400" />
                 {t('myWork.radar.kpiAlerts.title', 'KPI Alerts')}
               </h2>
-              <p className="text-[11px] text-slate-400">{t('myWork.radar.kpiAlerts.subtitle', 'Open deviations requiring attention')}</p>
+              <p className="text-[11px] text-slate-400">
+                {t('myWork.radar.kpiAlerts.subtitle', 'Open deviations requiring attention')}
+              </p>
             </div>
             <button
               type="button"
@@ -276,12 +299,16 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                 onClick={() => navigate('/benefits?tab=results_kpi&mode=queue')}
                 className="w-full text-left flex items-center gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 transition hover:bg-white/[0.06]"
               >
-                <span className={cn(
-                  'h-2 w-2 rounded-full shrink-0',
-                  alert.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'
-                )} />
+                <span
+                  className={cn(
+                    'h-2 w-2 rounded-full shrink-0',
+                    alert.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'
+                  )}
+                />
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium text-slate-200 truncate">{alert.kpiName || alert.kpiId}</p>
+                  <p className="text-xs font-medium text-slate-200 truncate">
+                    {alert.kpiName || alert.kpiId}
+                  </p>
                   <p className="text-[11px] text-slate-400 truncate">{alert.description}</p>
                 </div>
                 <span className="text-[10px] text-slate-500 shrink-0 tabular-nums">
@@ -461,10 +488,23 @@ const BgCanvas: React.FC<{ timeMode: HomeTimeMode; ambientMotion: 'soft' | 'full
   </>
 );
 
-const INSIGHT_STATUS_STYLES: Record<string, { bg: string; text: string; label: string; labelPl: string }> = {
+const INSIGHT_STATUS_STYLES: Record<
+  string,
+  { bg: string; text: string; label: string; labelPl: string }
+> = {
   draft: { bg: 'bg-slate-500/20', text: 'text-slate-300', label: 'Draft', labelPl: 'Szkic' },
-  in_review: { bg: 'bg-amber-500/20', text: 'text-amber-300', label: 'In Review', labelPl: 'W przeglądzie' },
-  published: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', label: 'Published', labelPl: 'Opublikowany' },
+  in_review: {
+    bg: 'bg-amber-500/20',
+    text: 'text-amber-300',
+    label: 'In Review',
+    labelPl: 'W przeglądzie',
+  },
+  published: {
+    bg: 'bg-emerald-500/20',
+    text: 'text-emerald-300',
+    label: 'Published',
+    labelPl: 'Opublikowany',
+  },
 };
 
 const PROMPT_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
@@ -474,7 +514,13 @@ const PROMPT_TYPE_LABELS: Record<string, { en: string; pl: string }> = {
   synthesis: { en: 'Synthesis', pl: 'Synteza' },
 };
 
-function RecentInsightsCard({ insights, isPolish }: { insights: V8InterviewInsight[]; isPolish: boolean }) {
+function RecentInsightsCard({
+  insights,
+  isPolish,
+}: {
+  insights: V8InterviewInsight[];
+  isPolish: boolean;
+}) {
   return (
     <div className="rounded-2xl border border-lime-400/20 bg-white/[0.025] backdrop-blur-xl overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-white/[0.06]">
@@ -502,7 +548,13 @@ function RecentInsightsCard({ insights, isPolish }: { insights: V8InterviewInsig
                   {insight.title || (isPolish ? 'Bez tytułu' : 'Untitled')}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-medium', statusMeta.bg, statusMeta.text)}>
+                  <span
+                    className={cn(
+                      'rounded-full px-1.5 py-0.5 text-[9px] font-medium',
+                      statusMeta.bg,
+                      statusMeta.text
+                    )}
+                  >
                     {isPolish ? statusMeta.labelPl : statusMeta.label}
                   </span>
                   {promptLabel && (
@@ -513,9 +565,15 @@ function RecentInsightsCard({ insights, isPolish }: { insights: V8InterviewInsig
                 </div>
               </div>
               <span className="shrink-0 font-mono text-[9px] tabular-nums text-slate-600">
-                {new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', { month: 'short', day: 'numeric' })}
+                {new Date(insight.createdAt).toLocaleDateString(isPolish ? 'pl-PL' : 'en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
               </span>
-              <ExternalLink size={10} className="shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors" />
+              <ExternalLink
+                size={10}
+                className="shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors"
+              />
             </a>
           );
         })}

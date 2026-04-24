@@ -92,7 +92,11 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
         '/settings/preferences/dashboard'
       )) as DashboardPreferencesResponse;
       if (data?.preferences) {
-        const merged = { ...DEFAULT_PREFERENCES, ...data.preferences, widgets: { ...DEFAULT_PREFERENCES.widgets, ...data.preferences.widgets } };
+        const merged = {
+          ...DEFAULT_PREFERENCES,
+          ...data.preferences,
+          widgets: { ...DEFAULT_PREFERENCES.widgets, ...data.preferences.widgets },
+        };
         setPreferences(merged);
         latestPrefsRef.current = merged;
       }
@@ -103,19 +107,25 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
     }
   };
 
-  const debouncedSave = useCallback((newPrefs: DashboardPreferences) => {
-    latestPrefsRef.current = newPrefs;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(async () => {
-      try {
-        await Api.put('/settings/preferences/dashboard', { preferences: latestPrefsRef.current });
-        invalidateDashboardPreferencesCache();
-        toast.success(t('settings.dashboard.saved', 'Preferences saved'), { id: 'dash-prefs-save', duration: 1500 });
-      } catch {
-        toast.error(t('settings.dashboard.error', 'Failed to save preferences'));
-      }
-    }, 600);
-  }, [t]);
+  const debouncedSave = useCallback(
+    (newPrefs: DashboardPreferences) => {
+      latestPrefsRef.current = newPrefs;
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(async () => {
+        try {
+          await Api.put('/settings/preferences/dashboard', { preferences: latestPrefsRef.current });
+          invalidateDashboardPreferencesCache();
+          toast.success(t('settings.dashboard.saved', 'Preferences saved'), {
+            id: 'dash-prefs-save',
+            duration: 1500,
+          });
+        } catch {
+          toast.error(t('settings.dashboard.error', 'Failed to save preferences'));
+        }
+      }, 600);
+    },
+    [t]
+  );
 
   const updatePreference = <K extends keyof DashboardPreferences>(
     key: K,
@@ -270,12 +280,7 @@ export const DashboardPreferencesSettings: React.FC<DashboardPreferencesSettings
             return (
               <button
                 key={option.value}
-                onClick={() =>
-                  updatePreference(
-                    'defaultLandingPage',
-                    option.value
-                  )
-                }
+                onClick={() => updatePreference('defaultLandingPage', option.value)}
                 className={`p-4 rounded-xl border-2 transition-all text-center ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10'

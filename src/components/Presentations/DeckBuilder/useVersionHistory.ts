@@ -99,9 +99,11 @@ export function useVersionHistory(deck: Deck | null) {
       if (res.status === 409) {
         setState((prev) => ({ ...prev, isSaving: false }));
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('deck-version-conflict', {
-            detail: { deckId: deck.deck_id },
-          }));
+          window.dispatchEvent(
+            new CustomEvent('deck-version-conflict', {
+              detail: { deckId: deck.deck_id },
+            })
+          );
         }
         return;
       }

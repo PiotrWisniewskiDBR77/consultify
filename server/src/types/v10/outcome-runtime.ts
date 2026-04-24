@@ -37,7 +37,12 @@ export type OutcomeSignalKind = z.infer<typeof OutcomeSignalKindSchema>;
 export const OutcomeConfidenceSchema = z.enum(['low', 'medium', 'high']);
 export type OutcomeConfidence = z.infer<typeof OutcomeConfidenceSchema>;
 
-export const OutcomeAcceptanceStatusSchema = z.enum(['draft', 'accepted', 'rejected', 'needs_revision']);
+export const OutcomeAcceptanceStatusSchema = z.enum([
+  'draft',
+  'accepted',
+  'rejected',
+  'needs_revision',
+]);
 export type OutcomeAcceptanceStatus = z.infer<typeof OutcomeAcceptanceStatusSchema>;
 
 export const OutcomeAcceptanceDecisionSchema = z.enum(['accepted', 'rejected', 'needs_revision']);
@@ -120,10 +125,18 @@ export const OutcomeAcceptancePreviewResponseSchema = z.object({
     confidence: OutcomeConfidenceSchema,
   }),
 });
-export type OutcomeAcceptancePreviewResponse = z.infer<typeof OutcomeAcceptancePreviewResponseSchema>;
+export type OutcomeAcceptancePreviewResponse = z.infer<
+  typeof OutcomeAcceptancePreviewResponseSchema
+>;
 
 export const OutcomeSignalIngestBodySchema = z.object({
-  source: z.enum(['kpi_accept', 'analysis_link', 'user_confirmation', 'artifact_ship', 'research_mission']),
+  source: z.enum([
+    'kpi_accept',
+    'analysis_link',
+    'user_confirmation',
+    'artifact_ship',
+    'research_mission',
+  ]),
   kind: OutcomeSignalKindSchema,
   magnitude: z.object({
     value: z.number().finite().nonnegative(),
@@ -172,7 +185,9 @@ export const OutcomeAcceptanceResolveResponseSchema = z.object({
   acceptedMetricIds: z.array(z.string().trim().min(1)),
   now: z.string().trim().min(1),
 });
-export type OutcomeAcceptanceResolveResponse = z.infer<typeof OutcomeAcceptanceResolveResponseSchema>;
+export type OutcomeAcceptanceResolveResponse = z.infer<
+  typeof OutcomeAcceptanceResolveResponseSchema
+>;
 
 export const OutcomeBusinessLinkBodySchema = z.object({
   analysisSummary: z.string().trim().min(1),
@@ -202,4 +217,3 @@ export const OutcomeBusinessLinkResponseSchema = z.object({
   }),
 });
 export type OutcomeBusinessLinkResponse = z.infer<typeof OutcomeBusinessLinkResponseSchema>;
-

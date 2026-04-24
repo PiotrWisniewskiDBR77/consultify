@@ -29,4 +29,3 @@ export interface ExecutionProposalV1 {
   readonly ops: readonly ExecutionOp[];
   readonly proposedBy: ActorId | string;
 }
-

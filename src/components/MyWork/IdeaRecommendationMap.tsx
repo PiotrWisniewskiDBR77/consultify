@@ -77,6 +77,7 @@ import { AIBranchBalancer } from './mindmap/AIBranchBalancer';
 import { AICompetitiveLandscape } from './mindmap/AICompetitiveLandscape';
 import { AIDependencyDetector, type DetectedDependency } from './mindmap/AIDependencyDetector';
 import { AIPriorityRecommender } from './mindmap/AIPriorityRecommender';
+import { AIProposalDiffModal } from './mindmap/AIProposalDiffModal';
 import { AISentimentOverlay, type SentimentResult } from './mindmap/AISentimentOverlay';
 import { detectMindmapIntent, type SidekickContext } from './mindmap/aiSidekickContext';
 import { AIWhatIfScenarios } from './mindmap/AIWhatIfScenarios';
@@ -143,7 +144,6 @@ import {
 } from './mindmap/useMindMapNodes';
 import { useMindMapPersistence } from './mindmap/useMindMapPersistence';
 import { useMindMapQuickActions } from './mindmap/useMindMapQuickActions';
-import { AIProposalDiffModal } from './mindmap/AIProposalDiffModal';
 import { VoiceToNode } from './mindmap/VoiceToNode';
 import { triggerWebhooks, WebhookSettings } from './mindmap/WebhookSettings';
 
@@ -1451,7 +1451,9 @@ const EditableIdeaNodeComponent: React.FC<NodeProps> = React.memo(({ id, data, s
                     );
                   }}
                   className="nodrag mt-0.5 flex items-center gap-0.5 text-slate-400 hover:bg-slate-100/80 dark:hover:bg-slate-700/50 rounded px-0.5 transition-colors"
-                  title={data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : (isPl ? 'Zwiń' : 'Collapse')}
+                  title={
+                    data._collapsed ? (isPl ? 'Rozwiń' : 'Expand') : isPl ? 'Zwiń' : 'Collapse'
+                  }
                 >
                   {data._collapsed ? <ChevronRight size={11} /> : <ChevronDown size={11} />}
                   {data._collapsed && (data._childCount ?? 0) > 0 && (
@@ -2040,11 +2042,12 @@ function MindMapInner({
     setNodes((prev: Node[]) =>
       prev.map((n) => ({
         ...n,
-        selected: n.id === ancestorId
-          ? true
-          : hiddenSelected.some((h) => h.id === n.id)
-            ? false
-            : n.selected,
+        selected:
+          n.id === ancestorId
+            ? true
+            : hiddenSelected.some((h) => h.id === n.id)
+              ? false
+              : n.selected,
       }))
     );
 
@@ -2170,9 +2173,7 @@ function MindMapInner({
   }, []);
 
   useEffect(() => {
-    window.dispatchEvent(
-      new CustomEvent('mm-undo-state', { detail: { canUndo, canRedo } })
-    );
+    window.dispatchEvent(new CustomEvent('mm-undo-state', { detail: { canUndo, canRedo } }));
   }, [canUndo, canRedo]);
 
   // ── Context menu ─────────────────────────────────────────────────────────
@@ -2597,9 +2598,7 @@ function MindMapInner({
       const wasCollapsed = collapsedNodeIds.has(nodeId);
       toggleCollapseNode(nodeId, setCollapsedNodeIds);
       toast(
-        wasCollapsed
-          ? (isPolish ? 'Rozwinięto' : 'Expanded')
-          : (isPolish ? 'Zwinięto' : 'Collapsed'),
+        wasCollapsed ? (isPolish ? 'Rozwinięto' : 'Expanded') : isPolish ? 'Zwinięto' : 'Collapsed',
         { id: 'mm-op-cue', duration: 1200 }
       );
     },
@@ -2866,7 +2865,10 @@ function MindMapInner({
       );
 
       if (label !== originalLabel) {
-        toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', { id: 'mm-op-cue', duration: 1500 });
+        toast.success(isPolish ? 'Zmieniono nazwę' : 'Renamed', {
+          id: 'mm-op-cue',
+          duration: 1500,
+        });
       }
     };
     window.addEventListener('idea-mindmap-node-edit', handler);
@@ -3080,8 +3082,16 @@ function MindMapInner({
       }
       if ((e.metaKey || e.ctrlKey) && e.key === '0') {
         e.preventDefault();
-        debugLog('KEY_HANDLED fitView', { source: 'keyboard', reaction: 'handled', detail: keyLabel });
-        try { fitView({ padding: 0.3, duration: 300 }); } catch { /* */ }
+        debugLog('KEY_HANDLED fitView', {
+          source: 'keyboard',
+          reaction: 'handled',
+          detail: keyLabel,
+        });
+        try {
+          fitView({ padding: 0.3, duration: 300 });
+        } catch {
+          /* */
+        }
         return;
       }
       if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === 'z') {
@@ -3766,133 +3776,136 @@ function MindMapInner({
     );
   }, [aiProposal, selectedAddIdx]);
 
-  const applyAIProposal = useCallback(async (overrideSelectedIdx?: Record<number, boolean>) => {
-    if (!aiProposal) return;
-    if (locked) {
-      toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
-      return;
-    }
-    const effectiveIdx = overrideSelectedIdx ?? selectedAddIdx;
-    const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => effectiveIdx[idx]);
-    const toAddEdges = aiProposal.add?.edges || [];
-
-    if (toAddNodes.length === 0) {
-      toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
-      return;
-    }
-
-    pushUndo();
-    setSaving(true);
-    try {
-      const aiSummaryBySource = new Map<string, string[]>();
-      for (const edge of toAddEdges as any[]) {
-        const targetNode = toAddNodes.find((node: any) => node.id === edge.target);
-        if (!edge?.source || !targetNode?.data?.label) continue;
-        aiSummaryBySource.set(edge.source, [
-          ...(aiSummaryBySource.get(edge.source) || []),
-          String(targetNode.data.label),
-        ]);
+  const applyAIProposal = useCallback(
+    async (overrideSelectedIdx?: Record<number, boolean>) => {
+      if (!aiProposal) return;
+      if (locked) {
+        toast((isPolish ? 'Najpierw zaakceptuj wyzwanie.' : 'Accept the challenge first.') as any);
+        return;
       }
-      const nextNodes = (() => {
-        const byId = new Map<string, Node>();
-        for (const n of nodes as any) byId.set(String((n as any)?.id), n as any);
-        for (const n of toAddNodes as any) byId.set(String((n as any)?.id), n as any);
-        for (const [sourceId, labels] of aiSummaryBySource.entries()) {
-          const existing = byId.get(String(sourceId));
-          if (!existing) continue;
-          byId.set(String(sourceId), {
-            ...existing,
-            data: {
-              ...(existing.data || {}),
-              aiExpansionHistory: appendAIHistoryEntry(existing.data?.aiExpansionHistory as any, {
-                timestamp: new Date().toISOString(),
-                prompt: isPolish ? 'AI expand branch' : 'AI expand branch',
-                resultSummary: labels.join(', '),
-              }),
-            },
-          } as Node);
+      const effectiveIdx = overrideSelectedIdx ?? selectedAddIdx;
+      const toAddNodes = (aiProposal.add?.nodes || []).filter((_n, idx) => effectiveIdx[idx]);
+      const toAddEdges = aiProposal.add?.edges || [];
+
+      if (toAddNodes.length === 0) {
+        toast((isPolish ? 'Brak wybranych zmian' : 'No selected changes') as any);
+        return;
+      }
+
+      pushUndo();
+      setSaving(true);
+      try {
+        const aiSummaryBySource = new Map<string, string[]>();
+        for (const edge of toAddEdges as any[]) {
+          const targetNode = toAddNodes.find((node: any) => node.id === edge.target);
+          if (!edge?.source || !targetNode?.data?.label) continue;
+          aiSummaryBySource.set(edge.source, [
+            ...(aiSummaryBySource.get(edge.source) || []),
+            String(targetNode.data.label),
+          ]);
         }
-        return Array.from(byId.values());
-      })();
-      const nextEdges = (() => {
-        const byId = new Map<string, Edge>();
-        for (const e of edges as any) byId.set(String((e as any)?.id), e as any);
-        for (const e of toAddEdges as any) byId.set(String((e as any)?.id), e as any);
-        return Array.from(byId.values());
-      })();
+        const nextNodes = (() => {
+          const byId = new Map<string, Node>();
+          for (const n of nodes as any) byId.set(String((n as any)?.id), n as any);
+          for (const n of toAddNodes as any) byId.set(String((n as any)?.id), n as any);
+          for (const [sourceId, labels] of aiSummaryBySource.entries()) {
+            const existing = byId.get(String(sourceId));
+            if (!existing) continue;
+            byId.set(String(sourceId), {
+              ...existing,
+              data: {
+                ...(existing.data || {}),
+                aiExpansionHistory: appendAIHistoryEntry(existing.data?.aiExpansionHistory as any, {
+                  timestamp: new Date().toISOString(),
+                  prompt: isPolish ? 'AI expand branch' : 'AI expand branch',
+                  resultSummary: labels.join(', '),
+                }),
+              },
+            } as Node);
+          }
+          return Array.from(byId.values());
+        })();
+        const nextEdges = (() => {
+          const byId = new Map<string, Edge>();
+          for (const e of edges as any) byId.set(String((e as any)?.id), e as any);
+          for (const e of toAddEdges as any) byId.set(String((e as any)?.id), e as any);
+          return Array.from(byId.values());
+        })();
 
-      setNodes(nextNodes as any);
-      setEdges(nextEdges as any);
+        setNodes(nextNodes as any);
+        setEdges(nextEdges as any);
 
-      if (externalRuntime) {
-        externalRuntime.captureGraph(
-          {
+        if (externalRuntime) {
+          externalRuntime.captureGraph(
+            {
+              nodes: nextNodes as any,
+              edges: nextEdges as any,
+              extensions: extensions || undefined,
+            },
+            { reason: 'ai', immediate: true }
+          );
+          await externalRuntime.flushGraph({ reason: 'ai' });
+        } else if (persistence === 'online') {
+          const response = await Api.syncMyIdeaMap(ideaId, {
             nodes: nextNodes as any,
             edges: nextEdges as any,
+            preferredTool: preferredTool || undefined,
             extensions: extensions || undefined,
-          },
-          { reason: 'ai', immediate: true }
-        );
-        await externalRuntime.flushGraph({ reason: 'ai' });
-      } else if (persistence === 'online') {
-        const response = await Api.syncMyIdeaMap(ideaId, {
-          nodes: nextNodes as any,
-          edges: nextEdges as any,
-          preferredTool: preferredTool || undefined,
-          extensions: extensions || undefined,
-          fromAI: true,
-          baseVersion: localVersionRef.current,
-          reason: 'ai',
-        });
-        localVersionRef.current = Math.max(
-          1,
-          Number(response?.version || localVersionRef.current || 1)
-        );
-        setLastSavedAt(Date.now());
-      }
+            fromAI: true,
+            baseVersion: localVersionRef.current,
+            reason: 'ai',
+          });
+          localVersionRef.current = Math.max(
+            1,
+            Number(response?.version || localVersionRef.current || 1)
+          );
+          setLastSavedAt(Date.now());
+        }
 
-      toast.success(
-        isPolish
-          ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)`
-          : `Applied AI proposals (${toAddNodes.length} added)`,
-        { duration: 1200 }
-      );
-      closeAIModal();
-    } catch (err: any) {
-      if (err?.status === 409) {
-        toast(
+        toast.success(
           isPolish
-            ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
-            : 'Change conflict detected. Refreshing map from server.',
-          { icon: '⚠️' }
+            ? `Zastosowano propozycje AI (${toAddNodes.length} dodano)`
+            : `Applied AI proposals (${toAddNodes.length} added)`,
+          { duration: 1200 }
         );
         closeAIModal();
-      } else {
-        toast.error(
-          err?.message ||
-            (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
-        );
+      } catch (err: any) {
+        if (err?.status === 409) {
+          toast(
+            isPolish
+              ? 'Wykryto konflikt zmian. Odświeżam mapę z serwera.'
+              : 'Change conflict detected. Refreshing map from server.',
+            { icon: '⚠️' }
+          );
+          closeAIModal();
+        } else {
+          toast.error(
+            err?.message ||
+              (isPolish ? 'Nie udało się zastosować propozycji' : 'Failed to apply proposals')
+          );
+        }
+      } finally {
+        setSaving(false);
       }
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    aiProposal,
-    closeAIModal,
-    edges,
-    extensions,
-    ideaId,
-    isPolish,
-    localVersionRef,
-    locked,
-    nodes,
-    persistence,
-    preferredTool,
-    pushUndo,
-    selectedAddIdx,
-    setEdges,
-    setNodes,
-  ]);
+    },
+    [
+      aiProposal,
+      closeAIModal,
+      edges,
+      extensions,
+      ideaId,
+      isPolish,
+      localVersionRef,
+      locked,
+      nodes,
+      persistence,
+      preferredTool,
+      pushUndo,
+      selectedAddIdx,
+      setEdges,
+      setNodes,
+    ]
+  );
 
   const handleAIExpand = useCallback(
     async (targetNodeId?: string) => {

@@ -1373,7 +1373,9 @@ const TOOL_INITIAL_DATA: Record<
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 const normalizeCanonicalStatus = (status?: string | null): CanonicalToolSessionStatus => {
-  const normalized = String(status || 'DRAFT').trim().toUpperCase();
+  const normalized = String(status || 'DRAFT')
+    .trim()
+    .toUpperCase();
   if (
     normalized === 'DRAFT' ||
     normalized === 'IN_PROGRESS' ||

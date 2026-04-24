@@ -89,19 +89,22 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
         </div>
       )}
 
-      {!compact && typeof tokenUsed === 'number' && typeof tokenLimit === 'number' && tokenLimit > 0 && (
-        <div className="hidden 2xl:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
-          <span>
-            {Math.round(tokenUsed / 1000)}k/{Math.round(tokenLimit / 1000)}k tokens
-          </span>
-        </div>
-      )}
+      {!compact &&
+        typeof tokenUsed === 'number' &&
+        typeof tokenLimit === 'number' &&
+        tokenLimit > 0 && (
+          <div className="hidden 2xl:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
+            <span>
+              {Math.round(tokenUsed / 1000)}k/{Math.round(tokenLimit / 1000)}k tokens
+            </span>
+          </div>
+        )}
 
       {compact && (
         <div className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 px-3 py-1 text-xs text-slate-600 dark:text-slate-300">
-        <Clock3 className="h-3.5 w-3.5" />
-        <span>{formatRemainingTime(timeRemainingMs)}</span>
-      </div>
+          <Clock3 className="h-3.5 w-3.5" />
+          <span>{formatRemainingTime(timeRemainingMs)}</span>
+        </div>
       )}
 
       {isDemoMode && isDemoLocaleMismatch && (
@@ -115,7 +118,11 @@ export const DemoTopbarStatus: React.FC<DemoTopbarStatusProps> = ({
           disabled={isDemoLoading}
           className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-200 transition-colors hover:bg-amber-500/15 disabled:opacity-50"
         >
-          <span>{t('demo.banner.restartLocale', 'Reload demo in {{locale}}', { locale: restartTargetLocale })}</span>
+          <span>
+            {t('demo.banner.restartLocale', 'Reload demo in {{locale}}', {
+              locale: restartTargetLocale,
+            })}
+          </span>
         </button>
       )}
 

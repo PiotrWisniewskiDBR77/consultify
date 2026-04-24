@@ -4,7 +4,12 @@ import { useTranslation } from 'react-i18next';
 import { Callout } from '@/components/shared/NModeBlocks';
 
 import type { CalendarEventSource, CalendarFilter, SourceLifecycleState } from './calendarTypes';
-import { SOURCE_COLORS, SOURCE_LABELS, LIFECYCLE_LABELS, LIFECYCLE_RECOVERY } from './calendarTypes';
+import {
+  LIFECYCLE_LABELS,
+  LIFECYCLE_RECOVERY,
+  SOURCE_COLORS,
+  SOURCE_LABELS,
+} from './calendarTypes';
 
 interface ExternalCalendarSourceState {
   available: boolean;
@@ -144,7 +149,9 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
         <div className="space-y-1.5">
           {ALL_SOURCES.map((source) => {
             const isExternalSource = source === 'google' || source === 'outlook';
-            const isAvailable = isExternalSource ? Boolean(externalSourceStatus?.[source]?.available) : true;
+            const isAvailable = isExternalSource
+              ? Boolean(externalSourceStatus?.[source]?.available)
+              : true;
             const active = isAvailable && filter.sources.includes(source);
             return (
               <button
@@ -155,8 +162,8 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
                   !isAvailable
                     ? 'cursor-not-allowed text-slate-400 dark:text-slate-600 opacity-70'
                     : active
-                    ? 'text-slate-800 dark:text-white'
-                    : 'text-slate-400 dark:text-slate-600 line-through'
+                      ? 'text-slate-800 dark:text-white'
+                      : 'text-slate-400 dark:text-slate-600 line-through'
                 } hover:bg-slate-100 dark:hover:bg-navy-800`}
               >
                 <span
@@ -194,13 +201,17 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
               if (state.available && lifecycle === 'connected') return null;
 
               const variant = lifecycleInfo
-                ? lifecycleInfo.variant === 'success' ? 'info' : lifecycleInfo.variant
+                ? lifecycleInfo.variant === 'success'
+                  ? 'info'
+                  : lifecycleInfo.variant === 'error'
+                    ? 'critical'
+                    : lifecycleInfo.variant
                 : 'info';
 
               return (
                 <Callout
                   key={source}
-                  variant={variant as 'info' | 'warning' | 'error' | 'success'}
+                  variant={variant}
                   compact
                   title={`${isPolish ? SOURCE_LABELS[source].pl : SOURCE_LABELS[source].en}: ${lifecycleInfo ? lifecycleInfo.label : state.statusLabel}`}
                 >

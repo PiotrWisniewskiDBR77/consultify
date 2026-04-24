@@ -1,3 +1,12 @@
+export const ANNOTATION_KINDS = [
+  'question',
+  'suggestion',
+  'issue',
+  'approval_note',
+  'note',
+  'todo',
+] as const;
+
 export type CommentAnchorRange = {
   readonly startOffset: number;
   readonly endOffset: number;
@@ -14,12 +23,14 @@ export type TypedComment = {
   readonly author: string;
   readonly body: string;
   readonly mentions: readonly string[];
-  readonly kind: 'question' | 'suggestion' | 'issue' | 'approval_note' | 'note' | 'todo';
+  readonly kind: AnnotationKind;
   readonly state: 'unresolved' | 'resolved';
   readonly orphaned: boolean;
   readonly createdAt: string;
   readonly resolvedAt: string | null;
 };
+
+export type AnnotationKind = (typeof ANNOTATION_KINDS)[number];
 
 export type MentionNotificationIntent = {
   readonly commentId: string;
@@ -95,4 +106,3 @@ export function assertAnchorSurvivesMutation(
   _mutation: AnchorMutation,
   _result: NonNullable<ReturnType<typeof reattachCommentToMutation>>
 ): void {}
-

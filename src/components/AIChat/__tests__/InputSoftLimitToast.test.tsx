@@ -15,10 +15,7 @@ import { render } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  buildInputSoftLimitToastMessage,
-  InputSoftLimitToast,
-} from '../InputSoftLimitToast';
+import { buildInputSoftLimitToastMessage, InputSoftLimitToast } from '../InputSoftLimitToast';
 
 function renderWithValue(
   value: string,

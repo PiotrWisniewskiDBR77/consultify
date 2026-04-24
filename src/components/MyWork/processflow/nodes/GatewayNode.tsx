@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 
 const XorMarker = () => (
   <>
@@ -58,7 +58,10 @@ export const GatewayNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
       </svg>
 
       {selected && (
-        <div className="absolute top-0 left-0 w-[50px] h-[50px] ring-2 ring-primary-500/60 pointer-events-none" style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }} />
+        <div
+          className="absolute top-0 left-0 w-[50px] h-[50px] ring-2 ring-primary-500/60 pointer-events-none"
+          style={{ clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)' }}
+        />
       )}
 
       <div className="mt-1 min-w-[50px] text-center">
@@ -81,10 +84,33 @@ export const GatewayNode: React.FC<NodeProps<any>> = ({ data, selected }) => {
         )}
       </div>
 
-      <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-slate-400" style={{ top: 25 }} />
-      <Handle type="source" id="right" position={Position.Right} className="!w-2 !h-2 !bg-slate-400" style={{ top: 25 }} />
-      <Handle type="source" id="top" position={Position.Top} className="!w-2 !h-2 !bg-slate-400" style={{ left: 25 }} />
-      <Handle type="source" id="bottom" position={Position.Bottom} className="!w-2 !h-2 !bg-slate-400" style={{ left: 25 }} />
+      <Handle
+        type="target"
+        position={Position.Left}
+        className="!w-2 !h-2 !bg-slate-400"
+        style={{ top: 25 }}
+      />
+      <Handle
+        type="source"
+        id="right"
+        position={Position.Right}
+        className="!w-2 !h-2 !bg-slate-400"
+        style={{ top: 25 }}
+      />
+      <Handle
+        type="source"
+        id="top"
+        position={Position.Top}
+        className="!w-2 !h-2 !bg-slate-400"
+        style={{ left: 25 }}
+      />
+      <Handle
+        type="source"
+        id="bottom"
+        position={Position.Bottom}
+        className="!w-2 !h-2 !bg-slate-400"
+        style={{ left: 25 }}
+      />
     </div>
   );
 };

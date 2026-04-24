@@ -227,16 +227,16 @@ export async function upsertManualContract(
 
   const plan = (await dbGet(
     `SELECT id, name, limits, token_limit, storage_limit_gb FROM subscription_plans WHERE id = ? LIMIT 1`,
-    [
-      input.subscriptionPlanId,
-    ]
-  )) as {
-    id?: string;
-    name?: string;
-    limits?: string | null;
-    token_limit?: number | null;
-    storage_limit_gb?: number | null;
-  } | undefined;
+    [input.subscriptionPlanId]
+  )) as
+    | {
+        id?: string;
+        name?: string;
+        limits?: string | null;
+        token_limit?: number | null;
+        storage_limit_gb?: number | null;
+      }
+    | undefined;
   if (!plan?.id) {
     return { success: false, message: 'Subscription plan not found' };
   }
@@ -257,7 +257,9 @@ export async function upsertManualContract(
   );
   const resolvedLimits = {
     maxProjects: normalizeLimitNumber(
-      input.limitsOverride?.maxProjects ?? parsedPlanLimits.maxProjects ?? parsedPlanLimits.max_projects,
+      input.limitsOverride?.maxProjects ??
+        parsedPlanLimits.maxProjects ??
+        parsedPlanLimits.max_projects,
       DEFAULT_PAID_LIMITS.max_projects
     ),
     maxUsers: normalizeLimitNumber(
@@ -281,7 +283,9 @@ export async function upsertManualContract(
         (typeof parsedPlanLimits.storage_gb === 'number'
           ? Math.round(parsedPlanLimits.storage_gb * 1024)
           : null) ??
-        (typeof plan.storage_limit_gb === 'number' ? Math.round(plan.storage_limit_gb * 1024) : null),
+        (typeof plan.storage_limit_gb === 'number'
+          ? Math.round(plan.storage_limit_gb * 1024)
+          : null),
       DEFAULT_PAID_LIMITS.max_storage_mb
     ),
     maxTotalTokens: normalizeLimitNumber(
@@ -387,7 +391,10 @@ export async function upsertManualContract(
       },
     });
 
-    return { success: true, message: `Manual contract updated for ${org.name || input.organizationId}` };
+    return {
+      success: true,
+      message: `Manual contract updated for ${org.name || input.organizationId}`,
+    };
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : String(err);
     logger.error(`[BillingAdminOps] upsertManualContract failed: ${msg}`);

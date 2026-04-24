@@ -67,9 +67,19 @@ const formatDate = (dateString: string) => {
 };
 
 const statusConfig = {
-  success: { icon: CheckCircle, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Success' },
+  success: {
+    icon: CheckCircle,
+    color: 'text-emerald-400',
+    bg: 'bg-emerald-500/10',
+    label: 'Success',
+  },
   failed: { icon: XCircle, color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Failed' },
-  suspicious: { icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Suspicious' },
+  suspicious: {
+    icon: AlertTriangle,
+    color: 'text-amber-400',
+    bg: 'bg-amber-500/10',
+    label: 'Suspicious',
+  },
 } as const;
 
 // ---------------------------------------------------------------------------
@@ -81,10 +91,18 @@ const TabToggle: React.FC<{ active: Tab; onChange: (t: Tab) => void }> = ({ acti
   const { t } = useTranslation();
   return (
     <div className="inline-flex rounded-lg bg-navy-900/50 p-0.5">
-      {([
-        { id: 'sessions' as Tab, icon: Globe, label: t('settings.security.tabSessions', 'Active Sessions') },
-        { id: 'history' as Tab, icon: History, label: t('settings.security.tabHistory', 'Login History') },
-      ]).map((tab) => (
+      {[
+        {
+          id: 'sessions' as Tab,
+          icon: Globe,
+          label: t('settings.security.tabSessions', 'Active Sessions'),
+        },
+        {
+          id: 'history' as Tab,
+          icon: History,
+          label: t('settings.security.tabHistory', 'Login History'),
+        },
+      ].map((tab) => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
@@ -186,7 +204,10 @@ export const SessionsActivitySettings: React.FC = () => {
     <SettingsSection
       icon={Globe}
       title={t('settings.security.sessionsActivityTitle', 'Sessions & Activity')}
-      description={t('settings.security.sessionsActivityDesc', 'Monitor your active sessions and review login history')}
+      description={t(
+        'settings.security.sessionsActivityDesc',
+        'Monitor your active sessions and review login history'
+      )}
       cardId="security-sessions-activity"
       actions={
         <div className="flex items-center gap-2">
@@ -242,7 +263,8 @@ export const SessionsActivitySettings: React.FC = () => {
                         )}
                       </div>
                       <p className="text-xs text-slate-500 mt-0.5 truncate">
-                        {session.location || session.ipAddress || 'Unknown'} · {session.lastActive || session.lastUsedAt || 'Recently'}
+                        {session.location || session.ipAddress || 'Unknown'} ·{' '}
+                        {session.lastActive || session.lastUsedAt || 'Recently'}
                       </p>
                     </div>
                     {!session.current && (

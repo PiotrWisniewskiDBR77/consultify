@@ -133,4 +133,3 @@ describe('artifactPipelineService', () => {
     expect(run?.materialized).toBe(true);
   });
 });
-

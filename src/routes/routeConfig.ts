@@ -263,6 +263,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // Main
   [AppView.AI_CHAT]: ROUTES.AI_CHAT,
+  [AppView.AI_CHAT_V10_RUNTIME]: ROUTES.AI_CHAT_V10_RUNTIME,
   [AppView.APP_INTRO]: ROUTES.APP_INTRO,
   [AppView.MY_WORK]: ROUTES.MY_WORK,
   [AppView.DASHBOARD]: ROUTES.AI_CHAT, // DEPRECATED: redirects to Chat
@@ -571,7 +572,7 @@ export function getAppViewFromPath(path: string): AppView | null {
   const exact = getAppViewFromRoute(normalized);
   if (exact) return exact;
 
-  if (normalized === ROUTES.AI_CHAT_V10_RUNTIME) return AppView.AI_CHAT;
+  if (normalized === ROUTES.AI_CHAT_V10_RUNTIME) return AppView.AI_CHAT_V10_RUNTIME;
   // /chat/:conversationId → AI_CHAT
   if (normalized.startsWith('/chat/')) return AppView.AI_CHAT;
   if (normalized.startsWith(ROUTES.DOCS)) return AppView.KNOWLEDGE_BASE;
@@ -598,9 +599,11 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.SUPERADMIN_BULK_OPERATIONS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_FEEDBACK))
     return AppView.SUPERADMIN_FEEDBACK;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_INVOICES)) return AppView.SUPERADMIN_INVOICES;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_INVOICES))
+    return AppView.SUPERADMIN_INVOICES;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_BILLING)) return AppView.SUPERADMIN_BILLING;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL)) return AppView.SUPERADMIN_REVENUE;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL))
+    return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION))
     return AppView.SUPERADMIN_COMMUNICATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_USERS)) return AppView.SUPERADMIN_USERS;
@@ -630,7 +633,8 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.SUPERADMIN_WHITELABEL;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION_SETTINGS))
     return AppView.SUPERADMIN_SETTINGS;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION)) return AppView.SUPERADMIN_CONFIGURATION;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION))
+    return AppView.SUPERADMIN_CONFIGURATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.REVENUE)) return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ANALYTICS)) return AppView.SUPERADMIN_ANALYTICS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.VIRTUAL_WORKERS))

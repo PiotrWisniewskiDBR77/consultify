@@ -58,6 +58,7 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import {
   V8InterviewApi,
@@ -66,7 +67,6 @@ import {
 } from '@/services/api/v8/interview';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { type LinkedItem, LinkedItemsSection } from '../MyWork/shared';
@@ -413,7 +413,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     const action = String(latestReviewDecision?.action || '');
     if (action === 'approve') return isPolish ? 'zatwierdzenie' : 'approval';
     if (action === 'send_back') return isPolish ? 'odesłanie do poprawy' : 'send back';
-    if (action === 'revoke_approval') return isPolish ? 'cofnięcie zatwierdzenia' : 'approval revoked';
+    if (action === 'revoke_approval')
+      return isPolish ? 'cofnięcie zatwierdzenia' : 'approval revoked';
     return '-';
   }, [isPolish, latestReviewDecision]);
   const canRevokeApproval = useMemo(
@@ -421,7 +422,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     [currentStatus, isManagerReviewActor]
   );
   const buildAiSendBackDraftReason = useCallback(() => {
-    if (aiWeakAnswerMap.length === 0 && (!aiEvaluation || aiEvaluation.recommendations.length === 0)) {
+    if (
+      aiWeakAnswerMap.length === 0 &&
+      (!aiEvaluation || aiEvaluation.recommendations.length === 0)
+    ) {
       return isPolish
         ? 'Uzupełnij odpowiedzi i dopracuj submission przed ponownym wysłaniem do review.'
         : 'Please complete the answers and improve the submission before resubmitting for review.';
@@ -456,9 +460,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setAiEvaluation(result);
         setAiEvaluationUpdatedAt(new Date().toISOString());
         if (!opts?.silent) {
-          toast.success(
-            isPolish ? 'Ocena jakości AI jest gotowa.' : 'AI quality review is ready.'
-          );
+          toast.success(isPolish ? 'Ocena jakości AI jest gotowa.' : 'AI quality review is ready.');
         }
         return result;
       } catch (error) {
@@ -622,9 +624,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
             currentSession.assignmentId
               ? V8InterviewApi.getManagedAssignments()
-                  .then((res) =>
-                    (res.assignments || []).find((item) => item.id === currentSession?.assignmentId) ||
-                    null
+                  .then(
+                    (res) =>
+                      (res.assignments || []).find(
+                        (item) => item.id === currentSession?.assignmentId
+                      ) || null
                   )
                   .catch(() => Api.get(`/interview/assignments/${currentSession.assignmentId}`))
                   .catch(() => Api.get(`/interview/assignments/my?includeCompleted=true`))
@@ -657,11 +661,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           );
 
           if (currentSession.assignmentId) {
-            const found = (
-              Array.isArray(assignmentRes)
+            const found =
+              (Array.isArray(assignmentRes)
                 ? assignmentRes.find((a: any) => a?.id === currentSession?.assignmentId)
-                : assignmentRes
-            ) || interviewDemoData.assignmentsBySessionId[currentSession.id];
+                : assignmentRes) || interviewDemoData.assignmentsBySessionId[currentSession.id];
             setAssignmentStatus(found?.status || null);
             setAssignmentInfo(found || null);
             setAiEvaluation((found as any)?.aiReview || null);
@@ -712,7 +715,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     };
 
     loadSession();
-  }, [initialSessionId, interviewDemoData, isPolish, onSessionChange, projectId, runAiQualityReview]);
+  }, [
+    initialSessionId,
+    interviewDemoData,
+    isPolish,
+    onSessionChange,
+    projectId,
+    runAiQualityReview,
+  ]);
 
   // ==========================================
   // HANDLERS
@@ -738,7 +748,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
       try {
         const updated = await Api.patch(`/interview/questions/${questionId}`, updates);
-        const nextQuestions = questions.map((q) => (q.id === questionId ? { ...q, ...updated } : q));
+        const nextQuestions = questions.map((q) =>
+          q.id === questionId ? { ...q, ...updated } : q
+        );
         setQuestions(nextQuestions);
         const answeredQuestions = nextQuestions.filter((q) => q.status === 'answered').length;
         setSession((prev) => {
@@ -1075,8 +1087,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             sentBackReason: null,
             missingItems: [],
           }));
-        }
-        else setAssignmentStatus('submitted');
+        } else setAssignmentStatus('submitted');
         toast.success(
           isPolish
             ? `Wywiad wysłany do review (${completeness ?? 0}%).`
@@ -1176,8 +1187,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       if (updatedAssignment?.status) {
         setAssignmentStatus(String(updatedAssignment.status));
         setAssignmentInfo((prev: any) => ({ ...(prev || {}), ...updatedAssignment }));
-      }
-      else setAssignmentStatus('approved');
+      } else setAssignmentStatus('approved');
       if (updatedSession) {
         setSession(updatedSession);
         onSessionChange?.(updatedSession);
@@ -1235,9 +1245,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       );
     } catch (error) {
       console.error('[InterviewWorkspace] Failed to revoke approval:', error);
-      toast.error(
-        isPolish ? 'Nie udało się cofnąć zatwierdzenia.' : 'Failed to revoke approval.'
-      );
+      toast.error(isPolish ? 'Nie udało się cofnąć zatwierdzenia.' : 'Failed to revoke approval.');
     } finally {
       setIsRevokingApproval(false);
     }
@@ -1339,7 +1347,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Export handlers
   const handleExportMarkdown = () => {
-    const factsText = summaryData.facts.map((f) => `- ${typeof f === 'string' ? f : (f as any)?.fact || JSON.stringify(f)}`).join('\n');
+    const factsText = summaryData.facts
+      .map((f) => `- ${typeof f === 'string' ? f : (f as any)?.fact || JSON.stringify(f)}`)
+      .join('\n');
     const content = `# ${sessionName}\n\n## Progress: ${overallPercent}%\n\n${factsText}`;
     const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -1352,7 +1362,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
   };
 
   const handleCopy = () => {
-    const factsText = summaryData.facts.map((f) => `- ${typeof f === 'string' ? f : (f as any)?.fact || JSON.stringify(f)}`).join('\n');
+    const factsText = summaryData.facts
+      .map((f) => `- ${typeof f === 'string' ? f : (f as any)?.fact || JSON.stringify(f)}`)
+      .join('\n');
     const content = `${sessionName}\n\nProgress: ${overallPercent}%\n\nFacts:\n${factsText}`;
     navigator.clipboard.writeText(content);
     toast.success(isPolish ? 'Skopiowano' : 'Copied');
@@ -1704,7 +1716,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             }}
           >
             {isAiEvaluating ? (
-              <p>{isPolish ? 'AI analizuje jakość odpowiedzi...' : 'AI is reviewing answer quality...'}</p>
+              <p>
+                {isPolish
+                  ? 'AI analizuje jakość odpowiedzi...'
+                  : 'AI is reviewing answer quality...'}
+              </p>
             ) : aiEvaluation ? (
               <div className="space-y-2">
                 <p>
@@ -1841,13 +1857,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
                 ? isPolish
                   ? 'Zatwierdzenie aktywne'
                   : 'Approval active'
-              : isLocked
-                ? isPolish
-                  ? 'Tryb tylko do odczytu'
-                  : 'Read-only'
-                : isPolish
-                  ? 'Następny krok'
-                  : 'Next action'
+                : isLocked
+                  ? isPolish
+                    ? 'Tryb tylko do odczytu'
+                    : 'Read-only'
+                  : isPolish
+                    ? 'Następny krok'
+                    : 'Next action'
           }
           action={
             isLocked
@@ -1867,13 +1883,13 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               ? isPolish
                 ? `Ta sesja została zatwierdzona. Możesz jednak cofnąć approval i oddać ją z powrotem do dalszej pracy.`
                 : `This session has already been approved, but you can still revoke the approval and return it to active work.`
-            : currentStatus === 'submitted'
-              ? isPolish
-                ? `Wysłane do review. Nadal możesz edytować odpowiedzi i wysłać je ponownie.`
-                : `Submitted for review. You can keep editing and submit again.`
-              : isPolish
-                ? `Postęp: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`
-                : `Progress: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`}
+              : currentStatus === 'submitted'
+                ? isPolish
+                  ? `Wysłane do review. Nadal możesz edytować odpowiedzi i wysłać je ponownie.`
+                  : `Submitted for review. You can keep editing and submit again.`
+                : isPolish
+                  ? `Postęp: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`
+                  : `Progress: ${answeredQuestions}/${totalQuestions} (${overallPercent}%).`}
         </Callout>
       </NModeSectionWrapper>
     );

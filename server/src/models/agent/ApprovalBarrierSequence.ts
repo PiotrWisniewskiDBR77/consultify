@@ -22,14 +22,22 @@ export type BarrierPauseState = {
 
 export type BarrierResumeResult =
   | { readonly outcome: 'resumed'; readonly resumedAt: string; readonly pause: BarrierPauseState }
-  | { readonly outcome: 'cancelled'; readonly resumedAt: string; readonly pause: BarrierPauseState };
+  | {
+      readonly outcome: 'cancelled';
+      readonly resumedAt: string;
+      readonly pause: BarrierPauseState;
+    };
 
 export function simulateBarrierSequence(
   sequence: ApprovalBarrierSequence,
   input: { readonly untilStepOrdinal?: number; readonly emittedAt: string }
-): { readonly outcome: 'completed'; readonly completedSteps: number } | { readonly outcome: 'paused'; readonly pause: BarrierPauseState } {
+):
+  | { readonly outcome: 'completed'; readonly completedSteps: number }
+  | { readonly outcome: 'paused'; readonly pause: BarrierPauseState } {
   const until = input.untilStepOrdinal ?? sequence.stepCount - 1;
-  const nextBarrier = [...sequence.barriers].sort((a, b) => a.stepOrdinal - b.stepOrdinal).find((b) => b.stepOrdinal <= until);
+  const nextBarrier = [...sequence.barriers]
+    .sort((a, b) => a.stepOrdinal - b.stepOrdinal)
+    .find((b) => b.stepOrdinal <= until);
   if (!nextBarrier) {
     return { outcome: 'completed', completedSteps: Math.min(sequence.stepCount, until + 1) };
   }
@@ -69,4 +77,3 @@ export function assertResumePoint(pause: BarrierPauseState, resume: BarrierResum
     throw new Error('Resume pause mismatch');
   }
 }
-

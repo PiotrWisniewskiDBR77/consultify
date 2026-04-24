@@ -61,7 +61,8 @@ describe('agent-schedules.routes', () => {
 
   it('triggers a schedule with org autonomy settings and actor context', async () => {
     const org = await import('../../../services/organizationService.js');
-    const schedules = await import('../../../services/v10/agent-schedules/agentScheduleRegistryService.js');
+    const schedules =
+      await import('../../../services/v10/agent-schedules/agentScheduleRegistryService.js');
 
     vi.mocked(org.getAISettings).mockResolvedValue({
       ai_autonomy_level: 'SUPERVISED',
@@ -121,13 +122,15 @@ describe('agent-schedules.routes', () => {
   });
 
   it('ignores tenant overrides from request payloads', async () => {
-    const schedules = await import('../../../services/v10/agent-schedules/agentScheduleRegistryService.js');
+    const schedules =
+      await import('../../../services/v10/agent-schedules/agentScheduleRegistryService.js');
     vi.mocked(schedules.agentScheduleRegistryService.listSchedules).mockResolvedValue([] as never);
 
     const mod = await import('../../../routes/v10/agent-schedules.routes.js');
     const router = mod.default;
     const layer = router.stack.find(
-      (entry: unknown) => (entry as RouteLayer).route?.path === '/' && (entry as RouteLayer).route?.methods?.get
+      (entry: unknown) =>
+        (entry as RouteLayer).route?.path === '/' && (entry as RouteLayer).route?.methods?.get
     );
 
     expect(layer).toBeDefined();

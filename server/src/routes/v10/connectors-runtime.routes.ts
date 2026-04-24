@@ -5,25 +5,14 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import verifyToken, { requireOrganization } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
-  connectorsRuntimeService,
-  type ConnectorsRuntimeService,
-} from '../../services/v10/connectors/connectorsRuntimeService.js';
-import { ConnectorsRegistryNotFoundError } from '../../services/v10/connectors/connectorsRegistryService.js';
-import {
   ConnectorsRuntimeBackendError,
   ConnectorsRuntimeInputError,
 } from '../../models/v10/pipelines/ConnectorsFetchPipeline.js';
+import { ConnectorsRegistryNotFoundError } from '../../services/v10/connectors/connectorsRegistryService.js';
 import {
-  ConnectorsFetchRequestSchema,
-  ConnectorsAuthCompleteRequestSchema,
-  ConnectorsAuthStartRequestSchema,
-  ConnectorsReadSourceRequestSchema,
-  ConnectorsSearchRequestSchema,
-  ConnectorsTokenRefreshRequestSchema,
-  ConnectorsSessionConnectRequestSchema,
-  ConnectorsSessionDisconnectRequestSchema,
-} from '../../types/v10/connectors-runtime.js';
-import { asyncHandler } from '../../utils/asyncHandler.js';
+  type ConnectorsRuntimeService,
+  connectorsRuntimeService,
+} from '../../services/v10/connectors/connectorsRuntimeService.js';
 import {
   ConnectorsRuntimeAuthChallengeNotFoundError,
   ConnectorsRuntimeSessionInputError,
@@ -31,7 +20,23 @@ import {
   ConnectorsRuntimeSourceNotFoundError,
   ConnectorsRuntimeTokenVaultError,
 } from '../../services/v10/connectors/connectorsRuntimeService.js';
-import { respondWithData, runtimeMeta, withRuntimeScope, scopeFromAuthRequest } from './runtimeRouteUtils.js';
+import {
+  ConnectorsAuthCompleteRequestSchema,
+  ConnectorsAuthStartRequestSchema,
+  ConnectorsFetchRequestSchema,
+  ConnectorsReadSourceRequestSchema,
+  ConnectorsSearchRequestSchema,
+  ConnectorsSessionConnectRequestSchema,
+  ConnectorsSessionDisconnectRequestSchema,
+  ConnectorsTokenRefreshRequestSchema,
+} from '../../types/v10/connectors-runtime.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
+import {
+  respondWithData,
+  runtimeMeta,
+  scopeFromAuthRequest,
+  withRuntimeScope,
+} from './runtimeRouteUtils.js';
 
 export const V10_CONNECTORS_RUNTIME_CONTRACT = 'connectors_runtime_wave_a_v1';
 
@@ -109,7 +114,9 @@ export function createConnectorsRuntimeRouter(
     validateBody(ConnectorsFetchRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
       try {
-        return await respondWithData(res, V10_CONNECTORS_RUNTIME_CONTRACT, () => service.fetch(req.body));
+        return await respondWithData(res, V10_CONNECTORS_RUNTIME_CONTRACT, () =>
+          service.fetch(req.body)
+        );
       } catch (error) {
         return handleConnectorsRuntimeError(error, res);
       }
@@ -149,9 +156,7 @@ export function createConnectorsRuntimeRouter(
     asyncHandler(async (req: AuthRequest, res: Response) => {
       const persona = typeof req.query.persona === 'string' ? req.query.persona : null;
       const includePlanned =
-        typeof req.query.includePlanned === 'string'
-          ? req.query.includePlanned !== 'false'
-          : true;
+        typeof req.query.includePlanned === 'string' ? req.query.includePlanned !== 'false' : true;
       return await respondWithData(res, V10_CONNECTORS_RUNTIME_CONTRACT, () =>
         service.listCatalog({ persona, includePlanned })
       );
@@ -272,22 +277,20 @@ export function createConnectorsRuntimeRouter(
   router.get(
     '/contract',
     asyncHandler(async (_req: AuthRequest, res: Response) => {
-      return res
-        .status(200)
-        .json({
-          data: {
-            contract: V10_CONNECTORS_RUNTIME_CONTRACT,
-            searchPath: '/api/v10/connectors-runtime/search',
-            readSourcePath: '/api/v10/connectors-runtime/sources/read',
-            catalogPath: '/api/v10/connectors-runtime/catalog',
-            detailPath: '/api/v10/connectors-runtime/connectors/:connectorId',
-            sessionsPath: '/api/v10/connectors-runtime/sessions',
-            authStartPath: '/api/v10/connectors-runtime/connectors/:connectorId/auth/start',
-            authCompletePath: '/api/v10/connectors-runtime/connectors/:connectorId/auth/complete',
-            tokenRefreshPath: '/api/v10/connectors-runtime/connectors/:connectorId/tokens/refresh',
-          },
-          meta: runtimeMeta(V10_CONNECTORS_RUNTIME_CONTRACT),
-        });
+      return res.status(200).json({
+        data: {
+          contract: V10_CONNECTORS_RUNTIME_CONTRACT,
+          searchPath: '/api/v10/connectors-runtime/search',
+          readSourcePath: '/api/v10/connectors-runtime/sources/read',
+          catalogPath: '/api/v10/connectors-runtime/catalog',
+          detailPath: '/api/v10/connectors-runtime/connectors/:connectorId',
+          sessionsPath: '/api/v10/connectors-runtime/sessions',
+          authStartPath: '/api/v10/connectors-runtime/connectors/:connectorId/auth/start',
+          authCompletePath: '/api/v10/connectors-runtime/connectors/:connectorId/auth/complete',
+          tokenRefreshPath: '/api/v10/connectors-runtime/connectors/:connectorId/tokens/refresh',
+        },
+        meta: runtimeMeta(V10_CONNECTORS_RUNTIME_CONTRACT),
+      });
     })
   );
 
@@ -295,4 +298,3 @@ export function createConnectorsRuntimeRouter(
 }
 
 export default createConnectorsRuntimeRouter();
-

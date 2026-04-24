@@ -62,13 +62,7 @@ describe('buildVoiceLegendCopyText', () => {
         body: 'Switch browsers.',
       },
     });
-    expect(out).toBe(
-      [
-        'Voice modes:',
-        '',
-        'Voice is unavailable! Switch browsers.',
-      ].join('\n')
-    );
+    expect(out).toBe(['Voice modes:', '', 'Voice is unavailable! Switch browsers.'].join('\n'));
   });
 
   it('prefers unavailable over modes when both are provided', () => {
@@ -89,9 +83,7 @@ describe('buildVoiceLegendCopyText', () => {
         { title: 'Dictation', body: 'Speech fills the input.' },
       ],
     });
-    expect(out).toBe(
-      ['Voice modes:', '', '- Dictation — Speech fills the input.'].join('\n')
-    );
+    expect(out).toBe(['Voice modes:', '', '- Dictation — Speech fills the input.'].join('\n'));
   });
 
   it('skips modes where body is empty', () => {
@@ -102,9 +94,7 @@ describe('buildVoiceLegendCopyText', () => {
         { title: 'Conversation (live)', body: 'Back and forth.' },
       ],
     });
-    expect(out).toBe(
-      ['Voice modes:', '', '- Conversation (live) — Back and forth.'].join('\n')
-    );
+    expect(out).toBe(['Voice modes:', '', '- Conversation (live) — Back and forth.'].join('\n'));
   });
 
   it('emits a "No content recorded." stub when every mode is filtered out', () => {
@@ -160,8 +150,6 @@ describe('buildVoiceLegendCopyText', () => {
       title: 'Voice modes',
       modes: [{ title: 'Dictation', body: 'Speech.' }],
     };
-    expect(buildVoiceLegendCopyText(payload)).toBe(
-      buildVoiceLegendCopyText(payload)
-    );
+    expect(buildVoiceLegendCopyText(payload)).toBe(buildVoiceLegendCopyText(payload));
   });
 });

@@ -12,4 +12,3 @@ export interface ReasoningFastChatResponse {
   readonly answer: string;
   readonly now: string;
 }
-

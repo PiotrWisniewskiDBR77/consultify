@@ -11,13 +11,13 @@
  *   3. classifyStatementDocument
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import {
-  detectStatementType,
   detectContainedStatementTypes,
-  validateStatement,
+  detectStatementType,
   resolveDuplicateSuggestedMappings,
+  validateStatement,
 } from '../financialStatementService.js';
 
 describe('financialStatementService — contract tests', () => {

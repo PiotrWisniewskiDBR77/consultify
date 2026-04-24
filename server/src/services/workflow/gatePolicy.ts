@@ -20,10 +20,7 @@ export type GateContextType =
 
 export type GateAction =
   // Interview
-  | 'SUBMIT_INTERVIEW'
-  | 'SEND_BACK_INTERVIEW'
-  | 'APPROVE_INTERVIEW'
-  | 'REVOKE_INTERVIEW_APPROVAL';
+  'SUBMIT_INTERVIEW' | 'SEND_BACK_INTERVIEW' | 'APPROVE_INTERVIEW' | 'REVOKE_INTERVIEW_APPROVAL';
 
 export type GateDecision =
   | { allow: true }

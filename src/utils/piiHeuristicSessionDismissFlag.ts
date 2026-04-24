@@ -29,8 +29,7 @@ const ENV_KEY = 'VITE_PII_HEURISTIC_SESSION_DISMISS';
  * Exported so the toast, its tests, and ops runbooks share one
  * canonical spelling of the session-dismiss sentinel.
  */
-export const PII_TOAST_SESSION_DISMISS_STORAGE_KEY =
-  'chatV9.piiToastDismissedForSession';
+export const PII_TOAST_SESSION_DISMISS_STORAGE_KEY = 'chatV9.piiToastDismissedForSession';
 
 function parseFlag(raw: string | null | undefined): boolean | null {
   if (raw === null || raw === undefined) return null;

@@ -58,7 +58,14 @@ const ANNA_SITE_CONFIGS: Record<AnnaSiteKey, AnnaSiteConfig> = {
       'marketplace',
       'dbr77',
     ],
-    landingTopics: ['machine visibility', 'downtime', 'pilot rollout', 'edge logic', 'ROI', 'scale-up'],
+    landingTopics: [
+      'machine visibility',
+      'downtime',
+      'pilot rollout',
+      'edge logic',
+      'ROI',
+      'scale-up',
+    ],
     positioning:
       'DBR77 IoT is the machine and signal visibility layer that helps factories turn raw operational data into usable actions on the shop floor.',
     crossSellRule:
@@ -79,7 +86,13 @@ const ANNA_SITE_CONFIGS: Record<AnnaSiteKey, AnnaSiteConfig> = {
       'marketplace',
       'dbr77',
     ],
-    landingTopics: ['plant operating system', 'AI-assisted operations', 'execution closure', 'governance', 'ROI'],
+    landingTopics: [
+      'plant operating system',
+      'AI-assisted operations',
+      'execution closure',
+      'governance',
+      'ROI',
+    ],
     positioning:
       'DBR77 IRIS is the plant operating system layer that connects operational visibility, AI-assisted recommendations, ownership, and execution closure.',
     crossSellRule:
@@ -100,7 +113,13 @@ const ANNA_SITE_CONFIGS: Record<AnnaSiteKey, AnnaSiteConfig> = {
       'marketplace',
       'dbr77',
     ],
-    landingTopics: ['layout decisions', 'scenario planning', 'flow simulation', 'CAPEX', 'governance'],
+    landingTopics: [
+      'layout decisions',
+      'scenario planning',
+      'flow simulation',
+      'CAPEX',
+      'governance',
+    ],
     positioning:
       'DBR77 Digital Twin is the simulation and scenario layer that helps factories test layout, flow, automation, and CAPEX decisions before live change is committed.',
     crossSellRule:
@@ -121,7 +140,13 @@ const ANNA_SITE_CONFIGS: Record<AnnaSiteKey, AnnaSiteConfig> = {
       'iris',
       'dbr77',
     ],
-    landingTopics: ['supplier matching', 'automation sourcing', 'offers', 'CAPEX defense', 'rollout governance'],
+    landingTopics: [
+      'supplier matching',
+      'automation sourcing',
+      'offers',
+      'CAPEX defense',
+      'rollout governance',
+    ],
     positioning:
       'DBR77 Marketplace is the sourcing and buying coordination layer for industrial automation, integration, and technology selection.',
     crossSellRule:
@@ -142,7 +167,13 @@ const ANNA_SITE_CONFIGS: Record<AnnaSiteKey, AnnaSiteConfig> = {
       'marketplace',
       'dbr77',
     ],
-    landingTopics: ['industrial AI', 'reasoning layer', 'governance', 'deployment control', 'decision quality'],
+    landingTopics: [
+      'industrial AI',
+      'reasoning layer',
+      'governance',
+      'deployment control',
+      'decision quality',
+    ],
     positioning:
       'DBR77 Vector is the industrial reasoning and AI layer that supports decision quality, controlled deployment, and explainable product intelligence across the DBR77 ecosystem.',
     crossSellRule:

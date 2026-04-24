@@ -27,6 +27,16 @@ export type ArtifactMutationPlanResponse = {
   rejectedOpIndices?: number[];
   previousReviewState?: string;
   nextReviewState?: string;
+  pipeline?: {
+    nextReviewState?: string | null;
+    [key: string]: unknown;
+  };
+  selectedOps?: unknown[];
+  capabilities?: {
+    supportsSelectionScope?: boolean;
+    [key: string]: unknown;
+  };
+  warnings?: string[];
   [key: string]: unknown;
 };
 
@@ -64,9 +74,18 @@ export type ArtifactExportPlanRequest = {
 export type ArtifactExportPlanResponse = {
   runId: string;
   exportAllowed: boolean;
-  manifest: Record<string, unknown>;
-  provenanceFooter: Record<string, unknown>;
+  manifest: {
+    format?: string;
+    destination?: string;
+    [key: string]: unknown;
+  };
+  provenanceFooter: {
+    target?: string;
+    [key: string]: unknown;
+  };
   lineageRootId: string;
+  supportedFormats?: string[];
+  warnings?: string[];
   [key: string]: unknown;
 };
 
@@ -86,6 +105,14 @@ export type ArtifactCommentPlanResponse = {
   notificationsPlanned: number;
   mentionedUserIds: string[];
   reattachResult?: unknown;
+  comment?: {
+    kind?: string;
+    state?: string;
+    [key: string]: unknown;
+  };
+  anchorOutcome?: string;
+  mentionNotifications?: unknown[];
+  warnings?: string[];
   [key: string]: unknown;
 };
 
@@ -126,20 +153,30 @@ export type ArtifactApprovalEvaluationResponse = {
 };
 
 export const ArtifactRuntimeApi = {
-  planMutation: async (body: ArtifactMutationPlanRequest): Promise<ArtifactMutationPlanResponse> => {
+  planMutation: async (
+    body: ArtifactMutationPlanRequest
+  ): Promise<ArtifactMutationPlanResponse> => {
     const res = await fetchWithRetry('/api/v10/artifact-runtime/mutations/plan', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<ArtifactMutationPlanResponse>(res, 'Failed to plan artifact mutation');
+    return handleDataResponse<ArtifactMutationPlanResponse>(
+      res,
+      'Failed to plan artifact mutation'
+    );
   },
 
-  applyMutation: async (body: ArtifactMutationApplyRequest): Promise<ArtifactMutationApplyResponse> => {
+  applyMutation: async (
+    body: ArtifactMutationApplyRequest
+  ): Promise<ArtifactMutationApplyResponse> => {
     const res = await fetchWithRetry('/api/v10/artifact-runtime/mutations/apply', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<ArtifactMutationApplyResponse>(res, 'Failed to apply artifact mutation');
+    return handleDataResponse<ArtifactMutationApplyResponse>(
+      res,
+      'Failed to apply artifact mutation'
+    );
   },
 
   planExport: async (body: ArtifactExportPlanRequest): Promise<ArtifactExportPlanResponse> => {
@@ -158,12 +195,17 @@ export const ArtifactRuntimeApi = {
     return handleDataResponse<ArtifactCommentPlanResponse>(res, 'Failed to plan artifact comment');
   },
 
-  reuseTemplate: async (body: ArtifactTemplateReuseRequest): Promise<ArtifactTemplateReuseResponse> => {
+  reuseTemplate: async (
+    body: ArtifactTemplateReuseRequest
+  ): Promise<ArtifactTemplateReuseResponse> => {
     const res = await fetchWithRetry('/api/v10/artifact-runtime/templates/fingerprint', {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<ArtifactTemplateReuseResponse>(res, 'Failed to evaluate artifact template reuse');
+    return handleDataResponse<ArtifactTemplateReuseResponse>(
+      res,
+      'Failed to evaluate artifact template reuse'
+    );
   },
 
   evaluateApproval: async (
@@ -173,6 +215,9 @@ export const ArtifactRuntimeApi = {
       method: 'POST',
       body: JSON.stringify(body),
     });
-    return handleDataResponse<ArtifactApprovalEvaluationResponse>(res, 'Failed to evaluate artifact approvals');
+    return handleDataResponse<ArtifactApprovalEvaluationResponse>(
+      res,
+      'Failed to evaluate artifact approvals'
+    );
   },
 };

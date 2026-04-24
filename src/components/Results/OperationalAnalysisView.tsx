@@ -12,16 +12,16 @@ import { Api } from '@/services/api';
 import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
-import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 import {
   deriveNeedsEntry,
   deriveStatus,
   deriveTrend,
-  mapResultsKpis,
   type KPIStatus,
   type KPITrend,
+  mapResultsKpis,
   type ResultsKPI,
 } from './kpiDomain';
+import { KPITimeSeriesDrawer } from './KPITimeSeriesDrawer';
 
 const STATUS_STYLES: Record<KPIStatus, { bg: string; text: string; dot: string }> = {
   'on-target': { bg: 'bg-emerald-500/10', text: 'text-emerald-400', dot: 'bg-emerald-500' },

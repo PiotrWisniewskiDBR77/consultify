@@ -33,7 +33,9 @@ function getTenantSchedules(tenantId: string): Map<string, AgentScheduleListItem
   return schedules;
 }
 
-function severityFromApprovalMode(mode: AgentScheduleDraftInput['approvalMode']): 'S0' | 'S1' | 'S2' | 'S3' | 'S4' {
+function severityFromApprovalMode(
+  mode: AgentScheduleDraftInput['approvalMode']
+): 'S0' | 'S1' | 'S2' | 'S3' | 'S4' {
   switch (mode) {
     case 'admin_only':
       return 'S4';
@@ -50,7 +52,11 @@ function severityFromApprovalMode(mode: AgentScheduleDraftInput['approvalMode'])
 }
 
 function autonomyRank(level: string | null | undefined): number {
-  switch (String(level || '').trim().toUpperCase()) {
+  switch (
+    String(level || '')
+      .trim()
+      .toUpperCase()
+  ) {
     case 'AUTONOMOUS':
       return 4;
     case 'SUPERVISED':

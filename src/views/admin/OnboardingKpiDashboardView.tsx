@@ -1,7 +1,11 @@
 import { AlertTriangle, CheckCircle2, RefreshCw, Timer, TrendingUp, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { OnboardingKpiDashboard, OnboardingKpiMetricKey, OnboardingKpiRow } from '@/models/onboarding/ActivationKpiDashboard';
+import type {
+  OnboardingKpiDashboard,
+  OnboardingKpiMetricKey,
+  OnboardingKpiRow,
+} from '@/models/onboarding/ActivationKpiDashboard';
 import { OnboardingRuntimeApi } from '@/services/api/v10/onboardingRuntime';
 import { cn } from '@/utils/cn';
 
@@ -13,8 +17,10 @@ const METRIC_LABELS: Record<OnboardingKpiMetricKey, string> = {
 };
 
 function statusClasses(status: 'green' | 'amber' | 'red') {
-  if (status === 'green') return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200';
-  if (status === 'amber') return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200';
+  if (status === 'green')
+    return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200';
+  if (status === 'amber')
+    return 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200';
   return 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200';
 }
 
@@ -51,9 +57,12 @@ function PersonaRow({ row }: { row: OnboardingKpiRow }) {
     <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="text-base font-semibold text-slate-900 dark:text-white">{row.persona}</div>
+          <div className="text-base font-semibold text-slate-900 dark:text-white">
+            {row.persona}
+          </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            started {row.startedSessions} · activated {row.activatedSessions} · resumed {row.resumedSessions}
+            started {row.startedSessions} · activated {row.activatedSessions} · resumed{' '}
+            {row.resumedSessions}
             {' · '}
             abandoned {row.abandonedSessions}
           </div>
@@ -61,7 +70,10 @@ function PersonaRow({ row }: { row: OnboardingKpiRow }) {
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {Object.entries(row.metrics).map(([key, metric]) => (
-          <div key={key} className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20">
+          <div
+            key={key}
+            className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/10 dark:bg-black/20"
+          >
             <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
               {METRIC_LABELS[key as OnboardingKpiMetricKey]}
             </div>
@@ -74,7 +86,12 @@ function PersonaRow({ row }: { row: OnboardingKpiRow }) {
                   target {formatMetricValue(key as OnboardingKpiMetricKey, metric.target)}
                 </div>
               </div>
-              <span className={cn('rounded-full px-2 py-1 text-[11px] font-semibold uppercase', statusClasses(metric.status))}>
+              <span
+                className={cn(
+                  'rounded-full px-2 py-1 text-[11px] font-semibold uppercase',
+                  statusClasses(metric.status)
+                )}
+              >
                 {metric.status}
               </span>
             </div>
@@ -113,9 +130,7 @@ export const OnboardingKpiDashboardView: React.FC = () => {
   const totals = summary?.totals || null;
   const riskCount = useMemo(
     () =>
-      totals
-        ? Object.values(totals.metrics).filter((metric) => metric.status === 'red').length
-        : 0,
+      totals ? Object.values(totals.metrics).filter((metric) => metric.status === 'red').length : 0,
     [totals]
   );
 
@@ -133,7 +148,9 @@ export const OnboardingKpiDashboardView: React.FC = () => {
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
         <div>
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Onboarding KPI Dashboard</h2>
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+            Onboarding KPI Dashboard
+          </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
             Activation, speed, connector attach, approvals, and abandonment for the current tenant.
           </p>

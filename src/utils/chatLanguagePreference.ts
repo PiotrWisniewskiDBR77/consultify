@@ -11,9 +11,7 @@ function normalizeChatLanguage(input: unknown): SupportedLanguage | null {
   return isValidLanguage(normalized) ? (normalized as SupportedLanguage) : null;
 }
 
-export function readPreferredChatLanguage(
-  fallback?: unknown
-): SupportedLanguage | null {
+export function readPreferredChatLanguage(fallback?: unknown): SupportedLanguage | null {
   const fromStorage =
     typeof localStorage !== 'undefined'
       ? localStorage.getItem(CANONICAL_KEY) || localStorage.getItem(LEGACY_KEY)

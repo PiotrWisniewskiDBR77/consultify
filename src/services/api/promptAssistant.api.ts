@@ -3,7 +3,7 @@
  * Shared client for prompt block preview, test bench, and assistant chat flows.
  */
 
-import { apiGet, apiPost, API_URL, fetchWithRetry, handleResponse } from './baseClient';
+import { API_URL, apiGet, apiPost, fetchWithRetry, handleResponse } from './baseClient';
 
 export interface PromptAssistantBlock {
   code: string;
@@ -15,15 +15,49 @@ export interface PromptAssistantBlock {
   usageCount?: number;
 }
 
+export interface PromptAssistantBlockCategory {
+  name: string;
+  description: string;
+  icon: string;
+  color: string;
+}
+
+export interface PromptAssistantSuggestion {
+  title: string;
+  description: string;
+}
+
+export interface PromptAssistantCodeBlock {
+  language: string;
+  content: string;
+}
+
 export interface PromptAssistantBlocksResponse {
   data: PromptAssistantBlock[];
-  categories: Record<string, unknown>;
+  categories: Record<string, PromptAssistantBlockCategory>;
+}
+
+export interface PromptAssistantTestResult {
+  language: string;
+  success: boolean;
+  expectedLanguage: string;
+  detectedLanguage: string;
+  languageMatch: boolean;
+  response?: string;
+  tokenCount?: number;
+  error?: string;
+}
+
+export interface PromptAssistantTestSummary {
+  tested: number;
+  passed: number;
+  languageAccuracy: number;
 }
 
 export interface PromptAssistantTestResponse {
   data?: {
-    results?: unknown[];
-    summary?: unknown;
+    results?: PromptAssistantTestResult[];
+    summary?: PromptAssistantTestSummary;
   };
 }
 
@@ -31,8 +65,8 @@ export interface PromptAssistantChatResponse {
   data?: {
     conversationId?: string;
     message?: string;
-    suggestions?: string[];
-    codeBlocks?: string[];
+    suggestions?: PromptAssistantSuggestion[];
+    codeBlocks?: PromptAssistantCodeBlock[];
   };
 }
 

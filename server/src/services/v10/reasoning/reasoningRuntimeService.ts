@@ -1,8 +1,11 @@
-import type { ReasoningFastChatRequest, ReasoningFastChatResponse } from '../../../types/v10/reasoning-runtime.js';
 import {
   runReasoningFastChatPipeline,
   unsafeReasoningFastChatPipelineRunId,
 } from '../../../models/v10/pipelines/ReasoningFastChatPipeline.js';
+import type {
+  ReasoningFastChatRequest,
+  ReasoningFastChatResponse,
+} from '../../../types/v10/reasoning-runtime.js';
 
 export class ReasoningRuntimeService {
   fastChat(input: ReasoningFastChatRequest): ReasoningFastChatResponse {
@@ -17,4 +20,3 @@ export class ReasoningRuntimeService {
 }
 
 export const reasoningRuntimeService = new ReasoningRuntimeService();
-

@@ -13,10 +13,10 @@ import {
   ACCESS_POSTURES,
   AIAccessContext,
   BILLING_RAILS,
-  CanInviteUsersResult,
-  CheckAccessResult,
   BillingRail,
   BillingStateRow,
+  CanInviteUsersResult,
+  CheckAccessResult,
   CONTRACT_STATUSES,
   ContractStatus,
   DailyUsage,
@@ -61,7 +61,9 @@ function normalizeSubscriptionStatus(raw: string | null | undefined): Subscripti
 }
 
 function normalizeBillingRail(raw: string | null | undefined): BillingRail {
-  const s = String(raw || '').trim().toLowerCase();
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase();
   if (s === BILLING_RAILS.STRIPE_SUBSCRIPTION) return BILLING_RAILS.STRIPE_SUBSCRIPTION;
   if (s === BILLING_RAILS.MANUAL_INVOICE) return BILLING_RAILS.MANUAL_INVOICE;
   if (s === BILLING_RAILS.HYBRID_USAGE_INVOICE) return BILLING_RAILS.HYBRID_USAGE_INVOICE;
@@ -69,7 +71,9 @@ function normalizeBillingRail(raw: string | null | undefined): BillingRail {
 }
 
 function normalizeContractStatus(raw: string | null | undefined): ContractStatus {
-  const s = String(raw || '').trim().toLowerCase();
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase();
   if (s === CONTRACT_STATUSES.DRAFT) return CONTRACT_STATUSES.DRAFT;
   if (s === CONTRACT_STATUSES.ACTIVE) return CONTRACT_STATUSES.ACTIVE;
   if (s === CONTRACT_STATUSES.RENEWAL_DUE) return CONTRACT_STATUSES.RENEWAL_DUE;
@@ -100,7 +104,8 @@ function hasManualBillingAccess(
   }
   if (contractStatus === CONTRACT_STATUSES.ACTIVE) return true;
   if (contractStatus === CONTRACT_STATUSES.RENEWAL_DUE) return true;
-  if (contractStatus === CONTRACT_STATUSES.GRACE) return isDateInFuture(graceUntil || accessExpiresAt);
+  if (contractStatus === CONTRACT_STATUSES.GRACE)
+    return isDateInFuture(graceUntil || accessExpiresAt);
   return false;
 }
 
@@ -156,9 +161,13 @@ function resolveAccessPosture(input: {
     return isDemoView ? ACCESS_POSTURES.DEMO_VIEW : ACCESS_POSTURES.DEMO_ORG;
   }
 
-  if (billingRail === BILLING_RAILS.MANUAL_INVOICE || billingRail === BILLING_RAILS.HYBRID_USAGE_INVOICE) {
+  if (
+    billingRail === BILLING_RAILS.MANUAL_INVOICE ||
+    billingRail === BILLING_RAILS.HYBRID_USAGE_INVOICE
+  ) {
     if (contractStatus === CONTRACT_STATUSES.SUSPENDED) return ACCESS_POSTURES.SUSPENDED;
-    if (contractStatus === CONTRACT_STATUSES.RENEWAL_DUE) return ACCESS_POSTURES.PAID_MANUAL_RENEWAL_DUE;
+    if (contractStatus === CONTRACT_STATUSES.RENEWAL_DUE)
+      return ACCESS_POSTURES.PAID_MANUAL_RENEWAL_DUE;
     if (hasManualBillingAccess(billingRail, contractStatus, graceUntil, accessExpiresAt)) {
       return ACCESS_POSTURES.PAID_MANUAL_ACTIVE;
     }
@@ -403,7 +412,10 @@ class AccessPolicyServiceClass {
             };
           }
         } catch (onboardingError) {
-          logger.error('[AccessPolicyService] Failed to verify onboarding status:', onboardingError);
+          logger.error(
+            '[AccessPolicyService] Failed to verify onboarding status:',
+            onboardingError
+          );
           return {
             allowed: false,
             reason: 'We could not verify your trial onboarding status. Please try again shortly.',
@@ -684,7 +696,13 @@ class AccessPolicyServiceClass {
     }
 
     if (posture === ACCESS_POSTURES.PAID_PAST_DUE || posture === ACCESS_POSTURES.SUSPENDED) {
-      blockedActions.push('AI_DO_ACTIONS', 'CREATE_PROJECT', 'CREATE_INITIATIVE', 'INVITES', 'WRITE');
+      blockedActions.push(
+        'AI_DO_ACTIONS',
+        'CREATE_PROJECT',
+        'CREATE_INITIATIVE',
+        'INVITES',
+        'WRITE'
+      );
     }
 
     const subscribedPlanId = (billingRow as any)?.subscription_plan_id as string | null | undefined;
@@ -712,7 +730,9 @@ class AccessPolicyServiceClass {
         );
         const planLimits = planRow?.limits ? JSON.parse(planRow.limits) : {};
         const orgTokenOverride =
-          typeof orgLimitRow?.max_total_tokens === 'number' ? orgLimitRow.max_total_tokens : undefined;
+          typeof orgLimitRow?.max_total_tokens === 'number'
+            ? orgLimitRow.max_total_tokens
+            : undefined;
         const orgStorageOverride =
           typeof orgLimitRow?.max_storage_mb === 'number' ? orgLimitRow.max_storage_mb : undefined;
         const planTokenLimit =
@@ -834,7 +854,8 @@ class AccessPolicyServiceClass {
       ctaReason = 'contract_suspended';
       ctaUrlOrRoute = '/legal/contact?topic=billing&reason=contract_suspended';
     } else if (posture === ACCESS_POSTURES.PAID_MANUAL_RENEWAL_DUE) {
-      bannerText = 'Your contract is nearing renewal. Coordinate the next term with your account team.';
+      bannerText =
+        'Your contract is nearing renewal. Coordinate the next term with your account team.';
       bannerTextKey = 'access.banner.contractRenewalDue';
       primaryAction = 'Renew Contract';
       primaryActionKey = 'access.cta.renewContract';

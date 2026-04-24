@@ -7,8 +7,8 @@
 
 import { Router } from 'express';
 
-import logger from '../../utils/Logger.js';
 import ProjectControllerRaw from '../../controllers/ProjectController.js';
+import logger from '../../utils/Logger.js';
 const ProjectController = ProjectControllerRaw as any;
 import { verifyToken } from '../../middleware/auth.middleware.js';
 import { demoContextMiddleware } from '../../middleware/demoGuard.middleware.js';

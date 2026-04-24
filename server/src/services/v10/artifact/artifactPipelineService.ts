@@ -1,10 +1,7 @@
 import crypto from 'crypto';
 import { ZodError } from 'zod';
 
-import type { ArtifactRuntimeArtifactDto } from '../../../types/v10/artifact-runtime.js';
 import type { ArtifactRecord } from '../../../types/artifactRegistry.js';
-import { registerArtifactOrigin } from '../../v8/artifactRegistryService.js';
-import artifactRuntimeService from './artifactRuntimeService.js';
 import type {
   ArtifactPipelinePreflightRequest,
   ArtifactPipelinePreflightResponse,
@@ -16,6 +13,9 @@ import {
   artifactPipelinePreflightRequestSchema,
   artifactPipelineRunRequestSchema,
 } from '../../../types/v10/artifact-pipeline.js';
+import type { ArtifactRuntimeArtifactDto } from '../../../types/v10/artifact-runtime.js';
+import { registerArtifactOrigin } from '../../v8/artifactRegistryService.js';
+import artifactRuntimeService from './artifactRuntimeService.js';
 
 type ArtifactStoreKey = string;
 function storeKey(tenantId: string, artifactId: string): ArtifactStoreKey {
@@ -110,7 +110,10 @@ export interface ArtifactPipelineServiceContract {
   publishRunToOutputsLibrary(args: {
     scope: { tenantId: string; userId: string; userRole: string | null };
     runId: string;
-  }): Promise<{ artifact: ArtifactRecord; origin: { originRuntime: 'native_artifact'; originRecordId: string } }>;
+  }): Promise<{
+    artifact: ArtifactRecord;
+    origin: { originRuntime: 'native_artifact'; originRecordId: string };
+  }>;
   getMaterializedArtifact(args: {
     scope: { tenantId: string; userId: string; userRole: string | null };
     artifactId: string;
@@ -185,7 +188,9 @@ const artifactPipelineService: ArtifactPipelineServiceContract = {
       step(
         now,
         'mutation_planned',
-        (plan as any)?.pipeline?.nextReviewState ? `next: ${(plan as any).pipeline.nextReviewState}` : null
+        (plan as any)?.pipeline?.nextReviewState
+          ? `next: ${(plan as any).pipeline.nextReviewState}`
+          : null
       )
     );
 
@@ -251,7 +256,10 @@ const artifactPipelineService: ArtifactPipelineServiceContract = {
   async publishRunToOutputsLibrary(args: {
     scope: { tenantId: string; userId: string; userRole: string | null };
     runId: string;
-  }): Promise<{ artifact: ArtifactRecord; origin: { originRuntime: 'native_artifact'; originRecordId: string } }> {
+  }): Promise<{
+    artifact: ArtifactRecord;
+    origin: { originRuntime: 'native_artifact'; originRecordId: string };
+  }> {
     const scope = args.scope;
     const runId = String(args.runId || '').trim();
     if (!runId) {
@@ -355,4 +363,3 @@ export function mapArtifactPipelineError(error: unknown): { status: number; body
 
 export { ArtifactPipelineInputError };
 export default artifactPipelineService;
-

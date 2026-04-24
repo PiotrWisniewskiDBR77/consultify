@@ -3,11 +3,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '@/services/api';
 import {
   V8InterviewApi,
   type V8InterviewManageAssignmentPayload,
 } from '@/services/api/v8/interview';
-import { Api } from '@/services/api';
 
 type AssignmentStatus =
   | 'assigned'
@@ -165,10 +165,12 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
   const sensitiveChange = assigneeChanged || templateChanged;
   const shouldCreateFreshAssignment = Boolean(
     assignment &&
-      ((isClosed && (sensitiveChange || forceFreshAssignment)) ||
-        (!isAssigned && (sensitiveChange || forceFreshAssignment)))
+    ((isClosed && (sensitiveChange || forceFreshAssignment)) ||
+      (!isAssigned && (sensitiveChange || forceFreshAssignment)))
   );
-  const requiresReason = Boolean(assignment && shouldCreateFreshAssignment && !isAssigned && !isClosed);
+  const requiresReason = Boolean(
+    assignment && shouldCreateFreshAssignment && !isAssigned && !isClosed
+  );
 
   const effectiveMode: V8InterviewManageAssignmentPayload['mode'] = useMemo(() => {
     if (!assignment) return 'update';
@@ -267,7 +269,9 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
       if (action === 'updated') {
         toast.success(isPolish ? 'Assignment zaktualizowany' : 'Assignment updated');
       } else if (action === 'assigned_again') {
-        toast.success(isPolish ? 'Utworzono nowy assignment follow-up' : 'Created a follow-up assignment');
+        toast.success(
+          isPolish ? 'Utworzono nowy assignment follow-up' : 'Created a follow-up assignment'
+        );
       } else {
         toast.success(isPolish ? 'Utworzono świeży assignment' : 'Created a fresh assignment');
       }
@@ -336,7 +340,9 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
                   <div className="mt-4 space-y-3">
                     <div>
                       <div className="text-lg font-semibold text-slate-900 dark:text-white">
-                        {selectedTemplate?.name || assignment.template?.name || 'Interview template'}
+                        {selectedTemplate?.name ||
+                          assignment.template?.name ||
+                          'Interview template'}
                       </div>
                       {selectedTemplate?.category ? (
                         <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -542,7 +548,9 @@ export const ManageAssignmentModal: React.FC<ManageAssignmentModalProps> = ({
         </div>
 
         <div className="shrink-0 flex flex-col gap-4 border-t border-slate-200 bg-slate-50/80 px-8 py-5 dark:border-navy-700 dark:bg-navy-950/40 md:flex-row md:items-center md:justify-between">
-          <div className="max-w-2xl text-sm text-slate-500 dark:text-slate-400">{actionSummary}</div>
+          <div className="max-w-2xl text-sm text-slate-500 dark:text-slate-400">
+            {actionSummary}
+          </div>
           <div className="flex items-center justify-end gap-3">
             <button
               type="button"

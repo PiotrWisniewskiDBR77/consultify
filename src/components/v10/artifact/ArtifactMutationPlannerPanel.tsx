@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -70,6 +70,7 @@ export function ArtifactMutationPlannerPanel({
   const allSelected = proposal.ops.length > 0 && selectedOpIndices.length === proposal.ops.length;
 
   const selectionSummary = formatSelectionSummary(selection);
+  const plannedWarnings = lastPlan?.warnings ?? [];
 
   const toggleIndex = (index: number) => {
     setSelectedOpIndices((current) =>
@@ -214,17 +215,19 @@ export function ArtifactMutationPlannerPanel({
           <Separator />
           <div className="space-y-2 text-sm">
             <div className="flex flex-wrap gap-2">
-              <Badge>{lastPlan.pipeline.nextReviewState}</Badge>
-              <Badge variant="outline">{lastPlan.selectedOps.length} ops in plan</Badge>
+              <Badge>
+                {lastPlan.pipeline?.nextReviewState ?? lastPlan.nextReviewState ?? 'unknown'}
+              </Badge>
+              <Badge variant="outline">{(lastPlan.selectedOps ?? []).length} ops in plan</Badge>
               <Badge variant="outline">
-                {lastPlan.capabilities.supportsSelectionScope
+                {lastPlan.capabilities?.supportsSelectionScope
                   ? 'Selection-aware'
                   : 'Whole artifact'}
               </Badge>
             </div>
-            {lastPlan.warnings.length > 0 ? (
+            {plannedWarnings.length > 0 ? (
               <ul className="list-disc space-y-1 pl-5 text-slate-600">
-                {lastPlan.warnings.map((warning) => (
+                {plannedWarnings.map((warning) => (
                   <li key={warning}>{warning}</li>
                 ))}
               </ul>

@@ -212,7 +212,10 @@ const searchArticles = async (
     const data = await fetchPublicKbBridge<{
       data?: { articles?: KbArticleListItem[] };
       articles?: KbArticleListItem[];
-    }>(withSite(`/search?q=${encodeURIComponent(query)}&lang=${language}`), 'public v8 unavailable');
+    }>(
+      withSite(`/search?q=${encodeURIComponent(query)}&lang=${language}`),
+      'public v8 unavailable'
+    );
     return normalizeArticleList(data);
   } catch {
     try {

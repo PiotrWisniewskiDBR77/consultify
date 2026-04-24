@@ -22,7 +22,10 @@ export const AgentSchedulesApi = {
       method: 'POST',
       body: JSON.stringify(draft),
     });
-    return handleDataResponse<AgentSchedulePlanResponse>(res, 'Failed to build agent schedule plan');
+    return handleDataResponse<AgentSchedulePlanResponse>(
+      res,
+      'Failed to build agent schedule plan'
+    );
   },
 
   preview: async (draft: AgentScheduleDraftInput): Promise<AgentSchedulePreview> => {
@@ -45,7 +48,9 @@ export const AgentSchedulesApi = {
     tenantId?: string
   ): Promise<AgentScheduleNotificationPreferencesEnvelope> => {
     void tenantId;
-    const response = await fetchWithRetry('/api/v10/agent-schedules/preferences', { method: 'GET' });
+    const response = await fetchWithRetry('/api/v10/agent-schedules/preferences', {
+      method: 'GET',
+    });
     return handleDataResponse<AgentScheduleNotificationPreferencesEnvelope>(
       response,
       'Failed to load agent schedule notification preferences'
@@ -69,10 +74,16 @@ export const AgentSchedulesApi = {
 
   getTimeline: async (scheduleId: string, tenantId?: string): Promise<AgentRunTimelineSummary> => {
     void tenantId;
-    const response = await fetchWithRetry(`/api/v10/agent-schedules/${encodeURIComponent(scheduleId)}/timeline`, {
-      method: 'GET',
-    });
-    return handleDataResponse<AgentRunTimelineSummary>(response, 'Failed to load agent schedule timeline');
+    const response = await fetchWithRetry(
+      `/api/v10/agent-schedules/${encodeURIComponent(scheduleId)}/timeline`,
+      {
+        method: 'GET',
+      }
+    );
+    return handleDataResponse<AgentRunTimelineSummary>(
+      response,
+      'Failed to load agent schedule timeline'
+    );
   },
 
   trigger: async (
@@ -80,12 +91,16 @@ export const AgentSchedulesApi = {
     tenantId?: string
   ): Promise<{ runId: string; gateDecision: string; timeline: AgentRunTimelineSummary }> => {
     void tenantId;
-    const res = await fetchWithRetry(`/api/v10/agent-schedules/${encodeURIComponent(scheduleId)}/trigger`, {
-      method: 'POST',
-    });
-    return handleDataResponse<{ runId: string; gateDecision: string; timeline: AgentRunTimelineSummary }>(
-      res,
-      'Failed to trigger agent schedule'
+    const res = await fetchWithRetry(
+      `/api/v10/agent-schedules/${encodeURIComponent(scheduleId)}/trigger`,
+      {
+        method: 'POST',
+      }
     );
+    return handleDataResponse<{
+      runId: string;
+      gateDecision: string;
+      timeline: AgentRunTimelineSummary;
+    }>(res, 'Failed to trigger agent schedule');
   },
 };

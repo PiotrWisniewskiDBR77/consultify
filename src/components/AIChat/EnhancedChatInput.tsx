@@ -37,12 +37,12 @@ import { CHAT_V9_PII_CHECK_EVENT } from '../../utils/piiHeuristicToastFlag';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
 import { CoThinkerMenu } from './CoThinkerMenu';
-import { MoveToProjectModal } from './MoveToProjectModal';
-import { ToolsMenu } from './ToolsMenu';
 import { InputCharCounter } from './InputCharCounter';
-import { InputSoftLimitToast } from './InputSoftLimitToast';
 import { InputHintStrip } from './InputHintStrip';
+import { InputSoftLimitToast } from './InputSoftLimitToast';
+import { MoveToProjectModal } from './MoveToProjectModal';
 import { NextModelChip } from './NextModelChip';
+import { ToolsMenu } from './ToolsMenu';
 import { VoiceModeLegend } from './VoiceModeLegend';
 
 // ============================================================================
@@ -890,7 +890,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               }
             />
             {/* Mic button: mute/unmute when Teresa voice is live, dictation otherwise */}
-            {(teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting') ? (
+            {teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting' ? (
               <button
                 onClick={() => onTeresaVoiceMuteToggle?.()}
                 disabled={teresaVoiceStatus !== 'live'}

@@ -81,10 +81,7 @@ export interface InputSoftLimitToastProps {
   /** Test seam — production omits. */
   markDismissedForSession?: () => void;
   /** Test seam — production omits. */
-  notify?: (
-    message: string,
-    options: InputSoftLimitToastNotifyOptions
-  ) => void;
+  notify?: (message: string, options: InputSoftLimitToastNotifyOptions) => void;
 }
 
 const DEFAULT_MAX = 8000;
@@ -93,10 +90,7 @@ export function buildInputSoftLimitToastMessage(length: number, max: number): st
   return `Your message is ${length.toLocaleString()} characters — past the ${max.toLocaleString()}-character soft limit. Teresa may trim or summarise long inputs; shorten it if every line matters.`;
 }
 
-function defaultNotify(
-  message: string,
-  options: InputSoftLimitToastNotifyOptions
-): void {
+function defaultNotify(message: string, options: InputSoftLimitToastNotifyOptions): void {
   toast.custom(
     (t) => (
       <div
@@ -153,9 +147,7 @@ export const InputSoftLimitToast: React.FC<InputSoftLimitToastProps> = ({
   // Tracks the length on the previous render so we can detect the
   // rising edge (`prev < max && curr >= max`). A ref is the right
   // tool here: we want no re-render from the comparison itself.
-  const prevLengthRef = useRef<number>(
-    typeof value === 'string' ? value.length : 0
-  );
+  const prevLengthRef = useRef<number>(typeof value === 'string' ? value.length : 0);
   // In-memory guard that survives sessionStorage write failures
   // (private-mode browsers, quota issues, cross-origin wrappers).
   // The tab-level sentinel is authoritative when sessionStorage is

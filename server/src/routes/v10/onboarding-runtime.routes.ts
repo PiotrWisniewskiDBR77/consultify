@@ -6,8 +6,8 @@ import verifyToken, { requireOrganization } from '../../middleware/auth.middlewa
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
   mapOnboardingRuntimeError,
-  onboardingRuntimeService,
   type OnboardingRuntimeService,
+  onboardingRuntimeService,
 } from '../../services/v10/onboarding/onboardingRuntimeService.js';
 import {
   OnboardingPersonaRequestSchema,
@@ -16,7 +16,12 @@ import {
   OnboardingTelemetryEventRequestSchema,
 } from '../../types/v10/onboarding-runtime.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { respondWithData, runtimeMeta, withRuntimeScope, scopeFromAuthRequest } from './runtimeRouteUtils.js';
+import {
+  respondWithData,
+  runtimeMeta,
+  scopeFromAuthRequest,
+  withRuntimeScope,
+} from './runtimeRouteUtils.js';
 
 export const V10_ONBOARDING_RUNTIME_CONTRACT = 'onboarding_runtime_wave_a_v1';
 
@@ -25,7 +30,9 @@ async function createResponder(res: Response, operation: () => Promise<unknown>)
     await respondWithData(res, V10_ONBOARDING_RUNTIME_CONTRACT, operation);
   } catch (error) {
     const mapped = mapOnboardingRuntimeError(error);
-    res.status(mapped.status).json({ ...mapped.body, meta: runtimeMeta(V10_ONBOARDING_RUNTIME_CONTRACT) });
+    res
+      .status(mapped.status)
+      .json({ ...mapped.body, meta: runtimeMeta(V10_ONBOARDING_RUNTIME_CONTRACT) });
   }
 }
 
@@ -79,9 +86,10 @@ export function createOnboardingRuntimeRouter(
   router.get(
     '/contract',
     asyncHandler(async (_req: AuthRequest, res: Response) => {
-      return res
-        .status(200)
-        .json({ data: { contract: V10_ONBOARDING_RUNTIME_CONTRACT }, meta: runtimeMeta(V10_ONBOARDING_RUNTIME_CONTRACT) });
+      return res.status(200).json({
+        data: { contract: V10_ONBOARDING_RUNTIME_CONTRACT },
+        meta: runtimeMeta(V10_ONBOARDING_RUNTIME_CONTRACT),
+      });
     })
   );
 
@@ -89,4 +97,3 @@ export function createOnboardingRuntimeRouter(
 }
 
 export default createOnboardingRuntimeRouter();
-

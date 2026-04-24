@@ -41,14 +41,7 @@
  */
 
 const ALLOWED_PROTOCOLS = new Set(['http:', 'https:']);
-const DANGEROUS_PREFIXES = [
-  'javascript:',
-  'data:',
-  'vbscript:',
-  'file:',
-  'about:',
-  'blob:',
-];
+const DANGEROUS_PREFIXES = ['javascript:', 'data:', 'vbscript:', 'file:', 'about:', 'blob:'];
 
 export function extractCitationDomain(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;

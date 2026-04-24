@@ -19,4 +19,3 @@ export function assertApprovalMode(value: unknown): asserts value is ApprovalMod
     throw new Error(`Invalid approval mode: ${String(value)}`);
   }
 }
-

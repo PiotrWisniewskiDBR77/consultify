@@ -42,15 +42,20 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   const config = useMemo(() => getToolWizardConfig(toolType), [toolType]);
-  const normalizeWizardStatus = useCallback((status?: string | null): WizardSessionData['status'] => {
-    const normalized = String(status || 'DRAFT').trim().toUpperCase();
-    if (normalized === 'REVIEW') return 'REVIEW';
-    if (normalized === 'IN_PROGRESS') return 'IN_PROGRESS';
-    if (normalized === 'FINALIZED' || normalized === 'APPROVED' || normalized === 'GENERATED') {
-      return 'FINALIZED';
-    }
-    return 'DRAFT';
-  }, []);
+  const normalizeWizardStatus = useCallback(
+    (status?: string | null): WizardSessionData['status'] => {
+      const normalized = String(status || 'DRAFT')
+        .trim()
+        .toUpperCase();
+      if (normalized === 'REVIEW') return 'REVIEW';
+      if (normalized === 'IN_PROGRESS') return 'IN_PROGRESS';
+      if (normalized === 'FINALIZED' || normalized === 'APPROVED' || normalized === 'GENERATED') {
+        return 'FINALIZED';
+      }
+      return 'DRAFT';
+    },
+    []
+  );
   const normalizeWizardMissingItems = useCallback(
     (items: WizardSessionData['review']['missingItems']) =>
       (items || []).map((item) => ({
@@ -147,7 +152,9 @@ export const ToolWizardView: React.FC<ToolWizardViewProps> = ({
   );
 
   const handleFinalize = useCallback(async () => {
-    const unresolvedMissingItems = (sessionData.review?.missingItems || []).filter((item) => !item.resolved);
+    const unresolvedMissingItems = (sessionData.review?.missingItems || []).filter(
+      (item) => !item.resolved
+    );
     if (unresolvedMissingItems.length > 0) {
       toast.error(t('tools.wizard.finalizeBlocked', 'Resolve missing items before finalizing'));
       return;

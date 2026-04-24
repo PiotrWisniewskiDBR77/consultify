@@ -77,7 +77,10 @@ export const OurStoryPage: React.FC = () => {
             transition={{ delay: 0.14 }}
             className="text-lg text-white/50 max-w-2xl mx-auto"
           >
-            {t('pages.ourStory.hero.subtitle', "Consultify wasn't built in a garage by people who'd never run a real transformation. It was built by people who had — and were frustrated with how broken the system was.")}
+            {t(
+              'pages.ourStory.hero.subtitle',
+              "Consultify wasn't built in a garage by people who'd never run a real transformation. It was built by people who had — and were frustrated with how broken the system was."
+            )}
           </motion.p>
         </div>
       </section>
@@ -89,7 +92,8 @@ export const OurStoryPage: React.FC = () => {
           <div
             className="absolute left-[28px] top-0 bottom-0 w-px"
             style={{
-              background: 'linear-gradient(to bottom, rgba(124,58,237,0.40), rgba(124,58,237,0.05))',
+              background:
+                'linear-gradient(to bottom, rgba(124,58,237,0.40), rgba(124,58,237,0.05))',
             }}
           />
 
@@ -137,13 +141,22 @@ export const OurStoryPage: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             className="mt-16 p-8 rounded-2xl text-center"
-            style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.25)' }}
+            style={{
+              background: 'rgba(124,58,237,0.08)',
+              border: '1px solid rgba(124,58,237,0.25)',
+            }}
           >
             <p className="text-xl font-black text-white mb-3">
-              {t('pages.ourStory.closing.quote', '"We did for consulting what Spotify did for music."')}
+              {t(
+                'pages.ourStory.closing.quote',
+                '"We did for consulting what Spotify did for music."'
+              )}
             </p>
             <p className="text-white/50 text-sm max-w-lg mx-auto">
-              {t('pages.ourStory.closing.description', "The world's best consulting methodology, on demand, at a fraction of the cost. For everyone who has a real transformation to deliver.")}
+              {t(
+                'pages.ourStory.closing.description',
+                "The world's best consulting methodology, on demand, at a fraction of the cost. For everyone who has a real transformation to deliver."
+              )}
             </p>
             <button
               className="mt-6 inline-flex items-center gap-2 px-7 py-3 rounded-full text-sm font-semibold text-white"

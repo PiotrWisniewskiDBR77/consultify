@@ -82,11 +82,11 @@ class RetentionAutomationService {
   }
 
   async executeRetention(organizationId: string): Promise<RetentionResult[]> {
-    const schedules = await dbAll(
+    const schedules = (await dbAll(
       `SELECT * FROM ai_retention_schedule
        WHERE organization_id = ? AND is_active = 1`,
       [organizationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     const results: RetentionResult[] = [];
 
@@ -95,11 +95,7 @@ class RetentionAutomationService {
         Date.now() - schedule.retention_days * 24 * 60 * 60 * 1000
       ).toISOString();
 
-      const result = await this.deleteExpiredData(
-        organizationId,
-        schedule.data_type,
-        cutoffDate
-      );
+      const result = await this.deleteExpiredData(organizationId, schedule.data_type, cutoffDate);
 
       results.push(result);
 
@@ -118,11 +114,11 @@ class RetentionAutomationService {
   }
 
   async sendPreDeletionNotifications(organizationId: string): Promise<number> {
-    const schedules = await dbAll(
+    const schedules = (await dbAll(
       `SELECT * FROM ai_retention_schedule
        WHERE organization_id = ? AND is_active = 1 AND notification_sent = 0`,
       [organizationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     let notified = 0;
 
@@ -131,10 +127,10 @@ class RetentionAutomationService {
         Date.now() - (schedule.retention_days - 7) * 24 * 60 * 60 * 1000
       ).toISOString();
 
-      const atRiskRow = await dbGet(
-        this.getCountQuery(schedule.data_type, true),
-        [organizationId, warningCutoff]
-      ).catch(() => null) as any;
+      const atRiskRow = (await dbGet(this.getCountQuery(schedule.data_type, true), [
+        organizationId,
+        warningCutoff,
+      ]).catch(() => null)) as any;
 
       const atRiskCount = Number(atRiskRow?.cnt) || 0;
 
@@ -166,13 +162,7 @@ class RetentionAutomationService {
         (id, conversation_id, organization_id, preserved_by, reason, preserved_at)
        VALUES (?, ?, ?, ?, ?, datetime('now'))
        ON CONFLICT(conversation_id) DO NOTHING`,
-      [
-        randomUUID(),
-        input.conversationId,
-        input.organizationId,
-        input.userId,
-        input.reason || null,
-      ]
+      [randomUUID(), input.conversationId, input.organizationId, input.userId, input.reason || null]
     ).catch(() => {});
   }
 
@@ -184,10 +174,10 @@ class RetentionAutomationService {
   }
 
   async getSchedules(organizationId: string): Promise<RetentionSchedule[]> {
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT * FROM ai_retention_schedule WHERE organization_id = ? ORDER BY data_type`,
       [organizationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     return (rows || []).map(this.mapSchedule);
   }
@@ -197,7 +187,7 @@ class RetentionAutomationService {
     organizationId: string,
     updates: { retentionDays?: number; isActive?: boolean }
   ): Promise<void> {
-    const sets: string[] = ['updated_at = datetime(\'now\')'];
+    const sets: string[] = ["updated_at = datetime('now')"];
     const params: unknown[] = [];
 
     if (updates.retentionDays !== undefined) {
@@ -229,22 +219,24 @@ class RetentionAutomationService {
     try {
       switch (dataType) {
         case 'conversations': {
-          const preservedIds = await dbAll(
+          const preservedIds = (await dbAll(
             `SELECT conversation_id FROM preserved_conversations WHERE organization_id = ?`,
             [orgId]
-          ).catch(() => []) as any[];
+          ).catch(() => [])) as any[];
           const preservedSet = new Set((preservedIds || []).map((r: any) => r.conversation_id));
           preserved = preservedSet.size;
 
-          const expiredConvs = await dbAll(
+          const expiredConvs = (await dbAll(
             `SELECT id FROM conversations
              WHERE organization_id = ? AND created_at < ?`,
             [orgId, cutoffDate]
-          ).catch(() => []) as any[];
+          ).catch(() => [])) as any[];
 
           for (const conv of expiredConvs || []) {
             if (preservedSet.has(conv.id)) continue;
-            await dbRun(`DELETE FROM conversation_messages WHERE conversation_id = ?`, [conv.id]).catch(() => {});
+            await dbRun(`DELETE FROM conversation_messages WHERE conversation_id = ?`, [
+              conv.id,
+            ]).catch(() => {});
             await dbRun(`DELETE FROM conversations WHERE id = ?`, [conv.id]).catch(() => {});
             deleted++;
           }
@@ -273,7 +265,13 @@ class RetentionAutomationService {
       errors.push(`${dataType}: ${err?.message}`);
     }
 
-    return { organizationId: orgId, dataType, itemsDeleted: deleted, preservedCount: preserved, errors };
+    return {
+      organizationId: orgId,
+      dataType,
+      itemsDeleted: deleted,
+      preservedCount: preserved,
+      errors,
+    };
   }
 
   private getCountQuery(dataType: string, _isWarning: boolean): string {

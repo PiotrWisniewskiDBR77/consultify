@@ -30,12 +30,12 @@ describe('formatTrustBadgeModelLabel', () => {
   });
 
   it('masks UUID-like ids to "Private model"', () => {
-    expect(
-      formatTrustBadgeModelLabel('e3b0c442-98fc-1c14-9afb-c4e9c4e9c4e9')
-    ).toBe('Private model');
-    expect(
-      formatTrustBadgeModelLabel('E3B0C442-98FC-1C14-9AFB-C4E9C4E9C4E9')
-    ).toBe('Private model');
+    expect(formatTrustBadgeModelLabel('e3b0c442-98fc-1c14-9afb-c4e9c4e9c4e9')).toBe(
+      'Private model'
+    );
+    expect(formatTrustBadgeModelLabel('E3B0C442-98FC-1C14-9AFB-C4E9C4E9C4E9')).toBe(
+      'Private model'
+    );
   });
 
   describe('GPT family', () => {
@@ -68,23 +68,15 @@ describe('formatTrustBadgeModelLabel', () => {
 
   describe('Claude family', () => {
     it('claude-3-5-sonnet + dated suffix', () => {
-      expect(formatTrustBadgeModelLabel('claude-3-5-sonnet-20241022')).toBe(
-        'Claude 3.5 Sonnet'
-      );
+      expect(formatTrustBadgeModelLabel('claude-3-5-sonnet-20241022')).toBe('Claude 3.5 Sonnet');
     });
     it('claude-3-5-haiku', () => {
-      expect(formatTrustBadgeModelLabel('claude-3-5-haiku-20241022')).toBe(
-        'Claude 3.5 Haiku'
-      );
+      expect(formatTrustBadgeModelLabel('claude-3-5-haiku-20241022')).toBe('Claude 3.5 Haiku');
     });
     it('claude-3-opus / claude-3-sonnet / claude-3-haiku', () => {
       expect(formatTrustBadgeModelLabel('claude-3-opus-20240229')).toBe('Claude 3 Opus');
-      expect(formatTrustBadgeModelLabel('claude-3-sonnet-20240229')).toBe(
-        'Claude 3 Sonnet'
-      );
-      expect(formatTrustBadgeModelLabel('claude-3-haiku-20240307')).toBe(
-        'Claude 3 Haiku'
-      );
+      expect(formatTrustBadgeModelLabel('claude-3-sonnet-20240229')).toBe('Claude 3 Sonnet');
+      expect(formatTrustBadgeModelLabel('claude-3-haiku-20240307')).toBe('Claude 3 Haiku');
     });
     it('claude-2', () => {
       expect(formatTrustBadgeModelLabel('claude-2.1')).toBe('Claude 2');
@@ -128,9 +120,7 @@ describe('formatTrustBadgeModelLabel', () => {
 
   it('matches case-insensitively', () => {
     expect(formatTrustBadgeModelLabel('GPT-4O-2024-08-06')).toBe('GPT-4o');
-    expect(formatTrustBadgeModelLabel('CLAUDE-3-5-SONNET-20241022')).toBe(
-      'Claude 3.5 Sonnet'
-    );
+    expect(formatTrustBadgeModelLabel('CLAUDE-3-5-SONNET-20241022')).toBe('Claude 3.5 Sonnet');
   });
 
   it('trims leading / trailing whitespace before matching', () => {

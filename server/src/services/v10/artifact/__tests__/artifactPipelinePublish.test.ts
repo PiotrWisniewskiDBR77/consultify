@@ -127,4 +127,3 @@ describe('artifactPipelineService.publishRunToOutputsLibrary', () => {
     expect(published.artifact.artifactId).toBe('artifact-db-1');
   });
 });
-

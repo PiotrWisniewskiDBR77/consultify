@@ -37,11 +37,25 @@ import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { bucketIdeaStageForList, type IdeaStageV5, normalizeStageToV5 } from './ideaEntryTypes';
 import { IdeasTableContent } from './IdeasTableContent';
-import type { IdeasBulkBarPayload, IdeasViewMode, IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
+import type {
+  IdeasBulkBarPayload,
+  IdeaStage,
+  IdeasViewMode,
+  MyIdea,
+  SortDir,
+  SortField,
+} from './myIdeasTypes';
 import { useConfirmDialog } from './shared/ConfirmDialog';
 import { KeyboardShortcutsHelp } from './shared/KeyboardShortcutsHelp';
 
-export type { IdeasBulkBarPayload, IdeasViewMode, IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
+export type {
+  IdeasBulkBarPayload,
+  IdeaStage,
+  IdeasViewMode,
+  MyIdea,
+  SortDir,
+  SortField,
+} from './myIdeasTypes';
 
 interface MyIdeasListContentProps {
   viewMode?: IdeasViewMode;
@@ -182,7 +196,9 @@ const DEFAULT_IDEAS_COLUMN_WIDTHS = {
 function getIdeasTableViewStorageKey(): string {
   try {
     const token = tokenService.getToken();
-    const payload = token ? (tokenService.decodeToken(token) as Record<string, unknown> | null) : null;
+    const payload = token
+      ? (tokenService.decodeToken(token) as Record<string, unknown> | null)
+      : null;
     const userId = String(payload?.id || 'anonymous').trim() || 'anonymous';
     const orgId = String(payload?.organizationId || 'unknown-org').trim() || 'unknown-org';
     return `${IDEAS_TABLE_VIEW_STORAGE_KEY}.${orgId}.${userId}`;

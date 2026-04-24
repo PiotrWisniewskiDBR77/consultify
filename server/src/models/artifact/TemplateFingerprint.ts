@@ -34,4 +34,3 @@ export function computeTemplateFingerprint(structure: ArtifactStructure): string
   const hex = (hash >>> 0).toString(16).padStart(8, '0');
   return `tf_${hex}`;
 }
-

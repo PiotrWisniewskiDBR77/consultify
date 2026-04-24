@@ -270,9 +270,7 @@ describe('TrustBadge', () => {
         modelUsed="  gpt-4o-2024-08-06  "
       />
     );
-    expect(screen.getByTestId('trust-badge-model')).toHaveTextContent(
-      'gpt-4o-2024-08-06'
-    );
+    expect(screen.getByTestId('trust-badge-model')).toHaveTextContent('gpt-4o-2024-08-06');
   });
 
   it('masks UUID-like model ids to "Private model" when humanizer is ON', () => {
@@ -389,10 +387,7 @@ describe('TrustBadge', () => {
         isCopyCitationsEnabled={() => true}
         isHumanizeModelEnabled={() => true}
         modelUsed="gpt-4o-2024-08-06"
-        citations={[
-          linkedCitation(1, 'https://example.com/one'),
-          linkedCitation(2),
-        ]}
+        citations={[linkedCitation(1, 'https://example.com/one'), linkedCitation(2)]}
         writeToClipboard={writer}
       />
     );
@@ -451,9 +446,7 @@ describe('TrustBadge', () => {
   });
 
   it('transitions to the "failed" state when the writer reports a failure', async () => {
-    const writer = vi
-      .fn()
-      .mockResolvedValue({ ok: false, reason: 'denied' } as const);
+    const writer = vi.fn().mockResolvedValue({ ok: false, reason: 'denied' } as const);
     render(
       <TrustBadge
         isEnabled={() => true}
@@ -556,9 +549,7 @@ describe('TrustBadge', () => {
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
     expect(screen.queryByTestId('trust-badge-reasoning')).not.toBeInTheDocument();
-    expect(
-      screen.queryByTestId('trust-badge-reasoning-toggle')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-reasoning-toggle')).not.toBeInTheDocument();
   });
 
   it('T-TR2: renders the toggle collapsed when the flag is ON', () => {
@@ -572,9 +563,7 @@ describe('TrustBadge', () => {
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
     const toggle = screen.getByTestId('trust-badge-reasoning-toggle');
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    expect(
-      screen.queryByTestId('trust-badge-reasoning-body')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-reasoning-body')).not.toBeInTheDocument();
   });
 
   it('T-TR2: clicking the toggle expands the body with the ordered observation ids', () => {
@@ -592,34 +581,20 @@ describe('TrustBadge', () => {
 
     expect(screen.getByTestId('trust-badge-reasoning-body')).toBeInTheDocument();
     // Retrieval bucket at 4 sources is `strong`.
-    expect(
-      screen.getByTestId('trust-badge-reasoning-retrieval-strong')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-reasoning-model-known')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-reasoning-verify')
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-reasoning-retrieval-strong')).toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-reasoning-model-known')).toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-reasoning-verify')).toBeInTheDocument();
   });
 
   it('T-TR2: uses retrieval-none + model-unknown when inputs are degraded', () => {
     render(
-      <TrustBadge
-        isEnabled={() => true}
-        isReasoningEnabled={() => true}
-        citations={undefined}
-      />
+      <TrustBadge isEnabled={() => true} isReasoningEnabled={() => true} citations={undefined} />
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
     fireEvent.click(screen.getByTestId('trust-badge-reasoning-toggle'));
 
-    expect(
-      screen.getByTestId('trust-badge-reasoning-retrieval-none')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-reasoning-model-unknown')
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-reasoning-retrieval-none')).toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-reasoning-model-unknown')).toBeInTheDocument();
   });
 
   it('T-TR2: a second toggle click collapses the body', () => {
@@ -634,9 +609,7 @@ describe('TrustBadge', () => {
     fireEvent.click(screen.getByTestId('trust-badge-reasoning-toggle'));
     expect(screen.getByTestId('trust-badge-reasoning-body')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('trust-badge-reasoning-toggle'));
-    expect(
-      screen.queryByTestId('trust-badge-reasoning-body')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-reasoning-body')).not.toBeInTheDocument();
   });
 
   it('T-TR2: closing the popover resets the disclosure so re-opening starts collapsed', () => {
@@ -655,12 +628,10 @@ describe('TrustBadge', () => {
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
     // Re-open.
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
-    expect(
-      screen.queryByTestId('trust-badge-reasoning-body')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-reasoning-toggle').getAttribute('aria-expanded')
-    ).toBe('false');
+    expect(screen.queryByTestId('trust-badge-reasoning-body')).not.toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-reasoning-toggle').getAttribute('aria-expanded')).toBe(
+      'false'
+    );
   });
 
   it('T-TR2: emits zero telemetry events from the reasoning toggle', () => {
@@ -696,9 +667,7 @@ describe('TrustBadge', () => {
       />
     );
     openAndExpandReasoning();
-    expect(
-      screen.queryByTestId('trust-badge-copy-reasoning')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-copy-reasoning')).not.toBeInTheDocument();
   });
 
   it('T-TR1.4: does not render the button when the reasoning disclosure is collapsed', () => {
@@ -712,9 +681,7 @@ describe('TrustBadge', () => {
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
     // Deliberately do NOT expand the disclosure.
-    expect(
-      screen.queryByTestId('trust-badge-copy-reasoning')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-copy-reasoning')).not.toBeInTheDocument();
   });
 
   it('T-TR1.4: renders the button inside the expanded disclosure when both flags are ON', () => {
@@ -805,9 +772,7 @@ describe('TrustBadge', () => {
   });
 
   it('T-TR1.4: transitions to "failed" when the writer reports a failure', async () => {
-    const writer = vi
-      .fn()
-      .mockResolvedValue({ ok: false, reason: 'denied' } as const);
+    const writer = vi.fn().mockResolvedValue({ ok: false, reason: 'denied' } as const);
     render(
       <TrustBadge
         isEnabled={() => true}
@@ -905,9 +870,7 @@ describe('TrustBadge', () => {
       );
     });
     fireEvent.keyDown(document, { key: 'Escape' });
-    expect(
-      screen.queryByTestId('trust-badge-copy-reasoning')
-    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-copy-reasoning')).not.toBeInTheDocument();
     openAndExpandReasoning();
     expect(screen.getByTestId('trust-badge-copy-reasoning')).toHaveAttribute(
       'data-copy-state',
@@ -954,12 +917,8 @@ describe('TrustBadge', () => {
       />
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
-    expect(
-      screen.queryByTestId('trust-badge-citation-link-0')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-citation-plain-0')
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-citation-link-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-citation-plain-0')).toBeInTheDocument();
   });
 
   it('T-TR3-lite: renders citation rows as plain text when the link is missing', () => {
@@ -971,12 +930,8 @@ describe('TrustBadge', () => {
       />
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
-    expect(
-      screen.queryByTestId('trust-badge-citation-link-0')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-citation-plain-0')
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-citation-link-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-citation-plain-0')).toBeInTheDocument();
   });
 
   it('T-TR3-lite: renders citation rows as plain text when the link is javascript:', () => {
@@ -988,12 +943,8 @@ describe('TrustBadge', () => {
       />
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
-    expect(
-      screen.queryByTestId('trust-badge-citation-link-0')
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-citation-plain-0')
-    ).toBeInTheDocument();
+    expect(screen.queryByTestId('trust-badge-citation-link-0')).not.toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-citation-plain-0')).toBeInTheDocument();
   });
 
   it('T-TR3-lite: renders an <a target="_blank" rel="noopener noreferrer"> when link is a safe https URL', () => {
@@ -1025,9 +976,7 @@ describe('TrustBadge', () => {
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
     const link = screen.getByTestId('trust-badge-citation-link-0');
-    expect(link.getAttribute('aria-label')).toBe(
-      'Open source in a new tab: Citation 1'
-    );
+    expect(link.getAttribute('aria-label')).toBe('Open source in a new tab: Citation 1');
   });
 
   it('T-TR3-lite: mixes linked and unlinked rows correctly in the same popover', () => {
@@ -1045,12 +994,8 @@ describe('TrustBadge', () => {
     );
     fireEvent.click(screen.getByTestId('trust-badge-trigger'));
     expect(screen.getByTestId('trust-badge-citation-link-0')).toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-citation-plain-1')
-    ).toBeInTheDocument();
-    expect(
-      screen.getByTestId('trust-badge-citation-plain-2')
-    ).toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-citation-plain-1')).toBeInTheDocument();
+    expect(screen.getByTestId('trust-badge-citation-plain-2')).toBeInTheDocument();
     expect(screen.getByTestId('trust-badge-citation-link-3')).toBeInTheDocument();
   });
 

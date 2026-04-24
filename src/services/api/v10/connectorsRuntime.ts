@@ -134,7 +134,12 @@ export type ConnectorsSessionMutationResponse = {
   session: ConnectorsSessionRecord;
 };
 
-export type ConnectorsAuthChallengeStatus = 'pending' | 'completed' | 'denied' | 'failed' | 'expired';
+export type ConnectorsAuthChallengeStatus =
+  | 'pending'
+  | 'completed'
+  | 'denied'
+  | 'failed'
+  | 'expired';
 
 export type ConnectorsAuthChallenge = {
   challengeId: string;
@@ -182,7 +187,13 @@ export type ConnectorsSourceRef = {
 
 export type ConnectorsSearchDiagnostic = {
   connectorId: string;
-  status: 'searched' | 'skipped' | 'not_supported' | 'needs_connection' | 'needs_reauth' | 'not_implemented';
+  status:
+    | 'searched'
+    | 'skipped'
+    | 'not_supported'
+    | 'needs_connection'
+    | 'needs_reauth'
+    | 'not_implemented';
   reason: string | null;
 };
 
@@ -237,18 +248,27 @@ export const ConnectorsRuntimeApi = {
       `/api/v10/connectors-runtime/connectors/${encodeURIComponent(connectorId)}`,
       { method: 'GET' }
     );
-    return handleDataResponse<ConnectorsCatalogDetailResponse>(res, 'Failed to load connector details');
+    return handleDataResponse<ConnectorsCatalogDetailResponse>(
+      res,
+      'Failed to load connector details'
+    );
   },
 
   listSessions: async (): Promise<ConnectorsSessionListResponse> => {
     const res = await fetchWithRetry('/api/v10/connectors-runtime/sessions', { method: 'GET' });
-    return handleDataResponse<ConnectorsSessionListResponse>(res, 'Failed to load connector sessions');
+    return handleDataResponse<ConnectorsSessionListResponse>(
+      res,
+      'Failed to load connector sessions'
+    );
   },
 
-  connectConnector: async (connectorId: string, body?: {
-    requestedScopes?: string[];
-    mode?: ConnectorsSessionMode;
-  }): Promise<ConnectorsSessionMutationResponse> => {
+  connectConnector: async (
+    connectorId: string,
+    body?: {
+      requestedScopes?: string[];
+      mode?: ConnectorsSessionMode;
+    }
+  ): Promise<ConnectorsSessionMutationResponse> => {
     const res = await fetchWithRetry(
       `/api/v10/connectors-runtime/connectors/${encodeURIComponent(connectorId)}/connect`,
       {
@@ -256,7 +276,10 @@ export const ConnectorsRuntimeApi = {
         body: JSON.stringify(body || {}),
       }
     );
-    return handleDataResponse<ConnectorsSessionMutationResponse>(res, 'Failed to connect connector');
+    return handleDataResponse<ConnectorsSessionMutationResponse>(
+      res,
+      'Failed to connect connector'
+    );
   },
 
   startAuth: async (
@@ -290,7 +313,10 @@ export const ConnectorsRuntimeApi = {
         body: JSON.stringify(body || {}),
       }
     );
-    return handleDataResponse<ConnectorsAuthCompleteResponse>(res, 'Failed to complete connector auth');
+    return handleDataResponse<ConnectorsAuthCompleteResponse>(
+      res,
+      'Failed to complete connector auth'
+    );
   },
 
   disconnectConnector: async (
@@ -304,7 +330,10 @@ export const ConnectorsRuntimeApi = {
         body: JSON.stringify(body || {}),
       }
     );
-    return handleDataResponse<ConnectorsSessionMutationResponse>(res, 'Failed to disconnect connector');
+    return handleDataResponse<ConnectorsSessionMutationResponse>(
+      res,
+      'Failed to disconnect connector'
+    );
   },
 
   search: async (body: {
@@ -341,6 +370,9 @@ export const ConnectorsRuntimeApi = {
         body: JSON.stringify(body || {}),
       }
     );
-    return handleDataResponse<ConnectorsTokenRefreshResponse>(res, 'Failed to refresh connector token');
+    return handleDataResponse<ConnectorsTokenRefreshResponse>(
+      res,
+      'Failed to refresh connector token'
+    );
   },
 };

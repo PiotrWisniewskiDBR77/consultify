@@ -51,9 +51,7 @@ describe('InputCharCounter', () => {
     );
     expect(screen.getByTestId('input-char-counter')).toBeInTheDocument();
 
-    rerender(
-      <InputCharCounter value={longString(25)} threshold={50} isEnabled={() => true} />
-    );
+    rerender(<InputCharCounter value={longString(25)} threshold={50} isEnabled={() => true} />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -77,12 +75,7 @@ describe('InputCharCounter', () => {
 
   it('honours a custom max for tone escalation', () => {
     render(
-      <InputCharCounter
-        value={longString(800)}
-        threshold={400}
-        max={1000}
-        isEnabled={() => true}
-      />
+      <InputCharCounter value={longString(800)} threshold={400} max={1000} isEnabled={() => true} />
     );
     expect(screen.getByTestId('input-char-counter').getAttribute('data-tone')).toBe('amber');
   });

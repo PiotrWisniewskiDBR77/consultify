@@ -5,10 +5,10 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import verifyToken, { requireOrganization } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
-  researchRuntimeService,
   ResearchRuntimeInputError,
   ResearchRuntimeMissionNotFoundError,
   type ResearchRuntimeService,
+  researchRuntimeService,
 } from '../../services/v10/research/researchRuntimeService.js';
 import {
   ResearchMissionPlanRequestSchema,
@@ -22,7 +22,10 @@ import { respondWithData, runtimeMeta, withRuntimeScope } from './runtimeRouteUt
 export const V10_RESEARCH_RUNTIME_CONTRACT = 'research_runtime_wave_a_v1';
 
 function handleResearchRuntimeError(res: Response, error: unknown) {
-  if (error instanceof ResearchRuntimeMissionNotFoundError || error instanceof ResearchRuntimeInputError) {
+  if (
+    error instanceof ResearchRuntimeMissionNotFoundError ||
+    error instanceof ResearchRuntimeInputError
+  ) {
     return res.status(error.status).json({
       error: error.message,
       code: error.code,
@@ -32,7 +35,9 @@ function handleResearchRuntimeError(res: Response, error: unknown) {
   throw error;
 }
 
-export function createResearchRuntimeRouter(service: ResearchRuntimeService = researchRuntimeService) {
+export function createResearchRuntimeRouter(
+  service: ResearchRuntimeService = researchRuntimeService
+) {
   const router = Router();
 
   router.use(verifyToken);
@@ -43,10 +48,8 @@ export function createResearchRuntimeRouter(service: ResearchRuntimeService = re
     validateBody(ResearchMissionPlanRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
       try {
-        return await respondWithData(
-          res,
-          V10_RESEARCH_RUNTIME_CONTRACT,
-          () => service.planMission(withRuntimeScope(req))
+        return await respondWithData(res, V10_RESEARCH_RUNTIME_CONTRACT, () =>
+          service.planMission(withRuntimeScope(req))
         );
       } catch (error) {
         return handleResearchRuntimeError(res, error);
@@ -59,10 +62,8 @@ export function createResearchRuntimeRouter(service: ResearchRuntimeService = re
     validateBody(ResearchMissionRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
       try {
-        return await respondWithData(
-          res,
-          V10_RESEARCH_RUNTIME_CONTRACT,
-          () => service.startMission(withRuntimeScope(req))
+        return await respondWithData(res, V10_RESEARCH_RUNTIME_CONTRACT, () =>
+          service.startMission(withRuntimeScope(req))
         );
       } catch (error) {
         return handleResearchRuntimeError(res, error);
@@ -75,10 +76,8 @@ export function createResearchRuntimeRouter(service: ResearchRuntimeService = re
     validateBody(ResearchMissionWatchRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
       try {
-        return await respondWithData(
-          res,
-          V10_RESEARCH_RUNTIME_CONTRACT,
-          () => service.watchMission(withRuntimeScope(req))
+        return await respondWithData(res, V10_RESEARCH_RUNTIME_CONTRACT, () =>
+          service.watchMission(withRuntimeScope(req))
         );
       } catch (error) {
         return handleResearchRuntimeError(res, error);
@@ -91,10 +90,8 @@ export function createResearchRuntimeRouter(service: ResearchRuntimeService = re
     validateBody(ResearchMissionSummaryRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
       try {
-        return await respondWithData(
-          res,
-          V10_RESEARCH_RUNTIME_CONTRACT,
-          () => service.getMissionSummary(withRuntimeScope(req))
+        return await respondWithData(res, V10_RESEARCH_RUNTIME_CONTRACT, () =>
+          service.getMissionSummary(withRuntimeScope(req))
         );
       } catch (error) {
         return handleResearchRuntimeError(res, error);
@@ -105,9 +102,10 @@ export function createResearchRuntimeRouter(service: ResearchRuntimeService = re
   router.get(
     '/contract',
     asyncHandler(async (_req: AuthRequest, res: Response) => {
-      return res
-        .status(200)
-        .json({ data: { contract: V10_RESEARCH_RUNTIME_CONTRACT }, meta: runtimeMeta(V10_RESEARCH_RUNTIME_CONTRACT) });
+      return res.status(200).json({
+        data: { contract: V10_RESEARCH_RUNTIME_CONTRACT },
+        meta: runtimeMeta(V10_RESEARCH_RUNTIME_CONTRACT),
+      });
     })
   );
 
@@ -115,4 +113,3 @@ export function createResearchRuntimeRouter(service: ResearchRuntimeService = re
 }
 
 export default createResearchRuntimeRouter();
-

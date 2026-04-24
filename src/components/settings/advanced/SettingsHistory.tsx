@@ -56,10 +56,10 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
       setLoading(true);
       const days =
         dateRange === '7d' ? 7 : dateRange === '30d' ? 30 : dateRange === '90d' ? 90 : 365;
-      const response = await Api.getSettingsHistory(
+      const response = (await Api.getSettingsHistory(
         selectedCategory !== 'all' ? selectedCategory : undefined,
         days
-      );
+      )) as { entries?: HistoryEntry[] } | null | undefined;
 
       if (response?.entries) {
         setEntries(response.entries);

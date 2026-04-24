@@ -25,8 +25,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { CanvasBgPattern } from '../ideaSelectionTypes';
-import type { WhiteboardSessionState, WhiteboardSharePolicy } from './whiteboardContracts';
 import { STICKY_COLORS } from './nodes/whiteboardNodeHelpers';
+import type { WhiteboardSessionState, WhiteboardSharePolicy } from './whiteboardContracts';
 import { ToolbarBtn, ToolbarDropdown } from './WhiteboardToolbarPrimitives';
 
 export interface WhiteboardToolbarProps {
@@ -46,7 +46,24 @@ export interface WhiteboardToolbarProps {
   canRedo: boolean;
   whiteboardModeCopy: { toggleLabel: string; modeLabel: string; exitHint: string; helper: string };
 
-  onAddElement: (kind: string, extraData?: Record<string, unknown>) => void;
+  onAddElement: (
+    kind:
+      | 'sticky'
+      | 'text'
+      | 'group'
+      | 'shape_rectangle'
+      | 'shape_circle'
+      | 'shape_diamond'
+      | 'shape_hexagon'
+      | 'frame'
+      | 'image'
+      | 'link'
+      | 'kpi_badge'
+      | 'score'
+      | 'progress'
+      | 'summary',
+    extraData?: Record<string, unknown>
+  ) => void;
   onSetBoardMode: (mode: 'board' | 'draw') => void;
   onClearDrawings: () => void;
   onToggleVoting: () => void;

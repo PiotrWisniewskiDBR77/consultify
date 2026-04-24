@@ -100,7 +100,11 @@ export const Breadcrumb: React.FC<BreadcrumbProps> = ({ items }) => {
     <nav className="flex items-center gap-2 text-sm" aria-label="Breadcrumb">
       {items.map((item, index) => (
         <React.Fragment key={index}>
-          {index > 0 && <span className="text-slate-400 dark:text-slate-500" aria-hidden="true">/</span>}
+          {index > 0 && (
+            <span className="text-slate-400 dark:text-slate-500" aria-hidden="true">
+              /
+            </span>
+          )}
           {item.onClick || item.href ? (
             <button
               onClick={item.onClick}

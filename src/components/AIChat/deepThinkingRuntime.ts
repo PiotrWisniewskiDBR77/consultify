@@ -56,7 +56,9 @@ export function normalizeDeepThinkingExpectedOutput(
 }
 
 export function resolveDeepThinkingDepth(raw: unknown): 'light' | 'standard' | 'hard' {
-  const value = String(raw || '').trim().toLowerCase();
+  const value = String(raw || '')
+    .trim()
+    .toLowerCase();
   if (value === 'light') return 'light';
   if (value === 'hard') return 'hard';
   return 'standard';
@@ -105,7 +107,9 @@ export function buildDeepThinkingConfirmMessageMetadata(args: {
   confirmToken?: string | null;
   extra?: Record<string, unknown>;
 }): Record<string, unknown> {
-  const expectedOutput = normalizeDeepThinkingExpectedOutput(args.confirm?.understanding?.expectedOutput);
+  const expectedOutput = normalizeDeepThinkingExpectedOutput(
+    args.confirm?.understanding?.expectedOutput
+  );
   const suggestedDepth = resolveDeepThinkingDepth(args.confirm?.suggestedDepth);
   return {
     deepThinking: {
@@ -157,7 +161,9 @@ export function buildDeepThinkingConfirmedContext(
     deepThinkingConfirm: pendingConfirm.confirm,
     deepThinkingDepth: resolveDeepThinkingDepth(pendingConfirm.confirm?.suggestedDepth),
     ...(expectedOutput ? { deepThinkingExpectedOutput: expectedOutput } : {}),
-    ...(pendingConfirm.confirmToken ? { deepThinkingConfirmToken: pendingConfirm.confirmToken } : {}),
+    ...(pendingConfirm.confirmToken
+      ? { deepThinkingConfirmToken: pendingConfirm.confirmToken }
+      : {}),
     ...(pendingConfirm.clarificationAnswers
       ? { clarificationAnswers: pendingConfirm.clarificationAnswers }
       : {}),

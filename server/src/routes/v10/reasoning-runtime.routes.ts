@@ -4,7 +4,10 @@ import { Router } from 'express';
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import verifyToken, { requireOrganization } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
-import { reasoningRuntimeService, type ReasoningRuntimeService } from '../../services/v10/reasoning/reasoningRuntimeService.js';
+import {
+  type ReasoningRuntimeService,
+  reasoningRuntimeService,
+} from '../../services/v10/reasoning/reasoningRuntimeService.js';
 import { researchRuntimeService } from '../../services/v10/research/researchRuntimeService.js';
 import { ReasoningFastChatRequestSchema } from '../../types/v10/reasoning-runtime.js';
 import { ResearchMissionPlanRequestSchema } from '../../types/v10/research-runtime.js';
@@ -13,7 +16,9 @@ import { respondWithData, runtimeMeta, withRuntimeScope } from './runtimeRouteUt
 
 export const V10_REASONING_RUNTIME_CONTRACT = 'reasoning_runtime_wave_a_v1';
 
-export function createReasoningRuntimeRouter(service: ReasoningRuntimeService = reasoningRuntimeService) {
+export function createReasoningRuntimeRouter(
+  service: ReasoningRuntimeService = reasoningRuntimeService
+) {
   const router = Router();
 
   router.use(verifyToken);
@@ -24,7 +29,9 @@ export function createReasoningRuntimeRouter(service: ReasoningRuntimeService = 
     validateBody(ReasoningFastChatRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
       const result = service.fastChat(req.body);
-      return res.status(200).json({ data: result, meta: runtimeMeta(V10_REASONING_RUNTIME_CONTRACT) });
+      return res
+        .status(200)
+        .json({ data: result, meta: runtimeMeta(V10_REASONING_RUNTIME_CONTRACT) });
     })
   );
 
@@ -32,10 +39,8 @@ export function createReasoningRuntimeRouter(service: ReasoningRuntimeService = 
     '/delegate/research/plan',
     validateBody(ResearchMissionPlanRequestSchema),
     asyncHandler(async (req: AuthRequest, res: Response) => {
-      return await respondWithData(
-        res,
-        V10_REASONING_RUNTIME_CONTRACT,
-        () => researchRuntimeService.planMission(withRuntimeScope(req))
+      return await respondWithData(res, V10_REASONING_RUNTIME_CONTRACT, () =>
+        researchRuntimeService.planMission(withRuntimeScope(req))
       );
     })
   );
@@ -43,9 +48,10 @@ export function createReasoningRuntimeRouter(service: ReasoningRuntimeService = 
   router.get(
     '/contract',
     asyncHandler(async (_req: AuthRequest, res: Response) => {
-      return res
-        .status(200)
-        .json({ data: { contract: V10_REASONING_RUNTIME_CONTRACT }, meta: runtimeMeta(V10_REASONING_RUNTIME_CONTRACT) });
+      return res.status(200).json({
+        data: { contract: V10_REASONING_RUNTIME_CONTRACT },
+        meta: runtimeMeta(V10_REASONING_RUNTIME_CONTRACT),
+      });
     })
   );
 
@@ -53,4 +59,3 @@ export function createReasoningRuntimeRouter(service: ReasoningRuntimeService = 
 }
 
 export default createReasoningRuntimeRouter();
-

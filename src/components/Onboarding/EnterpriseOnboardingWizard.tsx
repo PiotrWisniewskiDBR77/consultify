@@ -17,13 +17,13 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyPartner,
   V8PartnerApi,
   type V8PartnerOnboardingStatus,
 } from '@/services/api/v8';
-import { ROUTES } from '@/routes/routeConfig';
 
 type OnboardingStep = 1 | 2 | 3 | 4;
 type PricingTier = 'starter' | 'professional' | 'enterprise';
@@ -234,7 +234,9 @@ export const EnterpriseOnboardingWizard: React.FC = () => {
 
             {/* Privacy Policy */}
             <div className="border border-slate-200 dark:border-navy-700 rounded-xl p-6 bg-slate-50 dark:bg-navy-900/50">
-              <h3 className="font-semibold text-navy-900 dark:text-white mb-3">Polityka prywatnosci</h3>
+              <h3 className="font-semibold text-navy-900 dark:text-white mb-3">
+                Polityka prywatnosci
+              </h3>
               <div className="max-h-40 overflow-y-auto text-sm text-slate-600 dark:text-slate-300 mb-4 space-y-2">
                 <p>We respect your privacy and protect your data...</p>
                 <p>• We collect only necessary business information</p>

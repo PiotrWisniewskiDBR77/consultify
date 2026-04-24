@@ -35,7 +35,8 @@ describe('interviewInsightAnalysisService', () => {
           strength: 'strong',
           crossSessionPattern: true,
           perspective_labels: ['Operations', 'Technology'],
-          divergence_note: 'Technology sees ownership as system-level, while operations sees it as workflow-level.',
+          divergence_note:
+            'Technology sees ownership as system-level, while operations sees it as workflow-level.',
         },
       ],
       issues: [

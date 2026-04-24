@@ -1,15 +1,14 @@
 import crypto from 'crypto';
 import { ZodError } from 'zod';
 
-import { all as dbAll, get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
 import type {
   LearningAdaptiveCoverageSummary,
   LearningFeedbackSubmitRequest,
   LearningFeedbackSubmitResponse,
-  LearningIncidentsListResponse,
   LearningIncidentRecord,
   LearningIncidentReportRequest,
   LearningIncidentReportResponse,
+  LearningIncidentsListResponse,
   LearningQualityDashboard,
   LearningRetentionPreviewRequest,
   LearningRetentionPreviewResponse,
@@ -24,6 +23,7 @@ import {
   LearningRetentionPreviewRequestSchema,
   LearningStewardshipResolveRequestSchema,
 } from '../../../types/v10/learning-loop.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
 
 class LearningLoopInputError extends Error {
   readonly code: string;
@@ -101,7 +101,9 @@ function toInt(value: unknown, fallback = 0): number {
 }
 
 export class LearningLoopService {
-  async submitFeedback(input: LearningFeedbackSubmitRequest): Promise<LearningFeedbackSubmitResponse> {
+  async submitFeedback(
+    input: LearningFeedbackSubmitRequest
+  ): Promise<LearningFeedbackSubmitResponse> {
     const parsed = LearningFeedbackSubmitRequestSchema.parse(input);
     const now = resolveNow(parsed.now);
     const tenantId = tenantKey(parsed.scope.tenantId);
@@ -261,7 +263,11 @@ export class LearningLoopService {
       [itemId, tenantId]
     );
     if (!existing) {
-      throw new LearningLoopInputError('LEARNING_LOOP_QUEUE_ITEM_NOT_FOUND', 'Queue item not found', 404);
+      throw new LearningLoopInputError(
+        'LEARNING_LOOP_QUEUE_ITEM_NOT_FOUND',
+        'Queue item not found',
+        404
+      );
     }
 
     await dbRun(
@@ -456,7 +462,8 @@ export class LearningLoopService {
 
     const previewTotal = toInt(retentionAgg?.total, 0);
     const deniedCount = toInt(retentionAgg?.denied_count, 0);
-    const deniedRate = previewTotal === 0 ? 0 : Math.min(1, Math.max(0, deniedCount / previewTotal));
+    const deniedRate =
+      previewTotal === 0 ? 0 : Math.min(1, Math.max(0, deniedCount / previewTotal));
 
     const openItems = toInt(openItemsAgg?.open_items, 0);
     const openIncidents = toInt(incidentsAgg?.open, 0);
@@ -476,7 +483,11 @@ export function mapLearningLoopError(error: unknown): { status: number; body: un
   if (error instanceof ZodError) {
     return {
       status: 422,
-      body: { error: 'Invalid learning loop request', code: 'LEARNING_LOOP_INVALID_REQUEST', issues: error.issues },
+      body: {
+        error: 'Invalid learning loop request',
+        code: 'LEARNING_LOOP_INVALID_REQUEST',
+        issues: error.issues,
+      },
     };
   }
   if (error instanceof LearningLoopInputError) {
@@ -485,9 +496,11 @@ export function mapLearningLoopError(error: unknown): { status: number; body: un
   if (error instanceof Error) {
     return { status: 422, body: { error: error.message, code: error.name } };
   }
-  return { status: 500, body: { error: 'Unknown learning loop failure', code: 'LEARNING_LOOP_UNKNOWN_ERROR' } };
+  return {
+    status: 500,
+    body: { error: 'Unknown learning loop failure', code: 'LEARNING_LOOP_UNKNOWN_ERROR' },
+  };
 }
 
 export const learningLoopService = new LearningLoopService();
 export { LearningLoopInputError };
-

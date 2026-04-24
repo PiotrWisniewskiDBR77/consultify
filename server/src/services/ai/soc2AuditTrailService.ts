@@ -99,13 +99,13 @@ class SOC2AuditTrailService {
       params.push(input.eventType);
     }
 
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT * FROM ai_soc2_audit_trail
        WHERE ${conditions.join(' AND ')}
        ORDER BY created_at DESC
        LIMIT 10000`,
       params
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     const entries: AuditEntry[] = (rows || []).map(this.mapRow);
 
@@ -116,11 +116,7 @@ class SOC2AuditTrailService {
     };
   }
 
-  async getCostAttribution(input: {
-    organizationId: string;
-    from: string;
-    to: string;
-  }): Promise<{
+  async getCostAttribution(input: { organizationId: string; from: string; to: string }): Promise<{
     totalCost: number;
     byUser: Array<{ userId: string; cost: number; messageCount: number }>;
     byModel: Array<{ modelId: string; cost: number; tokenCount: number }>;
@@ -174,22 +170,27 @@ class SOC2AuditTrailService {
     };
   }
 
-  async verifyIntegrity(organizationId: string, entryId: string): Promise<{
+  async verifyIntegrity(
+    organizationId: string,
+    entryId: string
+  ): Promise<{
     exists: boolean;
     integrityValid: boolean;
   }> {
-    const row = await dbAll(
+    const row = (await dbAll(
       `SELECT id, request_hash, response_hash FROM ai_soc2_audit_trail
        WHERE id = ? AND organization_id = ?`,
       [entryId, organizationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     if (!row?.length) return { exists: false, integrityValid: false };
     return { exists: true, integrityValid: true };
   }
 
   private hashContent(content: string): string {
-    return createHash('sha256').update(content || '').digest('hex');
+    return createHash('sha256')
+      .update(content || '')
+      .digest('hex');
   }
 
   private mapRow(row: any): AuditEntry {

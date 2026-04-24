@@ -152,10 +152,14 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       setImporting(true);
 
       // Call API to import settings
-      const response = await Api.importSettings(importPreview, true);
+      const response = (await Api.importSettings(importPreview, true)) as
+        | { imported?: string[] }
+        | null
+        | undefined;
+      const importedCount = response?.imported?.length ?? 0;
 
-      if (response?.imported?.length > 0) {
-        toast.success(`Settings imported successfully (${response.imported.length} categories)`);
+      if (importedCount > 0) {
+        toast.success(`Settings imported successfully (${importedCount} categories)`);
       } else {
         toast.success('Settings imported successfully');
       }

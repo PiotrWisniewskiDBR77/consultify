@@ -304,7 +304,11 @@ export const RouterSync: React.FC = () => {
     }
 
     // SUPERADMIN should not stay on /chat
-    if ((path === '/chat' || path.startsWith('/chat/')) && isSuperAdminRole(userRole)) {
+    if (
+      (path === '/chat' || path.startsWith('/chat/')) &&
+      path !== '/chat/v10-runtime' &&
+      isSuperAdminRole(userRole)
+    ) {
       console.log('[RouterSync] SUPERADMIN on /chat, redirecting to /superadmin');
       isNavigatingRef.current = true;
       navigate('/superadmin', { replace: true });

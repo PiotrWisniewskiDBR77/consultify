@@ -304,9 +304,7 @@ export const RecentConversationsDropdown: React.FC<RecentConversationsDropdownPr
 
   if (entries.length === 0) return null;
 
-  const wrapperClass = className
-    ? `relative inline-flex ${className}`
-    : 'relative inline-flex';
+  const wrapperClass = className ? `relative inline-flex ${className}` : 'relative inline-flex';
 
   // Compose the `aria-keyshortcuts` advertisement from the two
   // independent trigger-shortcut flags. When neither flag is ON
@@ -362,11 +360,7 @@ export const RecentConversationsDropdown: React.FC<RecentConversationsDropdownPr
                   onClick={() => handleItemClick(entry.id)}
                   onKeyDown={(event) => handleItemKeyDown(event, idx)}
                   title={entry.truncated ? entry.fullTitle : undefined}
-                  aria-label={
-                    entry.pinned
-                      ? `Pinned: ${entry.fullTitle}`
-                      : undefined
-                  }
+                  aria-label={entry.pinned ? `Pinned: ${entry.fullTitle}` : undefined}
                   className="flex w-full items-center gap-1.5 truncate px-3 py-1.5 text-left hover:bg-slate-100 dark:hover:bg-navy-800 focus:bg-slate-100 dark:focus:bg-navy-800 focus:outline-none"
                 >
                   {entry.pinned && (

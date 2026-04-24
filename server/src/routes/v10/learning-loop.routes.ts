@@ -6,9 +6,9 @@ import verifyToken, { requireOrganization } from '../../middleware/auth.middlewa
 import { requireRole as requireRbacRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
+  type LearningLoopService,
   learningLoopService,
   mapLearningLoopError,
-  type LearningLoopService,
 } from '../../services/v10/learning/learningLoopService.js';
 import {
   LearningFeedbackSubmitBodySchema,
@@ -17,7 +17,12 @@ import {
   LearningStewardshipResolveBodySchema,
 } from '../../types/v10/learning-loop.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
-import { respondWithData, runtimeMeta, withRuntimeScope, scopeFromAuthRequest } from './runtimeRouteUtils.js';
+import {
+  respondWithData,
+  runtimeMeta,
+  scopeFromAuthRequest,
+  withRuntimeScope,
+} from './runtimeRouteUtils.js';
 
 export const V10_LEARNING_LOOP_CONTRACT = 'learning_loop_wave_b_v1';
 
@@ -26,7 +31,9 @@ async function createResponder(res: Response, operation: () => unknown): Promise
     await respondWithData(res, V10_LEARNING_LOOP_CONTRACT, operation);
   } catch (error) {
     const mapped = mapLearningLoopError(error);
-    res.status(mapped.status).json({ ...(mapped.body as object), meta: runtimeMeta(V10_LEARNING_LOOP_CONTRACT) });
+    res
+      .status(mapped.status)
+      .json({ ...(mapped.body as object), meta: runtimeMeta(V10_LEARNING_LOOP_CONTRACT) });
   }
 }
 
@@ -114,4 +121,3 @@ export function createLearningLoopRouter(service: LearningLoopService = learning
 }
 
 export default createLearningLoopRouter();
-

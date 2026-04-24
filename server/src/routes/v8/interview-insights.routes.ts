@@ -3,39 +3,39 @@ import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
 import type { AuthRequest } from '../../middleware/auth.middleware.js';
-import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import { requirePermission } from '../../middleware/permission.middleware.js';
-import { getById as getInsightById } from '../../services/InterviewInsightService.js';
-import { hasPermission } from '../../services/permissionService.js';
-import { fireAndForget } from '../../utils/fireAndForget.js';
+import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import type { InsightStatus } from '../../services/InterviewInsightService.js';
+import { getById as getInsightById } from '../../services/InterviewInsightService.js';
 import notificationService from '../../services/notificationService.js';
-import { canPublishFinding } from '../../services/v8/interviewInsightCanon.js';
-import {
-  validateLifecycleTransition,
-  listFindings,
-  getFinding,
-  addFinding,
-  updateFinding,
-  addEvidencePointer,
-  removeEvidencePointer,
-  buildHandoffPayload,
-  recordHandoff,
-  type InsightLifecycleAction,
-} from '../../services/v8/interviewInsightFindingsService.js';
-import {
-  listCandidates,
-  promoteCandidateToFinding,
-  triageCandidate,
-  type CandidateTriageAction,
-} from '../../services/v8/interviewInsightCandidateService.js';
-import { buildInsightAnalysis } from '../../services/v8/interviewInsightAnalysisService.js';
-import { onInsightPublished } from '../../services/v8/insightSignalBridgeService.js';
 import {
   organizationContextService,
   rebuildOrganizationContextSnapshot,
 } from '../../services/organizationContext/OrganizationContextService.js';
+import { hasPermission } from '../../services/permissionService.js';
+import { onInsightPublished } from '../../services/v8/insightSignalBridgeService.js';
+import { buildInsightAnalysis } from '../../services/v8/interviewInsightAnalysisService.js';
+import {
+  type CandidateTriageAction,
+  listCandidates,
+  promoteCandidateToFinding,
+  triageCandidate,
+} from '../../services/v8/interviewInsightCandidateService.js';
+import { canPublishFinding } from '../../services/v8/interviewInsightCanon.js';
+import {
+  addEvidencePointer,
+  addFinding,
+  buildHandoffPayload,
+  getFinding,
+  type InsightLifecycleAction,
+  listFindings,
+  recordHandoff,
+  removeEvidencePointer,
+  updateFinding,
+  validateLifecycleTransition,
+} from '../../services/v8/interviewInsightFindingsService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { fireAndForget } from '../../utils/fireAndForget.js';
 import logger from '../../utils/Logger.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
 
@@ -225,7 +225,10 @@ router.post(
     );
 
     if (transition.targetStatus === 'published') {
-      fireAndForget(rebuildOrganizationContextSnapshot(organizationId), 'rebuildOrgContextSnapshot');
+      fireAndForget(
+        rebuildOrganizationContextSnapshot(organizationId),
+        'rebuildOrgContextSnapshot'
+      );
 
       const freshInsight = await getInsightById(insightId);
       if (freshInsight) {
@@ -307,7 +310,9 @@ router.post(
     }
 
     if (!action) {
-      return res.status(400).json({ error: 'action is required', code: 'P10_CANDIDATE_ACTION_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'action is required', code: 'P10_CANDIDATE_ACTION_REQUIRED' });
     }
 
     if (action === 'promote_to_finding') {
@@ -379,7 +384,9 @@ router.get(
 
     const analysis = await buildInsightAnalysis(insightId);
     if (!analysis) {
-      return res.status(404).json({ error: 'Insight analysis not found', code: 'P10_ANALYSIS_NOT_FOUND' });
+      return res
+        .status(404)
+        .json({ error: 'Insight analysis not found', code: 'P10_ANALYSIS_NOT_FOUND' });
     }
 
     return res.json({
@@ -443,16 +450,20 @@ router.post(
       });
     }
 
-    const result = await addFinding(insightId, {
-      finding_statement,
-      confidence_level,
-      limits,
-      next_action,
-      evidence_pointers,
-    }, {
-      organizationId,
-      actorUserId: userId,
-    });
+    const result = await addFinding(
+      insightId,
+      {
+        finding_statement,
+        confidence_level,
+        limits,
+        next_action,
+        evidence_pointers,
+      },
+      {
+        organizationId,
+        actorUserId: userId,
+      }
+    );
 
     if (result.error) {
       return res.status(400).json({ error: result.error, code: 'P10_FINDING_VALIDATION_ERROR' });
@@ -499,15 +510,27 @@ router.patch(
       return res.status(404).json({ error: 'Finding not found', code: 'P10_FINDING_NOT_FOUND' });
     }
 
-    if (body.finding_statement !== undefined || body.confidence_level !== undefined || body.limits !== undefined || body.next_action !== undefined) {
-      const updateResult = await updateFinding(insightId, findingId, {
-        finding_statement: body.finding_statement,
-        confidence_level: body.confidence_level,
-        limits: body.limits,
-        next_action: body.next_action,
-      }, userId);
+    if (
+      body.finding_statement !== undefined ||
+      body.confidence_level !== undefined ||
+      body.limits !== undefined ||
+      body.next_action !== undefined
+    ) {
+      const updateResult = await updateFinding(
+        insightId,
+        findingId,
+        {
+          finding_statement: body.finding_statement,
+          confidence_level: body.confidence_level,
+          limits: body.limits,
+          next_action: body.next_action,
+        },
+        userId
+      );
       if (updateResult.error) {
-        return res.status(400).json({ error: updateResult.error, code: 'P10_FINDING_VALIDATION_ERROR' });
+        return res
+          .status(400)
+          .json({ error: updateResult.error, code: 'P10_FINDING_VALIDATION_ERROR' });
       }
     }
 
@@ -557,11 +580,14 @@ router.post(
       return res.status(404).json({ error: 'Finding not found', code: 'P10_FINDING_NOT_FOUND' });
     }
 
-    const publishCheck = canPublishFinding({
-      confidenceLevel: finding.confidence_level,
-      evidencePointers: finding.evidence_pointers,
-      limits: finding.limits,
-    }, 'handoff');
+    const publishCheck = canPublishFinding(
+      {
+        confidenceLevel: finding.confidence_level,
+        evidencePointers: finding.evidence_pointers,
+        limits: finding.limits,
+      },
+      'handoff'
+    );
     if (!publishCheck.allowed) {
       return res.status(422).json({
         error: `Cannot handoff: ${publishCheck.reason}`,
@@ -634,7 +660,12 @@ router.post(
               insightId,
               handoffTarget: target_initiative_id || initiativeRef.id,
             },
-            confidence: finding.confidence_level === 'high' ? 0.95 : finding.confidence_level === 'medium' ? 0.75 : 0.55,
+            confidence:
+              finding.confidence_level === 'high'
+                ? 0.95
+                : finding.confidence_level === 'medium'
+                  ? 0.75
+                  : 0.55,
           },
         ],
       })

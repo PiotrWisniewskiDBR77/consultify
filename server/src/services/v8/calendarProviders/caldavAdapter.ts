@@ -7,19 +7,19 @@
  * tokens for incremental polling.
  */
 
-import { DAVClient, DAVNamespaceShort } from 'tsdav';
-import type { DAVCalendar, DAVObject } from 'tsdav';
+import type { DateWithTimeZone, ParameterValue, VEvent } from 'node-ical';
 import * as ical from 'node-ical';
-import type { VEvent, ParameterValue, DateWithTimeZone } from 'node-ical';
+import type { DAVCalendar, DAVObject } from 'tsdav';
+import { DAVClient, DAVNamespaceShort } from 'tsdav';
 
+import logger from '../../../utils/Logger.js';
 import type {
   CalendarProviderAdapter,
   ConnectionRef,
+  FetchEventsResult,
   ProviderCalendarRef,
   ProviderEvent,
-  FetchEventsResult,
 } from './types.js';
-import logger from '../../../utils/Logger.js';
 
 const LOG_PREFIX = '[P02-CalDAV]';
 
@@ -130,10 +130,7 @@ interface ParsedVEvents {
   exceptions: Map<string, Array<{ event: VEvent; calObj: DAVObject }>>;
 }
 
-function collectVEvents(
-  calendarObjects: DAVObject[],
-  calendarId: string,
-): ParsedVEvents {
+function collectVEvents(calendarObjects: DAVObject[], calendarId: string): ParsedVEvents {
   const masters = new Map<string, { event: VEvent; calObj: DAVObject }>();
   const exceptions = new Map<string, Array<{ event: VEvent; calObj: DAVObject }>>();
 
@@ -172,7 +169,7 @@ function buildProviderEvent(
   vevent: VEvent,
   calObj: DAVObject,
   calendarId: string,
-  recurrenceExceptions: Array<{ event: VEvent; calObj: DAVObject }> | undefined,
+  recurrenceExceptions: Array<{ event: VEvent; calObj: DAVObject }> | undefined
 ): ProviderEvent {
   const uid = vevent.uid;
   const rruleStr = extractRRule(vevent);
@@ -198,9 +195,9 @@ function buildProviderEvent(
 
     const mappedExceptions = (recurrenceExceptions ?? []).map((exc) => ({
       recurrenceId: dateToISO(exc.event.recurrenceid!) ?? '',
-      action: (exc.event.status?.toUpperCase() === 'CANCELLED'
-        ? 'cancelled'
-        : 'modified') as 'modified' | 'cancelled',
+      action: (exc.event.status?.toUpperCase() === 'CANCELLED' ? 'cancelled' : 'modified') as
+        | 'modified'
+        | 'cancelled',
       overrides: {
         title: parameterValueToString(exc.event.summary),
         startAt: dateToISO(exc.event.start),
@@ -228,17 +225,12 @@ function buildProviderEvent(
   return pe;
 }
 
-function mapCalendarObjects(
-  calendarObjects: DAVObject[],
-  calendarId: string,
-): ProviderEvent[] {
+function mapCalendarObjects(calendarObjects: DAVObject[], calendarId: string): ProviderEvent[] {
   const { masters, exceptions } = collectVEvents(calendarObjects, calendarId);
   const events: ProviderEvent[] = [];
 
   for (const [uid, { event, calObj }] of masters) {
-    events.push(
-      buildProviderEvent(event, calObj, calendarId, exceptions.get(uid)),
-    );
+    events.push(buildProviderEvent(event, calObj, calendarId, exceptions.get(uid)));
   }
 
   for (const [uid, excList] of exceptions) {
@@ -299,8 +291,8 @@ export const caldavAdapter: CalendarProviderAdapter = {
         const displayName =
           typeof cal.displayName === 'string'
             ? cal.displayName
-            : (cal.displayName as Record<string, unknown> | undefined)?.['_cdata'] as string ??
-              cal.url;
+            : (((cal.displayName as Record<string, unknown> | undefined)?.['_cdata'] as string) ??
+              cal.url);
 
         return {
           calendarId: cal.url,
@@ -313,7 +305,7 @@ export const caldavAdapter: CalendarProviderAdapter = {
     } catch (err) {
       logger.error(`${LOG_PREFIX} listCalendars failed`, err);
       throw new Error(
-        `${LOG_PREFIX} Failed to list CalDAV calendars: ${err instanceof Error ? err.message : String(err)}`,
+        `${LOG_PREFIX} Failed to list CalDAV calendars: ${err instanceof Error ? err.message : String(err)}`
       );
     }
   },
@@ -321,10 +313,10 @@ export const caldavAdapter: CalendarProviderAdapter = {
   async fetchEvents(
     connection: ConnectionRef,
     window: { startAt: string; endAt: string },
-    cursor?: string | null,
+    cursor?: string | null
   ): Promise<FetchEventsResult> {
     logger.info(
-      `${LOG_PREFIX} fetchEvents window=${window.startAt}..${window.endAt} cursor=${cursor ? 'present' : 'none'}`,
+      `${LOG_PREFIX} fetchEvents window=${window.startAt}..${window.endAt} cursor=${cursor ? 'present' : 'none'}`
     );
 
     try {
@@ -371,7 +363,9 @@ export const caldavAdapter: CalendarProviderAdapter = {
             allEvents.push(...mapCalendarObjects(calObjects, calendarId));
           } catch (syncErr) {
             if (isSyncTokenInvalid(syncErr)) {
-              logger.warn(`${LOG_PREFIX} Sync token invalid/rejected for ${calendarId}, requesting full sync`);
+              logger.warn(
+                `${LOG_PREFIX} Sync token invalid/rejected for ${calendarId}, requesting full sync`
+              );
               return { events: [], nextCursor: null, fullSyncRequired: true };
             }
             throw syncErr;
@@ -407,9 +401,8 @@ export const caldavAdapter: CalendarProviderAdapter = {
 
       logger.error(`${LOG_PREFIX} fetchEvents failed`, err);
       throw new Error(
-        `${LOG_PREFIX} Failed to fetch CalDAV events: ${err instanceof Error ? err.message : String(err)}`,
+        `${LOG_PREFIX} Failed to fetch CalDAV events: ${err instanceof Error ? err.message : String(err)}`
       );
     }
   },
 };
-

@@ -348,7 +348,9 @@ export async function createProposal(params: CreateProposalParams): Promise<Acti
           title: validated.summary,
           summary: validated.reason,
           intent: validated.summary,
-          previewLines: buildActionPreviewLines((validated.previewPayload ?? null) as ActionPreview | null),
+          previewLines: buildActionPreviewLines(
+            (validated.previewPayload ?? null) as ActionPreview | null
+          ),
           riskLabel: validated.riskClass,
         })
       : undefined,

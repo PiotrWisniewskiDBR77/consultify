@@ -5,7 +5,11 @@ import { agentRuntimeService } from './agentRuntimeService.js';
 function mapAuditStatusToRuntime(args: {
   qualityStatus?: string | null;
   acceptedAt?: string | null;
-}): { status: 'pending' | 'paused' | 'succeeded'; approvalState: string; latestBarrierState: string | null } {
+}): {
+  status: 'pending' | 'paused' | 'succeeded';
+  approvalState: string;
+  latestBarrierState: string | null;
+} {
   if (args.acceptedAt) {
     return {
       status: 'succeeded',
@@ -13,7 +17,11 @@ function mapAuditStatusToRuntime(args: {
       latestBarrierState: 'risk_accepted',
     };
   }
-  if (String(args.qualityStatus || '').trim().toUpperCase() === 'FAIL') {
+  if (
+    String(args.qualityStatus || '')
+      .trim()
+      .toUpperCase() === 'FAIL'
+  ) {
     return {
       status: 'paused',
       approvalState: 'awaiting_risk_decision',
@@ -27,7 +35,9 @@ function mapAuditStatusToRuntime(args: {
   };
 }
 
-function runtimeStateFromStatus(status: 'pending' | 'paused' | 'succeeded'): 'idle' | 'paused' | 'completed' {
+function runtimeStateFromStatus(
+  status: 'pending' | 'paused' | 'succeeded'
+): 'idle' | 'paused' | 'completed' {
   if (status === 'paused') return 'paused';
   if (status === 'succeeded') return 'completed';
   return 'idle';
@@ -68,7 +78,8 @@ export async function syncAgentAuditRunIntoRuntime(args: {
     status: mapping.status,
     severity: mapping.status === 'paused' ? 'S3' : 'S2',
     startedAt: existing?.startedAt ?? new Date().toISOString(),
-    finishedAt: mapping.status === 'succeeded' ? new Date().toISOString() : existing?.finishedAt ?? null,
+    finishedAt:
+      mapping.status === 'succeeded' ? new Date().toISOString() : (existing?.finishedAt ?? null),
     budgetUsed: existing?.budgetUsed ?? {
       wallMs: 0,
       costCents: 0,

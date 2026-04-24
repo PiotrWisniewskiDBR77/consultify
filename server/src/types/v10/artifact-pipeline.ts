@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import {
-  artifactRuntimeMutationPlanRequestSchema,
   type ArtifactRuntimeMutationPlanRequest,
+  artifactRuntimeMutationPlanRequestSchema,
   type ArtifactRuntimeMutationPlanResponse,
 } from './artifact-runtime.js';
 
@@ -29,7 +29,9 @@ export const artifactPipelinePreflightResponseSchema = z.object({
   checks: z.array(artifactPipelinePreflightCheckSchema),
 });
 
-export type ArtifactPipelinePreflightResponse = z.infer<typeof artifactPipelinePreflightResponseSchema>;
+export type ArtifactPipelinePreflightResponse = z.infer<
+  typeof artifactPipelinePreflightResponseSchema
+>;
 
 export const artifactPipelineRunRequestSchema = artifactRuntimeMutationPlanRequestSchema.extend({
   materialize: z.boolean().optional().default(true),
@@ -73,4 +75,3 @@ export const artifactPipelineRunResponseSchema = z.object({
 export type ArtifactPipelineRunResponse = z.infer<typeof artifactPipelineRunResponseSchema> & {
   plan: ArtifactRuntimeMutationPlanResponse;
 };
-

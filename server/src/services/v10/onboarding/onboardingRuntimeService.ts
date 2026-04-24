@@ -29,7 +29,13 @@ import {
 } from '../../../types/v10/onboarding-runtime.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
 
-type OnboardingStatus = 'in_progress' | 'paused' | 'abandoned' | 'completed' | 'resumed' | 'expired';
+type OnboardingStatus =
+  | 'in_progress'
+  | 'paused'
+  | 'abandoned'
+  | 'completed'
+  | 'resumed'
+  | 'expired';
 
 type StoredSessionRow = {
   onboardingId: string;
@@ -201,7 +207,11 @@ function median(values: number[]): number {
   return ((sorted[middle - 1] || 0) + (sorted[middle] || 0)) / 2;
 }
 
-function metricStatus(actual: number, target: number, lowerIsBetter = false): 'green' | 'amber' | 'red' {
+function metricStatus(
+  actual: number,
+  target: number,
+  lowerIsBetter = false
+): 'green' | 'amber' | 'red' {
   if (lowerIsBetter) {
     if (actual <= target) return 'green';
     if (actual <= target * 1.1) return 'amber';
@@ -392,7 +402,10 @@ function parseEventRow(row: any): StoredEventRow | null {
   };
 }
 
-async function getSession(onboardingId: string, tenantId: string): Promise<StoredSessionRow | null> {
+async function getSession(
+  onboardingId: string,
+  tenantId: string
+): Promise<StoredSessionRow | null> {
   await ensureOnboardingRuntimeTables();
   const row = await dbGet(
     `SELECT onboarding_id AS onboardingId,
@@ -543,7 +556,14 @@ async function appendEvent(row: StoredEventRow): Promise<void> {
     `INSERT INTO v10_onboarding_events (
        id, tenant_id, onboarding_id, event_name, recorded_at, props_json
      ) VALUES (?, ?, ?, ?, ?, ?)`,
-    [row.id, row.tenantId, row.onboardingId, row.eventName, row.recordedAt, JSON.stringify(row.props)],
+    [
+      row.id,
+      row.tenantId,
+      row.onboardingId,
+      row.eventName,
+      row.recordedAt,
+      JSON.stringify(row.props),
+    ],
     { fallback: false } as any
   );
 }
@@ -578,7 +598,11 @@ export class OnboardingRuntimeService {
     const resumeToken = existing?.resumeToken || crypto.randomUUID();
     const resumeExpiresAt = existing?.resumeExpiresAt || plusDays(now, 7);
     const snapshot: OnboardingSessionSnapshot = {
-      ...(existing?.snapshot || defaultSnapshot({ persona: parsed.persona, personaConfidence: parsed.personaConfidence || null })),
+      ...(existing?.snapshot ||
+        defaultSnapshot({
+          persona: parsed.persona,
+          personaConfidence: parsed.personaConfidence || null,
+        })),
       persona: normalizePersona(parsed.persona),
       personaConfidence: parsed.personaConfidence || existing?.personaConfidence || null,
       currentStep: existing?.snapshot?.currentStep || 'persona_capture',
@@ -636,7 +660,9 @@ export class OnboardingRuntimeService {
     return { onboardingId, resumeToken, resumeExpiresAt, now, accepted: true };
   }
 
-  async saveSnapshot(input: OnboardingSnapshotSaveRequest): Promise<OnboardingSnapshotSaveResponse> {
+  async saveSnapshot(
+    input: OnboardingSnapshotSaveRequest
+  ): Promise<OnboardingSnapshotSaveResponse> {
     const parsed = OnboardingSnapshotSaveRequestSchema.parse(input);
     const scope = requireScope(parsed.scope);
     const now = parsed.now?.trim() || new Date().toISOString();
@@ -761,12 +787,17 @@ export class OnboardingRuntimeService {
       resumedAt: now,
       snapshot: session.snapshot,
       currentStep: session.snapshot?.currentStep || session.currentStep,
-      deltaBanner: deltaBannerForStep(session.snapshot?.currentStep || session.currentStep, changedSourceIds),
+      deltaBanner: deltaBannerForStep(
+        session.snapshot?.currentStep || session.currentStep,
+        changedSourceIds
+      ),
       changedSourceIds,
     };
   }
 
-  async recordEvent(input: OnboardingTelemetryEventRequest): Promise<OnboardingTelemetryEventResponse> {
+  async recordEvent(
+    input: OnboardingTelemetryEventRequest
+  ): Promise<OnboardingTelemetryEventResponse> {
     const parsed = OnboardingTelemetryEventRequestSchema.parse(input);
     const scope = requireScope(parsed.scope);
     const now = parsed.now?.trim() || new Date().toISOString();
@@ -793,7 +824,9 @@ export class OnboardingRuntimeService {
       ...session,
       status: nextStatus,
       lastEventAt: now,
-      activationReachedAt: activationReached ? session.activationReachedAt || now : session.activationReachedAt,
+      activationReachedAt: activationReached
+        ? session.activationReachedAt || now
+        : session.activationReachedAt,
       abandonedAt: parsed.eventName === 'onboard.abandoned' ? now : session.abandonedAt,
     });
     const eventId = crypto.randomUUID();
@@ -808,7 +841,10 @@ export class OnboardingRuntimeService {
     return { onboardingId: parsed.onboardingId, eventId, recordedAt: now };
   }
 
-  async summarizeKpis(scope: { tenantId: string; now?: string }): Promise<OnboardingKpiSummaryResponse> {
+  async summarizeKpis(scope: {
+    tenantId: string;
+    now?: string;
+  }): Promise<OnboardingKpiSummaryResponse> {
     const now = scope.now?.trim() || new Date().toISOString();
     const sessions = await listTenantSessions(scope.tenantId);
     const events = await listTenantEvents(scope.tenantId);
@@ -844,10 +880,11 @@ export class OnboardingRuntimeService {
         );
       }).length;
       const firstArtifactSeconds = subset
-        .map((session) =>
-          (eventsByOnboardingId.get(session.onboardingId) || []).find(
-            (event) => event.eventName === 'onboard.artifact_first_draft_rendered'
-          )?.props.secondsSinceStart
+        .map(
+          (session) =>
+            (eventsByOnboardingId.get(session.onboardingId) || []).find(
+              (event) => event.eventName === 'onboard.artifact_first_draft_rendered'
+            )?.props.secondsSinceStart
         )
         .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
       const approvals = subset.filter((session) =>
@@ -866,7 +903,8 @@ export class OnboardingRuntimeService {
 
       const activationRate = startedSessions > 0 ? (activatedSessions / startedSessions) * 100 : 0;
       const approvalRate = startedSessions > 0 ? (approvals / startedSessions) * 100 : 0;
-      const connectorAttachRate = activatedSessions > 0 ? (connectorAtAha / activatedSessions) * 100 : 0;
+      const connectorAttachRate =
+        activatedSessions > 0 ? (connectorAtAha / activatedSessions) * 100 : 0;
       const artifactMedian = median(firstArtifactSeconds);
 
       return {
@@ -876,7 +914,11 @@ export class OnboardingRuntimeService {
         resumedSessions,
         abandonedSessions,
         metrics: {
-          activation_rate: buildMetricValue('activation_rate', activationRate, targets.activation_rate),
+          activation_rate: buildMetricValue(
+            'activation_rate',
+            activationRate,
+            targets.activation_rate
+          ),
           median_time_to_first_artifact: buildMetricValue(
             'median_time_to_first_artifact',
             artifactMedian,
@@ -923,4 +965,3 @@ export class OnboardingRuntimeService {
 }
 
 export const onboardingRuntimeService = new OnboardingRuntimeService();
-

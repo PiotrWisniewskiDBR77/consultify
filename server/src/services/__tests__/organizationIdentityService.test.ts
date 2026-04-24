@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  DuplicateOrganizationNameError,
   assertOrganizationNameAvailable,
   buildOrganizationCanonicalKey,
+  DuplicateOrganizationNameError,
   findOrganizationByCanonicalName,
 } from '../organizationIdentityService.js';
 

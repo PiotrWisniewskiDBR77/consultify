@@ -88,7 +88,9 @@ function buildDeepThinkingFormatAddon(
           ]
         : []),
       ...(outputMode === 'FullReport'
-        ? ['- Deliver a comprehensive report with clear sections, evidence, and implementation guidance.']
+        ? [
+            '- Deliver a comprehensive report with clear sections, evidence, and implementation guidance.',
+          ]
         : []),
       ...(showHighlights
         ? ['- Include a "Reasoning highlights" section (3–6 bullets, high-level).']
@@ -199,8 +201,12 @@ async function extractOrgContext(
       maturityLevel: resolved.systems?.cloudAdoption || undefined,
       terminology: undefined,
       strategicPriorities: resolved.strategic?.priorities || [],
-      openGaps: (resolved.operations?.gaps || []).map((g: any) => g.description || g.title || JSON.stringify(g)),
-      keyMetrics: (resolved.operations?.keyMetrics || []).map((m: any) => m.name ? `${m.name}: ${m.value ?? ''}` : JSON.stringify(m)),
+      openGaps: (resolved.operations?.gaps || []).map(
+        (g: any) => g.description || g.title || JSON.stringify(g)
+      ),
+      keyMetrics: (resolved.operations?.keyMetrics || []).map((m: any) =>
+        m.name ? `${m.name}: ${m.value ?? ''}` : JSON.stringify(m)
+      ),
     };
   } catch (err: any) {
     logger.debug(`[DeepThinking] Org context extraction failed: ${err?.message}`);

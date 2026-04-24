@@ -2,7 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { V8FinanceApi, type V8FinanceModelOutputsResult } from '../../services/api/v8/finance';
-import { type FinanceModelForecastLine, type FinanceModelPreviewDetail, type FinanceModelRow } from './financeTypes';
+import {
+  type FinanceModelForecastLine,
+  type FinanceModelPreviewDetail,
+  type FinanceModelRow,
+} from './financeTypes';
 
 type Props = {
   row: FinanceModelRow;
@@ -39,7 +43,9 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
       }
     }
     loadOutputs();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [row.id, selectedVariant]);
 
   const activeVariant = useMemo(() => {
@@ -52,7 +58,8 @@ export const FinanceModelDocumentView: React.FC<Props> = ({ row, detail }) => {
   const serverRows = useMemo((): FinanceModelForecastLine[] | null => {
     if (!serverOutputs?.grouped) return null;
     const statementKey = selectedStatement === 'P&L' ? 'PL' : selectedStatement;
-    const periodGroups = serverOutputs.grouped[statementKey] || serverOutputs.grouped[selectedStatement];
+    const periodGroups =
+      serverOutputs.grouped[statementKey] || serverOutputs.grouped[selectedStatement];
     if (!periodGroups) return null;
     const periods = Object.keys(periodGroups);
     if (periods.length === 0) return null;

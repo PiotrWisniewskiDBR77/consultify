@@ -1,13 +1,3 @@
-export const APPROVAL_MODES = ['implicit', 'explicit'] as const;
-
-export type ApprovalMode = (typeof APPROVAL_MODES)[number];
-
-export function assertApprovalMode(value: unknown): asserts value is ApprovalMode {
-  if (value !== 'implicit' && value !== 'explicit') {
-    throw new Error(`Invalid approval mode: ${String(value)}`);
-  }
-}
-
 /**
  * V10-AGT-004 — ApprovalMode catalogue + upward-override rule
  * (Wave A seed, schema + pure resolver).
@@ -38,10 +28,7 @@ export function assertApprovalMode(value: unknown): asserts value is ApprovalMod
  */
 
 import type { ApprovalMode, Severity } from './ExecutionProposalV1';
-import {
-  getSeverityPolicy,
-  SEVERITY_POLICIES,
-} from './SeverityPolicies';
+import { getSeverityPolicy, SEVERITY_POLICIES } from './SeverityPolicies';
 
 export type { ApprovalMode } from './ExecutionProposalV1';
 
@@ -63,10 +50,7 @@ function ordinalOf(mode: ApprovalMode): number {
   return ix;
 }
 
-export function compareApprovalMode(
-  a: ApprovalMode,
-  b: ApprovalMode,
-): -1 | 0 | 1 {
+export function compareApprovalMode(a: ApprovalMode, b: ApprovalMode): -1 | 0 | 1 {
   const diff = ordinalOf(a) - ordinalOf(b);
   if (diff < 0) return -1;
   if (diff > 0) return 1;
@@ -78,10 +62,7 @@ export function compareApprovalMode(
  * `current` and `proposed` is stricter. If `proposed` is weaker,
  * `current` wins.
  */
-export function upgradeApprovalMode(
-  current: ApprovalMode,
-  proposed: ApprovalMode,
-): ApprovalMode {
+export function upgradeApprovalMode(current: ApprovalMode, proposed: ApprovalMode): ApprovalMode {
   return compareApprovalMode(current, proposed) >= 0 ? current : proposed;
 }
 
@@ -173,9 +154,7 @@ export interface EffectiveApprovalInput {
  * The strictest-wins contract is what Wave A seed enforces; the
  * runtime wiring lives in V10-AGT-008.
  */
-export function resolveEffectiveApprovalMode(
-  input: EffectiveApprovalInput,
-): ApprovalMode {
+export function resolveEffectiveApprovalMode(input: EffectiveApprovalInput): ApprovalMode {
   let effective = getSeverityPolicy(input.severity).defaultApproval;
   if (input.tenantMinimum !== null) {
     effective = upgradeApprovalMode(effective, input.tenantMinimum);

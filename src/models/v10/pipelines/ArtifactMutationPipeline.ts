@@ -30,7 +30,7 @@ export function runArtifactMutationPipeline(input: {
   readonly now: string;
 }): ArtifactMutationPipelineOutput {
   const previous = String(input.artifact.reviewState) as ReviewState;
-  const next = nextReviewState(previous, input.reviewEvent);
+  const next = nextReviewState(previous, input.reviewEvent) ?? previous;
 
   return {
     runId: input.runId,
@@ -48,4 +48,3 @@ export function runArtifactMutationPipeline(input: {
     callerToken: 'caller-token',
   };
 }
-

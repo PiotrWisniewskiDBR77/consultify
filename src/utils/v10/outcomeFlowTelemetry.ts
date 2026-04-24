@@ -39,7 +39,13 @@ export function emitOutcomeKpiAcceptancePreviewed(payload: {
 
 export function emitOutcomeSignalIngested(payload: {
   readonly source: OutcomeFlowTelemetrySource;
-  readonly kind: 'time_saved' | 'decision_shipped' | 'revenue' | 'margin' | 'risk_avoided' | 'quality';
+  readonly kind:
+    | 'time_saved'
+    | 'decision_shipped'
+    | 'revenue'
+    | 'margin'
+    | 'risk_avoided'
+    | 'quality';
 }): boolean {
   return safeTrack('outcome_signal_ingested', { ...payload });
 }
@@ -55,7 +61,13 @@ export function emitOutcomeAcceptanceResolved(payload: {
 export function emitOutcomeBusinessLinked(payload: {
   readonly source: OutcomeFlowTelemetrySource;
   readonly metricsCountBucket: '1' | '2_3' | '4_5' | '6_plus';
-  readonly strongestSignalKind: 'time_saved' | 'decision_shipped' | 'revenue' | 'margin' | 'risk_avoided' | 'quality';
+  readonly strongestSignalKind:
+    | 'time_saved'
+    | 'decision_shipped'
+    | 'revenue'
+    | 'margin'
+    | 'risk_avoided'
+    | 'quality';
 }): boolean {
   return safeTrack('outcome_business_linked', { ...payload });
 }

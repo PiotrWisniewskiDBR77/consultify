@@ -1,5 +1,5 @@
-import type { DataClassification } from './DataClassification.js';
 import type { ArtifactType } from './ArtifactTypeRegistry.js';
+import type { DataClassification } from './DataClassification.js';
 
 export type TenantId = string & { readonly __brand: 'ArtifactTenantId' };
 export type UserId = string & { readonly __brand: 'UserId' };
@@ -32,7 +32,10 @@ export function unsafeRetentionPolicyId(value: string): RetentionPolicyId {
   return String(value) as RetentionPolicyId;
 }
 
-export type EvidenceRef = { readonly trustBundleSha256: string; readonly sourceHint: string | null };
+export type EvidenceRef = {
+  readonly trustBundleSha256: string;
+  readonly sourceHint: string | null;
+};
 
 export interface Artifact {
   readonly id: ArtifactId;
@@ -54,4 +57,3 @@ export interface Artifact {
   readonly evidenceRefs: readonly EvidenceRef[];
   readonly content: unknown;
 }
-

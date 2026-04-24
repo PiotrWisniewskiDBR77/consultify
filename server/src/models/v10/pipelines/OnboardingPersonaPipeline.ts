@@ -1,6 +1,10 @@
-export type OnboardingPersonaPipelineRunId = string & { readonly __brand: 'OnboardingPersonaPipelineRunId' };
+export type OnboardingPersonaPipelineRunId = string & {
+  readonly __brand: 'OnboardingPersonaPipelineRunId';
+};
 
-export function unsafeOnboardingPersonaPipelineRunId(value: string): OnboardingPersonaPipelineRunId {
+export function unsafeOnboardingPersonaPipelineRunId(
+  value: string
+): OnboardingPersonaPipelineRunId {
   return String(value) as OnboardingPersonaPipelineRunId;
 }
 
@@ -18,4 +22,3 @@ export function runOnboardingPersonaPipeline(input: {
   void input.persona;
   return { onboardingId: input.onboardingId, now: input.now, accepted: true };
 }
-

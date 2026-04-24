@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 
 /**
  * PoolNode — BPMN-style pool container (P14 semantic type: pool).

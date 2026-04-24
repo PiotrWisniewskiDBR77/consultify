@@ -431,7 +431,13 @@ export const Select: React.FC<SelectProps> = ({
             ${fullWidth ? 'w-full' : ''}
           `}
         >
-          <span className={selectedOption ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}>
+          <span
+            className={
+              selectedOption
+                ? 'text-slate-900 dark:text-white'
+                : 'text-slate-500 dark:text-slate-400'
+            }
+          >
             {selectedOption?.label || placeholder}
           </span>
           <ChevronDown size={16} className="text-slate-500 dark:text-slate-500" />

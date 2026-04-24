@@ -80,4 +80,3 @@ describe('EnhancedChatInput (Teresa voice error UX)', () => {
     expect(toastError).toHaveBeenCalledWith('Missing GEMINI_API_KEY');
   });
 });
-

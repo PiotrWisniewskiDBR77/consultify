@@ -1,4 +1,6 @@
-export type ResearchMissionPipelineRunId = string & { readonly __brand: 'ResearchMissionPipelineRunId' };
+export type ResearchMissionPipelineRunId = string & {
+  readonly __brand: 'ResearchMissionPipelineRunId';
+};
 
 export function unsafeResearchMissionPipelineRunId(value: string): ResearchMissionPipelineRunId {
   return String(value) as ResearchMissionPipelineRunId;
@@ -21,4 +23,3 @@ export function runResearchMissionPipeline(input: {
     summary: `ResearchMissionPipeline(MVP): synthesized summary for "${input.query}"`,
   };
 }
-

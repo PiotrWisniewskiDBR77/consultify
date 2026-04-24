@@ -50,20 +50,33 @@
  */
 
 import {
+  encodeFlagOverrideState,
   type FlagKeys,
   type FlagOverrideState,
-  encodeFlagOverrideState,
   readFlagOverrideState,
   writeFlagOverride,
 } from './chatFlagsShared';
+import {
+  AGENT_ANTI_PATTERNS_FLAG_KEYS,
+  isAgentAntiPatternsEnabled,
+} from './v10/agentAntiPatternsFlag';
+import {
+  AGENT_APPROVAL_BARRIER_FLAG_KEYS,
+  isAgentApprovalBarrierEnabled,
+} from './v10/agentApprovalBarrierFlag';
 import {
   AGENT_APPROVAL_MODE_FLAG_KEYS,
   isAgentApprovalModeEnabled,
 } from './v10/agentApprovalModeFlag';
 import {
-  AGENT_BUDGET_V1_FLAG_KEYS,
-  isAgentBudgetV1Enabled,
-} from './v10/agentBudgetV1Flag';
+  AGENT_ATOMIC_BUNDLE_FLAG_KEYS,
+  isAgentAtomicBundleEnabled,
+} from './v10/agentAtomicBundleFlag';
+import { AGENT_BUDGET_V1_FLAG_KEYS, isAgentBudgetV1Enabled } from './v10/agentBudgetV1Flag';
+import {
+  AGENT_CHECKPOINT_STORE_FLAG_KEYS,
+  isAgentCheckpointStoreEnabled,
+} from './v10/agentCheckpointStoreFlag';
 import {
   AGENT_DIFF_PREVIEW_V1_FLAG_KEYS,
   isAgentDiffPreviewV1Enabled,
@@ -73,69 +86,75 @@ import {
   isAgentExecutionProposalV1Enabled,
 } from './v10/agentExecutionProposalV1Flag';
 import {
+  AGENT_FAN_OUT_FAN_IN_FLAG_KEYS,
+  isAgentFanOutFanInEnabled,
+} from './v10/agentFanOutFanInFlag';
+import {
+  AGENT_INTERRUPT_VERBS_FLAG_KEYS,
+  isAgentInterruptVerbsEnabled,
+} from './v10/agentInterruptVerbsFlag';
+import {
   AGENT_NAVIGATION_INTENT_FLAG_KEYS,
   isAgentNavigationIntentEnabled,
 } from './v10/agentNavigationIntentFlag';
 import {
-  AGENT_OP_TYPE_REGISTRY_FLAG_KEYS,
-  isAgentOpTypeRegistryEnabled,
-} from './v10/agentOpTypeRegistryFlag';
+  AGENT_NOTIFICATION_BROKER_FLAG_KEYS,
+  isAgentNotificationBrokerEnabled,
+} from './v10/agentNotificationBrokerFlag';
 import {
   AGENT_OPTIMISTIC_CONCURRENCY_FLAG_KEYS,
   isAgentOptimisticConcurrencyEnabled,
 } from './v10/agentOptimisticConcurrencyFlag';
 import {
-  AGENT_SEVERITY_POLICIES_FLAG_KEYS,
-  isAgentSeverityPoliciesEnabled,
-} from './v10/agentSeverityPoliciesFlag';
-import {
-  AGENT_SEVERITY_S0_FLAG_KEYS,
-  isAgentSeverityS0Enabled,
-} from './v10/agentSeverityS0Flag';
-import {
-  AGENT_SEVERITY_S1_FLAG_KEYS,
-  isAgentSeverityS1Enabled,
-} from './v10/agentSeverityS1Flag';
-import {
-  AGENT_SEVERITY_S2_FLAG_KEYS,
-  isAgentSeverityS2Enabled,
-} from './v10/agentSeverityS2Flag';
-import {
-  AGENT_SEVERITY_S3_FLAG_KEYS,
-  isAgentSeverityS3Enabled,
-} from './v10/agentSeverityS3Flag';
-import {
-  AGENT_RUN_LEDGER_FLAG_KEYS,
-  isAgentRunLedgerEnabled,
-} from './v10/agentRunLedgerFlag';
+  AGENT_OP_TYPE_REGISTRY_FLAG_KEYS,
+  isAgentOpTypeRegistryEnabled,
+} from './v10/agentOpTypeRegistryFlag';
 import {
   AGENT_QUEUE_EXECUTOR_FLAG_KEYS,
   isAgentQueueExecutorEnabled,
 } from './v10/agentQueueExecutorFlag';
 import {
-  AGENT_SEVERITY_S4_FLAG_KEYS,
-  isAgentSeverityS4Enabled,
-} from './v10/agentSeverityS4Flag';
+  AGENT_RESEARCH_PHASE_MACHINE_FLAG_KEYS,
+  isAgentResearchPhaseMachineEnabled,
+} from './v10/agentResearchPhaseMachineFlag';
+import { AGENT_RUN_LEDGER_FLAG_KEYS, isAgentRunLedgerEnabled } from './v10/agentRunLedgerFlag';
 import {
-  ARTIFACT_ONE_STEP_UNDO_FLAG_KEYS,
-  isArtifactOneStepUndoEnabled,
-} from './v10/artifactOneStepUndoFlag';
+  AGENT_RUNTIME_TIME_TRAVEL_REPLAY_FLAG_KEYS,
+  isAgentRuntimeTimeTravelReplayEnabled,
+} from './v10/agentRuntimeTimeTravelReplayFlag';
 import {
-  ARTIFACT_SELECTION_AWARE_FLAG_KEYS,
-  isArtifactSelectionAwareEnabled,
-} from './v10/artifactSelectionAwareFlag';
+  AGENT_SAGA_SEQUENCE_FLAG_KEYS,
+  isAgentSagaSequenceEnabled,
+} from './v10/agentSagaSequenceFlag';
 import {
-  ARTIFACT_CROSS_TRANSFORM_FLAG_KEYS,
-  isArtifactCrossTransformEnabled,
-} from './v10/artifactCrossTransformFlag';
+  AGENT_SCHEDULE_DEFINITION_FLAG_KEYS,
+  isAgentScheduleDefinitionEnabled,
+} from './v10/agentScheduleDefinitionFlag';
+import {
+  AGENT_SCHEDULE_REGISTRY_FLAG_KEYS,
+  isAgentScheduleRegistryEnabled,
+} from './v10/agentScheduleRegistryFlag';
+import {
+  AGENT_SEVERITY_POLICIES_FLAG_KEYS,
+  isAgentSeverityPoliciesEnabled,
+} from './v10/agentSeverityPoliciesFlag';
+import { AGENT_SEVERITY_S0_FLAG_KEYS, isAgentSeverityS0Enabled } from './v10/agentSeverityS0Flag';
+import { AGENT_SEVERITY_S1_FLAG_KEYS, isAgentSeverityS1Enabled } from './v10/agentSeverityS1Flag';
+import { AGENT_SEVERITY_S2_FLAG_KEYS, isAgentSeverityS2Enabled } from './v10/agentSeverityS2Flag';
+import { AGENT_SEVERITY_S3_FLAG_KEYS, isAgentSeverityS3Enabled } from './v10/agentSeverityS3Flag';
+import { AGENT_SEVERITY_S4_FLAG_KEYS, isAgentSeverityS4Enabled } from './v10/agentSeverityS4Flag';
+import {
+  AGENT_SWARM_DEFINITION_FLAG_KEYS,
+  isAgentSwarmDefinitionEnabled,
+} from './v10/agentSwarmDefinitionFlag';
+import {
+  AGENT_TRACE_COLLECTOR_FLAG_KEYS,
+  isAgentTraceCollectorEnabled,
+} from './v10/agentTraceCollectorFlag';
 import {
   ARTIFACT_APPROVE_EDIT_REJECT_FLAG_KEYS,
   isArtifactApproveEditRejectEnabled,
 } from './v10/artifactApproveEditRejectFlag';
-import {
-  ARTIFACT_PARTIAL_ACCEPTANCE_FLAG_KEYS,
-  isArtifactPartialAcceptanceEnabled,
-} from './v10/artifactPartialAcceptanceFlag';
 import {
   ARTIFACT_CANONICAL_CONTENT_FLAG_KEYS,
   isArtifactCanonicalContentEnabled,
@@ -145,13 +164,49 @@ import {
   isArtifactCitationV1Enabled,
 } from './v10/artifactCitationV1Flag';
 import {
+  ARTIFACT_COMMENTS_ANNOTATIONS_FLAG_KEYS,
+  isArtifactCommentsAnnotationsEnabled,
+} from './v10/artifactCommentsAnnotationsFlag';
+import {
+  ARTIFACT_CRDT_REPLICATED_STATE_FLAG_KEYS,
+  isArtifactCrdtReplicatedStateEnabled,
+} from './v10/artifactCrdtReplicatedStateFlag';
+import {
+  ARTIFACT_CROSS_REPLICA_MERGE_FLAG_KEYS,
+  isArtifactCrossReplicaMergeEnabled,
+} from './v10/artifactCrossReplicaMergeFlag';
+import {
+  ARTIFACT_CROSS_TRANSFORM_FLAG_KEYS,
+  isArtifactCrossTransformEnabled,
+} from './v10/artifactCrossTransformFlag';
+import {
   ARTIFACT_DATA_CLASSIFICATION_FLAG_KEYS,
   isArtifactDataClassificationEnabled,
 } from './v10/artifactDataClassificationFlag';
 import {
+  ARTIFACT_DECISION_DOC_FLAG_KEYS,
+  isArtifactDecisionDocEnabled,
+} from './v10/artifactDecisionDocFlag';
+import {
+  ARTIFACT_EXPORT_MANIFEST_FLAG_KEYS,
+  isArtifactExportManifestEnabled,
+} from './v10/artifactExportManifestFlag';
+import {
+  ARTIFACT_IMMUTABLE_AUDIT_FLAG_KEYS,
+  isArtifactImmutableAuditEnabled,
+} from './v10/artifactImmutableAuditFlag';
+import {
+  ARTIFACT_LIBRARY_FOLDERS_FLAG_KEYS,
+  isArtifactLibraryFoldersEnabled,
+} from './v10/artifactLibraryFoldersFlag';
+import {
   ARTIFACT_LINEAGE_GRAPH_FLAG_KEYS,
   isArtifactLineageGraphEnabled,
 } from './v10/artifactLineageGraphFlag';
+import {
+  ARTIFACT_MEMO_RICH_DOC_FLAG_KEYS,
+  isArtifactMemoRichDocEnabled,
+} from './v10/artifactMemoRichDocFlag';
 import {
   ARTIFACT_MUTATION_PROPOSAL_FLAG_KEYS,
   isArtifactMutationProposalEnabled,
@@ -161,13 +216,54 @@ import {
   isArtifactNoSilentWritesEnabled,
 } from './v10/artifactNoSilentWritesFlag';
 import {
-  ARTIFACT_TYPED_OPS_FLAG_KEYS,
-  isArtifactTypedOpsEnabled,
-} from './v10/artifactTypedOpsFlag';
+  ARTIFACT_ONE_STEP_UNDO_FLAG_KEYS,
+  isArtifactOneStepUndoEnabled,
+} from './v10/artifactOneStepUndoFlag';
+import {
+  ARTIFACT_PARTIAL_ACCEPTANCE_FLAG_KEYS,
+  isArtifactPartialAcceptanceEnabled,
+} from './v10/artifactPartialAcceptanceFlag';
+import { ARTIFACT_PRESENCE_FLAG_KEYS, isArtifactPresenceEnabled } from './v10/artifactPresenceFlag';
+import {
+  ARTIFACT_PROVENANCE_FOOTER_FLAG_KEYS,
+  isArtifactProvenanceFooterEnabled,
+} from './v10/artifactProvenanceFooterFlag';
+import {
+  ARTIFACT_RESEARCH_REPORT_FLAG_KEYS,
+  isArtifactResearchReportEnabled,
+} from './v10/artifactResearchReportFlag';
 import {
   ARTIFACT_REVIEW_FSM_FLAG_KEYS,
   isArtifactReviewFsmEnabled,
 } from './v10/artifactReviewFsmFlag';
+import {
+  ARTIFACT_ROLE_BASED_APPROVAL_GATES_FLAG_KEYS,
+  isArtifactRoleBasedApprovalGatesEnabled,
+} from './v10/artifactRoleBasedApprovalGatesFlag';
+import {
+  ARTIFACT_SELECTION_AWARE_FLAG_KEYS,
+  isArtifactSelectionAwareEnabled,
+} from './v10/artifactSelectionAwareFlag';
+import {
+  ARTIFACT_SLIDE_DECK_SCHEMA_FLAG_KEYS,
+  isArtifactSlideDeckSchemaEnabled,
+} from './v10/artifactSlideDeckSchemaFlag';
+import {
+  ARTIFACT_SPREADSHEET_LINEAGE_FLAG_KEYS,
+  isArtifactSpreadsheetLineageEnabled,
+} from './v10/artifactSpreadsheetLineageFlag';
+import {
+  ARTIFACT_STORE_CONTRACT_FLAG_KEYS,
+  isArtifactStoreContractEnabled,
+} from './v10/artifactStoreContractFlag';
+import {
+  ARTIFACT_TEMPLATE_FINGERPRINT_FLAG_KEYS,
+  isArtifactTemplateFingerprintEnabled,
+} from './v10/artifactTemplateFingerprintFlag';
+import {
+  ARTIFACT_TYPED_OPS_FLAG_KEYS,
+  isArtifactTypedOpsEnabled,
+} from './v10/artifactTypedOpsFlag';
 import {
   ARTIFACT_TYPE_REGISTRY_FLAG_KEYS,
   isArtifactTypeRegistryEnabled,
@@ -177,633 +273,13 @@ import {
   isArtifactUnifiedModelEnabled,
 } from './v10/artifactUnifiedModelFlag';
 import {
-  ONBOARD_BUYER_DATA_ONLY_FLAG_KEYS,
-  isOnboardBuyerDataOnlyEnabled,
-} from './v10/onboardBuyerDataOnlyFlag';
-import {
-  ONBOARD_CONNECTOR_RANKING_FLAG_KEYS,
-  isOnboardConnectorRankingEnabled,
-} from './v10/onboardConnectorRankingFlag';
-import {
-  ONBOARD_CONNECTOR_VALIDATION_FLAG_KEYS,
-  isOnboardConnectorValidationEnabled,
-} from './v10/onboardConnectorValidationFlag';
-import {
-  ONBOARD_FIRST_MUTATION_ENVELOPE_FLAG_KEYS,
-  isOnboardFirstMutationEnvelopeEnabled,
-} from './v10/onboardFirstMutationEnvelopeFlag';
-import {
-  ONBOARD_LIBRARY_SAVE_FLAG_KEYS,
-  isOnboardLibrarySaveEnabled,
-} from './v10/onboardLibrarySaveFlag';
-import {
-  ONBOARD_FIRST_EXPORT_MANIFEST_FLAG_KEYS,
-  isOnboardFirstExportManifestEnabled,
-} from './v10/onboardFirstExportManifestFlag';
-import {
-  ONBOARD_RESEARCH_COST_CAP_GATE_FLAG_KEYS,
-  isOnboardResearchCostCapGateEnabled,
-} from './v10/onboardResearchCostCapGateFlag';
-import {
-  ARTIFACT_MEMO_RICH_DOC_FLAG_KEYS,
-  isArtifactMemoRichDocEnabled,
-} from './v10/artifactMemoRichDocFlag';
-import {
-  AGENT_ATOMIC_BUNDLE_FLAG_KEYS,
-  isAgentAtomicBundleEnabled,
-} from './v10/agentAtomicBundleFlag';
-import {
-  ONBOARD_MEMORY_LAYER_OPT_IN_FLAG_KEYS,
-  isOnboardMemoryLayerOptInEnabled,
-} from './v10/onboardMemoryLayerOptInFlag';
-import {
-  ARTIFACT_SPREADSHEET_LINEAGE_FLAG_KEYS,
-  isArtifactSpreadsheetLineageEnabled,
-} from './v10/artifactSpreadsheetLineageFlag';
-import {
-  AGENT_SAGA_SEQUENCE_FLAG_KEYS,
-  isAgentSagaSequenceEnabled,
-} from './v10/agentSagaSequenceFlag';
-import {
-  ONBOARD_TENANT_BOOTSTRAP_FLAG_KEYS,
-  isOnboardTenantBootstrapEnabled,
-} from './v10/onboardTenantBootstrapFlag';
-import {
-  ARTIFACT_DECISION_DOC_FLAG_KEYS,
-  isArtifactDecisionDocEnabled,
-} from './v10/artifactDecisionDocFlag';
-import {
-  AGENT_APPROVAL_BARRIER_FLAG_KEYS,
-  isAgentApprovalBarrierEnabled,
-} from './v10/agentApprovalBarrierFlag';
-import {
-  ONBOARD_CONSERVATIVE_DEFAULTS_FLAG_KEYS,
-  isOnboardConservativeDefaultsEnabled,
-} from './v10/onboardConservativeDefaultsFlag';
-import {
-  ARTIFACT_RESEARCH_REPORT_FLAG_KEYS,
-  isArtifactResearchReportEnabled,
-} from './v10/artifactResearchReportFlag';
-import {
-  AGENT_FAN_OUT_FAN_IN_FLAG_KEYS,
-  isAgentFanOutFanInEnabled,
-} from './v10/agentFanOutFanInFlag';
-import {
-  ONBOARD_OAUTH_FALLBACK_FLAG_KEYS,
-  isOnboardOAuthFallbackEnabled,
-} from './v10/onboardOAuthFallbackFlag';
-import {
-  ARTIFACT_COMMENTS_ANNOTATIONS_FLAG_KEYS,
-  isArtifactCommentsAnnotationsEnabled,
-} from './v10/artifactCommentsAnnotationsFlag';
-import {
-  AGENT_SCHEDULE_DEFINITION_FLAG_KEYS,
-  isAgentScheduleDefinitionEnabled,
-} from './v10/agentScheduleDefinitionFlag';
-import {
-  ONBOARD_CITATION_VALIDATION_FALLBACK_FLAG_KEYS,
-  isOnboardCitationValidationFallbackEnabled,
-} from './v10/onboardCitationValidationFallbackFlag';
-import {
-  ARTIFACT_STORE_CONTRACT_FLAG_KEYS,
-  isArtifactStoreContractEnabled,
-} from './v10/artifactStoreContractFlag';
-import {
-  AGENT_SCHEDULE_REGISTRY_FLAG_KEYS,
-  isAgentScheduleRegistryEnabled,
-} from './v10/agentScheduleRegistryFlag';
-import {
-  ONBOARD_RESUME_ABANDONMENT_FLAG_KEYS,
-  isOnboardResumeAbandonmentEnabled,
-} from './v10/onboardResumeAbandonmentFlag';
-import {
-  ARTIFACT_IMMUTABLE_AUDIT_FLAG_KEYS,
-  isArtifactImmutableAuditEnabled,
-} from './v10/artifactImmutableAuditFlag';
-import {
-  AGENT_SWARM_DEFINITION_FLAG_KEYS,
-  isAgentSwarmDefinitionEnabled,
-} from './v10/agentSwarmDefinitionFlag';
-import {
-  ONBOARD_TELEMETRY_FLAG_KEYS,
-  isOnboardTelemetryEnabled,
-} from './v10/onboardTelemetryFlag';
-import {
-  ARTIFACT_EXPORT_MANIFEST_FLAG_KEYS,
-  isArtifactExportManifestEnabled,
-} from './v10/artifactExportManifestFlag';
-import {
-  ARTIFACT_PROVENANCE_FOOTER_FLAG_KEYS,
-  isArtifactProvenanceFooterEnabled,
-} from './v10/artifactProvenanceFooterFlag';
-import {
-  ARTIFACT_LIBRARY_FOLDERS_FLAG_KEYS,
-  isArtifactLibraryFoldersEnabled,
-} from './v10/artifactLibraryFoldersFlag';
-import {
-  ARTIFACT_TEMPLATE_FINGERPRINT_FLAG_KEYS,
-  isArtifactTemplateFingerprintEnabled,
-} from './v10/artifactTemplateFingerprintFlag';
-import {
-  AGENT_INTERRUPT_VERBS_FLAG_KEYS,
-  isAgentInterruptVerbsEnabled,
-} from './v10/agentInterruptVerbsFlag';
-import {
-  AGENT_RESEARCH_PHASE_MACHINE_FLAG_KEYS,
-  isAgentResearchPhaseMachineEnabled,
-} from './v10/agentResearchPhaseMachineFlag';
-import {
-  AGENT_TRACE_COLLECTOR_FLAG_KEYS,
-  isAgentTraceCollectorEnabled,
-} from './v10/agentTraceCollectorFlag';
-import {
-  AGENT_NOTIFICATION_BROKER_FLAG_KEYS,
-  isAgentNotificationBrokerEnabled,
-} from './v10/agentNotificationBrokerFlag';
-import {
-  ONBOARD_ACTIVATION_KPI_DASHBOARD_FLAG_KEYS,
-  isOnboardActivationKpiDashboardEnabled,
-} from './v10/onboardActivationKpiDashboardFlag';
-import {
-  ONBOARD_TEAM_INVITE_AFTER_AHA_FLAG_KEYS,
-  isOnboardTeamInviteAfterAhaEnabled,
-} from './v10/onboardTeamInviteAfterAhaFlag';
-import {
-  ARTIFACT_ROLE_BASED_APPROVAL_GATES_FLAG_KEYS,
-  isArtifactRoleBasedApprovalGatesEnabled,
-} from './v10/artifactRoleBasedApprovalGatesFlag';
-import {
-  AGENT_ANTI_PATTERNS_FLAG_KEYS,
-  isAgentAntiPatternsEnabled,
-} from './v10/agentAntiPatternsFlag';
-import {
-  ARTIFACT_SLIDE_DECK_SCHEMA_FLAG_KEYS,
-  isArtifactSlideDeckSchemaEnabled,
-} from './v10/artifactSlideDeckSchemaFlag';
-import {
-  AGENT_CHECKPOINT_STORE_FLAG_KEYS,
-  isAgentCheckpointStoreEnabled,
-} from './v10/agentCheckpointStoreFlag';
-import {
-  ONBOARD_FIVE_MINUTE_SLA_FLAG_KEYS,
-  isOnboardFiveMinuteSlaEnabled,
-} from './v10/onboardFiveMinuteSlaFlag';
-import {
-  ONBOARD_NO_GHOST_CAPS_FLAG_KEYS,
-  isOnboardNoGhostCapsEnabled,
-} from './v10/onboardNoGhostCapsFlag';
-import {
-  ONBOARD_PERSONA_CAPTURE_FLAG_KEYS,
-  isOnboardPersonaCaptureEnabled,
-} from './v10/onboardPersonaCaptureFlag';
-import {
-  ONBOARD_APPROVAL_AUDIT_FLAG_KEYS,
-  isOnboardApprovalAuditEnabled,
-} from './v10/onboardApprovalAuditFlag';
-import {
-  ONBOARD_PROVENANCE_PANEL_FLAG_KEYS,
-  isOnboardProvenancePanelEnabled,
-} from './v10/onboardProvenancePanelFlag';
-import {
-  ONBOARD_PERSONA_INFERENCE_OVERRIDE_FLAG_KEYS,
-  isOnboardPersonaInferenceOverrideEnabled,
-} from './v10/onboardPersonaInferenceOverrideFlag';
-import {
-  ONBOARD_PERSONA_JOURNEY_FLAG_KEYS,
-  isOnboardPersonaJourneyEnabled,
-} from './v10/onboardPersonaJourneyFlag';
-import {
-  ONBOARD_ROUTE_RESOLVER_FLAG_KEYS,
-  isOnboardRouteResolverEnabled,
-} from './v10/onboardRouteResolverFlag';
-import {
-  ONBOARD_TRUST_FIRST_BANNER_FLAG_KEYS,
-  isOnboardTrustFirstBannerEnabled,
-} from './v10/onboardTrustFirstBannerFlag';
-import {
-  REASONING_WORKLOAD_CLASS_REGISTRY_FLAG_KEYS,
-  isReasoningWorkloadClassRegistryEnabled,
-} from './v10/reasoningWorkloadClassRegistryFlag';
-import {
-  REASONING_INTENT_CLASSIFIER_FLAG_KEYS,
-  isReasoningIntentClassifierEnabled,
-} from './v10/reasoningIntentClassifierFlag';
-import {
-  REASONING_SCOPE_RESOLVER_FLAG_KEYS,
-  isReasoningScopeResolverEnabled,
-} from './v10/reasoningScopeResolverFlag';
-import {
-  REASONING_PLAN_FORMULATOR_FLAG_KEYS,
-  isReasoningPlanFormulatorEnabled,
-} from './v10/reasoningPlanFormulatorFlag';
-import {
-  LEARNING_TYPED_CONSENT_FLAG_KEYS,
-  isLearningTypedConsentEnabled,
-} from './v10/learningTypedConsentFlag';
-import {
-  LEARNING_FEEDBACK_SIGNAL_FLAG_KEYS,
-  isLearningFeedbackSignalEnabled,
-} from './v10/learningFeedbackSignalFlag';
-import {
-  LEARNING_FEEDBACK_COLLECTOR_FLAG_KEYS,
-  isLearningFeedbackCollectorEnabled,
-} from './v10/learningFeedbackCollectorFlag';
-import {
-  LEARNING_BEHAVIOURAL_SIGNALS_FLAG_KEYS,
-  isLearningBehaviouralSignalsEnabled,
-} from './v10/learningBehaviouralSignalsFlag';
-import {
-  RESEARCH_MISSION_FLAG_KEYS,
-  isResearchMissionEnabled,
-} from './v10/researchMissionFlag';
-import {
-  RESEARCH_MISSION_SCOPE_FLAG_KEYS,
-  isResearchMissionScopeEnabled,
-} from './v10/researchMissionScopeFlag';
-import {
-  RESEARCH_RETRIEVAL_POLICY_FLAG_KEYS,
-  isResearchRetrievalPolicyEnabled,
-} from './v10/researchRetrievalPolicyFlag';
-import {
-  RESEARCH_SOURCE_ALLOW_BLOCK_LIST_FLAG_KEYS,
-  isResearchSourceAllowBlockListEnabled,
-} from './v10/researchSourceAllowBlockListFlag';
-import {
-  CONNECTORS_CONNECTOR_INTERFACE_FLAG_KEYS,
-  isConnectorsConnectorInterfaceEnabled,
-} from './v10/connectorsConnectorInterfaceFlag';
-import {
-  CONNECTORS_REGISTRY_FLAG_KEYS,
-  isConnectorsRegistryEnabled,
-} from './v10/connectorsRegistryFlag';
-import {
-  OUTCOME_SIGNAL_FLAG_KEYS,
-  isOutcomeSignalEnabled,
-} from './v10/outcomeSignalFlag';
-import {
-  OUTCOME_RECORD_FLAG_KEYS,
-  isOutcomeRecordEnabled,
-} from './v10/outcomeRecordFlag';
-import {
-  REASONING_TOOL_CALL_REGISTRY_FLAG_KEYS,
-  isReasoningToolCallRegistryEnabled,
-} from './v10/reasoningToolCallRegistryFlag';
-import {
-  REASONING_RETRIEVAL_LAYER_FLAG_KEYS,
-  isReasoningRetrievalLayerEnabled,
-} from './v10/reasoningRetrievalLayerFlag';
-import {
-  REASONING_EXECUTION_LOOP_FLAG_KEYS,
-  isReasoningExecutionLoopEnabled,
-} from './v10/reasoningExecutionLoopFlag';
-import {
-  REASONING_CLAIM_EXTRACTION_FLAG_KEYS,
-  isReasoningClaimExtractionEnabled,
-} from './v10/reasoningClaimExtractionFlag';
-import {
-  LEARNING_OUTCOME_SIGNALS_FLAG_KEYS,
-  isLearningOutcomeSignalsEnabled,
-} from './v10/learningOutcomeSignalsFlag';
-import {
-  LEARNING_MEMORY_PACK_FLAG_KEYS,
-  isLearningMemoryPackEnabled,
-} from './v10/learningMemoryPackFlag';
-import {
-  LEARNING_TTL_FORGETTING_FLAG_KEYS,
-  isLearningTtlForgettingEnabled,
-} from './v10/learningTtlForgettingFlag';
-import {
-  LEARNING_REVOCATION_FLAG_KEYS,
-  isLearningRevocationEnabled,
-} from './v10/learningRevocationFlag';
-import {
-  RESEARCH_MISSION_PLAN_FORMULATOR_FLAG_KEYS,
-  isResearchMissionPlanFormulatorEnabled,
-} from './v10/researchMissionPlanFormulatorFlag';
-import {
-  RESEARCH_MISSION_BUDGET_FLAG_KEYS,
-  isResearchMissionBudgetEnabled,
-} from './v10/researchMissionBudgetFlag';
-import {
-  RESEARCH_EXECUTOR_FLAG_KEYS,
-  isResearchExecutorEnabled,
-} from './v10/researchExecutorFlag';
-import {
-  RESEARCH_SOURCE_FETCHER_FLAG_KEYS,
-  isResearchSourceFetcherEnabled,
-} from './v10/researchSourceFetcherFlag';
-import {
-  CONNECTORS_OAUTH_LAYER_FLAG_KEYS,
-  isConnectorsOAuthLayerEnabled,
-} from './v10/connectorsOAuthLayerFlag';
-import {
-  CONNECTORS_TOKEN_VAULT_FLAG_KEYS,
-  isConnectorsTokenVaultEnabled,
-} from './v10/connectorsTokenVaultFlag';
-import {
-  OUTCOME_TAXONOMY_FLAG_KEYS,
-  isOutcomeTaxonomyEnabled,
-} from './v10/outcomeTaxonomyFlag';
-import {
-  OUTCOME_ATTRIBUTION_POLICY_FLAG_KEYS,
-  isOutcomeAttributionPolicyEnabled,
-} from './v10/outcomeAttributionPolicyFlag';
-import {
-  REASONING_CITATION_BINDER_FLAG_KEYS,
-  isReasoningCitationBinderEnabled,
-} from './v10/reasoningCitationBinderFlag';
-import {
-  REASONING_EVIDENCE_COVERAGE_SCORER_FLAG_KEYS,
-  isReasoningEvidenceCoverageScorerEnabled,
-} from './v10/reasoningEvidenceCoverageScorerFlag';
-import {
-  REASONING_HEDGING_CALIBRATION_FLAG_KEYS,
-  isReasoningHedgingCalibrationEnabled,
-} from './v10/reasoningHedgingCalibrationFlag';
-import {
-  REASONING_HALLUCINATION_FILTER_FLAG_KEYS,
-  isReasoningHallucinationFilterEnabled,
-} from './v10/reasoningHallucinationFilterFlag';
-import {
-  LEARNING_ROUTING_ADJUSTMENT_FLAG_KEYS,
-  isLearningRoutingAdjustmentEnabled,
-} from './v10/learningRoutingAdjustmentFlag';
-import {
-  LEARNING_PII_REDACTION_FLAG_KEYS,
-  isLearningPiiRedactionEnabled,
-} from './v10/learningPiiRedactionFlag';
-import {
-  LEARNING_NEVER_OVERRIDE_INVARIANTS_FLAG_KEYS,
-  isLearningNeverOverrideInvariantsEnabled,
-} from './v10/learningNeverOverrideInvariantsFlag';
-import {
-  LEARNING_TELEMETRY_FLAG_KEYS,
-  isLearningTelemetryEnabled,
-} from './v10/learningTelemetryFlag';
-import {
-  RESEARCH_CURATED_WEB_SOURCE_PROVIDER_FLAG_KEYS,
-  isResearchCuratedWebSourceProviderEnabled,
-} from './v10/researchCuratedWebSourceProviderFlag';
-import {
-  RESEARCH_CONTENT_EXTRACTOR_FLAG_KEYS,
-  isResearchContentExtractorEnabled,
-} from './v10/researchContentExtractorFlag';
-import {
-  RESEARCH_DEDUP_NEAR_DUPLICATE_FLAG_KEYS,
-  isResearchDedupNearDuplicateEnabled,
-} from './v10/researchDedupNearDuplicateFlag';
-import {
-  RESEARCH_EVIDENCE_GRAPH_FLAG_KEYS,
-  isResearchEvidenceGraphEnabled,
-} from './v10/researchEvidenceGraphFlag';
-import {
-  CONNECTORS_TOKEN_REFRESH_REVOCATION_FLAG_KEYS,
-  isConnectorsTokenRefreshRevocationEnabled,
-} from './v10/connectorsTokenRefreshRevocationFlag';
-import {
-  CONNECTORS_SESSION_FLAG_KEYS,
-  isConnectorsSessionEnabled,
-} from './v10/connectorsSessionFlag';
-import {
-  OUTCOME_LINEAGE_BINDING_FLAG_KEYS,
-  isOutcomeLineageBindingEnabled,
-} from './v10/outcomeLineageBindingFlag';
-import {
-  OUTCOME_TIME_SAVED_CALIBRATION_FLAG_KEYS,
-  isOutcomeTimeSavedCalibrationEnabled,
-} from './v10/outcomeTimeSavedCalibrationFlag';
-import {
-  REASONING_TRUST_BUNDLE_FLAG_KEYS,
-  isReasoningTrustBundleEnabled,
-} from './v10/reasoningTrustBundleFlag';
-import {
-  REASONING_TRUST_BUNDLE_HASH_FLAG_KEYS,
-  isReasoningTrustBundleHashEnabled,
-} from './v10/reasoningTrustBundleHashFlag';
-import {
-  REASONING_FAST_CHAT_FLAG_KEYS,
-  isReasoningFastChatEnabled,
-} from './v10/reasoningFastChatFlag';
-import {
-  REASONING_GROUNDED_CHAT_FLAG_KEYS,
-  isReasoningGroundedChatEnabled,
-} from './v10/reasoningGroundedChatFlag';
-import {
-  LEARNING_ADAPTIVE_COVERAGE_THRESHOLD_FLAG_KEYS,
-  isLearningAdaptiveCoverageThresholdEnabled,
-} from './v10/learningAdaptiveCoverageThresholdFlag';
-import {
-  LEARNING_TENANT_PROMPT_SNIPPETS_FLAG_KEYS,
-  isLearningTenantPromptSnippetsEnabled,
-} from './v10/learningTenantPromptSnippetsFlag';
-import {
-  LEARNING_CONNECTOR_RANKING_FLAG_KEYS,
-  isLearningConnectorRankingEnabled,
-} from './v10/learningConnectorRankingFlag';
-import {
-  LEARNING_DRIFT_DETECTION_FLAG_KEYS,
-  isLearningDriftDetectionEnabled,
-} from './v10/learningDriftDetectionFlag';
-import {
-  RESEARCH_CLAIM_NODE_SOURCE_EDGE_FLAG_KEYS,
-  isResearchClaimNodeSourceEdgeEnabled,
-} from './v10/researchClaimNodeSourceEdgeFlag';
-import {
-  RESEARCH_SUPPORT_CONTRADICT_EDGES_FLAG_KEYS,
-  isResearchSupportContradictEdgesEnabled,
-} from './v10/researchSupportContradictEdgesFlag';
-import {
-  RESEARCH_SYNTHESIS_FLAG_KEYS,
-  isResearchSynthesisEnabled,
-} from './v10/researchSynthesisFlag';
-import {
-  RESEARCH_CLAIM_VALIDATOR_FLAG_KEYS,
-  isResearchClaimValidatorEnabled,
-} from './v10/researchClaimValidatorFlag';
-import {
-  CONNECTORS_READ_WRITE_SCOPES_FLAG_KEYS,
-  isConnectorsReadWriteScopesEnabled,
-} from './v10/connectorsReadWriteScopesFlag';
-import {
-  CONNECTORS_SOURCE_REF_PROVENANCE_FLAG_KEYS,
-  isConnectorsSourceRefProvenanceEnabled,
-} from './v10/connectorsSourceRefProvenanceFlag';
-import {
-  OUTCOME_USER_CONFIRMATION_SURFACE_FLAG_KEYS,
-  isOutcomeUserConfirmationSurfaceEnabled,
-} from './v10/outcomeUserConfirmationSurfaceFlag';
-import {
-  OUTCOME_PASSIVE_OUTCOME_EMISSION_FLAG_KEYS,
-  isOutcomePassiveOutcomeEmissionEnabled,
-} from './v10/outcomePassiveOutcomeEmissionFlag';
-import {
-  REASONING_ON_WORKSPACE_FLAG_KEYS,
-  isReasoningOnWorkspaceEnabled,
-} from './v10/reasoningOnWorkspaceFlag';
-import {
-  REASONING_DECISION_REVIEW_FLAG_KEYS,
-  isReasoningDecisionReviewEnabled,
-} from './v10/reasoningDecisionReviewFlag';
-import {
-  REASONING_ARTIFACT_BUILD_FLAG_KEYS,
-  isReasoningArtifactBuildEnabled,
-} from './v10/reasoningArtifactBuildFlag';
-import {
-  REASONING_DEEP_RESEARCH_STUB_FLAG_KEYS,
-  isReasoningDeepResearchStubEnabled,
-} from './v10/reasoningDeepResearchStubFlag';
-import {
-  LEARNING_AUDIT_EXPORT_FLAG_KEYS,
-  isLearningAuditExportEnabled,
-} from './v10/learningAuditExportFlag';
-import {
-  LEARNING_PER_TENANT_KILL_SWITCH_FLAG_KEYS,
-  isLearningPerTenantKillSwitchEnabled,
-} from './v10/learningPerTenantKillSwitchFlag';
-import {
-  RESEARCH_DISAGREEMENT_PRESENTATION_FLAG_KEYS,
-  isResearchDisagreementPresentationEnabled,
-} from './v10/researchDisagreementPresentationFlag';
-import {
-  RESEARCH_HEDGING_CALIBRATION_FLAG_KEYS,
-  isResearchHedgingCalibrationEnabled,
-} from './v10/researchHedgingCalibrationFlag';
-import {
-  RESEARCH_REPORT_ARTIFACT_FLAG_KEYS,
-  isResearchReportArtifactEnabled,
-} from './v10/researchReportArtifactFlag';
-import {
-  RESEARCH_MISSION_TRUST_BUNDLE_FLAG_KEYS,
-  isResearchMissionTrustBundleEnabled,
-} from './v10/researchMissionTrustBundleFlag';
-import {
-  RESEARCH_MISSION_INTERRUPT_VERBS_FLAG_KEYS,
-  isResearchMissionInterruptVerbsEnabled,
-} from './v10/researchMissionInterruptVerbsFlag';
-import {
-  RESEARCH_MISSION_RESUME_FLAG_KEYS,
-  isResearchMissionResumeEnabled,
-} from './v10/researchMissionResumeFlag';
-import {
   CONNECTORS_ACL_PROBE_FLAG_KEYS,
   isConnectorsAclProbeEnabled,
 } from './v10/connectorsAclProbeFlag';
 import {
-  CONNECTORS_FEDERATED_SEARCH_FLAG_KEYS,
-  isConnectorsFederatedSearchEnabled,
-} from './v10/connectorsFederatedSearchFlag';
-import {
-  OUTCOME_DECISION_SHIPPED_DETECTOR_FLAG_KEYS,
-  isOutcomeDecisionShippedDetectorEnabled,
-} from './v10/outcomeDecisionShippedDetectorFlag';
-import {
-  OUTCOME_KPI_ACCEPT_OUTCOME_FLAG_KEYS,
-  isOutcomeKpiAcceptOutcomeEnabled,
-} from './v10/outcomeKpiAcceptOutcomeFlag';
-import {
-  REASONING_BACKGROUND_AGENT_STUB_FLAG_KEYS,
-  isReasoningBackgroundAgentStubEnabled,
-} from './v10/reasoningBackgroundAgentStubFlag';
-import {
-  REASONING_PRESENTATION_LAYER_FLAG_KEYS,
-  isReasoningPresentationLayerEnabled,
-} from './v10/reasoningPresentationLayerFlag';
-import {
-  REASONING_TELEMETRY_FLAG_KEYS,
-  isReasoningTelemetryEnabled,
-} from './v10/reasoningTelemetryFlag';
-import {
-  REASONING_EDGE_CASE_MATRIX_FLAG_KEYS,
-  isReasoningEdgeCaseMatrixEnabled,
-} from './v10/reasoningEdgeCaseMatrixFlag';
-import {
-  RESEARCH_MISSION_AUDIT_LOG_FLAG_KEYS,
-  isResearchMissionAuditLogEnabled,
-} from './v10/researchMissionAuditLogFlag';
-import {
-  RESEARCH_TELEMETRY_FLAG_KEYS,
-  isResearchTelemetryEnabled,
-} from './v10/researchTelemetryFlag';
-import {
-  RESEARCH_COST_DASHBOARD_FLAG_KEYS,
-  isResearchCostDashboardEnabled,
-} from './v10/researchCostDashboardFlag';
-import {
-  RESEARCH_SCHEDULED_WATCHES_FLAG_KEYS,
-  isResearchScheduledWatchesEnabled,
-} from './v10/researchScheduledWatchesFlag';
-import {
-  CONNECTORS_INCREMENTAL_SYNC_FLAG_KEYS,
-  isConnectorsIncrementalSyncEnabled,
-} from './v10/connectorsIncrementalSyncFlag';
-import {
-  CONNECTORS_FRESHNESS_SLO_FLAG_KEYS,
-  isConnectorsFreshnessSloEnabled,
-} from './v10/connectorsFreshnessSloFlag';
-import {
-  CONNECTORS_RATE_LIMIT_BACKOFF_FLAG_KEYS,
-  isConnectorsRateLimitBackoffEnabled,
-} from './v10/connectorsRateLimitBackoffFlag';
-import {
   CONNECTORS_ACL_PROPAGATION_FLAG_KEYS,
   isConnectorsAclPropagationEnabled,
 } from './v10/connectorsAclPropagationFlag';
-import {
-  OUTCOME_DOUBLE_COUNT_GUARD_FLAG_KEYS,
-  isOutcomeDoubleCountGuardEnabled,
-} from './v10/outcomeDoubleCountGuardFlag';
-import {
-  OUTCOME_REVERSAL_FLAG_KEYS,
-  isOutcomeReversalEnabled,
-} from './v10/outcomeReversalFlag';
-import {
-  OUTCOME_PER_TEAM_ROI_DASHBOARD_FLAG_KEYS,
-  isOutcomePerTeamRoiDashboardEnabled,
-} from './v10/outcomePerTeamRoiDashboardFlag';
-import {
-  OUTCOME_PER_PERSONA_BREAKDOWN_FLAG_KEYS,
-  isOutcomePerPersonaBreakdownEnabled,
-} from './v10/outcomePerPersonaBreakdownFlag';
-import {
-  REASONING_QUALITY_DASHBOARD_FLAG_KEYS,
-  isReasoningQualityDashboardEnabled,
-} from './v10/reasoningQualityDashboardFlag';
-import {
-  RESEARCH_WATCH_DELTA_REPORT_FLAG_KEYS,
-  isResearchWatchDeltaReportEnabled,
-} from './v10/researchWatchDeltaReportFlag';
-import {
-  RESEARCH_CROSS_MISSION_MEMORY_FLAG_KEYS,
-  isResearchCrossMissionMemoryEnabled,
-} from './v10/researchCrossMissionMemoryFlag';
-import {
-  RESEARCH_COMPARATIVE_MISSION_MODE_FLAG_KEYS,
-  isResearchComparativeMissionModeEnabled,
-} from './v10/researchComparativeMissionModeFlag';
-import {
-  RESEARCH_QUALITY_DASHBOARD_FLAG_KEYS,
-  isResearchQualityDashboardEnabled,
-} from './v10/researchQualityDashboardFlag';
-import {
-  CONNECTORS_HEALTH_DASHBOARD_FLAG_KEYS,
-  isConnectorsHealthDashboardEnabled,
-} from './v10/connectorsHealthDashboardFlag';
-import {
-  CONNECTORS_GOOGLE_DRIVE_FLAG_KEYS,
-  isConnectorsGoogleDriveEnabled,
-} from './v10/connectorsGoogleDriveFlag';
-import {
-  CONNECTORS_SLACK_FLAG_KEYS,
-  isConnectorsSlackEnabled,
-} from './v10/connectorsSlackFlag';
-import {
-  CONNECTORS_NOTION_CONNECTOR_FLAG_KEYS,
-  isConnectorsNotionConnectorEnabled,
-} from './v10/connectorsNotionConnectorFlag';
-import {
-  CONNECTORS_EMAIL_CONNECTOR_FLAG_KEYS,
-  isConnectorsEmailConnectorEnabled,
-} from './v10/connectorsEmailConnectorFlag';
 import {
   CONNECTORS_CALENDAR_CONNECTOR_FLAG_KEYS,
   isConnectorsCalendarConnectorEnabled,
@@ -813,121 +289,591 @@ import {
   isConnectorsConnectorGovernanceUiEnabled,
 } from './v10/connectorsConnectorGovernanceUiFlag';
 import {
-  OUTCOME_PER_WORKLOAD_BREAKDOWN_FLAG_KEYS,
-  isOutcomePerWorkloadBreakdownEnabled,
-} from './v10/outcomePerWorkloadBreakdownFlag';
+  CONNECTORS_CONNECTOR_INTERFACE_FLAG_KEYS,
+  isConnectorsConnectorInterfaceEnabled,
+} from './v10/connectorsConnectorInterfaceFlag';
 import {
-  OUTCOME_CFO_NARRATIVE_EXPORT_FLAG_KEYS,
-  isOutcomeCfoNarrativeExportEnabled,
-} from './v10/outcomeCfoNarrativeExportFlag';
+  CONNECTORS_EMAIL_CONNECTOR_FLAG_KEYS,
+  isConnectorsEmailConnectorEnabled,
+} from './v10/connectorsEmailConnectorFlag';
 import {
-  OUTCOME_AUDIT_LOG_FLAG_KEYS,
-  isOutcomeAuditLogEnabled,
-} from './v10/outcomeAuditLogFlag';
+  CONNECTORS_FEDERATED_SEARCH_FLAG_KEYS,
+  isConnectorsFederatedSearchEnabled,
+} from './v10/connectorsFederatedSearchFlag';
 import {
-  OUTCOME_TELEMETRY_FLAG_KEYS,
-  isOutcomeTelemetryEnabled,
-} from './v10/outcomeTelemetryFlag';
+  CONNECTORS_FRESHNESS_SLO_FLAG_KEYS,
+  isConnectorsFreshnessSloEnabled,
+} from './v10/connectorsFreshnessSloFlag';
 import {
-  CONNECTORS_USER_DISCONNECT_FLAG_KEYS,
-  isConnectorsUserDisconnectEnabled,
-} from './v10/connectorsUserDisconnectFlag';
+  CONNECTORS_GOOGLE_DRIVE_FLAG_KEYS,
+  isConnectorsGoogleDriveEnabled,
+} from './v10/connectorsGoogleDriveFlag';
+import {
+  CONNECTORS_HEALTH_DASHBOARD_FLAG_KEYS,
+  isConnectorsHealthDashboardEnabled,
+} from './v10/connectorsHealthDashboardFlag';
+import {
+  CONNECTORS_INCREMENTAL_SYNC_FLAG_KEYS,
+  isConnectorsIncrementalSyncEnabled,
+} from './v10/connectorsIncrementalSyncFlag';
+import {
+  CONNECTORS_NOTION_CONNECTOR_FLAG_KEYS,
+  isConnectorsNotionConnectorEnabled,
+} from './v10/connectorsNotionConnectorFlag';
+import {
+  CONNECTORS_OAUTH_LAYER_FLAG_KEYS,
+  isConnectorsOAuthLayerEnabled,
+} from './v10/connectorsOAuthLayerFlag';
+import {
+  CONNECTORS_RATE_LIMIT_BACKOFF_FLAG_KEYS,
+  isConnectorsRateLimitBackoffEnabled,
+} from './v10/connectorsRateLimitBackoffFlag';
+import {
+  CONNECTORS_READ_WRITE_SCOPES_FLAG_KEYS,
+  isConnectorsReadWriteScopesEnabled,
+} from './v10/connectorsReadWriteScopesFlag';
+import {
+  CONNECTORS_REGISTRY_FLAG_KEYS,
+  isConnectorsRegistryEnabled,
+} from './v10/connectorsRegistryFlag';
+import {
+  CONNECTORS_SESSION_FLAG_KEYS,
+  isConnectorsSessionEnabled,
+} from './v10/connectorsSessionFlag';
+import { CONNECTORS_SLACK_FLAG_KEYS, isConnectorsSlackEnabled } from './v10/connectorsSlackFlag';
+import {
+  CONNECTORS_SOURCE_REF_PROVENANCE_FLAG_KEYS,
+  isConnectorsSourceRefProvenanceEnabled,
+} from './v10/connectorsSourceRefProvenanceFlag';
 import {
   CONNECTORS_TELEMETRY_FULL_FLAG_KEYS,
   isConnectorsTelemetryFullEnabled,
 } from './v10/connectorsTelemetryFullFlag';
 import {
+  CONNECTORS_TOKEN_REFRESH_REVOCATION_FLAG_KEYS,
+  isConnectorsTokenRefreshRevocationEnabled,
+} from './v10/connectorsTokenRefreshRevocationFlag';
+import {
+  CONNECTORS_TOKEN_VAULT_FLAG_KEYS,
+  isConnectorsTokenVaultEnabled,
+} from './v10/connectorsTokenVaultFlag';
+import {
+  CONNECTORS_USER_DISCONNECT_FLAG_KEYS,
+  isConnectorsUserDisconnectEnabled,
+} from './v10/connectorsUserDisconnectFlag';
+import {
   CONNECTORS_WRITE_FRAMEWORK_FLAG_KEYS,
   isConnectorsWriteFrameworkEnabled,
 } from './v10/connectorsWriteFrameworkFlag';
 import {
-  OUTCOME_NEVER_INVENT_METRIC_FLAG_KEYS,
-  isOutcomeNeverInventMetricEnabled,
-} from './v10/outcomeNeverInventMetricFlag';
+  isLearningAdaptiveCoverageThresholdEnabled,
+  LEARNING_ADAPTIVE_COVERAGE_THRESHOLD_FLAG_KEYS,
+} from './v10/learningAdaptiveCoverageThresholdFlag';
 import {
-  OUTCOME_ADMIN_OVERRIDES_FLAG_KEYS,
+  isLearningAuditExportEnabled,
+  LEARNING_AUDIT_EXPORT_FLAG_KEYS,
+} from './v10/learningAuditExportFlag';
+import {
+  isLearningBehaviouralSignalsEnabled,
+  LEARNING_BEHAVIOURAL_SIGNALS_FLAG_KEYS,
+} from './v10/learningBehaviouralSignalsFlag';
+import {
+  isLearningConnectorRankingEnabled,
+  LEARNING_CONNECTOR_RANKING_FLAG_KEYS,
+} from './v10/learningConnectorRankingFlag';
+import {
+  isLearningDriftDetectionEnabled,
+  LEARNING_DRIFT_DETECTION_FLAG_KEYS,
+} from './v10/learningDriftDetectionFlag';
+import {
+  isLearningFeedbackCollectorEnabled,
+  LEARNING_FEEDBACK_COLLECTOR_FLAG_KEYS,
+} from './v10/learningFeedbackCollectorFlag';
+import {
+  isLearningFeedbackSignalEnabled,
+  LEARNING_FEEDBACK_SIGNAL_FLAG_KEYS,
+} from './v10/learningFeedbackSignalFlag';
+import {
+  isLearningMemoryPackEnabled,
+  LEARNING_MEMORY_PACK_FLAG_KEYS,
+} from './v10/learningMemoryPackFlag';
+import {
+  isLearningNeverOverrideInvariantsEnabled,
+  LEARNING_NEVER_OVERRIDE_INVARIANTS_FLAG_KEYS,
+} from './v10/learningNeverOverrideInvariantsFlag';
+import {
+  isLearningOutcomeSignalsEnabled,
+  LEARNING_OUTCOME_SIGNALS_FLAG_KEYS,
+} from './v10/learningOutcomeSignalsFlag';
+import {
+  isLearningPerTenantKillSwitchEnabled,
+  LEARNING_PER_TENANT_KILL_SWITCH_FLAG_KEYS,
+} from './v10/learningPerTenantKillSwitchFlag';
+import {
+  isLearningPiiRedactionEnabled,
+  LEARNING_PII_REDACTION_FLAG_KEYS,
+} from './v10/learningPiiRedactionFlag';
+import {
+  isLearningRevocationEnabled,
+  LEARNING_REVOCATION_FLAG_KEYS,
+} from './v10/learningRevocationFlag';
+import {
+  isLearningRoutingAdjustmentEnabled,
+  LEARNING_ROUTING_ADJUSTMENT_FLAG_KEYS,
+} from './v10/learningRoutingAdjustmentFlag';
+import {
+  isLearningTelemetryEnabled,
+  LEARNING_TELEMETRY_FLAG_KEYS,
+} from './v10/learningTelemetryFlag';
+import {
+  isLearningTenantPromptSnippetsEnabled,
+  LEARNING_TENANT_PROMPT_SNIPPETS_FLAG_KEYS,
+} from './v10/learningTenantPromptSnippetsFlag';
+import {
+  isLearningTtlForgettingEnabled,
+  LEARNING_TTL_FORGETTING_FLAG_KEYS,
+} from './v10/learningTtlForgettingFlag';
+import {
+  isLearningTypedConsentEnabled,
+  LEARNING_TYPED_CONSENT_FLAG_KEYS,
+} from './v10/learningTypedConsentFlag';
+import {
+  isOnboardActivationKpiDashboardEnabled,
+  ONBOARD_ACTIVATION_KPI_DASHBOARD_FLAG_KEYS,
+} from './v10/onboardActivationKpiDashboardFlag';
+import {
+  isOnboardApprovalAuditEnabled,
+  ONBOARD_APPROVAL_AUDIT_FLAG_KEYS,
+} from './v10/onboardApprovalAuditFlag';
+import {
+  isOnboardBuyerDataOnlyEnabled,
+  ONBOARD_BUYER_DATA_ONLY_FLAG_KEYS,
+} from './v10/onboardBuyerDataOnlyFlag';
+import {
+  isOnboardCitationValidationFallbackEnabled,
+  ONBOARD_CITATION_VALIDATION_FALLBACK_FLAG_KEYS,
+} from './v10/onboardCitationValidationFallbackFlag';
+import {
+  isOnboardConnectorRankingEnabled,
+  ONBOARD_CONNECTOR_RANKING_FLAG_KEYS,
+} from './v10/onboardConnectorRankingFlag';
+import {
+  isOnboardConnectorValidationEnabled,
+  ONBOARD_CONNECTOR_VALIDATION_FLAG_KEYS,
+} from './v10/onboardConnectorValidationFlag';
+import {
+  isOnboardConservativeDefaultsEnabled,
+  ONBOARD_CONSERVATIVE_DEFAULTS_FLAG_KEYS,
+} from './v10/onboardConservativeDefaultsFlag';
+import {
+  isOnboardFirstExportManifestEnabled,
+  ONBOARD_FIRST_EXPORT_MANIFEST_FLAG_KEYS,
+} from './v10/onboardFirstExportManifestFlag';
+import {
+  isOnboardFirstMutationEnvelopeEnabled,
+  ONBOARD_FIRST_MUTATION_ENVELOPE_FLAG_KEYS,
+} from './v10/onboardFirstMutationEnvelopeFlag';
+import {
+  isOnboardFiveMinuteSlaEnabled,
+  ONBOARD_FIVE_MINUTE_SLA_FLAG_KEYS,
+} from './v10/onboardFiveMinuteSlaFlag';
+import {
+  isOnboardLibrarySaveEnabled,
+  ONBOARD_LIBRARY_SAVE_FLAG_KEYS,
+} from './v10/onboardLibrarySaveFlag';
+import {
+  isOnboardMemoryLayerOptInEnabled,
+  ONBOARD_MEMORY_LAYER_OPT_IN_FLAG_KEYS,
+} from './v10/onboardMemoryLayerOptInFlag';
+import {
+  isOnboardNoGhostCapsEnabled,
+  ONBOARD_NO_GHOST_CAPS_FLAG_KEYS,
+} from './v10/onboardNoGhostCapsFlag';
+import {
+  isOnboardOAuthFallbackEnabled,
+  ONBOARD_OAUTH_FALLBACK_FLAG_KEYS,
+} from './v10/onboardOAuthFallbackFlag';
+import {
+  isOnboardPersonaCaptureEnabled,
+  ONBOARD_PERSONA_CAPTURE_FLAG_KEYS,
+} from './v10/onboardPersonaCaptureFlag';
+import {
+  isOnboardPersonaInferenceOverrideEnabled,
+  ONBOARD_PERSONA_INFERENCE_OVERRIDE_FLAG_KEYS,
+} from './v10/onboardPersonaInferenceOverrideFlag';
+import {
+  isOnboardPersonaJourneyEnabled,
+  ONBOARD_PERSONA_JOURNEY_FLAG_KEYS,
+} from './v10/onboardPersonaJourneyFlag';
+import {
+  isOnboardProvenancePanelEnabled,
+  ONBOARD_PROVENANCE_PANEL_FLAG_KEYS,
+} from './v10/onboardProvenancePanelFlag';
+import {
+  isOnboardResearchCostCapGateEnabled,
+  ONBOARD_RESEARCH_COST_CAP_GATE_FLAG_KEYS,
+} from './v10/onboardResearchCostCapGateFlag';
+import {
+  isOnboardResumeAbandonmentEnabled,
+  ONBOARD_RESUME_ABANDONMENT_FLAG_KEYS,
+} from './v10/onboardResumeAbandonmentFlag';
+import {
+  isOnboardRouteResolverEnabled,
+  ONBOARD_ROUTE_RESOLVER_FLAG_KEYS,
+} from './v10/onboardRouteResolverFlag';
+import {
+  isOnboardTeamInviteAfterAhaEnabled,
+  ONBOARD_TEAM_INVITE_AFTER_AHA_FLAG_KEYS,
+} from './v10/onboardTeamInviteAfterAhaFlag';
+import { isOnboardTelemetryEnabled, ONBOARD_TELEMETRY_FLAG_KEYS } from './v10/onboardTelemetryFlag';
+import {
+  isOnboardTenantBootstrapEnabled,
+  ONBOARD_TENANT_BOOTSTRAP_FLAG_KEYS,
+} from './v10/onboardTenantBootstrapFlag';
+import {
+  isOnboardTrustFirstBannerEnabled,
+  ONBOARD_TRUST_FIRST_BANNER_FLAG_KEYS,
+} from './v10/onboardTrustFirstBannerFlag';
+import {
   isOutcomeAdminOverridesEnabled,
+  OUTCOME_ADMIN_OVERRIDES_FLAG_KEYS,
 } from './v10/outcomeAdminOverridesFlag';
 import {
-  OUTCOME_REVENUE_MARGIN_ATTRIBUTION_FLAG_KEYS,
-  isOutcomeRevenueMarginAttributionEnabled,
-} from './v10/outcomeRevenueMarginAttributionFlag';
+  isOutcomeAttributionPolicyEnabled,
+  OUTCOME_ATTRIBUTION_POLICY_FLAG_KEYS,
+} from './v10/outcomeAttributionPolicyFlag';
+import { isOutcomeAuditLogEnabled, OUTCOME_AUDIT_LOG_FLAG_KEYS } from './v10/outcomeAuditLogFlag';
 import {
-  OUTCOME_RISK_AVOIDED_OUTCOME_FLAG_KEYS,
-  isOutcomeRiskAvoidedOutcomeEnabled,
-} from './v10/outcomeRiskAvoidedOutcomeFlag';
+  isOutcomeCfoNarrativeExportEnabled,
+  OUTCOME_CFO_NARRATIVE_EXPORT_FLAG_KEYS,
+} from './v10/outcomeCfoNarrativeExportFlag';
 import {
-  OUTCOME_COHORT_BENCHMARK_FLAG_KEYS,
   isOutcomeCohortBenchmarkEnabled,
+  OUTCOME_COHORT_BENCHMARK_FLAG_KEYS,
 } from './v10/outcomeCohortBenchmarkFlag';
 import {
-  OUTCOME_OUTCOME_QUALITY_DASHBOARD_FLAG_KEYS,
+  isOutcomeDecisionShippedDetectorEnabled,
+  OUTCOME_DECISION_SHIPPED_DETECTOR_FLAG_KEYS,
+} from './v10/outcomeDecisionShippedDetectorFlag';
+import {
+  isOutcomeDoubleCountGuardEnabled,
+  OUTCOME_DOUBLE_COUNT_GUARD_FLAG_KEYS,
+} from './v10/outcomeDoubleCountGuardFlag';
+import {
+  isOutcomeKpiAcceptOutcomeEnabled,
+  OUTCOME_KPI_ACCEPT_OUTCOME_FLAG_KEYS,
+} from './v10/outcomeKpiAcceptOutcomeFlag';
+import {
+  isOutcomeLineageBindingEnabled,
+  OUTCOME_LINEAGE_BINDING_FLAG_KEYS,
+} from './v10/outcomeLineageBindingFlag';
+import {
+  isOutcomeNeverInventMetricEnabled,
+  OUTCOME_NEVER_INVENT_METRIC_FLAG_KEYS,
+} from './v10/outcomeNeverInventMetricFlag';
+import {
   isOutcomeOutcomeQualityDashboardEnabled,
+  OUTCOME_OUTCOME_QUALITY_DASHBOARD_FLAG_KEYS,
 } from './v10/outcomeOutcomeQualityDashboardFlag';
 import {
-  AGENT_RUNTIME_TIME_TRAVEL_REPLAY_FLAG_KEYS,
-  isAgentRuntimeTimeTravelReplayEnabled,
-} from './v10/agentRuntimeTimeTravelReplayFlag';
+  isOutcomePassiveOutcomeEmissionEnabled,
+  OUTCOME_PASSIVE_OUTCOME_EMISSION_FLAG_KEYS,
+} from './v10/outcomePassiveOutcomeEmissionFlag';
 import {
-  ARTIFACT_CRDT_REPLICATED_STATE_FLAG_KEYS,
-  isArtifactCrdtReplicatedStateEnabled,
-} from './v10/artifactCrdtReplicatedStateFlag';
+  isOutcomePerPersonaBreakdownEnabled,
+  OUTCOME_PER_PERSONA_BREAKDOWN_FLAG_KEYS,
+} from './v10/outcomePerPersonaBreakdownFlag';
 import {
-  ARTIFACT_PRESENCE_FLAG_KEYS,
-  isArtifactPresenceEnabled,
-} from './v10/artifactPresenceFlag';
+  isOutcomePerTeamRoiDashboardEnabled,
+  OUTCOME_PER_TEAM_ROI_DASHBOARD_FLAG_KEYS,
+} from './v10/outcomePerTeamRoiDashboardFlag';
 import {
-  ARTIFACT_CROSS_REPLICA_MERGE_FLAG_KEYS,
-  isArtifactCrossReplicaMergeEnabled,
-} from './v10/artifactCrossReplicaMergeFlag';
+  isOutcomePerWorkloadBreakdownEnabled,
+  OUTCOME_PER_WORKLOAD_BREAKDOWN_FLAG_KEYS,
+} from './v10/outcomePerWorkloadBreakdownFlag';
+import { isOutcomeRecordEnabled, OUTCOME_RECORD_FLAG_KEYS } from './v10/outcomeRecordFlag';
 import {
-  PIPELINES_REASONING_FAST_CHAT_PIPELINE_FLAG_KEYS,
-  isPipelinesReasoningFastChatPipelineEnabled,
-} from './v10/pipelinesReasoningFastChatPipelineFlag';
+  isOutcomeRevenueMarginAttributionEnabled,
+  OUTCOME_REVENUE_MARGIN_ATTRIBUTION_FLAG_KEYS,
+} from './v10/outcomeRevenueMarginAttributionFlag';
+import { isOutcomeReversalEnabled, OUTCOME_REVERSAL_FLAG_KEYS } from './v10/outcomeReversalFlag';
 import {
-  PIPELINES_REASONING_GROUNDED_CHAT_PIPELINE_FLAG_KEYS,
-  isPipelinesReasoningGroundedChatPipelineEnabled,
-} from './v10/pipelinesReasoningGroundedChatPipelineFlag';
+  isOutcomeRiskAvoidedOutcomeEnabled,
+  OUTCOME_RISK_AVOIDED_OUTCOME_FLAG_KEYS,
+} from './v10/outcomeRiskAvoidedOutcomeFlag';
+import { isOutcomeSignalEnabled, OUTCOME_SIGNAL_FLAG_KEYS } from './v10/outcomeSignalFlag';
+import { isOutcomeTaxonomyEnabled, OUTCOME_TAXONOMY_FLAG_KEYS } from './v10/outcomeTaxonomyFlag';
+import { isOutcomeTelemetryEnabled, OUTCOME_TELEMETRY_FLAG_KEYS } from './v10/outcomeTelemetryFlag';
 import {
-  PIPELINES_RESEARCH_MISSION_PIPELINE_FLAG_KEYS,
-  isPipelinesResearchMissionPipelineEnabled,
-} from './v10/pipelinesResearchMissionPipelineFlag';
+  isOutcomeTimeSavedCalibrationEnabled,
+  OUTCOME_TIME_SAVED_CALIBRATION_FLAG_KEYS,
+} from './v10/outcomeTimeSavedCalibrationFlag';
 import {
-  PIPELINES_RESEARCH_WATCH_PIPELINE_FLAG_KEYS,
-  isPipelinesResearchWatchPipelineEnabled,
-} from './v10/pipelinesResearchWatchPipelineFlag';
+  isOutcomeUserConfirmationSurfaceEnabled,
+  OUTCOME_USER_CONFIRMATION_SURFACE_FLAG_KEYS,
+} from './v10/outcomeUserConfirmationSurfaceFlag';
 import {
-  PIPELINES_ARTIFACT_MUTATION_PIPELINE_FLAG_KEYS,
-  isPipelinesArtifactMutationPipelineEnabled,
-} from './v10/pipelinesArtifactMutationPipelineFlag';
-import {
-  PIPELINES_ARTIFACT_EXPORT_PIPELINE_FLAG_KEYS,
-  isPipelinesArtifactExportPipelineEnabled,
-} from './v10/pipelinesArtifactExportPipelineFlag';
-import {
-  PIPELINES_AGENT_EXECUTION_PIPELINE_FLAG_KEYS,
   isPipelinesAgentExecutionPipelineEnabled,
+  PIPELINES_AGENT_EXECUTION_PIPELINE_FLAG_KEYS,
 } from './v10/pipelinesAgentExecutionPipelineFlag';
 import {
-  PIPELINES_AGENT_SCHEDULE_PIPELINE_FLAG_KEYS,
   isPipelinesAgentSchedulePipelineEnabled,
+  PIPELINES_AGENT_SCHEDULE_PIPELINE_FLAG_KEYS,
 } from './v10/pipelinesAgentSchedulePipelineFlag';
 import {
-  PIPELINES_OUTCOME_ROLLUP_PIPELINE_FLAG_KEYS,
-  isPipelinesOutcomeRollupPipelineEnabled,
-} from './v10/pipelinesOutcomeRollupPipelineFlag';
+  isPipelinesArtifactExportPipelineEnabled,
+  PIPELINES_ARTIFACT_EXPORT_PIPELINE_FLAG_KEYS,
+} from './v10/pipelinesArtifactExportPipelineFlag';
 import {
-  PIPELINES_LEARNING_FEEDBACK_PIPELINE_FLAG_KEYS,
-  isPipelinesLearningFeedbackPipelineEnabled,
-} from './v10/pipelinesLearningFeedbackPipelineFlag';
+  isPipelinesArtifactMutationPipelineEnabled,
+  PIPELINES_ARTIFACT_MUTATION_PIPELINE_FLAG_KEYS,
+} from './v10/pipelinesArtifactMutationPipelineFlag';
 import {
-  PIPELINES_CONNECTORS_INGEST_PIPELINE_FLAG_KEYS,
   isPipelinesConnectorsIngestPipelineEnabled,
+  PIPELINES_CONNECTORS_INGEST_PIPELINE_FLAG_KEYS,
 } from './v10/pipelinesConnectorsIngestPipelineFlag';
 import {
-  PIPELINES_ONBOARDING_PERSONA_PIPELINE_FLAG_KEYS,
+  isPipelinesLearningFeedbackPipelineEnabled,
+  PIPELINES_LEARNING_FEEDBACK_PIPELINE_FLAG_KEYS,
+} from './v10/pipelinesLearningFeedbackPipelineFlag';
+import {
   isPipelinesOnboardingPersonaPipelineEnabled,
+  PIPELINES_ONBOARDING_PERSONA_PIPELINE_FLAG_KEYS,
 } from './v10/pipelinesOnboardingPersonaPipelineFlag';
+import {
+  isPipelinesOutcomeRollupPipelineEnabled,
+  PIPELINES_OUTCOME_ROLLUP_PIPELINE_FLAG_KEYS,
+} from './v10/pipelinesOutcomeRollupPipelineFlag';
+import {
+  isPipelinesReasoningFastChatPipelineEnabled,
+  PIPELINES_REASONING_FAST_CHAT_PIPELINE_FLAG_KEYS,
+} from './v10/pipelinesReasoningFastChatPipelineFlag';
+import {
+  isPipelinesReasoningGroundedChatPipelineEnabled,
+  PIPELINES_REASONING_GROUNDED_CHAT_PIPELINE_FLAG_KEYS,
+} from './v10/pipelinesReasoningGroundedChatPipelineFlag';
+import {
+  isPipelinesResearchMissionPipelineEnabled,
+  PIPELINES_RESEARCH_MISSION_PIPELINE_FLAG_KEYS,
+} from './v10/pipelinesResearchMissionPipelineFlag';
+import {
+  isPipelinesResearchWatchPipelineEnabled,
+  PIPELINES_RESEARCH_WATCH_PIPELINE_FLAG_KEYS,
+} from './v10/pipelinesResearchWatchPipelineFlag';
+import {
+  isReasoningArtifactBuildEnabled,
+  REASONING_ARTIFACT_BUILD_FLAG_KEYS,
+} from './v10/reasoningArtifactBuildFlag';
+import {
+  isReasoningBackgroundAgentStubEnabled,
+  REASONING_BACKGROUND_AGENT_STUB_FLAG_KEYS,
+} from './v10/reasoningBackgroundAgentStubFlag';
+import {
+  isReasoningCitationBinderEnabled,
+  REASONING_CITATION_BINDER_FLAG_KEYS,
+} from './v10/reasoningCitationBinderFlag';
+import {
+  isReasoningClaimExtractionEnabled,
+  REASONING_CLAIM_EXTRACTION_FLAG_KEYS,
+} from './v10/reasoningClaimExtractionFlag';
+import {
+  isReasoningDecisionReviewEnabled,
+  REASONING_DECISION_REVIEW_FLAG_KEYS,
+} from './v10/reasoningDecisionReviewFlag';
+import {
+  isReasoningDeepResearchStubEnabled,
+  REASONING_DEEP_RESEARCH_STUB_FLAG_KEYS,
+} from './v10/reasoningDeepResearchStubFlag';
+import {
+  isReasoningEdgeCaseMatrixEnabled,
+  REASONING_EDGE_CASE_MATRIX_FLAG_KEYS,
+} from './v10/reasoningEdgeCaseMatrixFlag';
+import {
+  isReasoningEvidenceCoverageScorerEnabled,
+  REASONING_EVIDENCE_COVERAGE_SCORER_FLAG_KEYS,
+} from './v10/reasoningEvidenceCoverageScorerFlag';
+import {
+  isReasoningExecutionLoopEnabled,
+  REASONING_EXECUTION_LOOP_FLAG_KEYS,
+} from './v10/reasoningExecutionLoopFlag';
+import {
+  isReasoningFastChatEnabled,
+  REASONING_FAST_CHAT_FLAG_KEYS,
+} from './v10/reasoningFastChatFlag';
+import {
+  isReasoningGroundedChatEnabled,
+  REASONING_GROUNDED_CHAT_FLAG_KEYS,
+} from './v10/reasoningGroundedChatFlag';
+import {
+  isReasoningHallucinationFilterEnabled,
+  REASONING_HALLUCINATION_FILTER_FLAG_KEYS,
+} from './v10/reasoningHallucinationFilterFlag';
+import {
+  isReasoningHedgingCalibrationEnabled,
+  REASONING_HEDGING_CALIBRATION_FLAG_KEYS,
+} from './v10/reasoningHedgingCalibrationFlag';
+import {
+  isReasoningIntentClassifierEnabled,
+  REASONING_INTENT_CLASSIFIER_FLAG_KEYS,
+} from './v10/reasoningIntentClassifierFlag';
+import {
+  isReasoningOnWorkspaceEnabled,
+  REASONING_ON_WORKSPACE_FLAG_KEYS,
+} from './v10/reasoningOnWorkspaceFlag';
+import {
+  isReasoningPlanFormulatorEnabled,
+  REASONING_PLAN_FORMULATOR_FLAG_KEYS,
+} from './v10/reasoningPlanFormulatorFlag';
+import {
+  isReasoningPresentationLayerEnabled,
+  REASONING_PRESENTATION_LAYER_FLAG_KEYS,
+} from './v10/reasoningPresentationLayerFlag';
+import {
+  isReasoningQualityDashboardEnabled,
+  REASONING_QUALITY_DASHBOARD_FLAG_KEYS,
+} from './v10/reasoningQualityDashboardFlag';
+import {
+  isReasoningRetrievalLayerEnabled,
+  REASONING_RETRIEVAL_LAYER_FLAG_KEYS,
+} from './v10/reasoningRetrievalLayerFlag';
+import {
+  isReasoningScopeResolverEnabled,
+  REASONING_SCOPE_RESOLVER_FLAG_KEYS,
+} from './v10/reasoningScopeResolverFlag';
+import {
+  isReasoningTelemetryEnabled,
+  REASONING_TELEMETRY_FLAG_KEYS,
+} from './v10/reasoningTelemetryFlag';
+import {
+  isReasoningToolCallRegistryEnabled,
+  REASONING_TOOL_CALL_REGISTRY_FLAG_KEYS,
+} from './v10/reasoningToolCallRegistryFlag';
+import {
+  isReasoningTrustBundleEnabled,
+  REASONING_TRUST_BUNDLE_FLAG_KEYS,
+} from './v10/reasoningTrustBundleFlag';
+import {
+  isReasoningTrustBundleHashEnabled,
+  REASONING_TRUST_BUNDLE_HASH_FLAG_KEYS,
+} from './v10/reasoningTrustBundleHashFlag';
+import {
+  isReasoningWorkloadClassRegistryEnabled,
+  REASONING_WORKLOAD_CLASS_REGISTRY_FLAG_KEYS,
+} from './v10/reasoningWorkloadClassRegistryFlag';
+import {
+  isResearchClaimNodeSourceEdgeEnabled,
+  RESEARCH_CLAIM_NODE_SOURCE_EDGE_FLAG_KEYS,
+} from './v10/researchClaimNodeSourceEdgeFlag';
+import {
+  isResearchClaimValidatorEnabled,
+  RESEARCH_CLAIM_VALIDATOR_FLAG_KEYS,
+} from './v10/researchClaimValidatorFlag';
+import {
+  isResearchComparativeMissionModeEnabled,
+  RESEARCH_COMPARATIVE_MISSION_MODE_FLAG_KEYS,
+} from './v10/researchComparativeMissionModeFlag';
+import {
+  isResearchContentExtractorEnabled,
+  RESEARCH_CONTENT_EXTRACTOR_FLAG_KEYS,
+} from './v10/researchContentExtractorFlag';
+import {
+  isResearchCostDashboardEnabled,
+  RESEARCH_COST_DASHBOARD_FLAG_KEYS,
+} from './v10/researchCostDashboardFlag';
+import {
+  isResearchCrossMissionMemoryEnabled,
+  RESEARCH_CROSS_MISSION_MEMORY_FLAG_KEYS,
+} from './v10/researchCrossMissionMemoryFlag';
+import {
+  isResearchCuratedWebSourceProviderEnabled,
+  RESEARCH_CURATED_WEB_SOURCE_PROVIDER_FLAG_KEYS,
+} from './v10/researchCuratedWebSourceProviderFlag';
+import {
+  isResearchDedupNearDuplicateEnabled,
+  RESEARCH_DEDUP_NEAR_DUPLICATE_FLAG_KEYS,
+} from './v10/researchDedupNearDuplicateFlag';
+import {
+  isResearchDisagreementPresentationEnabled,
+  RESEARCH_DISAGREEMENT_PRESENTATION_FLAG_KEYS,
+} from './v10/researchDisagreementPresentationFlag';
+import {
+  isResearchEvidenceGraphEnabled,
+  RESEARCH_EVIDENCE_GRAPH_FLAG_KEYS,
+} from './v10/researchEvidenceGraphFlag';
+import { isResearchExecutorEnabled, RESEARCH_EXECUTOR_FLAG_KEYS } from './v10/researchExecutorFlag';
+import {
+  isResearchHedgingCalibrationEnabled,
+  RESEARCH_HEDGING_CALIBRATION_FLAG_KEYS,
+} from './v10/researchHedgingCalibrationFlag';
+import {
+  isResearchMissionAuditLogEnabled,
+  RESEARCH_MISSION_AUDIT_LOG_FLAG_KEYS,
+} from './v10/researchMissionAuditLogFlag';
+import {
+  isResearchMissionBudgetEnabled,
+  RESEARCH_MISSION_BUDGET_FLAG_KEYS,
+} from './v10/researchMissionBudgetFlag';
+import { isResearchMissionEnabled, RESEARCH_MISSION_FLAG_KEYS } from './v10/researchMissionFlag';
+import {
+  isResearchMissionInterruptVerbsEnabled,
+  RESEARCH_MISSION_INTERRUPT_VERBS_FLAG_KEYS,
+} from './v10/researchMissionInterruptVerbsFlag';
+import {
+  isResearchMissionPlanFormulatorEnabled,
+  RESEARCH_MISSION_PLAN_FORMULATOR_FLAG_KEYS,
+} from './v10/researchMissionPlanFormulatorFlag';
+import {
+  isResearchMissionResumeEnabled,
+  RESEARCH_MISSION_RESUME_FLAG_KEYS,
+} from './v10/researchMissionResumeFlag';
+import {
+  isResearchMissionScopeEnabled,
+  RESEARCH_MISSION_SCOPE_FLAG_KEYS,
+} from './v10/researchMissionScopeFlag';
+import {
+  isResearchMissionTrustBundleEnabled,
+  RESEARCH_MISSION_TRUST_BUNDLE_FLAG_KEYS,
+} from './v10/researchMissionTrustBundleFlag';
+import {
+  isResearchQualityDashboardEnabled,
+  RESEARCH_QUALITY_DASHBOARD_FLAG_KEYS,
+} from './v10/researchQualityDashboardFlag';
+import {
+  isResearchReportArtifactEnabled,
+  RESEARCH_REPORT_ARTIFACT_FLAG_KEYS,
+} from './v10/researchReportArtifactFlag';
+import {
+  isResearchRetrievalPolicyEnabled,
+  RESEARCH_RETRIEVAL_POLICY_FLAG_KEYS,
+} from './v10/researchRetrievalPolicyFlag';
+import {
+  isResearchScheduledWatchesEnabled,
+  RESEARCH_SCHEDULED_WATCHES_FLAG_KEYS,
+} from './v10/researchScheduledWatchesFlag';
+import {
+  isResearchSourceAllowBlockListEnabled,
+  RESEARCH_SOURCE_ALLOW_BLOCK_LIST_FLAG_KEYS,
+} from './v10/researchSourceAllowBlockListFlag';
+import {
+  isResearchSourceFetcherEnabled,
+  RESEARCH_SOURCE_FETCHER_FLAG_KEYS,
+} from './v10/researchSourceFetcherFlag';
+import {
+  isResearchSupportContradictEdgesEnabled,
+  RESEARCH_SUPPORT_CONTRADICT_EDGES_FLAG_KEYS,
+} from './v10/researchSupportContradictEdgesFlag';
+import {
+  isResearchSynthesisEnabled,
+  RESEARCH_SYNTHESIS_FLAG_KEYS,
+} from './v10/researchSynthesisFlag';
+import {
+  isResearchTelemetryEnabled,
+  RESEARCH_TELEMETRY_FLAG_KEYS,
+} from './v10/researchTelemetryFlag';
+import {
+  isResearchWatchDeltaReportEnabled,
+  RESEARCH_WATCH_DELTA_REPORT_FLAG_KEYS,
+} from './v10/researchWatchDeltaReportFlag';
 
 // ---------------------------------------------------------------------------
 // §1 — Canonical V10 block taxonomy (master plan §1.1).
@@ -2242,7 +2188,8 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-ONB-018',
     requirementId: 'R-ONBOARD-18',
     block: 'onboarding',
-    title: 'First-run tenant bootstrap — 10-object × SLA × idempotent × GDPR-deletable (Wave A seed)',
+    title:
+      'First-run tenant bootstrap — 10-object × SLA × idempotent × GDPR-deletable (Wave A seed)',
     description:
       'Adopt `BOOTSTRAP_OBJECT_KINDS` (closed 10-entry catalogue: ' +
       'persona_workspace_shell / policy_manifest / artifact_library_folders / ' +
@@ -2251,7 +2198,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       'telemetry_session_record), closed 2-entry `BOOTSTRAP_OUTCOMES` ' +
       '(created / reused), `BOOTSTRAP_SLA_P99_MS = 10_000` pinned budget. ' +
       '`planTenantBootstrap(tenantId)` is the pure 10-entry plan builder with a ' +
-      'deterministic `<tenantId>/<kind>` key builder (the Wave B driver\'s ' +
+      "deterministic `<tenantId>/<kind>` key builder (the Wave B driver's " +
       'idempotency key). `assertBootstrapCoverage` enforces "all 10 exist, no ' +
       'dupes"; `assertBootstrapSla` enforces "≥99% within 10 s" at the runtime ' +
       'boundary; `assertBootstrapIdempotent(prior, next)` enforces "re-run ' +
@@ -2347,7 +2294,8 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-ONB-019',
     requirementId: 'R-ONBOARD-19',
     block: 'onboarding',
-    title: 'Conservative defaults — Internal / 30d / approval-on-export / memory-off (on-by-construction)',
+    title:
+      'Conservative defaults — Internal / 30d / approval-on-export / memory-off (on-by-construction)',
     description:
       'On-by-construction (dev plan §6, CI invariant 40). Pin the dev-plan ' +
       'default matrix: `DEFAULT_CLASSIFICATION = Internal`, ' +
@@ -2386,7 +2334,8 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-ART-020',
     requirementId: 'R-ARTIFACT-20',
     block: 'artifact',
-    title: 'research_report typed schema + claim-citation invariant + hedging discipline (Wave A seed)',
+    title:
+      'research_report typed schema + claim-citation invariant + hedging discipline (Wave A seed)',
     description:
       'Research outputs are first-class artifacts. Pin the dev-plan ' +
       '8-block catalogue `RESEARCH_BLOCK_KINDS` (summary / finding / claim / ' +
@@ -2427,7 +2376,8 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-AGT-020',
     requirementId: 'R-AGENT-20',
     block: 'agent_runtime',
-    title: 'Fan-out / fan-in schema + "waits-for-all" + "abort-propagates-up" invariants (Wave A seed)',
+    title:
+      'Fan-out / fan-in schema + "waits-for-all" + "abort-propagates-up" invariants (Wave A seed)',
     description:
       'Wave C scope ("ship only after core executors proven"); Wave A seed ' +
       'pins the schema + pure reducer + invariants. Closed 4-entry ' +
@@ -2466,7 +2416,8 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-ONB-020',
     requirementId: 'R-ONBOARD-20',
     block: 'onboarding',
-    title: 'OAuth 20s fallback — honest path + preserved connector context + no-demo-substitute (Wave A seed)',
+    title:
+      'OAuth 20s fallback — honest path + preserved connector context + no-demo-substitute (Wave A seed)',
     description:
       'First-connector OAuth must have an honest fallback path when the ' +
       'provider round-trip exceeds 20s or fails. `OAUTH_FALLBACK_TIMEOUT_MS ' +
@@ -2495,7 +2446,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '`FALLBACK_LIVE_SYNC_WARNING_MESSAGE` canonical string, refusing copy ' +
       'drift (`live_sync_warning_mismatch`) or a fallback that flips ' +
       '`liveSyncActive` away from `false`. ' +
-      "`assertNoDemoSubstitute(fallback)` pins the dev-plan negative rule " +
+      '`assertNoDemoSubstitute(fallback)` pins the dev-plan negative rule ' +
       "'No demo data is inserted as substitute' as a hard runtime error " +
       'on `demoDataInserted !== false`.',
     default: false,
@@ -2530,7 +2481,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       'transition: `node_deleted` → `orphaned`; `node_renamed` → ' +
       '`reattached` with nodeId rewritten; range mutations either shift, ' +
       'narrow, or orphan based on overlap. ' +
-      "`assertAnchorSurvivesMutation(comment, mutation, result)` is the " +
+      '`assertAnchorSurvivesMutation(comment, mutation, result)` is the ' +
       "runtime mirror of the dev-plan 'comments survive anchor node " +
       "mutations (anchor re-attaches or marks as orphan)' acceptance, " +
       'refusing outcome/orphan-flag mismatches ' +
@@ -2573,14 +2524,14 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '`*`, `*/N`, lists, ranges) OR `every <N><unit>` intervals; ' +
       'malformed expressions raise ' +
       '`malformed_cron` / `malformed_interval` / `interval_below_floor`. ' +
-      "`assertScheduleDefinition(def)` is the write-time validator " +
+      '`assertScheduleDefinition(def)` is the write-time validator ' +
       "(dev-plan 'cron expressions validated at write time') — refuses " +
       'empty IDs / refs, invalid retention, invalid budget (via ' +
       '`assertBudgetValid`), missing `nextRunAt`, or `lastRunAt > ' +
       'nextRunAt`. `decideOverlapAction(policy, prior)` is the pure ' +
       'decision rule: `parallel` ⇒ always `start`; `skip` ⇒ `start` iff ' +
       'prior.status=idle else `skip`; `queue` ⇒ `start` iff idle else ' +
-      "`queue`. `assertOverlapPolicyBehaviour(policy, prior, decision)` " +
+      '`queue`. `assertOverlapPolicyBehaviour(policy, prior, decision)` ' +
       "is the runtime mirror of the dev-plan 'overlap policy enforced " +
       "correctly' acceptance, refusing any (policy, prior, decision) " +
       'triple that the pure rule would not produce ' +
@@ -2616,7 +2567,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       "`{status:'ready'}` only when coverageRatio ≥ 0.8 AND no required " +
       "source type is missing; otherwise `{status:'blocked', reasons}` " +
       'lists every triggered cause. ' +
-      "`assertScaffoldHasZeroConclusions(scaffold)` is the runtime " +
+      '`assertScaffoldHasZeroConclusions(scaffold)` is the runtime ' +
       "mirror of 'scaffold fallback contains zero generated conclusions' " +
       '— any block with `isConclusion=true` is refused ' +
       '(`scaffold_contains_conclusion`). ' +
@@ -2627,8 +2578,8 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       "onboard.artifact_blocked with reason code' — exactly one event, " +
       'known reason code, coverage + missing-source parity with the ' +
       'report, non-empty `emittedAt`. ' +
-      "`assertBlockedScreenIntegrity(screen)` stitches the four rails " +
-      "together and additionally refuses a ready report wearing the " +
+      '`assertBlockedScreenIntegrity(screen)` stitches the four rails ' +
+      'together and additionally refuses a ready report wearing the ' +
       'blocked shell (`ready_state_with_blocked_shell`).',
     default: false,
     keys: ONBOARD_CITATION_VALIDATION_FALLBACK_FLAG_KEYS,
@@ -2850,7 +2801,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       'residency_region / seconds_since_start / artifact_type / ' +
       'citation_count / validation_status / approval_required / ' +
       'aha_reached). Closed 3-entry `ONBOARD_TELEMETRY_TERMINAL_' +
-      "EVENTS` (artifact_saved / resume_reentered / abandoned). " +
+      'EVENTS` (artifact_saved / resume_reentered / abandoned). ' +
       "`assertRequiredProperties` is the runtime mirror of 'no " +
       "event lacks any required property (CI invariant 35)' — any " +
       'missing / empty-string / non-finite-number value fails ' +
@@ -2889,7 +2840,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '`canonicaliseManifest` emits deterministic JSON (sorted keys, ' +
       'stable ordering of lineage / sources / confidentialityTags) ' +
       'so the SHA-256 input is reproducible. ' +
-      "`assertManifestIntegrity(manifest, expectedSha256)` is the " +
+      '`assertManifestIntegrity(manifest, expectedSha256)` is the ' +
       "runtime mirror of 'client-side hash equals server-side " +
       "hash' — any mismatch (wrong length, non-hex, or value " +
       'divergence) fails `integrity_hash_mismatch` / ' +
@@ -2925,7 +2876,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       'reviewerUserId + approvedAt + `sha256Prefix12` (exactly 12 ' +
       'hex chars of the V10-ART-024 manifest hash). ' +
       '`WatermarkSpec` holds tenant-policy-derived text. ' +
-      "`assertProvenanceFooter` is the structural mirror of the " +
+      '`assertProvenanceFooter` is the structural mirror of the ' +
       'footer shape — wrong-length / non-hex prefix fails ' +
       '`footer_sha_prefix_wrong_length` / ' +
       '`footer_sha_prefix_non_hex`. ' +
@@ -2962,10 +2913,10 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       'save_as_template). Pure reducer `placeArtifactInFolder(' +
       'reviewState, everExported, isTemplate)` maps a ReviewState ' +
       'snapshot to exactly one folder. ' +
-      "`assertLibraryFolderPlacement` is the runtime mirror of the " +
+      '`assertLibraryFolderPlacement` is the runtime mirror of the ' +
       'placement reducer — rejects any folder claim that disagrees ' +
       'with the ReviewState (`placement_disagrees_with_state`). ' +
-      "`assertFolderTransitionSound(prior, next, event)` pins the " +
+      '`assertFolderTransitionSound(prior, next, event)` pins the ' +
       'sanctioned transitions (Drafts → Approved needs approval; ' +
       'Approved → Exported needs export; any → Templates needs ' +
       'save_as_template) — unauthorised edges fail ' +
@@ -3001,7 +2952,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '`assertFingerprintDifferentiatesStructure` refuses a ' +
       'fingerprint that collides when section names / node kinds ' +
       'differ (`fingerprint_collision_on_structure`). ' +
-      "`assertReuseSuggestion(fingerprint, libraryFingerprints)` " +
+      '`assertReuseSuggestion(fingerprint, libraryFingerprints)` ' +
       "pins 'suggest only when ≥1 library template matches' — a " +
       'suggestion fired against an empty match set fails ' +
       '`suggestion_without_match`.',
@@ -3020,8 +2971,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-AGT-024',
     requirementId: 'R-AGENT-24',
     block: 'agent_runtime',
-    title:
-      '9 interrupt verbs — idempotent + compensation-implied (Wave A seed)',
+    title: '9 interrupt verbs — idempotent + compensation-implied (Wave A seed)',
     description:
       'Pins user control over running agents. Closed ordered ' +
       '9-entry `INTERRUPT_VERBS` = pause / resume / cancel / skip / ' +
@@ -3032,7 +2982,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       'the successor state. Pure reducer `applyInterrupt(state, ' +
       'verb)` returns a typed decision (`nextState`, ' +
       '`requiresCompensation`, `reason: noop|state_changed|illegal`). ' +
-      "`assertVerbIdempotent(state, verb)` is the runtime mirror of " +
+      '`assertVerbIdempotent(state, verb)` is the runtime mirror of ' +
       "dev-plan 'every verb is idempotent' — applying the same verb " +
       'twice from a quiescent state must yield the same state ' +
       '(`verb_not_idempotent`). `COMPENSATION_VERBS` (cancel / ' +
@@ -3056,8 +3006,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-AGT-025',
     requirementId: 'R-AGENT-25',
     block: 'agent_runtime',
-    title:
-      'Research phase machine — 7 phases + artifact ledger per phase (Wave A seed)',
+    title: 'Research phase machine — 7 phases + artifact ledger per phase (Wave A seed)',
     description:
       'Pins the long-research-session state machine before the Wave B ' +
       'research runtime binds to it. Closed ordered 7-entry ' +
@@ -3069,9 +3018,9 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '/ approval_request / final_artifact). `PHASE_TRANSITIONS` ' +
       'encodes the legal (from, to) pairs including rewind edges. ' +
       'Pure reducer `advancePhase(current, event)` returns a typed ' +
-      "`PhaseTransition`. `assertPhaseTransitionLegal` refuses any " +
+      '`PhaseTransition`. `assertPhaseTransitionLegal` refuses any ' +
       'edge not in the transition set (`illegal_transition`). ' +
-      "`assertIntermediateArtifactPersisted(phase, ledgerRows)` pins " +
+      '`assertIntermediateArtifactPersisted(phase, ledgerRows)` pins ' +
       "'each phase persists intermediate artifacts to the ledger' — " +
       'a completed phase without ≥1 matching ledger row fails ' +
       '`phase_artifact_missing` / ' +
@@ -3091,8 +3040,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-AGT-026',
     requirementId: 'R-AGENT-26',
     block: 'agent_runtime',
-    title:
-      'TraceCollector — OTel-compatible spans + per-span budget + acyclic tree (Wave A seed)',
+    title: 'TraceCollector — OTel-compatible spans + per-span budget + acyclic tree (Wave A seed)',
     description:
       'Pins the OpenTelemetry-compatible trace shape before the Wave ' +
       'B exporter binds to Jaeger / Honeycomb / OTLP. Closed 4-entry ' +
@@ -3102,9 +3050,9 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       'attributes. `buildTraceTree(spans)` is the O(n) pure parent-' +
       'child reconstruction; `collectBudgetPerSpan(spans)` returns a ' +
       'span-id → BudgetConsumed map. Five invariants mirror the ' +
-      "dev-plan acceptance: `assertSpanStructural`, " +
-      "`assertEveryRunHasCompleteTrace` (≥1 root + every parent " +
-      "present — `no_root_span` / `orphan_span`), " +
+      'dev-plan acceptance: `assertSpanStructural`, ' +
+      '`assertEveryRunHasCompleteTrace` (≥1 root + every parent ' +
+      'present — `no_root_span` / `orphan_span`), ' +
       '`assertBudgetExposedPerSpan` (every span carries a non-null ' +
       '`budgetUsage` — `null_budget_usage`), `assertNoOrphanSpan`, ' +
       '`assertNoCycle` (self-cycle or mutual cycle fails ' +
@@ -3135,11 +3083,11 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '`UserNotificationPreferences` is a per-user × per-event × ' +
       'per-channel opt-in map. Pure reducer `routeNotification' +
       '(event, preferences)` returns zero-or-more dispatches. ' +
-      "`assertDispatchHonoursPreferences` refuses any dispatch on a " +
+      '`assertDispatchHonoursPreferences` refuses any dispatch on a ' +
       'channel the user opted out of ' +
       '(`dispatch_violates_preferences`). ' +
-      "`assertBudgetExceededReachesAdmin` pins the admin-safety " +
-      "override — a `budget_exceeded` event with an empty dispatch " +
+      '`assertBudgetExceededReachesAdmin` pins the admin-safety ' +
+      'override — a `budget_exceeded` event with an empty dispatch ' +
       'plan fails `budget_exceeded_not_delivered` so the per-user ' +
       'mute cannot silence a cost-alert reaching an admin channel.',
     default: false,
@@ -3182,7 +3130,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       "`assertTenantOverridesOnlyTighten` pins dev-plan 'tenant " +
       "admin can tighten, not loosen globally' " +
       '(`tenant_override_loosens`); ' +
-      "`assertRefreshCadenceWithinBudget` pins " +
+      '`assertRefreshCadenceWithinBudget` pins ' +
       "'`KPI_DASHBOARD_MAX_STALENESS_MS = 1 h` or on-demand' — " +
       '`now - lastRefreshedAt > budget` fails ' +
       '`refresh_cadence_stale`.',
@@ -3214,16 +3162,16 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '`resolveInviteCtaState(events, tenantPolicy, now)` returns ' +
       'an `InviteCtaDecision` with `landedAfterAhaAt` timestamp if ' +
       'any aha trigger fired. Four invariants: ' +
-      "`assertInviteCtaDecision` (structural); " +
+      '`assertInviteCtaDecision` (structural); ' +
       "`assertCtaHiddenBeforeAha` pins dev-plan 'team invite CTA " +
-      "appears only after artifact save or approval in 100 % of " +
+      'appears only after artifact save or approval in 100 % of ' +
       "first-run flows' — a `visible_interactive` decision without " +
       'any aha trigger event fails `cta_visible_before_aha`; ' +
       "`assertNoInteractivePreAhaElement` pins 'before aha, no " +
       "invite-related UI element is interactive' — any pre-aha " +
       'element with `interactive: true` fails ' +
       '`interactive_invite_element_pre_aha`; ' +
-      "`assertCtaStateReachable` rejects decisions whose claimed " +
+      '`assertCtaStateReachable` rejects decisions whose claimed ' +
       'state is not reachable from the session event history ' +
       '(`state_not_reachable`).',
     default: false,
@@ -3274,14 +3222,14 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       'STANDARD_PERSONAS (partner / cfo / ceo / coo / ciso / ' +
       'transformation) resolves to a role in REVIEWER_ROLES — ' +
       '`persona_without_default_route`; ' +
-      "`assertTenantOverrideDoesNotWeakenBaseline` pins the " +
+      '`assertTenantOverrideDoesNotWeakenBaseline` pins the ' +
       'Wave A safety rule "tenant overrides may only tighten, ' +
       'never loosen" — any tenant table where a sensitive ' +
       'context (Restricted / legal tag / CFO type) resolves from ' +
       'a specialist role in the baseline to a non-specialist ' +
       'role in the tenant fails ' +
       '`tenant_override_weakens_baseline`; ' +
-      "`assertRoutingCoverage` catches tables that lean on " +
+      '`assertRoutingCoverage` catches tables that lean on ' +
       'defaults for sensitive contexts (missing explicit rule) — ' +
       '`routing_coverage_gap`.',
     default: false,
@@ -3525,8 +3473,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-LRN-003',
     requirementId: 'R-LEARN-3',
     block: 'learning',
-    title:
-      'Feedback collector — admission policy + dedup + capacity bounds (Wave A seed)',
+    title: 'Feedback collector — admission policy + dedup + capacity bounds (Wave A seed)',
     description:
       'Pins the admission contract for `FeedbackSignalV1` before ' +
       'the collector hands signals off to storage. Closed ' +
@@ -3585,8 +3532,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-RSR-001',
     requirementId: 'R-RESEARCH-1',
     block: 'research',
-    title:
-      '`ResearchMissionV1` — 9-state FSM + immutable MissionId + finite budget (Wave A seed)',
+    title: '`ResearchMissionV1` — 9-state FSM + immutable MissionId + finite budget (Wave A seed)',
     description:
       'Opens the research block seed. Branded `MissionId`. ' +
       'Closed 9-entry `MISSION_STATES`, 4-entry ' +
@@ -3696,8 +3642,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-CON-001',
     requirementId: 'R-CONNECT-1',
     block: 'connectors',
-    title:
-      '`Connector` interface — closed kinds + auth kinds + ≥1 capability (Wave A seed)',
+    title: '`Connector` interface — closed kinds + auth kinds + ≥1 capability (Wave A seed)',
     description:
       'Opens the connectors block seed. Branded `ConnectorId`. ' +
       'Closed catalogues: `CONNECTOR_KINDS`, `AUTH_KINDS`, ' +
@@ -3749,8 +3694,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-OUT-001',
     requirementId: 'R-OUTCOME-1',
     block: 'outcome',
-    title:
-      '`OutcomeSignalV1` — closed kinds + finite magnitude + evidence ref (Wave A seed)',
+    title: '`OutcomeSignalV1` — closed kinds + finite magnitude + evidence ref (Wave A seed)',
     description:
       'Opens the outcome block seed. Branded `OutcomeSignalId`. ' +
       'Closed catalogues: `OUTCOME_SOURCES`, `OUTCOME_KINDS`, ' +
@@ -3777,8 +3721,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-OUT-002',
     requirementId: 'R-OUTCOME-2',
     block: 'outcome',
-    title:
-      '`OutcomeRecordV1` — ≥1 signal + closed state FSM + attribution pinned (Wave A seed)',
+    title: '`OutcomeRecordV1` — ≥1 signal + closed state FSM + attribution pinned (Wave A seed)',
     description:
       'Aggregates one or more `OutcomeSignalV1` into a tenant ' +
       'outcome record. Branded `OutcomeRecordId`. Closed 4-entry ' +
@@ -4199,8 +4142,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-OUT-003',
     requirementId: 'R-OUTCOME-3',
     block: 'outcome',
-    title:
-      'Outcome taxonomy — acyclic tree + every OUTCOME_KIND → exactly one leaf (Wave A seed)',
+    title: 'Outcome taxonomy — acyclic tree + every OUTCOME_KIND → exactly one leaf (Wave A seed)',
     description:
       'Hierarchical taxonomy (tree) over outcome categories. ' +
       'Branded `TaxonomyNodeId`. Closed `TAXONOMY_NODE_KINDS` ' +
@@ -4669,8 +4611,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-OUT-005',
     requirementId: 'R-OUTCOME-5',
     block: 'outcome',
-    title:
-      'Lineage binding — DAG over signal → source edges, 3 edge kinds (Wave A seed)',
+    title: 'Lineage binding — DAG over signal → source edges, 3 edge kinds (Wave A seed)',
     description:
       'Binds `OutcomeSignalV1` to upstream artifacts / ' +
       'decisions that caused it. Branded `LineageEdgeId`. ' +
@@ -4860,8 +4801,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-LRN-014',
     requirementId: 'R-LEARN-14',
     block: 'learning',
-    title:
-      'Tenant prompt snippets — 3 scopes, 4 KiB cap, PII-free, tenant-scoped (Wave A seed)',
+    title: 'Tenant prompt snippets — 3 scopes, 4 KiB cap, PII-free, tenant-scoped (Wave A seed)',
     description:
       'Tenant-scoped prompt augmentations. Branded ' +
       '`PromptSnippetId`. Closed `SNIPPET_SCOPES` (persona / ' +
@@ -5213,8 +5153,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-RSN-019',
     requirementId: 'R-REASON-19',
     block: 'reasoning',
-    title:
-      'artifact_build — 5 target kinds, minCoverage=0.85, emitsTrustBundle=true (Wave A seed)',
+    title: 'artifact_build — 5 target kinds, minCoverage=0.85, emitsTrustBundle=true (Wave A seed)',
     description:
       'Workload-class contract for `artifact_build`. Closed ' +
       '`ARTIFACT_TARGET_KINDS` (slide_deck / memo / ' +
@@ -5241,8 +5180,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-RSN-020',
     requirementId: 'R-REASON-20',
     block: 'reasoning',
-    title:
-      'deep_research (stub) — references MissionId, 4 closed states (Wave A seed)',
+    title: 'deep_research (stub) — references MissionId, 4 closed states (Wave A seed)',
     description:
       'Reasoning-side stub that forwards to the research ' +
       'pipeline. Closed `DEEP_RESEARCH_STUB_STATES` (pending ' +
@@ -5578,8 +5516,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-OUT-010',
     requirementId: 'R-OUTCOME-10',
     block: 'outcome',
-    title:
-      'KPI-accept outcome — 4 domains, per-domain cap, PII-free metadata (Wave A seed)',
+    title: 'KPI-accept outcome — 4 domains, per-domain cap, PII-free metadata (Wave A seed)',
     description:
       'Outcome captured when a user accepts a KPI-bearing ' +
       'output. Branded `KpiAcceptId`. Closed 4-entry ' +
@@ -5659,8 +5596,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-RSN-023',
     requirementId: 'R-REASON-23',
     block: 'reasoning',
-    title:
-      'Reasoning telemetry — 6 closed event kinds + tenantId + PII-free payload (Wave A seed)',
+    title: 'Reasoning telemetry — 6 closed event kinds + tenantId + PII-free payload (Wave A seed)',
     description:
       'Telemetry envelope for every reasoning reducer. Closed ' +
       '6-entry `REASONING_EVENTS` (workload_class_selected / ' +
@@ -5671,13 +5607,17 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '`buildReasoningTelemetryEvent(kind, payload, now, id, ' +
       'traceId?)`. Imports `assertPayloadNoPii` from learning ' +
       'and re-throws as ' +
-      '`ReasoningTelemetryError(\'pii_in_payload\')`. ' +
+      "`ReasoningTelemetryError('pii_in_payload')`. " +
       'Invariants: event kind from closed set; tenantId ' +
       'mandatory; no PII in payload; deterministic.',
     default: false,
     keys: REASONING_TELEMETRY_FLAG_KEYS,
     isEnabled: isReasoningTelemetryEnabled,
-    telemetry: ['reasoning_runtime_started', 'reasoning_runtime_succeeded', 'reasoning_runtime_failed'],
+    telemetry: [
+      'reasoning_runtime_started',
+      'reasoning_runtime_succeeded',
+      'reasoning_runtime_failed',
+    ],
     testId: null,
     specDocs: [
       'docs/Chat V9/CHAT_V10_IMPLEMENTATION_PLAN_2026-04-18.md',
@@ -5759,7 +5699,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
       '`buildResearchTelemetryEvent(kind, payload, now, id)`. ' +
       'Delegates PII guard to `assertPayloadNoPii` ' +
       '(LearningTelemetry) re-throwing as ' +
-      '`ResearchTelemetryError(\'pii_in_payload\')`. ' +
+      "`ResearchTelemetryError('pii_in_payload')`. " +
       'Invariants: event kind from closed set; tenantId ' +
       'mandatory; deterministic.',
     default: false,
@@ -5843,8 +5783,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-CON-011',
     requirementId: 'R-CONNECT-11',
     block: 'connectors',
-    title:
-      'Incremental sync — 3 modes, cursor monotonic ≥, full resets to "0" (Wave A seed)',
+    title: 'Incremental sync — 3 modes, cursor monotonic ≥, full resets to "0" (Wave A seed)',
     description:
       'Cursor-based incremental sync. Closed 3-entry ' +
       '`SYNC_MODES` (full / delta / cursor). Branded ' +
@@ -6533,7 +6472,19 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     default: false,
     keys: CONNECTORS_TELEMETRY_FULL_FLAG_KEYS,
     isEnabled: isConnectorsTelemetryFullEnabled,
-    telemetry: ['connectors_runtime_started', 'connectors_runtime_succeeded', 'connectors_runtime_failed'],
+    telemetry: [
+      'connectors_runtime_started',
+      'connectors_runtime_succeeded',
+      'connectors_runtime_failed',
+      'connectors_registry_loaded',
+      'connector_session_connected',
+      'connector_auth_started',
+      'connector_auth_completed',
+      'connector_source_searched',
+      'connector_source_read',
+      'connector_token_refreshed',
+      'connector_session_disconnected',
+    ],
     testId: null,
     specDocs: [
       'docs/Chat V9/CHAT_V10_IMPLEMENTATION_PLAN_2026-04-18.md',
@@ -6600,8 +6551,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-OUT-020',
     requirementId: 'R-OUTCOME-20',
     block: 'outcome',
-    title:
-      'Outcome admin overrides — redact/reassign, audit-bound, terminal redact (Wave A seed)',
+    title: 'Outcome admin overrides — redact/reassign, audit-bound, terminal redact (Wave A seed)',
     description:
       'Admin actions that modify an outcome record. Branded ' +
       '`OutcomeAdminOverrideId`. Closed override catalogue ' +
@@ -6682,8 +6632,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-OUT-023',
     requirementId: 'R-OUTCOME-23',
     block: 'outcome',
-    title:
-      'Cohort benchmarking — anonymised, opt-in, k-anonymity threshold (Wave A seed)',
+    title: 'Cohort benchmarking — anonymised, opt-in, k-anonymity threshold (Wave A seed)',
     description:
       'Benchmarks tenant outcomes against an anonymised ' +
       'cohort. Branded `CohortBenchmarkId`, ' +
@@ -6709,8 +6658,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-OUT-024',
     requirementId: 'R-OUTCOME-24',
     block: 'outcome',
-    title:
-      'Outcome quality dashboard — confirmation / reversal / coverage metrics (Wave A seed)',
+    title: 'Outcome quality dashboard — confirmation / reversal / coverage metrics (Wave A seed)',
     description:
       'Observability surface for outcome quality. Branded ' +
       '`OutcomeQualityDashboardId`. Closed metric catalogue ' +
@@ -6939,8 +6887,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-PIP-005',
     requirementId: 'R-PIPELINE-5',
     block: 'artifact',
-    title:
-      'ArtifactMutationPipeline — proposal → FSM → partial accept → audit (Wave-B bridge)',
+    title: 'ArtifactMutationPipeline — proposal → FSM → partial accept → audit (Wave-B bridge)',
     description:
       'Cross-block pipeline for artifact mutation. ' +
       'Composes the Artifact unified model + type registry + ' +
@@ -6988,8 +6935,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-PIP-007',
     requirementId: 'R-PIPELINE-7',
     block: 'agent_runtime',
-    title:
-      'AgentExecutionPipeline — proposal → severity → approval → run ledger (Wave-B bridge)',
+    title: 'AgentExecutionPipeline — proposal → severity → approval → run ledger (Wave-B bridge)',
     description:
       'Cross-block pipeline for agent execution. Composes ' +
       '`ExecutionProposalV1` + severity ladder + approval ' +
@@ -7012,8 +6958,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-PIP-008',
     requirementId: 'R-PIPELINE-8',
     block: 'agent_runtime',
-    title:
-      'AgentSchedulePipeline — schedule → run → ledger → replay (Wave-B bridge)',
+    title: 'AgentSchedulePipeline — schedule → run → ledger → replay (Wave-B bridge)',
     description:
       'Cross-block pipeline for scheduled agent runs. ' +
       'Composes schedule definition + run ledger + time-' +
@@ -7085,8 +7030,7 @@ export const CHAT_V10_FLAGS: readonly ChatV10FlagDescriptor[] = [
     ticketId: 'V10-PIP-011',
     requirementId: 'R-PIPELINE-11',
     block: 'connectors',
-    title:
-      'ConnectorsIngestPipeline — oauth → sync → ACL → freshness → telemetry (Wave-B bridge)',
+    title: 'ConnectorsIngestPipeline — oauth → sync → ACL → freshness → telemetry (Wave-B bridge)',
     description:
       'Cross-block pipeline for connector ingest ticks. ' +
       'Composes connector interface + registry + session + ' +
@@ -7173,7 +7117,7 @@ export function findChatV10FlagByTicket(ticketId: TicketId): ChatV10FlagDescript
 }
 
 export function findChatV10FlagByRequirement(
-  requirementId: RequirementId,
+  requirementId: RequirementId
 ): ChatV10FlagDescriptor | undefined {
   return CHAT_V10_FLAGS.find((f) => f.requirementId === requirementId);
 }

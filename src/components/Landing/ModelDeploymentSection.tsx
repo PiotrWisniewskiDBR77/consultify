@@ -66,10 +66,7 @@ export const ModelDeploymentSection: React.FC = () => {
           </div>
 
           <h2 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-[1.08]">
-            {t(
-              'landing.modelDeployment.title',
-              'Your governance reality. Your deployment model.'
-            )}
+            {t('landing.modelDeployment.title', 'Your governance reality. Your deployment model.')}
           </h2>
 
           <p className="mt-6 max-w-2xl mx-auto text-lg leading-relaxed text-slate-600 dark:text-white/55">
@@ -130,7 +127,9 @@ export const ModelDeploymentSection: React.FC = () => {
                   <Icon size={16} />
                 </div>
                 <p className="text-sm font-black text-slate-900 dark:text-white">{point.title}</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/55">{point.body}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-white/55">
+                  {point.body}
+                </p>
               </motion.div>
             );
           })}
@@ -149,7 +148,9 @@ export const ModelDeploymentSection: React.FC = () => {
                 viewport={{ once: true }}
                 className="group relative rounded-3xl border border-slate-200 bg-white/95 p-7 shadow-lg shadow-slate-900/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/[0.08] dark:bg-slate-950/70"
               >
-                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${option.accent} text-white shadow-lg ${option.shadow} mb-5`}>
+                <div
+                  className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${option.accent} text-white shadow-lg ${option.shadow} mb-5`}
+                >
                   <Icon size={24} />
                 </div>
 

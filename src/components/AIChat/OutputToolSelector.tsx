@@ -12,11 +12,41 @@ import { useAppStore } from '@/store/useAppStore';
 
 type OutputTool = 'auto' | 'wordy' | 'excele' | 'prezentacje';
 
-const TOOLS: Array<{ id: OutputTool; icon: React.ElementType; labelKey: string; fallback: string; fallbackPl: string }> = [
-  { id: 'auto', icon: Sparkles, labelKey: 'chatOutputTool.auto', fallback: 'Auto', fallbackPl: 'Auto' },
-  { id: 'wordy', icon: FileText, labelKey: 'chatOutputTool.documents', fallback: 'Documents', fallbackPl: 'Dokumenty' },
-  { id: 'excele', icon: FileSpreadsheet, labelKey: 'chatOutputTool.tables', fallback: 'Tables', fallbackPl: 'Tabele' },
-  { id: 'prezentacje', icon: Presentation, labelKey: 'chatOutputTool.presentations', fallback: 'Presentations', fallbackPl: 'Prezentacje' },
+const TOOLS: Array<{
+  id: OutputTool;
+  icon: React.ElementType;
+  labelKey: string;
+  fallback: string;
+  fallbackPl: string;
+}> = [
+  {
+    id: 'auto',
+    icon: Sparkles,
+    labelKey: 'chatOutputTool.auto',
+    fallback: 'Auto',
+    fallbackPl: 'Auto',
+  },
+  {
+    id: 'wordy',
+    icon: FileText,
+    labelKey: 'chatOutputTool.documents',
+    fallback: 'Documents',
+    fallbackPl: 'Dokumenty',
+  },
+  {
+    id: 'excele',
+    icon: FileSpreadsheet,
+    labelKey: 'chatOutputTool.tables',
+    fallback: 'Tables',
+    fallbackPl: 'Tabele',
+  },
+  {
+    id: 'prezentacje',
+    icon: Presentation,
+    labelKey: 'chatOutputTool.presentations',
+    fallback: 'Presentations',
+    fallbackPl: 'Prezentacje',
+  },
 ];
 
 export const OutputToolSelector: React.FC = () => {

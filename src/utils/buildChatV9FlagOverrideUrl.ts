@@ -91,9 +91,7 @@ function readLocationFromWindow(): FlagOverrideUrlLocation {
   return { origin: origin ?? '', pathname: pathname ?? '/', search: search ?? '' };
 }
 
-export function buildChatV9FlagOverrideUrl(
-  options: BuildOverrideUrlOptions = {}
-): string {
+export function buildChatV9FlagOverrideUrl(options: BuildOverrideUrlOptions = {}): string {
   const location = options.location ?? readLocationFromWindow();
   const flags = options.flags ?? CHAT_V9_FLAGS;
   const getOverride = options.getOverride ?? getChatV9FlagOverrideState;

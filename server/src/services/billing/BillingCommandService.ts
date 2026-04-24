@@ -221,7 +221,9 @@ export class BillingCommandService {
         billingData.external_invoice_ref ?? null,
         billingData.notes ?? null,
         billingData.managed_by_user_id ?? null,
-        billingData.is_manual_override == null ? null : Number(Boolean(billingData.is_manual_override)),
+        billingData.is_manual_override == null
+          ? null
+          : Number(Boolean(billingData.is_manual_override)),
         billingData.stripe_customer_id ?? null,
         billingData.stripe_subscription_id ?? null,
         billingData.billing_email ?? null,
@@ -1047,7 +1049,11 @@ export class BillingCommandService {
         }),
       ]
     ) as Promise<any>);
-    this.eventService.emitEvent('billing.invoice.recorded', { invoiceId: id, orgId, source: 'manual' });
+    this.eventService.emitEvent('billing.invoice.recorded', {
+      invoiceId: id,
+      orgId,
+      source: 'manual',
+    });
     return { id };
   }
 

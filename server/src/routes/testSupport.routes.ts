@@ -607,7 +607,16 @@ router.post(
       await DbPromise.run(
         `INSERT INTO users (id, organization_id, email, password, role, status, first_name, last_name)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, organizationId, email, 'e2e-not-used', userRole, 'active', 'E2E', userRole === 'SUPERADMIN' ? 'SuperAdmin' : 'Admin'],
+        [
+          userId,
+          organizationId,
+          email,
+          'e2e-not-used',
+          userRole,
+          'active',
+          'E2E',
+          userRole === 'SUPERADMIN' ? 'SuperAdmin' : 'Admin',
+        ],
         { fallback: false }
       );
 

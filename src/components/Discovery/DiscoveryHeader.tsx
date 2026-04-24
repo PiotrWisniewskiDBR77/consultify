@@ -41,15 +41,28 @@ const PhaseIndicator: React.FC<{ currentPhase: DiscoveryPhase }> = ({ currentPha
                             `}
               title={config?.description}
             >
-              {isPast && <span className="text-green-700 dark:text-green-500" aria-hidden="true">✓</span>}
-              {isActive && <span className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-pulse" aria-hidden="true" />}
+              {isPast && (
+                <span className="text-green-700 dark:text-green-500" aria-hidden="true">
+                  ✓
+                </span>
+              )}
+              {isActive && (
+                <span
+                  className="w-2 h-2 bg-blue-600 dark:bg-blue-500 rounded-full animate-pulse"
+                  aria-hidden="true"
+                />
+              )}
               <span className="hidden md:inline">
                 {t(`discovery.phases.${phase}`, config?.title ?? phase)}
               </span>
               <span className="md:hidden">{index + 1}</span>
             </div>
             {index < mainPhases.length - 1 && (
-              <ChevronRight size={14} className="text-slate-400 dark:text-slate-600" aria-hidden="true" />
+              <ChevronRight
+                size={14}
+                className="text-slate-400 dark:text-slate-600"
+                aria-hidden="true"
+              />
             )}
           </React.Fragment>
         );

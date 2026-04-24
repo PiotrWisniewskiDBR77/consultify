@@ -5,8 +5,8 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import verifyToken, { requireOrganization } from '../../middleware/auth.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import {
-  learningRuntimeService,
   type LearningRuntimeService,
+  learningRuntimeService,
 } from '../../services/v10/learning/learningRuntimeService.js';
 import { LearningIngestRequestSchema } from '../../types/v10/learning-runtime.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -17,7 +17,9 @@ function meta() {
   return { version: 'v10' as const, contract: V10_LEARNING_RUNTIME_CONTRACT };
 }
 
-export function createLearningRuntimeRouter(service: LearningRuntimeService = learningRuntimeService) {
+export function createLearningRuntimeRouter(
+  service: LearningRuntimeService = learningRuntimeService
+) {
   const router = Router();
 
   router.use(verifyToken);
@@ -35,7 +37,9 @@ export function createLearningRuntimeRouter(service: LearningRuntimeService = le
   router.get(
     '/contract',
     asyncHandler(async (_req: AuthRequest, res: Response) => {
-      return res.status(200).json({ data: { contract: V10_LEARNING_RUNTIME_CONTRACT }, meta: meta() });
+      return res
+        .status(200)
+        .json({ data: { contract: V10_LEARNING_RUNTIME_CONTRACT }, meta: meta() });
     })
   );
 
@@ -43,4 +47,3 @@ export function createLearningRuntimeRouter(service: LearningRuntimeService = le
 }
 
 export default createLearningRuntimeRouter();
-

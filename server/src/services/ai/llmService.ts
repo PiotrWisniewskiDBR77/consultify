@@ -718,9 +718,7 @@ export class LLMService {
       // into the user-facing chat bubble. Tag it with CIRCUIT_OPEN so both the
       // pipeline (for provider-level fallback) and the client (for a friendly
       // localized message) can recognize the condition.
-      const err: any = new Error(
-        circuitCheck.reason || `Circuit [${providerId}] is OPEN`
-      );
+      const err: any = new Error(circuitCheck.reason || `Circuit [${providerId}] is OPEN`);
       err.code = 'CIRCUIT_OPEN';
       err.isCircuitOpen = true;
       err.breakerName = providerId;
@@ -837,9 +835,7 @@ export class LLMService {
       // Feedback #a9fcdd99 / #3b6c0287 — see matching block in callWithToolsStream.
       // Tagging the error lets the AIPipeline fallback loop keep iterating to the
       // next candidate and gives the client a localizable code to map on.
-      const err: any = new Error(
-        circuitCheck.reason || `Circuit [${providerId}] is OPEN`
-      );
+      const err: any = new Error(circuitCheck.reason || `Circuit [${providerId}] is OPEN`);
       err.code = 'CIRCUIT_OPEN';
       err.isCircuitOpen = true;
       err.breakerName = providerId;

@@ -13,8 +13,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import { User } from '../../types';
 import { useAppStore } from '../../store/useAppStore';
+import { User } from '../../types';
 
 const DEPARTMENT_OPTIONS = [
   'Sprzedaż',
@@ -46,17 +46,42 @@ const TENURE_OPTIONS = [
 ];
 
 const EXPERTISE_POOL = [
-  'ERP', 'CRM', 'Lean', 'Six Sigma', 'ISO', 'AI / ML',
-  'Automatyzacja', 'Power BI', 'Excel', 'SAP',
-  'Zarządzanie projektami', 'Agile', 'Supply Chain',
-  'Analiza danych', 'BPM', 'RPA', 'IoT',
-  'Marketing Automation', 'CAD/CAM', 'HR Tech',
+  'ERP',
+  'CRM',
+  'Lean',
+  'Six Sigma',
+  'ISO',
+  'AI / ML',
+  'Automatyzacja',
+  'Power BI',
+  'Excel',
+  'SAP',
+  'Zarządzanie projektami',
+  'Agile',
+  'Supply Chain',
+  'Analiza danych',
+  'BPM',
+  'RPA',
+  'IoT',
+  'Marketing Automation',
+  'CAD/CAM',
+  'HR Tech',
 ];
 
 interface ProfileSurveyNudgeProps {
   currentUser: User;
   onUpdateUser: (updates: Partial<User>) => void;
 }
+
+type ProfileSurveyUser = User & {
+  department?: string;
+  seniorityLevel?: string;
+  tenureYears?: string;
+  expertiseTags?: string[];
+  profileSurveyCompletedAt?: string;
+  profileSurveyDismissedCount?: number;
+  profileSurveyLastDismissedAt?: string;
+};
 
 type Step = 'department' | 'seniority' | 'tenure' | 'expertise' | 'done';
 const STEPS: Step[] = ['department', 'seniority', 'tenure', 'expertise'];
@@ -65,7 +90,7 @@ const MIN_LOGINS_BEFORE_NUDGE = 2;
 const DISMISS_COOLDOWN_HOURS = 48;
 const MAX_DISMISS_COUNT = 3;
 
-function shouldShowNudge(user: User): boolean {
+function shouldShowNudge(user: ProfileSurveyUser): boolean {
   if (user.profileSurveyCompletedAt) return false;
   if ((user.profileSurveyDismissedCount || 0) >= MAX_DISMISS_COUNT) return false;
 
@@ -84,35 +109,41 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
   currentUser,
   onUpdateUser,
 }) => {
+  const surveyUser = currentUser as ProfileSurveyUser;
   const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [step, setStep] = useState<Step>('department');
   const [animating, setAnimating] = useState(false);
 
-  const [department, setDepartment] = useState(currentUser.department || '');
-  const [seniority, setSeniority] = useState(currentUser.seniorityLevel || '');
-  const [tenure, setTenure] = useState(currentUser.tenureYears || '');
-  const [expertise, setExpertise] = useState<string[]>(currentUser.expertiseTags || []);
+  const [department, setDepartment] = useState(surveyUser.department || '');
+  const [seniority, setSeniority] = useState(surveyUser.seniorityLevel || '');
+  const [tenure, setTenure] = useState(surveyUser.tenureYears || '');
+  const [expertise, setExpertise] = useState<string[]>(surveyUser.expertiseTags || []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (shouldShowNudge(currentUser)) {
+      if (shouldShowNudge(surveyUser)) {
         setVisible(true);
       }
     }, 3000);
     return () => clearTimeout(timer);
-  }, [currentUser]);
+  }, [surveyUser]);
 
   const stepIndex = STEPS.indexOf(step);
   const progress = step === 'done' ? 100 : ((stepIndex + 1) / STEPS.length) * 100;
 
   const canProceed = useMemo(() => {
     switch (step) {
-      case 'department': return !!department;
-      case 'seniority': return !!seniority;
-      case 'tenure': return !!tenure;
-      case 'expertise': return true;
-      default: return false;
+      case 'department':
+        return !!department;
+      case 'seniority':
+        return !!seniority;
+      case 'tenure':
+        return !!tenure;
+      case 'expertise':
+        return true;
+      default:
+        return false;
     }
   }, [step, department, seniority, tenure]);
 
@@ -132,7 +163,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
 
   const handleSubmit = async () => {
     try {
-      const updates: Partial<User> = {
+      const updates: Partial<ProfileSurveyUser> = {
         department,
         seniorityLevel: seniority,
         tenureYears: tenure,
@@ -140,7 +171,7 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
         profileSurveyCompletedAt: new Date().toISOString(),
       };
       await Api.updateUser(currentUser.id, updates as any);
-      onUpdateUser(updates);
+      onUpdateUser(updates as Partial<User>);
       setStep('done');
       setTimeout(() => setVisible(false), 2500);
     } catch {
@@ -151,13 +182,15 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
 
   const handleDismiss = async () => {
     try {
-      const newCount = (currentUser.profileSurveyDismissedCount || 0) + 1;
+      const newCount = (surveyUser.profileSurveyDismissedCount || 0) + 1;
       await Api.updateUser(currentUser.id, { profileSurveyDismissedCount: newCount } as any);
       onUpdateUser({
         profileSurveyDismissedCount: newCount,
         profileSurveyLastDismissedAt: new Date().toISOString(),
-      });
-    } catch { /* ignore */ }
+      } as Partial<User>);
+    } catch {
+      /* ignore */
+    }
     setVisible(false);
   };
 
@@ -189,15 +222,15 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
               <div className="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center">
                 <Sparkles size={32} className="text-green-600 dark:text-green-400" />
               </div>
-              <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">
-                Gotowe!
-              </h3>
+              <h3 className="text-xl font-bold text-navy-900 dark:text-white mb-2">Gotowe!</h3>
               <p className="text-slate-500 dark:text-slate-400 text-sm">
                 Dzięki za uzupełnienie profilu. Teraz dopasujemy pytania do Twojego obszaru.
               </p>
             </div>
           ) : (
-            <div className={`transition-opacity duration-200 ${animating ? 'opacity-0' : 'opacity-100'}`}>
+            <div
+              className={`transition-opacity duration-200 ${animating ? 'opacity-0' : 'opacity-100'}`}
+            >
               {/* Header */}
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-1">
@@ -212,10 +245,13 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                   {step === 'expertise' && 'Jakie masz kompetencje?'}
                 </h3>
                 <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                  {step === 'department' && 'Pomoże nam to dobrać odpowiednie pytania do Twojego obszaru.'}
+                  {step === 'department' &&
+                    'Pomoże nam to dobrać odpowiednie pytania do Twojego obszaru.'}
                   {step === 'seniority' && 'Dopasujemy pytania do perspektywy Twojego stanowiska.'}
-                  {step === 'tenure' && 'Twoje doświadczenie w firmie ma znaczenie dla kontekstu odpowiedzi.'}
-                  {step === 'expertise' && 'Opcjonalne — wybierz kilka, które najlepiej Cię opisują.'}
+                  {step === 'tenure' &&
+                    'Twoje doświadczenie w firmie ma znaczenie dla kontekstu odpowiedzi.'}
+                  {step === 'expertise' &&
+                    'Opcjonalne — wybierz kilka, które najlepiej Cię opisują.'}
                 </p>
               </div>
 
@@ -234,7 +270,10 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                             : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-purple-300 dark:hover:border-purple-600'
                         }`}
                       >
-                        <Building size={16} className={department === dept ? 'text-purple-500' : 'text-slate-400'} />
+                        <Building
+                          size={16}
+                          className={department === dept ? 'text-purple-500' : 'text-slate-400'}
+                        />
                         {dept}
                       </button>
                     ))}
@@ -254,7 +293,10 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                             : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-purple-300 dark:hover:border-purple-600'
                         }`}
                       >
-                        <Award size={16} className={seniority === lvl ? 'text-purple-500' : 'text-slate-400'} />
+                        <Award
+                          size={16}
+                          className={seniority === lvl ? 'text-purple-500' : 'text-slate-400'}
+                        />
                         {lvl}
                       </button>
                     ))}
@@ -274,7 +316,10 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                             : 'bg-white dark:bg-navy-800 border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-300 hover:border-purple-300 dark:hover:border-purple-600'
                         }`}
                       >
-                        <Calendar size={16} className={tenure === opt.value ? 'text-purple-500' : 'text-slate-400'} />
+                        <Calendar
+                          size={16}
+                          className={tenure === opt.value ? 'text-purple-500' : 'text-slate-400'}
+                        />
                         {opt.label}
                       </button>
                     ))}
@@ -304,22 +349,20 @@ export const ProfileSurveyNudge: React.FC<ProfileSurveyNudgeProps> = ({
                       </div>
                     )}
                     <div className="flex flex-wrap gap-1.5">
-                      {EXPERTISE_POOL
-                        .filter((s) => !expertise.includes(s))
-                        .map((suggestion) => (
-                          <button
-                            key={suggestion}
-                            type="button"
-                            onClick={() => {
-                              if (expertise.length < 10) {
-                                setExpertise([...expertise, suggestion]);
-                              }
-                            }}
-                            className="px-2.5 py-1 text-xs rounded-full border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
-                          >
-                            + {suggestion}
-                          </button>
-                        ))}
+                      {EXPERTISE_POOL.filter((s) => !expertise.includes(s)).map((suggestion) => (
+                        <button
+                          key={suggestion}
+                          type="button"
+                          onClick={() => {
+                            if (expertise.length < 10) {
+                              setExpertise([...expertise, suggestion]);
+                            }
+                          }}
+                          className="px-2.5 py-1 text-xs rounded-full border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-purple-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                        >
+                          + {suggestion}
+                        </button>
+                      ))}
                     </div>
                   </div>
                 )}

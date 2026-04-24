@@ -8,4 +8,3 @@ export type ArtifactCanonicalContent = {
   readonly __opaqueType: string;
   readonly blob: unknown;
 };
-

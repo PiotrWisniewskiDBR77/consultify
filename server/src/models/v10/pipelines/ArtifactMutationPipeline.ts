@@ -48,4 +48,3 @@ export function runArtifactMutationPipeline(input: {
     callerToken: 'caller-token',
   };
 }
-

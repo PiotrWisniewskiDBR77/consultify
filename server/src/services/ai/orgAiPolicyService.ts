@@ -46,10 +46,9 @@ const DEFAULT_POLICY: OrgAiPolicy = {
 
 class OrgAiPolicyService {
   async getPolicy(organizationId: string): Promise<OrgAiPolicy> {
-    const row = await dbGet(
-      `SELECT * FROM organization_ai_config WHERE organization_id = ?`,
-      [organizationId]
-    ).catch(() => null) as any;
+    const row = (await dbGet(`SELECT * FROM organization_ai_config WHERE organization_id = ?`, [
+      organizationId,
+    ]).catch(() => null)) as any;
 
     if (!row) return { ...DEFAULT_POLICY, organizationId };
 
@@ -179,9 +178,7 @@ class OrgAiPolicyService {
 
     if (policy.allowedTopics.length > 0) {
       const msgLower = input.message.toLowerCase();
-      const matchesAllowed = policy.allowedTopics.some((t) =>
-        msgLower.includes(t.toLowerCase())
-      );
+      const matchesAllowed = policy.allowedTopics.some((t) => msgLower.includes(t.toLowerCase()));
       if (!matchesAllowed && input.message.length > 50) {
         violations.push('Message does not match allowed topics');
       }

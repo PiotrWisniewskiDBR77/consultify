@@ -1,6 +1,10 @@
-export type ReasoningFastChatPipelineRunId = string & { readonly __brand: 'ReasoningFastChatPipelineRunId' };
+export type ReasoningFastChatPipelineRunId = string & {
+  readonly __brand: 'ReasoningFastChatPipelineRunId';
+};
 
-export function unsafeReasoningFastChatPipelineRunId(value: string): ReasoningFastChatPipelineRunId {
+export function unsafeReasoningFastChatPipelineRunId(
+  value: string
+): ReasoningFastChatPipelineRunId {
   return String(value) as ReasoningFastChatPipelineRunId;
 }
 
@@ -21,4 +25,3 @@ export function runReasoningFastChatPipeline(input: {
     answer: `ReasoningFastChatPipeline(MVP): ${input.prompt}`,
   };
 }
-

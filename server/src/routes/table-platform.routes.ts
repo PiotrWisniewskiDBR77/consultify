@@ -110,22 +110,24 @@ async function checkOrgQuota(req: Request, res: Response, next: NextFunction) {
 
     const db = (await import('../database/Database.js')).getDatabase();
 
-    const usage = await db.query(`
+    const usage = await db.query(
+      `
       SELECT COUNT(*) as record_count
       FROM tp_records r
       JOIN tp_tables t ON r.table_id = t.id
       JOIN tp_bases b ON t.base_id = b.id
       WHERE b.organization_id = $1
-    `, [orgId]);
+    `,
+      [orgId]
+    );
 
     const recordCount = parseInt((usage.rows[0] as any)?.record_count || '0', 10);
 
     let maxRecords = 100000;
     try {
-      const orgPlan = await db.query(
-        'SELECT plan_config FROM organizations WHERE id = $1',
-        [orgId]
-      );
+      const orgPlan = await db.query('SELECT plan_config FROM organizations WHERE id = $1', [
+        orgId,
+      ]);
       const config = (orgPlan.rows[0] as any)?.plan_config;
       if (config?.maxTableRecords) {
         maxRecords = config.maxTableRecords;
@@ -205,7 +207,8 @@ router.get('/search', async (req: Request, res: Response) => {
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     if (!q || q.length < 2) return res.json({ results: [] });
     const db = (await import('../database/Database.js')).getDatabase();
-    const results = await db.query(`
+    const results = await db.query(
+      `
       SELECT r.id as record_id, r.data, t.id as table_id, t.name as table_name,
              b.id as base_id, b.name as base_name, b.workspace_id
       FROM tp_records r
@@ -213,14 +216,24 @@ router.get('/search', async (req: Request, res: Response) => {
       JOIN tp_bases b ON t.base_id = b.id
       WHERE b.organization_id = $1 AND r.data::text ILIKE $2
       ORDER BY r.updated_at DESC LIMIT $3
-    `, [orgId, `%${q}%`, limit]);
-    res.json({ results: results.rows.map((r: any) => ({
-      recordId: r.record_id, data: r.data, tableId: r.table_id,
-      tableName: r.table_name, baseId: r.base_id, baseName: r.base_name,
-      workspaceId: r.workspace_id,
-      deepLink: `/my-work/ideas/${encodeURIComponent(r.workspace_id)}/workspace/table?tpTable=${encodeURIComponent(r.table_id)}`,
-    })) });
-  } catch (e) { res.status(500).json({ error: (e as Error).message }); }
+    `,
+      [orgId, `%${q}%`, limit]
+    );
+    res.json({
+      results: results.rows.map((r: any) => ({
+        recordId: r.record_id,
+        data: r.data,
+        tableId: r.table_id,
+        tableName: r.table_name,
+        baseId: r.base_id,
+        baseName: r.base_name,
+        workspaceId: r.workspace_id,
+        deepLink: `/my-work/ideas/${encodeURIComponent(r.workspace_id)}/workspace/table?tpTable=${encodeURIComponent(r.table_id)}`,
+      })),
+    });
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
 });
 
 // ==========================================
@@ -254,17 +267,23 @@ router.post('/bases', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/bases/:baseId/sync-members', requireBaseAccess, async (req: Request, res: Response) => {
-  try {
-    const { baseId } = req.params;
-    const orgId = (req as any).organizationId;
-    const OrgMemberSyncService = (await import('../services/tablePlatform/OrgMemberSyncService.js')).default;
-    const result = await OrgMemberSyncService.syncOrgMembersToBase(baseId, orgId);
-    res.json({ success: true, ...result });
-  } catch (e) {
-    res.status(500).json({ error: (e as Error).message });
+router.post(
+  '/bases/:baseId/sync-members',
+  requireBaseAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { baseId } = req.params;
+      const orgId = (req as any).organizationId;
+      const OrgMemberSyncService = (
+        await import('../services/tablePlatform/OrgMemberSyncService.js')
+      ).default;
+      const result = await OrgMemberSyncService.syncOrgMembersToBase(baseId, orgId);
+      res.json({ success: true, ...result });
+    } catch (e) {
+      res.status(500).json({ error: (e as Error).message });
+    }
   }
-});
+);
 
 router.get('/bases/:baseId', requireBaseAccess, async (req: Request, res: Response) => {
   try {
@@ -391,62 +410,81 @@ router.get('/workspaces/:workspaceId/bases', async (req: Request, res: Response)
   }
 });
 
-router.post('/bases/:baseId/tables', requireBaseAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { baseId } = req.params;
-    const { name, description } = req.body ?? {};
-    if (!baseId) {
-      return res.status(400).json({ error: 'baseId is required' });
+router.post(
+  '/bases/:baseId/tables',
+  requireBaseAccess,
+  requireRoles(...SCHEMA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { baseId } = req.params;
+      const { name, description } = req.body ?? {};
+      if (!baseId) {
+        return res.status(400).json({ error: 'baseId is required' });
+      }
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({ error: 'name is required' });
+      }
+      const table = await MetadataService.createTable(baseId, name, description, userId);
+      if (!table) {
+        return res.status(500).json({ error: 'Failed to create table' });
+      }
+      return res.status(201).json(table);
+    } catch (err) {
+      handleRouteError(err, res, 'createTable');
     }
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'name is required' });
-    }
-    const table = await MetadataService.createTable(baseId, name, description, userId);
-    if (!table) {
-      return res.status(500).json({ error: 'Failed to create table' });
-    }
-    return res.status(201).json(table);
-  } catch (err) {
-    handleRouteError(err, res, 'createTable');
   }
-});
+);
 
-router.patch('/tables/:tableId', requireTableAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { tableId } = req.params;
-    const { name, description } = req.body ?? {};
-    if (!tableId) {
-      return res.status(400).json({ error: 'tableId is required' });
+router.patch(
+  '/tables/:tableId',
+  requireTableAccess,
+  requireRoles(...SCHEMA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { tableId } = req.params;
+      const { name, description } = req.body ?? {};
+      if (!tableId) {
+        return res.status(400).json({ error: 'tableId is required' });
+      }
+      const table = await MetadataService.updateTable(
+        tableId,
+        { name, description },
+        authReq.userId
+      );
+      if (!table) {
+        return res.status(404).json({ error: 'Table not found' });
+      }
+      return res.status(200).json(table);
+    } catch (err) {
+      handleRouteError(err, res, 'updateTable');
     }
-    const table = await MetadataService.updateTable(tableId, { name, description }, authReq.userId);
-    if (!table) {
-      return res.status(404).json({ error: 'Table not found' });
-    }
-    return res.status(200).json(table);
-  } catch (err) {
-    handleRouteError(err, res, 'updateTable');
   }
-});
+);
 
-router.delete('/tables/:tableId', requireTableAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { tableId } = req.params;
-    if (!tableId) {
-      return res.status(400).json({ error: 'tableId is required' });
+router.delete(
+  '/tables/:tableId',
+  requireTableAccess,
+  requireRoles(...SCHEMA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { tableId } = req.params;
+      if (!tableId) {
+        return res.status(400).json({ error: 'tableId is required' });
+      }
+      const ok = await MetadataService.deleteTable(tableId, authReq.userId);
+      if (!ok) {
+        return res.status(404).json({ error: 'Table not found' });
+      }
+      return res.status(204).send();
+    } catch (err) {
+      handleRouteError(err, res, 'deleteTable');
     }
-    const ok = await MetadataService.deleteTable(tableId, authReq.userId);
-    if (!ok) {
-      return res.status(404).json({ error: 'Table not found' });
-    }
-    return res.status(204).send();
-  } catch (err) {
-    handleRouteError(err, res, 'deleteTable');
   }
-});
+);
 
 router.get('/tables/:tableId', requireTableAccess, async (req: Request, res: Response) => {
   try {
@@ -464,199 +502,244 @@ router.get('/tables/:tableId', requireTableAccess, async (req: Request, res: Res
   }
 });
 
-router.post('/tables/:tableId/fields', requireTableAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { tableId } = req.params;
-    const { name, fieldType, options } = req.body ?? {};
-    if (!tableId) {
-      return res.status(400).json({ error: 'tableId is required' });
+router.post(
+  '/tables/:tableId/fields',
+  requireTableAccess,
+  requireRoles(...SCHEMA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { tableId } = req.params;
+      const { name, fieldType, options } = req.body ?? {};
+      if (!tableId) {
+        return res.status(400).json({ error: 'tableId is required' });
+      }
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({ error: 'name is required' });
+      }
+      if (!fieldType || typeof fieldType !== 'string') {
+        return res.status(400).json({ error: 'fieldType is required' });
+      }
+      const field = await MetadataService.createField(
+        tableId,
+        name,
+        fieldType,
+        options ?? undefined,
+        userId
+      );
+      if (!field) {
+        return res.status(500).json({ error: 'Failed to create field' });
+      }
+      return res.status(201).json(field);
+    } catch (err) {
+      handleRouteError(err, res, 'createField');
     }
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'name is required' });
-    }
-    if (!fieldType || typeof fieldType !== 'string') {
-      return res.status(400).json({ error: 'fieldType is required' });
-    }
-    const field = await MetadataService.createField(
-      tableId,
-      name,
-      fieldType,
-      options ?? undefined,
-      userId
-    );
-    if (!field) {
-      return res.status(500).json({ error: 'Failed to create field' });
-    }
-    return res.status(201).json(field);
-  } catch (err) {
-    handleRouteError(err, res, 'createField');
   }
-});
+);
 
-router.delete('/fields/:fieldId', requireFieldAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { fieldId } = req.params;
-    if (!fieldId) {
-      return res.status(400).json({ error: 'fieldId is required' });
+router.delete(
+  '/fields/:fieldId',
+  requireFieldAccess,
+  requireRoles(...SCHEMA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { fieldId } = req.params;
+      if (!fieldId) {
+        return res.status(400).json({ error: 'fieldId is required' });
+      }
+      const ok = await MetadataService.deleteField(fieldId, authReq.userId);
+      if (!ok) {
+        return res.status(404).json({ error: 'Field not found' });
+      }
+      return res.status(204).send();
+    } catch (err) {
+      handleRouteError(err, res, 'deleteField');
     }
-    const ok = await MetadataService.deleteField(fieldId, authReq.userId);
-    if (!ok) {
-      return res.status(404).json({ error: 'Field not found' });
-    }
-    return res.status(204).send();
-  } catch (err) {
-    handleRouteError(err, res, 'deleteField');
   }
-});
+);
 
-router.patch('/fields/:fieldId', requireFieldAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const { fieldId } = req.params;
-    const { name, options } = req.body ?? {};
-    if (!fieldId) {
-      return res.status(400).json({ error: 'fieldId is required' });
+router.patch(
+  '/fields/:fieldId',
+  requireFieldAccess,
+  requireRoles(...SCHEMA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const { fieldId } = req.params;
+      const { name, options } = req.body ?? {};
+      if (!fieldId) {
+        return res.status(400).json({ error: 'fieldId is required' });
+      }
+      const field = await MetadataService.updateField(fieldId, { name, options });
+      if (!field) {
+        return res.status(404).json({ error: 'Field not found' });
+      }
+      return res.status(200).json(field);
+    } catch (err) {
+      handleRouteError(err, res, 'updateField');
     }
-    const field = await MetadataService.updateField(fieldId, { name, options });
-    if (!field) {
-      return res.status(404).json({ error: 'Field not found' });
-    }
-    return res.status(200).json(field);
-  } catch (err) {
-    handleRouteError(err, res, 'updateField');
   }
-});
+);
 
-router.post('/fields/:fieldId/change-type', requireFieldAccess, requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { fieldId } = req.params;
-    const { newType, options, preview } = req.body ?? {};
-    if (!fieldId) return res.status(400).json({ error: 'fieldId is required' });
-    if (!newType || typeof newType !== 'string') {
-      return res.status(400).json({ error: 'newType is required' });
+router.post(
+  '/fields/:fieldId/change-type',
+  requireFieldAccess,
+  requireRoles(...SCHEMA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { fieldId } = req.params;
+      const { newType, options, preview } = req.body ?? {};
+      if (!fieldId) return res.status(400).json({ error: 'fieldId is required' });
+      if (!newType || typeof newType !== 'string') {
+        return res.status(400).json({ error: 'newType is required' });
+      }
+      const result = await MetadataService.changeFieldType(
+        fieldId,
+        newType,
+        authReq.userId!,
+        options,
+        preview
+      );
+      return res.status(200).json(result);
+    } catch (err) {
+      handleRouteError(err, res, 'changeFieldType');
     }
-    const result = await MetadataService.changeFieldType(fieldId, newType, authReq.userId!, options, preview);
-    return res.status(200).json(result);
-  } catch (err) {
-    handleRouteError(err, res, 'changeFieldType');
   }
-});
+);
 
-router.patch('/fields/:fieldId/permissions', requireFieldAccess, async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { fieldId } = req.params;
-    const { readRoles, writeRoles } = req.body ?? {};
-    if (!fieldId) {
-      return res.status(400).json({ error: 'fieldId is required' });
-    }
-    if (!Array.isArray(readRoles) && !Array.isArray(writeRoles)) {
-      return res.status(400).json({ error: 'readRoles or writeRoles array is required' });
-    }
+router.patch(
+  '/fields/:fieldId/permissions',
+  requireFieldAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { fieldId } = req.params;
+      const { readRoles, writeRoles } = req.body ?? {};
+      if (!fieldId) {
+        return res.status(400).json({ error: 'fieldId is required' });
+      }
+      if (!Array.isArray(readRoles) && !Array.isArray(writeRoles)) {
+        return res.status(400).json({ error: 'readRoles or writeRoles array is required' });
+      }
 
-    const db = (await import('../database/Database.js')).getDatabase();
-    const existing = await db.query('SELECT id, options FROM tp_fields WHERE id = $1', [fieldId]);
-    if (!existing.rows[0]) {
-      return res.status(404).json({ error: 'Field not found' });
-    }
+      const db = (await import('../database/Database.js')).getDatabase();
+      const existing = await db.query('SELECT id, options FROM tp_fields WHERE id = $1', [fieldId]);
+      if (!existing.rows[0]) {
+        return res.status(404).json({ error: 'Field not found' });
+      }
 
-    const permissions: Record<string, string[]> = {};
-    if (Array.isArray(readRoles)) permissions.readRoles = readRoles;
-    if (Array.isArray(writeRoles)) permissions.writeRoles = writeRoles;
+      const permissions: Record<string, string[]> = {};
+      if (Array.isArray(readRoles)) permissions.readRoles = readRoles;
+      if (Array.isArray(writeRoles)) permissions.writeRoles = writeRoles;
 
-    await db.query(
-      `UPDATE tp_fields SET options = jsonb_set(
+      await db.query(
+        `UPDATE tp_fields SET options = jsonb_set(
         COALESCE(options, '{}'),
         '{permissions}',
         $2::jsonb
       ), updated_at = NOW() WHERE id = $1`,
-      [fieldId, JSON.stringify(permissions)]
-    );
+        [fieldId, JSON.stringify(permissions)]
+      );
 
-    const AuditService = (await import('../services/tablePlatform/AuditService.js')).default;
-    await AuditService.logEvent(
-      'permissions_changed',
-      'field',
-      fieldId,
-      authReq.userId,
-      (existing.rows[0] as any)?.options?.permissions ?? null,
-      permissions,
-      { readRoles, writeRoles }
-    );
+      const AuditService = (await import('../services/tablePlatform/AuditService.js')).default;
+      await AuditService.logEvent(
+        'permissions_changed',
+        'field',
+        fieldId,
+        authReq.userId,
+        (existing.rows[0] as any)?.options?.permissions ?? null,
+        permissions,
+        { readRoles, writeRoles }
+      );
 
-    const updated = await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId]);
-    return res.status(200).json(updated.rows[0]);
-  } catch (err) {
-    handleRouteError(err, res, 'setFieldPermissions');
+      const updated = await db.query('SELECT * FROM tp_fields WHERE id = $1', [fieldId]);
+      return res.status(200).json(updated.rows[0]);
+    } catch (err) {
+      handleRouteError(err, res, 'setFieldPermissions');
+    }
   }
-});
+);
 
-router.post('/tables/:tableId/views', requireTableAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { tableId } = req.params;
-    const { name, viewType, config, isPersonal } = req.body ?? {};
-    if (!tableId) {
-      return res.status(400).json({ error: 'tableId is required' });
+router.post(
+  '/tables/:tableId/views',
+  requireTableAccess,
+  requireRoles(...VIEW_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { tableId } = req.params;
+      const { name, viewType, config, isPersonal } = req.body ?? {};
+      if (!tableId) {
+        return res.status(400).json({ error: 'tableId is required' });
+      }
+      if (!name || typeof name !== 'string') {
+        return res.status(400).json({ error: 'name is required' });
+      }
+      const view = await MetadataService.createView(
+        tableId,
+        name,
+        viewType ?? 'grid',
+        config,
+        userId,
+        !!isPersonal,
+        isPersonal ? userId : undefined
+      );
+      if (!view) {
+        return res.status(500).json({ error: 'Failed to create view' });
+      }
+      return res.status(201).json(view);
+    } catch (err) {
+      handleRouteError(err, res, 'createView');
     }
-    if (!name || typeof name !== 'string') {
-      return res.status(400).json({ error: 'name is required' });
-    }
-    const view = await MetadataService.createView(
-      tableId,
-      name,
-      viewType ?? 'grid',
-      config,
-      userId,
-      !!isPersonal,
-      isPersonal ? userId : undefined
-    );
-    if (!view) {
-      return res.status(500).json({ error: 'Failed to create view' });
-    }
-    return res.status(201).json(view);
-  } catch (err) {
-    handleRouteError(err, res, 'createView');
   }
-});
+);
 
-router.patch('/views/:viewId', requireViewAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
-  try {
-    const { viewId } = req.params;
-    const { name, config, visibleFieldIds } = req.body ?? {};
-    if (!viewId) {
-      return res.status(400).json({ error: 'viewId is required' });
+router.patch(
+  '/views/:viewId',
+  requireViewAccess,
+  requireRoles(...VIEW_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const { viewId } = req.params;
+      const { name, config, visibleFieldIds } = req.body ?? {};
+      if (!viewId) {
+        return res.status(400).json({ error: 'viewId is required' });
+      }
+      const view = await MetadataService.updateView(viewId, { name, config, visibleFieldIds });
+      if (!view) {
+        return res.status(404).json({ error: 'View not found' });
+      }
+      return res.status(200).json(view);
+    } catch (err) {
+      handleRouteError(err, res, 'updateView');
     }
-    const view = await MetadataService.updateView(viewId, { name, config, visibleFieldIds });
-    if (!view) {
-      return res.status(404).json({ error: 'View not found' });
-    }
-    return res.status(200).json(view);
-  } catch (err) {
-    handleRouteError(err, res, 'updateView');
   }
-});
+);
 
-router.delete('/views/:viewId', requireViewAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { viewId } = req.params;
-    if (!viewId) {
-      return res.status(400).json({ error: 'viewId is required' });
+router.delete(
+  '/views/:viewId',
+  requireViewAccess,
+  requireRoles(...VIEW_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { viewId } = req.params;
+      if (!viewId) {
+        return res.status(400).json({ error: 'viewId is required' });
+      }
+      const ok = await MetadataService.deleteView(viewId, authReq.userId);
+      if (!ok) {
+        return res.status(404).json({ error: 'View not found' });
+      }
+      return res.status(204).send();
+    } catch (err) {
+      handleRouteError(err, res, 'deleteView');
     }
-    const ok = await MetadataService.deleteView(viewId, authReq.userId);
-    if (!ok) {
-      return res.status(404).json({ error: 'View not found' });
-    }
-    return res.status(204).send();
-  } catch (err) {
-    handleRouteError(err, res, 'deleteView');
   }
-});
+);
 
 // ==========================================
 // WORKSPACE PROJECTION / RESOLVE
@@ -776,27 +859,33 @@ router.get('/tables/:tableId/records', requireTableAccess, async (req: Request, 
   }
 });
 
-router.post('/tables/:tableId/records', requireTableAccess, requireRoles(...DATA_ROLES), checkOrgQuota as any, async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { tableId } = req.params;
-    const { data } = req.body ?? {};
-    if (!tableId) {
-      return res.status(400).json({ error: 'tableId is required' });
+router.post(
+  '/tables/:tableId/records',
+  requireTableAccess,
+  requireRoles(...DATA_ROLES),
+  checkOrgQuota as any,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { tableId } = req.params;
+      const { data } = req.body ?? {};
+      if (!tableId) {
+        return res.status(400).json({ error: 'tableId is required' });
+      }
+      if (!data || typeof data !== 'object') {
+        return res.status(400).json({ error: 'data is required' });
+      }
+      const record = await RecordsService.createRecord(tableId, data, userId);
+      if (!record) {
+        return res.status(500).json({ error: 'Failed to create record' });
+      }
+      return res.status(201).json(record);
+    } catch (err) {
+      handleRouteError(err, res, 'createRecord');
     }
-    if (!data || typeof data !== 'object') {
-      return res.status(400).json({ error: 'data is required' });
-    }
-    const record = await RecordsService.createRecord(tableId, data, userId);
-    if (!record) {
-      return res.status(500).json({ error: 'Failed to create record' });
-    }
-    return res.status(201).json(record);
-  } catch (err) {
-    handleRouteError(err, res, 'createRecord');
   }
-});
+);
 
 router.get('/records/:recordId', requireRecordAccess, async (req: Request, res: Response) => {
   try {
@@ -814,95 +903,117 @@ router.get('/records/:recordId', requireRecordAccess, async (req: Request, res: 
   }
 });
 
-router.patch('/records/:recordId', requireRecordAccess, requireRoles(...DATA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { recordId } = req.params;
-    const { data } = req.body ?? {};
-    if (!recordId) {
-      return res.status(400).json({ error: 'recordId is required' });
+router.patch(
+  '/records/:recordId',
+  requireRecordAccess,
+  requireRoles(...DATA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { recordId } = req.params;
+      const { data } = req.body ?? {};
+      if (!recordId) {
+        return res.status(400).json({ error: 'recordId is required' });
+      }
+      if (!data || typeof data !== 'object') {
+        return res.status(400).json({ error: 'data is required' });
+      }
+      const record = await RecordsService.updateRecord(recordId, data, userId);
+      if (!record) {
+        return res.status(404).json({ error: 'Record not found' });
+      }
+      return res.status(200).json(record);
+    } catch (err) {
+      handleRouteError(err, res, 'updateRecord');
     }
-    if (!data || typeof data !== 'object') {
-      return res.status(400).json({ error: 'data is required' });
-    }
-    const record = await RecordsService.updateRecord(recordId, data, userId);
-    if (!record) {
-      return res.status(404).json({ error: 'Record not found' });
-    }
-    return res.status(200).json(record);
-  } catch (err) {
-    handleRouteError(err, res, 'updateRecord');
   }
-});
+);
 
-router.delete('/records/:recordId', requireRecordAccess, requireRoles(...DATA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { recordId } = req.params;
-    if (!recordId) {
-      return res.status(400).json({ error: 'recordId is required' });
+router.delete(
+  '/records/:recordId',
+  requireRecordAccess,
+  requireRoles(...DATA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { recordId } = req.params;
+      if (!recordId) {
+        return res.status(400).json({ error: 'recordId is required' });
+      }
+      const ok = await RecordsService.deleteRecord(recordId, userId);
+      if (!ok) {
+        return res.status(404).json({ error: 'Record not found' });
+      }
+      return res.status(204).send();
+    } catch (err) {
+      handleRouteError(err, res, 'deleteRecord');
     }
-    const ok = await RecordsService.deleteRecord(recordId, userId);
-    if (!ok) {
-      return res.status(404).json({ error: 'Record not found' });
-    }
-    return res.status(204).send();
-  } catch (err) {
-    handleRouteError(err, res, 'deleteRecord');
   }
-});
+);
 
 // ==========================================
 // RECORD COMMENTS
 // ==========================================
 
-router.post('/records/:recordId/comments', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { recordId } = req.params;
-    const { tableId, content, parentId, authorName, mentions } = req.body ?? {};
-    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
-    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-    if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return res.status(400).json({ error: 'content is required' });
+router.post(
+  '/records/:recordId/comments',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { recordId } = req.params;
+      const { tableId, content, parentId, authorName, mentions } = req.body ?? {};
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+      if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+      if (!content || typeof content !== 'string' || content.trim().length === 0) {
+        return res.status(400).json({ error: 'content is required' });
+      }
+      const mentionList = Array.isArray(mentions)
+        ? mentions
+            .filter((m: unknown) => typeof m === 'string' && m.trim().length > 0)
+            .map((m: string) => m.trim())
+        : [];
+      const RecordCommentService = (
+        await import('../services/tablePlatform/RecordCommentService.js')
+      ).default;
+      const comment = await RecordCommentService.addComment(
+        recordId,
+        tableId,
+        userId!,
+        authorName,
+        content.trim(),
+        parentId,
+        mentionList.length ? mentionList : undefined
+      );
+      return res.status(201).json(comment);
+    } catch (err) {
+      handleRouteError(err, res, 'addComment');
     }
-    const mentionList = Array.isArray(mentions)
-      ? mentions.filter((m: unknown) => typeof m === 'string' && m.trim().length > 0).map((m: string) => m.trim())
-      : [];
-    const RecordCommentService = (await import('../services/tablePlatform/RecordCommentService.js'))
-      .default;
-    const comment = await RecordCommentService.addComment(
-      recordId,
-      tableId,
-      userId!,
-      authorName,
-      content.trim(),
-      parentId,
-      mentionList.length ? mentionList : undefined
-    );
-    return res.status(201).json(comment);
-  } catch (err) {
-    handleRouteError(err, res, 'addComment');
   }
-});
+);
 
-router.get('/records/:recordId/comments', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const { recordId } = req.params;
-    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
-    const limit = parseInt(String(req.query.limit ?? '50'), 10);
-    const offset = parseInt(String(req.query.offset ?? '0'), 10);
-    const RecordCommentService = (await import('../services/tablePlatform/RecordCommentService.js'))
-      .default;
-    const result = await RecordCommentService.listComments(recordId, limit, offset);
-    return res.status(200).json(result);
-  } catch (err) {
-    handleRouteError(err, res, 'listComments');
+router.get(
+  '/records/:recordId/comments',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+      const limit = parseInt(String(req.query.limit ?? '50'), 10);
+      const offset = parseInt(String(req.query.offset ?? '0'), 10);
+      const RecordCommentService = (
+        await import('../services/tablePlatform/RecordCommentService.js')
+      ).default;
+      const result = await RecordCommentService.listComments(recordId, limit, offset);
+      return res.status(200).json(result);
+    } catch (err) {
+      handleRouteError(err, res, 'listComments');
+    }
   }
-});
+);
 
 router.patch('/comments/:commentId', async (req: Request, res: Response) => {
   try {
@@ -948,86 +1059,102 @@ router.delete('/comments/:commentId', async (req: Request, res: Response) => {
 // RECORD UNDO
 // ==========================================
 
-router.post('/tables/:tableId/undo', requireRoles(...DATA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { tableId } = req.params;
-    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-    if (!userId) return res.status(401).json({ error: 'Authentication required' });
-    const record = await RecordsService.undoLastEdit(tableId, userId);
-    if (!record) {
-      return res.status(404).json({ error: 'Nothing to undo' });
+router.post(
+  '/tables/:tableId/undo',
+  requireRoles(...DATA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { tableId } = req.params;
+      if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+      if (!userId) return res.status(401).json({ error: 'Authentication required' });
+      const record = await RecordsService.undoLastEdit(tableId, userId);
+      if (!record) {
+        return res.status(404).json({ error: 'Nothing to undo' });
+      }
+      return res.status(200).json(record);
+    } catch (err) {
+      handleRouteError(err, res, 'undoLastEdit');
     }
-    return res.status(200).json(record);
-  } catch (err) {
-    handleRouteError(err, res, 'undoLastEdit');
   }
-});
+);
 
 // ==========================================
 // CELL HISTORY
 // ==========================================
 
-router.get('/records/:recordId/cell-history', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const { recordId } = req.params;
-    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
-    const fieldId = typeof req.query.fieldId === 'string' ? req.query.fieldId : undefined;
-    const limit = parseInt(String(req.query.limit ?? '50'), 10);
-    const offset = parseInt(String(req.query.offset ?? '0'), 10);
-    const AuditService = (await import('../services/tablePlatform/AuditService.js')).default;
-    if (fieldId) {
-      const history = await AuditService.getCellHistory(recordId, fieldId, limit, offset);
+router.get(
+  '/records/:recordId/cell-history',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+      const fieldId = typeof req.query.fieldId === 'string' ? req.query.fieldId : undefined;
+      const limit = parseInt(String(req.query.limit ?? '50'), 10);
+      const offset = parseInt(String(req.query.offset ?? '0'), 10);
+      const AuditService = (await import('../services/tablePlatform/AuditService.js')).default;
+      if (fieldId) {
+        const history = await AuditService.getCellHistory(recordId, fieldId, limit, offset);
+        return res.status(200).json(history);
+      }
+      const history = await AuditService.getRecordCellHistory(recordId, limit);
       return res.status(200).json(history);
+    } catch (err) {
+      handleRouteError(err, res, 'getCellHistory');
     }
-    const history = await AuditService.getRecordCellHistory(recordId, limit);
-    return res.status(200).json(history);
-  } catch (err) {
-    handleRouteError(err, res, 'getCellHistory');
   }
-});
+);
 
 // ==========================================
 // RECORD WATCHES
 // ==========================================
 
-router.post('/records/:recordId/watch', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const userId = authReq.userId;
-    const { recordId } = req.params;
-    const { tableId } = req.body ?? {};
-    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
-    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-    if (!userId) return res.status(401).json({ error: 'Authentication required' });
-    const RecordWatchService = (await import('../services/tablePlatform/RecordWatchService.js'))
-      .default;
-    const isWatching = await RecordWatchService.isWatching(recordId, userId);
-    if (isWatching) {
-      await RecordWatchService.unwatchRecord(recordId, userId);
-      return res.status(200).json({ watching: false });
-    } else {
-      await RecordWatchService.watchRecord(recordId, tableId, userId);
-      return res.status(200).json({ watching: true });
+router.post(
+  '/records/:recordId/watch',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.userId;
+      const { recordId } = req.params;
+      const { tableId } = req.body ?? {};
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+      if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+      if (!userId) return res.status(401).json({ error: 'Authentication required' });
+      const RecordWatchService = (await import('../services/tablePlatform/RecordWatchService.js'))
+        .default;
+      const isWatching = await RecordWatchService.isWatching(recordId, userId);
+      if (isWatching) {
+        await RecordWatchService.unwatchRecord(recordId, userId);
+        return res.status(200).json({ watching: false });
+      } else {
+        await RecordWatchService.watchRecord(recordId, tableId, userId);
+        return res.status(200).json({ watching: true });
+      }
+    } catch (err) {
+      handleRouteError(err, res, 'toggleWatch');
     }
-  } catch (err) {
-    handleRouteError(err, res, 'toggleWatch');
   }
-});
+);
 
-router.get('/records/:recordId/watchers', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const { recordId } = req.params;
-    if (!recordId) return res.status(400).json({ error: 'recordId is required' });
-    const RecordWatchService = (await import('../services/tablePlatform/RecordWatchService.js'))
-      .default;
-    const watchers = await RecordWatchService.getWatchers(recordId);
-    return res.status(200).json(watchers);
-  } catch (err) {
-    handleRouteError(err, res, 'getWatchers');
+router.get(
+  '/records/:recordId/watchers',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      if (!recordId) return res.status(400).json({ error: 'recordId is required' });
+      const RecordWatchService = (await import('../services/tablePlatform/RecordWatchService.js'))
+        .default;
+      const watchers = await RecordWatchService.getWatchers(recordId);
+      return res.status(200).json(watchers);
+    } catch (err) {
+      handleRouteError(err, res, 'getWatchers');
+    }
   }
-});
+);
 
 router.post(
   '/tables/:tableId/records/query',
@@ -1398,25 +1525,29 @@ router.post('/schema/propose', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/schema/proposals/:proposalId/execute', requireRoles(...SCHEMA_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { proposalId } = req.params;
-    const { approvedOperationIds } = req.body ?? {};
-    const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
-      .default;
-    const result = await ChatToSchemaService.executeProposal(
-      proposalId,
-      approvedOperationIds,
-      authReq.userId,
-      { organizationId: authReq.organizationId }
-    );
-    return res.status(200).json(result);
-  } catch (e) {
-    logger.error('[TablePlatform] schema/execute failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Execution failed', details: (e as Error).message });
+router.post(
+  '/schema/proposals/:proposalId/execute',
+  requireRoles(...SCHEMA_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { proposalId } = req.params;
+      const { approvedOperationIds } = req.body ?? {};
+      const ChatToSchemaService = (await import('../services/tablePlatform/ChatToSchemaService.js'))
+        .default;
+      const result = await ChatToSchemaService.executeProposal(
+        proposalId,
+        approvedOperationIds,
+        authReq.userId,
+        { organizationId: authReq.organizationId }
+      );
+      return res.status(200).json(result);
+    } catch (e) {
+      logger.error('[TablePlatform] schema/execute failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Execution failed', details: (e as Error).message });
+    }
   }
-});
+);
 
 router.post('/schema/proposals/:proposalId/reject', async (req: Request, res: Response) => {
   try {
@@ -2034,70 +2165,90 @@ router.post('/migrate/rollback', async (req: Request, res: Response) => {
 // LINKED RECORDS / RELATIONS
 // ==========================================
 
-router.post('/records/:recordId/links', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { recordId } = req.params;
-    const { fromFieldId, toRecordIds } = req.body ?? {};
-    if (!fromFieldId || !Array.isArray(toRecordIds)) {
-      return res.status(400).json({ error: 'fromFieldId and toRecordIds required' });
+router.post(
+  '/records/:recordId/links',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { recordId } = req.params;
+      const { fromFieldId, toRecordIds } = req.body ?? {};
+      if (!fromFieldId || !Array.isArray(toRecordIds)) {
+        return res.status(400).json({ error: 'fromFieldId and toRecordIds required' });
+      }
+      const RelationService = (await import('../services/tablePlatform/RelationService.js'))
+        .default;
+      await RelationService.linkRecords(recordId, fromFieldId, toRecordIds, authReq.userId);
+      return res.status(201).json({ linked: toRecordIds.length });
+    } catch (e) {
+      logger.error('[TablePlatform] link records failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Link failed', details: (e as Error).message });
     }
-    const RelationService = (await import('../services/tablePlatform/RelationService.js')).default;
-    await RelationService.linkRecords(recordId, fromFieldId, toRecordIds, authReq.userId);
-    return res.status(201).json({ linked: toRecordIds.length });
-  } catch (e) {
-    logger.error('[TablePlatform] link records failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Link failed', details: (e as Error).message });
   }
-});
+);
 
-router.delete('/records/:recordId/links', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { recordId } = req.params;
-    const { fromFieldId, toRecordIds } = req.body ?? {};
-    if (!fromFieldId || !Array.isArray(toRecordIds)) {
-      return res.status(400).json({ error: 'fromFieldId and toRecordIds required' });
+router.delete(
+  '/records/:recordId/links',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { recordId } = req.params;
+      const { fromFieldId, toRecordIds } = req.body ?? {};
+      if (!fromFieldId || !Array.isArray(toRecordIds)) {
+        return res.status(400).json({ error: 'fromFieldId and toRecordIds required' });
+      }
+      const RelationService = (await import('../services/tablePlatform/RelationService.js'))
+        .default;
+      await RelationService.unlinkRecords(recordId, fromFieldId, toRecordIds, authReq.userId);
+      return res.status(200).json({ unlinked: toRecordIds.length });
+    } catch (e) {
+      logger.error('[TablePlatform] unlink records failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Unlink failed', details: (e as Error).message });
     }
-    const RelationService = (await import('../services/tablePlatform/RelationService.js')).default;
-    await RelationService.unlinkRecords(recordId, fromFieldId, toRecordIds, authReq.userId);
-    return res.status(200).json({ unlinked: toRecordIds.length });
-  } catch (e) {
-    logger.error('[TablePlatform] unlink records failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Unlink failed', details: (e as Error).message });
   }
-});
+);
 
-router.get('/records/:recordId/links/:fieldId', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const { recordId, fieldId } = req.params;
-    const RelationService = (await import('../services/tablePlatform/RelationService.js')).default;
-    const linked = await RelationService.getLinkedRecords(recordId, fieldId);
-    return res.status(200).json({ records: linked });
-  } catch (e) {
-    logger.error('[TablePlatform] get linked records failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Fetch failed', details: (e as Error).message });
+router.get(
+  '/records/:recordId/links/:fieldId',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { recordId, fieldId } = req.params;
+      const RelationService = (await import('../services/tablePlatform/RelationService.js'))
+        .default;
+      const linked = await RelationService.getLinkedRecords(recordId, fieldId);
+      return res.status(200).json({ records: linked });
+    } catch (e) {
+      logger.error('[TablePlatform] get linked records failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Fetch failed', details: (e as Error).message });
+    }
   }
-});
+);
 
-router.get('/records/:recordId/expand', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const { recordId } = req.params;
-    if (!recordId) {
-      return res.status(400).json({ error: 'recordId is required' });
+router.get(
+  '/records/:recordId/expand',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      if (!recordId) {
+        return res.status(400).json({ error: 'recordId is required' });
+      }
+      const depth = Math.min(Math.max(parseInt(String(req.query.depth ?? '1'), 10) || 1, 0), 3);
+      const RelationService = (await import('../services/tablePlatform/RelationService.js'))
+        .default;
+      const expanded = await RelationService.expandRecord(recordId, depth);
+      if (!expanded) {
+        return res.status(404).json({ error: 'Record not found' });
+      }
+      return res.status(200).json(expanded);
+    } catch (e) {
+      logger.error('[TablePlatform] expand record failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Expand failed', details: (e as Error).message });
     }
-    const depth = Math.min(Math.max(parseInt(String(req.query.depth ?? '1'), 10) || 1, 0), 3);
-    const RelationService = (await import('../services/tablePlatform/RelationService.js')).default;
-    const expanded = await RelationService.expandRecord(recordId, depth);
-    if (!expanded) {
-      return res.status(404).json({ error: 'Record not found' });
-    }
-    return res.status(200).json(expanded);
-  } catch (e) {
-    logger.error('[TablePlatform] expand record failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Expand failed', details: (e as Error).message });
   }
-});
+);
 
 router.post('/records/display-names', async (req: Request, res: Response) => {
   try {
@@ -2158,30 +2309,34 @@ router.post(
   }
 );
 
-router.post('/records/:recordId/attachments', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { recordId } = req.params;
-    const { fieldId, fileName, mimeType, sizeBytes, storageKey } = req.body ?? {};
-    if (!fieldId || !fileName)
-      return res.status(400).json({ error: 'fieldId and fileName required' });
-    const AttachmentService = (await import('../services/tablePlatform/AttachmentService.js'))
-      .default;
-    const attachment = await AttachmentService.createAttachment(
-      recordId,
-      fieldId,
-      fileName,
-      mimeType ?? 'application/octet-stream',
-      sizeBytes ?? 0,
-      storageKey ?? '',
-      authReq.userId
-    );
-    return res.status(201).json(attachment);
-  } catch (e) {
-    logger.error('[TablePlatform] create attachment failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'Create attachment failed' });
+router.post(
+  '/records/:recordId/attachments',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { recordId } = req.params;
+      const { fieldId, fileName, mimeType, sizeBytes, storageKey } = req.body ?? {};
+      if (!fieldId || !fileName)
+        return res.status(400).json({ error: 'fieldId and fileName required' });
+      const AttachmentService = (await import('../services/tablePlatform/AttachmentService.js'))
+        .default;
+      const attachment = await AttachmentService.createAttachment(
+        recordId,
+        fieldId,
+        fileName,
+        mimeType ?? 'application/octet-stream',
+        sizeBytes ?? 0,
+        storageKey ?? '',
+        authReq.userId
+      );
+      return res.status(201).json(attachment);
+    } catch (e) {
+      logger.error('[TablePlatform] create attachment failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'Create attachment failed' });
+    }
   }
-});
+);
 
 router.get('/attachments/:attachmentId/download', async (req: Request, res: Response) => {
   try {
@@ -2248,19 +2403,23 @@ router.get('/attachments/download/:token', async (req: Request, res: Response) =
   }
 });
 
-router.get('/records/:recordId/attachments', requireRecordAccess, async (req: Request, res: Response) => {
-  try {
-    const { recordId } = req.params;
-    const fieldId = typeof req.query.fieldId === 'string' ? req.query.fieldId : undefined;
-    const AttachmentService = (await import('../services/tablePlatform/AttachmentService.js'))
-      .default;
-    const attachments = await AttachmentService.getAttachments(recordId, fieldId);
-    return res.status(200).json(attachments);
-  } catch (e) {
-    logger.error('[TablePlatform] list attachments failed', { error: (e as Error).message });
-    return res.status(500).json({ error: 'List attachments failed' });
+router.get(
+  '/records/:recordId/attachments',
+  requireRecordAccess,
+  async (req: Request, res: Response) => {
+    try {
+      const { recordId } = req.params;
+      const fieldId = typeof req.query.fieldId === 'string' ? req.query.fieldId : undefined;
+      const AttachmentService = (await import('../services/tablePlatform/AttachmentService.js'))
+        .default;
+      const attachments = await AttachmentService.getAttachments(recordId, fieldId);
+      return res.status(200).json(attachments);
+    } catch (e) {
+      logger.error('[TablePlatform] list attachments failed', { error: (e as Error).message });
+      return res.status(500).json({ error: 'List attachments failed' });
+    }
   }
-});
+);
 
 router.delete('/attachments/:attachmentId', async (req: Request, res: Response) => {
   try {
@@ -2281,25 +2440,30 @@ router.delete('/attachments/:attachmentId', async (req: Request, res: Response) 
 // FORMS API (authenticated)
 // ==========================================
 
-router.post('/tables/:tableId/forms', requireTableAccess, requireRoles(...ALL_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { tableId } = req.params;
-    const { name, description, slug, config } = req.body ?? {};
-    if (!tableId) return res.status(400).json({ error: 'tableId is required' });
-    if (!name || typeof name !== 'string')
-      return res.status(400).json({ error: 'name is required' });
-    const FormService = (await import('../services/tablePlatform/FormService.js')).default;
-    const form = await FormService.createForm(
-      tableId,
-      { name, description, slug, config },
-      authReq.userId
-    );
-    return res.status(201).json(form);
-  } catch (err) {
-    handleRouteError(err, res, 'createForm');
+router.post(
+  '/tables/:tableId/forms',
+  requireTableAccess,
+  requireRoles(...ALL_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { tableId } = req.params;
+      const { name, description, slug, config } = req.body ?? {};
+      if (!tableId) return res.status(400).json({ error: 'tableId is required' });
+      if (!name || typeof name !== 'string')
+        return res.status(400).json({ error: 'name is required' });
+      const FormService = (await import('../services/tablePlatform/FormService.js')).default;
+      const form = await FormService.createForm(
+        tableId,
+        { name, description, slug, config },
+        authReq.userId
+      );
+      return res.status(201).json(form);
+    } catch (err) {
+      handleRouteError(err, res, 'createForm');
+    }
   }
-});
+);
 
 router.get('/tables/:tableId/forms', requireTableAccess, async (req: Request, res: Response) => {
   try {
@@ -2562,24 +2726,29 @@ router.post('/automations/:automationId/trigger', async (req: Request, res: Resp
 // INTERFACE DESIGNER API
 // ==========================================
 
-router.post('/bases/:baseId/interfaces', requireBaseAccess, requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { baseId } = req.params;
-    const { name, description } = req.body ?? {};
-    if (!baseId) return res.status(400).json({ error: 'baseId is required' });
-    if (!name || typeof name !== 'string')
-      return res.status(400).json({ error: 'name is required' });
-    const iface = await interfaceService.createInterface(baseId, {
-      name,
-      description,
-      createdBy: authReq.userId,
-    });
-    return res.status(201).json(iface);
-  } catch (err) {
-    handleRouteError(err, res, 'createInterface');
+router.post(
+  '/bases/:baseId/interfaces',
+  requireBaseAccess,
+  requireRoles(...INTERFACE_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { baseId } = req.params;
+      const { name, description } = req.body ?? {};
+      if (!baseId) return res.status(400).json({ error: 'baseId is required' });
+      if (!name || typeof name !== 'string')
+        return res.status(400).json({ error: 'name is required' });
+      const iface = await interfaceService.createInterface(baseId, {
+        name,
+        description,
+        createdBy: authReq.userId,
+      });
+      return res.status(201).json(iface);
+    } catch (err) {
+      handleRouteError(err, res, 'createInterface');
+    }
   }
-});
+);
 
 router.get('/bases/:baseId/interfaces', requireBaseAccess, async (req: Request, res: Response) => {
   try {
@@ -2604,65 +2773,86 @@ router.get('/interfaces/:interfaceId', async (req: Request, res: Response) => {
   }
 });
 
-router.put('/interfaces/:interfaceId/layout', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
-  try {
-    const { interfaceId } = req.params;
-    const { blocks, theme } = req.body ?? {};
-    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
-    if (!Array.isArray(blocks)) return res.status(400).json({ error: 'blocks array is required' });
-    const iface = await interfaceService.updateLayout(interfaceId, { blocks, theme });
-    if (!iface) return res.status(404).json({ error: 'Interface not found' });
-    return res.status(200).json(iface);
-  } catch (err) {
-    handleRouteError(err, res, 'updateInterfaceLayout');
+router.put(
+  '/interfaces/:interfaceId/layout',
+  requireRoles(...INTERFACE_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const { interfaceId } = req.params;
+      const { blocks, theme } = req.body ?? {};
+      if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+      if (!Array.isArray(blocks))
+        return res.status(400).json({ error: 'blocks array is required' });
+      const iface = await interfaceService.updateLayout(interfaceId, { blocks, theme });
+      if (!iface) return res.status(404).json({ error: 'Interface not found' });
+      return res.status(200).json(iface);
+    } catch (err) {
+      handleRouteError(err, res, 'updateInterfaceLayout');
+    }
   }
-});
+);
 
-router.post('/interfaces/:interfaceId/publish', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
-  try {
-    const { interfaceId } = req.params;
-    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
-    const result = await interfaceService.publishInterface(interfaceId);
-    return res.status(200).json(result);
-  } catch (err) {
-    handleRouteError(err, res, 'publishInterface');
+router.post(
+  '/interfaces/:interfaceId/publish',
+  requireRoles(...INTERFACE_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const { interfaceId } = req.params;
+      if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+      const result = await interfaceService.publishInterface(interfaceId);
+      return res.status(200).json(result);
+    } catch (err) {
+      handleRouteError(err, res, 'publishInterface');
+    }
   }
-});
+);
 
-router.post('/interfaces/:interfaceId/unpublish', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
-  try {
-    const { interfaceId } = req.params;
-    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
-    await interfaceService.unpublishInterface(interfaceId);
-    return res.status(204).send();
-  } catch (err) {
-    handleRouteError(err, res, 'unpublishInterface');
+router.post(
+  '/interfaces/:interfaceId/unpublish',
+  requireRoles(...INTERFACE_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const { interfaceId } = req.params;
+      if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+      await interfaceService.unpublishInterface(interfaceId);
+      return res.status(204).send();
+    } catch (err) {
+      handleRouteError(err, res, 'unpublishInterface');
+    }
   }
-});
+);
 
-router.delete('/interfaces/:interfaceId', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
-  try {
-    const { interfaceId } = req.params;
-    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
-    await interfaceService.deleteInterface(interfaceId);
-    return res.status(204).send();
-  } catch (err) {
-    handleRouteError(err, res, 'deleteInterface');
+router.delete(
+  '/interfaces/:interfaceId',
+  requireRoles(...INTERFACE_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const { interfaceId } = req.params;
+      if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+      await interfaceService.deleteInterface(interfaceId);
+      return res.status(204).send();
+    } catch (err) {
+      handleRouteError(err, res, 'deleteInterface');
+    }
   }
-});
+);
 
-router.patch('/interfaces/:interfaceId/roles', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
-  try {
-    const { interfaceId } = req.params;
-    const { roles } = req.body ?? {};
-    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
-    if (!Array.isArray(roles)) return res.status(400).json({ error: 'roles array is required' });
-    await interfaceService.updateAllowedRoles(interfaceId, roles);
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    handleRouteError(err, res, 'updateInterfaceRoles');
+router.patch(
+  '/interfaces/:interfaceId/roles',
+  requireRoles(...INTERFACE_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const { interfaceId } = req.params;
+      const { roles } = req.body ?? {};
+      if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+      if (!Array.isArray(roles)) return res.status(400).json({ error: 'roles array is required' });
+      await interfaceService.updateAllowedRoles(interfaceId, roles);
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      handleRouteError(err, res, 'updateInterfaceRoles');
+    }
   }
-});
+);
 
 // ==========================================
 // GOVERNED MODELS
@@ -3323,57 +3513,75 @@ router.post('/views/:viewId/unshare', requireViewAccess, async (req: Request, re
 // VIEW LOCKS
 // ==========================================
 
-router.post('/views/:viewId/lock', requireViewAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { viewId } = req.params;
-    if (!viewId) return res.status(400).json({ error: 'viewId is required' });
-    await MetadataService.lockView(viewId, authReq.userId!);
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    handleRouteError(err, res, 'lockView');
+router.post(
+  '/views/:viewId/lock',
+  requireViewAccess,
+  requireRoles(...VIEW_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { viewId } = req.params;
+      if (!viewId) return res.status(400).json({ error: 'viewId is required' });
+      await MetadataService.lockView(viewId, authReq.userId!);
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      handleRouteError(err, res, 'lockView');
+    }
   }
-});
+);
 
-router.post('/views/:viewId/unlock', requireViewAccess, requireRoles(...VIEW_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { viewId } = req.params;
-    if (!viewId) return res.status(400).json({ error: 'viewId is required' });
-    await MetadataService.unlockView(viewId, authReq.userId!);
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    handleRouteError(err, res, 'unlockView');
+router.post(
+  '/views/:viewId/unlock',
+  requireViewAccess,
+  requireRoles(...VIEW_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { viewId } = req.params;
+      if (!viewId) return res.status(400).json({ error: 'viewId is required' });
+      await MetadataService.unlockView(viewId, authReq.userId!);
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      handleRouteError(err, res, 'unlockView');
+    }
   }
-});
+);
 
 // ==========================================
 // INTERFACE LOCKS
 // ==========================================
 
-router.post('/interfaces/:interfaceId/lock', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { interfaceId } = req.params;
-    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
-    await MetadataService.lockInterface(interfaceId, authReq.userId!);
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    handleRouteError(err, res, 'lockInterface');
+router.post(
+  '/interfaces/:interfaceId/lock',
+  requireRoles(...INTERFACE_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { interfaceId } = req.params;
+      if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+      await MetadataService.lockInterface(interfaceId, authReq.userId!);
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      handleRouteError(err, res, 'lockInterface');
+    }
   }
-});
+);
 
-router.post('/interfaces/:interfaceId/unlock', requireRoles(...INTERFACE_ROLES), async (req: Request, res: Response) => {
-  try {
-    const authReq = req as AuthRequest;
-    const { interfaceId } = req.params;
-    if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
-    await MetadataService.unlockInterface(interfaceId, authReq.userId!);
-    return res.status(200).json({ success: true });
-  } catch (err) {
-    handleRouteError(err, res, 'unlockInterface');
+router.post(
+  '/interfaces/:interfaceId/unlock',
+  requireRoles(...INTERFACE_ROLES),
+  async (req: Request, res: Response) => {
+    try {
+      const authReq = req as AuthRequest;
+      const { interfaceId } = req.params;
+      if (!interfaceId) return res.status(400).json({ error: 'interfaceId is required' });
+      await MetadataService.unlockInterface(interfaceId, authReq.userId!);
+      return res.status(200).json({ success: true });
+    } catch (err) {
+      handleRouteError(err, res, 'unlockInterface');
+    }
   }
-});
+);
 
 // ==========================================
 // PUBLIC FORMS API (no auth required)

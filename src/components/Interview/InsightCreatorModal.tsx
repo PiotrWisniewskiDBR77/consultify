@@ -289,9 +289,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         ]);
 
         const nextSessions =
-          sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value) ? sessionsRes.value : [];
+          sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value)
+            ? sessionsRes.value
+            : [];
         const nextTemplates =
-          templatesRes.status === 'fulfilled' && Array.isArray(templatesRes.value) ? templatesRes.value : [];
+          templatesRes.status === 'fulfilled' && Array.isArray(templatesRes.value)
+            ? templatesRes.value
+            : [];
 
         setCompletedSessions(nextSessions);
         setTemplates(nextTemplates);
@@ -455,17 +459,19 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           dateTo: filterDateTo || undefined,
         },
         customPrompt: customPrompt.trim() || undefined,
-      }).catch(() => Api.post('/interview/insights', {
-        title: title.trim(),
-        sessionIds: selectedSessions,
-        promptType: selectedType,
-        filters: {
-          templateId: filterTemplate || undefined,
-          dateFrom: filterDateFrom || undefined,
-          dateTo: filterDateTo || undefined,
-        },
-        customPrompt: customPrompt.trim() || undefined,
-      }));
+      }).catch(() =>
+        Api.post('/interview/insights', {
+          title: title.trim(),
+          sessionIds: selectedSessions,
+          promptType: selectedType,
+          filters: {
+            templateId: filterTemplate || undefined,
+            dateFrom: filterDateFrom || undefined,
+            dateTo: filterDateTo || undefined,
+          },
+          customPrompt: customPrompt.trim() || undefined,
+        })
+      );
 
       toast.dismiss(toastId);
       toast.success(isPolish ? 'Wnioski wygenerowane!' : 'Insights generated!');
@@ -830,7 +836,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                         setCompletedSessions(nextSessions);
                         setTemplates(nextTemplates);
 
-                        if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
+                        if (
+                          sessionsRes.status === 'rejected' ||
+                          templatesRes.status === 'rejected'
+                        ) {
                           setLoadError(
                             isPolish
                               ? 'Nie udało się wczytać danych do generatora wniosków.'

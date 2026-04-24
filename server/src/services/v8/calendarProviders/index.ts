@@ -4,13 +4,22 @@
  * Central export for all provider adapters + dispatcher.
  */
 
-export type { CalendarProviderAdapter, ConnectionRef, ProviderEvent, ProviderConflictError, FetchEventsResult, ProviderCalendarRef, WatchSubscription, CalendarItemPayload } from './types.js';
+export type {
+  CalendarItemPayload,
+  CalendarProviderAdapter,
+  ConnectionRef,
+  FetchEventsResult,
+  ProviderCalendarRef,
+  ProviderConflictError,
+  ProviderEvent,
+  WatchSubscription,
+} from './types.js';
 export { isProviderConflict } from './types.js';
 
-import type { CalendarProviderAdapter } from './types.js';
+import { caldavAdapter } from './caldavAdapter.js';
 import { googleCalendarAdapter } from './googleCalendarAdapter.js';
 import { microsoftGraphCalendarAdapter } from './microsoftGraphCalendarAdapter.js';
-import { caldavAdapter } from './caldavAdapter.js';
+import type { CalendarProviderAdapter } from './types.js';
 
 const ADAPTER_REGISTRY: Record<string, CalendarProviderAdapter> = {
   google: googleCalendarAdapter,
@@ -22,4 +31,4 @@ export function getCalendarAdapter(provider: string): CalendarProviderAdapter | 
   return ADAPTER_REGISTRY[provider] ?? null;
 }
 
-export { googleCalendarAdapter, microsoftGraphCalendarAdapter, caldavAdapter };
+export { caldavAdapter, googleCalendarAdapter, microsoftGraphCalendarAdapter };

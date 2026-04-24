@@ -65,7 +65,10 @@ export function assertMentionNotifications(
   }
 }
 
-export function reattachCommentToMutation(comment: TypedComment, mutation: AnchorMutation): {
+export function reattachCommentToMutation(
+  comment: TypedComment,
+  mutation: AnchorMutation
+): {
   readonly outcome: ReattachOutcome;
   readonly prior: TypedComment;
   readonly next: TypedComment;
@@ -94,4 +97,3 @@ export function assertAnchorSurvivesMutation(
 ): void {
   // MVP: if reattach happened, we accept it.
 }
-

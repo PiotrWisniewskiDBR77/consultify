@@ -31,7 +31,9 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
     if (sql.includes('UPDATE interview_insight_candidates')) {
       const candidateId = params[params.length - 2];
       const insightId = params[params.length - 1];
-      const existing = state.candidates.find((candidate) => candidate.id === candidateId && candidate.insight_id === insightId);
+      const existing = state.candidates.find(
+        (candidate) => candidate.id === candidateId && candidate.insight_id === insightId
+      );
       if (!existing) return { changes: 0 };
       if (sql.includes("triage_status = 'promoted'")) {
         existing.triage_status = 'promoted';
@@ -78,8 +80,9 @@ vi.mock('../../../utils/queryHelpers.js', () => ({
     }
     if (sql.includes('FROM interview_insight_candidates')) {
       return (
-        state.candidates.find((candidate) => candidate.insight_id === params[0] && candidate.id === params[1]) ||
-        null
+        state.candidates.find(
+          (candidate) => candidate.insight_id === params[0] && candidate.id === params[1]
+        ) || null
       );
     }
     return null;
@@ -173,7 +176,9 @@ vi.mock('../interviewInsightAnalysisService.js', () => ({
       consensusTopicIds: ['theme:0'],
       localOnlyTopicIds: ['issue:0'],
       contradictedTopicIds: ['opportunity:0'],
-      coverageGaps: ['Interview finance to confirm whether this pattern generalizes beyond operations.'],
+      coverageGaps: [
+        'Interview finance to confirm whether this pattern generalizes beyond operations.',
+      ],
     },
   })),
 }));
@@ -228,15 +233,26 @@ describe('interviewInsightCandidateService', () => {
     const candidates = await listCandidates('insight_1');
 
     expect(candidates).toHaveLength(3);
-    expect(candidates.find((candidate) => candidate.source_key === 'theme:0')?.triage_status).toBe('ready_for_review');
-    expect(candidates.find((candidate) => candidate.source_key === 'issue:0')?.triage_status).toBe('needs_evidence');
-    expect(candidates.find((candidate) => candidate.source_key === 'opportunity:0')?.triage_status).toBe('needs_split');
-    expect(candidates.find((candidate) => candidate.source_key === 'theme:0')?.followup_type).toBe('reinterview');
-    expect(candidates.find((candidate) => candidate.source_key === 'theme:0')?.linked_finding_id).toBe('finding_theme');
+    expect(candidates.find((candidate) => candidate.source_key === 'theme:0')?.triage_status).toBe(
+      'ready_for_review'
+    );
+    expect(candidates.find((candidate) => candidate.source_key === 'issue:0')?.triage_status).toBe(
+      'needs_evidence'
+    );
+    expect(
+      candidates.find((candidate) => candidate.source_key === 'opportunity:0')?.triage_status
+    ).toBe('needs_split');
+    expect(candidates.find((candidate) => candidate.source_key === 'theme:0')?.followup_type).toBe(
+      'reinterview'
+    );
+    expect(
+      candidates.find((candidate) => candidate.source_key === 'theme:0')?.linked_finding_id
+    ).toBe('finding_theme');
   });
 
   it('updates triage status without duplicating findings', async () => {
-    const { listCandidates, triageCandidate } = await import('../interviewInsightCandidateService.js');
+    const { listCandidates, triageCandidate } =
+      await import('../interviewInsightCandidateService.js');
 
     const [candidate] = await listCandidates('insight_1');
     const result = await triageCandidate(
@@ -255,7 +271,8 @@ describe('interviewInsightCandidateService', () => {
   });
 
   it('promotes a candidate into the linked finding lifecycle', async () => {
-    const { listCandidates, promoteCandidateToFinding } = await import('../interviewInsightCandidateService.js');
+    const { listCandidates, promoteCandidateToFinding } =
+      await import('../interviewInsightCandidateService.js');
 
     const candidates = await listCandidates('insight_1');
     const target = candidates.find((candidate) => candidate.source_key === 'theme:0');

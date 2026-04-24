@@ -41,7 +41,6 @@ import { useAppStore } from '../../store/useAppStore';
 import type { User } from '../../types';
 import { resetAllChatV9FlagOverrides } from '../../utils/chatV9FeatureFlags';
 import { isFlagsResetUrlEnabled } from '../../utils/flagsResetUrlFlag';
-
 import { isV9FlagsOverlayAuthorized } from './ChatV9FlagsOverlay';
 
 const QUERY_KEY = 'v9flags';

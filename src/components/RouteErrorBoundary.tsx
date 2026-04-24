@@ -148,7 +148,9 @@ export class RouteErrorBoundary extends Component<Props, State> {
                 {this.state.errorInfo && (
                   <details className="text-xs text-gray-600 dark:text-gray-400">
                     <summary className="cursor-pointer">Stack trace</summary>
-                    <pre className="mt-2 overflow-auto max-h-40">{this.state.errorInfo.componentStack}</pre>
+                    <pre className="mt-2 overflow-auto max-h-40">
+                      {this.state.errorInfo.componentStack}
+                    </pre>
                   </details>
                 )}
               </div>

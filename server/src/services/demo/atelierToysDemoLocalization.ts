@@ -109,7 +109,8 @@ export const atelierToysProjectPL: Record<
 > = {
   'forward-pmo': {
     name: 'Atelier Forward PMO',
-    description: 'Centralne sterowanie transformacją łączące operacje, wzrost cyfrowy i governance.',
+    description:
+      'Centralne sterowanie transformacją łączące operacje, wzrost cyfrowy i governance.',
     goal: 'Utrzymać całą transformację w jednym rytmie decyzji, zależności i realizacji.',
     health: 'amber',
   },
@@ -155,9 +156,14 @@ export const atelierToysInitiativePL: Record<string, any> = {
   'line-3-digital-twin': {
     name: 'Rollout Digital Twin dla Linii 3',
     area: 'Operacje',
-    summary: 'Uruchomić pilotaż i skalowanie Digital Twin dla linii o największym wpływie na przepustowość.',
+    summary:
+      'Uruchomić pilotaż i skalowanie Digital Twin dla linii o największym wpływie na przepustowość.',
     currentStage: 'Skalowanie',
-    deliverables: ['Model Digital Twin dla Linii 3', 'Dashboard telemetrii', 'Playbook dla supervisorów'],
+    deliverables: [
+      'Model Digital Twin dla Linii 3',
+      'Dashboard telemetrii',
+      'Playbook dla supervisorów',
+    ],
     successCriteria: ['OEE +8 pkt', 'Mniej nieplanowanych postojów', 'Lepsza jakość przezbrojeń'],
     keyRisks: ['Niska jakość telemetrii', 'Brak adopcji supervisorów', 'Zbyt szeroki rollout'],
     tasks: {
@@ -180,13 +186,15 @@ export const atelierToysInitiativePL: Record<string, any> = {
     decisions: {
       'line3-rollout-funding': {
         title: 'Zatwierdzić finansowanie rolloutu Digital Twin na Linie 3 i 4',
-        rationale: 'Pilot pokazał potencjał, ale pełny rollout wymaga jawnej zgody na kolejną falę.',
+        rationale:
+          'Pilot pokazał potencjał, ale pełny rollout wymaga jawnej zgody na kolejną falę.',
       },
     },
     milestones: {
       'line3-data-live': {
         name: 'Telemetria live',
-        description: 'Kluczowe sygnały z linii są dostępne w czasie rzeczywistym dla twin i dashboardów.',
+        description:
+          'Kluczowe sygnały z linii są dostępne w czasie rzeczywistym dla twin i dashboardów.',
       },
       'line3-supervisor-pilot': {
         name: 'Pilot supervisorów uruchomiony',
@@ -201,10 +209,19 @@ export const atelierToysInitiativePL: Record<string, any> = {
   'procurement-control-tower': {
     name: 'Control Tower Zakupowy',
     area: 'Zakupy',
-    summary: 'Uspójnić sygnały dostawców, ryzyka komponentów i decyzje zakupowe w jednym cockpitcie.',
+    summary:
+      'Uspójnić sygnały dostawców, ryzyka komponentów i decyzje zakupowe w jednym cockpitcie.',
     deliverables: ['Scorecards dostawców', 'War room zakupowy', 'Reguły eskalacji ryzyka'],
-    successCriteria: ['Lepsza widoczność ryzyk', 'Szybsza reakcja na opóźnienia', 'Mniej zaskoczeń marżowych'],
-    keyRisks: ['Niespójne dane dostawców', 'Słaba dyscyplina aktualizacji', 'Brak wspólnych progów ryzyka'],
+    successCriteria: [
+      'Lepsza widoczność ryzyk',
+      'Szybsza reakcja na opóźnienia',
+      'Mniej zaskoczeń marżowych',
+    ],
+    keyRisks: [
+      'Niespójne dane dostawców',
+      'Słaba dyscyplina aktualizacji',
+      'Brak wspólnych progów ryzyka',
+    ],
     tasks: {
       'procurement-supplier-scorecards': {
         title: 'Uruchomić scorecards dla dostawców krytycznych',
@@ -220,7 +237,8 @@ export const atelierToysInitiativePL: Record<string, any> = {
     decisions: {
       'procurement-dual-source': {
         title: 'Zatwierdzić dual sourcing dla komponentów wysokiego ryzyka',
-        rationale: 'Drugi dostawca zwiększy koszt krótkoterminowy, ale obniży ryzyko marży i dostępności.',
+        rationale:
+          'Drugi dostawca zwiększy koszt krótkoterminowy, ale obniży ryzyko marży i dostępności.',
       },
     },
     milestones: {
@@ -237,10 +255,19 @@ export const atelierToysInitiativePL: Record<string, any> = {
   'atelier-digital-growth': {
     name: 'Wzrost Atelier Digital',
     area: 'Wzrost',
-    summary: 'Przełożyć historię Digital Twin i bundle cyfrowego na wyższy attach rate i odnowienia.',
+    summary:
+      'Przełożyć historię Digital Twin i bundle cyfrowego na wyższy attach rate i odnowienia.',
     deliverables: ['Partner kit', 'Pakiet sygnałów renewal risk', 'Board pack wzrostowy'],
-    successCriteria: ['Attach rate +7 pkt', 'Lepsza jakość pipeline', 'Silniejsza narracja odnowień'],
-    keyRisks: ['Niespójny messaging', 'Brak dowodów adopcji', 'Rozjazd między produktem a sprzedażą'],
+    successCriteria: [
+      'Attach rate +7 pkt',
+      'Lepsza jakość pipeline',
+      'Silniejsza narracja odnowień',
+    ],
+    keyRisks: [
+      'Niespójny messaging',
+      'Brak dowodów adopcji',
+      'Rozjazd między produktem a sprzedażą',
+    ],
     tasks: {
       'digital-growth-partner-kit': {
         title: 'Zaktualizować partner kit pod historię hardware-to-SaaS',
@@ -275,7 +302,11 @@ export const atelierToysInitiativePL: Record<string, any> = {
     area: 'Łańcuch dostaw',
     summary: 'Zrobić z ryzyka dostawców codzienny workflow decyzji zamiast miesięcznego raportu.',
     deliverables: ['Alerty ryzyka', 'Playbooki eskalacji', 'Polityka buforów'],
-    successCriteria: ['Szybsza reakcja na zakłócenia', 'Mniej eskalacji ad hoc', 'Lepsza wiarygodność obietnic delivery'],
+    successCriteria: [
+      'Szybsza reakcja na zakłócenia',
+      'Mniej eskalacji ad hoc',
+      'Lepsza wiarygodność obietnic delivery',
+    ],
     keyRisks: ['Przeciążenie alertami', 'Brak właścicieli decyzji', 'Rozbieżne priorytety funkcji'],
     tasks: {
       'supplier-war-room-score': {
@@ -290,14 +321,16 @@ export const atelierToysInitiativePL: Record<string, any> = {
       },
       'supplier-war-room-playbooks': {
         title: 'Przygotować playbooki odpowiedzi na zakłócenia',
-        description: 'Ustalić warianty reakcji przy opóźnieniu, braku komponentów i wzroście kosztu.',
+        description:
+          'Ustalić warianty reakcji przy opóźnieniu, braku komponentów i wzroście kosztu.',
         why: 'War room musi prowadzić do decyzji, nie tylko do opisu problemu.',
       },
     },
     decisions: {
       'supplier-war-room-buffer-policy': {
         title: 'Potwierdzić politykę buforów dla komponentów krytycznych',
-        rationale: 'Lepszy bufor może ograniczyć ryzyko utraty marży i wiarygodności wobec partnerów.',
+        rationale:
+          'Lepszy bufor może ograniczyć ryzyko utraty marży i wiarygodności wobec partnerów.',
       },
     },
     milestones: {
@@ -314,14 +347,24 @@ export const atelierToysInitiativePL: Record<string, any> = {
   'qa-defect-closing-loop': {
     name: 'Domknięcie Pętli Defektów QA',
     area: 'Jakość',
-    summary: 'Zmienić zarządzanie defektami z reakcji punktowych w powtarzalny system zamknięcia i weryfikacji.',
+    summary:
+      'Zmienić zarządzanie defektami z reakcji punktowych w powtarzalny system zamknięcia i weryfikacji.',
     deliverables: ['Taksonomia defektów', 'Board przyczyn źródłowych', 'Dashboard close-rate'],
-    successCriteria: ['Mniej nawrotów defektów', 'Szybsze zamknięcie działań', 'Jeden właściciel engineeringowy dla wzorców cross-plant'],
-    keyRisks: ['Brak domknięcia po pierwszym review', 'Słaby ownership engineeringu', 'Za dużo lokalnych obejść'],
+    successCriteria: [
+      'Mniej nawrotów defektów',
+      'Szybsze zamknięcie działań',
+      'Jeden właściciel engineeringowy dla wzorców cross-plant',
+    ],
+    keyRisks: [
+      'Brak domknięcia po pierwszym review',
+      'Słaby ownership engineeringu',
+      'Za dużo lokalnych obejść',
+    ],
     tasks: {
       'qa-defect-taxonomy': {
         title: 'Ujednolicić taksonomię defektów i eskalacji',
-        description: 'Stworzyć wspólny język problemów jakościowych dla zakładu, QA i engineeringu.',
+        description:
+          'Stworzyć wspólny język problemów jakościowych dla zakładu, QA i engineeringu.',
         why: 'Bez wspólnej klasyfikacji nie da się zobaczyć powtarzalności wzorców.',
       },
       'qa-root-cause-board': {
@@ -338,7 +381,8 @@ export const atelierToysInitiativePL: Record<string, any> = {
     decisions: {
       'qa-escalation-thresholds': {
         title: 'Uzgodnić progi eskalacji dla defektów wysokiego wpływu',
-        rationale: 'Zespół potrzebuje jasnego momentu, w którym problem przechodzi na poziom leadership review.',
+        rationale:
+          'Zespół potrzebuje jasnego momentu, w którym problem przechodzi na poziom leadership review.',
       },
       'qa-engineering-ownership': {
         title: 'Przypisać jednego ownera engineeringowego do wzorców cross-plant',
@@ -361,8 +405,16 @@ export const atelierToysInitiativePL: Record<string, any> = {
     area: 'Produkt',
     summary: 'Spiąć roadmapę produktu z sygnałami adopcji, operacji i kanału partnerskiego.',
     deliverables: ['Signal pack roadmapowy', 'Plan kwartalny', 'Review z partnerami'],
-    successCriteria: ['Lepsze priorytety roadmapy', 'Mniej losowych próśb o wyjątki', 'Jasne trade-offy między adopcją a głębią analityki'],
-    keyRisks: ['Chaos priorytetów', 'Brak wspólnych trade-offów', 'Rozjazd między produktem i growth'],
+    successCriteria: [
+      'Lepsze priorytety roadmapy',
+      'Mniej losowych próśb o wyjątki',
+      'Jasne trade-offy między adopcją a głębią analityki',
+    ],
+    keyRisks: [
+      'Chaos priorytetów',
+      'Brak wspólnych trade-offów',
+      'Rozjazd między produktem i growth',
+    ],
     tasks: {
       'product-roadmap-signal-pack': {
         title: 'Przygotować signal pack do priorytetyzacji roadmapy',
@@ -383,7 +435,8 @@ export const atelierToysInitiativePL: Record<string, any> = {
     decisions: {
       'product-roadmap-bet': {
         title: 'Wybrać główny zakład roadmapowy na kolejny kwartał',
-        rationale: 'Leadership musi świadomie wybrać między szybszą adopcją a głębszym insightem analitycznym.',
+        rationale:
+          'Leadership musi świadomie wybrać między szybszą adopcją a głębszym insightem analitycznym.',
       },
     },
     milestones: {
@@ -402,8 +455,16 @@ export const atelierToysInitiativePL: Record<string, any> = {
     area: 'Kanał partnerski',
     summary: 'Skrócić czas od podpisania partnera do pierwszej sprzedaży bundle cyfrowego.',
     deliverables: ['Journey partnera', 'Scorecards aktywacji', 'Case pack'],
-    successCriteria: ['Szybsza gotowość demo', 'Silniejsza aktywacja', 'Wyższa spójność sprzedaży partnerów'],
-    keyRisks: ['Za długi onboarding', 'Brak jednej historii wartości', 'Słaba jakość pierwszego wdrożenia'],
+    successCriteria: [
+      'Szybsza gotowość demo',
+      'Silniejsza aktywacja',
+      'Wyższa spójność sprzedaży partnerów',
+    ],
+    keyRisks: [
+      'Za długi onboarding',
+      'Brak jednej historii wartości',
+      'Słaba jakość pierwszego wdrożenia',
+    ],
     tasks: {
       'partner-onboarding-journey': {
         title: 'Zaprojektować nową ścieżkę onboardingu partnera',
@@ -443,7 +504,11 @@ export const atelierToysInitiativePL: Record<string, any> = {
     area: 'Ludzie',
     summary: 'Wyposażyć supervisorów i liderów w rytm zarządzania potrzebny dla Atelier Forward.',
     deliverables: ['Program akademii', 'Checkpoints coachingowe', 'Dashboard adopcji'],
-    successCriteria: ['Adherence do rutyn +25%', 'Lepsza jakość eskalacji', 'Wyższa pewność managerów'],
+    successCriteria: [
+      'Adherence do rutyn +25%',
+      'Lepsza jakość eskalacji',
+      'Wyższa pewność managerów',
+    ],
     keyRisks: ['Brak czasu liderów', 'Niespójne wsparcie sponsorów', 'Zbyt teoretyczny trening'],
     tasks: {
       'academy-curriculum': {
@@ -482,10 +547,19 @@ export const atelierToysInitiativePL: Record<string, any> = {
   'board-value-tracking': {
     name: 'Board Value Tracking',
     area: 'Governance',
-    summary: 'Uczynić wartość, ryzyko i follow-up po decyzjach widocznymi w każdym cyklu zarządczym.',
+    summary:
+      'Uczynić wartość, ryzyko i follow-up po decyzjach widocznymi w każdym cyklu zarządczym.',
     deliverables: ['Board scorecard', 'Log follow-upów decyzji', 'Transformation score'],
-    successCriteria: ['100% completeness follow-upów', 'Wyższa pewność ROI', 'Czas przygotowania board packa -35%'],
-    keyRisks: ['Ręczny ciężar raportowania', 'Niespójne założenia', 'Słaby follow-through po decyzjach'],
+    successCriteria: [
+      '100% completeness follow-upów',
+      'Wyższa pewność ROI',
+      'Czas przygotowania board packa -35%',
+    ],
+    keyRisks: [
+      'Ręczny ciężar raportowania',
+      'Niespójne założenia',
+      'Słaby follow-through po decyzjach',
+    ],
     tasks: {
       'board-scorecard-v2': {
         title: 'Opublikować board scorecard v2',
@@ -523,15 +597,29 @@ export const atelierToysInitiativePL: Record<string, any> = {
   'atelier-motion-concept-lab': {
     name: 'Concept Lab Atelier Motion',
     area: 'Innowacja',
-    summary: 'Zdefiniować nową generację zestawów motion-based STEM i przetestować pierwsze hipotezy.',
+    summary:
+      'Zdefiniować nową generację zestawów motion-based STEM i przetestować pierwsze hipotezy.',
     currentStage: 'Discovery',
-    deliverables: ['Concept brief', 'Pakiet insightów od nauczycieli', 'Pierwszy test desirability'],
-    successCriteria: ['Zidentyfikowane top 3 ryzyka konceptu', '10 wywiadów z klientami', 'Wybrany jeden koncept do pilotażu'],
-    keyRisks: ['Shiny-object bias', 'Słaba jakość sygnału klienta', 'Brak jasnej ścieżki monetyzacji'],
+    deliverables: [
+      'Concept brief',
+      'Pakiet insightów od nauczycieli',
+      'Pierwszy test desirability',
+    ],
+    successCriteria: [
+      'Zidentyfikowane top 3 ryzyka konceptu',
+      '10 wywiadów z klientami',
+      'Wybrany jeden koncept do pilotażu',
+    ],
+    keyRisks: [
+      'Shiny-object bias',
+      'Słaba jakość sygnału klienta',
+      'Brak jasnej ścieżki monetyzacji',
+    ],
     tasks: {
       'motion-concept-interviews': {
         title: 'Przeprowadzić wywiady z nauczycielami o zastosowaniach motion-learning',
-        description: 'Zebrać potrzeby, bóle i sygnały willingness-to-pay przed zamknięciem konceptu.',
+        description:
+          'Zebrać potrzeby, bóle i sygnały willingness-to-pay przed zamknięciem konceptu.',
         why: 'Koncept musi wynikać z dowodów, a nie tylko z intuicji produktowej.',
       },
       'motion-concept-brief': {
@@ -559,19 +647,29 @@ export const atelierToysInitiativePL: Record<string, any> = {
     summary: 'Zatwierdzić bazowy standard bezpieczeństwa OT i przygotować pierwszą falę wdrożenia.',
     currentStage: 'Business Case',
     deliverables: ['Baseline kontroli OT', 'Plan segmentacji', 'Rejestr ryzyk gotowy do audytu'],
-    successCriteria: ['Baseline zatwierdzony', 'Zakres pierwszego zakładu określony', 'Priorytety luk krytycznych ustalone'],
-    keyRisks: ['Postrzeganie security jako czystego kosztu', 'Niejasny podział OT/IT', 'Obawy przed przestojem zakładu'],
+    successCriteria: [
+      'Baseline zatwierdzony',
+      'Zakres pierwszego zakładu określony',
+      'Priorytety luk krytycznych ustalone',
+    ],
+    keyRisks: [
+      'Postrzeganie security jako czystego kosztu',
+      'Niejasny podział OT/IT',
+      'Obawy przed przestojem zakładu',
+    ],
     tasks: {
       'ot-cyber-baseline': {
         title: 'Domknąć baseline kontroli OT',
-        description: 'Uzgodnić segmentację, dostęp uprzywilejowany i monitoring dla pierwszej fali.',
+        description:
+          'Uzgodnić segmentację, dostęp uprzywilejowany i monitoring dla pierwszej fali.',
         why: 'Inicjatywa jest zatwierdzona, ale wdrożenie nie ruszy bez jednego uzgodnionego standardu.',
       },
     },
     decisions: {
       'ot-cyber-wave1': {
         title: 'Zatwierdzić pierwszą falę hardeningu dla Lyon East',
-        rationale: 'Pierwsza fala została zatwierdzona, aby zmniejszyć ekspozycję przed dalszym rolloutem Digital Twin.',
+        rationale:
+          'Pierwsza fala została zatwierdzona, aby zmniejszyć ekspozycję przed dalszym rolloutem Digital Twin.',
       },
     },
     milestones: {
@@ -591,7 +689,11 @@ export const atelierToysInitiativePL: Record<string, any> = {
     summary: 'Zaplanować pilot inteligentnego schedulera produkcji dla Lyon North.',
     currentStage: 'Przygotowanie pilota',
     deliverables: ['Logika pilota schedulera', 'Reguły wyjątków', 'Review symulacji zmian'],
-    successCriteria: ['Pilot rusza na czas', 'Poprawa adherence planu', 'Wyższe zaufanie planistów'],
+    successCriteria: [
+      'Pilot rusza na czas',
+      'Poprawa adherence planu',
+      'Wyższe zaufanie planistów',
+    ],
     keyRisks: ['Sceptycyzm planistów', 'Słabe dane master', 'Przestrzelenie pod jeden scenariusz'],
     tasks: {
       'scheduler-pilot-readiness': {
@@ -619,8 +721,16 @@ export const atelierToysInitiativePL: Record<string, any> = {
     summary: 'Wdrożyć nową ścieżkę onboardingu Atelier Core i skrócić time-to-value.',
     currentStage: 'Rollout',
     deliverables: ['Journey onboardingu', 'Scorecard pierwszych 30 dni', 'Assets dla coachów'],
-    successCriteria: ['Time-to-first-value -25%', 'Aktywacja +12 pkt', 'Niższe obciążenie supportu'],
-    keyRisks: ['Rozjazd komunikacji między zespołami', 'Brak definicji usage triggera', 'Przeciążenie supportu podczas rolloutu'],
+    successCriteria: [
+      'Time-to-first-value -25%',
+      'Aktywacja +12 pkt',
+      'Niższe obciążenie supportu',
+    ],
+    keyRisks: [
+      'Rozjazd komunikacji między zespołami',
+      'Brak definicji usage triggera',
+      'Przeciążenie supportu podczas rolloutu',
+    ],
     tasks: {
       'core-onboarding-playbook': {
         title: 'Wdrożyć nowy playbook onboardingu dla zespołów customer-facing',
@@ -636,7 +746,8 @@ export const atelierToysInitiativePL: Record<string, any> = {
     decisions: {
       'core-onboarding-scale': {
         title: 'Zdecydować czy nowa ścieżka stanie się standardem dla wszystkich nowych klientów',
-        rationale: 'Pierwsza fala wdrożeniowa musi najpierw udowodnić wartość przed pełną standaryzacją.',
+        rationale:
+          'Pierwsza fala wdrożeniowa musi najpierw udowodnić wartość przed pełną standaryzacją.',
       },
     },
     milestones: {
@@ -652,8 +763,16 @@ export const atelierToysInitiativePL: Record<string, any> = {
     summary: 'Odblokować pierwszą falę automatyzacji magazynu po opóźnieniu przez layout i safety.',
     currentStage: 'Ryzyko wykonania',
     deliverables: ['Layout Wave 1', 'Review bezpieczeństwa', 'SOP-y automatyzacji'],
-    successCriteria: ['Czas przemieszczania -18%', 'Błędy kompletacji -30%', '0 incydentów bezpieczeństwa'],
-    keyRisks: ['Nierozwiązany conflict layoutu', 'Dostępność integratora', 'Opóźnienie safety sign-off'],
+    successCriteria: [
+      'Czas przemieszczania -18%',
+      'Błędy kompletacji -30%',
+      '0 incydentów bezpieczeństwa',
+    ],
+    keyRisks: [
+      'Nierozwiązany conflict layoutu',
+      'Dostępność integratora',
+      'Opóźnienie safety sign-off',
+    ],
     tasks: {
       'warehouse-layout-rework': {
         title: 'Rozwiązać konflikt layoutu na inbound lane',
@@ -679,8 +798,16 @@ export const atelierToysInitiativePL: Record<string, any> = {
     area: 'Niezawodność',
     summary: 'Śledzić zrealizowaną wartość z alertów predykcyjnych po pierwszej fali wdrożenia.',
     currentStage: 'Realizacja wartości',
-    deliverables: ['Log tuningu alertów', 'Dashboard adopcji maintenance', 'Pakiet dowodów oszczędności'],
-    successCriteria: ['Nieplanowane postoje -12%', 'Wyższa precyzja alertów', 'Dowody oszczędności gotowe na steering'],
+    deliverables: [
+      'Log tuningu alertów',
+      'Dashboard adopcji maintenance',
+      'Pakiet dowodów oszczędności',
+    ],
+    successCriteria: [
+      'Nieplanowane postoje -12%',
+      'Wyższa precyzja alertów',
+      'Dowody oszczędności gotowe na steering',
+    ],
     keyRisks: ['Słaba dyscyplina dowodowa', 'Powrót alert fatigue', 'Przeszacowanie savings'],
     tasks: {
       'predictive-maintenance-value-pack': {
@@ -707,13 +834,22 @@ export const atelierToysInitiativePL: Record<string, any> = {
     area: 'Systemy',
     summary: 'Domknąć wyjście z legacy CRM po udanej migracji zespołu komercyjnego.',
     currentStage: 'Zamknięte',
-    deliverables: ['Checklist decommissioningu', 'Log migracji danych', 'Playbook adopcji nowego CRM'],
-    successCriteria: ['Stare licencje wyłączone', 'Stabilna jakość danych', 'Pełna migracja handlu'],
+    deliverables: [
+      'Checklist decommissioningu',
+      'Log migracji danych',
+      'Playbook adopcji nowego CRM',
+    ],
+    successCriteria: [
+      'Stare licencje wyłączone',
+      'Stabilna jakość danych',
+      'Pełna migracja handlu',
+    ],
     keyRisks: ['Utrata danych historycznych', 'Shadow spreadsheets', 'Niejasny ownership supportu'],
     tasks: {
       'legacy-crm-closeout': {
         title: 'Zarchiwizować pakiet closeout i lessons learned',
-        description: 'Udokumentować co zadziałało, co nie i co można powtórzyć przy kolejnych migracjach.',
+        description:
+          'Udokumentować co zadziałało, co nie i co można powtórzyć przy kolejnych migracjach.',
         why: 'Zamknięte inicjatywy też muszą zostawiać wiedzę do ponownego użycia.',
       },
     },
@@ -733,11 +869,20 @@ export const atelierToysInitiativePL: Record<string, any> = {
   'classroom-community-app': {
     name: 'Aplikacja Classroom Community',
     area: 'Produkt',
-    summary: 'Sprawdzić community companion app, a następnie zatrzymać temat z powodu słabego dopasowania do roadmapy.',
+    summary:
+      'Sprawdzić community companion app, a następnie zatrzymać temat z powodu słabego dopasowania do roadmapy.',
     currentStage: 'Zatrzymane',
     deliverables: ['Spec konceptu', 'Hipoteza adopcji', 'Notatka o scope pilota'],
-    successCriteria: ['Potwierdzić silny popyt edukatorów', 'Sprawdzić fit z core roadmapą', 'Nie zwiększyć burden na support'],
-    keyRisks: ['Słaby fit strategiczny', 'Rozproszenie uwagi roadmapy', 'Brak jasnego ownera po pilocie'],
+    successCriteria: [
+      'Potwierdzić silny popyt edukatorów',
+      'Sprawdzić fit z core roadmapą',
+      'Nie zwiększyć burden na support',
+    ],
+    keyRisks: [
+      'Słaby fit strategiczny',
+      'Rozproszenie uwagi roadmapy',
+      'Brak jasnego ownera po pilocie',
+    ],
     tasks: {
       'community-app-closeout': {
         title: 'Udokumentować dlaczego koncept został zatrzymany',
@@ -763,35 +908,45 @@ export const atelierToysInitiativePL: Record<string, any> = {
 export const atelierToysReportPL: Record<string, { title: string; content: string }> = {
   'board-qbr': {
     title: 'Board QBR: momentum Atelier Forward',
-    content: 'Atelier Forward dowozi kluczowe kamienie milowe, ale jakość telemetrii i zmienność dostawców pozostają dwoma głównymi tematami dla boardu.',
+    content:
+      'Atelier Forward dowozi kluczowe kamienie milowe, ale jakość telemetrii i zmienność dostawców pozostają dwoma głównymi tematami dla boardu.',
   },
   'factory-weekly': {
     title: 'Tygodniowy Przegląd Operacji Zakładu',
-    content: 'OEE wzrosło tydzień do tygodnia o 2,3 pkt. Największym obciążeniem pozostają mikroprzestoje heat-treatment i słaba dyscyplina przezbrojeń.',
+    content:
+      'OEE wzrosło tydzień do tygodnia o 2,3 pkt. Największym obciążeniem pozostają mikroprzestoje heat-treatment i słaba dyscyplina przezbrojeń.',
   },
   'digital-growth-pulse': {
     title: 'Digital Growth Pulse',
-    content: 'Attach rate Atelier Digital wzrósł o 7 pkt u partnerów pilotażowych, szczególnie tam, gdzie onboarding od początku opiera się o historię Digital Twin.',
+    content:
+      'Attach rate Atelier Digital wzrósł o 7 pkt u partnerów pilotażowych, szczególnie tam, gdzie onboarding od początku opiera się o historię Digital Twin.',
   },
   'quality-monthly': {
     title: 'Miesięczny Review Jakości',
-    content: 'Powtarzalne wzorce defektów zawężają się, ale cross-plant closure działań korygujących nadal jest zbyt wolny przy problemach o wysokim wpływie.',
+    content:
+      'Powtarzalne wzorce defektów zawężają się, ale cross-plant closure działań korygujących nadal jest zbyt wolny przy problemach o wysokim wpływie.',
   },
   'partner-cohort-review': {
     title: 'Review Kohorty Partnerskiej',
-    content: 'Pierwsza kohorta szybciej osiąga gotowość demo i lepiej pozycjonuje bundle tam, gdzie case story pojawia się wcześnie.',
+    content:
+      'Pierwsza kohorta szybciej osiąga gotowość demo i lepiej pozycjonuje bundle tam, gdzie case story pojawia się wcześnie.',
   },
   'academy-adoption-pulse': {
     title: 'Capability Academy Adoption Pulse',
-    content: 'Managerowie dobrze angażują się w nowe rutyny, ale jakość eskalacji nadal silnie różni się między funkcjami.',
+    content:
+      'Managerowie dobrze angażują się w nowe rutyny, ale jakość eskalacji nadal silnie różni się między funkcjami.',
   },
   'board-pre-read': {
     title: 'Board pre-read: pakiet sygnałów wartości i ryzyka',
-    content: 'Board powinien skupić się na skali Linii 3, ochronie marży wobec zmienności dostawców i wiarygodności dowodów pokazujących zrealizowaną wartość.',
+    content:
+      'Board powinien skupić się na skali Linii 3, ochronie marży wobec zmienności dostawców i wiarygodności dowodów pokazujących zrealizowaną wartość.',
   },
 };
 
-export const atelierToysKnowledgeDocPL: Record<string, { title: string; category: string; body: string }> = {
+export const atelierToysKnowledgeDocPL: Record<
+  string,
+  { title: string; category: string; body: string }
+> = {
   'forward-charter': {
     title: 'Karta programu Atelier Forward',
     category: 'strategia',
@@ -844,51 +999,63 @@ export const atelierToysKnowledgeDocPL: Record<string, { title: string; category
   },
 };
 
-export const atelierToysPromptPL: Record<string, { name: string; context: string; template: string }> = {
+export const atelierToysPromptPL: Record<
+  string,
+  { name: string; context: string; template: string }
+> = {
   'ceo-brief': {
     name: 'Board Brief CEO',
     context: 'Streszczenie executive',
-    template: 'Podsumuj Atelier Forward dla Antoine Laurent: postęp, ryzyka, ROI i to, co zarząd powinien zdecydować jako następne.',
+    template:
+      'Podsumuj Atelier Forward dla Antoine Laurent: postęp, ryzyka, ROI i to, co zarząd powinien zdecydować jako następne.',
   },
   'cfo-margin-risks': {
     name: 'Przegląd ryzyk marży CFO',
     context: 'Finanse',
-    template: 'Działaj jako Claire Laurent i oceń źródła wycieku marży, zmienność dostawców oraz trade-offy alokacji kapitału.',
+    template:
+      'Działaj jako Claire Laurent i oceń źródła wycieku marży, zmienność dostawców oraz trade-offy alokacji kapitału.',
   },
   'cto-scale-plan': {
     name: 'Plan skalowania CTO',
     context: 'Technologia i produkt',
-    template: 'Działaj jako Julien Moreau i przygotuj plan skalowania Digital Twin oraz Atelier Digital wraz z zależnościami i guardrailami.',
+    template:
+      'Działaj jako Julien Moreau i przygotuj plan skalowania Digital Twin oraz Atelier Digital wraz z zależnościami i guardrailami.',
   },
   'plant-manager-bottlenecks': {
     name: 'Przegląd bottlenecków zakładu',
     context: 'Operacje',
-    template: 'Działaj jako Marc Dubois i opisz trzy największe bottlenecki przepustowości, aktualne countermeasures i miejsca, gdzie potrzebne jest wsparcie leadershipu.',
+    template:
+      'Działaj jako Marc Dubois i opisz trzy największe bottlenecki przepustowości, aktualne countermeasures i miejsca, gdzie potrzebne jest wsparcie leadershipu.',
   },
   'qa-close-loop': {
     name: 'Brief QA Close-the-Loop',
     context: 'Jakość',
-    template: 'Działaj jako Sophie Bernard i podsumuj nawroty defektów, skuteczność działań korygujących i ryzyka jakościowe dla executive teamu.',
+    template:
+      'Działaj jako Sophie Bernard i podsumuj nawroty defektów, skuteczność działań korygujących i ryzyka jakościowe dla executive teamu.',
   },
   'partner-growth-coach': {
     name: 'Coach wzrostu partnerskiego',
     context: 'Commercial',
-    template: 'Działaj jako Thomas Viau i coachuj zespół jak zwiększyć aktywację partnerów, attach rate i jakość obsługi obiekcji dla bundli Atelier Digital.',
+    template:
+      'Działaj jako Thomas Viau i coachuj zespół jak zwiększyć aktywację partnerów, attach rate i jakość obsługi obiekcji dla bundli Atelier Digital.',
   },
   'board-pre-read-copilot': {
     name: 'Copilot board pre-read',
     context: 'Governance',
-    template: 'Przygotuj zwięzły board pre-read dla Antoine i Jean-Claude: sygnał wartości, sygnał ryzyka, otwarte decyzje i poziom pewności follow-upów.',
+    template:
+      'Przygotuj zwięzły board pre-read dla Antoine i Jean-Claude: sygnał wartości, sygnał ryzyka, otwarte decyzje i poziom pewności follow-upów.',
   },
   'supply-risk-simulator': {
     name: 'Symulator ryzyk dostaw',
     context: 'Łańcuch dostaw',
-    template: 'Działaj jako Isabelle Leroy i zasymuluj co stanie się z delivery promises, marżą i wiarygodnością partnerów, jeśli lead time kluczowego komponentu wydłuży się o 21 dni.',
+    template:
+      'Działaj jako Isabelle Leroy i zasymuluj co stanie się z delivery promises, marżą i wiarygodnością partnerów, jeśli lead time kluczowego komponentu wydłuży się o 21 dni.',
   },
   'academy-retro-coach': {
     name: 'Coach retro akademii',
     context: 'Ludzie',
-    template: 'Działaj jako Claire Laurent i wyciągnij, co akademia zmienia w zachowaniach managerów, co nadal jest słabe i jaki kolejny ruch powinien nastąpić.',
+    template:
+      'Działaj jako Claire Laurent i wyciągnij, co akademia zmienia w zachowaniach managerów, co nadal jest słabe i jaki kolejny ruch powinien nastąpić.',
   },
 };
 
@@ -902,16 +1069,25 @@ export const atelierToysToolCoveragePL: Record<string, any> = {
   },
   'Portfolio & PMO': {
     tool: 'Portfolio i PMO',
-    seededRecords: ['7 projektów', '15 inicjatyw cross-funkcyjnych', 'Milestones, zależności i bramki decyzyjne'],
+    seededRecords: [
+      '7 projektów',
+      '15 inicjatyw cross-funkcyjnych',
+      'Milestones, zależności i bramki decyzyjne',
+    ],
     userGoal: 'Zrozumieć dlaczego priorytet strategiczny się opóźnia i kto ma go odblokować.',
     ahaMoment: 'Zależności, decyzje i delivery są rozwiązywane w jednym workflow.',
     cta: 'Umów warsztat, aby odwzorować Twoje live portfolio w takim samym control towerze.',
   },
   'DRD assessment': {
     tool: 'Ocena DRD',
-    seededRecords: ['Zatwierdzony baseline DRD', 'Executive assessment report', 'Sekcje rekomendacji priorytetów'],
+    seededRecords: [
+      'Zatwierdzony baseline DRD',
+      'Executive assessment report',
+      'Sekcje rekomendacji priorytetów',
+    ],
     userGoal: 'Zrozumieć dojrzałość, największe luki i to, co warto sfinansować jako następne.',
-    ahaMoment: 'Assessment nie jest statyczną ankietą, bo przechodzi bezpośrednio do inicjatyw, governance i value tracking.',
+    ahaMoment:
+      'Assessment nie jest statyczną ankietą, bo przechodzi bezpośrednio do inicjatyw, governance i value tracking.',
     cta: 'Uruchom ten sam baseline DRD dla swojego zespołu i zamień wyniki w żywe portfolio.',
   },
   'Factory operations': {
@@ -923,35 +1099,57 @@ export const atelierToysToolCoveragePL: Record<string, any> = {
   },
   'AI workspace': {
     tool: 'AI workspace',
-    seededRecords: ['9 promptów dla ról', '10+ knowledge docs', 'Persony leadershipu i specjalistów'],
+    seededRecords: [
+      '9 promptów dla ról',
+      '10+ knowledge docs',
+      'Persony leadershipu i specjalistów',
+    ],
     userGoal: 'Zapytać system o odpowiedź dopasowaną do roli i osadzoną w kontekście firmy.',
     ahaMoment: 'AI odpowiada na bazie historii firmy i danych wykonawczych, a nie w próżni.',
     cta: 'Uruchom trial i wgraj własny kontekst, aby zbudować prywatny workspace.',
   },
   'Quality cockpit': {
     tool: 'Cockpit jakości',
-    seededRecords: ['Inicjatywa QA defect', 'Miesięczny raport jakości', 'Dokumenty o wzorcach defektów'],
-    userGoal: 'Zobaczyć gdzie ryzyko jakości wraca i które działania korygujące faktycznie się domykają.',
-    ahaMoment: 'Jakość staje się częścią głównego systemu operacyjnego, a nie osobnym bocznym procesem.',
+    seededRecords: [
+      'Inicjatywa QA defect',
+      'Miesięczny raport jakości',
+      'Dokumenty o wzorcach defektów',
+    ],
+    userGoal:
+      'Zobaczyć gdzie ryzyko jakości wraca i które działania korygujące faktycznie się domykają.',
+    ahaMoment:
+      'Jakość staje się częścią głównego systemu operacyjnego, a nie osobnym bocznym procesem.',
     cta: 'W trialu połącz własne incydenty, inicjatywy i review leadershipu.',
   },
   'Partner growth': {
     tool: 'Wzrost partnerski',
-    seededRecords: ['Inicjatywa onboardingu partnerów', 'Raport kohorty partnerów', 'Commercial playbooki'],
+    seededRecords: [
+      'Inicjatywa onboardingu partnerów',
+      'Raport kohorty partnerów',
+      'Commercial playbooki',
+    ],
     userGoal: 'Zrozumieć jak onboarding i enablement przekładają się na realny wzrost kanału.',
     ahaMoment: 'System łączy zachowania onboardingowe z wynikami ekspansji i referencjami.',
     cta: 'Poproś o custom demo skoncentrowane na Twoim motion partnerskim lub kanałowym.',
   },
   'Board governance': {
     tool: 'Governance zarządczy',
-    seededRecords: ['Inicjatywa board value tracking', 'Raport pre-read', 'Artefakty follow-upów decyzji'],
-    userGoal: 'Przygotowywać rozmowy zarządcze i boardowe na podstawie aktualnych sygnałów operacyjnych.',
+    seededRecords: [
+      'Inicjatywa board value tracking',
+      'Raport pre-read',
+      'Artefakty follow-upów decyzji',
+    ],
+    userGoal:
+      'Przygotowywać rozmowy zarządcze i boardowe na podstawie aktualnych sygnałów operacyjnych.',
     ahaMoment: 'Przygotowanie boardu staje się ciągłym workflow zamiast miesięcznej gorączki.',
     cta: 'Uruchom trial, aby zbudować własny board-ready control tower.',
   },
 };
 
-export const atelierToysScenarioPL: Record<string, { title: string; audience: string; persona: string }> = {
+export const atelierToysScenarioPL: Record<
+  string,
+  { title: string; audience: string; persona: string }
+> = {
   'executive-overview': {
     title: 'Executive Overview',
     audience: 'CEO, CFO, rada',

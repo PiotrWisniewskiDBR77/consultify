@@ -238,13 +238,13 @@ function buildStructuredWhere(
   }
 
   if (filters.type != null && filters.type !== '') {
-    conditions.push('lower(coalesce(np.note_type, \'\')) = lower(?)');
+    conditions.push("lower(coalesce(np.note_type, '')) = lower(?)");
     params.push(filters.type.trim());
     filtersApplied.push('type');
   }
 
   if (filters.capture_source != null && filters.capture_source !== '') {
-    conditions.push('lower(coalesce(np.capture_source, \'\')) = lower(?)');
+    conditions.push("lower(coalesce(np.capture_source, '')) = lower(?)");
     params.push(filters.capture_source.trim());
     filtersApplied.push('capture_source');
   }
@@ -253,7 +253,9 @@ function buildStructuredWhere(
     if (isPostgres()) {
       conditions.push(`COALESCE(np.attachments_json::jsonb, '[]'::jsonb) <> '[]'::jsonb`);
     } else {
-      conditions.push(`(np.attachments_json IS NOT NULL AND trim(np.attachments_json) NOT IN ('', '[]', 'null'))`);
+      conditions.push(
+        `(np.attachments_json IS NOT NULL AND trim(np.attachments_json) NOT IN ('', '[]', 'null'))`
+      );
     }
     filtersApplied.push('has_attachments');
   }
@@ -326,11 +328,7 @@ function buildStructuredWhere(
   return { conditions, params, filtersApplied };
 }
 
-function appendTextSearch(
-  where: WhereBuild,
-  qTrim: string,
-  filtersApplied: string[]
-): void {
+function appendTextSearch(where: WhereBuild, qTrim: string, filtersApplied: string[]): void {
   if (!qTrim) return;
   const like = `%${qTrim.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_')}%`;
   where.conditions.push(
@@ -384,7 +382,9 @@ function rowToResult(
  * Builds a readable snippet around the first occurrence of `query` with `**highlight**` markers.
  */
 export function buildSnippet(contentText: string, query: string, maxLen = 200): string {
-  const text = String(contentText ?? '').replace(/\s+/g, ' ').trim();
+  const text = String(contentText ?? '')
+    .replace(/\s+/g, ' ')
+    .trim();
   const q = String(query ?? '').trim();
   if (!text) return '';
   if (!q) {
@@ -399,13 +399,13 @@ export function buildSnippet(contentText: string, query: string, maxLen = 200): 
   }
 
   const radius = Math.max(40, Math.floor(maxLen / 2) - q.length);
-  let start = Math.max(0, idx - radius);
+  const start = Math.max(0, idx - radius);
   let end = Math.min(text.length, idx + q.length + radius);
   if (end - start > maxLen + q.length) {
     end = start + maxLen + q.length;
   }
 
-  let slice = text.slice(start, end);
+  const slice = text.slice(start, end);
   let rel = idx - start;
   if (rel < 0 || rel > slice.length) {
     rel = slice.toLowerCase().indexOf(lowerQ);
@@ -432,7 +432,9 @@ async function countMatching(whereSql: string, params: unknown[]): Promise<numbe
   const sql = isPostgres()
     ? `SELECT COUNT(*)::int AS c FROM notebook_pages np WHERE ${whereSql}`
     : `SELECT COUNT(*) AS c FROM notebook_pages np WHERE ${whereSql}`;
-  const row = await dbGet<{ c: number | string }>(sql, params, { fallback: false }).catch(() => null);
+  const row = await dbGet<{ c: number | string }>(sql, params, { fallback: false }).catch(
+    () => null
+  );
   if (!row) return 0;
   const n = row.c;
   return typeof n === 'number' ? n : parseInt(String(n), 10) || 0;
@@ -496,14 +498,15 @@ export async function searchNotebook(
     });
   } catch (err: any) {
     const msg = err?.message || String(err);
-    if (
-      msg.includes('note_type') ||
-      (msg.includes('column') && msg.includes('does not exist'))
-    ) {
+    if (msg.includes('note_type') || (msg.includes('column') && msg.includes('does not exist'))) {
       logger.warn(`${LOG_PREFIX} retrying without note_type filter`, { err: msg });
       const withoutType = { ...filters, type: undefined };
       const s2 = buildStructuredWhere(organizationId, userId, withoutType);
-      const w2 = { conditions: [...s2.conditions], params: [...s2.params], filtersApplied: [...s2.filtersApplied] };
+      const w2 = {
+        conditions: [...s2.conditions],
+        params: [...s2.params],
+        filtersApplied: [...s2.filtersApplied],
+      };
       appendTextSearch(w2, qTrim, w2.filtersApplied);
       const cw = w2.conditions.join(' AND ');
       try {
@@ -590,7 +593,7 @@ export async function searchNotebook(
     }
   }
 
-  let total =
+  const total =
     rows.length > 0
       ? Number(rows[0]._match_total ?? 0)
       : await countMatching(activeWhere, activeParams).catch((err) => {
@@ -602,7 +605,9 @@ export async function searchNotebook(
 
   const matchKind: MatchKind = qTrim ? 'keyword' : 'metadata';
   const maxSnippet = 200;
-  const results: NotebookSearchResult[] = rows.map((r) => rowToResult(r, qTrim, matchKind, maxSnippet));
+  const results: NotebookSearchResult[] = rows.map((r) =>
+    rowToResult(r, qTrim, matchKind, maxSnippet)
+  );
 
   if (qTrim && offset === 0) {
     try {

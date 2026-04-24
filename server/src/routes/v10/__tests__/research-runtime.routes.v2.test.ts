@@ -27,7 +27,8 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
     req.user = { id: 'route-user', organizationId: 'route-org', role: 'ADMIN' };
     next();
   }) satisfies RequestHandler,
-  requireOrganization: ((_req: unknown, _res: unknown, next: () => void) => next()) satisfies RequestHandler,
+  requireOrganization: ((_req: unknown, _res: unknown, next: () => void) =>
+    next()) satisfies RequestHandler,
 }));
 
 import { createResearchRuntimeRouter } from '../research-runtime.routes.js';
@@ -196,4 +197,3 @@ describe('research-runtime.routes (wave b)', () => {
     expect(res.body.meta.contract).toBe('research_runtime_wave_a_v1');
   });
 });
-

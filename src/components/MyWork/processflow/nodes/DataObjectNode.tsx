@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Handle, Position } from 'reactflow';
+import React, { useEffect, useRef, useState } from 'react';
 import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 
 const FOLD = 12;
 const W = 60;
@@ -46,12 +46,7 @@ export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => 
           strokeWidth={1.5}
           className="dark:fill-navy-800"
         />
-        <path
-          d={foldPath}
-          fill="none"
-          stroke="#64748b"
-          strokeWidth={1.5}
-        />
+        <path d={foldPath} fill="none" stroke="#64748b" strokeWidth={1.5} />
       </svg>
 
       {selected && (
@@ -78,11 +73,7 @@ export const DataObjectNode: React.FC<NodeProps<any>> = ({ data, selected }) => 
         )}
       </div>
 
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!w-2 !h-2 !bg-slate-400"
-      />
+      <Handle type="source" position={Position.Bottom} className="!w-2 !h-2 !bg-slate-400" />
       <Handle
         type="target"
         position={Position.Bottom}

@@ -1,3 +1,7 @@
+import {
+  runConnectorsFetchPipeline,
+  unsafeConnectorsFetchPipelineRunId,
+} from '../../../models/v10/pipelines/ConnectorsFetchPipeline.js';
 import type {
   ConnectorsAuthChallenge,
   ConnectorsAuthChallengeStatus,
@@ -14,9 +18,6 @@ import type {
   ConnectorsRuntimeScope,
   ConnectorsSearchRequest,
   ConnectorsSearchResponse,
-  ConnectorsSourceRef,
-  ConnectorsTokenRefreshRequest,
-  ConnectorsTokenRefreshResponse,
   ConnectorsSessionConnectRequest,
   ConnectorsSessionDisconnectRequest,
   ConnectorsSessionListResponse,
@@ -24,17 +25,16 @@ import type {
   ConnectorsSessionMutationResponse,
   ConnectorsSessionRecord,
   ConnectorsSessionStatus,
+  ConnectorsSourceRef,
+  ConnectorsTokenRefreshRequest,
+  ConnectorsTokenRefreshResponse,
 } from '../../../types/v10/connectors-runtime.js';
-import {
-  connectorsRegistryService,
-  type ConnectorsRegistryService,
-} from './connectorsRegistryService.js';
-import {
-  runConnectorsFetchPipeline,
-  unsafeConnectorsFetchPipelineRunId,
-} from '../../../models/v10/pipelines/ConnectorsFetchPipeline.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../../utils/DbPromise.js';
 import { decrypt, encrypt } from '../../encryption/EncryptionService.js';
+import {
+  type ConnectorsRegistryService,
+  connectorsRegistryService,
+} from './connectorsRegistryService.js';
 
 type StoredConnectorSessionRow = {
   session_id: string;
@@ -473,14 +473,20 @@ export class ConnectorsRuntimeService {
     query: string;
     rank: number;
   }): ConnectorsSourceRef {
-    const queryKey = args.query.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'source';
-    const vendorType = args.connectorId === 'slack'
-      ? 'slack_message'
-      : args.connectorId === 'gmail'
-        ? 'email_thread'
-        : args.connectorId === 'google_calendar'
-          ? 'calendar_event'
-          : 'document';
+    const queryKey =
+      args.query
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '') || 'source';
+    const vendorType =
+      args.connectorId === 'slack'
+        ? 'slack_message'
+        : args.connectorId === 'gmail'
+          ? 'email_thread'
+          : args.connectorId === 'google_calendar'
+            ? 'calendar_event'
+            : 'document';
     const vendorId = `${queryKey}-${args.rank + 1}`;
     const sourceId = `${args.connectorId}:${vendorType}:${vendorId}`;
     const baseTime = new Date(Date.now() - args.rank * 60 * 60 * 1000).toISOString();
@@ -553,7 +559,9 @@ export class ConnectorsRuntimeService {
     };
   }
 
-  listCatalog(input: { persona?: string | null; includePlanned?: boolean } = {}): ConnectorsCatalogResponse {
+  listCatalog(
+    input: { persona?: string | null; includePlanned?: boolean } = {}
+  ): ConnectorsCatalogResponse {
     return this.registry.listCatalog(input);
   }
 
@@ -585,17 +593,22 @@ export class ConnectorsRuntimeService {
     };
   }
 
-  async connectConnector(input: ConnectorsSessionConnectRequest & {
-    connectorId: string;
-    scope: ConnectorsRuntimeScope;
-  }): Promise<ConnectorsSessionMutationResponse> {
+  async connectConnector(
+    input: ConnectorsSessionConnectRequest & {
+      connectorId: string;
+      scope: ConnectorsRuntimeScope;
+    }
+  ): Promise<ConnectorsSessionMutationResponse> {
     const scope = requireScope(input.scope);
     const detail = this.registry.getConnector(input.connectorId);
     await ensureConnectorsRuntimeTables();
 
     const now = new Date().toISOString();
     const requestedScopes = uniqueStrings(input.requestedScopes || []);
-    const allowedScopes = uniqueStrings([...detail.connector.readScopes, ...detail.connector.writeScopes]);
+    const allowedScopes = uniqueStrings([
+      ...detail.connector.readScopes,
+      ...detail.connector.writeScopes,
+    ]);
     const normalizedRequestedScopes =
       requestedScopes.length > 0
         ? requestedScopes.filter((scopeItem) => allowedScopes.includes(scopeItem))
@@ -609,8 +622,11 @@ export class ConnectorsRuntimeService {
     const mode: ConnectorsSessionMode =
       input.mode || (detail.connector.authStrategy === 'manual_upload' ? 'manual' : 'oauth_stub');
     const authRequired = !['manual_upload', 'none'].includes(detail.connector.authStrategy);
-    const status: ConnectorsSessionStatus =
-      authRequired ? 'pending' : detail.connector.availability === 'available' ? 'connected' : 'pending';
+    const status: ConnectorsSessionStatus = authRequired
+      ? 'pending'
+      : detail.connector.availability === 'available'
+        ? 'connected'
+        : 'pending';
     const existing = await this.getStoredSession(detail.connector.id, scope);
     const sessionId = existing?.session_id || `connector-session-${crypto.randomUUID()}`;
 
@@ -694,10 +710,12 @@ export class ConnectorsRuntimeService {
     };
   }
 
-  async disconnectConnector(input: ConnectorsSessionDisconnectRequest & {
-    connectorId: string;
-    scope: ConnectorsRuntimeScope;
-  }): Promise<ConnectorsSessionMutationResponse> {
+  async disconnectConnector(
+    input: ConnectorsSessionDisconnectRequest & {
+      connectorId: string;
+      scope: ConnectorsRuntimeScope;
+    }
+  ): Promise<ConnectorsSessionMutationResponse> {
     const scope = requireScope(input.scope);
     const detail = this.registry.getConnector(input.connectorId);
     const existing = await this.getStoredSession(detail.connector.id, scope);
@@ -722,7 +740,10 @@ export class ConnectorsRuntimeService {
         existing.session_id,
       ]
     );
-    await this.revokeTokenVault(existing.session_id, input.reason ? String(input.reason) : 'user_disconnect');
+    await this.revokeTokenVault(
+      existing.session_id,
+      input.reason ? String(input.reason) : 'user_disconnect'
+    );
 
     const stored = await this.getStoredSession(detail.connector.id, scope);
     if (!stored) {
@@ -735,10 +756,12 @@ export class ConnectorsRuntimeService {
     };
   }
 
-  async startAuth(input: ConnectorsAuthStartRequest & {
-    connectorId: string;
-    scope: ConnectorsRuntimeScope;
-  }): Promise<ConnectorsAuthStartResponse> {
+  async startAuth(
+    input: ConnectorsAuthStartRequest & {
+      connectorId: string;
+      scope: ConnectorsRuntimeScope;
+    }
+  ): Promise<ConnectorsAuthStartResponse> {
     const scope = requireScope(input.scope);
     const detail = this.registry.getConnector(input.connectorId);
     if (['manual_upload', 'none'].includes(detail.connector.authStrategy)) {
@@ -759,9 +782,10 @@ export class ConnectorsRuntimeService {
     const expiresAt = plusMinutes(now, 10);
     const challengeId = `connector-auth-${crypto.randomUUID()}`;
     const state = crypto.randomBytes(16).toString('hex');
-    const pkceVerifier = detail.connector.authStrategy === 'oauth2_pkce'
-      ? crypto.randomBytes(24).toString('hex')
-      : null;
+    const pkceVerifier =
+      detail.connector.authStrategy === 'oauth2_pkce'
+        ? crypto.randomBytes(24).toString('hex')
+        : null;
     const requestedScopes =
       connected.session.requestedScopes.length > 0
         ? connected.session.requestedScopes
@@ -824,10 +848,12 @@ export class ConnectorsRuntimeService {
     };
   }
 
-  async completeAuth(input: ConnectorsAuthCompleteRequest & {
-    connectorId: string;
-    scope: ConnectorsRuntimeScope;
-  }): Promise<ConnectorsAuthCompleteResponse> {
+  async completeAuth(
+    input: ConnectorsAuthCompleteRequest & {
+      connectorId: string;
+      scope: ConnectorsRuntimeScope;
+    }
+  ): Promise<ConnectorsAuthCompleteResponse> {
     const scope = requireScope(input.scope);
     const detail = this.registry.getConnector(input.connectorId);
     const challenge = await this.getStoredChallenge({
@@ -847,10 +873,12 @@ export class ConnectorsRuntimeService {
 
     const now = new Date().toISOString();
     const expired = new Date(challenge.expires_at).getTime() < Date.now();
-    const requestedResult =
-      input.result || (input.authorizationCode ? 'authorized' : 'authorized');
-    const finalResult: ConnectorsAuthChallengeStatus =
-      expired ? 'expired' : requestedResult === 'authorized' ? 'completed' : requestedResult;
+    const requestedResult = input.result || (input.authorizationCode ? 'authorized' : 'authorized');
+    const finalResult: ConnectorsAuthChallengeStatus = expired
+      ? 'expired'
+      : requestedResult === 'authorized'
+        ? 'completed'
+        : requestedResult;
     const sessionStatus: ConnectorsSessionStatus =
       finalResult === 'completed' && detail.connector.availability === 'available'
         ? 'connected'
@@ -860,11 +888,13 @@ export class ConnectorsRuntimeService {
     const errorCode =
       finalResult === 'completed'
         ? null
-        : input.errorCode || (expired ? 'CONNECTORS_RUNTIME_AUTH_EXPIRED' : 'CONNECTORS_RUNTIME_AUTH_FAILED');
+        : input.errorCode ||
+          (expired ? 'CONNECTORS_RUNTIME_AUTH_EXPIRED' : 'CONNECTORS_RUNTIME_AUTH_FAILED');
     const errorMessage =
       finalResult === 'completed'
         ? null
-        : input.errorMessage || (expired ? 'Auth challenge expired' : 'Connector authorization failed');
+        : input.errorMessage ||
+          (expired ? 'Auth challenge expired' : 'Connector authorization failed');
 
     await dbRun(
       `UPDATE v10_connector_auth_challenges
@@ -930,9 +960,11 @@ export class ConnectorsRuntimeService {
     };
   }
 
-  async search(input: ConnectorsSearchRequest & {
-    scope: ConnectorsRuntimeScope;
-  }): Promise<ConnectorsSearchResponse> {
+  async search(
+    input: ConnectorsSearchRequest & {
+      scope: ConnectorsRuntimeScope;
+    }
+  ): Promise<ConnectorsSearchResponse> {
     const scope = requireScope(input.scope);
     const query = String(input.query || '').trim();
     if (!query) {
@@ -952,7 +984,10 @@ export class ConnectorsRuntimeService {
 
     const diagnostics: Array<ConnectorsSearchResponse['diagnostics'][number]> = [];
     const sources: ConnectorsSourceRef[] = [];
-    const perConnectorLimit = Math.max(1, Math.ceil((input.limit || 6) / Math.max(1, connectors.length)));
+    const perConnectorLimit = Math.max(
+      1,
+      Math.ceil((input.limit || 6) / Math.max(1, connectors.length))
+    );
 
     for (const connector of connectors) {
       const session = sessionMap.get(connector.id) || null;
@@ -1016,9 +1051,11 @@ export class ConnectorsRuntimeService {
     };
   }
 
-  async readSource(input: ConnectorsReadSourceRequest & {
-    scope: ConnectorsRuntimeScope;
-  }): Promise<ConnectorsReadSourceResponse> {
+  async readSource(
+    input: ConnectorsReadSourceRequest & {
+      scope: ConnectorsRuntimeScope;
+    }
+  ): Promise<ConnectorsReadSourceResponse> {
     const scope = requireScope(input.scope);
     const connectorId = String(input.connectorId || '').trim();
     const sourceId = String(input.sourceId || '').trim();
@@ -1073,10 +1110,12 @@ export class ConnectorsRuntimeService {
     };
   }
 
-  async refreshTokens(input: ConnectorsTokenRefreshRequest & {
-    connectorId: string;
-    scope: ConnectorsRuntimeScope;
-  }): Promise<ConnectorsTokenRefreshResponse> {
+  async refreshTokens(
+    input: ConnectorsTokenRefreshRequest & {
+      connectorId: string;
+      scope: ConnectorsRuntimeScope;
+    }
+  ): Promise<ConnectorsTokenRefreshResponse> {
     const scope = requireScope(input.scope);
     const detail = this.registry.getConnector(input.connectorId);
     const session = await this.getStoredSession(detail.connector.id, scope);
@@ -1116,13 +1155,7 @@ export class ConnectorsRuntimeService {
               revoked_reason = NULL,
               updated_at = ?
         WHERE session_id = ?`,
-      [
-        encrypt(JSON.stringify(rotatedBlob)),
-        plusMinutes(now, 60),
-        now,
-        now,
-        session.session_id,
-      ]
+      [encrypt(JSON.stringify(rotatedBlob)), plusMinutes(now, 60), now, now, session.session_id]
     );
     await dbRun(
       `UPDATE v10_connector_sessions
@@ -1156,4 +1189,3 @@ export class ConnectorsRuntimeService {
 }
 
 export const connectorsRuntimeService = new ConnectorsRuntimeService();
-

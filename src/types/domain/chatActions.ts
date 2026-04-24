@@ -239,7 +239,11 @@ export const CHAT_ACTION_DEFINITIONS: ChatActionDefinition[] = [
     icon: 'ShieldCheck',
     category: 'creation',
     payloadSchema: {
-      artifactId: { type: 'string', required: true, description: 'Artifact ID to start review for' },
+      artifactId: {
+        type: 'string',
+        required: true,
+        description: 'Artifact ID to start review for',
+      },
     },
     requiredCapabilities: ['create_report'],
     styling: 'primary',
@@ -251,7 +255,11 @@ export const CHAT_ACTION_DEFINITIONS: ChatActionDefinition[] = [
     icon: 'Eye',
     category: 'navigation',
     payloadSchema: {
-      artifactId: { type: 'string', required: true, description: 'Artifact ID to inspect trust state' },
+      artifactId: {
+        type: 'string',
+        required: true,
+        description: 'Artifact ID to inspect trust state',
+      },
     },
     requiredCapabilities: ['read'],
     styling: 'secondary',
@@ -263,7 +271,11 @@ export const CHAT_ACTION_DEFINITIONS: ChatActionDefinition[] = [
     icon: 'BookTemplate',
     category: 'generation',
     payloadSchema: {
-      templateArtifactId: { type: 'string', required: true, description: 'Template artifact ID to use' },
+      templateArtifactId: {
+        type: 'string',
+        required: true,
+        description: 'Template artifact ID to use',
+      },
       outputType: { type: 'string', required: false, description: 'report or presentation' },
     },
     requiredCapabilities: ['create_report'],
@@ -276,7 +288,11 @@ export const CHAT_ACTION_DEFINITIONS: ChatActionDefinition[] = [
     icon: 'LayoutGrid',
     category: 'navigation',
     payloadSchema: {
-      templateType: { type: 'string', required: false, description: 'Filter: report or presentation' },
+      templateType: {
+        type: 'string',
+        required: false,
+        description: 'Filter: report or presentation',
+      },
       category: { type: 'string', required: false, description: 'Filter: R1, R2, R3, R4, etc.' },
     },
     requiredCapabilities: ['read'],
@@ -289,7 +305,11 @@ export const CHAT_ACTION_DEFINITIONS: ChatActionDefinition[] = [
     icon: 'FileText',
     category: 'recording',
     payloadSchema: {
-      statementPackId: { type: 'string', required: true, description: 'Financial statement pack ID to analyze' },
+      statementPackId: {
+        type: 'string',
+        required: true,
+        description: 'Financial statement pack ID to analyze',
+      },
     },
     requiredCapabilities: ['read'],
     styling: 'primary',

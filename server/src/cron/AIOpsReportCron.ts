@@ -1,8 +1,8 @@
 import cron from 'node-cron';
 
-import logger from '../utils/Logger.js';
-import { get as dbGet, all as dbAll } from '../utils/DbPromise.js';
 import { SlackServiceClass } from '../services/slackService.js';
+import { all as dbAll, get as dbGet } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 
 function resolveOpsWebhookUrl(): string {
   const direct = String(process.env.AI_OPS_SLACK_WEBHOOK_URL || '').trim();
@@ -53,7 +53,9 @@ async function buildSnapshot(): Promise<{
 
   const byProvider = new Map<string, { provider: string; health: string; active: unknown }>();
   for (const r of rows || []) {
-    const provider = String((r as any).provider || '').trim().toLowerCase();
+    const provider = String((r as any).provider || '')
+      .trim()
+      .toLowerCase();
     if (!provider) continue;
     if (byProvider.has(provider)) continue;
     const rawHealth = String((r as any).health_status || 'unknown').trim();
@@ -115,4 +117,3 @@ export function startAIOpsReportCron(): void {
 }
 
 export default { startAIOpsReportCron };
-

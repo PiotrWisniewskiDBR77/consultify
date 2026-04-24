@@ -70,7 +70,9 @@ export const CustomersModule: React.FC<CustomersModuleProps> = ({
 
   const resolveRequestedTab = React.useCallback(() => {
     const params = new URLSearchParams(location.search);
-    const rawTab = String(params.get('tab') || initialTab || '').trim().toLowerCase();
+    const rawTab = String(params.get('tab') || initialTab || '')
+      .trim()
+      .toLowerCase();
     if (!rawTab) return null;
 
     if (rawTab === 'backlog' || rawTab === 'feedback_backlog') {

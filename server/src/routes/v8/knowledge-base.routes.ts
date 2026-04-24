@@ -81,7 +81,11 @@ publicKnowledgeBaseRoutes.get(
     const language = firstParam(req.query.lang) || 'en';
     const limit = parseBoundedLimit(firstParam(req.query.limit), 4, 20);
     const categoryPrefix = sitePrefix(firstParam(req.query.site));
-    const articles = await KnowledgeBaseService.getFeaturedArticles(language, limit, categoryPrefix);
+    const articles = await KnowledgeBaseService.getFeaturedArticles(
+      language,
+      limit,
+      categoryPrefix
+    );
     return res.json({ data: { articles }, meta: kbMeta() });
   })
 );
@@ -222,7 +226,10 @@ publicKnowledgeBaseRoutes.get(
     const language = firstParam(req.query.lang) || 'en';
     if (!slug) return res.status(400).json({ error: 'slug required' });
     const collection = await KnowledgeBaseService.getCollectionBySlug(slug, language);
-    if (!collection) return res.status(404).json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
+    if (!collection)
+      return res
+        .status(404)
+        .json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
     return res.json({ data: { collection }, meta: kbMeta() });
   })
 );
@@ -236,13 +243,24 @@ publicKnowledgeBaseRoutes.get(
     const slug = firstParam((req.params as any).slug);
     const language = firstParam(req.query.lang) || 'en';
     const limit = parseBoundedLimit(firstParam(req.query.limit), 20, 100);
-    const offset = Math.max(0, Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0);
+    const offset = Math.max(
+      0,
+      Number.parseInt(String(firstParam(req.query.offset) ?? '0'), 10) || 0
+    );
     if (!slug) return res.status(400).json({ error: 'slug required' });
 
     const collection = await KnowledgeBaseService.getCollectionBySlug(slug, language);
-    if (!collection) return res.status(404).json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
+    if (!collection)
+      return res
+        .status(404)
+        .json({ error: 'Collection not found', code: 'KB_COLLECTION_NOT_FOUND' });
 
-    const result = await KnowledgeBaseService.getArticlesByCollection(collection.id, language, limit, offset);
+    const result = await KnowledgeBaseService.getArticlesByCollection(
+      collection.id,
+      language,
+      limit,
+      offset
+    );
     return res.json({ data: { ...result, collection }, meta: kbMeta() });
   })
 );
@@ -302,10 +320,18 @@ publicKnowledgeBaseRoutes.get(
     const surface = firstParam(req.query.surface);
 
     if (!q || q.length < 2) {
-      return res.json({ data: { articles: [], facets: { collections: [], tags: [] }, total: 0 }, meta: kbMeta() });
+      return res.json({
+        data: { articles: [], facets: { collections: [], tags: [] }, total: 0 },
+        meta: kbMeta(),
+      });
     }
 
-    const tagSlugs = tagsRaw ? tagsRaw.split(',').map((s: string) => s.trim()).filter(Boolean) : undefined;
+    const tagSlugs = tagsRaw
+      ? tagsRaw
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : undefined;
 
     const result = await KnowledgeBaseService.searchWithFacets(q, language, {
       collectionSlug: collectionSlug || undefined,
@@ -334,7 +360,8 @@ publicKnowledgeBaseRoutes.get(
     if (!slug) return res.status(400).json({ error: 'slug required' });
 
     const article = await KnowledgeBaseService.getArticleBySlug(slug, language);
-    if (!article) return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
+    if (!article)
+      return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
 
     const related = await KnowledgeBaseService.getRelatedArticles(article.id, language, limit);
     return res.json({ data: { articles: related }, meta: kbMeta() });
@@ -351,7 +378,8 @@ publicKnowledgeBaseRoutes.get(
     if (!slug) return res.status(400).json({ error: 'slug required' });
 
     const article = await KnowledgeBaseService.getArticleBySlug(slug, 'en');
-    if (!article) return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
+    if (!article)
+      return res.status(404).json({ error: 'Article not found', code: 'KB_ARTICLE_NOT_FOUND' });
 
     const versions = await KnowledgeBaseService.getArticleVersions(article.id);
     return res.json({ data: { versions }, meta: kbMeta() });
@@ -408,7 +436,11 @@ router.get(
     const includePrivate = firstParam(req.query.all) === 'true';
     const categoryPrefix = sitePrefix(firstParam(req.query.site));
 
-    const categories = await KnowledgeBaseService.getCategories(language, includePrivate, categoryPrefix);
+    const categories = await KnowledgeBaseService.getCategories(
+      language,
+      includePrivate,
+      categoryPrefix
+    );
     return res.json({ data: { categories }, meta: kbMeta() });
   })
 );

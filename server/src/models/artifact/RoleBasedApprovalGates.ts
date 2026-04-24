@@ -1,5 +1,5 @@
-import type { DataClassification } from './DataClassification.js';
 import type { ArtifactType } from './ArtifactTypeRegistry.js';
+import type { DataClassification } from './DataClassification.js';
 
 export const LEGAL_CONTENT_TAG = 'legal' as const;
 
@@ -8,7 +8,12 @@ export type ReviewerRole = (typeof REVIEWER_ROLES)[number];
 
 export const STANDARD_PERSONAS = ['operations', 'legal', 'finance'] as const;
 
-export const ROUTING_MATCH_KINDS = ['classification', 'content_tag', 'artifact_type', 'persona'] as const;
+export const ROUTING_MATCH_KINDS = [
+  'classification',
+  'content_tag',
+  'artifact_type',
+  'persona',
+] as const;
 export type RoutingMatchKind = (typeof ROUTING_MATCH_KINDS)[number];
 
 export type ApprovalContext = {
@@ -59,7 +64,10 @@ function ruleMatches(context: ApprovalContext, rule: ApprovalRoutingRule): boole
   }
 }
 
-export function resolveRequiredReviewer(context: ApprovalContext, table: ApprovalRoutingTable): ReviewerRole {
+export function resolveRequiredReviewer(
+  context: ApprovalContext,
+  table: ApprovalRoutingTable
+): ReviewerRole {
   const matched = [...table.rules]
     .filter((rule) => ruleMatches(context, rule))
     .sort((a, b) => b.priority - a.priority);
@@ -76,4 +84,3 @@ export function assertTenantOverrideDoesNotWeakenBaseline(
   _baseline: ApprovalRoutingTable,
   _override: ApprovalRoutingTable
 ): void {}
-

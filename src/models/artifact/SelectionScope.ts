@@ -38,8 +38,8 @@
  *     selection's node-id set.
  */
 
-import type { ArtifactOp } from './ArtifactOp';
 import type { ArtifactId } from './Artifact';
+import type { ArtifactOp } from './ArtifactOp';
 
 // ---------------------------------------------------------------------------
 // §1 — Selection shape.
@@ -65,10 +65,7 @@ export interface RangeSelection {
   readonly endNodeId: string;
 }
 
-export type SelectionScope =
-  | EmptySelection
-  | NodesSelection
-  | RangeSelection;
+export type SelectionScope = EmptySelection | NodesSelection | RangeSelection;
 
 export interface SelectionContext {
   readonly artifactId: ArtifactId;
@@ -113,9 +110,7 @@ const DEMONSTRATIVE_SET: ReadonlySet<string> = new Set(DEMONSTRATIVE_PRONOUNS);
  * `null` when the command is unambiguous-without-context. Pure; used
  * by the scope resolver and by reasoning-layer command parsers.
  */
-export function findDemonstrativeLexeme(
-  command: string,
-): DemonstrativePronoun | null {
+export function findDemonstrativeLexeme(command: string): DemonstrativePronoun | null {
   const tokens = command
     .toLowerCase()
     .split(/[^\p{L}\p{N}_]+/u)
@@ -130,11 +125,7 @@ export function findDemonstrativeLexeme(
 // §3 — Scope-verdict union.
 // ---------------------------------------------------------------------------
 
-export const SCOPE_VERDICT_KINDS = [
-  'scoped_to_selection',
-  'whole_artifact',
-  'rejected',
-] as const;
+export const SCOPE_VERDICT_KINDS = ['scoped_to_selection', 'whole_artifact', 'rejected'] as const;
 
 export type ScopeVerdictKind = (typeof SCOPE_VERDICT_KINDS)[number];
 
@@ -165,10 +156,7 @@ export interface RejectedScope {
   readonly clarificationSeed: string;
 }
 
-export type ScopeVerdict =
-  | ScopedToSelection
-  | WholeArtifactScope
-  | RejectedScope;
+export type ScopeVerdict = ScopedToSelection | WholeArtifactScope | RejectedScope;
 
 // ---------------------------------------------------------------------------
 // §4 — Resolver.
@@ -186,10 +174,7 @@ export type ScopeVerdict =
  *       selection non-empty ⇒ scoped_to_selection(nodeIds).
  *       selection empty    ⇒ whole_artifact.
  */
-export function resolveOpScope(
-  command: string,
-  selection: SelectionScope,
-): ScopeVerdict {
+export function resolveOpScope(command: string, selection: SelectionScope): ScopeVerdict {
   if (command.trim().length === 0) {
     return {
       kind: 'rejected',
@@ -200,23 +185,18 @@ export function resolveOpScope(
   }
 
   if (selection.kind === 'range') {
-    if (
-      selection.startNodeId.length === 0 ||
-      selection.endNodeId.length === 0
-    ) {
+    if (selection.startNodeId.length === 0 || selection.endNodeId.length === 0) {
       return {
         kind: 'rejected',
         reason: 'range_missing_endpoints',
         triggeringLexeme: null,
-        clarificationSeed:
-          'Range selection is incomplete; please reselect or click a single node.',
+        clarificationSeed: 'Range selection is incomplete; please reselect or click a single node.',
       };
     }
   }
 
   const lexeme = findDemonstrativeLexeme(command);
-  const nodeIds =
-    selection.kind === 'empty' ? [] : selection.nodeIds;
+  const nodeIds = selection.kind === 'empty' ? [] : selection.nodeIds;
   const selectionEmpty = nodeIds.length === 0;
 
   if (lexeme) {
@@ -258,7 +238,7 @@ export class InvalidSelectionScopeError extends Error {
       params.message ??
         `Invalid selection-scope: ${params.reason}${
           params.offendingNodeId ? ` (nodeId=${params.offendingNodeId})` : ''
-        }`,
+        }`
     );
     this.name = 'InvalidSelectionScopeError';
     this.reason = params.reason;
@@ -297,10 +277,9 @@ function nodeIdForOp(op: ArtifactOp): string | null {
  */
 export function assertOpsWithinSelection(
   ops: readonly ArtifactOp[],
-  selection: SelectionScope,
+  selection: SelectionScope
 ): void {
-  const nodeIds =
-    selection.kind === 'empty' ? [] : selection.nodeIds;
+  const nodeIds = selection.kind === 'empty' ? [] : selection.nodeIds;
   if (nodeIds.length === 0) {
     throw new InvalidSelectionScopeError({
       reason: 'empty_selection_for_scoped_ops',

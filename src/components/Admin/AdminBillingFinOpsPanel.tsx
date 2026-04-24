@@ -53,7 +53,9 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   const addPaymentMethod = async () => {
     if (!newPaymentMethodId.trim()) return;
     try {
-      const result = await Api.addAdminBillingPaymentMethod({ paymentMethodId: newPaymentMethodId.trim() });
+      const result = await Api.addAdminBillingPaymentMethod({
+        paymentMethodId: newPaymentMethodId.trim(),
+      });
       setPaymentMethods((current) => [result?.paymentMethod, ...current].filter(Boolean));
       setNewPaymentMethodId('');
       toast.success('Payment method added');
@@ -132,7 +134,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
                     {method.brand || 'Card'} ending in {method.last4}
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    Expires {method.exp_month}/{method.exp_year} {method.is_default ? '| Default' : ''}
+                    Expires {method.exp_month}/{method.exp_year}{' '}
+                    {method.is_default ? '| Default' : ''}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -204,7 +207,9 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
                   onChange={(event) =>
                     setAlerts((current) =>
                       current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, threshold: Number(event.target.value || 0) } : item
+                        itemIndex === index
+                          ? { ...item, threshold: Number(event.target.value || 0) }
+                          : item
                       )
                     )
                   }
@@ -221,7 +226,9 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
           </div>
 
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">Tax and invoicing</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              Tax and invoicing
+            </div>
             <input
               type="text"
               value={taxSettings?.company?.legalName || ''}
@@ -321,8 +328,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
           Billing, FinOps, and commercial controls
         </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          P32 now exposes subscriptions, payment methods, invoices, budgets, tax settings, and
-          usage posture as first-class tenant admin capabilities.
+          P32 now exposes subscriptions, payment methods, invoices, budgets, tax settings, and usage
+          posture as first-class tenant admin capabilities.
         </p>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">

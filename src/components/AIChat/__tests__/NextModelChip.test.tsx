@@ -40,9 +40,9 @@ describe('resolveNextModelLabel', () => {
   });
 
   it('prefers selectedModelId over modelId when both are set', () => {
-    expect(
-      resolveNextModelLabel({ modelId: 'gpt-4o', selectedModelId: 'claude-3-haiku' })
-    ).toBe('claude-3-haiku');
+    expect(resolveNextModelLabel({ modelId: 'gpt-4o', selectedModelId: 'claude-3-haiku' })).toBe(
+      'claude-3-haiku'
+    );
   });
 
   it('substitutes a friendly label when the id looks like a UUID', () => {
@@ -62,9 +62,7 @@ describe('resolveNextModelLabel', () => {
     const result = resolveNextModelLabel({
       selectedModelId: 'private-123',
       modelId: 'gpt-4o',
-      privateModels: [
-        { id: 'private-123', modelId: 'gpt-4o', name: 'Acme On-Prem' },
-      ],
+      privateModels: [{ id: 'private-123', modelId: 'gpt-4o', name: 'Acme On-Prem' }],
     });
     expect(result).toBe('Acme On-Prem');
   });
@@ -96,9 +94,7 @@ describe('NextModelChip (component)', () => {
   // -------------------------------------------------------------------
   it('returns null when the feature flag is disabled', () => {
     mockStoreState = { currentUser: { aiConfig: { modelId: 'gpt-4o' } } };
-    const { container } = render(
-      <NextModelChip isEnabled={() => false} />
-    );
+    const { container } = render(<NextModelChip isEnabled={() => false} />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -145,9 +141,7 @@ describe('NextModelChip (component)', () => {
 
   it('returns null when overrideLabel is an empty string', () => {
     mockStoreState = { currentUser: { aiConfig: { modelId: 'store-model' } } };
-    const { container } = render(
-      <NextModelChip isEnabled={() => true} overrideLabel="" />
-    );
+    const { container } = render(<NextModelChip isEnabled={() => true} overrideLabel="" />);
     expect(container.firstChild).toBeNull();
   });
 

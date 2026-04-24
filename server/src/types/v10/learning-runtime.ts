@@ -12,4 +12,3 @@ export interface LearningIngestResponse {
   readonly now: string;
   readonly accepted: true;
 }
-

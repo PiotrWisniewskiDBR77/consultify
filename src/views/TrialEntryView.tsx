@@ -12,9 +12,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 
-import { Api } from '@/services/api';
 import { ROUTES } from '@/routes/routeConfig';
-import { updateAnnaLpCtaContext, readAnnaLpCtaContext } from '@/services/annaLpCtaContext';
+import { readAnnaLpCtaContext, updateAnnaLpCtaContext } from '@/services/annaLpCtaContext';
+import { Api } from '@/services/api';
 import { postPublicAnnaFunnelEvent } from '@/services/publicAnnaAnalytics';
 
 /**

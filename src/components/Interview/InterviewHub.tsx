@@ -124,7 +124,6 @@ import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { AssignInterviewModal } from './AssignInterviewModal';
 import { InsightCreatorModal } from './InsightCreatorModal';
 import { InsightViewer } from './InsightViewer';
-import { ManageAssignmentModal } from './ManageAssignmentModal';
 import {
   InterviewAssignmentPreviewBody,
   InterviewAssignmentPreviewFooter,
@@ -143,6 +142,7 @@ import {
   InterviewTemplatePreviewFooter,
 } from './InterviewTemplatePreview';
 import { InterviewWorkspace } from './InterviewWorkspace';
+import { ManageAssignmentModal } from './ManageAssignmentModal';
 import { TemplateBuilder } from './TemplateBuilder';
 import {
   getTemplateAreaTagLabel,
@@ -1630,21 +1630,32 @@ export const InterviewHub: React.FC = () => {
       setSelectedAssignment(assignment);
       setReviewActionMode(mode);
       setReviewActionReason(
-        mode === 'send_back' ? buildAiSendBackDraftReason({ assignment, isPolish }) : ''
+        mode === 'send_back'
+          ? buildAiSendBackDraftReason({
+              assignment: assignment as InterviewAssignment & { aiReview?: any },
+              isPolish,
+            })
+          : ''
       );
       setShowReviewActionModal(true);
     },
     [isPolish]
   );
 
-  const handleOpenSendBackModal = useCallback((assignment: InterviewAssignment) => {
-    handleOpenReviewActionModal(assignment, 'send_back');
-  }, [handleOpenReviewActionModal]);
+  const handleOpenSendBackModal = useCallback(
+    (assignment: InterviewAssignment) => {
+      handleOpenReviewActionModal(assignment, 'send_back');
+    },
+    [handleOpenReviewActionModal]
+  );
 
-  const handleOpenRevokeApprovalModal = useCallback((assignment: InterviewAssignment) => {
-    setSelectedAssignment(assignment);
-    handleOpenReviewActionModal(assignment, 'revoke_approval');
-  }, [handleOpenReviewActionModal]);
+  const handleOpenRevokeApprovalModal = useCallback(
+    (assignment: InterviewAssignment) => {
+      setSelectedAssignment(assignment);
+      handleOpenReviewActionModal(assignment, 'revoke_approval');
+    },
+    [handleOpenReviewActionModal]
+  );
 
   const handleOpenManageAssignmentModal = useCallback((assignment: InterviewAssignment) => {
     setSelectedAssignment(assignment);
@@ -1681,9 +1692,7 @@ export const InterviewHub: React.FC = () => {
           Api.post(`/interview/assignments/${assignment.id}/archive`, {})
         );
         toast.success(
-          isPolish
-            ? 'Assignment został zarchiwizowany.'
-            : 'The assignment has been archived.'
+          isPolish ? 'Assignment został zarchiwizowany.' : 'The assignment has been archived.'
         );
         await refreshInterviewCockpit();
       } catch (error: any) {
@@ -1737,12 +1746,7 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [
-      isPolish,
-      refreshInterviewCockpit,
-      reviewActionMode,
-      selectedAssignment,
-    ]
+    [isPolish, refreshInterviewCockpit, reviewActionMode, selectedAssignment]
   );
 
   const handleApproveAssignment = useCallback(
@@ -1763,10 +1767,7 @@ export const InterviewHub: React.FC = () => {
         );
       }
     },
-    [
-      isPolish,
-      refreshInterviewCockpit,
-    ]
+    [isPolish, refreshInterviewCockpit]
   );
 
   const getManagedAssignmentForSession = useCallback(
@@ -2965,8 +2966,12 @@ export const InterviewHub: React.FC = () => {
                 ...(((insight as any).issues as Array<any>) || []),
                 ...(((insight as any).opportunities as Array<any>) || []),
               ];
-              const crossPerspectiveCount = topicCollections.filter((item) => item?.crossSessionPattern).length;
-              const divergenceCount = topicCollections.filter((item) => item?.divergence_note).length;
+              const crossPerspectiveCount = topicCollections.filter(
+                (item) => item?.crossSessionPattern
+              ).length;
+              const divergenceCount = topicCollections.filter(
+                (item) => item?.divergence_note
+              ).length;
               const typeConfig = getInsightTypeConfig(promptType);
               const status = ((insight.reviewStatus === 'in_review' ||
               insight.reviewStatus === 'published'
@@ -4698,9 +4703,7 @@ Return ONLY the answer text (no markdown fences).`;
                             ? [
                                 {
                                   id: 'manage-closed',
-                                  label: isPolish
-                                    ? 'Przydziel ponownie'
-                                    : 'Assign again / manage',
+                                  label: isPolish ? 'Przydziel ponownie' : 'Assign again / manage',
                                   icon: Edit3,
                                   onClick: () => handleOpenManageAssignmentModal(assignment),
                                 },
@@ -5764,7 +5767,9 @@ Return ONLY the answer text (no markdown fences).`;
               ...(((insight as any).issues as Array<any>) || []),
               ...(((insight as any).opportunities as Array<any>) || []),
             ];
-            const crossPerspectiveCount = topicCollections.filter((item) => item?.crossSessionPattern).length;
+            const crossPerspectiveCount = topicCollections.filter(
+              (item) => item?.crossSessionPattern
+            ).length;
             const divergenceCount = topicCollections.filter((item) => item?.divergence_note).length;
 
             return (

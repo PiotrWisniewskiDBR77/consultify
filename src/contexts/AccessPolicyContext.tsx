@@ -132,7 +132,9 @@ export const getAuthToken = (): string | null => {
 };
 
 const isPolicyBypassedRole = (role: unknown): boolean => {
-  const normalizedRole = String(role || '').trim().toUpperCase();
+  const normalizedRole = String(role || '')
+    .trim()
+    .toUpperCase();
   return normalizedRole === 'SUPERADMIN' || normalizedRole === 'SUPER_ADMIN';
 };
 

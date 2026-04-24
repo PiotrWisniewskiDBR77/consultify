@@ -199,44 +199,49 @@ export const DelayDetectionPanel: React.FC<DelayDetectionPanelProps> = ({
     });
   }, [effectiveSignalsSource, severityFilter, entityFilter]);
 
-  const handleDismiss = useCallback(async (signal: DelaySignalItem) => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) return;
-      const payload = {
-        signalId: signal.id,
-        entityType: signal.entityType,
-        entityId: signal.entityId,
-        deviationType: signal.deviationType,
-      };
-      const res = await V8ExecutionControlApi.dismissDelaySignal(payload)
-        .then(() => ({ ok: true, json: async () => ({}) }))
-        .catch((error) => {
-          if (!shouldFallbackToLegacyExecutionControl(error)) {
-            throw error;
-          }
-          return fetch('/api/execution-control/delay-signals/dismiss', {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
+  const handleDismiss = useCallback(
+    async (signal: DelaySignalItem) => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const payload = {
+          signalId: signal.id,
+          entityType: signal.entityType,
+          entityId: signal.entityId,
+          deviationType: signal.deviationType,
+        };
+        const res = await V8ExecutionControlApi.dismissDelaySignal(payload)
+          .then(() => ({ ok: true, json: async () => ({}) }))
+          .catch((error) => {
+            if (!shouldFallbackToLegacyExecutionControl(error)) {
+              throw error;
+            }
+            return fetch('/api/execution-control/delay-signals/dismiss', {
+              method: 'POST',
+              headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
           });
-        });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error((err as any)?.error || t('execution.delay.dismissFailed', 'Failed to dismiss'));
-        return;
-      }
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          toast.error(
+            (err as any)?.error || t('execution.delay.dismissFailed', 'Failed to dismiss')
+          );
+          return;
+        }
 
-      setSignals((prev) => prev.filter((s) => s.id !== signal.id));
-      onRefresh?.();
-      trackFunnelEvent('delay_signal_dismissed', {
-        deviationType: signal.deviationType,
-        severity: signal.severity,
-      });
-    } catch {
-      // non-blocking
-    }
-  }, [onRefresh]);
+        setSignals((prev) => prev.filter((s) => s.id !== signal.id));
+        onRefresh?.();
+        trackFunnelEvent('delay_signal_dismissed', {
+          deviationType: signal.deviationType,
+          severity: signal.severity,
+        });
+      } catch {
+        // non-blocking
+      }
+    },
+    [onRefresh]
+  );
 
   const criticalCount = effectiveSignalsSource.filter((s) => s.severity === 'CRITICAL').length;
   const warningCount = effectiveSignalsSource.filter((s) => s.severity === 'WARNING').length;

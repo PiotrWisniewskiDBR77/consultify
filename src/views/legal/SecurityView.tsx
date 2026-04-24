@@ -194,7 +194,7 @@ const LLM_COMPARISON = [
   {
     dimension: 'Data residency',
     vector: 'On-premise, private cloud, or region-specific hosting. Client chooses.',
-    generic: 'Data processed in provider\'s cloud infrastructure. Limited residency control.',
+    generic: "Data processed in provider's cloud infrastructure. Limited residency control.",
   },
   {
     dimension: 'Query & output storage',
@@ -204,7 +204,7 @@ const LLM_COMPARISON = [
   {
     dimension: 'Network dependency',
     vector: 'On-premise runs fully offline. Private API requires only internal network.',
-    generic: 'Requires internet connection to provider\'s servers for every query.',
+    generic: "Requires internet connection to provider's servers for every query.",
   },
   {
     dimension: 'Multi-tenancy',
@@ -281,11 +281,17 @@ export const SecurityView: React.FC = () => {
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
                   className="p-6 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 shadow-sm hover:shadow-lg transition-shadow"
                 >
-                  <div className={`w-12 h-12 ${feature.bgColor} rounded-xl flex items-center justify-center mb-4`}>
+                  <div
+                    className={`w-12 h-12 ${feature.bgColor} rounded-xl flex items-center justify-center mb-4`}
+                  >
                     <Icon size={24} className={feature.color} />
                   </div>
-                  <h3 className="text-lg font-bold text-navy-950 dark:text-white mb-2">{t(`security.infra.features.${idx}.title`, feature.title)}</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{t(`security.infra.features.${idx}.description`, feature.description)}</p>
+                  <h3 className="text-lg font-bold text-navy-950 dark:text-white mb-2">
+                    {t(`security.infra.features.${idx}.title`, feature.title)}
+                  </h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                    {t(`security.infra.features.${idx}.description`, feature.description)}
+                  </p>
                 </motion.div>
               );
             })}
@@ -327,8 +333,12 @@ export const SecurityView: React.FC = () => {
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 text-white shadow-lg shadow-emerald-500/20 mb-5">
                     <Icon size={20} />
                   </div>
-                  <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">{t(`security.pillars.items.${idx}.title`, pillar.title)}</h3>
-                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{t(`security.pillars.items.${idx}.body`, pillar.body)}</p>
+                  <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">
+                    {t(`security.pillars.items.${idx}.title`, pillar.title)}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    {t(`security.pillars.items.${idx}.body`, pillar.body)}
+                  </p>
                 </motion.div>
               );
             })}
@@ -363,17 +373,26 @@ export const SecurityView: React.FC = () => {
                   transition={{ duration: 0.45, delay: idx * 0.1 }}
                   className="group relative rounded-3xl border border-slate-200 bg-white/95 p-7 shadow-lg shadow-slate-900/5 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 dark:border-white/[0.08] dark:bg-slate-950/70"
                 >
-                  <div className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${model.accent} text-white shadow-lg ${model.shadow} mb-5`}>
+                  <div
+                    className={`flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${model.accent} text-white shadow-lg ${model.shadow} mb-5`}
+                  >
                     <Icon size={24} />
                   </div>
                   <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white/50 mb-4">
                     {t(`security.deployment.models.${idx}.tag`, model.tag)}
                   </span>
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">{t(`security.deployment.models.${idx}.title`, model.title)}</h3>
-                  <p className="text-sm leading-6 text-slate-600 dark:text-white/55 mb-4">{t(`security.deployment.models.${idx}.body`, model.body)}</p>
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3">
+                    {t(`security.deployment.models.${idx}.title`, model.title)}
+                  </h3>
+                  <p className="text-sm leading-6 text-slate-600 dark:text-white/55 mb-4">
+                    {t(`security.deployment.models.${idx}.body`, model.body)}
+                  </p>
                   <ul className="space-y-2">
                     {model.bullets.map((b, bIdx) => (
-                      <li key={b} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400">
+                      <li
+                        key={b}
+                        className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                      >
                         <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                         {t(`security.deployment.models.${idx}.bullets.${bIdx}`, b)}
                       </li>
@@ -410,11 +429,23 @@ export const SecurityView: React.FC = () => {
                 <ul className="space-y-3">
                   {[
                     t('security.sovereignty.p1', 'Choose your data residency: EU, US, or APAC'),
-                    t('security.sovereignty.p2', 'On-premise deployment: data never leaves your network'),
-                    t('security.sovereignty.p3', 'Private API: dedicated compute in your chosen region'),
-                    t('security.sovereignty.p4', 'Full GDPR compliance with Data Processing Agreements'),
+                    t(
+                      'security.sovereignty.p2',
+                      'On-premise deployment: data never leaves your network'
+                    ),
+                    t(
+                      'security.sovereignty.p3',
+                      'Private API: dedicated compute in your chosen region'
+                    ),
+                    t(
+                      'security.sovereignty.p4',
+                      'Full GDPR compliance with Data Processing Agreements'
+                    ),
                   ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400"
+                    >
                       <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                       {item}
                     </li>
@@ -430,12 +461,27 @@ export const SecurityView: React.FC = () => {
                 </div>
                 <ul className="space-y-3">
                   {[
-                    t('security.sovereignty.d1', 'No client production data used for model training or fine-tuning'),
-                    t('security.sovereignty.d2', 'Queries and outputs are not stored beyond the inference session'),
-                    t('security.sovereignty.d3', 'Complete separation between inference and training pipelines'),
-                    t('security.sovereignty.d4', 'Transparent methodology available for security review'),
+                    t(
+                      'security.sovereignty.d1',
+                      'No client production data used for model training or fine-tuning'
+                    ),
+                    t(
+                      'security.sovereignty.d2',
+                      'Queries and outputs are not stored beyond the inference session'
+                    ),
+                    t(
+                      'security.sovereignty.d3',
+                      'Complete separation between inference and training pipelines'
+                    ),
+                    t(
+                      'security.sovereignty.d4',
+                      'Transparent methodology available for security review'
+                    ),
                   ].map((item, i) => (
-                    <li key={i} className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400">
+                    <li
+                      key={i}
+                      className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-400"
+                    >
                       <CheckCircle size={14} className="text-green-500 mt-0.5 shrink-0" />
                       {item}
                     </li>
@@ -472,8 +518,12 @@ export const SecurityView: React.FC = () => {
                     <Icon size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-black text-navy-950 dark:text-white">{t(`security.techControls.items.${idx}.label`, ctrl.label)}</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-500">{t(`security.techControls.items.${idx}.sub`, ctrl.sub)}</p>
+                    <p className="text-sm font-black text-navy-950 dark:text-white">
+                      {t(`security.techControls.items.${idx}.label`, ctrl.label)}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-500">
+                      {t(`security.techControls.items.${idx}.sub`, ctrl.sub)}
+                    </p>
                   </div>
                 </motion.div>
               );
@@ -507,8 +557,12 @@ export const SecurityView: React.FC = () => {
                 transition={{ duration: 0.4, delay: idx * 0.07 }}
                 className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-6 text-center"
               >
-                <p className="text-xl font-black text-navy-950 dark:text-white mb-1">{t(`security.compliance.standards.${idx}.label`, std.label)}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-500 mb-3">{t(`security.compliance.standards.${idx}.sub`, std.sub)}</p>
+                <p className="text-xl font-black text-navy-950 dark:text-white mb-1">
+                  {t(`security.compliance.standards.${idx}.label`, std.label)}
+                </p>
+                <p className="text-xs text-slate-500 dark:text-slate-500 mb-3">
+                  {t(`security.compliance.standards.${idx}.sub`, std.sub)}
+                </p>
                 <span className="inline-flex items-center rounded-full bg-green-100 dark:bg-green-900/30 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-green-600 dark:text-green-400">
                   {t(`security.compliance.standards.${idx}.status`, std.status)}
                 </span>
@@ -526,28 +580,50 @@ export const SecurityView: React.FC = () => {
               {t('security.comparison.title', 'DBR77 Vector vs. Public LLMs')}
             </h2>
             <p className="mt-4 text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-              {t('security.comparison.subtitle', 'Security side by side — how Vector compares on the dimensions that matter most.')}
+              {t(
+                'security.comparison.subtitle',
+                'Security side by side — how Vector compares on the dimensions that matter most.'
+              )}
             </p>
           </motion.div>
 
-          <motion.div {...fadeUp} className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/[0.08]">
+          <motion.div
+            {...fadeUp}
+            className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/[0.08]"
+          >
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-100 dark:bg-white/[0.04]">
-                  <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">{t('security.comparison.dimensionHeader', 'Dimension')}</th>
-                  <th className="text-left px-6 py-4 font-bold text-green-600 dark:text-green-400">{t('security.comparison.vectorHeader', 'DBR77 Vector')}</th>
-                  <th className="text-left px-6 py-4 font-bold text-slate-500">{t('security.comparison.llmHeader', 'Public LLM')}</th>
+                  <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">
+                    {t('security.comparison.dimensionHeader', 'Dimension')}
+                  </th>
+                  <th className="text-left px-6 py-4 font-bold text-green-600 dark:text-green-400">
+                    {t('security.comparison.vectorHeader', 'DBR77 Vector')}
+                  </th>
+                  <th className="text-left px-6 py-4 font-bold text-slate-500">
+                    {t('security.comparison.llmHeader', 'Public LLM')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {LLM_COMPARISON.map((row, idx) => (
                   <tr
                     key={row.dimension}
-                    className={idx % 2 === 0 ? 'bg-white dark:bg-transparent' : 'bg-slate-50/50 dark:bg-white/[0.02]'}
+                    className={
+                      idx % 2 === 0
+                        ? 'bg-white dark:bg-transparent'
+                        : 'bg-slate-50/50 dark:bg-white/[0.02]'
+                    }
                   >
-                    <td className="px-6 py-4 font-semibold text-navy-950 dark:text-white whitespace-nowrap">{t(`security.comparison.rows.${idx}.dimension`, row.dimension)}</td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{t(`security.comparison.rows.${idx}.vector`, row.vector)}</td>
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-500">{t(`security.comparison.rows.${idx}.generic`, row.generic)}</td>
+                    <td className="px-6 py-4 font-semibold text-navy-950 dark:text-white whitespace-nowrap">
+                      {t(`security.comparison.rows.${idx}.dimension`, row.dimension)}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
+                      {t(`security.comparison.rows.${idx}.vector`, row.vector)}
+                    </td>
+                    <td className="px-6 py-4 text-slate-500 dark:text-slate-500">
+                      {t(`security.comparison.rows.${idx}.generic`, row.generic)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -593,8 +669,12 @@ export const SecurityView: React.FC = () => {
                   <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.06] mb-3">
                     <Icon size={18} className="text-white/50" />
                   </div>
-                  <p className="text-sm font-bold text-white/80">{t(`security.pipeline.steps.${idx}.label`, step.label)}</p>
-                  <p className="text-xs text-white/35 mt-1">{t(`security.pipeline.steps.${idx}.sub`, step.sub)}</p>
+                  <p className="text-sm font-bold text-white/80">
+                    {t(`security.pipeline.steps.${idx}.label`, step.label)}
+                  </p>
+                  <p className="text-xs text-white/35 mt-1">
+                    {t(`security.pipeline.steps.${idx}.sub`, step.sub)}
+                  </p>
                 </motion.div>
               );
             })}
@@ -615,13 +695,31 @@ export const SecurityView: React.FC = () => {
                   {t('security.disclosure.title', 'Responsible Disclosure')}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300 mb-4">
-                  {t('security.disclosure.intro', 'We take security vulnerabilities seriously. If you discover a security issue, please report it to us responsibly. We commit to:')}
+                  {t(
+                    'security.disclosure.intro',
+                    'We take security vulnerabilities seriously. If you discover a security issue, please report it to us responsibly. We commit to:'
+                  )}
                 </p>
                 <ul className="list-disc list-inside text-slate-600 dark:text-slate-300 space-y-1 mb-4">
                   <li>{t('security.disclosure.items.0', 'Acknowledge receipt within 24 hours')}</li>
-                  <li>{t('security.disclosure.items.1', 'Provide regular updates on our investigation')}</li>
-                  <li>{t('security.disclosure.items.2', 'Credit researchers who follow responsible disclosure')}</li>
-                  <li>{t('security.disclosure.items.3', 'Not pursue legal action against good-faith researchers')}</li>
+                  <li>
+                    {t(
+                      'security.disclosure.items.1',
+                      'Provide regular updates on our investigation'
+                    )}
+                  </li>
+                  <li>
+                    {t(
+                      'security.disclosure.items.2',
+                      'Credit researchers who follow responsible disclosure'
+                    )}
+                  </li>
+                  <li>
+                    {t(
+                      'security.disclosure.items.3',
+                      'Not pursue legal action against good-faith researchers'
+                    )}
+                  </li>
                 </ul>
                 <p className="text-slate-600 dark:text-slate-300">
                   {t('security.disclosure.report', 'Report security issues to:')}{' '}
@@ -656,7 +754,10 @@ export const SecurityView: React.FC = () => {
               <a
                 href={`mailto:${COMPANY.securityEmail}`}
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-white transition-all"
-                style={{ background: 'linear-gradient(135deg, #059669, #10b981)', boxShadow: '0 0 24px -8px rgba(5,150,105,0.60)' }}
+                style={{
+                  background: 'linear-gradient(135deg, #059669, #10b981)',
+                  boxShadow: '0 0 24px -8px rgba(5,150,105,0.60)',
+                }}
               >
                 <Shield size={16} />
                 {t('security.cta.review', 'Book a Security Review')}

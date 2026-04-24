@@ -60,10 +60,7 @@ class InlineEditingService {
 
       const editedText = result.choices?.[0]?.message?.content || request.selectedText;
 
-      const fullUpdatedResponse = request.fullResponse.replace(
-        request.selectedText,
-        editedText
-      );
+      const fullUpdatedResponse = request.fullResponse.replace(request.selectedText, editedText);
 
       return {
         originalText: request.selectedText,

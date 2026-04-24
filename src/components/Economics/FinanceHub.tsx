@@ -37,23 +37,17 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
 import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useV8FeatureFlag } from '@/hooks/useV8FeatureFlag';
+import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
 import {
   shouldFallbackToLegacyFinance,
   V8FinanceApi,
   type V8FinanceDashboard,
 } from '@/services/api/v8/finance';
-import { ROUTES } from '@/routes/routeConfig';
 import { useAppStore } from '@/store/useAppStore';
-import { usePolicySnapshot } from '@/contexts/AccessPolicyContext';
-
-import { FinanceDegradedBanner } from './FinanceDegradedBanner';
-import { getFinanceErrorMessage } from './financeErrorMap';
-import { FinanceLanePanel } from './FinanceLanePanel';
-import { FinanceLaneStrip } from './FinanceLaneStrip';
-import { useFinanceLane } from './hooks/useFinanceLane';
 
 import { BudgetWorkspace } from '../Benefits/BudgetWorkspace';
 import { FinancialAnalysisWorkspace } from '../Benefits/FinancialAnalysisWorkspace';
@@ -75,6 +69,10 @@ import {
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
+import { FinanceDegradedBanner } from './FinanceDegradedBanner';
+import { getFinanceErrorMessage } from './financeErrorMap';
+import { FinanceLanePanel } from './FinanceLanePanel';
+import { FinanceLaneStrip } from './FinanceLaneStrip';
 import { FinanceModelDocumentView } from './FinanceModelDocumentView';
 import { useFinancePreview } from './FinancePreviewPanel';
 import {
@@ -91,6 +89,7 @@ import {
   statusToProgress,
 } from './financeTypes';
 import { useFinanceData } from './hooks/useFinanceData';
+import { useFinanceLane } from './hooks/useFinanceLane';
 import { useFinanceRowActions } from './hooks/useFinanceRowActions';
 import { useFinanceSelection } from './hooks/useFinanceSelection';
 import { CreateAnalysisModal } from './modals/CreateAnalysisModal';
@@ -127,12 +126,8 @@ export const FinanceHub: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState<FilterChip[]>([]);
 
-  const {
-    openDocuments,
-    setOpenDocuments,
-    activeDocumentId,
-    setActiveDocumentId,
-  } = useModuleOpenDocuments('finance');
+  const { openDocuments, setOpenDocuments, activeDocumentId, setActiveDocumentId } =
+    useModuleOpenDocuments('finance');
   const [activeDocument, setActiveDocument] = useState<FinanceRow | null>(null);
 
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
@@ -181,7 +176,8 @@ export const FinanceHub: React.FC = () => {
     },
   });
   const validFinanceTabs = useMemo(
-    () => ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'] as ModuleTab[],
+    () =>
+      ['statements', 'models', 'analysis', 'prediction', 'valuation', 'investment'] as ModuleTab[],
     []
   );
 
@@ -238,7 +234,7 @@ export const FinanceHub: React.FC = () => {
       openChatWithContext({
         entityType: entityTypeMap[row.kind] || 'financial_model',
         entityId: row.id,
-        entityName: row.name,
+        entityName: row.title,
         contextData: {
           kind: row.kind,
           status: row.status,
@@ -1389,29 +1385,39 @@ export const FinanceHub: React.FC = () => {
 
   const laneActions = useMemo(() => {
     if (lane.activeLaneRun) {
-      return [{
-        id: 'lane_status',
-        label: t('finance.analyze.laneStatus', 'View Lane Status'),
-        description: t('finance.analyze.laneStatusHint', 'View active finance lane progress and issues.'),
-        disabled: false,
-        onSelect: () => setLanePanelOpen(true),
-      }];
+      return [
+        {
+          id: 'lane_status',
+          label: t('finance.analyze.laneStatus', 'View Lane Status'),
+          description: t(
+            'finance.analyze.laneStatusHint',
+            'View active finance lane progress and issues.'
+          ),
+          disabled: false,
+          onSelect: () => setLanePanelOpen(true),
+        },
+      ];
     }
-    return [{
-      id: 'lane_start',
-      label: t('finance.analyze.laneStart', 'Start Finance Lane'),
-      description: t('finance.analyze.laneStartHint', 'Begin a governed import→analysis→mutation→readback workflow.'),
-      disabled: false,
-      onSelect: async () => {
-        try {
-          await lane.startRun();
-          toast.success(t('finance.lane.started', 'Finance lane started'));
-          setLanePanelOpen(true);
-        } catch (err: any) {
-          toast.error(getFinanceErrorMessage(err));
-        }
+    return [
+      {
+        id: 'lane_start',
+        label: t('finance.analyze.laneStart', 'Start Finance Lane'),
+        description: t(
+          'finance.analyze.laneStartHint',
+          'Begin a governed import→analysis→mutation→readback workflow.'
+        ),
+        disabled: false,
+        onSelect: async () => {
+          try {
+            await lane.startRun();
+            toast.success(t('finance.lane.started', 'Finance lane started'));
+            setLanePanelOpen(true);
+          } catch (err: any) {
+            toast.error(getFinanceErrorMessage(err));
+          }
+        },
       },
-    }];
+    ];
   }, [lane, t]);
 
   const analyzeActionIcons: Record<string, React.ReactNode> = useMemo(
@@ -1551,20 +1557,17 @@ export const FinanceHub: React.FC = () => {
     const runtimeChips = [
       {
         label: t('finance.v8.ingestion', 'V8 Ingestion'),
-        value:
-          v8Dashboard == null ? '—' : String(v8Dashboard.ingestionPipeline?.totalCount ?? '—'),
+        value: v8Dashboard == null ? '—' : String(v8Dashboard.ingestionPipeline?.totalCount ?? '—'),
         dotClassName: 'bg-violet-400',
       },
       {
         label: t('finance.v8.escalations', 'Escalations'),
-        value:
-          v8Dashboard == null ? '—' : String(v8Dashboard.unresolvedEscalationsCount ?? '—'),
+        value: v8Dashboard == null ? '—' : String(v8Dashboard.unresolvedEscalationsCount ?? '—'),
         dotClassName: 'bg-amber-400',
       },
       {
         label: t('finance.v8.linkages', 'Linkages'),
-        value:
-          v8Dashboard == null ? '—' : String(v8Dashboard.linkageHealth?.totalLinkages ?? '—'),
+        value: v8Dashboard == null ? '—' : String(v8Dashboard.linkageHealth?.totalLinkages ?? '—'),
         dotClassName: 'bg-violet-400',
       },
       {
@@ -1988,7 +1991,9 @@ export const FinanceHub: React.FC = () => {
       <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400 p-8 text-center">
         <div>
           <Calculator size={40} className="mx-auto mb-4 opacity-40" />
-          <p className="text-lg font-medium">{t('finance.v8Disabled', 'Finance module is not enabled for this organization.')}</p>
+          <p className="text-lg font-medium">
+            {t('finance.v8Disabled', 'Finance module is not enabled for this organization.')}
+          </p>
         </div>
       </div>
     );
@@ -1999,7 +2004,12 @@ export const FinanceHub: React.FC = () => {
       <div className="flex h-full items-center justify-center text-slate-500 dark:text-slate-400 p-8 text-center">
         <div>
           <Calculator size={40} className="mx-auto mb-4 opacity-40" />
-          <p className="text-lg font-medium">{t('finance.blocked', 'Access to the Finance module is restricted by your organization\'s policy.')}</p>
+          <p className="text-lg font-medium">
+            {t(
+              'finance.blocked',
+              "Access to the Finance module is restricted by your organization's policy."
+            )}
+          </p>
         </div>
       </div>
     );

@@ -167,7 +167,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {(error || helperText) && (
           <p
             className={`mt-2 text-sm ${
-              hasError ? 'text-danger-700 dark:text-danger-400' : 'text-slate-600 dark:text-slate-400'
+              hasError
+                ? 'text-danger-700 dark:text-danger-400'
+                : 'text-slate-600 dark:text-slate-400'
             }`}
           >
             {error || helperText}

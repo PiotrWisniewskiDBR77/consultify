@@ -7,19 +7,29 @@
 import bcrypt from 'bcryptjs';
 import { Response, Router } from 'express';
 
-import { login } from '../controllers/AuthController.js';
-import logger from '../utils/Logger.js';
 import {
   authRuntimeConfig,
   buildPasswordResetLink,
   getPasswordResetExpiresAt,
 } from '../config/authRuntime.js';
+import { login } from '../controllers/AuthController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
-import mfaService from '../services/MFAService.js';
-import refreshTokenService from '../services/RefreshTokenService.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import legalService from '../services/legalService.js';
+import mfaService from '../services/MFAService.js';
+import {
+  assertOrganizationNameAvailable,
+  DuplicateOrganizationNameError,
+  isGenericOrganizationName,
+} from '../services/organizationIdentityService.js';
+import refreshTokenService from '../services/RefreshTokenService.js';
+import slackService from '../services/slackService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import {
+  buildCaseInsensitiveUserEmailLookupQuery,
+  normalizeAuthEmail,
+} from '../utils/authEmail.js';
 import {
   ACCESS_TOKEN_COOKIE,
   clearAuthCookies,
@@ -27,6 +37,7 @@ import {
   setAuthCookies,
 } from '../utils/cookieAuth.js';
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
   ChangePasswordRequestSchema,
   ForgotPasswordRequestSchema,
@@ -42,17 +53,6 @@ import {
   SessionIdParamSchema,
   VerifyEmailRequestSchema,
 } from '../validators/auth.validators.js';
-import legalService from '../services/legalService.js';
-import {
-  DuplicateOrganizationNameError,
-  assertOrganizationNameAvailable,
-  isGenericOrganizationName,
-} from '../services/organizationIdentityService.js';
-import {
-  buildCaseInsensitiveUserEmailLookupQuery,
-  normalizeAuthEmail,
-} from '../utils/authEmail.js';
-import slackService from '../services/slackService.js';
 
 const router = Router();
 import crypto from 'crypto';
@@ -107,9 +107,8 @@ async function assignAplixDefaultInterviews(params: {
     .toUpperCase();
   if (normalizedAccessCode !== APLIX_ACCESS_CODE) return;
 
-  const { default: interviewAssignmentService } = (await import(
-    '../services/InterviewAssignmentService.js'
-  )) as any;
+  const { default: interviewAssignmentService } =
+    (await import('../services/InterviewAssignmentService.js')) as any;
   const dueAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
   for (const templateSuffix of APLIX_DEFAULT_TEMPLATE_SUFFIXES) {
@@ -479,7 +478,9 @@ router.get(
       let parsedExpertiseTags: string[] = [];
       try {
         if (user.expertise_tags) parsedExpertiseTags = JSON.parse(user.expertise_tags);
-      } catch { /* ignore bad JSON */ }
+      } catch {
+        /* ignore bad JSON */
+      }
 
       const response: {
         user: Record<string, unknown>;
@@ -619,7 +620,9 @@ router.post(
         });
       }
 
-      const orgType = String(membership.organization_type || '').trim().toUpperCase();
+      const orgType = String(membership.organization_type || '')
+        .trim()
+        .toUpperCase();
       const isDemo = orgType === ORG_TYPES.DEMO;
 
       // Update users.organization_id so token refresh stays consistent
@@ -658,7 +661,14 @@ router.post(
           await dbRun(
             `INSERT INTO organization_switch_log (id, user_id, from_organization_id, to_organization_id, ip_address, user_agent)
              VALUES (?, ?, ?, ?, ?, ?)`,
-            [uuidv4(), userId, previousOrgId || null, organizationId, req.ip || null, req.get('user-agent') || null]
+            [
+              uuidv4(),
+              userId,
+              previousOrgId || null,
+              organizationId,
+              req.ip || null,
+              req.get('user-agent') || null,
+            ]
           );
         } catch {
           // Non-critical audit logging
@@ -1709,10 +1719,14 @@ router.post(
       }>('SELECT * FROM access_codes WHERE code = ? AND is_active = 1', [accessCode]);
 
       if (!codeRow) {
-        return res.status(400).json({ error: 'Invalid access code', errorCode: 'INVALID_ACCESS_CODE' });
+        return res
+          .status(400)
+          .json({ error: 'Invalid access code', errorCode: 'INVALID_ACCESS_CODE' });
       } else {
         if (codeRow.expires_at && new Date(codeRow.expires_at) < new Date()) {
-          return res.status(400).json({ error: 'Access code has expired', errorCode: 'ACCESS_CODE_EXPIRED' });
+          return res
+            .status(400)
+            .json({ error: 'Access code has expired', errorCode: 'ACCESS_CODE_EXPIRED' });
         } else if (codeRow.max_uses > 0 && codeRow.current_uses >= codeRow.max_uses) {
           return res.status(400).json({
             error: 'Access code usage limit reached',

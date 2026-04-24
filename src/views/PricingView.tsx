@@ -223,8 +223,8 @@ export const PricingView: React.FC = () => {
             </h1>
 
             <p className="text-lg text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed mb-8">
-              Replace expensive consultants with AI-powered strategic guidance. 7-day free trial.
-              No credit card required.
+              Replace expensive consultants with AI-powered strategic guidance. 7-day free trial. No
+              credit card required.
             </p>
 
             {/* Billing Toggle */}

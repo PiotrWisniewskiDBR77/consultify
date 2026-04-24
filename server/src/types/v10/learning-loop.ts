@@ -48,7 +48,9 @@ export const LearningRetentionPreviewResponseSchema = z.object({
   redactedSample: z.string().trim().min(1).nullable().default(null),
 });
 
-export type LearningRetentionPreviewResponse = z.infer<typeof LearningRetentionPreviewResponseSchema>;
+export type LearningRetentionPreviewResponse = z.infer<
+  typeof LearningRetentionPreviewResponseSchema
+>;
 
 export const LearningStewardshipQueueItemSchema = z.object({
   itemId: z.string().trim().min(1),
@@ -183,4 +185,3 @@ export const LearningIncidentReportBodySchema = LearningIncidentReportRequestSch
   scope: true,
 });
 export type LearningIncidentReportBody = z.infer<typeof LearningIncidentReportBodySchema>;
-

@@ -1,7 +1,9 @@
 import type { ExecutionProposalV1 } from '../../agent/ExecutionProposalV1.js';
 import type { RunId, RunRow } from '../../agent/RunLedger.js';
 
-export type AgentExecutionPipelineRunId = string & { readonly __brand: 'AgentExecutionPipelineRunId' };
+export type AgentExecutionPipelineRunId = string & {
+  readonly __brand: 'AgentExecutionPipelineRunId';
+};
 
 export function unsafeAgentExecutionPipelineRunId(value: string): AgentExecutionPipelineRunId {
   return String(value) as AgentExecutionPipelineRunId;
@@ -65,4 +67,3 @@ export function runAgentExecutionPipeline(input: {
     ledgerRunRow,
   };
 }
-

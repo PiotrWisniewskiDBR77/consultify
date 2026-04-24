@@ -92,7 +92,8 @@ export const PERSONA_JOURNEYS: Record<OnboardingPersona, PersonaJourney> = {
     libraryDestination: 'Security evidence library',
     entrySurface: 'admin_console',
     headline: 'Start from policy posture before generation.',
-    subheadline: 'Review retention, ACL inheritance, and workspace restrictions before any artifact is created.',
+    subheadline:
+      'Review retention, ACL inheritance, and workspace restrictions before any artifact is created.',
     generateLabel: 'Continue to secure onboarding',
   },
   'Transformation Officer': {
@@ -115,7 +116,9 @@ export function resolvePersonaJourney(persona: OnboardingPersona): PersonaJourne
   return PERSONA_JOURNEYS[persona] || PERSONA_JOURNEYS['Transformation Officer'];
 }
 
-export function resolveFirstOnboardingSurface(persona: OnboardingPersona): 'admin_console' | 'artifact_seed' {
+export function resolveFirstOnboardingSurface(
+  persona: OnboardingPersona
+): 'admin_console' | 'artifact_seed' {
   return resolvePersonaJourney(persona).entrySurface;
 }
 

@@ -9,12 +9,12 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { getSettingsActorRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
+import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
 import { updateIntegrationStatus } from '../services/integrationHubService.js';
 import * as oauthEngine from '../services/integrationOAuthEngine.js';
 import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
-import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
@@ -165,16 +165,18 @@ router.get(
       let tenantDefaults: { timezone?: string | null; currency?: string | null } = {};
       if (orgId) {
         try {
-          const { default: organizationContextService } = await import(
-            '../services/organizationContext/OrganizationContextService.js'
-          );
+          const { default: organizationContextService } =
+            await import('../services/organizationContext/OrganizationContextService.js');
           const context = await organizationContextService.buildResolvedContext(orgId);
           tenantDefaults = {
             timezone: context.profile.defaultTimezone,
             currency: context.profile.currency,
           };
         } catch (contextErr) {
-          logger.warn('[settings] Failed to hydrate tenant regional defaults from organization context:', contextErr);
+          logger.warn(
+            '[settings] Failed to hydrate tenant regional defaults from organization context:',
+            contextErr
+          );
         }
       }
 
@@ -745,26 +747,91 @@ router.put(
 const defaultIntegrationProviders = [
   // Email & Communication
   { id: 'gmail', name: 'Gmail', capabilities: ['email', 'contacts'], category: 'email' },
-  { id: 'outlook', name: 'Microsoft Outlook', capabilities: ['email', 'contacts'], category: 'email' },
+  {
+    id: 'outlook',
+    name: 'Microsoft Outlook',
+    capabilities: ['email', 'contacts'],
+    category: 'email',
+  },
   { id: 'slack', name: 'Slack', capabilities: ['messages', 'notifications'], category: 'email' },
-  { id: 'teams', name: 'Microsoft Teams', capabilities: ['messages', 'meetings'], category: 'email' },
+  {
+    id: 'teams',
+    name: 'Microsoft Teams',
+    capabilities: ['messages', 'meetings'],
+    category: 'email',
+  },
   // Calendar
-  { id: 'google_calendar', name: 'Google Calendar', capabilities: ['events', 'reminders'], category: 'calendar' },
-  { id: 'outlook_calendar', name: 'Outlook Calendar', capabilities: ['events', 'reminders'], category: 'calendar' },
-  { id: 'apple_calendar', name: 'Apple Calendar (iCal)', capabilities: ['events'], category: 'calendar' },
-  { id: 'calendly', name: 'Calendly', capabilities: ['scheduling', 'events'], category: 'calendar' },
+  {
+    id: 'google_calendar',
+    name: 'Google Calendar',
+    capabilities: ['events', 'reminders'],
+    category: 'calendar',
+  },
+  {
+    id: 'outlook_calendar',
+    name: 'Outlook Calendar',
+    capabilities: ['events', 'reminders'],
+    category: 'calendar',
+  },
+  {
+    id: 'apple_calendar',
+    name: 'Apple Calendar (iCal)',
+    capabilities: ['events'],
+    category: 'calendar',
+  },
+  {
+    id: 'calendly',
+    name: 'Calendly',
+    capabilities: ['scheduling', 'events'],
+    category: 'calendar',
+  },
   // Task Management
   { id: 'jira', name: 'Jira', capabilities: ['issues', 'sprints'], category: 'task_management' },
   { id: 'asana', name: 'Asana', capabilities: ['tasks', 'projects'], category: 'task_management' },
   { id: 'trello', name: 'Trello', capabilities: ['boards', 'cards'], category: 'task_management' },
-  { id: 'clickup', name: 'ClickUp', capabilities: ['tasks', 'spaces'], category: 'task_management' },
-  { id: 'monday', name: 'Monday.com', capabilities: ['boards', 'items'], category: 'task_management' },
-  { id: 'notion', name: 'Notion', capabilities: ['databases', 'pages'], category: 'task_management' },
-  { id: 'todoist', name: 'Todoist', capabilities: ['tasks', 'projects'], category: 'task_management' },
-  { id: 'linear', name: 'Linear', capabilities: ['issues', 'projects'], category: 'task_management' },
+  {
+    id: 'clickup',
+    name: 'ClickUp',
+    capabilities: ['tasks', 'spaces'],
+    category: 'task_management',
+  },
+  {
+    id: 'monday',
+    name: 'Monday.com',
+    capabilities: ['boards', 'items'],
+    category: 'task_management',
+  },
+  {
+    id: 'notion',
+    name: 'Notion',
+    capabilities: ['databases', 'pages'],
+    category: 'task_management',
+  },
+  {
+    id: 'todoist',
+    name: 'Todoist',
+    capabilities: ['tasks', 'projects'],
+    category: 'task_management',
+  },
+  {
+    id: 'linear',
+    name: 'Linear',
+    capabilities: ['issues', 'projects'],
+    category: 'task_management',
+  },
   // Cloud Storage
-  { id: 'google_drive', name: 'Google Drive', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
-  { id: 'onedrive', name: 'OneDrive', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
+  {
+    id: 'google_drive',
+    name: 'Google Drive',
+    capabilities: ['files', 'sharing'],
+    category: 'cloud_storage',
+  },
+  {
+    id: 'onedrive',
+    name: 'OneDrive',
+    capabilities: ['files', 'sharing'],
+    category: 'cloud_storage',
+  },
   { id: 'dropbox', name: 'Dropbox', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
   { id: 'box', name: 'Box', capabilities: ['files', 'workflows'], category: 'cloud_storage' },
 ];
@@ -1160,9 +1227,15 @@ router.post(
           integrationId,
           connectorId: connector.id,
           eventType: 'external_auth_prepared',
-          metadata: { source: 'settings', mode: 'connect', callbackUrl: session.callbackUrl, expiresAt: session.expiresAt },
+          metadata: {
+            source: 'settings',
+            mode: 'connect',
+            callbackUrl: session.callbackUrl,
+            expiresAt: session.expiresAt,
+          },
           ipAddress: typeof req.ip === 'string' ? req.ip : null,
-          userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+          userAgent:
+            typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
         });
       }
 
@@ -1253,7 +1326,9 @@ router.post(
     const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
     const item = integrations.find((integration) => integration.provider === provider);
     if (!item) {
-      return res.status(404).json({ success: false, error: oauthResult.error || 'Integration not connected' });
+      return res
+        .status(404)
+        .json({ success: false, error: oauthResult.error || 'Integration not connected' });
     }
 
     if (item.status !== 'active') {
@@ -1297,12 +1372,17 @@ router.get(
     }
 
     if (cfg.authType === 'basic') {
-      return res.status(400).json({ error: 'This connector uses credential-based auth, not OAuth. Use POST /connect with credentials.' });
+      return res.status(400).json({
+        error:
+          'This connector uses credential-based auth, not OAuth. Use POST /connect with credentials.',
+      });
     }
 
     const result = oauthEngine.generateAuthUrl(connectorId, userId, organizationId);
     if (!result) {
-      return res.status(503).json({ error: 'Connector not configured. Missing API credentials in environment.' });
+      return res
+        .status(503)
+        .json({ error: 'Connector not configured. Missing API credentials in environment.' });
     }
 
     await logIntegrationConnectionEvent({
@@ -1349,7 +1429,9 @@ router.get(
 
     const tokens = await oauthEngine.exchangeCode(pending.connectorId, code);
     if (!tokens) {
-      return res.redirect(`/settings/integrations?oauth_error=token_exchange_failed&connector=${pending.connectorId}`);
+      return res.redirect(
+        `/settings/integrations?oauth_error=token_exchange_failed&connector=${pending.connectorId}`
+      );
     }
 
     const cfg = oauthEngine.getConnectorConfig(pending.connectorId);
@@ -4306,7 +4388,10 @@ const ensureUserApiKeysTable = async () => {
     ['last_used_at', `ALTER TABLE user_api_keys ADD COLUMN last_used_at TIMESTAMPTZ`],
     ['expires_at', `ALTER TABLE user_api_keys ADD COLUMN expires_at TIMESTAMPTZ`],
     ['is_active', `ALTER TABLE user_api_keys ADD COLUMN is_active INTEGER DEFAULT 1`],
-    ['updated_at', `ALTER TABLE user_api_keys ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`],
+    [
+      'updated_at',
+      `ALTER TABLE user_api_keys ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
+    ],
   ];
 
   for (const [column, sql] of alterations) {
@@ -4509,7 +4594,10 @@ const ensureUserWebhooksTable = async () => {
     ['last_triggered_at', `ALTER TABLE user_webhooks ADD COLUMN last_triggered_at TIMESTAMPTZ`],
     ['last_status', `ALTER TABLE user_webhooks ADD COLUMN last_status INTEGER`],
     ['failure_count', `ALTER TABLE user_webhooks ADD COLUMN failure_count INTEGER DEFAULT 0`],
-    ['updated_at', `ALTER TABLE user_webhooks ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`],
+    [
+      'updated_at',
+      `ALTER TABLE user_webhooks ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
+    ],
   ];
 
   for (const [column, sql] of alterations) {
@@ -5136,7 +5224,11 @@ async function applySettingsPayload(userId: string, settings: Record<string, unk
   }
 }
 
-async function restoreSettingsValue(userId: string, category: string, value: Record<string, unknown>) {
+async function restoreSettingsValue(
+  userId: string,
+  category: string,
+  value: Record<string, unknown>
+) {
   if (category === 'developer') {
     await ensureDeveloperSettingsTable();
     const existing = await dbGet<{ id: string }>(
@@ -5179,8 +5271,8 @@ router.get(
     const owner = req.query.owner as string | undefined;
 
     let keys = registryService.getRegistry();
-    if (scope) keys = keys.filter(k => k.scope === scope);
-    if (owner) keys = keys.filter(k => k.ownerContract === owner);
+    if (scope) keys = keys.filter((k) => k.scope === scope);
+    if (owner) keys = keys.filter((k) => k.ownerContract === owner);
 
     res.json({ keys, total: keys.length });
   })
@@ -5237,9 +5329,11 @@ router.put(
         req.params.key,
         meta.readOnlyInSettings || meta.managedIn !== 'settings' ? 'read_only' : 'permission_denied'
       );
-      return res
-        .status(denial.status)
-        .json({ ...denial, guidance: routing.guidance || denial.guidance, routeTo: denial.routeTo || routing.routeTo });
+      return res.status(denial.status).json({
+        ...denial,
+        guidance: routing.guidance || denial.guidance,
+        routeTo: denial.routeTo || routing.routeTo,
+      });
     }
 
     if (meta?.confirmationGate && !req.body.confirmed) {
@@ -5254,7 +5348,11 @@ router.put(
     const userId = req.userId || req.user?.id;
     const organizationId = req.user?.organizationId;
     const { value } = req.body;
-    const writeTarget = registryService.getWriteTarget(req.params.key, userRole, req.body.targetScope);
+    const writeTarget = registryService.getWriteTarget(
+      req.params.key,
+      userRole,
+      req.body.targetScope
+    );
 
     if (writeTarget === 'blocked') {
       const denial = registryService.buildDenialResponse(req.params.key, 'permission_denied');
@@ -5264,17 +5362,24 @@ router.put(
     if (writeTarget === 'personal') {
       await dbRun(
         'INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP) ON CONFLICT (user_id, key) DO UPDATE SET value = $3, updated_at = CURRENT_TIMESTAMP',
-        [userId, `settings:${meta.key}`, typeof value === 'object' ? JSON.stringify(value) : String(value)],
+        [
+          userId,
+          `settings:${meta.key}`,
+          typeof value === 'object' ? JSON.stringify(value) : String(value),
+        ],
         { fallback: false }
       );
     } else {
       if (!organizationId) {
-        return res.status(400).json({ error: 'Organization context is required for non-personal settings writes.' });
+        return res
+          .status(400)
+          .json({ error: 'Organization context is required for non-personal settings writes.' });
       }
 
-      const storeKey = writeTarget === 'tenant'
-        ? `tenant:${organizationId}:${meta.key}`
-        : `module:${organizationId}:${meta.moduleId}:${meta.key}`;
+      const storeKey =
+        writeTarget === 'tenant'
+          ? `tenant:${organizationId}:${meta.key}`
+          : `module:${organizationId}:${meta.moduleId}:${meta.key}`;
       await dbRun(
         'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
         [storeKey, typeof value === 'object' ? JSON.stringify(value) : String(value)],
@@ -5290,7 +5395,9 @@ router.put(
         [crypto.randomUUID(), userId, writeTarget, meta.key, 'updated', null, String(value)],
         { fallback: true }
       );
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     res.json({
       success: true,

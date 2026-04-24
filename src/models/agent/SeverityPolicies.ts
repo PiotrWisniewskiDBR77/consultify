@@ -1,22 +1,3 @@
-import type { ApprovalMode } from './ApprovalMode.js';
-import type { Severity } from './ExecutionProposalV1.js';
-
-export type SeverityPolicy = {
-  readonly defaultApproval: ApprovalMode;
-};
-
-const DEFAULT_POLICIES: Record<Severity, SeverityPolicy> = {
-  S0: { defaultApproval: 'implicit' },
-  S1: { defaultApproval: 'explicit' },
-  S2: { defaultApproval: 'explicit' },
-  S3: { defaultApproval: 'explicit' },
-  S4: { defaultApproval: 'explicit' },
-};
-
-export function getSeverityPolicy(severity: Severity): SeverityPolicy {
-  return DEFAULT_POLICIES[severity];
-}
-
 /**
  * V10-AGT-002 — Severity S0..S4 policy table (Wave A seed, schema-only).
  *
@@ -46,8 +27,8 @@ export function getSeverityPolicy(severity: Severity): SeverityPolicy {
 
 import type { ApprovalMode, Severity } from './ExecutionProposalV1';
 
-export { SEVERITIES } from './ExecutionProposalV1';
 export type { Severity } from './ExecutionProposalV1';
+export { SEVERITIES } from './ExecutionProposalV1';
 
 // ---------------------------------------------------------------------------
 // §1 — Policy sub-types.

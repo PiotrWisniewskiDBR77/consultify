@@ -7,6 +7,8 @@ import {
   buildAnnaVoiceBootstrap,
 } from '../services/ai/annaKnowledgeService.js';
 import { resolveAnnaSiteConfig } from '../services/ai/annaSiteConfig.js';
+import llmConfigService from '../services/ai/llmConfigService.js';
+import { buildConversationIntelligence } from '../services/ai/virtualWorkerConversationIntelligence.js';
 import {
   findOrCreateConversation,
   getConversationBySession,
@@ -17,7 +19,6 @@ import {
   buildWorkerKnowledgeContext,
   buildWorkerVoiceBootstrap,
 } from '../services/ai/virtualWorkerKnowledgeService.js';
-import { buildConversationIntelligence } from '../services/ai/virtualWorkerConversationIntelligence.js';
 import { getWorkerWithProfile } from '../services/ai/virtualWorkerService.js';
 import { buildWorkerWebAccessResult } from '../services/ai/virtualWorkerWebAccessService.js';
 import {
@@ -26,7 +27,6 @@ import {
 } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
-import llmConfigService from '../services/ai/llmConfigService.js';
 
 const router = Router();
 
@@ -100,8 +100,6 @@ function shouldFallbackToLegacyAnnaKnowledge(knowledge: AnnaKnowledgePayload): b
     knowledge.fallbackReason === 'worker_not_found'
   );
 }
-
-
 
 const ANNA_PUBLIC_BEHAVIOR = `
 IDENTITY
@@ -344,10 +342,16 @@ function buildAnnaServiceUnavailableMessage(locale?: string): string {
   return 'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.';
 }
 
-function enforceAnnaCitationsOrUncertainty(answer: string, sources: string[], locale?: string): string {
+function enforceAnnaCitationsOrUncertainty(
+  answer: string,
+  sources: string[],
+  locale?: string
+): string {
   const resolvedLocale = resolveAnnaLocale(locale);
   const trimmed = String(answer || '').trim();
-  const safeSources = Array.isArray(sources) ? sources.filter((s) => Boolean(String(s).trim())) : [];
+  const safeSources = Array.isArray(sources)
+    ? sources.filter((s) => Boolean(String(s).trim()))
+    : [];
 
   const alreadyHasSources =
     /\n\s*(Sources|Źródła)\s*:/i.test(trimmed) || /\b(Sources|Źródła):\s*\S+/i.test(trimmed);
@@ -458,7 +462,11 @@ function consumeAnnaFunnelEventRateLimit(req: Request, sessionId?: string, nowMs
   return { allowed: true as const };
 }
 
-function buildSystemInstruction(locale?: string, knowledgeContext?: string, siteKey?: string): string {
+function buildSystemInstruction(
+  locale?: string,
+  knowledgeContext?: string,
+  siteKey?: string
+): string {
   const siteConfig = resolveAnnaSiteConfig(siteKey);
   return `${ANNA_PUBLIC_BEHAVIOR}
 
@@ -498,7 +506,9 @@ export function buildAnnaRuntimeInstruction(args: {
   const additiveContext = [surfaceContext, conversationContext]
     .filter((item) => Boolean(String(item || '').trim()))
     .join('\n\n');
-  const shapedInstruction = additiveContext ? `${baseInstruction}\n\n${additiveContext}` : baseInstruction;
+  const shapedInstruction = additiveContext
+    ? `${baseInstruction}\n\n${additiveContext}`
+    : baseInstruction;
 
   if (!workerSystemPrompt) {
     return shapedInstruction;
@@ -614,7 +624,9 @@ function buildAnnaRetrievalQuery(
     `Current knowledge base article: ${surfaceContext.articleTitle}`,
     surfaceContext.categoryName ? `Category: ${surfaceContext.categoryName}` : null,
     surfaceContext.currentSection ? `Current section: ${surfaceContext.currentSection}` : null,
-    surfaceContext.articleSummary ? `Article summary: ${safeSlice(surfaceContext.articleSummary, 240)}` : null,
+    surfaceContext.articleSummary
+      ? `Article summary: ${safeSlice(surfaceContext.articleSummary, 240)}`
+      : null,
   ]
     .filter(Boolean)
     .join('\n');
@@ -653,13 +665,15 @@ function buildAnnaConversationContext(
   return sections.join('\n');
 }
 
-function buildAnnaSessionMemoryContext(conversation?: {
-  summary?: string | null;
-  session_memory?: Record<string, unknown>;
-  primary_topic?: string | null;
-  intent?: string | null;
-  products_discussed?: string[];
-} | null): string | null {
+function buildAnnaSessionMemoryContext(
+  conversation?: {
+    summary?: string | null;
+    session_memory?: Record<string, unknown>;
+    primary_topic?: string | null;
+    intent?: string | null;
+    products_discussed?: string[];
+  } | null
+): string | null {
   if (!conversation) return null;
   const summary = String(conversation.summary || '').trim();
   const memory = conversation.session_memory || {};
@@ -916,26 +930,29 @@ router.post(
       const conversationContext = [sessionMemoryContext, followUpContext]
         .filter((value) => Boolean(String(value || '').trim()))
         .join('\n\n');
-      const workerWeb =
-        workerConfig?.profile
-          ? await buildWorkerWebAccessResult({
-              workerSlug: 'anna',
-              profile: workerConfig.profile,
-              message: body.message,
-              locale: body.locale,
-              historyLength: history.length,
-            })
-          : null;
+      const workerWeb = workerConfig?.profile
+        ? await buildWorkerWebAccessResult({
+            workerSlug: 'anna',
+            profile: workerConfig.profile,
+            message: body.message,
+            locale: body.locale,
+            historyLength: history.length,
+          })
+        : null;
       const combinedSources = [
         ...knowledge.sources,
-        ...((workerWeb?.citations || []).map((citation) => citation.link).filter(Boolean) as string[]),
+        ...((workerWeb?.citations || [])
+          .map((citation) => citation.link)
+          .filter(Boolean) as string[]),
       ];
 
       const systemPrompt = buildAnnaRuntimeInstruction({
         locale: body.locale,
         knowledgeContext: [
           knowledge.contextText,
-          workerWeb?.used && workerWeb.systemInstructionAddon ? workerWeb.systemInstructionAddon : '',
+          workerWeb?.used && workerWeb.systemInstructionAddon
+            ? workerWeb.systemInstructionAddon
+            : '',
         ]
           .filter(Boolean)
           .join('\n\n'),
@@ -958,11 +975,10 @@ router.post(
         surfaceContext: body.surfaceContext as any,
         priorSummary: persistedConversation?.summary || null,
       });
-      const responseMode =
-        workerWeb?.used
-          ? 'knowledge_pill_web'
-          : knowledge.usedPillIds && knowledge.usedPillIds.length > 0
-            ? 'knowledge_pill'
+      const responseMode = workerWeb?.used
+        ? 'knowledge_pill_web'
+        : knowledge.usedPillIds && knowledge.usedPillIds.length > 0
+          ? 'knowledge_pill'
           : knowledge.sources.length > 0
             ? 'rag'
             : 'fallback';

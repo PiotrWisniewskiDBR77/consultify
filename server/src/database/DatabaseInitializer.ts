@@ -2576,7 +2576,9 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
             'INSERT INTO tp_migration_history (filename, duration_ms) VALUES ($1, $2)',
             [file, Date.now() - startMs]
           );
-        } catch { /* ignore if already recorded */ }
+        } catch {
+          /* ignore if already recorded */
+        }
       } else {
         logger.error(`${TAG} ✗ ${file} failed: ${msg}`);
         throw new Error(`Table Platform migration ${file} failed: ${msg}`);

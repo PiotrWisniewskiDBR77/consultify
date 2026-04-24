@@ -489,7 +489,10 @@ export async function acceptAgentAuditRun(args: {
   note?: string | null;
 }) {
   await ensureAgentAuditTables();
-  const existing = await getAgentAuditRun({ runId: args.runId, organizationId: args.organizationId });
+  const existing = await getAgentAuditRun({
+    runId: args.runId,
+    organizationId: args.organizationId,
+  });
   if (!existing) {
     throw new AgentAuditPersistenceError(`Agent audit run ${args.runId} not found`);
   }

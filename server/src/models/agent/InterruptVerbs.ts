@@ -1,4 +1,11 @@
-export type RunState = 'idle' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled' | 'aborted';
+export type RunState =
+  | 'idle'
+  | 'running'
+  | 'paused'
+  | 'completed'
+  | 'failed'
+  | 'cancelled'
+  | 'aborted';
 
 export type InterruptVerb =
   | 'pause'
@@ -38,7 +45,8 @@ export function applyInterrupt(current: RunState, verb: InterruptVerb): NextStat
       if (current !== 'paused') return { reason: 'illegal', nextState: current };
       return { reason: 'ok', nextState: 'running' };
     case 'cancel':
-      if (current === 'completed' || current === 'failed') return { reason: 'illegal', nextState: current };
+      if (current === 'completed' || current === 'failed')
+        return { reason: 'illegal', nextState: current };
       return { reason: 'ok', nextState: 'cancelled' };
     case 'skip':
       if (current !== 'running' && current !== 'paused') {
@@ -70,8 +78,8 @@ export function applyInterrupt(current: RunState, verb: InterruptVerb): NextStat
       }
       return { reason: 'ok', nextState: 'paused' };
     case 'abort':
-      if (current === 'completed' || current === 'failed') return { reason: 'illegal', nextState: current };
+      if (current === 'completed' || current === 'failed')
+        return { reason: 'illegal', nextState: current };
       return { reason: 'ok', nextState: 'aborted' };
   }
 }
-

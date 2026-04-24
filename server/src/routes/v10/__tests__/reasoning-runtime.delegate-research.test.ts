@@ -22,7 +22,8 @@ vi.mock('../../../middleware/auth.middleware.js', () => ({
     req.user = { id: 'route-user', organizationId: 'route-org', role: 'ADMIN' };
     next();
   }) satisfies RequestHandler,
-  requireOrganization: ((_req: unknown, _res: unknown, next: () => void) => next()) satisfies RequestHandler,
+  requireOrganization: ((_req: unknown, _res: unknown, next: () => void) =>
+    next()) satisfies RequestHandler,
 }));
 
 vi.mock('../../../services/v10/research/researchRuntimeService.js', () => ({
@@ -63,4 +64,3 @@ describe('reasoning-runtime.routes delegate research', () => {
     });
   });
 });
-

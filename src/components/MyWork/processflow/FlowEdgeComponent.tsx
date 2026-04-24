@@ -1,7 +1,7 @@
-import React from 'react';
-import { EdgeProps } from 'reactflow';
 // @ts-ignore — getSmoothStepPath is exported at runtime but types re-export may not resolve
 import { getSmoothStepPath } from '@reactflow/core';
+import React from 'react';
+import { EdgeProps } from 'reactflow';
 
 export const CONDITION_TYPES = ['', 'yes', 'no', 'default', 'exception'] as const;
 

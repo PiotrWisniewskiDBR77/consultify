@@ -192,8 +192,12 @@ export const FloatingNodeToolbar: React.FC<FloatingNodeToolbarProps> = ({
             onClick={() => onAction('mm_toggle_collapse')}
             title={
               isPl
-                ? (nodeData?._collapsed ? 'Rozwiń (Space)' : 'Zwiń (Space)')
-                : (nodeData?._collapsed ? 'Expand (Space)' : 'Collapse (Space)')
+                ? nodeData?._collapsed
+                  ? 'Rozwiń (Space)'
+                  : 'Zwiń (Space)'
+                : nodeData?._collapsed
+                  ? 'Expand (Space)'
+                  : 'Collapse (Space)'
             }
             aria-label={isPl ? 'Zwiń/Rozwiń' : 'Collapse/Expand'}
             className={btnClass(false)}

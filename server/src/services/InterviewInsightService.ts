@@ -27,7 +27,13 @@ export type InsightPromptType =
   | 'opportunity_scan'
   | 'maturity'
   | 'stakeholder_map';
-export type InsightStatus = 'generating' | 'completed' | 'failed' | 'draft' | 'in_review' | 'published';
+export type InsightStatus =
+  | 'generating'
+  | 'completed'
+  | 'failed'
+  | 'draft'
+  | 'in_review'
+  | 'published';
 
 export interface CreateInsightInput {
   organizationId: string;
@@ -560,12 +566,7 @@ Rules:
 
     const mapCrossSession = <T extends Record<string, any>>(items: T[]): T[] =>
       items.map((item) => {
-        const {
-          cross_session_pattern,
-          perspective_labels,
-          divergence_note,
-          ...rest
-        } = item;
+        const { cross_session_pattern, perspective_labels, divergence_note, ...rest } = item;
         return {
           ...rest,
           ...('cross_session_pattern' in item
@@ -574,16 +575,13 @@ Rules:
           ...('perspective_labels' in item
             ? {
                 perspective_labels: Array.isArray(perspective_labels)
-                  ? perspective_labels
-                      .map((entry) => String(entry || '').trim())
-                      .filter(Boolean)
+                  ? perspective_labels.map((entry) => String(entry || '').trim()).filter(Boolean)
                   : [],
               }
             : {}),
           ...('divergence_note' in item
             ? {
-                divergence_note:
-                  String(divergence_note || '').trim() || undefined,
+                divergence_note: String(divergence_note || '').trim() || undefined,
               }
             : {}),
         } as unknown as T;
@@ -906,7 +904,9 @@ ${answerText}
       missingData: safeJsonArray<string>(row.missing_data_json),
       status: row.status as InsightStatus,
       reviewStatus:
-        row.status === 'in_review' || row.status === 'published' ? (row.status as 'in_review' | 'published') : 'draft',
+        row.status === 'in_review' || row.status === 'published'
+          ? (row.status as 'in_review' | 'published')
+          : 'draft',
       publishedAt: row.published_at || undefined,
       reviewedBy: row.reviewed_by || undefined,
       errorMessage: row.error_message || undefined,

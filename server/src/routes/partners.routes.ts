@@ -21,10 +21,14 @@ import { NextFunction, Request, Response, Router } from 'express';
 import { getDatabase } from '../database/Database.js';
 import { verifyToken } from '../middleware/auth.middleware.js';
 import { verifySuperAdmin } from '../middleware/superAdmin.middleware.js';
+import {
+  listPartnerApplications,
+  reviewPartnerApplication,
+} from '../services/partnerApplicationIntakeService.js';
 import { generatePartnerCertificatePdf } from '../services/partnerCertificatePdf.js';
 import {
-  ensurePartnerCertificationMatrix,
   ensureLearningProgressRows,
+  ensurePartnerCertificationMatrix,
   getCertificationBlueprints,
   getCertificationModules,
   getCertificationReviewQueue,
@@ -32,8 +36,8 @@ import {
   getPartnerCertificationReporting,
   recalcCertificationProgress,
   startCertificationExam,
-  updateCertificationReviewState,
   submitCertificationExam,
+  updateCertificationReviewState,
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
@@ -41,10 +45,6 @@ import {
   getPartnerPayoutSettings,
   updatePartnerPayoutSettings,
 } from '../services/partnerPayoutSettingsService.js';
-import {
-  listPartnerApplications,
-  reviewPartnerApplication,
-} from '../services/partnerApplicationIntakeService.js';
 import PartnerProgramLedgerService from '../services/partnerProgramLedgerService.js';
 import PartnerReferralService from '../services/partnerReferralService.js';
 import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
@@ -1396,7 +1396,9 @@ router.get('/certifications', async (req: Request, res: Response, next: NextFunc
         const blueprint = blueprints.find((item) => item.type === updated.certification_type);
         const prerequisiteBlocked = (blueprint?.prerequisiteTypes || []).some((type) => {
           const prerequisite = currentByType.get(type);
-          return String(prerequisite?.status || '') !== 'completed' && !prerequisite?.certificate_id;
+          return (
+            String(prerequisite?.status || '') !== 'completed' && !prerequisite?.certificate_id
+          );
         });
 
         const totalMinutes = modules.reduce((sum, module) => {
@@ -1447,7 +1449,8 @@ router.get('/certifications', async (req: Request, res: Response, next: NextFunc
           needsReview,
           targetTier: updated.tier_target || blueprint?.targetTier || null,
           validUntil: updated.valid_until || undefined,
-          publicArticleSlug: updated.public_article_slug || blueprint?.publicArticleSlug || undefined,
+          publicArticleSlug:
+            updated.public_article_slug || blueprint?.publicArticleSlug || undefined,
           lifecycleStep: updated.partner_lifecycle_step || blueprint?.lifecycleStep || undefined,
           prerequisiteTypes: blueprint?.prerequisiteTypes || [],
           blockedReason,
@@ -1570,9 +1573,14 @@ router.post(
         [certId]
       );
       const language = looksPolish(req) ? 'pl' : 'en';
-      const validModules = await getCertificationModules(certification?.certification_type, language);
+      const validModules = await getCertificationModules(
+        certification?.certification_type,
+        language
+      );
       if (!validModules.some((module) => module.id === moduleId)) {
-        return res.status(404).json({ success: false, error: 'Module not found for certification' });
+        return res
+          .status(404)
+          .json({ success: false, error: 'Module not found for certification' });
       }
 
       await DbPromise.run(
@@ -1854,7 +1862,11 @@ router.get('/resources', async (req: Request, res: Response, next: NextFunction)
     const db = getDatabase();
     const partnerTier = await getEffectivePartnerTier(partnerOrgId);
     const language = looksPolish(req) ? 'pl' : 'en';
-    const certifications = await ensurePartnerCertificationMatrix({ partnerOrgId, userId, language });
+    const certifications = await ensurePartnerCertificationMatrix({
+      partnerOrgId,
+      userId,
+      language,
+    });
 
     const rows = await DbPromise.all<any>(
       db,
@@ -1886,7 +1898,8 @@ router.get('/resources', async (req: Request, res: Response, next: NextFunction)
         },
         {
           id: 'partner-doc-payouts',
-          title: language === 'pl' ? 'Activation i payout readiness' : 'Activation and payout readiness',
+          title:
+            language === 'pl' ? 'Activation i payout readiness' : 'Activation and payout readiness',
           href: '/docs/consultify-partner-operations/partner-payout-and-activation',
           kind: 'public_doc',
         },
@@ -2751,16 +2764,19 @@ partnerConfigRouter.get('/reporting', async (req: Request, res: Response, next: 
   }
 });
 
-partnerConfigRouter.get('/applications', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const limit = Math.max(1, Math.min(200, Number(req.query.limit || 100) || 100));
-    const data = await listPartnerApplications(limit);
-    res.json({ success: true, data });
-  } catch (error: any) {
-    logger.error('Error fetching partner applications:', error);
-    next(error);
+partnerConfigRouter.get(
+  '/applications',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const limit = Math.max(1, Math.min(200, Number(req.query.limit || 100) || 100));
+      const data = await listPartnerApplications(limit);
+      res.json({ success: true, data });
+    } catch (error: any) {
+      logger.error('Error fetching partner applications:', error);
+      next(error);
+    }
   }
-});
+);
 
 partnerConfigRouter.post(
   '/applications/:applicationId/review',

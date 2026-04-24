@@ -6,6 +6,7 @@
 
 import React from 'react';
 
+import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
 import {
   ProposalCardType,
   SessionGenerationStatus,
@@ -14,9 +15,6 @@ import {
   ToolType,
 } from '@/store/useToolStore';
 
-import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
-
-import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
 import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
 import { ContextStep } from './steps/ContextStep';
 import { ImpactHypothesisStep } from './steps/ImpactHypothesisStep';
@@ -28,6 +26,7 @@ import { ReasoningStep } from './steps/ReasoningStep';
 import { ReportStep } from './steps/ReportStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { SummaryStep } from './steps/SummaryStep';
+import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
 import { ToolContextPanel } from './ToolContextPanel';
 import { SWOTBuildPhase } from './tools/DynamicSWOT/SWOTBuildPhase';
 import { SWOTInputExplorationPhase } from './tools/DynamicSWOT/SWOTInputExplorationPhase';

@@ -33,9 +33,9 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { CHAT_V9_FLAGS } from '../chatV9FeatureFlags';
 import { isBackToChatButtonEnabled } from '../backToChatButtonFlag';
 import { isBackToChatShortcutEnabled } from '../backToChatShortcutFlag';
+import { CHAT_V9_FLAGS } from '../chatV9FeatureFlags';
 import { isWorkspaceBreadcrumbEnabled } from '../workspaceBreadcrumbFlag';
 
 function setQuery(search: string) {

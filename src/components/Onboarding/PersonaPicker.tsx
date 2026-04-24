@@ -39,7 +39,10 @@ export function PersonaPicker({
       </p>
       {inferredPersona ? (
         <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
-          Suggested path: <span className="font-semibold text-slate-700 dark:text-slate-200">{inferredPersona}</span>{' '}
+          Suggested path:{' '}
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            {inferredPersona}
+          </span>{' '}
           ({confidence} confidence)
         </p>
       ) : null}
@@ -57,7 +60,9 @@ export function PersonaPicker({
                   : 'border-slate-200 bg-slate-50 hover:border-violet-300 hover:bg-white dark:border-navy-700 dark:bg-navy-900 dark:hover:border-violet-500/40'
               }`}
             >
-              <div className="text-base font-semibold text-slate-900 dark:text-white">{persona}</div>
+              <div className="text-base font-semibold text-slate-900 dark:text-white">
+                {persona}
+              </div>
               <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                 {persona === 'Partner' && 'Client-share artifact first.'}
                 {persona === 'CFO' && 'Memo and spreadsheet first.'}

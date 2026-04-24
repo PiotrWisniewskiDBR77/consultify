@@ -1,4 +1,13 @@
-import { BellRing, CalendarClock, Loader2, Mail, PlayCircle, RefreshCw, Save } from 'lucide-react';
+import {
+  BellRing,
+  CalendarClock,
+  Loader2,
+  type LucideIcon,
+  Mail,
+  PlayCircle,
+  RefreshCw,
+  Save,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 
@@ -333,33 +342,43 @@ export function AgentSchedulePanel({ tenantId, className }: AgentSchedulePanelPr
           </p>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {[
-              ['inAppEnabled', 'In-app alerts', BellRing],
-              ['emailEnabled', 'Email alerts', Mail],
-              ['notifyOnFailure', 'Notify on failure', BellRing],
-              ['notifyOnSuccess', 'Notify on success', BellRing],
-              ['notifyOnQueued', 'Notify when queued', BellRing],
-            ].map(([key, label, Icon]) => (
-              <label
-                key={key}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-800"
-              >
-                <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
-                  <Icon size={14} />
-                  {label}
-                </span>
-                <input
-                  type="checkbox"
-                  checked={Boolean(currentNotifications[key as keyof typeof currentNotifications])}
-                  onChange={(event) =>
-                    handleNotificationChange(
-                      key as keyof NonNullable<AgentScheduleDraftInput['notifications']>,
-                      event.target.checked
-                    )
-                  }
-                />
-              </label>
-            ))}
+            {(
+              [
+                ['inAppEnabled', 'In-app alerts', BellRing],
+                ['emailEnabled', 'Email alerts', Mail],
+                ['notifyOnFailure', 'Notify on failure', BellRing],
+                ['notifyOnSuccess', 'Notify on success', BellRing],
+                ['notifyOnQueued', 'Notify when queued', BellRing],
+              ] as const
+            ).map(
+              ([key, label, Icon]: readonly [
+                keyof NonNullable<AgentScheduleDraftInput['notifications']>,
+                string,
+                LucideIcon,
+              ]) => (
+                <label
+                  key={key}
+                  className="flex items-center justify-between rounded-2xl border border-slate-200 px-3 py-2 dark:border-slate-800"
+                >
+                  <span className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                    <Icon size={14} />
+                    {label}
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={Boolean(
+                      currentNotifications[key as keyof typeof currentNotifications]
+                    )}
+                    onChange={(event) =>
+                      handleNotificationChange(
+                        key as keyof NonNullable<AgentScheduleDraftInput['notifications']>,
+                        event.target.checked
+                      )
+                    }
+                  />
+                </label>
+              )
+            )}
           </div>
 
           <div className="mt-4">

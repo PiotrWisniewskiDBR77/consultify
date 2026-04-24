@@ -213,10 +213,7 @@ describe('connectors-runtime.routes', () => {
   it('maps input errors to 422 responses', async () => {
     const service = {
       fetch: vi.fn(async () => {
-        throw new ConnectorsRuntimeInputError(
-          'CONNECTORS_RUNTIME_INVALID_URL',
-          'invalid url'
-        );
+        throw new ConnectorsRuntimeInputError('CONNECTORS_RUNTIME_INVALID_URL', 'invalid url');
       }),
       search: vi.fn(),
       readSource: vi.fn(),
@@ -275,7 +272,9 @@ describe('connectors-runtime.routes', () => {
       disconnectConnector: vi.fn(),
     };
 
-    const res = await request(createApp(service as any)).get('/api/v10/connectors-runtime/sessions');
+    const res = await request(createApp(service as any)).get(
+      '/api/v10/connectors-runtime/sessions'
+    );
 
     expect(res.status).toBe(200);
     expect(service.listSessions).toHaveBeenCalledWith({

@@ -1,4 +1,6 @@
-export type OutcomeRollupPipelineRunId = string & { readonly __brand: 'OutcomeRollupPipelineRunId' };
+export type OutcomeRollupPipelineRunId = string & {
+  readonly __brand: 'OutcomeRollupPipelineRunId';
+};
 
 export function unsafeOutcomeRollupPipelineRunId(value: string): OutcomeRollupPipelineRunId {
   return String(value) as OutcomeRollupPipelineRunId;
@@ -19,4 +21,3 @@ export function runOutcomeRollupPipeline(input: {
   void input;
   return { outcomeId: input.outcomeId, now: input.now, status: 'resolved' };
 }
-

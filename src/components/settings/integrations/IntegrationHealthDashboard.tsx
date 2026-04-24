@@ -28,7 +28,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
-import { V8SyncApi, shouldFallbackToLegacySync } from '../../../services/api/v8/sync';
+import { shouldFallbackToLegacySync, V8SyncApi } from '../../../services/api/v8/sync';
 import { User } from '../../../types';
 import { InfoButton } from '../../shared/InfoButton';
 
@@ -73,7 +73,14 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
     id: h.integrationId || h.id,
     name: h.connectorId || h.name || 'Integration',
     icon: h.icon || '🔗',
-    status: h.status === 'healthy' ? 'healthy' : h.status === 'degraded' ? 'warning' : h.status === 'unhealthy' ? 'error' : 'disconnected',
+    status:
+      h.status === 'healthy'
+        ? 'healthy'
+        : h.status === 'degraded'
+          ? 'warning'
+          : h.status === 'unhealthy'
+            ? 'error'
+            : 'disconnected',
     lastSync: h.lastRunAt || '',
     nextSync: '',
     syncFrequency: h.syncFrequency || 'On demand',
@@ -114,7 +121,9 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       }
     } catch (error: any) {
       console.error('Error loading integration health:', error);
-      setLoadError(t('integrations.health.loadError', 'Failed to load health data. Please try again.'));
+      setLoadError(
+        t('integrations.health.loadError', 'Failed to load health data. Please try again.')
+      );
     } finally {
       setLoading(false);
     }
@@ -142,7 +151,11 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       setIntegrations(
         integrations.map((i) => (i.id === integrationId ? { ...i, enabled: !i.enabled } : i))
       );
-      toast.success(integration.enabled ? t('integrations.health.paused', 'Integration paused') : t('integrations.health.enabled', 'Integration enabled'));
+      toast.success(
+        integration.enabled
+          ? t('integrations.health.paused', 'Integration paused')
+          : t('integrations.health.enabled', 'Integration enabled')
+      );
     } catch (error) {
       toast.error(t('integrations.health.updateFailed', 'Failed to update integration'));
     }
@@ -151,7 +164,15 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
   const bulkDisconnect = async () => {
     if (selectedIntegrations.length === 0) return;
 
-    if (!window.confirm(t('integrations.health.bulkDisconnectConfirm', `Disconnect ${selectedIntegrations.length} integration(s)?`))) return;
+    if (
+      !window.confirm(
+        t(
+          'integrations.health.bulkDisconnectConfirm',
+          `Disconnect ${selectedIntegrations.length} integration(s)?`
+        )
+      )
+    )
+      return;
 
     try {
       await Promise.all(
@@ -161,7 +182,9 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       setSelectedIntegrations([]);
       toast.success(t('integrations.health.disconnected', 'Integrations disconnected'));
     } catch (error) {
-      toast.error(t('integrations.health.disconnectFailed', 'Failed to disconnect some integrations'));
+      toast.error(
+        t('integrations.health.disconnectFailed', 'Failed to disconnect some integrations')
+      );
     }
   };
 
@@ -227,7 +250,10 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
             {t('settings.integrations.health.title', 'Integration Health')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            {t('settings.integrations.health.subtitle', 'Monitor and manage your connected integrations')}
+            {t(
+              'settings.integrations.health.subtitle',
+              'Monitor and manage your connected integrations'
+            )}
           </p>
         </div>
         {selectedIntegrations.length > 0 && (
@@ -245,27 +271,37 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">{integrations.length}</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t('integrations.health.statConnected', 'Connected')}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('integrations.health.statConnected', 'Connected')}
+          </p>
         </div>
         <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/30 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-600">{totalStats.healthy}</p>
-          <p className="text-sm text-green-600">{t('integrations.health.statHealthy', 'Healthy')}</p>
+          <p className="text-sm text-green-600">
+            {t('integrations.health.statHealthy', 'Healthy')}
+          </p>
         </div>
         <div className="bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-amber-600">{totalStats.warnings}</p>
-          <p className="text-sm text-amber-600">{t('integrations.health.statWarnings', 'Warnings')}</p>
+          <p className="text-sm text-amber-600">
+            {t('integrations.health.statWarnings', 'Warnings')}
+          </p>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
             {totalStats.requestsToday}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t('integrations.health.statRequestsToday', 'Requests Today')}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('integrations.health.statRequestsToday', 'Requests Today')}
+          </p>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
             {totalStats.requestsThisMonth.toLocaleString()}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t('integrations.health.statThisMonth', 'This Month')}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('integrations.health.statThisMonth', 'This Month')}
+          </p>
         </div>
       </div>
 
@@ -300,7 +336,8 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                       {getStatusIcon(integration.status)}
                     </h4>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {t('integrations.health.lastSync', 'Last sync')}: {integration.lastSync ? new Date(integration.lastSync).toLocaleString() : '—'}
+                      {t('integrations.health.lastSync', 'Last sync')}:{' '}
+                      {integration.lastSync ? new Date(integration.lastSync).toLocaleString() : '—'}
                       {integration.errorCount > 0 && (
                         <span className="ml-2 text-red-500 font-medium">
                           ({integration.errorCount} {t('integrations.health.errors', 'errors')})
@@ -317,7 +354,11 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
                         ? 'text-green-600 hover:bg-green-100 dark:hover:bg-green-500/20'
                         : 'text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700'
                     }`}
-                    title={integration.enabled ? t('integrations.health.pause', 'Pause') : t('integrations.health.enable', 'Enable')}
+                    title={
+                      integration.enabled
+                        ? t('integrations.health.pause', 'Pause')
+                        : t('integrations.health.enable', 'Enable')
+                    }
                   >
                     {integration.enabled ? <Pause size={18} /> : <Play size={18} />}
                   </button>
@@ -347,25 +388,33 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
               {/* Stats */}
               <div className="grid grid-cols-4 gap-4 text-sm">
                 <div>
-                    <p className="text-slate-500 dark:text-slate-400">{t('integrations.health.syncFrequency', 'Sync Frequency')}</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('integrations.health.syncFrequency', 'Sync Frequency')}
+                  </p>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {integration.syncFrequency}
                   </p>
                 </div>
                 <div>
-                    <p className="text-slate-500 dark:text-slate-400">{t('integrations.health.requestsToday', 'Requests Today')}</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('integrations.health.requestsToday', 'Requests Today')}
+                  </p>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {integration.usageStats.requestsToday}
                   </p>
                 </div>
                 <div>
-                    <p className="text-slate-500 dark:text-slate-400">{t('integrations.health.thisMonth', 'This Month')}</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('integrations.health.thisMonth', 'This Month')}
+                  </p>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {integration.usageStats.requestsThisMonth}
                   </p>
                 </div>
                 <div>
-                    <p className="text-slate-500 dark:text-slate-400">{t('integrations.health.dataTransferred', 'Data Transferred')}</p>
+                  <p className="text-slate-500 dark:text-slate-400">
+                    {t('integrations.health.dataTransferred', 'Data Transferred')}
+                  </p>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {integration.usageStats.dataTransferred}
                   </p>
@@ -404,7 +453,13 @@ export const IntegrationHealthDashboard: React.FC<IntegrationHealthDashboardProp
 function RecentActivityPanel({ integrationId }: { integrationId: string }) {
   const { t } = useTranslation();
   const [runs, setRuns] = React.useState<
-    Array<{ id: string; status: string; items_processed?: number; started_at: string; error_summary?: string }>
+    Array<{
+      id: string;
+      status: string;
+      items_processed?: number;
+      started_at: string;
+      error_summary?: string;
+    }>
   >([]);
   const [loading, setLoading] = React.useState(true);
 
@@ -420,13 +475,16 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [integrationId]);
 
   if (loading) {
     return (
       <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg flex items-center gap-2 text-sm text-slate-500">
-        <Loader2 size={14} className="animate-spin" /> {t('integrations.health.loadingActivity', 'Loading activity…')}
+        <Loader2 size={14} className="animate-spin" />{' '}
+        {t('integrations.health.loadingActivity', 'Loading activity…')}
       </div>
     );
   }
@@ -441,19 +499,33 @@ function RecentActivityPanel({ integrationId }: { integrationId: string }) {
 
   return (
     <div className="mt-4 p-4 bg-slate-100 dark:bg-navy-950 rounded-lg">
-      <h5 className="font-medium text-slate-900 dark:text-white mb-2">{t('integrations.health.recentActivity', 'Recent Activity')}</h5>
+      <h5 className="font-medium text-slate-900 dark:text-white mb-2">
+        {t('integrations.health.recentActivity', 'Recent Activity')}
+      </h5>
       <div className="space-y-2 text-sm">
         {runs.map((run) => (
           <div
             key={run.id}
             className={`flex items-center gap-2 ${
-              run.status === 'completed' ? 'text-green-600' : run.status === 'failed' ? 'text-red-500' : 'text-amber-600'
+              run.status === 'completed'
+                ? 'text-green-600'
+                : run.status === 'failed'
+                  ? 'text-red-500'
+                  : 'text-amber-600'
             }`}
           >
-            {run.status === 'completed' ? <CheckCircle size={14} /> : run.status === 'failed' ? <XCircle size={14} /> : <Clock size={14} />}
+            {run.status === 'completed' ? (
+              <CheckCircle size={14} />
+            ) : run.status === 'failed' ? (
+              <XCircle size={14} />
+            ) : (
+              <Clock size={14} />
+            )}
             <span>
               {run.status === 'completed'
-                ? t('integrations.health.syncedItems', 'Synced {{count}} items', { count: run.items_processed ?? 0 })
+                ? t('integrations.health.syncedItems', 'Synced {{count}} items', {
+                    count: run.items_processed ?? 0,
+                  })
                 : run.status === 'failed'
                   ? run.error_summary || t('integrations.health.syncFailed', 'Sync failed')
                   : t('integrations.health.syncInProgress', 'Sync in progress')}

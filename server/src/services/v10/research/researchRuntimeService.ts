@@ -1,13 +1,17 @@
+import {
+  runResearchMissionPipeline,
+  unsafeResearchMissionPipelineRunId,
+} from '../../../models/v10/pipelines/ResearchMissionPipeline.js';
 import type {
   ResearchMissionPlanRequest,
   ResearchMissionPlanResponse,
   ResearchMissionRequest,
-  ResearchRuntimeScope,
   ResearchMissionResponse,
   ResearchMissionSummaryRequest,
   ResearchMissionSummaryResponse,
   ResearchMissionWatchRequest,
   ResearchMissionWatchResponse,
+  ResearchRuntimeScope,
 } from '../../../types/v10/research-runtime.js';
 import {
   ResearchMissionPlanRequestSchema,
@@ -15,10 +19,6 @@ import {
   ResearchMissionSummaryRequestSchema,
   ResearchMissionWatchRequestSchema,
 } from '../../../types/v10/research-runtime.js';
-import {
-  runResearchMissionPipeline,
-  unsafeResearchMissionPipelineRunId,
-} from '../../../models/v10/pipelines/ResearchMissionPipeline.js';
 
 type MissionStatus = 'planned' | 'running' | 'completed';
 type MissionRecord = {
@@ -209,4 +209,3 @@ export class ResearchRuntimeService {
 }
 
 export const researchRuntimeService = new ResearchRuntimeService();
-

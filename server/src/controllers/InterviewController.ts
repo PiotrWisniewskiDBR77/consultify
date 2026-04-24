@@ -16,15 +16,15 @@ import { z } from 'zod';
 
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
-import notificationService from '../services/notificationService.js';
-import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import {
   buildAssignmentManagerScopeClause,
   buildSessionManagerScopeClause,
+  type InterviewManagerScope,
   isOrgWideInterviewManagerRole,
   resolveInterviewManagerScope,
-  type InterviewManagerScope,
 } from '../services/interviewManagerScope.js';
+import notificationService from '../services/notificationService.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';
@@ -123,7 +123,11 @@ const INTERVIEW_AI_FIX_TYPES = [
 
 type InterviewAiFixType = (typeof INTERVIEW_AI_FIX_TYPES)[number];
 type InterviewAiAnswerVerdict = 'sufficient' | 'needs_improvement' | 'insufficient' | 'unanswered';
-type InterviewAiOverallVerdict = 'ready_for_approval' | 'needs_improvement' | 'insufficient' | 'empty';
+type InterviewAiOverallVerdict =
+  | 'ready_for_approval'
+  | 'needs_improvement'
+  | 'insufficient'
+  | 'empty';
 type InterviewReviewAlignment =
   | 'aligned'
   | 'manager_stricter_than_ai'
@@ -339,7 +343,8 @@ const appendInterviewReviewDecisionMemory = (params: {
     aiWeakAnswerCount: params.aiReview?.weakAnswerMap?.length || 0,
     alignment: resolveInterviewReviewAlignment(params.action, params.aiReview),
     reason: params.reason || undefined,
-    missingItems: params.missingItems && params.missingItems.length > 0 ? params.missingItems : undefined,
+    missingItems:
+      params.missingItems && params.missingItems.length > 0 ? params.missingItems : undefined,
   };
 
   return [...(params.existing || []), entry].slice(-25);
@@ -557,7 +562,9 @@ async function ensureInterviewAssignmentAiReviewColumns(): Promise<void> {
     );
   }
   if (!cols.has('ai_reviewed_at')) {
-    await queryHelpers.queryRun(`ALTER TABLE interview_assignments ADD COLUMN ai_reviewed_at TIMESTAMP`);
+    await queryHelpers.queryRun(
+      `ALTER TABLE interview_assignments ADD COLUMN ai_reviewed_at TIMESTAMP`
+    );
   }
   if (!cols.has('review_decision_memory_json')) {
     await queryHelpers.queryRun(
@@ -2067,7 +2074,8 @@ export const InterviewController = {
 
     if (normalizedStatus && (sessionCheck as any)?.assignment_id) {
       res.status(409).json({
-        error: 'Assignment-backed sessions must use assignment workflow actions instead of direct status changes',
+        error:
+          'Assignment-backed sessions must use assignment workflow actions instead of direct status changes',
       });
       return;
     }
@@ -2356,7 +2364,9 @@ export const InterviewController = {
           ...createPayloadBase,
           assigneeUserIds: [userId],
         });
-        const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(created.id);
+        const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(
+          created.id
+        );
         if (assignmentWithDetails) {
           createdAssignments.push(assignmentWithDetails);
         }
@@ -2377,7 +2387,9 @@ export const InterviewController = {
       teamLeadId: teamLeadId || undefined,
     });
 
-    const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(assignment.id);
+    const assignmentWithDetails = await interviewAssignmentService.getByIdWithDetails(
+      assignment.id
+    );
     res.status(201).json(assignmentWithDetails);
   }),
 
@@ -3226,7 +3238,10 @@ export const InterviewController = {
         });
       }
     } catch (e) {
-      logger.warn('[InterviewController] Failed to send interview_approval_revoked notification', e);
+      logger.warn(
+        '[InterviewController] Failed to send interview_approval_revoked notification',
+        e
+      );
     }
 
     const updatedAssignment = await queryHelpers.queryOne(
@@ -3670,20 +3685,16 @@ export const InterviewController = {
   manageAssignment: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
     const { id } = req.params;
-    const {
-      assigneeUserId,
-      templateId,
-      dueAt,
-      priority,
-      notes,
-      mode,
-      reason,
-    } = req.body || {};
+    const { assigneeUserId, templateId, dueAt, priority, notes, mode, reason } = req.body || {};
 
     await ensureInterviewAssignmentManagementSchema();
 
     const allowedPriorities = new Set(['low', 'medium', 'high', 'urgent']);
-    const allowedModes = new Set<InterviewAssignmentManageMode>(['update', 'restart', 'assign_again']);
+    const allowedModes = new Set<InterviewAssignmentManageMode>([
+      'update',
+      'restart',
+      'assign_again',
+    ]);
     if (mode !== undefined && !allowedModes.has(mode)) {
       res.status(400).json({ error: 'Invalid mode. Must be update, restart, or assign_again.' });
       return;
@@ -3715,7 +3726,9 @@ export const InterviewController = {
     }
 
     const nextAssigneeUserId =
-      assigneeUserId !== undefined ? String(assigneeUserId || '').trim() : (existing as any).assignee_user_id;
+      assigneeUserId !== undefined
+        ? String(assigneeUserId || '').trim()
+        : (existing as any).assignee_user_id;
     const nextTemplateId =
       templateId !== undefined ? String(templateId || '').trim() : (existing as any).template_id;
     const nextPriority =
@@ -3925,11 +3938,7 @@ export const InterviewController = {
       return;
     }
 
-    if (
-      effectiveMode === 'restart' &&
-      currentStatus !== 'assigned' &&
-      !normalizedReason
-    ) {
+    if (effectiveMode === 'restart' && currentStatus !== 'assigned' && !normalizedReason) {
       res.status(400).json({ error: 'Reason is required when replacing a started assignment' });
       return;
     }
@@ -3947,9 +3956,7 @@ export const InterviewController = {
       priority: nextPriority as 'low' | 'medium' | 'high' | 'urgent',
       escalateTo: (existing as any).escalate_to || user.id,
       notes:
-        typeof nextNotes === 'string' && nextNotes.trim().length > 0
-          ? nextNotes.trim()
-          : undefined,
+        typeof nextNotes === 'string' && nextNotes.trim().length > 0 ? nextNotes.trim() : undefined,
       processRef: (existing as any).process_ref || undefined,
       createdBy: user.id,
     });
@@ -4299,9 +4306,14 @@ export const InterviewController = {
         [user.organizationId]
       );
       if (langRow && (langRow as any).setting_value) {
-        orgLanguage = String((langRow as any).setting_value).trim().toLowerCase().substring(0, 2);
+        orgLanguage = String((langRow as any).setting_value)
+          .trim()
+          .toLowerCase()
+          .substring(0, 2);
       }
-    } catch { /* fallback to 'en' */ }
+    } catch {
+      /* fallback to 'en' */
+    }
 
     const rows = await queryHelpers.queryAll(
       `SELECT
@@ -4335,7 +4347,16 @@ export const InterviewController = {
          t.is_default DESC,
          t.category ASC,
          t.name ASC`,
-      [user.organizationId, orgLanguage, orgLanguage, user.organizationId, user.organizationId, user.id, user.role, user.id]
+      [
+        user.organizationId,
+        orgLanguage,
+        orgLanguage,
+        user.organizationId,
+        user.organizationId,
+        user.id,
+        user.role,
+        user.id,
+      ]
     );
 
     const templates = (rows || [])
@@ -5390,7 +5411,12 @@ Answer type: ${(question as any).answer_type || 'open'}`;
             `UPDATE interview_assignments
              SET ai_review_snapshot_json = ?, ai_reviewed_at = ?, updated_at = ?
              WHERE id = ?`,
-            [JSON.stringify(evaluation), new Date().toISOString(), new Date().toISOString(), (assignment as any).id]
+            [
+              JSON.stringify(evaluation),
+              new Date().toISOString(),
+              new Date().toISOString(),
+              (assignment as any).id,
+            ]
           );
         }
       } catch (persistError) {

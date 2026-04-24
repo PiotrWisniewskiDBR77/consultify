@@ -1,38 +1,59 @@
-import React from 'react';
-import { Handle, Position } from 'reactflow';
-import type { NodeProps } from 'reactflow';
 import {
-  CircleDot,
-  StopCircle,
-  Square,
-  Diamond,
+  ArrowLeftFromLine,
+  ArrowRightFromLine,
   Box,
+  Building2,
+  CircleDot,
   Database,
+  Diamond,
+  GitMerge,
+  ListOrdered,
+  ShoppingCart,
+  Square,
+  StopCircle,
+  Triangle,
+  Truck,
   Users,
   UserSquare2,
-  Building2,
-  GitMerge,
   Zap,
-  Triangle,
-  ArrowRightFromLine,
-  ArrowLeftFromLine,
-  ShoppingCart,
-  ListOrdered,
-  Truck,
 } from 'lucide-react';
+import React from 'react';
+import type { NodeProps } from 'reactflow';
+import { Handle, Position } from 'reactflow';
 
 export type FlowShape =
-  | 'start' | 'end' | 'action' | 'decision'
-  | 'bpmn_event' | 'bpmn_task' | 'bpmn_gateway'
-  | 'system_service' | 'system_db' | 'system_actor'
-  | 'org_role' | 'org_team' | 'org_handoff'
-  | 'auto_trigger' | 'auto_api' | 'auto_condition'
-  | 'vsm_process' | 'vsm_inventory' | 'vsm_supplier' | 'vsm_customer' | 'vsm_kaizen'
-  | 'vsm_push_arrow' | 'vsm_pull_arrow' | 'vsm_supermarket' | 'vsm_fifo';
+  | 'start'
+  | 'end'
+  | 'action'
+  | 'decision'
+  | 'bpmn_event'
+  | 'bpmn_task'
+  | 'bpmn_gateway'
+  | 'system_service'
+  | 'system_db'
+  | 'system_actor'
+  | 'org_role'
+  | 'org_team'
+  | 'org_handoff'
+  | 'auto_trigger'
+  | 'auto_api'
+  | 'auto_condition'
+  | 'vsm_process'
+  | 'vsm_inventory'
+  | 'vsm_supplier'
+  | 'vsm_customer'
+  | 'vsm_kaizen'
+  | 'vsm_push_arrow'
+  | 'vsm_pull_arrow'
+  | 'vsm_supermarket'
+  | 'vsm_fifo';
 
 export const LANE_HEIGHT = 140;
 
-export const SHAPE_CONFIG: Record<FlowShape, { icon: React.ComponentType<{ size?: number }>; label: string; labelPl: string }> = {
+export const SHAPE_CONFIG: Record<
+  FlowShape,
+  { icon: React.ComponentType<{ size?: number }>; label: string; labelPl: string }
+> = {
   start: { icon: CircleDot, label: 'Start', labelPl: 'Start' },
   end: { icon: StopCircle, label: 'End', labelPl: 'Koniec' },
   action: { icon: Square, label: 'Action', labelPl: 'Akcja' },

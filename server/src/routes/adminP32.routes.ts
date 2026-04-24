@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+
 import { Response, Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -50,9 +51,21 @@ type AdminRoleAssignment = {
 const DEFAULT_ADMIN_IAM_POLICY: AdminIamPolicy = {
   delegatedRoles: [
     { id: 'billing_admin', name: 'Billing Admin', capabilities: ['billing:read', 'billing:write'] },
-    { id: 'security_admin', name: 'Security Admin', capabilities: ['security:write', 'audit:read'] },
-    { id: 'ai_admin', name: 'AI Admin', capabilities: ['ai:governance', 'ai:operations', 'ai:budget'] },
-    { id: 'compliance_admin', name: 'Compliance Admin', capabilities: ['audit:read', 'compliance:read'] },
+    {
+      id: 'security_admin',
+      name: 'Security Admin',
+      capabilities: ['security:write', 'audit:read'],
+    },
+    {
+      id: 'ai_admin',
+      name: 'AI Admin',
+      capabilities: ['ai:governance', 'ai:operations', 'ai:budget'],
+    },
+    {
+      id: 'compliance_admin',
+      name: 'Compliance Admin',
+      capabilities: ['audit:read', 'compliance:read'],
+    },
   ],
   accessReviewsEnabled: true,
   accessReviewCadenceDays: 90,
@@ -167,7 +180,9 @@ async function getActorCapabilities(
   const activeAssignments = assignments.filter(
     (assignment) =>
       assignment.userId === actorId &&
-      (!assignment.expiresAt || Number.isNaN(Date.parse(assignment.expiresAt)) || Date.parse(assignment.expiresAt) > now)
+      (!assignment.expiresAt ||
+        Number.isNaN(Date.parse(assignment.expiresAt)) ||
+        Date.parse(assignment.expiresAt) > now)
   );
   return Array.from(new Set(activeAssignments.flatMap((assignment) => assignment.capabilities)));
 }
@@ -176,16 +191,13 @@ async function getAdminActor(
   req: AuthRequest,
   res: Response,
   requiredCapabilities: string[] = []
-): Promise<
-  | {
+): Promise<{
   orgId: string;
   actorId: string;
   actorRole: string;
   isSuperAdmin: boolean;
   capabilities: string[];
-}
-  | null
-> {
+} | null> {
   const orgId = String(req.query.orgId || req.user?.organizationId || '').trim();
   const actorId = String(req.user?.id || '').trim();
   const isSuperAdmin = isRequestSuperAdmin(req);
@@ -313,7 +325,11 @@ async function writeOrganizationSetting(orgId: string, key: string, value: unkno
 }
 
 async function readAdminIamPolicy(orgId: string): Promise<AdminIamPolicy> {
-  return readOrganizationSetting<AdminIamPolicy>(orgId, 'admin_iam_policy', DEFAULT_ADMIN_IAM_POLICY);
+  return readOrganizationSetting<AdminIamPolicy>(
+    orgId,
+    'admin_iam_policy',
+    DEFAULT_ADMIN_IAM_POLICY
+  );
 }
 
 async function writeAdminIamPolicy(orgId: string, value: AdminIamPolicy) {
@@ -337,10 +353,11 @@ async function writeSecuritySettings(
     ssoProtocol: 'saml' | 'oidc';
   }
 ) {
-  await dbRun(
-    `UPDATE organizations SET mfa_required = ?, mfa_grace_period_days = ? WHERE id = ?`,
-    [next.mfaRequired ? 1 : 0, next.mfaGracePeriodDays, orgId]
-  );
+  await dbRun(`UPDATE organizations SET mfa_required = ?, mfa_grace_period_days = ? WHERE id = ?`, [
+    next.mfaRequired ? 1 : 0,
+    next.mfaGracePeriodDays,
+    orgId,
+  ]);
 
   await dbRun(
     `INSERT OR REPLACE INTO organization_settings (organization_id, setting_key, setting_value, updated_at)
@@ -436,10 +453,10 @@ async function writeCollaborationControls(
   ] as const;
 
   for (const [key, value] of writes) {
-    await dbRun(
-      `INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`,
-      [key, JSON.stringify(value)]
-    );
+    await dbRun(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`, [
+      key,
+      JSON.stringify(value),
+    ]);
   }
 }
 
@@ -607,7 +624,10 @@ async function deleteBillingPaymentMethod(orgId: string, paymentMethodId: string
   );
   if (!existing) return { notFound: true, isDefault: false };
   if (Number(existing.is_default || 0) === 1) return { notFound: false, isDefault: true };
-  await dbRun(`DELETE FROM payment_methods WHERE id = ? AND organization_id = ?`, [paymentMethodId, orgId]);
+  await dbRun(`DELETE FROM payment_methods WHERE id = ? AND organization_id = ?`, [
+    paymentMethodId,
+    orgId,
+  ]);
   return { notFound: false, isDefault: false };
 }
 
@@ -645,7 +665,9 @@ async function readBillingUsageDetails(orgId: string) {
       [orgId],
       { fallback: true }
     ),
-    dbGet<any>(`SELECT * FROM billing_alerts WHERE organization_id = ?`, [orgId], { fallback: true }),
+    dbGet<any>(`SELECT * FROM billing_alerts WHERE organization_id = ?`, [orgId], {
+      fallback: true,
+    }),
   ]);
   return {
     usageRecords: usageRows || [],
@@ -809,10 +831,18 @@ async function readComplianceSummary(orgId: string) {
   const retention = byType.get('data_retention');
   return {
     gdpr: gdpr
-      ? { enabled: !!gdpr.enabled, ...parseJson(gdpr.settings_data, { features: [] }), lastUpdated: gdpr.updated_at }
+      ? {
+          enabled: !!gdpr.enabled,
+          ...parseJson(gdpr.settings_data, { features: [] }),
+          lastUpdated: gdpr.updated_at,
+        }
       : { enabled: false, features: [], lastUpdated: null },
     cookies: cookies
-      ? { enabled: !!cookies.enabled, ...parseJson(cookies.settings_data, {}), lastUpdated: cookies.updated_at }
+      ? {
+          enabled: !!cookies.enabled,
+          ...parseJson(cookies.settings_data, {}),
+          lastUpdated: cookies.updated_at,
+        }
       : { enabled: false, lastUpdated: null },
     dataRetention: retention
       ? parseJson(retention.settings_data, {
@@ -832,7 +862,13 @@ async function readComplianceSummary(orgId: string) {
   };
 }
 
-async function writeComplianceSetting(orgId: string, actorId: string, type: string, enabled: boolean, data: any) {
+async function writeComplianceSetting(
+  orgId: string,
+  actorId: string,
+  type: string,
+  enabled: boolean,
+  data: any
+) {
   await dbRun(
     `INSERT INTO compliance_settings (id, organization_id, setting_type, settings_data, enabled, updated_by, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
@@ -946,14 +982,24 @@ async function deleteScimToken(orgId: string, id: string) {
   await dbRun(`DELETE FROM scim_tokens WHERE id = ? AND organization_id = ?`, [id, orgId]);
 }
 
-async function createScimGroupMapping(externalGroupName: string, externalGroupId: string, internalRole: string) {
+async function createScimGroupMapping(
+  externalGroupName: string,
+  externalGroupId: string,
+  internalRole: string
+) {
   const id = uuidv4();
   await dbRun(
     `INSERT INTO scim_group_mappings (id, external_group_id, external_group_name, internal_role)
      VALUES (?, ?, ?, ?)`,
     [id, externalGroupId, externalGroupName, internalRole || 'member']
   );
-  return { id, externalGroupId, externalGroupName, internalRole: internalRole || 'member', isActive: true };
+  return {
+    id,
+    externalGroupId,
+    externalGroupName,
+    internalRole: internalRole || 'member',
+    isActive: true,
+  };
 }
 
 async function deleteScimGroupMapping(id: string) {
@@ -965,14 +1011,15 @@ async function readRiskSummary(orgId: string) {
   const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
   let llmIncidents: any[] = [];
   try {
-    llmIncidents = (await dbAll<any>(
-      `SELECT id, provider, status, started_at, resolved_at, severity
+    llmIncidents =
+      (await dbAll<any>(
+        `SELECT id, provider, status, started_at, resolved_at, severity
        FROM llm_incidents
        ORDER BY started_at DESC
        LIMIT 20`,
-      [],
-      { fallback: true }
-    )) || [];
+        [],
+        { fallback: true }
+      )) || [];
   } catch {
     llmIncidents = [];
   }
@@ -1011,7 +1058,8 @@ function matchesAuditFilter(log: any, orgId: string, filters: Record<string, str
   if (logOrgId !== orgId) return false;
   if (filters.actionType && String(log.action_type) !== filters.actionType) return false;
   if (filters.status && String(log.status) !== filters.status) return false;
-  if (filters.riskScoreMin && Number(log.risk_score || 0) < Number(filters.riskScoreMin)) return false;
+  if (filters.riskScoreMin && Number(log.risk_score || 0) < Number(filters.riskScoreMin))
+    return false;
   if (filters.search) {
     const haystack = JSON.stringify({
       actionType: log.action_type,
@@ -1032,32 +1080,39 @@ router.get(
     if (!actor) return;
     const { orgId } = actor;
 
-    const [memberRows, ownershipTransfers, billingSummary, aiSummary, securityPolicy, collaboration, auditStats] =
-      await Promise.all([
-        dbAll<{ role?: string; total?: number }>(
-          `SELECT role, COUNT(*) as total FROM organization_members WHERE organization_id = ? GROUP BY role`,
-          [orgId],
-          { fallback: true }
-        ),
-        dbGet<{ total?: number }>(
-          `SELECT COUNT(*) as total FROM ownership_transfer_requests WHERE organization_id = ? AND status = 'pending'`,
-          [orgId],
-          { fallback: true }
-        ),
-        readBillingSummary(orgId),
-        readAiSummary(orgId),
-        readSecuritySettings(orgId),
-        readCollaborationControls(orgId),
-        (async () => {
-          const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
-          const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
-          return {
-            totalLogs: scoped.length,
-            unresolvedCount: scoped.filter((log: any) => log.status !== 'resolved').length,
-            highRiskCount: scoped.filter((log: any) => Number(log.risk_score || 0) >= 60).length,
-          };
-        })(),
-      ]);
+    const [
+      memberRows,
+      ownershipTransfers,
+      billingSummary,
+      aiSummary,
+      securityPolicy,
+      collaboration,
+      auditStats,
+    ] = await Promise.all([
+      dbAll<{ role?: string; total?: number }>(
+        `SELECT role, COUNT(*) as total FROM organization_members WHERE organization_id = ? GROUP BY role`,
+        [orgId],
+        { fallback: true }
+      ),
+      dbGet<{ total?: number }>(
+        `SELECT COUNT(*) as total FROM ownership_transfer_requests WHERE organization_id = ? AND status = 'pending'`,
+        [orgId],
+        { fallback: true }
+      ),
+      readBillingSummary(orgId),
+      readAiSummary(orgId),
+      readSecuritySettings(orgId),
+      readCollaborationControls(orgId),
+      (async () => {
+        const logs = await adminAuditService.getLogs({ limit: 1000, offset: 0 });
+        const scoped = logs.filter((log: any) => matchesAuditFilter(log, orgId, {}));
+        return {
+          totalLogs: scoped.length,
+          unresolvedCount: scoped.filter((log: any) => log.status !== 'resolved').length,
+          highRiskCount: scoped.filter((log: any) => Number(log.risk_score || 0) >= 60).length,
+        };
+      })(),
+    ]);
 
     const membersByRole = Object.fromEntries(
       memberRows.map((row) => [String(row.role || 'unknown').toUpperCase(), Number(row.total || 0)])
@@ -1117,7 +1172,9 @@ router.put(
     const current = await readAdminIamPolicy(actor.orgId);
     const body = req.body || {};
     const next: AdminIamPolicy = {
-      delegatedRoles: Array.isArray(body.delegatedRoles) ? body.delegatedRoles : current.delegatedRoles,
+      delegatedRoles: Array.isArray(body.delegatedRoles)
+        ? body.delegatedRoles
+        : current.delegatedRoles,
       accessReviewsEnabled: Boolean(body.accessReviewsEnabled ?? current.accessReviewsEnabled),
       accessReviewCadenceDays: Number(
         body.accessReviewCadenceDays ?? current.accessReviewCadenceDays ?? 90
@@ -1335,7 +1392,13 @@ router.put(
   asyncHandler(async (req: AuthRequest, res) => {
     const actor = await getAdminActor(req, res, ['compliance:write']);
     if (!actor) return;
-    await writeComplianceSetting(actor.orgId, actor.actorId, 'data_retention', true, req.body || {});
+    await writeComplianceSetting(
+      actor.orgId,
+      actor.actorId,
+      'data_retention',
+      true,
+      req.body || {}
+    );
     await adminAuditService.logAction({
       adminId: actor.actorId,
       actionType: 'update_data_retention_policy',
@@ -1582,7 +1645,15 @@ router.get(
     const scoped = logs.filter((log: any) =>
       matchesAuditFilter(log, orgId, { actionType: '', status: '', riskScoreMin: '', search: '' })
     );
-    const headers = ['id', 'admin_id', 'action_type', 'risk_score', 'risk_level', 'status', 'created_at'];
+    const headers = [
+      'id',
+      'admin_id',
+      'action_type',
+      'risk_score',
+      'risk_level',
+      'status',
+      'created_at',
+    ];
     const rows = scoped.map((log: any) =>
       headers.map((header) => JSON.stringify(log[header] ?? '')).join(',')
     );

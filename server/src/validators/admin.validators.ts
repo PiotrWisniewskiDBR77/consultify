@@ -11,7 +11,14 @@ import { z } from 'zod';
 // REQUEST SCHEMAS
 // ==========================================
 
-const userStatusValues = ['active', 'blocked', 'inactive', 'suspended', 'pending', 'deleted'] as const;
+const userStatusValues = [
+  'active',
+  'blocked',
+  'inactive',
+  'suspended',
+  'pending',
+  'deleted',
+] as const;
 
 const userStatusSchema = z
   .string()

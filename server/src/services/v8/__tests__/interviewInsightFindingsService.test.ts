@@ -84,12 +84,14 @@ beforeEach(() => {
     }
     if (sql.includes('FROM interview_insight_findings WHERE insight_id = ? AND source_key = ?')) {
       return (
-        findingsTable.find(
-          (row) => row.insight_id === params[0] && row.source_key === params[1]
-        ) || null
+        findingsTable.find((row) => row.insight_id === params[0] && row.source_key === params[1]) ||
+        null
       );
     }
-    if (sql.includes('FROM interview_insight_evidence_pointers') && sql.includes('source_fingerprint')) {
+    if (
+      sql.includes('FROM interview_insight_evidence_pointers') &&
+      sql.includes('source_fingerprint')
+    ) {
       return (
         pointersTable.find(
           (row) =>
@@ -148,7 +150,9 @@ beforeEach(() => {
     }
 
     if (sql.includes('UPDATE interview_insight_findings')) {
-      const row = findingsTable.find((item) => item.id === params[params.length - 1] || item.id === params[8]);
+      const row = findingsTable.find(
+        (item) => item.id === params[params.length - 1] || item.id === params[8]
+      );
       if (row) {
         if (sql.includes('finding_statement = ?')) {
           row.finding_statement = params[0];
@@ -182,7 +186,9 @@ beforeEach(() => {
     }
 
     if (sql.includes('UPDATE interview_insight_evidence_pointers')) {
-      const row = pointersTable.find((item) => item.id === params[params.length - 1] || item.id === params[3]);
+      const row = pointersTable.find(
+        (item) => item.id === params[params.length - 1] || item.id === params[3]
+      );
       if (row) {
         if (sql.includes("pointer_state = 'removed'")) {
           row.pointer_state = 'removed';

@@ -18,6 +18,7 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
+
 import { PARTNER_DOCS } from '../../config/partnerKnowledge';
 import { ROUTES } from '../../routes/routeConfig';
 import {
@@ -39,25 +40,32 @@ const PROGRAM_JOURNEY: JourneyStep[] = [
   {
     title: 'Pozyskanie szansy',
     description: 'Partner otwiera rozmowę z klientem i kwalifikuje potrzebę transformacji.',
-    detail: 'Anna, materiały sprzedażowe i playbook pomagają skrócić czas od pierwszego kontaktu do discovery.',
+    detail:
+      'Anna, materiały sprzedażowe i playbook pomagają skrócić czas od pierwszego kontaktu do discovery.',
     icon: Briefcase,
   },
   {
     title: 'Wspólny discovery i oferta',
-    description: 'Partner prowadzi rozmowy wspólnie z Consultify albo samodzielnie z naszym wsparciem.',
-    detail: 'Deal desk, case studies i struktura wdrożenia pomagają domknąć ofertę bez improwizacji.',
+    description:
+      'Partner prowadzi rozmowy wspólnie z Consultify albo samodzielnie z naszym wsparciem.',
+    detail:
+      'Deal desk, case studies i struktura wdrożenia pomagają domknąć ofertę bez improwizacji.',
     icon: Users,
   },
   {
     title: 'Aktywacja partnera i klienta',
-    description: 'Po zaakceptowaniu ścieżki partner przechodzi ten sam flow aplikacyjny z LP i z produktu.',
-    detail: 'Onboarding, wybór tracku, payout readiness i aktywacja workspace są spięte jednym procesem.',
+    description:
+      'Po zaakceptowaniu ścieżki partner przechodzi ten sam flow aplikacyjny z LP i z produktu.',
+    detail:
+      'Onboarding, wybór tracku, payout readiness i aktywacja workspace są spięte jednym procesem.',
     icon: Workflow,
   },
   {
     title: 'Rozliczenie i wzrost',
-    description: 'Partner zarabia na sprzedaży, co-sellu i aktywacjach zgodnie z poziomem programu.',
-    detail: 'Program jest zaprojektowany pod przewidywalny wzrost: academy, certyfikacja, case pack i payout flow.',
+    description:
+      'Partner zarabia na sprzedaży, co-sellu i aktywacjach zgodnie z poziomem programu.',
+    detail:
+      'Program jest zaprojektowany pod przewidywalny wzrost: academy, certyfikacja, case pack i payout flow.',
     icon: ShieldCheck,
   },
 ];
@@ -102,630 +110,668 @@ export const PartnerPricingView: React.FC = () => {
   return (
     <MarketingLayout>
       <div className="min-h-full bg-slate-50 dark:bg-navy-950">
-      <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-20 pt-14 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent dark:from-purple-900/20" />
+        <section className="relative overflow-hidden bg-gradient-to-b from-purple-50 via-white to-slate-50 px-6 pb-20 pt-14 dark:from-navy-900 dark:via-navy-950 dark:to-navy-950">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-100/40 via-transparent to-transparent dark:from-purple-900/20" />
 
-        <div className="relative mx-auto max-w-6xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center"
-          >
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
-                <span className="h-2 w-2 rounded-full bg-purple-500" />
-                Consultify Partner Program
-              </span>
-
-              <h1 className="mt-6 text-4xl font-black tracking-tight text-navy-950 dark:text-white md:text-5xl">
-                Program partnerski, który daje{' '}
-                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  realny pipeline, wdrożenia i payout
+          <div className="relative mx-auto max-w-6xl">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center"
+            >
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full bg-purple-100 px-4 py-2 text-sm font-semibold text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                  <span className="h-2 w-2 rounded-full bg-purple-500" />
+                  Consultify Partner Program
                 </span>
-              </h1>
 
-              <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
-                To nie jest tylko listing partnerów. Otrzymujesz wspólną ścieżkę aplikacji, playbook
-                handlowy, academy, case pack, wsparcie deal-desk i model rozliczeń dopasowany do
-                wzrostu partnera.
-              </p>
+                <h1 className="mt-6 text-4xl font-black tracking-tight text-navy-950 dark:text-white md:text-5xl">
+                  Program partnerski, który daje{' '}
+                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    realny pipeline, wdrożenia i payout
+                  </span>
+                </h1>
 
-              <div className="mt-8 flex flex-wrap gap-3">
-                <button
-                  onClick={startApplication}
-                  className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
-                >
-                  Apply
-                  <ArrowRight size={18} />
-                </button>
-                <button
-                  onClick={openPartnerDocs}
-                  className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:bg-navy-900 dark:text-white dark:hover:bg-white/5"
-                >
-                  Odkrywaj program
-                </button>
-                <button
-                  onClick={openPartnerLogin}
-                  className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
-                >
-                  <LogIn size={16} />
-                  Zaloguj się jako partner
-                </button>
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="rounded-2xl border border-purple-200 bg-white/90 p-6 shadow-sm dark:border-purple-900/40 dark:bg-navy-900/80 md:col-span-2">
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-600 dark:text-purple-300">
-                  Co dostajesz od dnia 1
+                <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-600 dark:text-slate-300">
+                  To nie jest tylko listing partnerów. Otrzymujesz wspólną ścieżkę aplikacji,
+                  playbook handlowy, academy, case pack, wsparcie deal-desk i model rozliczeń
+                  dopasowany do wzrostu partnera.
                 </p>
-                <div className="mt-4 grid gap-4 md:grid-cols-3">
-                  <div>
-                    <p className="text-3xl font-black text-navy-950 dark:text-white">1 flow</p>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                      Taka sama ścieżka wejścia z LP i z aplikacji.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-black text-navy-950 dark:text-white">do 20%</p>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                      Prowizji oraz progresji wraz z certyfikacją i aktywacją.
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-3xl font-black text-navy-950 dark:text-white">case pack</p>
-                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                      Materiały, które pomagają domknąć discovery i ofertę.
-                    </p>
-                  </div>
+
+                <div className="mt-8 flex flex-wrap gap-3">
+                  <button
+                    onClick={startApplication}
+                    className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
+                  >
+                    Apply
+                    <ArrowRight size={18} />
+                  </button>
+                  <button
+                    onClick={openPartnerDocs}
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-6 py-3 text-sm font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:bg-navy-900 dark:text-white dark:hover:bg-white/5"
+                  >
+                    Odkrywaj program
+                  </button>
+                  <button
+                    onClick={openPartnerLogin}
+                    className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-6 py-3 text-sm font-bold text-slate-700 transition hover:border-slate-400 hover:bg-slate-100 dark:border-white/15 dark:text-white dark:hover:bg-white/5"
+                  >
+                    <LogIn size={16} />
+                    Zaloguj się jako partner
+                  </button>
                 </div>
               </div>
 
-              {PROGRAM_JOURNEY.map((step) => {
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-purple-200 bg-white/90 p-6 shadow-sm dark:border-purple-900/40 dark:bg-navy-900/80 md:col-span-2">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-purple-600 dark:text-purple-300">
+                    Co dostajesz od dnia 1
+                  </p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-3">
+                    <div>
+                      <p className="text-3xl font-black text-navy-950 dark:text-white">1 flow</p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                        Taka sama ścieżka wejścia z LP i z aplikacji.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-black text-navy-950 dark:text-white">do 20%</p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                        Prowizji oraz progresji wraz z certyfikacją i aktywacją.
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-3xl font-black text-navy-950 dark:text-white">case pack</p>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                        Materiały, które pomagają domknąć discovery i ofertę.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {PROGRAM_JOURNEY.map((step) => {
+                  const Icon = step.icon;
+                  return (
+                    <div
+                      key={step.title}
+                      className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900"
+                    >
+                      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                        <Icon size={20} />
+                      </div>
+                      <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
+                        {step.title}
+                      </h3>
+                      <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                        {step.description}
+                      </p>
+                      <p className="mt-3 text-sm font-medium text-slate-800 dark:text-slate-200">
+                        {step.detail}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        <section className="px-6 py-10">
+          <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-500">
+                  Proof + next step
+                </p>
+                <h2 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
+                  Kanoniczne partner docs i wspólna ścieżka wejścia
+                </h2>
+                <p className="mt-3 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
+                  Public docs są source of truth dla programu, activation, certification i case
+                  studies. Niezależnie od tego, skąd partner startuje, kończy w tym samym
+                  application flow.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <button
+                  onClick={openPartnerDocs}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-5 py-4 text-sm font-bold text-slate-700 transition hover:border-purple-400 hover:text-purple-600 dark:border-white/15 dark:text-white"
+                >
+                  Otwórz partner docs
+                  <ArrowRight size={16} />
+                </button>
+                <button
+                  onClick={openCaseStudy}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-600 px-5 py-4 text-sm font-bold text-white transition hover:bg-purple-500"
+                >
+                  Zobacz case study
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="px-6 py-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-10 text-center">
+              <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+                Jak ten program pracuje w praktyce
+              </h2>
+              <p className="mx-auto mt-4 max-w-3xl text-slate-600 dark:text-slate-400">
+                Budujemy program pod partnera, który chce sprzedawać i wdrażać Consultify
+                profesjonalnie, a nie tylko zbierać leady. Dlatego ścieżka łączy sales enablement,
+                onboarding, certyfikację i payout readiness.
+              </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-4">
+              {PROGRAM_JOURNEY.map((step, idx) => {
                 const Icon = step.icon;
                 return (
                   <div
                     key={step.title}
-                    className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-navy-700 dark:bg-navy-900"
+                    className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
                   >
-                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
-                      <Icon size={20} />
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                        <Icon size={18} />
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
+                        0{idx + 1}
+                      </span>
                     </div>
-                    <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">{step.title}</h3>
-                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{step.description}</p>
-                    <p className="mt-3 text-sm font-medium text-slate-800 dark:text-slate-200">{step.detail}</p>
+                    <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
+                      {step.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                      {step.description}
+                    </p>
                   </div>
                 );
               })}
             </div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
 
-      <section className="px-6 py-10">
-        <div className="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-purple-500">
-                Proof + next step
-              </p>
-              <h2 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
-                Kanoniczne partner docs i wspólna ścieżka wejścia
+        <section id="partner-case-study" className="bg-white px-6 py-16 dark:bg-navy-900/50">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-10 flex flex-col gap-4 text-center lg:text-left">
+              <div className="inline-flex w-fit self-center rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 lg:self-start">
+                Case study partnera
+              </div>
+              <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+                Przykład korzyści w pracy partnera, nie tylko na slajdzie
               </h2>
-              <p className="mt-3 max-w-3xl text-sm text-slate-600 dark:text-slate-400">
-                Public docs są source of truth dla programu, activation, certification i case studies.
-                Niezależnie od tego, skąd partner startuje, kończy w tym samym application flow.
+              <p className="max-w-3xl text-slate-600 dark:text-slate-400">
+                Partner wprowadził Consultify do rozmowy z firmą produkcyjną, przeprowadził
+                discovery w oparciu o frameworki oceny, a potem zbudował wspólną ofertę z
+                Consultify. Klient szybciej przeszedł z diagnozy do roadmapy, a partner miał gotowy
+                case do dalszej sprzedaży.
               </p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                onClick={openPartnerDocs}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-300 px-5 py-4 text-sm font-bold text-slate-700 transition hover:border-purple-400 hover:text-purple-600 dark:border-white/15 dark:text-white"
-              >
-                Otwórz partner docs
-                <ArrowRight size={16} />
-              </button>
-              <button
-                onClick={openCaseStudy}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-purple-600 px-5 py-4 text-sm font-bold text-white transition hover:bg-purple-500"
-              >
-                Zobacz case study
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl font-black text-navy-950 dark:text-white">Jak ten program pracuje w praktyce</h2>
-            <p className="mx-auto mt-4 max-w-3xl text-slate-600 dark:text-slate-400">
-              Budujemy program pod partnera, który chce sprzedawać i wdrażać Consultify profesjonalnie,
-              a nie tylko zbierać leady. Dlatego ścieżka łączy sales enablement, onboarding,
-              certyfikację i payout readiness.
-            </p>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-4">
-            {PROGRAM_JOURNEY.map((step, idx) => {
-              const Icon = step.icon;
-              return (
-                <div
-                  key={step.title}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
-                      <Icon size={18} />
-                    </div>
-                    <span className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">
-                      0{idx + 1}
-                    </span>
-                  </div>
-                  <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">{step.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{step.description}</p>
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-7 dark:border-navy-700 dark:bg-navy-950">
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                  Partner motion
+                </p>
+                <h3 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
+                  Od rozmowy sprzedażowej do aktywnego rolloutu
+                </h3>
+                <div className="mt-6 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
+                  <p>
+                    Partner rozpoczął od warsztatu z zarządem i kierownikami operacyjnymi. Dzięki
+                    gotowym materiałom Consultify nie musiał budować narracji od zera.
+                  </p>
+                  <p>
+                    W kolejnym kroku wspólnie przygotowano assessment, mapę problemów i plan pilota.
+                    To skróciło czas dopięcia oferty oraz zwiększyło wiarygodność po stronie
+                    klienta.
+                  </p>
+                  <p>
+                    Po aktywacji partner wykorzystał academy i case pack do powtórzenia tego samego
+                    modelu u kolejnych klientów, zamiast każdorazowo wymyślać proces od nowa.
+                  </p>
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+              </div>
 
-      <section id="partner-case-study" className="bg-white px-6 py-16 dark:bg-navy-900/50">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-10 flex flex-col gap-4 text-center lg:text-left">
-            <div className="inline-flex w-fit self-center rounded-full bg-emerald-100 px-4 py-2 text-sm font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 lg:self-start">
-              Case study partnera
-            </div>
-            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
-              Przykład korzyści w pracy partnera, nie tylko na slajdzie
-            </h2>
-            <p className="max-w-3xl text-slate-600 dark:text-slate-400">
-              Partner wprowadził Consultify do rozmowy z firmą produkcyjną, przeprowadził discovery w
-              oparciu o frameworki oceny, a potem zbudował wspólną ofertę z Consultify. Klient szybciej
-              przeszedł z diagnozy do roadmapy, a partner miał gotowy case do dalszej sprzedaży.
-            </p>
-          </div>
+              <div className="grid gap-4">
+                {[
+                  'Krótszy czas od pierwszej rozmowy do warsztatu discovery',
+                  'Mocniejsza oferta dzięki wspólnemu case pack i frameworkom',
+                  'Powtarzalny model wdrożenia dla kolejnych klientów partnera',
+                  'Jasna ścieżka aktywacji, academy i payout readiness',
+                ].map((item) => (
+                  <div
+                    key={item}
+                    className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Check className="mt-0.5 text-emerald-500" size={18} />
+                      <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                        {item}
+                      </p>
+                    </div>
+                  </div>
+                ))}
 
-          <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-7 dark:border-navy-700 dark:bg-navy-950">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
-                Partner motion
-              </p>
-              <h3 className="mt-3 text-2xl font-black text-navy-950 dark:text-white">
-                Od rozmowy sprzedażowej do aktywnego rolloutu
-              </h3>
-              <div className="mt-6 space-y-4 text-sm leading-7 text-slate-600 dark:text-slate-300">
-                <p>
-                  Partner rozpoczął od warsztatu z zarządem i kierownikami operacyjnymi. Dzięki gotowym
-                  materiałom Consultify nie musiał budować narracji od zera.
-                </p>
-                <p>
-                  W kolejnym kroku wspólnie przygotowano assessment, mapę problemów i plan pilota. To
-                  skróciło czas dopięcia oferty oraz zwiększyło wiarygodność po stronie klienta.
-                </p>
-                <p>
-                  Po aktywacji partner wykorzystał academy i case pack do powtórzenia tego samego modelu
-                  u kolejnych klientów, zamiast każdorazowo wymyślać proces od nowa.
-                </p>
+                <button
+                  onClick={openContact}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-navy-950 px-5 py-4 text-sm font-bold text-white transition hover:bg-navy-900 dark:bg-white dark:text-navy-950"
+                >
+                  Skontaktuj się, aby omówić pełny case
+                  <ArrowRight size={16} />
+                </button>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="grid gap-4">
+        <section className="px-6 py-16">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-12 text-center">
+              <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+                Korzyści z partnerstwa
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
+                Program jest zbudowany tak, by partner mógł szybciej wejść na rynek, przejść przez
+                aktywację i skalować współpracę bez ręcznego zszywania procesu.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {priorityBenefits.map((benefit, idx) => {
+                const Icon = benefit.icon;
+                return (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30">
+                      <Icon size={24} className="text-purple-600 dark:text-purple-400" />
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
+                      {benefit.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                      {benefit.description}
+                    </p>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="bg-slate-100 px-6 py-16 dark:bg-navy-900/40">
+          <div className="mx-auto max-w-6xl">
+            <div className="mb-12 text-center">
+              <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+                Start application: wspólna ścieżka z LP i z aplikacji
+              </h2>
+              <p className="mx-auto mt-4 max-w-3xl text-slate-600 dark:text-slate-400">
+                Każde wejście do programu prowadzi do tego samego procesu aplikacyjnego. Partner
+                może przejść go samodzielnie, a jeśli potrzebuje niestandardowych warunków, ma od
+                razu ścieżkę kontaktu do ustalenia modelu współpracy.
+              </p>
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-3">
               {[
-                'Krótszy czas od pierwszej rozmowy do warsztatu discovery',
-                'Mocniejsza oferta dzięki wspólnemu case pack i frameworkom',
-                'Powtarzalny model wdrożenia dla kolejnych klientów partnera',
-                'Jasna ścieżka aktywacji, academy i payout readiness',
-              ].map((item) => (
-                <div
-                  key={item}
-                  className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900"
-                >
-                  <div className="flex items-start gap-3">
-                    <Check className="mt-0.5 text-emerald-500" size={18} />
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-200">{item}</p>
+                {
+                  title: '1. Apply i utworzenie ścieżki',
+                  description:
+                    'Kliknięcie Apply przenosi partnera do tego samego flow onboardingowego niezależnie od miejsca wejścia.',
+                  icon: FileCheck2,
+                },
+                {
+                  title: '2. Automatyczna kwalifikacja',
+                  description:
+                    'Partner akceptuje warunki, wybiera track i uzupełnia dane potrzebne do aktywacji oraz dalszych rozliczeń.',
+                  icon: Clock3,
+                },
+                {
+                  title: '3. Kontakt i warunki specjalne',
+                  description:
+                    'Jeśli współpraca wymaga innego modelu, partner może od razu przejść do kontaktu z zespołem partnerskim.',
+                  icon: MessageCircle,
+                },
+              ].map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div
+                    key={step.title}
+                    className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                  >
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
+                      <Icon size={22} />
+                    </div>
+                    <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">
+                      {step.title}
+                    </h3>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                      {step.description}
+                    </p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
+            </div>
 
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <button
+                onClick={startApplication}
+                className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-8 py-4 font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
+              >
+                Start application
+                <ArrowRight size={18} />
+              </button>
               <button
                 onClick={openContact}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl bg-navy-950 px-5 py-4 text-sm font-bold text-white transition hover:bg-navy-900 dark:bg-white dark:text-navy-950"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-8 py-4 font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:text-white dark:hover:bg-white/5"
               >
-                Skontaktuj się, aby omówić pełny case
-                <ArrowRight size={16} />
+                Ustal warunki współpracy
               </button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
-              Korzyści z partnerstwa
-            </h2>
-            <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
-              Program jest zbudowany tak, by partner mógł szybciej wejść na rynek, przejść przez
-              aktywację i skalować współpracę bez ręcznego zszywania procesu.
-            </p>
+        <section className="px-6 py-16">
+          <div className="mx-auto max-w-7xl">
+            <div className="mb-12 text-center">
+              <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+                Poziomy programu
+              </h2>
+              <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
+                Poziomy nadal porządkują rozwój partnera, ale najpierw partner dostaje jeden, spójny
+                flow wejścia i jasną ścieżkę wzrostu.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              {PARTNER_TIERS.map((tier, idx) => {
+                const Icon = tier.icon;
+                return (
+                  <motion.div
+                    key={tier.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: idx * 0.08 }}
+                    className={`relative flex flex-col rounded-2xl p-6 ${
+                      tier.highlight
+                        ? 'z-10 scale-[1.02] bg-gradient-to-b from-purple-600 to-purple-700 text-white shadow-2xl shadow-purple-500/20 ring-4 ring-purple-500/50'
+                        : 'border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900'
+                    }`}
+                  >
+                    {tier.badge && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span className="rounded-full bg-amber-400 px-3 py-1 text-xs font-black uppercase tracking-wider text-navy-950 shadow-lg">
+                          {tier.badge}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-xl ${
+                          tier.highlight ? 'bg-white/20' : 'bg-purple-100 dark:bg-purple-900/30'
+                        }`}
+                      >
+                        <Icon
+                          size={24}
+                          className={
+                            tier.highlight ? 'text-white' : 'text-purple-600 dark:text-purple-400'
+                          }
+                        />
+                      </div>
+                      <div>
+                        <h3
+                          className={`text-xl font-black ${
+                            tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
+                          }`}
+                        >
+                          {tier.name}
+                        </h3>
+                        <p
+                          className={`text-xs ${
+                            tier.highlight
+                              ? 'text-purple-200'
+                              : 'text-slate-500 dark:text-slate-400'
+                          }`}
+                        >
+                          {tier.subtitle}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="flex items-baseline gap-1">
+                        <span
+                          className={`text-4xl font-black ${
+                            tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
+                          }`}
+                        >
+                          {tier.commissionRate}%
+                        </span>
+                        <span
+                          className={`text-sm ${
+                            tier.highlight
+                              ? 'text-purple-200'
+                              : 'text-slate-500 dark:text-slate-400'
+                          }`}
+                        >
+                          commission
+                        </span>
+                      </div>
+                      <p
+                        className={`mt-1 text-xs ${
+                          tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        Support SLA: {tier.supportSLA}
+                      </p>
+                    </div>
+
+                    <p
+                      className={`mt-4 text-sm ${
+                        tier.highlight ? 'text-purple-100' : 'text-slate-600 dark:text-slate-400'
+                      }`}
+                    >
+                      {tier.description}
+                    </p>
+
+                    <ul className="mt-6 flex-1 space-y-2">
+                      {tier.features.slice(0, 7).map((feature, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          {feature.included ? (
+                            <Check
+                              size={16}
+                              className={`mt-0.5 flex-shrink-0 ${
+                                tier.highlight ? 'text-purple-200' : 'text-green-500'
+                              }`}
+                            />
+                          ) : (
+                            <X
+                              size={16}
+                              className={`mt-0.5 flex-shrink-0 ${
+                                tier.highlight
+                                  ? 'text-purple-300/50'
+                                  : 'text-slate-300 dark:text-slate-600'
+                              }`}
+                            />
+                          )}
+                          <span
+                            className={`text-xs ${
+                              feature.included
+                                ? tier.highlight
+                                  ? 'text-purple-100'
+                                  : 'text-slate-700 dark:text-slate-300'
+                                : tier.highlight
+                                  ? 'text-purple-300/50'
+                                  : 'text-slate-400 dark:text-slate-500'
+                            } ${feature.highlight ? 'font-semibold' : ''}`}
+                          >
+                            {feature.name}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div
+                      className={`mt-6 rounded-xl p-3 ${
+                        tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
+                      }`}
+                    >
+                      <p
+                        className={`mb-2 text-xs font-semibold uppercase tracking-wide ${
+                          tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
+                        }`}
+                      >
+                        Wymagania
+                      </p>
+                      <div className="space-y-1">
+                        {tier.requirements.map((req, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between gap-3 text-xs"
+                          >
+                            <span
+                              className={
+                                tier.highlight
+                                  ? 'text-purple-200'
+                                  : 'text-slate-600 dark:text-slate-400'
+                              }
+                            >
+                              {req.label}
+                            </span>
+                            <span
+                              className={`text-right font-semibold ${
+                                tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
+                              }`}
+                            >
+                              {req.value}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleTierCta(tier)}
+                      className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
+                        tier.ctaVariant === 'primary'
+                          ? 'bg-white text-purple-700 shadow-lg hover:bg-purple-50'
+                          : tier.ctaVariant === 'secondary'
+                            ? 'bg-purple-600 text-white hover:bg-purple-500'
+                            : 'border-2 border-slate-300 text-navy-950 hover:bg-slate-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5'
+                      }`}
+                    >
+                      {tier.id === 'PLATINUM' ? 'Ustal warunki' : 'Start application'}
+                      <ArrowRight size={16} />
+                    </button>
+                  </motion.div>
+                );
+              })}
+            </div>
+
+            <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-slate-500 dark:text-slate-400">
+              {TRUST_INDICATORS.map((indicator, idx) => {
+                const Icon = indicator.icon;
+                return (
+                  <div key={idx} className="flex items-center gap-2">
+                    <Icon size={18} className="text-purple-500" />
+                    <span>{indicator.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
+        </section>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {priorityBenefits.map((benefit, idx) => {
-              const Icon = benefit.icon;
-              return (
+        <section className="px-6 py-16">
+          <div className="mx-auto max-w-3xl">
+            <div className="mb-12 text-center">
+              <h2 className="text-3xl font-black text-navy-950 dark:text-white">
+                Najczęściej zadawane pytania
+              </h2>
+              <p className="mt-4 text-slate-600 dark:text-slate-400">
+                Masz scenariusz, który wymaga niestandardowych warunków?{' '}
+                <button onClick={openContact} className="text-purple-600 hover:underline">
+                  Skontaktuj się z nami
+                </button>
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {PARTNER_FAQS.map((faq, idx) => (
                 <motion.div
                   key={idx}
                   initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.05 }}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-900/30">
-                    <Icon size={24} className="text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">{benefit.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{benefit.description}</p>
-                </motion.div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="bg-slate-100 px-6 py-16 dark:bg-navy-900/40">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
-              Start application: wspólna ścieżka z LP i z aplikacji
-            </h2>
-            <p className="mx-auto mt-4 max-w-3xl text-slate-600 dark:text-slate-400">
-              Każde wejście do programu prowadzi do tego samego procesu aplikacyjnego. Partner może
-              przejść go samodzielnie, a jeśli potrzebuje niestandardowych warunków, ma od razu ścieżkę
-              kontaktu do ustalenia modelu współpracy.
-            </p>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-3">
-            {[
-              {
-                title: '1. Apply i utworzenie ścieżki',
-                description:
-                  'Kliknięcie Apply przenosi partnera do tego samego flow onboardingowego niezależnie od miejsca wejścia.',
-                icon: FileCheck2,
-              },
-              {
-                title: '2. Automatyczna kwalifikacja',
-                description:
-                  'Partner akceptuje warunki, wybiera track i uzupełnia dane potrzebne do aktywacji oraz dalszych rozliczeń.',
-                icon: Clock3,
-              },
-              {
-                title: '3. Kontakt i warunki specjalne',
-                description:
-                  'Jeśli współpraca wymaga innego modelu, partner może od razu przejść do kontaktu z zespołem partnerskim.',
-                icon: MessageCircle,
-              },
-            ].map((step) => {
-              const Icon = step.icon;
-              return (
-                <div
-                  key={step.title}
-                  className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900"
-                >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300">
-                    <Icon size={22} />
-                  </div>
-                  <h3 className="mt-4 text-lg font-bold text-navy-950 dark:text-white">{step.title}</h3>
-                  <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">{step.description}</p>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <button
-              onClick={startApplication}
-              className="inline-flex items-center gap-2 rounded-full bg-purple-600 px-8 py-4 font-bold text-white shadow-lg shadow-purple-500/30 transition hover:bg-purple-500"
-            >
-              Start application
-              <ArrowRight size={18} />
-            </button>
-            <button
-              onClick={openContact}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-slate-300 px-8 py-4 font-bold text-navy-950 transition hover:border-purple-300 hover:bg-white dark:border-white/20 dark:text-white dark:hover:bg-white/5"
-            >
-              Ustal warunki współpracy
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-7xl">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-black text-navy-950 dark:text-white">Poziomy programu</h2>
-            <p className="mx-auto mt-4 max-w-2xl text-slate-600 dark:text-slate-400">
-              Poziomy nadal porządkują rozwój partnera, ale najpierw partner dostaje jeden, spójny
-              flow wejścia i jasną ścieżkę wzrostu.
-            </p>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {PARTNER_TIERS.map((tier, idx) => {
-              const Icon = tier.icon;
-              return (
-                <motion.div
-                  key={tier.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: idx * 0.08 }}
-                  className={`relative flex flex-col rounded-2xl p-6 ${
-                    tier.highlight
-                      ? 'z-10 scale-[1.02] bg-gradient-to-b from-purple-600 to-purple-700 text-white shadow-2xl shadow-purple-500/20 ring-4 ring-purple-500/50'
-                      : 'border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900'
-                  }`}
-                >
-                  {tier.badge && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <span className="rounded-full bg-amber-400 px-3 py-1 text-xs font-black uppercase tracking-wider text-navy-950 shadow-lg">
-                        {tier.badge}
+                  <button
+                    onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
+                    className="flex w-full items-center justify-between p-4 text-left"
+                  >
+                    <div className="flex items-start gap-3">
+                      <HelpCircle size={20} className="mt-0.5 flex-shrink-0 text-purple-500" />
+                      <span className="font-bold text-navy-950 dark:text-white">
+                        {faq.question}
                       </span>
                     </div>
-                  )}
-
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                        tier.highlight ? 'bg-white/20' : 'bg-purple-100 dark:bg-purple-900/30'
+                    <ChevronDown
+                      size={20}
+                      className={`flex-shrink-0 text-slate-400 dark:text-slate-500 transition-transform ${
+                        expandedFaq === idx ? 'rotate-180' : ''
                       }`}
-                    >
-                      <Icon
-                        size={24}
-                        className={
-                          tier.highlight ? 'text-white' : 'text-purple-600 dark:text-purple-400'
-                        }
-                      />
-                    </div>
-                    <div>
-                      <h3
-                        className={`text-xl font-black ${
-                          tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
-                        }`}
-                      >
-                        {tier.name}
-                      </h3>
-                      <p
-                        className={`text-xs ${
-                          tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
-                        }`}
-                      >
-                        {tier.subtitle}
+                    />
+                  </button>
+                  {expandedFaq === idx && (
+                    <div className="border-t border-slate-100 p-4 pb-5 pt-4 dark:border-navy-700">
+                      <p className="pl-8 text-sm text-slate-600 dark:text-slate-400">
+                        {faq.answer}
                       </p>
                     </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <div className="flex items-baseline gap-1">
-                      <span
-                        className={`text-4xl font-black ${
-                          tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
-                        }`}
-                      >
-                        {tier.commissionRate}%
-                      </span>
-                      <span
-                        className={`text-sm ${
-                          tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
-                        }`}
-                      >
-                        commission
-                      </span>
-                    </div>
-                    <p
-                      className={`mt-1 text-xs ${
-                        tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
-                      }`}
-                    >
-                      Support SLA: {tier.supportSLA}
-                    </p>
-                  </div>
-
-                  <p
-                    className={`mt-4 text-sm ${
-                      tier.highlight ? 'text-purple-100' : 'text-slate-600 dark:text-slate-400'
-                    }`}
-                  >
-                    {tier.description}
-                  </p>
-
-                  <ul className="mt-6 flex-1 space-y-2">
-                    {tier.features.slice(0, 7).map((feature, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        {feature.included ? (
-                          <Check
-                            size={16}
-                            className={`mt-0.5 flex-shrink-0 ${
-                              tier.highlight ? 'text-purple-200' : 'text-green-500'
-                            }`}
-                          />
-                        ) : (
-                          <X
-                            size={16}
-                            className={`mt-0.5 flex-shrink-0 ${
-                              tier.highlight
-                                ? 'text-purple-300/50'
-                                : 'text-slate-300 dark:text-slate-600'
-                            }`}
-                          />
-                        )}
-                        <span
-                          className={`text-xs ${
-                            feature.included
-                              ? tier.highlight
-                                ? 'text-purple-100'
-                                : 'text-slate-700 dark:text-slate-300'
-                              : tier.highlight
-                                ? 'text-purple-300/50'
-                                : 'text-slate-400 dark:text-slate-500'
-                          } ${feature.highlight ? 'font-semibold' : ''}`}
-                        >
-                          {feature.name}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div
-                    className={`mt-6 rounded-xl p-3 ${
-                      tier.highlight ? 'bg-white/10' : 'bg-slate-50 dark:bg-navy-950'
-                    }`}
-                  >
-                    <p
-                      className={`mb-2 text-xs font-semibold uppercase tracking-wide ${
-                        tier.highlight ? 'text-purple-200' : 'text-slate-500 dark:text-slate-400'
-                      }`}
-                    >
-                      Wymagania
-                    </p>
-                    <div className="space-y-1">
-                      {tier.requirements.map((req, index) => (
-                        <div key={index} className="flex items-center justify-between gap-3 text-xs">
-                          <span
-                            className={
-                              tier.highlight
-                                ? 'text-purple-200'
-                                : 'text-slate-600 dark:text-slate-400'
-                            }
-                          >
-                            {req.label}
-                          </span>
-                          <span
-                            className={`text-right font-semibold ${
-                              tier.highlight ? 'text-white' : 'text-navy-950 dark:text-white'
-                            }`}
-                          >
-                            {req.value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleTierCta(tier)}
-                    className={`mt-6 flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold transition ${
-                      tier.ctaVariant === 'primary'
-                        ? 'bg-white text-purple-700 shadow-lg hover:bg-purple-50'
-                        : tier.ctaVariant === 'secondary'
-                          ? 'bg-purple-600 text-white hover:bg-purple-500'
-                          : 'border-2 border-slate-300 text-navy-950 hover:bg-slate-50 dark:border-white/20 dark:text-white dark:hover:bg-white/5'
-                    }`}
-                  >
-                    {tier.id === 'PLATINUM' ? 'Ustal warunki' : 'Start application'}
-                    <ArrowRight size={16} />
-                  </button>
+                  )}
                 </motion.div>
-              );
-            })}
+              ))}
+            </div>
           </div>
+        </section>
 
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-8 text-sm text-slate-500 dark:text-slate-400">
-            {TRUST_INDICATORS.map((indicator, idx) => {
-              const Icon = indicator.icon;
-              return (
-                <div key={idx} className="flex items-center gap-2">
-                  <Icon size={18} className="text-purple-500" />
-                  <span>{indicator.label}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-6 py-16">
-        <div className="mx-auto max-w-3xl">
-          <div className="mb-12 text-center">
-            <h2 className="text-3xl font-black text-navy-950 dark:text-white">
-              Najczęściej zadawane pytania
-            </h2>
-            <p className="mt-4 text-slate-600 dark:text-slate-400">
-              Masz scenariusz, który wymaga niestandardowych warunków?{' '}
-              <button onClick={openContact} className="text-purple-600 hover:underline">
-                Skontaktuj się z nami
-              </button>
+        <section className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-16">
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="text-3xl font-black text-white">Gotowy do wejścia do programu?</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-purple-100">
+              Możesz wystartować aplikację od razu albo porozmawiać z nami o warunkach współpracy,
+              certyfikacji i wspólnym motion sprzedażowym.
             </p>
-          </div>
-
-          <div className="space-y-4">
-            {PARTNER_FAQS.map((faq, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 10 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.05 }}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900"
+            <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+              <button
+                onClick={startApplication}
+                className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-bold text-purple-700 shadow-lg transition hover:bg-purple-50 dark:bg-navy-900"
               >
-                <button
-                  onClick={() => setExpandedFaq(expandedFaq === idx ? null : idx)}
-                  className="flex w-full items-center justify-between p-4 text-left"
-                >
-                  <div className="flex items-start gap-3">
-                    <HelpCircle size={20} className="mt-0.5 flex-shrink-0 text-purple-500" />
-                    <span className="font-bold text-navy-950 dark:text-white">{faq.question}</span>
-                  </div>
-                  <ChevronDown
-                    size={20}
-                    className={`flex-shrink-0 text-slate-400 dark:text-slate-500 transition-transform ${
-                      expandedFaq === idx ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-                {expandedFaq === idx && (
-                  <div className="border-t border-slate-100 p-4 pb-5 pt-4 dark:border-navy-700">
-                    <p className="pl-8 text-sm text-slate-600 dark:text-slate-400">{faq.answer}</p>
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                Start application
+                <ArrowRight size={18} />
+              </button>
+              <button
+                onClick={openContact}
+                className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 font-bold text-white transition hover:bg-white/10"
+              >
+                Skontaktuj się z zespołem partnerskim
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
-
-      <section className="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-16">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl font-black text-white">Gotowy do wejścia do programu?</h2>
-          <p className="mx-auto mt-4 max-w-2xl text-purple-100">
-            Możesz wystartować aplikację od razu albo porozmawiać z nami o warunkach współpracy,
-            certyfikacji i wspólnym motion sprzedażowym.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <button
-              onClick={startApplication}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 font-bold text-purple-700 shadow-lg transition hover:bg-purple-50 dark:bg-navy-900"
-            >
-              Start application
-              <ArrowRight size={18} />
-            </button>
-            <button
-              onClick={openContact}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-white/30 px-8 py-4 font-bold text-white transition hover:bg-white/10"
-            >
-              Skontaktuj się z zespołem partnerskim
-            </button>
-          </div>
-        </div>
-      </section>
+        </section>
       </div>
     </MarketingLayout>
   );

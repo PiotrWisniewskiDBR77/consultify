@@ -109,7 +109,9 @@ function normalizeFrequency(
   value: unknown,
   fallback: InitiativeKpiMeasurementFrequency = 'MONTHLY'
 ): InitiativeKpiMeasurementFrequency {
-  const normalized = String(value || fallback).trim().toUpperCase();
+  const normalized = String(value || fallback)
+    .trim()
+    .toUpperCase();
   return KPI_FREQUENCIES.includes(normalized as InitiativeKpiMeasurementFrequency)
     ? (normalized as InitiativeKpiMeasurementFrequency)
     : fallback;
@@ -131,7 +133,9 @@ function boolFromDb(value: unknown, fallback = false): boolean {
 }
 
 function normalizeObservationStatus(value: unknown): InitiativeKpiObservationStatus {
-  const normalized = String(value || 'active').trim().toLowerCase();
+  const normalized = String(value || 'active')
+    .trim()
+    .toLowerCase();
   if (normalized === 'paused') return 'paused';
   if (normalized === 'completed') return 'completed';
   return 'active';
@@ -142,7 +146,9 @@ function deriveObservationPhase(params: {
   trackedInRealization?: unknown;
   trackedPostImplementation?: unknown;
 }): InitiativeKpiObservationPhase {
-  const phase = String(params.phase || '').trim().toLowerCase();
+  const phase = String(params.phase || '')
+    .trim()
+    .toLowerCase();
   if (phase === 'realization' || phase === 'post-implementation' || phase === 'both') {
     return phase as InitiativeKpiObservationPhase;
   }
@@ -237,7 +243,10 @@ function mapAssignmentRow(row: AssignmentQueryRow): InitiativeKpiAssignmentRead 
   const realizationExpectation: InitiativeKpiExpectation = {
     baselineValue: safeNumber(row.realization_baseline_value) ?? baselineValue,
     targetValue: safeNumber(row.realization_target_value) ?? targetValue,
-    measurementFrequency: normalizeFrequency(row.realization_measurement_frequency, measurementFrequency),
+    measurementFrequency: normalizeFrequency(
+      row.realization_measurement_frequency,
+      measurementFrequency
+    ),
   };
   const postImplementationExpectation: InitiativeKpiExpectation = {
     baselineValue: safeNumber(row.post_implementation_baseline_value) ?? baselineValue,
@@ -281,7 +290,9 @@ function mapAssignmentRow(row: AssignmentQueryRow): InitiativeKpiAssignmentRead 
     createdAt: String(row.created_at),
     updatedAt: row.updated_at || null,
     definitionSource:
-      String(row.definition_source || '').trim().toLowerCase() === 'library'
+      String(row.definition_source || '')
+        .trim()
+        .toLowerCase() === 'library'
         ? 'library'
         : 'initiative-custom',
     observationPhase,
@@ -307,7 +318,10 @@ function buildMappingInsertParts(
       | 'observationStatus'
     >
   > &
-    Pick<UpsertInitiativeKpiAssignmentInput, 'userId' | 'realizationExpectation' | 'postImplementationExpectation'> & {
+    Pick<
+      UpsertInitiativeKpiAssignmentInput,
+      'userId' | 'realizationExpectation' | 'postImplementationExpectation'
+    > & {
       kpiId: string;
       id: string;
     }
@@ -376,7 +390,10 @@ async function upsertMapping(
       | 'observationStatus'
     >
   > &
-    Pick<UpsertInitiativeKpiAssignmentInput, 'userId' | 'realizationExpectation' | 'postImplementationExpectation'> & {
+    Pick<
+      UpsertInitiativeKpiAssignmentInput,
+      'userId' | 'realizationExpectation' | 'postImplementationExpectation'
+    > & {
       kpiId: string;
     }
 ) {
@@ -447,7 +464,9 @@ export async function listInitiativeKpiAssignments(
              : 'k.baseline_value'
          } AS realization_baseline_value,
          ${
-           mappingColumns.has('realization_target_value') ? 'm.realization_target_value' : 'k.target_value'
+           mappingColumns.has('realization_target_value')
+             ? 'm.realization_target_value'
+             : 'k.target_value'
          } AS realization_target_value,
          ${
            mappingColumns.has('realization_measurement_frequency')
@@ -554,8 +573,7 @@ export async function upsertInitiativeKpiAssignment(
     input.trackedPostImplementation
   );
   const definitionSource =
-    input.definitionSource ||
-    (input.kpiId ? 'library' : 'initiative-custom');
+    input.definitionSource || (input.kpiId ? 'library' : 'initiative-custom');
   const observationPhase =
     input.observationPhase ||
     deriveObservationPhase({
@@ -564,8 +582,10 @@ export async function upsertInitiativeKpiAssignment(
     });
   const baseFrequency = normalizeFrequency(input.measurementFrequency);
   const realizationExpectation: InitiativeKpiExpectation = {
-    baselineValue: safeNumber(input.realizationExpectation?.baselineValue) ?? safeNumber(input.baselineValue),
-    targetValue: safeNumber(input.realizationExpectation?.targetValue) ?? safeNumber(input.targetValue),
+    baselineValue:
+      safeNumber(input.realizationExpectation?.baselineValue) ?? safeNumber(input.baselineValue),
+    targetValue:
+      safeNumber(input.realizationExpectation?.targetValue) ?? safeNumber(input.targetValue),
     measurementFrequency: normalizeFrequency(
       input.realizationExpectation?.measurementFrequency,
       baseFrequency
@@ -573,7 +593,8 @@ export async function upsertInitiativeKpiAssignment(
   };
   const postImplementationExpectation: InitiativeKpiExpectation = {
     baselineValue:
-      safeNumber(input.postImplementationExpectation?.baselineValue) ?? safeNumber(input.baselineValue),
+      safeNumber(input.postImplementationExpectation?.baselineValue) ??
+      safeNumber(input.baselineValue),
     targetValue:
       safeNumber(input.postImplementationExpectation?.targetValue) ?? safeNumber(input.targetValue),
     measurementFrequency: normalizeFrequency(
@@ -614,7 +635,10 @@ export async function upsertInitiativeKpiAssignment(
     pushOptional('category', input.category || 'benefits');
     pushOptional('baseline_value', safeNumber(input.baselineValue));
     pushOptional('target_value', safeNumber(input.targetValue));
-    pushOptional('current_value', safeNumber(input.currentValue) ?? safeNumber(input.baselineValue));
+    pushOptional(
+      'current_value',
+      safeNumber(input.currentValue) ?? safeNumber(input.baselineValue)
+    );
     pushOptional('progress_percentage', 0);
     pushOptional('status', 'on_track');
     pushOptional('measurement_frequency', baseFrequency);
@@ -669,12 +693,23 @@ export async function updateInitiativeKpiAssignment(
   pushKpiUpdate('description', params.description ?? undefined);
   pushKpiUpdate('category', params.category ?? undefined);
   pushKpiUpdate('unit', params.unit ?? undefined);
-  pushKpiUpdate('baseline_value', params.baselineValue != null ? safeNumber(params.baselineValue) : undefined);
-  pushKpiUpdate('target_value', params.targetValue != null ? safeNumber(params.targetValue) : undefined);
-  pushKpiUpdate('current_value', params.currentValue != null ? safeNumber(params.currentValue) : undefined);
+  pushKpiUpdate(
+    'baseline_value',
+    params.baselineValue != null ? safeNumber(params.baselineValue) : undefined
+  );
+  pushKpiUpdate(
+    'target_value',
+    params.targetValue != null ? safeNumber(params.targetValue) : undefined
+  );
+  pushKpiUpdate(
+    'current_value',
+    params.currentValue != null ? safeNumber(params.currentValue) : undefined
+  );
   pushKpiUpdate(
     'measurement_frequency',
-    params.measurementFrequency != null ? normalizeFrequency(params.measurementFrequency) : undefined
+    params.measurementFrequency != null
+      ? normalizeFrequency(params.measurementFrequency)
+      : undefined
   );
   if (kpiColumns.has('updated_at')) {
     updates.push('updated_at = ?');
@@ -683,10 +718,16 @@ export async function updateInitiativeKpiAssignment(
 
   if (updates.length > 0) {
     updateParams.push(params.kpiId);
-    await queryHelpers.queryRun(`UPDATE initiative_kpis SET ${updates.join(', ')} WHERE id = ?`, updateParams);
+    await queryHelpers.queryRun(
+      `UPDATE initiative_kpis SET ${updates.join(', ')} WHERE id = ?`,
+      updateParams
+    );
   }
 
-  const existingAssignments = await listInitiativeKpiAssignments(params.initiativeId, params.organizationId);
+  const existingAssignments = await listInitiativeKpiAssignments(
+    params.initiativeId,
+    params.organizationId
+  );
   const existing = existingAssignments.find((item) => item.id === params.kpiId);
   await upsertInitiativeKpiAssignment({
     initiativeId: params.initiativeId,
@@ -720,7 +761,10 @@ export async function deleteInitiativeKpiAssignment(params: {
   await assertInitiativeBelongsToOrg(params.initiativeId, params.organizationId);
   await assertKpiBelongsToOrg(params.kpiId, params.organizationId);
 
-  const assignments = await listInitiativeKpiAssignments(params.initiativeId, params.organizationId);
+  const assignments = await listInitiativeKpiAssignments(
+    params.initiativeId,
+    params.organizationId
+  );
   const existing = assignments.find((item) => item.id === params.kpiId);
   if (!existing) return;
 
@@ -740,18 +784,21 @@ export async function deleteInitiativeKpiAssignment(params: {
     : { cnt: 0 };
 
   const shouldDeleteKpi =
-    existing.definitionSource === 'initiative-custom' &&
-    Number(remainingMappings?.cnt || 0) === 0;
+    existing.definitionSource === 'initiative-custom' && Number(remainingMappings?.cnt || 0) === 0;
 
   if (shouldDeleteKpi) {
-    await queryHelpers.queryRun(`DELETE FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ?`, [
-      params.kpiId,
-      params.organizationId,
-    ]).catch(() => null);
-    await queryHelpers.queryRun(
-      `DELETE FROM kpi_deviation_cases WHERE kpi_id = ? AND organization_id = ?`,
-      [params.kpiId, params.organizationId]
-    ).catch(() => null);
+    await queryHelpers
+      .queryRun(`DELETE FROM kpi_time_series WHERE kpi_id = ? AND organization_id = ?`, [
+        params.kpiId,
+        params.organizationId,
+      ])
+      .catch(() => null);
+    await queryHelpers
+      .queryRun(`DELETE FROM kpi_deviation_cases WHERE kpi_id = ? AND organization_id = ?`, [
+        params.kpiId,
+        params.organizationId,
+      ])
+      .catch(() => null);
     await queryHelpers.queryRun(`DELETE FROM initiative_kpis WHERE id = ?`, [params.kpiId]);
   }
 }

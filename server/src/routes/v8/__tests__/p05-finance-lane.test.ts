@@ -10,14 +10,14 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  P05_FINANCE_LANE_CONTRACT,
-  P05_ACCEPTANCE_CHECKLIST,
-  FINANCE_DEGRADED_SCENARIOS,
   FINANCE_ANTI_DUPLICATE_RULES,
+  FINANCE_DEGRADED_SCENARIOS,
   FINANCE_OWNERSHIP_BOUNDARY,
-  VERSION_SEMANTICS,
   IMPORT_ERROR_TAXONOMY,
   MUTATION_ERROR_TAXONOMY,
+  P05_ACCEPTANCE_CHECKLIST,
+  P05_FINANCE_LANE_CONTRACT,
+  VERSION_SEMANTICS,
 } from '../../../services/v8/financeCanon.js';
 
 const mockDbRun = vi.fn();
@@ -35,39 +35,69 @@ vi.mock('../../../services/v8/financeIntegrationService.js', () => ({
 }));
 
 vi.mock('../../../services/financialAnalysisService.js', () => ({
-  createAnalysis: vi.fn(), listAnalyses: vi.fn(), getAnalysisRatios: vi.fn(),
-  getAnalysisInsights: vi.fn(), approveAnalysis: vi.fn(), runFullAnalysis: vi.fn(),
+  createAnalysis: vi.fn(),
+  listAnalyses: vi.fn(),
+  getAnalysisRatios: vi.fn(),
+  getAnalysisInsights: vi.fn(),
+  approveAnalysis: vi.fn(),
+  runFullAnalysis: vi.fn(),
 }));
 
 vi.mock('../../../services/financialModelingService.js', () => ({
-  addEvent: vi.fn(), approveModel: vi.fn(), computeModel: vi.fn(), createModel: vi.fn(),
-  deleteEvent: vi.fn(), getModel: vi.fn(), getOutputs: vi.fn(), getValidations: vi.fn(),
-  listEvents: vi.fn(), listModels: vi.fn(), persistComputeResult: vi.fn(), updateModel: vi.fn(),
+  addEvent: vi.fn(),
+  approveModel: vi.fn(),
+  computeModel: vi.fn(),
+  createModel: vi.fn(),
+  deleteEvent: vi.fn(),
+  getModel: vi.fn(),
+  getOutputs: vi.fn(),
+  getValidations: vi.fn(),
+  listEvents: vi.fn(),
+  listModels: vi.fn(),
+  persistComputeResult: vi.fn(),
+  updateModel: vi.fn(),
 }));
 
 vi.mock('../../../services/financialStatementService.js', () => ({
-  confirmStatement: vi.fn(), createStatement: vi.fn(), detectStatementType: vi.fn(),
-  evaluateStatementReadiness: vi.fn(), extractFinancialLines: vi.fn(),
-  analyzeAndExtractFullDocument: vi.fn(), getLatestStatementIngestRun: vi.fn(),
-  loadPersistedStatementCandidateRows: vi.fn(), loadStatementSourceText: vi.fn(),
-  locateStatementSections: vi.fn(), persistStatementCandidateRows: vi.fn(),
-  persistStatementExtractedSections: vi.fn(), persistStatementMappingCandidates: vi.fn(),
-  persistStatementValidationLedger: vi.fn(), recordStatementQualityRun: vi.fn(),
-  recordStatementSourceArtifact: vi.fn(), resolveStatementColumnSelection: vi.fn(),
-  resolveDuplicateSuggestedMappings: vi.fn(), saveStatementValues: vi.fn(),
-  snapshotCanonicalStatementVersion: vi.fn(), startStatementIngestRun: vi.fn(),
-  updateStatementMetadata: vi.fn(), updateStatementReadinessState: vi.fn(),
-  updateStatementStatus: vi.fn(), updateStatementIngestRun: vi.fn(),
-  validateStatement: vi.fn(), saveStatementValuesFlow: vi.fn(),
+  confirmStatement: vi.fn(),
+  createStatement: vi.fn(),
+  detectStatementType: vi.fn(),
+  evaluateStatementReadiness: vi.fn(),
+  extractFinancialLines: vi.fn(),
+  analyzeAndExtractFullDocument: vi.fn(),
+  getLatestStatementIngestRun: vi.fn(),
+  loadPersistedStatementCandidateRows: vi.fn(),
+  loadStatementSourceText: vi.fn(),
+  locateStatementSections: vi.fn(),
+  persistStatementCandidateRows: vi.fn(),
+  persistStatementExtractedSections: vi.fn(),
+  persistStatementMappingCandidates: vi.fn(),
+  persistStatementValidationLedger: vi.fn(),
+  recordStatementQualityRun: vi.fn(),
+  recordStatementSourceArtifact: vi.fn(),
+  resolveStatementColumnSelection: vi.fn(),
+  resolveDuplicateSuggestedMappings: vi.fn(),
+  saveStatementValues: vi.fn(),
+  snapshotCanonicalStatementVersion: vi.fn(),
+  startStatementIngestRun: vi.fn(),
+  updateStatementMetadata: vi.fn(),
+  updateStatementReadinessState: vi.fn(),
+  updateStatementStatus: vi.fn(),
+  updateStatementIngestRun: vi.fn(),
+  validateStatement: vi.fn(),
+  saveStatementValuesFlow: vi.fn(),
 }));
 
 vi.mock('../../../services/financialStatementReadService.js', () => ({
-  getStatementPackDetail: vi.fn(), getStatementDetail: vi.fn(),
-  listStatements: vi.fn(), listStatementPacks: vi.fn(),
+  getStatementPackDetail: vi.fn(),
+  getStatementDetail: vi.fn(),
+  listStatements: vi.fn(),
+  listStatementPacks: vi.fn(),
 }));
 
 vi.mock('../../../services/ratioAnalysisService.js', () => ({
-  computeRatios: vi.fn(), buildStatementAnalytics: vi.fn(),
+  computeRatios: vi.fn(),
+  buildStatementAnalytics: vi.fn(),
 }));
 
 vi.mock('../../../services/valuationService.js', () => ({
@@ -87,21 +117,27 @@ vi.mock('../../../services/financeCanonicalRegistryService.ts', () => ({
 }));
 
 vi.mock('../../../services/llmFinancialMappingService.js', () => ({
-  applyLlmProposals: vi.fn(), applySecondPassProposals: vi.fn(),
-  mapDuplicateConflictLinesWithLLM: vi.fn(), mapUnmappedLinesWithLLM: vi.fn(),
+  applyLlmProposals: vi.fn(),
+  applySecondPassProposals: vi.fn(),
+  mapDuplicateConflictLinesWithLLM: vi.fn(),
+  mapUnmappedLinesWithLLM: vi.fn(),
 }));
 
 vi.mock('../../../services/financeMappingPolicy.js', () => ({
-  assessCoverage: vi.fn(), classifyMappingTier: vi.fn(),
-  isLikelySubtotalOrAggregate: vi.fn(), isNonFinancialByPolicy: vi.fn(),
+  assessCoverage: vi.fn(),
+  classifyMappingTier: vi.fn(),
+  isLikelySubtotalOrAggregate: vi.fn(),
+  isNonFinancialByPolicy: vi.fn(),
 }));
 
 vi.mock('../../../services/openAIFinancialExtractionService.js', () => ({
-  extractFinancialLinesWithAnthropic: vi.fn(), extractFinancialLinesWithOpenAI: vi.fn(),
+  extractFinancialLinesWithAnthropic: vi.fn(),
+  extractFinancialLinesWithOpenAI: vi.fn(),
 }));
 
 vi.mock('../../../services/financialStatementPackService.js', () => ({
-  recomputeStatementPackForOrganization: vi.fn(), syncStatementToPack: vi.fn(),
+  recomputeStatementPackForOrganization: vi.fn(),
+  syncStatementToPack: vi.fn(),
 }));
 
 vi.mock('../../../services/financeCanonicalResolver.js', () => ({
@@ -109,7 +145,8 @@ vi.mock('../../../services/financeCanonicalResolver.js', () => ({
 }));
 
 vi.mock('../../../services/financeDiagnosticsService.js', () => ({
-  searchStatementDocumentIntelligence: vi.fn(), classifyStatementDocument: vi.fn(),
+  searchStatementDocumentIntelligence: vi.fn(),
+  classifyStatementDocument: vi.fn(),
 }));
 
 vi.mock('../../../services/financeCompositeScores.js', () => ({
@@ -143,7 +180,8 @@ vi.mock('../../../utils/financeTraceId.js', () => ({
   logFinanceEvent: vi.fn(),
 }));
 
-let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null = null;
+let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null =
+  null;
 
 vi.mock('../../../middleware/auth.middleware.js', () => ({
   default: (req: any, _res: any, next: () => void) => {
@@ -212,11 +250,19 @@ describe('P05 Finance Lane', () => {
   describe('POST /lane/:runId/advance — advance lane step', () => {
     it('advances from import to analysis on completed outcome', async () => {
       const run = {
-        run_id: 'run-1', organization_id: ORG, current_step: 'import',
-        import_outcome: null, analysis_completed: 0, mutation_outcome: null,
-        readback_confirmed: 0, degraded_json: '[]', audit_trail_json: '[]',
-        version_type: 'current', kpi_linkage_status: 'coherent',
-        created_at: '2026-03-01', updated_at: '2026-03-01',
+        run_id: 'run-1',
+        organization_id: ORG,
+        current_step: 'import',
+        import_outcome: null,
+        analysis_completed: 0,
+        mutation_outcome: null,
+        readback_confirmed: 0,
+        degraded_json: '[]',
+        audit_trail_json: '[]',
+        version_type: 'current',
+        kpi_linkage_status: 'coherent',
+        created_at: '2026-03-01',
+        updated_at: '2026-03-01',
       };
       mockDbGet.mockResolvedValueOnce(run);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
@@ -231,11 +277,19 @@ describe('P05 Finance Lane', () => {
 
     it('blocks advancement on import failure and adds degraded reason', async () => {
       const run = {
-        run_id: 'run-2', organization_id: ORG, current_step: 'import',
-        import_outcome: null, analysis_completed: 0, mutation_outcome: null,
-        readback_confirmed: 0, degraded_json: '[]', audit_trail_json: '[]',
-        version_type: 'current', kpi_linkage_status: 'coherent',
-        created_at: '2026-03-01', updated_at: '2026-03-01',
+        run_id: 'run-2',
+        organization_id: ORG,
+        current_step: 'import',
+        import_outcome: null,
+        analysis_completed: 0,
+        mutation_outcome: null,
+        readback_confirmed: 0,
+        degraded_json: '[]',
+        audit_trail_json: '[]',
+        version_type: 'current',
+        kpi_linkage_status: 'coherent',
+        created_at: '2026-03-01',
+        updated_at: '2026-03-01',
       };
       mockDbGet.mockResolvedValueOnce(run);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
@@ -251,9 +305,7 @@ describe('P05 Finance Lane', () => {
     });
 
     it('rejects missing outcome', async () => {
-      const res = await request(app)
-        .post('/api/v8/finance/lane/run-3/advance')
-        .send({});
+      const res = await request(app).post('/api/v8/finance/lane/run-3/advance').send({});
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('P05_OUTCOME_REQUIRED');
     });
@@ -262,11 +314,19 @@ describe('P05 Finance Lane', () => {
   describe('GET /lane/:runId — get lane run', () => {
     it('returns a lane run', async () => {
       mockDbGet.mockResolvedValueOnce({
-        run_id: 'run-1', organization_id: ORG, current_step: 'analysis',
-        import_outcome: 'completed', analysis_completed: 0, mutation_outcome: null,
-        readback_confirmed: 0, degraded_json: '[]', audit_trail_json: '[]',
-        version_type: 'current', kpi_linkage_status: 'coherent',
-        created_at: '2026-03-01', updated_at: '2026-03-01',
+        run_id: 'run-1',
+        organization_id: ORG,
+        current_step: 'analysis',
+        import_outcome: 'completed',
+        analysis_completed: 0,
+        mutation_outcome: null,
+        readback_confirmed: 0,
+        degraded_json: '[]',
+        audit_trail_json: '[]',
+        version_type: 'current',
+        kpi_linkage_status: 'coherent',
+        created_at: '2026-03-01',
+        updated_at: '2026-03-01',
       });
       const res = await request(app).get('/api/v8/finance/lane/run-1');
       expect(res.status).toBe(200);
@@ -285,7 +345,21 @@ describe('P05 Finance Lane', () => {
   describe('GET /lane — list lane runs', () => {
     it('returns list of runs', async () => {
       mockDbAll.mockResolvedValueOnce([
-        { run_id: 'r1', organization_id: ORG, current_step: 'readback', import_outcome: 'completed', analysis_completed: 1, mutation_outcome: 'applied', readback_confirmed: 1, degraded_json: '[]', audit_trail_json: '[]', version_type: 'current', kpi_linkage_status: 'coherent', created_at: '2026-03-01', updated_at: '2026-03-01' },
+        {
+          run_id: 'r1',
+          organization_id: ORG,
+          current_step: 'readback',
+          import_outcome: 'completed',
+          analysis_completed: 1,
+          mutation_outcome: 'applied',
+          readback_confirmed: 1,
+          degraded_json: '[]',
+          audit_trail_json: '[]',
+          version_type: 'current',
+          kpi_linkage_status: 'coherent',
+          created_at: '2026-03-01',
+          updated_at: '2026-03-01',
+        },
       ]);
       const res = await request(app).get('/api/v8/finance/lane');
       expect(res.status).toBe(200);
@@ -298,15 +372,13 @@ describe('P05 Finance Lane', () => {
   describe('POST /lane/:runId/mutation-audit — record mutation audit', () => {
     it('records a mutation audit entry', async () => {
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
-      const res = await request(app)
-        .post('/api/v8/finance/lane/run-1/mutation-audit')
-        .send({
-          mutationType: 'budget_update',
-          targetEntity: 'budget-42',
-          previousValue: '10000',
-          newValue: '12000',
-          outcome: 'applied',
-        });
+      const res = await request(app).post('/api/v8/finance/lane/run-1/mutation-audit').send({
+        mutationType: 'budget_update',
+        targetEntity: 'budget-42',
+        previousValue: '10000',
+        newValue: '12000',
+        outcome: 'applied',
+      });
       expect(res.status).toBe(200);
       expect(res.body.data.mutationType).toBe('budget_update');
       expect(res.body.data.outcome).toBe('applied');
@@ -325,7 +397,18 @@ describe('P05 Finance Lane', () => {
   describe('GET /lane/:runId/mutation-audit — list mutation audits', () => {
     it('returns audit entries for a run', async () => {
       mockDbAll.mockResolvedValueOnce([
-        { audit_id: 'a1', organization_id: ORG, run_id: 'run-1', mutation_type: 'budget_update', target_entity: 'b1', previous_value: '100', new_value: '200', outcome: 'applied', actor: USER, created_at: '2026-03-01' },
+        {
+          audit_id: 'a1',
+          organization_id: ORG,
+          run_id: 'run-1',
+          mutation_type: 'budget_update',
+          target_entity: 'b1',
+          previous_value: '100',
+          new_value: '200',
+          outcome: 'applied',
+          actor: USER,
+          created_at: '2026-03-01',
+        },
       ]);
       const res = await request(app).get('/api/v8/finance/lane/run-1/mutation-audit');
       expect(res.status).toBe(200);
@@ -349,9 +432,7 @@ describe('P05 Finance Lane', () => {
     });
 
     it('rejects missing params', async () => {
-      const res = await request(app)
-        .post('/api/v8/finance/versions/snapshot')
-        .send({});
+      const res = await request(app).post('/api/v8/finance/versions/snapshot').send({});
       expect(res.status).toBe(400);
       expect(res.body.code).toBe('P05_VERSION_PARAMS_REQUIRED');
     });
@@ -360,15 +441,25 @@ describe('P05 Finance Lane', () => {
   describe('POST /versions/:snapshotId/finalize — switchover', () => {
     it('finalizes a snapshot as actual', async () => {
       mockDbGet.mockResolvedValueOnce({
-        snapshot_id: 'snap-1', organization_id: ORG, version_type: 'actual',
-        snapshot_data: '{"budget":50000}', switchover_date: null,
-        switchover_actor: null, is_finalized: 0, created_at: '2026-03-01',
+        snapshot_id: 'snap-1',
+        organization_id: ORG,
+        version_type: 'actual',
+        snapshot_data: '{"budget":50000}',
+        switchover_date: null,
+        switchover_actor: null,
+        is_finalized: 0,
+        created_at: '2026-03-01',
       });
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
       mockDbGet.mockResolvedValueOnce({
-        snapshot_id: 'snap-1', organization_id: ORG, version_type: 'actual',
-        snapshot_data: '{"budget":50000}', switchover_date: '2026-03-31',
-        switchover_actor: USER, is_finalized: 1, created_at: '2026-03-01',
+        snapshot_id: 'snap-1',
+        organization_id: ORG,
+        version_type: 'actual',
+        snapshot_data: '{"budget":50000}',
+        switchover_date: '2026-03-31',
+        switchover_actor: USER,
+        is_finalized: 1,
+        created_at: '2026-03-01',
       });
 
       const res = await request(app).post('/api/v8/finance/versions/snap-1/finalize');
@@ -381,7 +472,16 @@ describe('P05 Finance Lane', () => {
   describe('GET /versions — list version snapshots', () => {
     it('returns version snapshots', async () => {
       mockDbAll.mockResolvedValueOnce([
-        { snapshot_id: 's1', organization_id: ORG, version_type: 'current', snapshot_data: '{}', switchover_date: null, switchover_actor: null, is_finalized: 0, created_at: '2026-03-01' },
+        {
+          snapshot_id: 's1',
+          organization_id: ORG,
+          version_type: 'current',
+          snapshot_data: '{}',
+          switchover_date: null,
+          switchover_actor: null,
+          is_finalized: 0,
+          created_at: '2026-03-01',
+        },
       ]);
       const res = await request(app).get('/api/v8/finance/versions');
       expect(res.status).toBe(200);
@@ -426,11 +526,19 @@ describe('P05 Finance Lane', () => {
 
       // Step 2: Advance import → completed
       const importRun = {
-        run_id: runId, organization_id: ORG, current_step: 'import',
-        import_outcome: null, analysis_completed: 0, mutation_outcome: null,
-        readback_confirmed: 0, degraded_json: '[]', audit_trail_json: JSON.stringify(startRes.body.data.auditTrail),
-        version_type: 'current', kpi_linkage_status: 'coherent',
-        created_at: '2026-03-01', updated_at: '2026-03-01',
+        run_id: runId,
+        organization_id: ORG,
+        current_step: 'import',
+        import_outcome: null,
+        analysis_completed: 0,
+        mutation_outcome: null,
+        readback_confirmed: 0,
+        degraded_json: '[]',
+        audit_trail_json: JSON.stringify(startRes.body.data.auditTrail),
+        version_type: 'current',
+        kpi_linkage_status: 'coherent',
+        created_at: '2026-03-01',
+        updated_at: '2026-03-01',
       };
       mockDbGet.mockResolvedValueOnce(importRun);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
@@ -441,7 +549,12 @@ describe('P05 Finance Lane', () => {
       expect(importRes.body.data.currentStep).toBe('analysis');
 
       // Step 3: Advance analysis → completed
-      const analysisRun = { ...importRun, current_step: 'analysis', import_outcome: 'completed', audit_trail_json: JSON.stringify(importRes.body.data.auditTrail) };
+      const analysisRun = {
+        ...importRun,
+        current_step: 'analysis',
+        import_outcome: 'completed',
+        audit_trail_json: JSON.stringify(importRes.body.data.auditTrail),
+      };
       mockDbGet.mockResolvedValueOnce(analysisRun);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
@@ -454,11 +567,21 @@ describe('P05 Finance Lane', () => {
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
       const auditRes = await request(app)
         .post(`/api/v8/finance/lane/${runId}/mutation-audit`)
-        .send({ mutationType: 'forecast_update', targetEntity: 'model-1', newValue: '150000', outcome: 'applied' });
+        .send({
+          mutationType: 'forecast_update',
+          targetEntity: 'model-1',
+          newValue: '150000',
+          outcome: 'applied',
+        });
       expect(auditRes.status).toBe(200);
 
       // Step 5: Advance mutation → applied
-      const mutationRun = { ...analysisRun, current_step: 'mutation', analysis_completed: 1, audit_trail_json: JSON.stringify(analysisRes.body.data.auditTrail) };
+      const mutationRun = {
+        ...analysisRun,
+        current_step: 'mutation',
+        analysis_completed: 1,
+        audit_trail_json: JSON.stringify(analysisRes.body.data.auditTrail),
+      };
       mockDbGet.mockResolvedValueOnce(mutationRun);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
@@ -468,15 +591,28 @@ describe('P05 Finance Lane', () => {
       expect(mutationRes.body.data.currentStep).toBe('readback');
 
       // Step 6: Advance readback → confirmed
-      const readbackRun = { ...mutationRun, current_step: 'readback', mutation_outcome: 'applied', audit_trail_json: JSON.stringify(mutationRes.body.data.auditTrail) };
+      const readbackRun = {
+        ...mutationRun,
+        current_step: 'readback',
+        mutation_outcome: 'applied',
+        audit_trail_json: JSON.stringify(mutationRes.body.data.auditTrail),
+      };
       mockDbGet.mockResolvedValueOnce(readbackRun);
       // getMutationAudits query
-      mockDbAll.mockResolvedValueOnce([{
-        audit_id: 'a1', organization_id: ORG, run_id: runId,
-        mutation_type: 'forecast_update', target_entity: 'model-1',
-        previous_value: null, new_value: '150000', outcome: 'applied',
-        actor: 'test-user', created_at: '2026-03-31',
-      }]);
+      mockDbAll.mockResolvedValueOnce([
+        {
+          audit_id: 'a1',
+          organization_id: ORG,
+          run_id: runId,
+          mutation_type: 'forecast_update',
+          target_entity: 'model-1',
+          previous_value: null,
+          new_value: '150000',
+          outcome: 'applied',
+          actor: 'test-user',
+          created_at: '2026-03-31',
+        },
+      ]);
       // checkKpiLinkageCoherence query
       mockDbAll.mockResolvedValueOnce([]);
       mockDbRun.mockResolvedValueOnce({ changes: 1 });
@@ -486,7 +622,9 @@ describe('P05 Finance Lane', () => {
         .send({ outcome: 'confirmed' });
       expect(readbackRes.body.data.readbackConfirmed).toBe(true);
       expect(readbackRes.body.data.auditTrail.length).toBeGreaterThanOrEqual(5);
-      const verifiedEntry = readbackRes.body.data.auditTrail.find((e: Record<string, unknown>) => e.outcome === 'readback_verified');
+      const verifiedEntry = readbackRes.body.data.auditTrail.find(
+        (e: Record<string, unknown>) => e.outcome === 'readback_verified'
+      );
       expect(verifiedEntry).toBeDefined();
     });
   });
@@ -578,7 +716,9 @@ describe('P05 Concurrent Lane Run Prevention', () => {
     // Follow-up SELECT to get the active run for the error message
     mockDbGet.mockResolvedValueOnce({ run_id: 'existing-run' });
 
-    const res = await request(app).post('/api/v8/finance/lane/start').send({ versionType: 'current' });
+    const res = await request(app)
+      .post('/api/v8/finance/lane/start')
+      .send({ versionType: 'current' });
 
     expect(res.status).toBe(409);
     expect(res.body.code).toBe('P05_CONCURRENT_RUN_EXISTS');
@@ -588,7 +728,9 @@ describe('P05 Concurrent Lane Run Prevention', () => {
   it('allows new run after previous completed (readback confirmed)', async () => {
     mockDbRun.mockResolvedValueOnce({ changes: 1 });
 
-    const res = await request(app).post('/api/v8/finance/lane/start').send({ versionType: 'current' });
+    const res = await request(app)
+      .post('/api/v8/finance/lane/start')
+      .send({ versionType: 'current' });
 
     expect(res.status).toBe(200);
     expect(res.body.data).toBeDefined();
@@ -643,11 +785,19 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
     mockDbGet
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
-        run_id: 'run-1', organization_id: ORG, current_step: 'import',
-        import_outcome: null, analysis_completed: 0, mutation_outcome: null,
-        readback_confirmed: 0, degraded_json: '[]', audit_trail_json: '[]',
-        version_type: 'current', kpi_linkage_status: 'coherent',
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        run_id: 'run-1',
+        organization_id: ORG,
+        current_step: 'import',
+        import_outcome: null,
+        analysis_completed: 0,
+        mutation_outcome: null,
+        readback_confirmed: 0,
+        degraded_json: '[]',
+        audit_trail_json: '[]',
+        version_type: 'current',
+        kpi_linkage_status: 'coherent',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .mockResolvedValueOnce({ role: 'admin' })
       .mockResolvedValueOnce(null);
@@ -665,11 +815,19 @@ describe('P05 AdvanceLaneContext from HTTP', () => {
     mockDbGet
       .mockResolvedValueOnce(null)
       .mockResolvedValueOnce({
-        run_id: 'run-1', organization_id: ORG, current_step: 'import',
-        import_outcome: null, analysis_completed: 0, mutation_outcome: null,
-        readback_confirmed: 0, degraded_json: '[]', audit_trail_json: '[]',
-        version_type: 'current', kpi_linkage_status: 'coherent',
-        created_at: new Date().toISOString(), updated_at: new Date().toISOString(),
+        run_id: 'run-1',
+        organization_id: ORG,
+        current_step: 'import',
+        import_outcome: null,
+        analysis_completed: 0,
+        mutation_outcome: null,
+        readback_confirmed: 0,
+        degraded_json: '[]',
+        audit_trail_json: '[]',
+        version_type: 'current',
+        kpi_linkage_status: 'coherent',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
       .mockResolvedValueOnce({ role: 'admin' })
       .mockResolvedValueOnce(null);

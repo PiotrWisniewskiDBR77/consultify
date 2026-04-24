@@ -1,7 +1,7 @@
-import WhatsAppService from './WhatsAppService.js';
+import logger from '../utils/Logger.js';
 import slackService from './slackService.js';
 import { SlackServiceClass } from './slackService.js';
-import logger from '../utils/Logger.js';
+import WhatsAppService from './WhatsAppService.js';
 
 export type SystemAlertSeverity = 'INFO' | 'WARNING' | 'CRITICAL';
 
@@ -48,8 +48,11 @@ export async function sendSystemAlert(input: SystemAlertInput): Promise<void> {
   }
 
   const title = input.source ? `${input.source}: ${input.title}` : input.title;
-  const sourceKey = String(input.source || '').trim().toUpperCase();
-  const slackTarget = (sourceKey === 'LLM' || sourceKey === 'AI') && aiSlack ? aiSlack : slackService;
+  const sourceKey = String(input.source || '')
+    .trim()
+    .toUpperCase();
+  const slackTarget =
+    (sourceKey === 'LLM' || sourceKey === 'AI') && aiSlack ? aiSlack : slackService;
   const results = await Promise.allSettled([
     slackTarget.sendSystemAlert(title, input.message, input.severity),
     WhatsAppService.sendSystemAlert({

@@ -58,7 +58,7 @@ export interface UISlice {
   myWorkIntent: {
     tab?: 'executive' | 'inbox' | 'focus' | 'tasks' | 'ideas' | 'decisions' | 'notebook';
     open?: {
-      type: 'notification' | 'task' | 'idea' | 'decision';
+      type: 'notification' | 'task' | 'idea' | 'decision' | 'notebook';
       id: string;
       name?: string;
       data?: unknown;

@@ -79,7 +79,9 @@ describe('LearningLoopService (DB adapter)', () => {
     expect(res.status).toBe('resolved');
     expect(getMock).toHaveBeenCalledTimes(1);
     expect(runMock).toHaveBeenCalledTimes(1);
-    expect(String(runMock.mock.calls[0]?.[0] || '')).toContain('UPDATE v10_learning_stewardship_queue');
+    expect(String(runMock.mock.calls[0]?.[0] || '')).toContain(
+      'UPDATE v10_learning_stewardship_queue'
+    );
   });
 
   it('computes dashboard metrics from aggregates', async () => {
@@ -99,4 +101,3 @@ describe('LearningLoopService (DB adapter)', () => {
     expect(dash.incidents.open).toBe(2);
   });
 });
-

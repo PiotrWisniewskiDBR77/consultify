@@ -157,23 +157,25 @@ export const useBreadcrumbs = (): string[] | null => {
     const rmode = params.get('rmode');
 
     if (tab === 'results_kpi') {
-      sub = mode === 'overview'
-        ? t('results.tabs.kpiOverview', 'KPI Overview')
-        : mode === 'queue'
-          ? t('results.tabs.kpiQueue', 'KPI Queue')
-          : mode === 'scorecards'
-            ? t('results.tabs.kpiScorecards', 'Scorecards')
-            : t('results.tabs.kpi', 'KPI');
+      sub =
+        mode === 'overview'
+          ? t('results.tabs.kpiOverview', 'KPI Overview')
+          : mode === 'queue'
+            ? t('results.tabs.kpiQueue', 'KPI Queue')
+            : mode === 'scorecards'
+              ? t('results.tabs.kpiScorecards', 'Scorecards')
+              : t('results.tabs.kpi', 'KPI');
     } else if (tab === 'results_reports') {
-      sub = rmode === 'reports'
-        ? t('results.tabs.kpiReports', 'Reports')
-        : rmode === 'schedules'
-          ? t('results.tabs.schedules', 'Schedules')
-          : rmode === 'wallboards'
-            ? t('results.tabs.wallboards', 'Wallboards')
-            : rmode === 'connectors'
-              ? t('results.tabs.connectors', 'Connectors')
-              : t('results.tabs.kpiReports', 'Reports');
+      sub =
+        rmode === 'reports'
+          ? t('results.tabs.kpiReports', 'Reports')
+          : rmode === 'schedules'
+            ? t('results.tabs.schedules', 'Schedules')
+            : rmode === 'wallboards'
+              ? t('results.tabs.wallboards', 'Wallboards')
+              : rmode === 'connectors'
+                ? t('results.tabs.connectors', 'Connectors')
+                : t('results.tabs.kpiReports', 'Reports');
     } else if (tab === 'roi') {
       sub = t('results.tabs.roi', 'ROI');
     } else if (tab === 'roi_analysis') {

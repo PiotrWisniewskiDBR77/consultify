@@ -50,21 +50,15 @@ describe('extractCitationDomain — accepts', () => {
   });
 
   it('preserves non-www subdomains', () => {
-    expect(extractCitationDomain('https://news.ycombinator.com')).toBe(
-      'news.ycombinator.com'
-    );
+    expect(extractCitationDomain('https://news.ycombinator.com')).toBe('news.ycombinator.com');
   });
 
   it('ignores path, query, and fragment', () => {
-    expect(
-      extractCitationDomain('https://example.com/path/deep?q=1#frag')
-    ).toBe('example.com');
+    expect(extractCitationDomain('https://example.com/path/deep?q=1#frag')).toBe('example.com');
   });
 
   it('drops the port', () => {
-    expect(extractCitationDomain('https://example.com:8443/foo')).toBe(
-      'example.com'
-    );
+    expect(extractCitationDomain('https://example.com:8443/foo')).toBe('example.com');
   });
 
   it('trims surrounding whitespace', () => {
@@ -72,9 +66,7 @@ describe('extractCitationDomain — accepts', () => {
   });
 
   it('does NOT strip `www1.` (only the bare `www.` prefix is a product choice)', () => {
-    expect(extractCitationDomain('https://www1.example.com')).toBe(
-      'www1.example.com'
-    );
+    expect(extractCitationDomain('https://www1.example.com')).toBe('www1.example.com');
   });
 });
 

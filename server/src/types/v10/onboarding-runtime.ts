@@ -203,4 +203,3 @@ export interface OnboardingKpiSummaryResponse {
   readonly personas: OnboardingKpiRow[];
   readonly last24hEventCount: number;
 }
-

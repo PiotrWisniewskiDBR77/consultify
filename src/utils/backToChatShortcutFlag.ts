@@ -66,7 +66,9 @@ function isDeployedHardOff(): boolean {
   const envFlag = readEnvFlag();
   if (envFlag !== false) return false;
   if (typeof window === 'undefined' || !window.location) return true;
-  const host = String(window.location.hostname || '').trim().toLowerCase();
+  const host = String(window.location.hostname || '')
+    .trim()
+    .toLowerCase();
   return host !== '' && host !== 'localhost' && host !== '127.0.0.1' && host !== '[::1]';
 }
 

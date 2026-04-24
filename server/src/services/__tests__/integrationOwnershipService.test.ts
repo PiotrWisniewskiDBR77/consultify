@@ -20,10 +20,9 @@ describe('integrationOwnershipService', () => {
     });
 
     const sqlCalls = dbRun.mock.calls.map((c) => String(c[0]));
-    expect(sqlCalls.some((sql) => sql.includes('CREATE TABLE IF NOT EXISTS integration_ownership'))).toBe(
-      true
-    );
+    expect(
+      sqlCalls.some((sql) => sql.includes('CREATE TABLE IF NOT EXISTS integration_ownership'))
+    ).toBe(true);
     expect(sqlCalls.some((sql) => sql.includes('ON CONFLICT (integration_id)'))).toBe(true);
   });
 });
-

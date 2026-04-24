@@ -24,7 +24,9 @@ export function scopeFromAuthRequest(req: AuthRequest): RuntimeScope {
   };
 }
 
-export function withRuntimeScope<T extends Record<string, unknown>>(req: AuthRequest): T & { scope: RuntimeScope } {
+export function withRuntimeScope<T extends Record<string, unknown>>(
+  req: AuthRequest
+): T & { scope: RuntimeScope } {
   const body = req.body && typeof req.body === 'object' ? (req.body as T) : ({} as T);
   return {
     ...body,

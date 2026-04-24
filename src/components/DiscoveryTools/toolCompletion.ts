@@ -57,7 +57,10 @@ export function computeDynamicSwotSessionSignals(data: SWOTData | undefined, isP
   if (!signals.length)
     missingEvidence.push(isPolish ? 'Brak sygnałów wejściowych' : 'Missing input signals');
   if (!items.length) missingEvidence.push(isPolish ? 'Brak kart SWOT' : 'Missing SWOT cards');
-  if (!acceptedTensions.length && !(swot?.correlations || []).some((item) => isGovernedAccepted(item.proposalStatus)))
+  if (
+    !acceptedTensions.length &&
+    !(swot?.correlations || []).some((item) => isGovernedAccepted(item.proposalStatus))
+  )
     missingEvidence.push(
       isPolish ? 'Brak napięć lub korelacji' : 'Missing tensions or correlations'
     );
@@ -90,9 +93,12 @@ export function computeDynamicSwotPhaseSummaries(
 
   const acceptedCorrelations =
     swot?.correlations?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
-  const acceptedTensions = swot?.tensions?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
-  const acceptedMoves = swot?.recommendedMoves?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
-  const acceptedOutputs = swot?.outputCandidates?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedTensions =
+    swot?.tensions?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedMoves =
+    swot?.recommendedMoves?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
+  const acceptedOutputs =
+    swot?.outputCandidates?.filter((item) => isGovernedAccepted(item.proposalStatus)).length || 0;
   const acceptedSummary =
     !!swot?.summary?.executiveSummary && isGovernedAccepted(swot?.summary?.proposalStatus);
 
@@ -144,7 +150,9 @@ export function computeDynamicSwotPhaseSummaries(
     {
       id: 'insights',
       label: isPolish ? 'Synthesis & Insights' : 'Synthesis & Insights',
-      done: (acceptedTensions > 0 || acceptedCorrelations > 0) && (acceptedMoves > 0 || acceptedSummary),
+      done:
+        (acceptedTensions > 0 || acceptedCorrelations > 0) &&
+        (acceptedMoves > 0 || acceptedSummary),
       gapCount: [
         !(acceptedTensions > 0 || acceptedCorrelations > 0),
         !(acceptedMoves > 0 || acceptedSummary),
@@ -244,9 +252,11 @@ export function computeToolReviewGaps(
     const acceptedCorrelations =
       data.correlations?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
     const acceptedMoves =
-      data.recommendedMoves?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
+      data.recommendedMoves?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
     const acceptedOutputs =
-      data.outputCandidates?.filter((item: any) => isGovernedAccepted(item.proposalStatus)).length || 0;
+      data.outputCandidates?.filter((item: any) => isGovernedAccepted(item.proposalStatus))
+        .length || 0;
     const acceptedSummary =
       !!data.summary?.executiveSummary && isGovernedAccepted(data.summary?.proposalStatus);
     if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal)
@@ -270,7 +280,8 @@ export function computeToolReviewGaps(
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
     if (!acceptedSummary)
       gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
-    if (!acceptedOutputs) gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 

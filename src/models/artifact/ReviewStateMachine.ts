@@ -82,10 +82,7 @@ export const REVIEW_TRANSITIONS: readonly ReviewTransition[] = [
  * `null` when the transition is not allowed. Callers log the
  * rejection and surface `InvalidTransitionError` (defined below).
  */
-export function nextReviewState(
-  from: ReviewState,
-  event: ReviewEvent,
-): ReviewState | null {
+export function nextReviewState(from: ReviewState, event: ReviewEvent): ReviewState | null {
   for (const t of REVIEW_TRANSITIONS) {
     if (t.from === from && t.event === event) return t.to;
   }
@@ -155,10 +152,7 @@ export class InvalidReviewTransitionError extends Error {
  * Helper: resolves the next state or throws. Consumed by the audit
  * write path (V10-ART-023) which wants hard failure semantics.
  */
-export function resolveNextReviewStateOrThrow(
-  from: ReviewState,
-  event: ReviewEvent,
-): ReviewState {
+export function resolveNextReviewStateOrThrow(from: ReviewState, event: ReviewEvent): ReviewState {
   const next = nextReviewState(from, event);
   if (next === null) {
     throw new InvalidReviewTransitionError(from, event);
