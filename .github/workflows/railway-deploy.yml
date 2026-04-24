@@ -61,6 +61,10 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Install bash (required by gate scripts)
+        run: |
+          apk add --no-cache bash >/dev/null
+
       - name: Validate staging configuration
         run: |
           test -n "$RAILWAY_TOKEN"
@@ -179,6 +183,10 @@ jobs:
       FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
     steps:
       - uses: actions/checkout@v5.0.1
+
+      - name: Install bash (required by gate scripts)
+        run: |
+          apk add --no-cache bash >/dev/null
 
       - name: Validate production configuration
         run: |
