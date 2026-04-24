@@ -163,6 +163,7 @@ jobs:
           STAGING_TAG: staging-deployed
         run: |
           apk add --no-cache git >/dev/null
+          cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git tag -f "$STAGING_TAG" "$GITHUB_SHA"
           git push origin -f "refs/tags/$STAGING_TAG"
@@ -200,6 +201,7 @@ jobs:
           STAGING_TAG: staging-deployed
         run: |
           apk add --no-cache git >/dev/null
+          cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --tags origin
           if ! git show-ref --verify --quiet "refs/tags/$STAGING_TAG"; then
