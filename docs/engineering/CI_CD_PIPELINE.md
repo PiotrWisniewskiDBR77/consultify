@@ -67,6 +67,10 @@ git push origin develop
 # GitHub Actions -> Railway Deploy -> environment=production
 ```
 
+Notes:
+- Production deploy must be dispatched from `main`.
+- The workflow requires explicit confirmation before deploy continues.
+- The workflow blocks production deploy unless the `main` SHA matches the last staged revision (tagged as `staging-deployed` by successful staging deploy).
 ## Environment Variables
 
 ### Required Secrets
@@ -91,12 +95,19 @@ git push origin develop
 
 - `RAILWAY_STAGING_PROJECT_ID`
 - `RAILWAY_STAGING_ENVIRONMENT`
-- `RAILWAY_STAGING_BACKEND_SERVICE`
-- `RAILWAY_STAGING_FRONTEND_SERVICE`
+- `RAILWAY_STAGING_APP_SERVICE` (canonical)
+- `RAILWAY_STAGING_SECONDARY_SERVICE` (optional)
 - `RAILWAY_PRODUCTION_PROJECT_ID`
 - `RAILWAY_PRODUCTION_ENVIRONMENT`
-- `RAILWAY_PRODUCTION_BACKEND_SERVICE`
-- `RAILWAY_PRODUCTION_FRONTEND_SERVICE`
+- `RAILWAY_PRODUCTION_APP_SERVICE` (canonical)
+- `RAILWAY_PRODUCTION_SECONDARY_SERVICE` (optional)
+
+**Compatibility aliases (legacy docs / older setups):**
+
+- `RAILWAY_STAGING_BACKEND_SERVICE` → used when `RAILWAY_STAGING_APP_SERVICE` is not set
+- `RAILWAY_STAGING_FRONTEND_SERVICE` → used when `RAILWAY_STAGING_SECONDARY_SERVICE` is not set
+- `RAILWAY_PRODUCTION_BACKEND_SERVICE` → used when `RAILWAY_PRODUCTION_APP_SERVICE` is not set
+- `RAILWAY_PRODUCTION_FRONTEND_SERVICE` → used when `RAILWAY_PRODUCTION_SECONDARY_SERVICE` is not set
 
 **Health and verification URLs:**
 
