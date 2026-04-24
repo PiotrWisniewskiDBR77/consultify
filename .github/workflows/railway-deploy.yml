@@ -57,6 +57,10 @@ jobs:
       API_HEALTH_URL: ${{ vars.STAGING_API_HEALTH_URL }}
       FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
     steps:
+      - name: Install git (required for checkout + tagging)
+        run: |
+          apk add --no-cache git >/dev/null
+
       - uses: actions/checkout@v5.0.1
         with:
           fetch-depth: 1
@@ -162,7 +166,6 @@ jobs:
         env:
           STAGING_TAG: staging-deployed
         run: |
-          apk add --no-cache git >/dev/null
           cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git tag -f "$STAGING_TAG" "$GITHUB_SHA"
@@ -183,6 +186,10 @@ jobs:
       API_HEALTH_URL: ${{ vars.PRODUCTION_API_HEALTH_URL }}
       FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
     steps:
+      - name: Install git (required for checkout + tags)
+        run: |
+          apk add --no-cache git >/dev/null
+
       - uses: actions/checkout@v5.0.1
 
       - name: Install bash (required by gate scripts)
@@ -200,7 +207,6 @@ jobs:
         env:
           STAGING_TAG: staging-deployed
         run: |
-          apk add --no-cache git >/dev/null
           cd "$GITHUB_WORKSPACE"
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --tags origin
