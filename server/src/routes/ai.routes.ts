@@ -1883,9 +1883,13 @@ router.post(
           }
         }
       } catch (polErr: any) {
-        logger.error('[AI Stream] Policy gateway unavailable (fail-closed):', polErr?.message || String(polErr));
+        logger.error(
+          '[AI Stream] Policy gateway unavailable (fail-closed):',
+          polErr?.message || String(polErr)
+        );
 
-        const degradedMsg = 'Policy gateway unavailable — request blocked for safety. Please try again.';
+        const degradedMsg =
+          'Policy gateway unavailable — request blocked for safety. Please try again.';
 
         emitSSE({
           type: 'policy_refusal',
@@ -2763,11 +2767,10 @@ router.post(
           const nbSearch = ((nbSearchMod as any).default || nbSearchMod) as any;
           const searchFn = nbSearch.searchNotebook || nbSearch.default?.searchNotebook;
           if (searchFn) {
-            const results = await searchFn(
-              req.organizationId,
-              (req as any).userId || '',
-              { q: message.slice(0, 300), limit: 5 } as any
-            );
+            const results = await searchFn(req.organizationId, (req as any).userId || '', {
+              q: message.slice(0, 300),
+              limit: 5,
+            } as any);
             const notes = Array.isArray(results?.results) ? results.results : [];
             if (notes.length > 0) {
               const notesText = notes
@@ -3475,7 +3478,9 @@ router.post(
                   // Fire and forget — don't block the stream
                   kgService
                     .processConversation(req.organizationId, message, accumulatedContent)
-                    .catch((err: unknown) => logger.warn('[AI] knowledge graph processing failed', err));
+                    .catch((err: unknown) =>
+                      logger.warn('[AI] knowledge graph processing failed', err)
+                    );
                 }
               }
             } catch {
@@ -4625,9 +4630,8 @@ router.get(
   validateParams(z.object({ id: z.string().uuid() })),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { getConversationProposals } = await import(
-        '../services/v8/proposalUnificationService.js'
-      );
+      const { getConversationProposals } =
+        await import('../services/v8/proposalUnificationService.js');
       const proposals = await getConversationProposals({
         conversationId: req.params.id,
         organizationId: req.organizationId || undefined,

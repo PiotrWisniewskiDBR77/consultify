@@ -84,8 +84,13 @@ vi.mock('../../services/tablePlatform/PermissionsService.js', () => ({
     VIEW_ROLES: ['base_owner', 'schema_editor', 'view_editor'] as const,
     INTERFACE_ROLES: ['base_owner', 'schema_editor', 'interface_builder'] as const,
     ALL_ROLES: [
-      'base_owner', 'schema_editor', 'data_editor', 'view_editor',
-      'interface_builder', 'viewer', 'form_submitter',
+      'base_owner',
+      'schema_editor',
+      'data_editor',
+      'view_editor',
+      'interface_builder',
+      'viewer',
+      'form_submitter',
     ] as const,
   },
 }));
@@ -140,7 +145,9 @@ async function importRouter() {
 async function runMiddlewareChain(handlers: any[], req: any, res: any): Promise<void> {
   for (const handler of handlers) {
     let nextCalled = false;
-    await handler.handle(req, res, () => { nextCalled = true; });
+    await handler.handle(req, res, () => {
+      nextCalled = true;
+    });
     if (!nextCalled) return;
   }
 }

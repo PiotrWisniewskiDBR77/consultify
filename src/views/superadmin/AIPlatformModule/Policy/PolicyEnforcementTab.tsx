@@ -71,8 +71,12 @@ export const PolicyEnforcementTab: React.FC = () => {
             <ShieldAlert className="h-4 w-4 text-amber-500" />
             Drift detection
           </div>
-          <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">{driftCount}</div>
-          <div className="mt-2 text-xs text-slate-500">Domains where desired and applied state diverge.</div>
+          <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+            {driftCount}
+          </div>
+          <div className="mt-2 text-xs text-slate-500">
+            Domains where desired and applied state diverge.
+          </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
@@ -82,7 +86,9 @@ export const PolicyEnforcementTab: React.FC = () => {
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
             {rows.filter((row) => row.id.startsWith('provider:')).length}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Tracked model providers with runtime feedback.</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Tracked model providers with runtime feedback.
+          </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
@@ -125,9 +131,15 @@ export const PolicyEnforcementTab: React.FC = () => {
             <tbody>
               {rows.map((row) => (
                 <tr key={row.id} className="border-b border-slate-100 dark:border-navy-800">
-                  <td className="px-3 py-3 font-medium text-slate-900 dark:text-white">{row.domain}</td>
-                  <td className="px-3 py-3 text-slate-600 dark:text-slate-300">{row.desiredState}</td>
-                  <td className="px-3 py-3 text-slate-600 dark:text-slate-300">{row.appliedState}</td>
+                  <td className="px-3 py-3 font-medium text-slate-900 dark:text-white">
+                    {row.domain}
+                  </td>
+                  <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
+                    {row.desiredState}
+                  </td>
+                  <td className="px-3 py-3 text-slate-600 dark:text-slate-300">
+                    {row.appliedState}
+                  </td>
                   <td className="px-3 py-3">
                     <span
                       className={`rounded-full px-2 py-1 text-xs font-medium ${

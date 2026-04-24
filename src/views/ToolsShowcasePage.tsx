@@ -24,8 +24,8 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { ToolVideoModal } from '@/components/Education/ToolVideoModal';
 import { ToolsV8CanonPanel } from '@/components/Discovery/ToolsV8CanonPanel';
+import { ToolVideoModal } from '@/components/Education/ToolVideoModal';
 import { AnnaAssistantWidget } from '@/components/Landing/AnnaAssistantWidget';
 import { DemoModeModal } from '@/components/Landing/DemoModeModal';
 import { EntryFooter } from '@/components/Landing/EntryFooter';

@@ -77,7 +77,9 @@ describe('notebookAttachmentService', () => {
 
     expect(mockWriteFile).toHaveBeenCalledTimes(1);
     expect(mockQueryRun).toHaveBeenCalledTimes(3);
-    expect(mockQueryRun.mock.calls[0]?.[0]).toContain("COALESCE(attachments_json, '[]')::jsonb = ?::jsonb");
+    expect(mockQueryRun.mock.calls[0]?.[0]).toContain(
+      "COALESCE(attachments_json, '[]')::jsonb = ?::jsonb"
+    );
     expect(mockUnlink).toHaveBeenCalledTimes(1);
   });
 
@@ -147,7 +149,9 @@ describe('notebookAttachmentService', () => {
 
     mockQueryOne
       .mockResolvedValueOnce({ attachmentsJson: JSON.stringify([targetAttachment]) })
-      .mockResolvedValueOnce({ attachmentsJson: JSON.stringify([targetAttachment, peerAttachment]) });
+      .mockResolvedValueOnce({
+        attachmentsJson: JSON.stringify([targetAttachment, peerAttachment]),
+      });
     mockQueryRun.mockResolvedValueOnce({ changes: 0 }).mockResolvedValueOnce({ changes: 1 });
 
     const result = await removeNotebookAttachmentFromPage({

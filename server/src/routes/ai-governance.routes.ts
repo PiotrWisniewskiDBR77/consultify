@@ -29,9 +29,7 @@ router.get(
       AIPolicyEngine.getPolicySummary(orgId),
     ]);
 
-    const { getRuntimeWebSearchStatus } = await import(
-      '../services/ai/runtimeWebSearchService.js'
-    );
+    const { getRuntimeWebSearchStatus } = await import('../services/ai/runtimeWebSearchService.js');
     const runtimeStatus = getRuntimeWebSearchStatus();
     res.json({
       success: true,
@@ -40,7 +38,8 @@ router.get(
         summary,
         runtime: {
           ...runtimeStatus,
-          webSearchAvailable: Boolean((effective as any)?.internetEnabled) && runtimeStatus.available,
+          webSearchAvailable:
+            Boolean((effective as any)?.internetEnabled) && runtimeStatus.available,
         },
       },
     });

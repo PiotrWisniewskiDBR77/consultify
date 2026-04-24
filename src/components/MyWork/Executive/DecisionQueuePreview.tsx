@@ -118,7 +118,8 @@ const DecisionItem: React.FC<{
             {!isOverdue && (
               <span className="flex items-center gap-1">
                 <Clock size={10} />
-                {decision.daysWaiting}{t('executive.actions.days', 'd')} {t('executive.decisions.waiting', 'waiting')}
+                {decision.daysWaiting}
+                {t('executive.actions.days', 'd')} {t('executive.decisions.waiting', 'waiting')}
               </span>
             )}
           </div>

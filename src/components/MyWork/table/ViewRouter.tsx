@@ -27,8 +27,8 @@ import { useTranslation } from 'react-i18next';
 import type { FieldType, LinkedRecordFieldOptions, TablePlatformView } from '@/types/tablePlatform';
 
 import { CalendarView } from './CalendarView';
-import { ChatToSchemaPanel } from './ChatToSchemaPanel';
 import { CellEditor } from './CellEditor';
+import { ChatToSchemaPanel } from './ChatToSchemaPanel';
 import { EmptyStateView } from './EmptyStateView';
 import { FieldManager } from './FieldManager';
 import { GridView, isMissingField } from './GridView';
@@ -41,9 +41,9 @@ import { useTableData } from './TableDataProvider';
 import { tpViewToLegacy } from './tablePlatformMappers';
 import type { ColumnDef, TableEdge, TableNode } from './tableTypes';
 import { TimelineView } from './TimelineView';
+import type { ViewLayout } from './useTableViews';
 import ViewErrorBoundary from './ViewErrorBoundary';
 import { ViewSwitcher } from './ViewSwitcher';
-import type { ViewLayout } from './useTableViews';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -82,7 +82,10 @@ interface PlatformGridViewProps {
   processedRows: TableNode[];
   groupedRows: Record<string, TableNode[]> | null;
   visibleColumns: ColumnDef[];
-  platformFieldById: Map<string, { fieldType: FieldType; options: Record<string, unknown>; isComputed: boolean }>;
+  platformFieldById: Map<
+    string,
+    { fieldType: FieldType; options: Record<string, unknown>; isComputed: boolean }
+  >;
   locked: boolean;
   selectedRowIds: Set<string>;
   toggleRowSelection: (id: string) => void;
@@ -114,7 +117,10 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   const renderCell = (row: TableNode, col: ColumnDef) => {
     if (isMissingField(col.key, viewConfig)) {
       return (
-        <div className="px-1 py-1 text-xs text-amber-500 dark:text-amber-400 italic select-none" aria-hidden>
+        <div
+          className="px-1 py-1 text-xs text-amber-500 dark:text-amber-400 italic select-none"
+          aria-hidden
+        >
           —
         </div>
       );
@@ -136,9 +142,7 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
             fieldType={fieldType}
             fieldOptions={fieldOptions}
             linkedRecordContext={
-              isLinked
-                ? { recordId: row.id, fieldId: col.key, linkedTableId }
-                : undefined
+              isLinked ? { recordId: row.id, fieldId: col.key, linkedTableId } : undefined
             }
             onSave={(v) => {
               handleFieldChange(row.id, col.key, v);
@@ -225,23 +229,21 @@ const PlatformGridView: React.FC<PlatformGridViewProps> = ({
   );
 
   const body =
-    groupedRows && Object.keys(groupedRows).length > 0 ? (
-      Object.entries(groupedRows).map(([groupLabel, rows]) => (
-        <React.Fragment key={groupLabel}>
-          <tr className="bg-slate-100/90 dark:bg-navy-900/80">
-            <td
-              colSpan={visibleColumns.length + 1}
-              className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200/80 dark:border-navy-700/80"
-            >
-              {groupLabel}
-            </td>
-          </tr>
-          {rows.map((row) => renderRow(row))}
-        </React.Fragment>
-      ))
-    ) : (
-      processedRows.map((row) => renderRow(row))
-    );
+    groupedRows && Object.keys(groupedRows).length > 0
+      ? Object.entries(groupedRows).map(([groupLabel, rows]) => (
+          <React.Fragment key={groupLabel}>
+            <tr className="bg-slate-100/90 dark:bg-navy-900/80">
+              <td
+                colSpan={visibleColumns.length + 1}
+                className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200/80 dark:border-navy-700/80"
+              >
+                {groupLabel}
+              </td>
+            </tr>
+            {rows.map((row) => renderRow(row))}
+          </React.Fragment>
+        ))
+      : processedRows.map((row) => renderRow(row));
 
   return (
     <div className="flex-1 min-h-0 overflow-auto rounded-xl border border-slate-200/70 dark:border-navy-700/70 bg-white/90 dark:bg-navy-950/40">
@@ -338,7 +340,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
 
   const activeViewName = useMemo(() => {
     if (!activeViewId) return null;
-    const view = savedViews.find(v => v.id === activeViewId) || platformViews?.find((v: any) => v.id === activeViewId);
+    const view =
+      savedViews.find((v) => v.id === activeViewId) ||
+      platformViews?.find((v: any) => v.id === activeViewId);
     return view?.name || null;
   }, [activeViewId, savedViews, platformViews]);
 
@@ -363,22 +367,11 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
     [activeViewId, removeMissingFieldFromView]
   );
 
-  if (loading && !nodes.length) {
-    return (
-      <div className="flex flex-1 items-center justify-center p-12">
-        <div className="space-y-3 w-full max-w-2xl">
-          <div className="h-10 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
-          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse" />
-          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-3/4" />
-          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-1/2" />
-          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-5/6" />
-        </div>
-      </div>
-    );
-  }
-
   const platformFieldById = useMemo(() => {
-    const m = new Map<string, { fieldType: FieldType; options: Record<string, unknown>; isComputed: boolean }>();
+    const m = new Map<
+      string,
+      { fieldType: FieldType; options: Record<string, unknown>; isComputed: boolean }
+    >();
     for (const f of platformFields) {
       m.set(f.id, {
         fieldType: f.fieldType,
@@ -589,6 +582,20 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
 
   const switchToGrid = useCallback(() => setViewLayout('grid'), [setViewLayout]);
 
+  if (loading && !nodes.length) {
+    return (
+      <div className="flex flex-1 items-center justify-center p-12">
+        <div className="space-y-3 w-full max-w-2xl">
+          <div className="h-10 bg-slate-100 dark:bg-navy-800 rounded-xl animate-pulse" />
+          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse" />
+          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-3/4" />
+          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-1/2" />
+          <div className="h-8 bg-slate-100 dark:bg-navy-800 rounded-lg animate-pulse w-5/6" />
+        </div>
+      </div>
+    );
+  }
+
   const mainContent =
     processedRows.length === 0 ? (
       <ViewErrorBoundary viewName={viewLayout} onSwitchToGrid={switchToGrid} locale={i18n.language}>
@@ -639,13 +646,28 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
 
       {base && table && (
         <nav className="flex items-center gap-1.5 px-4 py-2 text-xs text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-navy-800/60 shrink-0">
-          <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[120px]" title={base.name}>{base.name}</span>
+          <span
+            className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[120px]"
+            title={base.name}
+          >
+            {base.name}
+          </span>
           <ChevronRight className="h-3 w-3 shrink-0" />
-          <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[160px]" title={table.name}>{table.name}</span>
+          <span
+            className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[160px]"
+            title={table.name}
+          >
+            {table.name}
+          </span>
           {activeViewName && (
             <>
               <ChevronRight className="h-3 w-3 shrink-0" />
-              <span className="text-primary-600 dark:text-primary-400 truncate max-w-[140px]" title={activeViewName}>{activeViewName}</span>
+              <span
+                className="text-primary-600 dark:text-primary-400 truncate max-w-[140px]"
+                title={activeViewName}
+              >
+                {activeViewName}
+              </span>
             </>
           )}
         </nav>
@@ -763,7 +785,9 @@ export const ViewRouter: React.FC<ViewRouterProps> = ({ onCSVImport }) => {
         <div className="fixed inset-y-0 right-0 z-50 w-[480px] max-w-[90vw] shadow-2xl">
           <ChatToSchemaPanel
             workspaceId={tableId || ''}
-            onClose={() => uiDispatch({ type: 'SET_PANEL', panel: 'showChatToSchema', value: false })}
+            onClose={() =>
+              uiDispatch({ type: 'SET_PANEL', panel: 'showChatToSchema', value: false })
+            }
             onExecuted={async () => {
               await refresh();
               uiDispatch({ type: 'SET_PANEL', panel: 'showChatToSchema', value: false });

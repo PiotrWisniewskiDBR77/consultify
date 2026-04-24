@@ -4,7 +4,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
   type ActionRow,
   type MetaPill,
@@ -14,6 +13,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { shouldFallbackToLegacyResults, V8ResultsApi } from '@/services/api/v8/results';
 

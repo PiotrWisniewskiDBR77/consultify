@@ -1,4 +1,12 @@
-import { AlertTriangle, Building2, ExternalLink, Loader2, Settings2, Shield, Sparkles } from 'lucide-react';
+import {
+  AlertTriangle,
+  Building2,
+  ExternalLink,
+  Loader2,
+  Settings2,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,8 +14,8 @@ import { ROUTES } from '@/routes/routeConfig';
 
 import { Api } from '../../services/api';
 import { Button } from '../ui/primitives/Button';
-import { SettingsTaxonomyPanel } from './SettingsTaxonomyPanel';
 import type { SettingsSection } from './SettingsSidebar';
+import { SettingsTaxonomyPanel } from './SettingsTaxonomyPanel';
 
 type RegistryResolveResponse = {
   value: unknown;
@@ -31,7 +39,12 @@ type OrganizationContextSummary = {
 };
 
 type SettingsOwnershipPanelsProps = {
-  mode: 'overview' | 'tenant-defaults' | 'tenant-branding' | 'tenant-security' | 'module-preferences';
+  mode:
+    | 'overview'
+    | 'tenant-defaults'
+    | 'tenant-branding'
+    | 'tenant-security'
+    | 'module-preferences';
   onOpenSection?: (section: SettingsSection) => void;
 };
 
@@ -82,10 +95,13 @@ function useSettingsOwnershipData() {
 
         if (cancelled) return;
 
-        const nextResolved = registryValues.reduce<Record<string, RegistryResolveResponse>>((acc, item, index) => {
-          acc[RESOLVE_KEYS[index]] = item as RegistryResolveResponse;
-          return acc;
-        }, {});
+        const nextResolved = registryValues.reduce<Record<string, RegistryResolveResponse>>(
+          (acc, item, index) => {
+            acc[RESOLVE_KEYS[index]] = item as RegistryResolveResponse;
+            return acc;
+          },
+          {}
+        );
 
         setOrgContext((context || {}) as OrganizationContextSummary);
         setResolved(nextResolved);
@@ -183,10 +199,28 @@ function TenantDefaultsPanel({
       actionLabel="Open Organization"
       onAction={onOpenOrganization}
     >
-      <ValueRow label="Default language" value={formatValue(resolved.default_language?.value)} source={resolved.default_language?.source} readOnly />
-      <ValueRow label="Default timezone" value={formatValue(resolved.default_timezone?.value)} source={resolved.default_timezone?.source} readOnly />
-      <ValueRow label="Default currency" value={formatValue(resolved.default_currency?.value)} source={resolved.default_currency?.source} />
-      <ValueRow label="Default sharing mode" value={formatValue(resolved.default_sharing_mode?.value)} source={resolved.default_sharing_mode?.source} />
+      <ValueRow
+        label="Default language"
+        value={formatValue(resolved.default_language?.value)}
+        source={resolved.default_language?.source}
+        readOnly
+      />
+      <ValueRow
+        label="Default timezone"
+        value={formatValue(resolved.default_timezone?.value)}
+        source={resolved.default_timezone?.source}
+        readOnly
+      />
+      <ValueRow
+        label="Default currency"
+        value={formatValue(resolved.default_currency?.value)}
+        source={resolved.default_currency?.source}
+      />
+      <ValueRow
+        label="Default sharing mode"
+        value={formatValue(resolved.default_sharing_mode?.value)}
+        source={resolved.default_sharing_mode?.source}
+      />
     </SectionCard>
   );
 }
@@ -207,8 +241,16 @@ function TenantBrandingPanel({
       onAction={onOpenBranding}
     >
       <ValueRow label="Brand color" value={formatValue(orgContext?.profile?.brandColor)} readOnly />
-      <ValueRow label="Accent color" value={formatValue(orgContext?.profile?.accentColor)} readOnly />
-      <ValueRow label="Custom domain" value={formatValue(orgContext?.profile?.customDomain)} readOnly />
+      <ValueRow
+        label="Accent color"
+        value={formatValue(orgContext?.profile?.accentColor)}
+        readOnly
+      />
+      <ValueRow
+        label="Custom domain"
+        value={formatValue(orgContext?.profile?.customDomain)}
+        readOnly
+      />
     </SectionCard>
   );
 }
@@ -232,12 +274,46 @@ function TenantSecurityPanel({
       actionLabel="Open Admin Security"
       onAction={onOpenAdmin}
     >
-      <ValueRow label="MFA required" value={formatValue(resolved.mfa_required?.value)} source={resolved.mfa_required?.source} readOnly />
-      <ValueRow label="SSO enforced" value={`${formatValue(resolved.sso_enforced?.value)}${ssoProvider ? ` (${ssoProvider})` : ''}`} source={resolved.sso_enforced?.source} readOnly />
-      <ValueRow label="Session timeout" value={resolved.session_timeout_minutes?.value ? `${resolved.session_timeout_minutes.value} minutes` : 'Not configured'} source={resolved.session_timeout_minutes?.source} readOnly />
-      <ValueRow label="Guest access" value={formatValue(resolved.guest_access_enabled?.value)} source={resolved.guest_access_enabled?.source} readOnly />
-      <ValueRow label="External link sharing" value={formatValue(resolved.external_link_sharing?.value)} source={resolved.external_link_sharing?.source} readOnly />
-      <ValueRow label="Tool approval required" value={formatValue(resolved.tool_approval_required?.value)} source={resolved.tool_approval_required?.source} readOnly />
+      <ValueRow
+        label="MFA required"
+        value={formatValue(resolved.mfa_required?.value)}
+        source={resolved.mfa_required?.source}
+        readOnly
+      />
+      <ValueRow
+        label="SSO enforced"
+        value={`${formatValue(resolved.sso_enforced?.value)}${ssoProvider ? ` (${ssoProvider})` : ''}`}
+        source={resolved.sso_enforced?.source}
+        readOnly
+      />
+      <ValueRow
+        label="Session timeout"
+        value={
+          resolved.session_timeout_minutes?.value
+            ? `${resolved.session_timeout_minutes.value} minutes`
+            : 'Not configured'
+        }
+        source={resolved.session_timeout_minutes?.source}
+        readOnly
+      />
+      <ValueRow
+        label="Guest access"
+        value={formatValue(resolved.guest_access_enabled?.value)}
+        source={resolved.guest_access_enabled?.source}
+        readOnly
+      />
+      <ValueRow
+        label="External link sharing"
+        value={formatValue(resolved.external_link_sharing?.value)}
+        source={resolved.external_link_sharing?.source}
+        readOnly
+      />
+      <ValueRow
+        label="Tool approval required"
+        value={formatValue(resolved.tool_approval_required?.value)}
+        source={resolved.tool_approval_required?.source}
+        readOnly
+      />
     </SectionCard>
   );
 }
@@ -308,11 +384,16 @@ function ModulePreferencesPanel({
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">{card.title}</div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {card.title}
+                </div>
                 <div className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400">
                   {card.values.map(([label, value]) => (
                     <div key={label}>
-                      <span className="font-medium text-slate-800 dark:text-slate-200">{label}:</span> {value}
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
+                        {label}:
+                      </span>{' '}
+                      {value}
                     </div>
                   ))}
                 </div>
@@ -358,7 +439,11 @@ export const SettingsOwnershipPanels: React.FC<SettingsOwnershipPanelsProps> = (
       <div className="space-y-6">
         <SettingsTaxonomyPanel />
         <TenantDefaultsPanel resolved={resolved} onOpenOrganization={openOrganizationProfile} />
-        <TenantSecurityPanel resolved={resolved} orgContext={orgContext} onOpenAdmin={openAdminSecurity} />
+        <TenantSecurityPanel
+          resolved={resolved}
+          orgContext={orgContext}
+          onOpenAdmin={openAdminSecurity}
+        />
         <ModulePreferencesPanel resolved={resolved} onOpenSection={onOpenSection} />
       </div>
     );
@@ -369,11 +454,19 @@ export const SettingsOwnershipPanels: React.FC<SettingsOwnershipPanelsProps> = (
   }
 
   if (mode === 'tenant-branding') {
-    return <TenantBrandingPanel orgContext={orgContext} onOpenBranding={openOrganizationBranding} />;
+    return (
+      <TenantBrandingPanel orgContext={orgContext} onOpenBranding={openOrganizationBranding} />
+    );
   }
 
   if (mode === 'tenant-security') {
-    return <TenantSecurityPanel resolved={resolved} orgContext={orgContext} onOpenAdmin={openAdminSecurity} />;
+    return (
+      <TenantSecurityPanel
+        resolved={resolved}
+        orgContext={orgContext}
+        onOpenAdmin={openAdminSecurity}
+      />
+    );
   }
 
   return <ModulePreferencesPanel resolved={resolved} onOpenSection={onOpenSection} />;

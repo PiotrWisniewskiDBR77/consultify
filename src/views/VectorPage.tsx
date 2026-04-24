@@ -169,7 +169,7 @@ export const VectorPage: React.FC = () => {
             </span>
 
             <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-black text-navy-950 dark:text-white mb-6 tracking-tight leading-[1.1]">
-              {t('vector.hero.title', 'The world\'s first AI that')}{' '}
+              {t('vector.hero.title', "The world's first AI that")}{' '}
               <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
                 {t('vector.hero.titleHighlight', 'reasons like an industrial engineer.')}
               </span>
@@ -188,7 +188,10 @@ export const VectorPage: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)' }}
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                  boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)',
+                }}
               >
                 <Download size={16} />
                 {t('vector.hero.downloadCta', 'Download Whitepaper')}
@@ -228,7 +231,7 @@ export const VectorPage: React.FC = () => {
                 title: t('vector.beyond.problem.title', 'The Problem'),
                 body: t(
                   'vector.beyond.problem.body',
-                  'Factories generate exascale telemetry, yet optimization depends on slow, high-latency human analysis. The bottleneck is no longer data — it\'s the absence of decision systems.'
+                  "Factories generate exascale telemetry, yet optimization depends on slow, high-latency human analysis. The bottleneck is no longer data — it's the absence of decision systems."
                 ),
               },
               {
@@ -260,11 +263,17 @@ export const VectorPage: React.FC = () => {
                   transition={{ duration: 0.45, delay: idx * 0.1 }}
                   className="rounded-2xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.02] p-7"
                 >
-                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${card.accent} text-white shadow-lg mb-5`}>
+                  <div
+                    className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${card.accent} text-white shadow-lg mb-5`}
+                  >
                     <Icon size={22} />
                   </div>
-                  <h3 className="text-lg font-black text-navy-950 dark:text-white mb-2">{card.title}</h3>
-                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{card.body}</p>
+                  <h3 className="text-lg font-black text-navy-950 dark:text-white mb-2">
+                    {card.title}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    {card.body}
+                  </p>
                 </motion.div>
               );
             })}
@@ -309,8 +318,12 @@ export const VectorPage: React.FC = () => {
                     </span>
                     <Icon size={18} className="text-slate-400 dark:text-slate-500" />
                   </div>
-                  <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">{t(`vector.pipeline.steps.${step.num}.title`, step.title)}</h3>
-                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{t(`vector.pipeline.steps.${step.num}.body`, step.body)}</p>
+                  <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">
+                    {t(`vector.pipeline.steps.${step.num}.title`, step.title)}
+                  </h3>
+                  <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    {t(`vector.pipeline.steps.${step.num}.body`, step.body)}
+                  </p>
                 </motion.div>
               );
             })}
@@ -329,10 +342,26 @@ export const VectorPage: React.FC = () => {
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { value: '94%', label: t('vector.numbers.parity', 'Parity with senior consultants'), sub: '30/39 vs 32/39 DUS' },
-              { value: '<120s', label: t('vector.numbers.speed', 'Analysis time'), sub: t('vector.numbers.speedSub', 'vs weeks of manual work') },
-              { value: '1,400+', label: t('vector.numbers.cases', 'Authenticated case studies'), sub: t('vector.numbers.casesSub', 'Proprietary training corpus') },
-              { value: '~20B', label: t('vector.numbers.params', 'Model parameters'), sub: t('vector.numbers.paramsSub', '+ QLoRA domain adapter') },
+              {
+                value: '94%',
+                label: t('vector.numbers.parity', 'Parity with senior consultants'),
+                sub: '30/39 vs 32/39 DUS',
+              },
+              {
+                value: '<120s',
+                label: t('vector.numbers.speed', 'Analysis time'),
+                sub: t('vector.numbers.speedSub', 'vs weeks of manual work'),
+              },
+              {
+                value: '1,400+',
+                label: t('vector.numbers.cases', 'Authenticated case studies'),
+                sub: t('vector.numbers.casesSub', 'Proprietary training corpus'),
+              },
+              {
+                value: '~20B',
+                label: t('vector.numbers.params', 'Model parameters'),
+                sub: t('vector.numbers.paramsSub', '+ QLoRA domain adapter'),
+              },
             ].map((stat, idx) => (
               <motion.div
                 key={stat.value}
@@ -361,28 +390,50 @@ export const VectorPage: React.FC = () => {
               {t('vector.comparison.title', 'Vector vs. Generic LLMs')}
             </h2>
             <p className="mt-4 text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-              {t('vector.comparison.subtitle', 'Purpose-built industrial reasoning vs. general-purpose language generation.')}
+              {t(
+                'vector.comparison.subtitle',
+                'Purpose-built industrial reasoning vs. general-purpose language generation.'
+              )}
             </p>
           </motion.div>
 
-          <motion.div {...fadeUp} className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/[0.08]">
+          <motion.div
+            {...fadeUp}
+            className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-white/[0.08]"
+          >
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-100 dark:bg-white/[0.04]">
-                  <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">{t('vector.comparison.dimensionHeader', 'Dimension')}</th>
-                  <th className="text-left px-6 py-4 font-bold text-violet-600 dark:text-violet-400">{t('vector.comparison.vectorHeader', 'DBR77 Vector')}</th>
-                  <th className="text-left px-6 py-4 font-bold text-slate-500">{t('vector.comparison.genericHeader', 'Generic LLM')}</th>
+                  <th className="text-left px-6 py-4 font-bold text-navy-950 dark:text-white">
+                    {t('vector.comparison.dimensionHeader', 'Dimension')}
+                  </th>
+                  <th className="text-left px-6 py-4 font-bold text-violet-600 dark:text-violet-400">
+                    {t('vector.comparison.vectorHeader', 'DBR77 Vector')}
+                  </th>
+                  <th className="text-left px-6 py-4 font-bold text-slate-500">
+                    {t('vector.comparison.genericHeader', 'Generic LLM')}
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {COMPARISON_ROWS.map((row, idx) => (
                   <tr
                     key={row.dimension}
-                    className={idx % 2 === 0 ? 'bg-white dark:bg-transparent' : 'bg-slate-50/50 dark:bg-white/[0.02]'}
+                    className={
+                      idx % 2 === 0
+                        ? 'bg-white dark:bg-transparent'
+                        : 'bg-slate-50/50 dark:bg-white/[0.02]'
+                    }
                   >
-                    <td className="px-6 py-4 font-semibold text-navy-950 dark:text-white whitespace-nowrap">{t(`vector.comparison.rows.${idx}.dimension`, row.dimension)}</td>
-                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{t(`vector.comparison.rows.${idx}.vector`, row.vector)}</td>
-                    <td className="px-6 py-4 text-slate-500 dark:text-slate-500">{t(`vector.comparison.rows.${idx}.generic`, row.generic)}</td>
+                    <td className="px-6 py-4 font-semibold text-navy-950 dark:text-white whitespace-nowrap">
+                      {t(`vector.comparison.rows.${idx}.dimension`, row.dimension)}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
+                      {t(`vector.comparison.rows.${idx}.vector`, row.vector)}
+                    </td>
+                    <td className="px-6 py-4 text-slate-500 dark:text-slate-500">
+                      {t(`vector.comparison.rows.${idx}.generic`, row.generic)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -433,8 +484,12 @@ export const VectorPage: React.FC = () => {
                   {stage.status === 'current' && ` — ${t('vector.roadmap.now', 'Now')}`}
                   {stage.status === 'done' && ` — ${t('vector.roadmap.done', 'Done')}`}
                 </span>
-                <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">{t(`vector.roadmap.stages.${stage.stage}.title`, stage.title)}</h3>
-                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">{t(`vector.roadmap.stages.${stage.stage}.body`, stage.body)}</p>
+                <h3 className="text-base font-black text-navy-950 dark:text-white mb-2">
+                  {t(`vector.roadmap.stages.${stage.stage}.title`, stage.title)}
+                </h3>
+                <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                  {t(`vector.roadmap.stages.${stage.stage}.body`, stage.body)}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -473,17 +528,23 @@ export const VectorPage: React.FC = () => {
                       : 'border-white/[0.08] bg-white/[0.03]'
                   }`}
                 >
-                  <div className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl mb-4 ${
-                    isVector
-                      ? 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30'
-                      : 'bg-white/[0.06]'
-                  }`}>
+                  <div
+                    className={`mx-auto flex h-12 w-12 items-center justify-center rounded-xl mb-4 ${
+                      isVector
+                        ? 'bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30'
+                        : 'bg-white/[0.06]'
+                    }`}
+                  >
                     <Icon size={22} className={isVector ? 'text-white' : 'text-white/50'} />
                   </div>
-                  <p className={`text-sm font-black ${isVector ? 'text-violet-300' : 'text-white/70'}`}>
+                  <p
+                    className={`text-sm font-black ${isVector ? 'text-violet-300' : 'text-white/70'}`}
+                  >
                     {t(`vector.ecosystem.layers.${idx}.label`, layer.label)}
                   </p>
-                  <p className="text-xs text-white/35 mt-1">{t(`vector.ecosystem.layers.${idx}.sub`, layer.sub)}</p>
+                  <p className="text-xs text-white/35 mt-1">
+                    {t(`vector.ecosystem.layers.${idx}.sub`, layer.sub)}
+                  </p>
                   {idx < ECOSYSTEM_LAYERS.length - 1 && (
                     <div className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2">
                       <ArrowRight size={14} className="text-white/20" />
@@ -516,7 +577,10 @@ export const VectorPage: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-sm font-semibold text-white transition-all"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)', boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)' }}
+                style={{
+                  background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
+                  boxShadow: '0 0 24px -8px rgba(124,58,237,0.60)',
+                }}
               >
                 <Download size={16} />
                 {t('vector.cta.download', 'Download Whitepaper (PDF)')}

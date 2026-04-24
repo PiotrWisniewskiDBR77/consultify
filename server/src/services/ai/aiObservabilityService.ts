@@ -119,9 +119,10 @@ class AIObservabilityService {
       this.queryRequestCount(from, to, orgFilter, orgParams),
     ]);
 
-    const daysDiff = Math.max(1, Math.ceil(
-      (new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24)
-    ));
+    const daysDiff = Math.max(
+      1,
+      Math.ceil((new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24))
+    );
 
     return {
       period: { from, to },
@@ -184,7 +185,10 @@ class AIObservabilityService {
     };
   }
 
-  checkAlerts(metrics: ObservabilityMetrics, rules?: AlertRule[]): Array<{
+  checkAlerts(
+    metrics: ObservabilityMetrics,
+    rules?: AlertRule[]
+  ): Array<{
     rule: AlertRule;
     currentValue: number;
     triggered: boolean;
@@ -192,8 +196,7 @@ class AIObservabilityService {
     const activeRules = rules || DEFAULT_ALERTS;
     return activeRules.map((rule) => {
       const value = this.resolveMetricValue(metrics, rule.metric);
-      const triggered =
-        rule.operator === 'lt' ? value < rule.threshold : value > rule.threshold;
+      const triggered = rule.operator === 'lt' ? value < rule.threshold : value > rule.threshold;
       return { rule, currentValue: value, triggered };
     });
   }
@@ -287,7 +290,12 @@ class AIObservabilityService {
     ).catch(() => null) as any;
   }
 
-  private async querySafetyByCategory(from: string, to: string, orgFilter: string, orgParams: any[]) {
+  private async querySafetyByCategory(
+    from: string,
+    to: string,
+    orgFilter: string,
+    orgParams: any[]
+  ) {
     const rows = await dbAll(
       `SELECT COALESCE(JSON_EXTRACT(context_snapshot, '$.category'), 'unknown') as category,
               COUNT(*) as count
@@ -383,11 +391,11 @@ class AIObservabilityService {
   }
 
   private async queryRequestCount(from: string, to: string, orgFilter: string, orgParams: any[]) {
-    const row = await dbGet(
+    const row = (await dbGet(
       `SELECT COUNT(*) as cnt FROM ai_usage_logs
        WHERE created_at >= ? AND created_at <= ? ${orgFilter}`,
       [from, to, ...orgParams]
-    ).catch(() => null) as any;
+    ).catch(() => null)) as any;
     return numInt(row?.cnt);
   }
 }

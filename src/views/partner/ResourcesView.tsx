@@ -40,19 +40,22 @@ export const ResourcesView: React.FC = () => {
           {[
             {
               title: 'Public docs',
-              description: 'Program overview, application flow, payouts, certification, FAQ, and case studies.',
+              description:
+                'Program overview, application flow, payouts, certification, FAQ, and case studies.',
               icon: BookOpen,
               action: () => navigate(PARTNER_DOCS.overview.href),
             },
             {
               title: 'Partner academy',
-              description: 'Track-based learning paths with modules, exam eligibility, and review states.',
+              description:
+                'Track-based learning paths with modules, exam eligibility, and review states.',
               icon: GraduationCap,
               action: () => navigate(`${ROUTES.PARTNER.LANDING}?tab=learning-path`),
             },
             {
               title: 'Governed readiness',
-              description: 'Operator review, payout readiness, and certificates stay visible in the portal.',
+              description:
+                'Operator review, payout readiness, and certificates stay visible in the portal.',
               icon: ShieldCheck,
               action: () => navigate(`${ROUTES.PARTNER.LANDING}?tab=certificates`),
             },

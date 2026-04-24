@@ -133,7 +133,8 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({
     setEmailSettings((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const sectionLabel = 'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+  const sectionLabel =
+    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
 
   const optionCardCls = (active: boolean) =>
     cn(
@@ -192,7 +193,13 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({
                 >
                   {emailSettings[key] && (
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2.5 6L5 8.5L9.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      <path
+                        d="M2.5 6L5 8.5L9.5 3.5"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
                     </svg>
                   )}
                 </button>
@@ -224,7 +231,12 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({
                   onClick={() => setFrequency(opt.value)}
                   className={optionCardCls(frequency === opt.value)}
                 >
-                  <div className={cn('text-sm font-medium', frequency === opt.value ? 'text-violet-300' : 'text-slate-400')}>
+                  <div
+                    className={cn(
+                      'text-sm font-medium',
+                      frequency === opt.value ? 'text-violet-300' : 'text-slate-400'
+                    )}
+                  >
                     {t(`settings.emailDigest.freq_${opt.value}`, opt.label)}
                   </div>
                   <div className="text-[11px] text-slate-500 mt-0.5">
@@ -247,7 +259,12 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({
                   onClick={() => setContent(opt.value)}
                   className={optionCardCls(content === opt.value)}
                 >
-                  <div className={cn('text-sm font-medium', content === opt.value ? 'text-violet-300' : 'text-slate-400')}>
+                  <div
+                    className={cn(
+                      'text-sm font-medium',
+                      content === opt.value ? 'text-violet-300' : 'text-slate-400'
+                    )}
+                  >
                     {t(`settings.emailDigest.content_${opt.value}`, opt.label)}
                   </div>
                   <div className="text-[11px] text-slate-500 mt-0.5">
@@ -270,7 +287,12 @@ export const EmailDigestSettings: React.FC<EmailDigestSettingsProps> = ({
                   onClick={() => setFormat(opt.value)}
                   className={optionCardCls(format === opt.value)}
                 >
-                  <div className={cn('text-sm font-medium', format === opt.value ? 'text-violet-300' : 'text-slate-400')}>
+                  <div
+                    className={cn(
+                      'text-sm font-medium',
+                      format === opt.value ? 'text-violet-300' : 'text-slate-400'
+                    )}
+                  >
                     {t(`settings.emailDigest.format_${opt.value}`, opt.label)}
                   </div>
                   <div className="text-[11px] text-slate-500 mt-0.5">

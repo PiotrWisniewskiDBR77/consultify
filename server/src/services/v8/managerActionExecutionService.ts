@@ -17,7 +17,10 @@ function isoDay(offsetDays = 0) {
   return date.toISOString().slice(0, 10);
 }
 
-async function pickCandidateUser(organizationId: string, excludedUserIds: Array<string | null | undefined> = []) {
+async function pickCandidateUser(
+  organizationId: string,
+  excludedUserIds: Array<string | null | undefined> = []
+) {
   const excluded = excludedUserIds.filter((value): value is string => Boolean(value));
   const params: unknown[] = [organizationId];
   let exclusionSql = '';
@@ -86,7 +89,16 @@ async function createRaidEscalation(args: {
   await dbRun(
     `INSERT INTO raid_items (id, organization_id, initiative_id, type, title, description, status, owner_id, due_date, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, NOW(), NOW())`,
-    [raidId, args.organizationId, args.initiativeId, args.escalationType, args.title, args.description, args.ownerId, isoDay(7)]
+    [
+      raidId,
+      args.organizationId,
+      args.initiativeId,
+      args.escalationType,
+      args.title,
+      args.description,
+      args.ownerId,
+      isoDay(7),
+    ]
   );
   return raidId;
 }
@@ -134,7 +146,8 @@ async function executeProblemActionInternal(
   actionId: string
 ) {
   const changedEntities: Array<{ entityType: string; entityId: string }> = [];
-  const addChange = (entityType: string, entityId: string) => changedEntities.push({ entityType, entityId });
+  const addChange = (entityType: string, entityId: string) =>
+    changedEntities.push({ entityType, entityId });
 
   const candidateUser = async (...excludedIds: Array<string | null | undefined>) =>
     pickCandidateUser(organizationId, [userId, row.ownerId, ...excludedIds]);
@@ -161,7 +174,10 @@ async function executeProblemActionInternal(
           [candidate.id, row.sourceEntityId, organizationId]
         );
         addChange('TASK', row.sourceEntityId);
-        return { message: `Task reassigned to ${candidate.display_name || candidate.id}.`, changedEntities };
+        return {
+          message: `Task reassigned to ${candidate.display_name || candidate.id}.`,
+          changedEntities,
+        };
       }
       case 'unblock': {
         await dbRun(
@@ -221,7 +237,10 @@ async function executeProblemActionInternal(
           [candidate.id, row.sourceEntityId, organizationId]
         );
         addChange('INITIATIVE', row.sourceEntityId);
-        return { message: `Initiative owner assigned to ${candidate.display_name || candidate.id}.`, changedEntities };
+        return {
+          message: `Initiative owner assigned to ${candidate.display_name || candidate.id}.`,
+          changedEntities,
+        };
       }
       case 'assign_sponsor': {
         const candidate = await candidateUser();
@@ -231,7 +250,10 @@ async function executeProblemActionInternal(
           [candidate.id, row.sourceEntityId, organizationId]
         );
         addChange('INITIATIVE', row.sourceEntityId);
-        return { message: `Initiative sponsor assigned to ${candidate.display_name || candidate.id}.`, changedEntities };
+        return {
+          message: `Initiative sponsor assigned to ${candidate.display_name || candidate.id}.`,
+          changedEntities,
+        };
       }
       case 'set_dates':
       case 'set_baseline': {
@@ -344,7 +366,10 @@ async function executeProblemActionInternal(
           [candidate.id, row.sourceEntityId, organizationId]
         );
         addChange('DECISION', row.sourceEntityId);
-        return { message: `Decision maker assigned to ${candidate.display_name || candidate.id}.`, changedEntities };
+        return {
+          message: `Decision maker assigned to ${candidate.display_name || candidate.id}.`,
+          changedEntities,
+        };
       }
       case 'request_info': {
         await dbRun(
@@ -382,7 +407,11 @@ async function executeProblemActionInternal(
                mitigation_status = 'IN_PROGRESS',
                updated_at = NOW()
            WHERE id = ? AND organization_id = ?`,
-          [`Manager mitigation created for ${row.sourceEntityName}`, row.sourceEntityId, organizationId]
+          [
+            `Manager mitigation created for ${row.sourceEntityName}`,
+            row.sourceEntityId,
+            organizationId,
+          ]
         );
         addChange('RAID_ITEM', row.sourceEntityId);
         return { message: 'Mitigation plan created and started.', changedEntities };
@@ -395,7 +424,10 @@ async function executeProblemActionInternal(
           [candidate.id, row.sourceEntityId, organizationId]
         );
         addChange('RAID_ITEM', row.sourceEntityId);
-        return { message: `Risk owner assigned to ${candidate.display_name || candidate.id}.`, changedEntities };
+        return {
+          message: `Risk owner assigned to ${candidate.display_name || candidate.id}.`,
+          changedEntities,
+        };
       }
       case 'mark_mitigated': {
         await dbRun(
@@ -427,7 +459,10 @@ async function executeProblemActionInternal(
   }
 
   if (row.sourceEntityType === 'PERSON') {
-    if (row.problemType === 'overloaded_person' && ['distribute_work', 'reassign'].includes(actionId)) {
+    if (
+      row.problemType === 'overloaded_person' &&
+      ['distribute_work', 'reassign'].includes(actionId)
+    ) {
       const candidate = await candidateUser(row.sourceEntityId);
       if (!candidate) throw new Error('No rebalance candidate available');
       const tasks = await dbAll<{ id: string }>(
@@ -527,7 +562,12 @@ export async function executeManagerProblemAction(args: {
     throw new Error(`Problem ${args.problemId} not found in lane ${args.laneId}`);
   }
 
-  const result = await executeProblemActionInternal(args.organizationId, args.userId, row, args.actionId);
+  const result = await executeProblemActionInternal(
+    args.organizationId,
+    args.userId,
+    row,
+    args.actionId
+  );
 
   for (const entity of result.changedEntities) {
     await managerAuditLog(
@@ -556,14 +596,20 @@ export async function applyManagerSuggestion(args: {
   projectId?: string;
 }): Promise<ManagerActionExecutionResult> {
   const changedEntities: Array<{ entityType: string; entityId: string }> = [];
-  const addChange = (entityType: string, entityId: string) => changedEntities.push({ entityType, entityId });
+  const addChange = (entityType: string, entityId: string) =>
+    changedEntities.push({ entityType, entityId });
 
   const problems = await getManagerProblems(args.organizationId, args.laneId, args.projectId);
   const executeByPrefix = async (prefix: string, actionId: string, limit?: number) => {
     const matching = problems.filter((problem) => problem.id.startsWith(prefix));
     const slice = typeof limit === 'number' ? matching.slice(0, limit) : matching;
     for (const problem of slice) {
-      const result = await executeProblemActionInternal(args.organizationId, args.userId, problem, actionId);
+      const result = await executeProblemActionInternal(
+        args.organizationId,
+        args.userId,
+        problem,
+        actionId
+      );
       changedEntities.push(...result.changedEntities);
     }
     return slice.length;
@@ -603,10 +649,17 @@ export async function applyManagerSuggestion(args: {
           actions: [],
           meta: {},
         } satisfies ManagerProblemRow;
-        const result = await executeProblemActionInternal(args.organizationId, args.userId, pseudoRow, 'reassign');
+        const result = await executeProblemActionInternal(
+          args.organizationId,
+          args.userId,
+          pseudoRow,
+          'reassign'
+        );
         changedEntities.push(...result.changedEntities);
       }
-      message = tasks.length ? `Assigned ${tasks.length} previously unassigned task(s).` : 'No unassigned tasks left to assign.';
+      message = tasks.length
+        ? `Assigned ${tasks.length} previously unassigned task(s).`
+        : 'No unassigned tasks left to assign.';
       break;
     }
     case 'sug-aq:missing-due-dates': {
@@ -621,7 +674,10 @@ export async function applyManagerSuggestion(args: {
         [args.organizationId]
       );
       for (const task of tasks) {
-        await dbRun(`UPDATE tasks SET due_date = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`, [isoDay(7), task.id, args.organizationId]);
+        await dbRun(
+          `UPDATE tasks SET due_date = ?, updated_at = NOW() WHERE id = ? AND organization_id = ?`,
+          [isoDay(7), task.id, args.organizationId]
+        );
         addChange('TASK', task.id);
       }
       message = tasks.length
@@ -634,7 +690,9 @@ export async function applyManagerSuggestion(args: {
     case 'sug-aq:overdue-decisions-escalation':
     case 'sug-blk:decision-escalation': {
       const count = await executeByPrefix('aq-dec-overdue-', 'escalate');
-      message = count ? `Escalated ${count} overdue decision(s).` : 'No overdue decisions to escalate.';
+      message = count
+        ? `Escalated ${count} overdue decision(s).`
+        : 'No overdue decisions to escalate.';
       break;
     }
     case 'sug-blk:dependency-unblock': {
@@ -658,7 +716,9 @@ export async function applyManagerSuggestion(args: {
     }
     case 'sug-blk:scope-reduction': {
       const count = await executeByPrefix('blk-ini-', 'scope_reduction', 5);
-      message = count ? `Reduced scope on ${count} blocked initiative(s).` : 'No blocked initiatives found for scope reduction.';
+      message = count
+        ? `Reduced scope on ${count} blocked initiative(s).`
+        : 'No blocked initiatives found for scope reduction.';
       break;
     }
     case 'sug-aq:severely-overdue-replan': {
@@ -668,58 +728,80 @@ export async function applyManagerSuggestion(args: {
     }
     case 'sug-dec:assign-approvers': {
       const count = await executeByPrefix('dec-nomaker-', 'assign_maker');
-      message = count ? `Assigned decision makers for ${count} decision(s).` : 'No unassigned decisions found.';
+      message = count
+        ? `Assigned decision makers for ${count} decision(s).`
+        : 'No unassigned decisions found.';
       break;
     }
     case 'sug-dec:request-missing-info': {
       const count = await executeByPrefix('dec-overdue-', 'request_info', 10);
-      message = count ? `Deferred ${count} decision(s) pending more input.` : 'No overdue decisions require more input.';
+      message = count
+        ? `Deferred ${count} decision(s) pending more input.`
+        : 'No overdue decisions require more input.';
       break;
     }
     case 'sug-dec:assign-substitute-approvers': {
       const count = await executeByPrefix('dec-overdue-', 'assign_maker', 10);
-      message = count ? `Redistributed ${count} overdue decision(s) to substitute approvers.` : 'No overdue decisions to reassign.';
+      message = count
+        ? `Redistributed ${count} overdue decision(s) to substitute approvers.`
+        : 'No overdue decisions to reassign.';
       break;
     }
     case 'sug-dec:weekly-governance-cadence': {
       const count = await executeByPrefix('dec-pending-', 'send_nudge', 10);
-      message = count ? `Escalated ${count} pending decision(s) into a tighter governance cadence.` : 'No pending decisions found for cadence change.';
+      message = count
+        ? `Escalated ${count} pending decision(s) into a tighter governance cadence.`
+        : 'No pending decisions found for cadence change.';
       break;
     }
     case 'sug-wl:rebalance-top-overload': {
       const count = await executeByPrefix('wl-overload-', 'distribute_work', 1);
-      message = count ? 'Rebalanced top overload cluster.' : 'No overload cluster found to rebalance.';
+      message = count
+        ? 'Rebalanced top overload cluster.'
+        : 'No overload cluster found to rebalance.';
       break;
     }
     case 'sug-wl:add-estimates': {
       const count = await executeByPrefix('wl-noest-', 'set_capacity', 20);
-      message = count ? `Added default estimates to ${count} task(s).` : 'No tasks without estimates found.';
+      message = count
+        ? `Added default estimates to ${count} task(s).`
+        : 'No tasks without estimates found.';
       break;
     }
     case 'sug-wl:reduce-wip-limit':
     case 'sug-wl:smooth-delivery-schedule': {
       const count = await executeByPrefix('wl-overload-', 'smooth_schedule', 1);
-      message = count ? 'Smoothed schedule for overloaded work.' : 'No overload schedule to smooth.';
+      message = count
+        ? 'Smoothed schedule for overloaded work.'
+        : 'No overload schedule to smooth.';
       break;
     }
     case 'sug-rsk:set-baseline-dates': {
       const count = await executeByPrefix('risk-nobase-', 'set_baseline', 20);
-      message = count ? `Set baselines for ${count} initiative(s).` : 'No initiatives without baselines found.';
+      message = count
+        ? `Set baselines for ${count} initiative(s).`
+        : 'No initiatives without baselines found.';
       break;
     }
     case 'sug-rsk:assign-mitigation-owners': {
       const count = await executeByPrefix('risk-', 'assign_mitigation_owner', 10);
-      message = count ? `Assigned mitigation owners across ${count} risk item(s).` : 'No risk items found.';
+      message = count
+        ? `Assigned mitigation owners across ${count} risk item(s).`
+        : 'No risk items found.';
       break;
     }
     case 'sug-rsk:comprehensive-risk-plan': {
       const count = await executeByPrefix('risk-', 'create_mitigation', 10);
-      message = count ? `Started mitigation plans for ${count} risk item(s).` : 'No risk items found to mitigate.';
+      message = count
+        ? `Started mitigation plans for ${count} risk item(s).`
+        : 'No risk items found to mitigate.';
       break;
     }
     case 'sug-rsk:leadership-escalation-review': {
       const count = await executeByPrefix('risk-', 'escalate', 5);
-      message = count ? `Escalated ${count} critical risk item(s) for leadership review.` : 'No critical risks found to escalate.';
+      message = count
+        ? `Escalated ${count} critical risk item(s) for leadership review.`
+        : 'No critical risks found to escalate.';
       break;
     }
     case 'sug-rsk:refresh-stale-items': {
@@ -733,7 +815,16 @@ export async function applyManagerSuggestion(args: {
       break;
     }
     case 'sug-pc:assign-task-owners': {
-      const tasks = await dbAll<{ id: string; title: string; status: string | null; due_date: string | null; assignee_id: string | null; assignee_name: string | null; initiative_id: string | null; initiative_name: string | null }>(
+      const tasks = await dbAll<{
+        id: string;
+        title: string;
+        status: string | null;
+        due_date: string | null;
+        assignee_id: string | null;
+        assignee_name: string | null;
+        initiative_id: string | null;
+        initiative_name: string | null;
+      }>(
         `SELECT t.id, t.title, t.status, t.due_date, t.assignee_id, COALESCE(u.first_name || ' ' || u.last_name, '') as assignee_name, t.initiative_id, i.name as initiative_name
          FROM tasks t
          LEFT JOIN users u ON u.id = t.assignee_id
@@ -762,10 +853,17 @@ export async function applyManagerSuggestion(args: {
           actions: [],
           meta: {},
         } satisfies ManagerProblemRow;
-        const result = await executeProblemActionInternal(args.organizationId, args.userId, pseudoRow, 'reassign');
+        const result = await executeProblemActionInternal(
+          args.organizationId,
+          args.userId,
+          pseudoRow,
+          'reassign'
+        );
         changedEntities.push(...result.changedEntities);
       }
-      message = tasks.length ? `Assigned ${tasks.length} previously unowned task(s).` : 'No unowned tasks remain.';
+      message = tasks.length
+        ? `Assigned ${tasks.length} previously unowned task(s).`
+        : 'No unowned tasks remain.';
       break;
     }
     case 'sug-pc:update-raci': {
@@ -775,12 +873,16 @@ export async function applyManagerSuggestion(args: {
     }
     case 'sug-pc:launch-steerco-cadence': {
       const count = await executeByPrefix('dec-pending-', 'send_nudge', 10);
-      message = count ? `Escalated ${count} pending decision(s) into active governance flow.` : 'No pending decisions found for governance cadence.';
+      message = count
+        ? `Escalated ${count} pending decision(s) into active governance flow.`
+        : 'No pending decisions found for governance cadence.';
       break;
     }
     case 'sug-pc:distribute-ownership': {
       const count = await executeByPrefix('pc-busfactor-', 'distribute_work', 1);
-      message = count ? 'Redistributed ownership away from the main bottleneck.' : 'No bus-factor issue found.';
+      message = count
+        ? 'Redistributed ownership away from the main bottleneck.'
+        : 'No bus-factor issue found.';
       break;
     }
     default:

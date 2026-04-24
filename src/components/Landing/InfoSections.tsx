@@ -611,7 +611,7 @@ export const InfoSections: React.FC = () => {
 
       {/* Trust & Governance */}
       <section className="px-6 relative z-10">
-          <div className="max-w-6xl mx-auto bg-navy-950 rounded-[4rem] p-12 lg:p-24 relative overflow-hidden border border-navy-800 dark:border-white/10 shadow-3xl">
+        <div className="max-w-6xl mx-auto bg-navy-950 rounded-[4rem] p-12 lg:p-24 relative overflow-hidden border border-navy-800 dark:border-white/10 shadow-3xl">
           {/* Background decoration */}
           <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[120px] -mr-32 -mt-32" />
           <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-indigo-600/5 rounded-full blur-[100px] -ml-20 -mb-20" />

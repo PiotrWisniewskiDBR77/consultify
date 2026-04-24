@@ -1633,7 +1633,13 @@ export class InitiativeController {
         );
       }
       if (nextStatus === 'DONE') {
-        pushOptionalColumnUpdate(lifecycleUpdates, lifecycleParams, initiativeColumns, 'done_at', now);
+        pushOptionalColumnUpdate(
+          lifecycleUpdates,
+          lifecycleParams,
+          initiativeColumns,
+          'done_at',
+          now
+        );
         pushOptionalColumnUpdate(
           lifecycleUpdates,
           lifecycleParams,
@@ -1674,7 +1680,11 @@ export class InitiativeController {
           now
         );
       }
-      if (actorId && (process.env.DB_TYPE || '').toLowerCase() !== 'postgres' && initiativeColumns.has('updated_by')) {
+      if (
+        actorId &&
+        (process.env.DB_TYPE || '').toLowerCase() !== 'postgres' &&
+        initiativeColumns.has('updated_by')
+      ) {
         lifecycleUpdates.push('updated_by = ?');
         lifecycleParams.push(actorId);
       }
@@ -3308,7 +3318,9 @@ export class InitiativeController {
       } catch (err: any) {
         const message = String(err?.message || '');
         if (message.includes('Initiative not found') || message.includes('KPI not found')) {
-          res.status(404).json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
+          res
+            .status(404)
+            .json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
           return;
         }
         throw err;
@@ -3338,7 +3350,9 @@ export class InitiativeController {
       } catch (err: any) {
         const message = String(err?.message || '');
         if (message.includes('Initiative not found') || message.includes('KPI not found')) {
-          res.status(404).json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
+          res
+            .status(404)
+            .json({ error: message.includes('KPI') ? 'KPI not found' : 'Initiative not found' });
           return;
         }
         throw err;
@@ -5181,12 +5195,7 @@ export class InitiativeController {
       // Canonical role resolution (system role + project membership + gate roles + steering board)
       const accessCtx =
         orgId && currentUserId
-          ? await resolveInitiativeAccessContext(
-              orgId,
-              initiativeId,
-              currentUserId,
-              req.user?.role
-            )
+          ? await resolveInitiativeAccessContext(orgId, initiativeId, currentUserId, req.user?.role)
           : null;
       const steeringBoardEnabled = !!accessCtx?.steeringBoard?.enabled;
       const userRoles = accessCtx?.effectiveRoles || [];
@@ -5531,9 +5540,13 @@ export class InitiativeController {
       const hasEditRole =
         isAdmin ||
         userRoles.some((r: string) =>
-          ['PMO', 'PROJECT_MANAGER', 'PROJECT_LEAD', 'INITIATIVE_OWNER', 'PROJECT_SPONSOR'].includes(
-            String(r || '').toUpperCase()
-          )
+          [
+            'PMO',
+            'PROJECT_MANAGER',
+            'PROJECT_LEAD',
+            'INITIATIVE_OWNER',
+            'PROJECT_SPONSOR',
+          ].includes(String(r || '').toUpperCase())
         );
 
       const topBar = {

@@ -392,43 +392,43 @@ export const CollaborationPresence: React.FC<CollaborationPresenceProps> = ({
       )}
       {presenceStatus !== 'degraded' && (
         <>
-      <Users size={11} className="text-slate-400" />
-      <div className="flex items-center -space-x-1.5">
-        {activeUsers.slice(0, 5).map((user) => (
-          <div
-            key={user.id}
-            className="relative group"
-            title={`${user.name}${user.isTyping ? (isPl ? ' (pisze…)' : ' (typing…)') : ''}`}
-          >
-            {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-900"
-                style={{ borderColor: user.color }}
-              />
-            ) : (
+          <Users size={11} className="text-slate-400" />
+          <div className="flex items-center -space-x-1.5">
+            {activeUsers.slice(0, 5).map((user) => (
               <div
-                className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-black text-white"
-                style={{ backgroundColor: user.color }}
+                key={user.id}
+                className="relative group"
+                title={`${user.name}${user.isTyping ? (isPl ? ' (pisze…)' : ' (typing…)') : ''}`}
               >
-                {getInitials(user.name)}
+                {user.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-900"
+                    style={{ borderColor: user.color }}
+                  />
+                ) : (
+                  <div
+                    className="w-5 h-5 rounded-full border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-black text-white"
+                    style={{ backgroundColor: user.color }}
+                  >
+                    {getInitials(user.name)}
+                  </div>
+                )}
+                {user.isTyping && (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-white dark:border-navy-900 animate-pulse" />
+                )}
+              </div>
+            ))}
+            {activeUsers.length > 5 && (
+              <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-navy-700 border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-bold text-slate-500">
+                +{activeUsers.length - 5}
               </div>
             )}
-            {user.isTyping && (
-              <div className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-400 border border-white dark:border-navy-900 animate-pulse" />
-            )}
           </div>
-        ))}
-        {activeUsers.length > 5 && (
-          <div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-navy-700 border-2 border-white dark:border-navy-900 flex items-center justify-center text-[7px] font-bold text-slate-500">
-            +{activeUsers.length - 5}
-          </div>
-        )}
-      </div>
-      <span className="text-[9px] text-slate-400 ml-1">
-        {activeUsers.length} {isPl ? 'online' : 'online'}
-      </span>
+          <span className="text-[9px] text-slate-400 ml-1">
+            {activeUsers.length} {isPl ? 'online' : 'online'}
+          </span>
         </>
       )}
     </div>

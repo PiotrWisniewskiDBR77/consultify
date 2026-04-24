@@ -45,14 +45,20 @@ async function purgeExpiredConversations(): Promise<number> {
     let purged = 0;
     for (const row of rows) {
       try {
-        const titleHash = row.title
-          ? Buffer.from(row.title).toString('base64').slice(0, 64)
-          : null;
+        const titleHash = row.title ? Buffer.from(row.title).toString('base64').slice(0, 64) : null;
 
         await dbRun(
           `INSERT INTO conversation_purge_audit (id, conversation_id, purged_by_user_id, organization_id, message_count, title_hash, purged_at)
            VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-          [uuidv4(), row.id, row.user_id, row.organization_id, row.message_count, titleHash, new Date().toISOString()]
+          [
+            uuidv4(),
+            row.id,
+            row.user_id,
+            row.organization_id,
+            row.message_count,
+            titleHash,
+            new Date().toISOString(),
+          ]
         );
 
         await dbRun('DELETE FROM conversation_messages WHERE conversation_id = $1', [row.id]);
@@ -64,7 +70,9 @@ async function purgeExpiredConversations(): Promise<number> {
     }
 
     if (purged > 0) {
-      logger.info(`[PurgeScheduler] Purged ${purged} conversations past ${GRACE_DAYS}-day grace window`);
+      logger.info(
+        `[PurgeScheduler] Purged ${purged} conversations past ${GRACE_DAYS}-day grace window`
+      );
     }
     return purged;
   } catch (err) {
@@ -76,7 +84,9 @@ async function purgeExpiredConversations(): Promise<number> {
 export function startPurgeScheduler(): void {
   if (timer) return;
 
-  logger.info(`[PurgeScheduler] Starting — grace=${GRACE_DAYS}d, interval=${INTERVAL_MS}ms, batch=${BATCH_SIZE}`);
+  logger.info(
+    `[PurgeScheduler] Starting — grace=${GRACE_DAYS}d, interval=${INTERVAL_MS}ms, batch=${BATCH_SIZE}`
+  );
 
   setTimeout(() => {
     void purgeExpiredConversations();

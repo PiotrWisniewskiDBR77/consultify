@@ -47,7 +47,15 @@ interface Subscription {
   currentPeriodEnd: string;
   cancelAtPeriodEnd: boolean;
   billingRail?: 'stripe_subscription' | 'manual_invoice' | 'hybrid_usage_invoice';
-  contractStatus?: 'draft' | 'active' | 'renewal_due' | 'grace' | 'suspended' | 'expired' | 'canceled' | null;
+  contractStatus?:
+    | 'draft'
+    | 'active'
+    | 'renewal_due'
+    | 'grace'
+    | 'suspended'
+    | 'expired'
+    | 'canceled'
+    | null;
   renewalAt?: string | null;
   graceUntil?: string | null;
   accessExpiresAt?: string | null;
@@ -113,13 +121,10 @@ const normalizePlan = (plan: any): BillingPlanOption => ({
 
 const normalizeInvoice = (invoice: any): Invoice => ({
   id: String(invoice?.id || invoice?.stripe_invoice_id || ''),
-  date: String(invoice?.paid_at || invoice?.due_date || invoice?.created_at || new Date().toISOString()),
-  amount: Number(
-    invoice?.amount_paid ??
-      invoice?.amount_due ??
-      invoice?.amount ??
-      0
+  date: String(
+    invoice?.paid_at || invoice?.due_date || invoice?.created_at || new Date().toISOString()
   ),
+  amount: Number(invoice?.amount_paid ?? invoice?.amount_due ?? invoice?.amount ?? 0),
   status: String(invoice?.status || 'open'),
   downloadUrl: invoice?.pdf_url || invoice?.downloadUrl || null,
   source: invoice?.source || (invoice?.stripe_invoice_id ? 'stripe' : null),
@@ -196,7 +201,9 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       if (paymentRes.data) setPaymentMethods(paymentRes.data);
       else setPaymentMethods([]);
 
-      setAvailablePlans(Array.isArray(plansRes) ? plansRes.map(normalizePlan).filter((plan) => plan.id) : []);
+      setAvailablePlans(
+        Array.isArray(plansRes) ? plansRes.map(normalizePlan).filter((plan) => plan.id) : []
+      );
     } catch (error) {
       console.error('Error loading billing data:', error);
     } finally {
@@ -417,8 +424,9 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
         {(isManualBilling ? manualStatus || effectiveStatus : effectiveStatus) && (
           <span
             className={`px-3 py-1 rounded-full text-xs font-medium ${
-              STATUS_COLORS[(isManualBilling ? manualStatus || effectiveStatus : effectiveStatus) as string] ||
-              STATUS_COLORS.trialing
+              STATUS_COLORS[
+                (isManualBilling ? manualStatus || effectiveStatus : effectiveStatus) as string
+              ] || STATUS_COLORS.trialing
             }`}
           >
             {t(
@@ -543,55 +551,57 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           {availablePlans.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {availablePlans.map((plan) => (
-              <div
-                key={plan.id}
-                className={`p-4 rounded-xl border-2 relative ${
-                  plan.id === subscription?.plan
-                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
-                    : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
-                }`}
-              >
-                {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
-                    {t('access.upgrade.popular')}
+                <div
+                  key={plan.id}
+                  className={`p-4 rounded-xl border-2 relative ${
+                    plan.id === subscription?.plan
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10'
+                      : 'border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900'
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-purple-600 text-white text-xs font-bold rounded-full">
+                      {t('access.upgrade.popular')}
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-slate-900 dark:text-white">{plan.name}</h4>
+                    {plan.id === subscription?.plan && (
+                      <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
+                        {t('access.upgrade.currentPlan')}
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold text-slate-900 dark:text-white">{plan.name}</h4>
-                  {plan.id === subscription?.plan && (
-                    <span className="text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full">
-                      {t('access.upgrade.currentPlan')}
-                    </span>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
+                    {plan.price !== null
+                      ? `$${plan.price}${t('access.upgrade.perMonth')}`
+                      : 'Custom'}
+                  </p>
+                  <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <Check size={14} className="text-emerald-500" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  {plan.id !== subscription?.plan && plan.price !== null && !isManualBilling && (
+                    <button
+                      onClick={() => handleSelectPlan(plan.id)}
+                      className="w-full mt-4 py-2 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-sm font-medium transition-colors"
+                    >
+                      {availablePlans.indexOf(plan) >
+                      availablePlans.findIndex((p) => p.id === subscription?.plan)
+                        ? 'Upgrade'
+                        : 'Downgrade'}
+                    </button>
+                  )}
+                  {plan.price === null && (
+                    <button className="w-full mt-4 py-2 px-4 border border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors">
+                      {t('access.cta.contactSales')}
+                    </button>
                   )}
                 </div>
-                <p className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-                  {plan.price !== null ? `$${plan.price}${t('access.upgrade.perMonth')}` : 'Custom'}
-                </p>
-                <ul className="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                  {plan.features.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <Check size={14} className="text-emerald-500" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                {plan.id !== subscription?.plan && plan.price !== null && !isManualBilling && (
-                  <button
-                    onClick={() => handleSelectPlan(plan.id)}
-                    className="w-full mt-4 py-2 px-4 border border-emerald-500 text-emerald-600 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-sm font-medium transition-colors"
-                  >
-                    {availablePlans.indexOf(plan) >
-                    availablePlans.findIndex((p) => p.id === subscription?.plan)
-                      ? 'Upgrade'
-                      : 'Downgrade'}
-                  </button>
-                )}
-                {plan.price === null && (
-                  <button className="w-full mt-4 py-2 px-4 border border-slate-300 dark:border-navy-600 text-slate-600 dark:text-slate-400 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 text-sm font-medium transition-colors">
-                    {t('access.cta.contactSales')}
-                  </button>
-                )}
-              </div>
               ))}
             </div>
           ) : (
@@ -614,8 +624,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
           )}
           {isManualBilling && (
             <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-300">
-              This subscription is managed manually outside Stripe. Contract renewals, invoice status,
-              and access changes are handled by your account team.
+              This subscription is managed manually outside Stripe. Contract renewals, invoice
+              status, and access changes are handled by your account team.
             </div>
           )}
         </>
@@ -752,7 +762,9 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
                     <button
                       className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg disabled:opacity-40"
                       disabled={!invoice.downloadUrl}
-                      onClick={() => invoice.downloadUrl && window.open(invoice.downloadUrl, '_blank')}
+                      onClick={() =>
+                        invoice.downloadUrl && window.open(invoice.downloadUrl, '_blank')
+                      }
                     >
                       <Download size={16} className="text-slate-500 dark:text-slate-400" />
                     </button>

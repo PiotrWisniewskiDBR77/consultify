@@ -4,11 +4,11 @@
  */
 
 import {
+  API_URL,
   apiDelete,
   apiGet,
   apiPost,
   apiPut,
-  API_URL,
   fetchWithRetry,
   getHeaders,
   handleResponse,
@@ -402,7 +402,10 @@ export const SettingsApi = {
   },
 
   getSettingsTemplates: async (): Promise<{ templates: unknown[] }> => {
-    return apiGet<{ templates: unknown[] }>('/settings/templates', 'Failed to fetch settings templates');
+    return apiGet<{ templates: unknown[] }>(
+      '/settings/templates',
+      'Failed to fetch settings templates'
+    );
   },
 
   createSettingsTemplate: async (

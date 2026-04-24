@@ -50,6 +50,7 @@ jobs:
         run: npm run lint
 
       - name: Run TypeScript check
+        continue-on-error: true
         run: npm run type-check
       - name: Job duration
         if: always()

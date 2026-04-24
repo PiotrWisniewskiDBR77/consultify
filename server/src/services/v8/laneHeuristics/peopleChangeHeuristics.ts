@@ -12,8 +12,8 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
 
   const { initiatives, tasks, decisions } = input;
 
-  const active = initiatives.filter((i: any) =>
-    !['DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT'].includes(String(i.status).toUpperCase())
+  const active = initiatives.filter(
+    (i: any) => !['DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT'].includes(String(i.status).toUpperCase())
   );
 
   const noOwner = active.filter((i: any) => !i.owner_execution_id && !i.ownerId && !i.assigneeId);
@@ -23,11 +23,12 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
   // Ownership diversity: how many unique owners across active initiatives?
   const owners = new Set(active.map((i: any) => i.owner_execution_id || i.ownerId).filter(Boolean));
   const ownerCount = owners.size;
-  const ownerClarityPct = active.length > 0 ? Math.round(((active.length - noOwner.length) / active.length) * 100) : 100;
+  const ownerClarityPct =
+    active.length > 0 ? Math.round(((active.length - noOwner.length) / active.length) * 100) : 100;
 
   // Tasks without assignees
-  const activeTasks = tasks.filter((t: any) =>
-    !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase())
+  const activeTasks = tasks.filter(
+    (t: any) => !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase())
   );
   const unownedTasks = activeTasks.filter((t: any) => !t.assignee_id);
 
@@ -71,7 +72,9 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
   });
 
   // Look for steerco/communication gaps
-  const pendingDecisions = decisions.filter((d: any) => String(d.status).toUpperCase() === 'PENDING');
+  const pendingDecisions = decisions.filter(
+    (d: any) => String(d.status).toUpperCase() === 'PENDING'
+  );
 
   // Insights
   if (noOwner.length > 3) {
@@ -79,7 +82,8 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
     insights.push({
       id: insId,
       observationIds: observations.filter((o) => o.metric.includes('owner')).map((o) => o.id),
-      interpretation: 'Significant ownership gap — initiatives without owners create decision vacuum and accountability void',
+      interpretation:
+        'Significant ownership gap — initiatives without owners create decision vacuum and accountability void',
       isSystemic: true,
       requiresAction: true,
       confidence: 'high',
@@ -99,7 +103,8 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
     insights.push({
       id: insId,
       observationIds: observations.filter((o) => o.metric.includes('clarity')).map((o) => o.id),
-      interpretation: 'Low ownership clarity across portfolio — governance and communication structures need reinforcement',
+      interpretation:
+        'Low ownership clarity across portfolio — governance and communication structures need reinforcement',
       isSystemic: true,
       requiresAction: true,
       confidence: 'medium',
@@ -117,7 +122,8 @@ export function analyzePeopleChange(input: HeuristicInput): HeuristicOutput {
     insights.push({
       id: uid('ins-pc'),
       observationIds: observations.map((o) => o.id),
-      interpretation: 'Single point of failure: all initiatives owned by one person — bottleneck and bus-factor risk',
+      interpretation:
+        'Single point of failure: all initiatives owned by one person — bottleneck and bus-factor risk',
       isSystemic: true,
       requiresAction: true,
       confidence: 'high',

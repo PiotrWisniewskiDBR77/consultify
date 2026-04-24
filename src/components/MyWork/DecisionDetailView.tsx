@@ -95,6 +95,7 @@ import type {
 } from '../shared/NModeSections/CommentsCanvas';
 import { CommentsCanvas } from '../shared/NModeSections/CommentsCanvas';
 import { RiskCanvas } from '../shared/NModeSections/RiskCanvas';
+import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import {
   type Alternative,
   AlternativesSection,
@@ -121,7 +122,6 @@ import {
   StakeholdersSection,
   type WarningThresholds,
 } from './shared';
-import { NotebookMetadataBadges } from './notebook/NotebookMetadataBadges';
 import { AIConnections } from './shared/AIConnections';
 import { buildAskAIMessage } from './shared/askAiHelper';
 import { PostDecisionFollowUp } from './shared/PostDecisionFollowUp';
@@ -4546,9 +4546,13 @@ Context: ${JSON.stringify(projectContext)}`;
                   {sourceType === 'task' && <Settings size={14} className="text-slate-500" />}
                   <span className="text-slate-600 dark:text-slate-300">
                     {sourceType === 'idea'
-                      ? (isPolish ? 'Utworzone z pomysłu' : 'Created from Idea')
+                      ? isPolish
+                        ? 'Utworzone z pomysłu'
+                        : 'Created from Idea'
                       : sourceType === 'notebook'
-                        ? (isPolish ? 'Utworzone z notatki' : 'Created from Note')
+                        ? isPolish
+                          ? 'Utworzone z notatki'
+                          : 'Created from Note'
                         : `Created from ${sourceType}`}
                   </span>
                   <button
@@ -4567,8 +4571,12 @@ Context: ${JSON.stringify(projectContext)}`;
                     className="text-amber-600 dark:text-amber-400 hover:underline font-medium"
                   >
                     {sourceType === 'idea'
-                      ? (isPolish ? 'Pokaż źródło w mapie →' : 'View source in mindmap →')
-                      : (isPolish ? 'Pokaż źródło →' : 'View source →')}
+                      ? isPolish
+                        ? 'Pokaż źródło w mapie →'
+                        : 'View source in mindmap →'
+                      : isPolish
+                        ? 'Pokaż źródło →'
+                        : 'View source →'}
                   </button>
                 </div>
               )}

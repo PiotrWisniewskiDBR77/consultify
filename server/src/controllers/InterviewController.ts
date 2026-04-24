@@ -16,15 +16,15 @@ import { z } from 'zod';
 
 import { IngestionPipeline } from '../services/ai/ingestionPipeline.js';
 import { llmService } from '../services/ai/llmService.js';
-import notificationService from '../services/notificationService.js';
-import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import {
   buildAssignmentManagerScopeClause,
   buildSessionManagerScopeClause,
+  type InterviewManagerScope,
   isOrgWideInterviewManagerRole,
   resolveInterviewManagerScope,
-  type InterviewManagerScope,
 } from '../services/interviewManagerScope.js';
+import notificationService from '../services/notificationService.js';
+import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import PDFParserService from '../services/pdfParserService.js';
 import { evaluateGatePolicy } from '../services/workflow/gatePolicy.js';
 import type { AuthenticatedRequest } from '../types/index.js';

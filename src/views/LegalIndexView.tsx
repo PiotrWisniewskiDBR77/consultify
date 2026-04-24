@@ -363,7 +363,10 @@ export const LegalIndexView: React.FC = () => {
         </section>
 
         {/* Contact Section */}
-        <section id="contact" className="scroll-mt-24 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 sm:p-10 shadow-sm">
+        <section
+          id="contact"
+          className="scroll-mt-24 bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-navy-700 p-8 sm:p-10 shadow-sm"
+        >
           <div className="flex items-start gap-4 mb-8">
             <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
               <Mail className="w-6 h-6" />

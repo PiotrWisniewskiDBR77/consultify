@@ -87,7 +87,10 @@ export const CloudDataSettings: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     const confirmed = window.confirm(
-      t('cloud.deleteConfirm', 'Are you sure you want to disconnect this cloud source? This will stop syncing files from this source.')
+      t(
+        'cloud.deleteConfirm',
+        'Are you sure you want to disconnect this cloud source? This will stop syncing files from this source.'
+      )
     );
     if (!confirmed) return;
 

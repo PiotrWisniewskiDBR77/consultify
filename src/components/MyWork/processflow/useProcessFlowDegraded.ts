@@ -17,7 +17,10 @@ interface UseProcessFlowDegradedOpts {
   pollIntervalMs?: number;
 }
 
-export function useProcessFlowDegraded({ processId, pollIntervalMs = 30000 }: UseProcessFlowDegradedOpts) {
+export function useProcessFlowDegraded({
+  processId,
+  pollIntervalMs = 30000,
+}: UseProcessFlowDegradedOpts) {
   const [state, setState] = useState<DegradedState>({ isDegraded: false, scenarios: [] });
   const [isChecking, setIsChecking] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
@@ -35,7 +38,17 @@ export function useProcessFlowDegraded({ processId, pollIntervalMs = 30000 }: Us
         });
       }
     } catch {
-      setState({ isDegraded: true, scenarios: [{ scenario: 'network_error', active: true, posture: 'offline', recovery: 'Check network connection and retry' }] });
+      setState({
+        isDegraded: true,
+        scenarios: [
+          {
+            scenario: 'network_error',
+            active: true,
+            posture: 'offline',
+            recovery: 'Check network connection and retry',
+          },
+        ],
+      });
     } finally {
       setIsChecking(false);
     }
@@ -45,7 +58,9 @@ export function useProcessFlowDegraded({ processId, pollIntervalMs = 30000 }: Us
     if (!processId) return;
     checkHealth();
     intervalRef.current = setInterval(checkHealth, pollIntervalMs);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [processId, pollIntervalMs, checkHealth]);
 
   const activeScenarios = (state.scenarios ?? []).filter((s) => s.active);

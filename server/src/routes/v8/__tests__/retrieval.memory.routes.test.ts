@@ -106,10 +106,7 @@ describe('V8 retrieval memory + promotion routes (P34-B)', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.meta?.version).toBe('v8');
-    expect(mockGetWorkingMemory).toHaveBeenCalledWith(
-      '00000000-0000-4000-8000-000000000001',
-      ORG
-    );
+    expect(mockGetWorkingMemory).toHaveBeenCalledWith('00000000-0000-4000-8000-000000000001', ORG);
   });
 
   it('POST /memory/promotions submits a private→org promotion request with provenance', async () => {
@@ -155,4 +152,3 @@ describe('V8 retrieval memory + promotion routes (P34-B)', () => {
     expect(mockResolveMemoryPromotion).toHaveBeenCalledWith('promo-1', 'approved', UID);
   });
 });
-

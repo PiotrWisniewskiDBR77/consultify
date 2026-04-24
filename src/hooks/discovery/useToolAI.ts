@@ -9,15 +9,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
-import { useAIStream } from '@/hooks/useAIStream';
-import { SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
-
 import {
   getToolPhaseAiActions,
   type ToolPhaseAiActionDefinition,
   type ToolPhaseAiActionId,
 } from '@/components/DiscoveryTools/toolAiActions';
+import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
+import { useAIStream } from '@/hooks/useAIStream';
+import { SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
 
 import {
   applyDynamicSwotPendingAction,
@@ -93,9 +92,8 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   const [error, setError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<ToolAiPendingAction | null>(null);
   const [activeAiActionId, setActiveAiActionId] = useState<ToolPhaseAiActionId | null>(null);
-  const [missionSuggestion, setMissionSuggestion] = useState<Partial<ConsultingMissionContext> | null>(
-    null
-  );
+  const [missionSuggestion, setMissionSuggestion] =
+    useState<Partial<ConsultingMissionContext> | null>(null);
   const [rethinkTarget, setRethinkTarget] = useState<{
     phaseId: string;
     cardType: string;
@@ -164,11 +162,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
     if (!currentStepDef) return;
 
-    const prompt = getToolSuggestionPrompt(
-      toolType,
-      currentStepDef.id,
-      currentSession?.inputData
-    );
+    const prompt = getToolSuggestionPrompt(toolType, currentStepDef.id, currentSession?.inputData);
 
     if (prompt) {
       setPendingAction('suggestions');

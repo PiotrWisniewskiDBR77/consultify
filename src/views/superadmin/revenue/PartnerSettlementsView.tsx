@@ -256,7 +256,10 @@ export const PartnerSettlementsView: React.FC = () => {
 
   // Process payout
   const handleProcessPayout = async (payoutId: string) => {
-    const reason = window.prompt('Podaj powód zatwierdzenia payoutu do processing:', 'Approve payout');
+    const reason = window.prompt(
+      'Podaj powód zatwierdzenia payoutu do processing:',
+      'Approve payout'
+    );
     if (!reason || reason.trim().length < 3) {
       toast.error('Confirmation reason is required');
       return;
@@ -264,11 +267,14 @@ export const PartnerSettlementsView: React.FC = () => {
 
     try {
       setProcessing(true);
-      const response = await Api.post(`/api/superadmin/partner-settlements/process-payout/${payoutId}`, {
-        payoutId,
-        confirmation: true,
-        reason: reason.trim(),
-      });
+      const response = await Api.post(
+        `/api/superadmin/partner-settlements/process-payout/${payoutId}`,
+        {
+          payoutId,
+          confirmation: true,
+          reason: reason.trim(),
+        }
+      );
 
       if (response?.success) {
         toast.success('Payout marked as processing');
@@ -297,11 +303,14 @@ export const PartnerSettlementsView: React.FC = () => {
 
     try {
       setProcessing(true);
-      const response = await Api.post(`/api/superadmin/partner-settlements/complete-payout/${payoutId}`, {
-        payoutId,
-        confirmation: true,
-        reason: reason.trim(),
-      });
+      const response = await Api.post(
+        `/api/superadmin/partner-settlements/complete-payout/${payoutId}`,
+        {
+          payoutId,
+          confirmation: true,
+          reason: reason.trim(),
+        }
+      );
 
       if (response?.success) {
         toast.success('Payout completed successfully');

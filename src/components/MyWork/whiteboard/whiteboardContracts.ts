@@ -32,7 +32,12 @@ export interface WhiteboardPresenceState {
 
 export type FacilitationPhase = 'start' | 'organize' | 'converge' | 'handoff';
 
-export const FACILITATION_PHASES: readonly FacilitationPhase[] = ['start', 'organize', 'converge', 'handoff'];
+export const FACILITATION_PHASES: readonly FacilitationPhase[] = [
+  'start',
+  'organize',
+  'converge',
+  'handoff',
+];
 
 export const FACILITATION_TRANSITIONS: Record<FacilitationPhase, FacilitationPhase[]> = {
   start: ['organize'],

@@ -34,72 +34,49 @@ vi.mock('../../../../../utils/Logger.js', () => ({
 
 // ── Canon imports ──────────────────────────────────────────────────────────
 
-import {
-  buildP09HandoffPayloadSkeleton,
-  P09_HANDOFF_TO_P10,
-  P09_SUBMISSION_STATUSES,
-} from '../../../surveyCollectionCanon.js';
-
+import type { InitiativeHandoffKind } from '../../../../initiative/initiativeLifecycleCanon.js';
+import { buildInitiativeOutboundHandoffPayload } from '../../../../initiative/initiativeLifecycleCanon.js';
 import {
   buildP10HandoffToInitiativesSkeleton,
   P10_CONFIDENCE_LEVELS,
   P10_EVIDENCE_POINTER_TYPES,
   P10_HANDOFF_TO_INITIATIVES,
 } from '../../../interviewInsightCanon.js';
-
+import { P07_HANDOFF_COMMON_FIELDS, P07_HANDOFF_TARGETS } from '../../../notebookCanon.js';
 import {
+  buildP09HandoffPayloadSkeleton,
+  P09_HANDOFF_TO_P10,
+  P09_SUBMISSION_STATUSES,
+} from '../../../surveyCollectionCanon.js';
+import {
+  isValidEnvelopeTransition,
   P08_ACTION_ENVELOPE_STATES,
   P08_HANDOFF_TARGET_MODULES,
   P08_HANDOFF_TARGETS,
-  isValidEnvelopeTransition,
   validateHandoffContext,
   validateTargetPayload,
   validateWriteOwnership,
 } from '../../../teresaCopilotCanon.js';
 
-import {
-  P07_HANDOFF_COMMON_FIELDS,
-  P07_HANDOFF_TARGETS,
-} from '../../../notebookCanon.js';
-
-import {
-  buildInitiativeOutboundHandoffPayload,
-} from '../../../../initiative/initiativeLifecycleCanon.js';
-
-import type { InitiativeHandoffKind } from '../../../../initiative/initiativeLifecycleCanon.js';
-
 const INITIATIVE_HANDOFF_KINDS: InitiativeHandoffKind[] = ['execution', 'kpi', 'calendar'];
 
-import {
-  buildHandoffContext,
-  executeHandoff,
-} from '../../../radarTriageService.js';
-
-import {
-  checkKpiLinkageCoherence,
-  advanceLaneStep,
-  startLaneRun,
-} from '../../../financeLaneService.js';
-
-import {
-  initiateReconciliation,
-  getKpiWorkflowStatus,
-} from '../../../resultsROIService.js';
-
+import { createArtifactRunFromChat } from '../../../artifactRegistryService.js';
 import {
   createEconomicsLinkage,
   evaluatePromotionGate,
   getLinkagesByInitiative,
 } from '../../../financeIntegrationService.js';
-
 import {
-  validateMaterializationChain,
+  advanceLaneStep,
+  checkKpiLinkageCoherence,
+  startLaneRun,
+} from '../../../financeLaneService.js';
+import { buildHandoffContext, executeHandoff } from '../../../radarTriageService.js';
+import { getKpiWorkflowStatus, initiateReconciliation } from '../../../resultsROIService.js';
+import {
   recordSourceMaterialization,
+  validateMaterializationChain,
 } from '../../../sourceTruthService.js';
-
-import {
-  createArtifactRunFromChat,
-} from '../../../artifactRegistryService.js';
 
 // ── Fixtures ───────────────────────────────────────────────────────────────
 
@@ -281,7 +258,14 @@ describe('C2 — Radar → Initiative / Execution handoff', () => {
       category: 'execution_delay',
       priority_level: 'P0',
       score: 95,
-      bands_json: JSON.stringify({ impact: 5, urgency: 5, scope: 3, confidence: 4, freshness: 5, actionability: 4 }),
+      bands_json: JSON.stringify({
+        impact: 5,
+        urgency: 5,
+        scope: 3,
+        confidence: 4,
+        freshness: 5,
+        actionability: 4,
+      }),
       triggered_rules_json: JSON.stringify(['critical_path_blocker']),
       why_now_json: JSON.stringify({
         rationaleText: 'Critical path blocker detected',
@@ -326,7 +310,14 @@ describe('C2 — Radar → Initiative / Execution handoff', () => {
       category: 'resource_bottleneck',
       priority_level: 'P0',
       score: 90,
-      bands_json: JSON.stringify({ impact: 4, urgency: 4, scope: 3, confidence: 3, freshness: 4, actionability: 3 }),
+      bands_json: JSON.stringify({
+        impact: 4,
+        urgency: 4,
+        scope: 3,
+        confidence: 3,
+        freshness: 4,
+        actionability: 3,
+      }),
       triggered_rules_json: JSON.stringify(['resource_bottleneck']),
       why_now_json: JSON.stringify({
         rationaleText: 'Resource bottleneck on critical path',
@@ -370,7 +361,7 @@ describe('C3 — Teresa copilot → handoff targets', () => {
   it('all 4 P0 handoff targets are defined with required fields', () => {
     expect(P08_HANDOFF_TARGET_MODULES).toHaveLength(4);
     expect(P08_HANDOFF_TARGET_MODULES).toEqual(
-      expect.arrayContaining(['radar', 'initiatives', 'calendar', 'notebook']),
+      expect.arrayContaining(['radar', 'initiatives', 'calendar', 'notebook'])
     );
 
     for (const mod of P08_HANDOFF_TARGET_MODULES) {
@@ -561,9 +552,7 @@ describe('C5 — Initiative → Execution / KPI / Calendar handoff', () => {
       organizationId: ORG,
       handoffBy: USER,
       kind: 'calendar',
-      contextPackExtras: [
-        { kind: 'milestone', ref: 'milestone:m1', label: 'Phase 1 end' },
-      ],
+      contextPackExtras: [{ kind: 'milestone', ref: 'milestone:m1', label: 'Phase 1 end' }],
     });
 
     expect(payload.calendarIntent).toBeTruthy();
@@ -703,9 +692,9 @@ describe('C6 — KPI ↔ Finance coherence gate', () => {
 
   it('getKpiWorkflowStatus returns status with degraded reasons', async () => {
     mockDbAll
-      .mockResolvedValueOnce([])   // getKpiSignals
-      .mockResolvedValueOnce([])   // getKpiNextActions
-      .mockResolvedValueOnce([]);  // getReconciliationHealth
+      .mockResolvedValueOnce([]) // getKpiSignals
+      .mockResolvedValueOnce([]) // getKpiNextActions
+      .mockResolvedValueOnce([]); // getReconciliationHealth
     mockDbGet
       .mockResolvedValueOnce(null) // KPI definition lookup
       .mockResolvedValueOnce(null) // linkage row
@@ -935,8 +924,8 @@ describe('C8 — Source Truth → Initiative materialization chain', () => {
 
   it('validateMaterializationChain reports gaps when no materializations exist', async () => {
     mockDbAll
-      .mockResolvedValueOnce([])   // JOIN query
-      .mockResolvedValueOnce([]);  // promotion records
+      .mockResolvedValueOnce([]) // JOIN query
+      .mockResolvedValueOnce([]); // promotion records
 
     const result = await validateMaterializationChain(INITIATIVE_ID, ORG);
 
@@ -1061,8 +1050,8 @@ describe('C9 — Artifact Registry → Chat → Execution Spine', () => {
       expect(err).toBeDefined();
       expect(
         err.code === 'HANDOFF_FAILED' ||
-        err.code === 'EXECUTION_SPINE_ERROR' ||
-        err.message?.includes('not a function') === false
+          err.code === 'EXECUTION_SPINE_ERROR' ||
+          err.message?.includes('not a function') === false
       ).toBe(true);
     }
   });

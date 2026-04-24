@@ -4,6 +4,103 @@
 // The @ts-nocheck remains only for the legacy handlers still in this file;
 // extracted domain controllers have full TypeScript checking.
 
+import auditEventsService from '../services/AuditEventsService.js';
+import logger from '../utils/Logger.js';
+import * as customerCtrl from './superadmin/customerController.js';
+import {
+  createContractAmendment,
+  createCustomerContract,
+  createLifecycleStage,
+  createSuccessPlaybook,
+  deleteCustomerContract,
+  deleteLifecycleStage,
+  deleteSuccessPlaybook,
+  executeSuccessPlaybook,
+  getContractAmendments,
+  getContractStats,
+  getCustomerContracts,
+  getLifecycleStages,
+  getLifecycleStats,
+  getLifecycleTransitions,
+  getPlaybookStats,
+  getSuccessActions,
+  getSuccessPlaybooks,
+  getUpcomingRenewals,
+  transitionOrganization,
+  updateCustomerContract,
+  updateLifecycleStage,
+  updateSuccessPlaybook,
+} from './superadmin/customerController.js';
+import * as dashboardCtrl from './superadmin/dashboardController.js';
+import {
+  addDashboardWidget,
+  cloneDashboard,
+  createDashboard,
+  deleteDashboard,
+  getDashboardBuilderStats,
+  getDashboardById,
+  getDashboards,
+  getDashboardWidgetData,
+  removeDashboardWidget,
+  reorderDashboardWidgets,
+  toggleDashboardShare,
+  updateDashboard,
+  updateDashboardWidget,
+} from './superadmin/dashboardController.js';
+import * as integrationsCtrl from './superadmin/integrationsController.js';
+import * as revenueCtrl from './superadmin/revenueController.js';
+import {
+  addPaymentMethod,
+  addPlanFeature,
+  approveSubscriptionChange,
+  calculateProration,
+  comparePricingPlans,
+  createPricingPlan,
+  createRevenueForecast,
+  createRevenueRecognition,
+  createSubscriptionChange,
+  deletePaymentMethod,
+  deletePricingPlan,
+  deleteRevenueForecast,
+  generateRevenueForecast,
+  getPaymentFailures,
+  getPaymentFailureStats,
+  getPaymentMethods,
+  getPlanFeatures,
+  getPricingPlans,
+  getRecognitionSchedule,
+  getRevenueForecasts,
+  getRevenueForecastStats,
+  getRevenueRecognitions,
+  getRevenueRecognitionStats,
+  getSubscriptionChanges,
+  getSubscriptionChangeStats,
+  recognizeRevenue,
+  rejectSubscriptionChange,
+  removePlanFeature,
+  retryPayment,
+  updatePaymentMethod,
+  updatePricingPlan,
+  updateRevenueForecast,
+  updateRevenueRecognition,
+} from './superadmin/revenueController.js';
+// Domain controllers extracted from this monolith. Namespace imports provide
+// local bindings that the default export object can reference via spread.
+import * as securityCtrl from './superadmin/securityController.js';
+import {
+  createSecurityIncident,
+  deleteSecurityIncident,
+  getIPAccessRules,
+  getSecurityEventStats,
+  getSecurityIncidentById,
+  getSecurityIncidents,
+  getSecurityIncidentStats,
+  getSecurityPolicies,
+  resolveSecurityIncident,
+  updateIPRule,
+  updateSecurityIncident,
+  updateSecurityPolicy,
+} from './superadmin/securityController.js';
 import {
   AppError,
   catchAsync,
@@ -14,69 +111,33 @@ import {
   setDependencies,
   tableExists,
 } from './superadmin/shared.js';
-import auditEventsService from '../services/AuditEventsService.js';
-import logger from '../utils/Logger.js';
-
-// Domain controllers extracted from this monolith. Namespace imports provide
-// local bindings that the default export object can reference via spread.
-import * as securityCtrl from './superadmin/securityController.js';
-import {
-  getSecurityIncidents, getSecurityIncidentStats, getSecurityIncidentById,
-  createSecurityIncident, updateSecurityIncident, resolveSecurityIncident,
-  deleteSecurityIncident, getSecurityEventStats, getIPAccessRules,
-  updateIPRule, getSecurityPolicies, updateSecurityPolicy,
-} from './superadmin/securityController.js';
 import * as threatDlpCtrl from './superadmin/threatDlpController.js';
 import {
-  getThreats, getThreatStats, getThreatById, addThreat, updateThreat,
-  blockThreat, unblockThreat, deleteThreat, checkIPReputation,
-  checkDomainReputation, getBlockedIPs, getBlockedDomains, bulkImportThreats,
-  getDLPPolicies, getDLPPolicyById, createDLPPolicy, updateDLPPolicy,
-  toggleDLPPolicy, deleteDLPPolicy, getDLPViolations, getDLPViolationById,
-  resolveDLPViolation, getDLPStats, scanResourceDLP,
+  addThreat,
+  blockThreat,
+  bulkImportThreats,
+  checkDomainReputation,
+  checkIPReputation,
+  createDLPPolicy,
+  deleteDLPPolicy,
+  deleteThreat,
+  getBlockedDomains,
+  getBlockedIPs,
+  getDLPPolicies,
+  getDLPPolicyById,
+  getDLPStats,
+  getDLPViolationById,
+  getDLPViolations,
+  getThreatById,
+  getThreats,
+  getThreatStats,
+  resolveDLPViolation,
+  scanResourceDLP,
+  toggleDLPPolicy,
+  unblockThreat,
+  updateDLPPolicy,
+  updateThreat,
 } from './superadmin/threatDlpController.js';
-import * as integrationsCtrl from './superadmin/integrationsController.js';
-import * as dashboardCtrl from './superadmin/dashboardController.js';
-import {
-  getDashboards,
-  getDashboardBuilderStats,
-  getDashboardById,
-  createDashboard,
-  updateDashboard,
-  cloneDashboard,
-  toggleDashboardShare,
-  deleteDashboard,
-  addDashboardWidget,
-  updateDashboardWidget,
-  removeDashboardWidget,
-  reorderDashboardWidgets,
-  getDashboardWidgetData,
-} from './superadmin/dashboardController.js';
-import * as revenueCtrl from './superadmin/revenueController.js';
-import {
-  getPricingPlans, createPricingPlan, updatePricingPlan, deletePricingPlan,
-  getPlanFeatures, addPlanFeature, removePlanFeature, comparePricingPlans,
-  getSubscriptionChanges, createSubscriptionChange, approveSubscriptionChange,
-  rejectSubscriptionChange, calculateProration, getSubscriptionChangeStats,
-  getRevenueRecognitions, createRevenueRecognition, updateRevenueRecognition,
-  recognizeRevenue, getRecognitionSchedule, getRevenueRecognitionStats,
-  getRevenueForecasts, createRevenueForecast, updateRevenueForecast,
-  deleteRevenueForecast, generateRevenueForecast, getRevenueForecastStats,
-  getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod,
-  getPaymentFailures, retryPayment, getPaymentFailureStats,
-} from './superadmin/revenueController.js';
-import * as customerCtrl from './superadmin/customerController.js';
-import {
-  getLifecycleStages, createLifecycleStage, updateLifecycleStage,
-  deleteLifecycleStage, transitionOrganization, getLifecycleTransitions,
-  getLifecycleStats, getSuccessPlaybooks, createSuccessPlaybook,
-  updateSuccessPlaybook, deleteSuccessPlaybook, executeSuccessPlaybook,
-  getSuccessActions, getPlaybookStats, getCustomerContracts,
-  createCustomerContract, updateCustomerContract, deleteCustomerContract,
-  createContractAmendment, getContractAmendments, getUpcomingRenewals,
-  getContractStats,
-} from './superadmin/customerController.js';
-
 
 /**
  * GET All Organizations
@@ -349,12 +410,15 @@ const getUsers = catchAsync(async (req, res, next) => {
         logger.warn('[SuperAdmin] organization_members lookup failed:', mErr.message);
       }
 
-      const membershipByUser = new Map<string, Array<{
-        organizationId: string;
-        organizationName: string | null;
-        role: string | null;
-        source: 'primary' | 'member';
-      }>>();
+      const membershipByUser = new Map<
+        string,
+        Array<{
+          organizationId: string;
+          organizationName: string | null;
+          role: string | null;
+          source: 'primary' | 'member';
+        }>
+      >();
 
       for (const r of (memberRows || []) as Array<any>) {
         if (!r?.user_id || !r?.organization_id) continue;
@@ -750,91 +814,95 @@ const impersonateUser = catchAsync(async (req, res, next) => {
     if (err) return next(new AppError(err.message, 500));
     if (!user) return next(new AppError('User not found', 404));
 
-    deps.db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], async (err, org) => {
-      if (err) return next(new AppError('Server error', 500));
+    deps.db.get(
+      'SELECT * FROM organizations WHERE id = ?',
+      [user.organization_id],
+      async (err, org) => {
+        if (err) return next(new AppError('Server error', 500));
 
-      const sessionId = deps.uuid.v4();
-      const jti = deps.uuid.v4();
-      const sessionReason = String(reason || 'Superadmin support session').trim();
+        const sessionId = deps.uuid.v4();
+        const jti = deps.uuid.v4();
+        const sessionReason = String(reason || 'Superadmin support session').trim();
 
-      deps.db.run(
-        `INSERT INTO superadmin_impersonation_sessions
+        deps.db.run(
+          `INSERT INTO superadmin_impersonation_sessions
            (id, admin_id, target_user_id, reason, started_at, ip_address, is_active)
          VALUES (?, ?, ?, ?, datetime('now'), ?, 1)`,
-        [sessionId, req.user.id, user.id, sessionReason, req.ip || null],
-        async (sessionErr) => {
-          if (sessionErr) return next(new AppError(sessionErr.message, 500));
+          [sessionId, req.user.id, user.id, sessionReason, req.ip || null],
+          async (sessionErr) => {
+            if (sessionErr) return next(new AppError(sessionErr.message, 500));
 
-          try {
-            await auditEventsService.log({
-              actorId: req.user.id,
-              actorType: 'USER',
-              organizationId: user.organization_id,
-              action: 'user.impersonation_start',
-              resourceType: 'user',
-              resourceId: user.id,
-              metadata: {
-                targetUserId: user.id,
-                targetUserEmail: user.email,
-                tenantId: user.organization_id,
-                durationMinutes: 30,
-                readOnly: true,
-                sessionId,
-                reason: sessionReason,
+            try {
+              await auditEventsService.log({
+                actorId: req.user.id,
+                actorType: 'USER',
+                organizationId: user.organization_id,
+                action: 'user.impersonation_start',
+                resourceType: 'user',
+                resourceId: user.id,
+                metadata: {
+                  targetUserId: user.id,
+                  targetUserEmail: user.email,
+                  tenantId: user.organization_id,
+                  durationMinutes: 30,
+                  readOnly: true,
+                  sessionId,
+                  reason: sessionReason,
+                },
+                ip: req.ip,
+                userAgent: req.headers['user-agent'],
+              });
+            } catch (auditErr) {
+              return next(new AppError('Audit system unavailable for impersonation start', 503));
+            }
+
+            const token = deps.jwt.sign(
+              {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                organizationId: user.organization_id,
+                impersonatorId: req.user.id,
+                impersonationSessionId: sessionId,
+                jti: jti,
               },
-              ip: req.ip,
-              userAgent: req.headers['user-agent'],
-            });
-          } catch (auditErr) {
-            return next(new AppError('Audit system unavailable for impersonation start', 503));
-          }
+              deps.config.JWT_SECRET,
+              { expiresIn: '30m' }
+            );
 
-          const token = deps.jwt.sign(
-            {
+            const safeUser = {
               id: user.id,
               email: user.email,
+              firstName: user.first_name,
+              lastName: user.last_name,
               role: user.role,
+              status: user.status,
               organizationId: user.organization_id,
+              companyName: org ? org.name : 'Unknown',
               impersonatorId: req.user.id,
               impersonationSessionId: sessionId,
-              jti: jti,
-            },
-            deps.config.JWT_SECRET,
-            { expiresIn: '30m' }
-          );
+              accessLevel: 'read_only',
+            };
 
-          const safeUser = {
-            id: user.id,
-            email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            role: user.role,
-            status: user.status,
-            organizationId: user.organization_id,
-            companyName: org ? org.name : 'Unknown',
-            impersonatorId: req.user.id,
-            impersonationSessionId: sessionId,
-            accessLevel: 'read_only',
-          };
+            deps.ActivityService.log({
+              userId: req.user.id,
+              action: 'impersonate_start',
+              entityType: 'user',
+              entityId: user.id,
+              entityName: user.email,
+              details: {
+                target_organization: user.organization_id,
+                read_only: true,
+                duration_minutes: 30,
+                session_id: sessionId,
+              },
+            });
 
-          deps.ActivityService.log({
-            userId: req.user.id,
-            action: 'impersonate_start',
-            entityType: 'user',
-            entityId: user.id,
-            entityName: user.email,
-            details: {
-              target_organization: user.organization_id,
-              read_only: true,
-              duration_minutes: 30,
-              session_id: sessionId,
-            },
-          });
-
-          res.json({ user: safeUser, token });
-        }
-      );
-    });
+            res.json({ user: safeUser, token });
+          }
+        );
+      }
+    );
   });
 });
 

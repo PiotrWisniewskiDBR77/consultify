@@ -161,9 +161,7 @@ export const ContactView: React.FC = () => {
         const topicLabel = typeLabelMap[formData.type] || formData.type;
         const annaPrompt = `A visitor just submitted a contact form. Their name is ${formData.name}${formData.company ? ` from ${formData.company}` : ''}. They wrote about: "${formData.message.slice(0, 200)}". The inquiry type is "${topicLabel}". Please greet them warmly, acknowledge their message, and try to help them right now with their question. If you can address their concern, do so. Otherwise, reassure them the team will follow up within 1 business day.`;
 
-        window.dispatchEvent(
-          new CustomEvent('anna:open', { detail: { prompt: annaPrompt } })
-        );
+        window.dispatchEvent(new CustomEvent('anna:open', { detail: { prompt: annaPrompt } }));
       }, 1500);
 
       if (ctx && ctx.cta_type === 'contact') {
@@ -340,7 +338,10 @@ export const ContactView: React.FC = () => {
                     {t('contact.bookDemoSub', 'Free consultation. See Consultify in action.')}
                   </p>
                 </div>
-                <ArrowRight size={14} className="text-white/20 group-hover:text-white/40 transition-colors" />
+                <ArrowRight
+                  size={14}
+                  className="text-white/20 group-hover:text-white/40 transition-colors"
+                />
               </a>
 
               {/* SLA */}
@@ -378,7 +379,13 @@ export const ContactView: React.FC = () => {
                   <button
                     onClick={() => {
                       setIsSubmitted(false);
-                      setFormData({ name: '', email: '', company: '', type: 'general', message: '' });
+                      setFormData({
+                        name: '',
+                        email: '',
+                        company: '',
+                        type: 'general',
+                        message: '',
+                      });
                     }}
                     className="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-semibold text-white transition-all"
                     style={{
@@ -514,7 +521,8 @@ export const ContactView: React.FC = () => {
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full text-sm font-semibold text-white transition-all duration-300 active:scale-[0.98]"
                     style={{
                       background: 'linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
-                      boxShadow: '0 0 40px -10px rgba(124,58,237,0.60), 0 3px 16px rgba(0,0,0,0.35)',
+                      boxShadow:
+                        '0 0 40px -10px rgba(124,58,237,0.60), 0 3px 16px rgba(0,0,0,0.35)',
                     }}
                   >
                     {isSubmitting ? (

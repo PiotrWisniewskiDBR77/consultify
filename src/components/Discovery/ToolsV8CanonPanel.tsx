@@ -1,4 +1,12 @@
-import { ArrowRight, Bot, FolderOutput, Library, ShieldCheck, Sparkles, Workflow } from 'lucide-react';
+import {
+  ArrowRight,
+  Bot,
+  FolderOutput,
+  Library,
+  ShieldCheck,
+  Sparkles,
+  Workflow,
+} from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -40,7 +48,8 @@ const COPY: Record<'en' | 'pl', Record<ToolsV8CanonMode, LocalizedCopy>> = {
         {
           id: 'library',
           title: 'Discover the library',
-          description: 'Browse strategic, operational, digital, and assessment tools in one catalog.',
+          description:
+            'Browse strategic, operational, digital, and assessment tools in one catalog.',
           icon: Library,
         },
         {
@@ -52,13 +61,15 @@ const COPY: Record<'en' | 'pl', Record<ToolsV8CanonMode, LocalizedCopy>> = {
         {
           id: 'ai',
           title: 'Use AI through propose / accept',
-          description: 'AI assists inside the session while review, missing items, and approvals stay visible.',
+          description:
+            'AI assists inside the session while review, missing items, and approvals stay visible.',
           icon: Bot,
         },
         {
           id: 'outputs',
           title: 'Finalize and promote outputs',
-          description: 'Turn the result into initiatives, reports, presentations, and reusable knowledge.',
+          description:
+            'Turn the result into initiatives, reports, presentations, and reusable knowledge.',
           icon: FolderOutput,
         },
       ],
@@ -93,7 +104,8 @@ const COPY: Record<'en' | 'pl', Record<ToolsV8CanonMode, LocalizedCopy>> = {
         {
           id: 'promote',
           title: 'Promote only finalized results',
-          description: 'Outputs are created after review so downstream work inherits the right source.',
+          description:
+            'Outputs are created after review so downstream work inherits the right source.',
           icon: ShieldCheck,
         },
       ],
@@ -118,13 +130,15 @@ const COPY: Record<'en' | 'pl', Record<ToolsV8CanonMode, LocalizedCopy>> = {
         {
           id: 'library',
           title: 'Odkryj biblioteke',
-          description: 'Przegladaj narzedzia strategiczne, operacyjne, cyfrowe i assessmenty w jednym katalogu.',
+          description:
+            'Przegladaj narzedzia strategiczne, operacyjne, cyfrowe i assessmenty w jednym katalogu.',
           icon: Library,
         },
         {
           id: 'session',
           title: 'Podepnij kontekst i startuj sesje',
-          description: 'Kazda praca startuje z jawnym celem, zakresem, danymi wejsciowymi i zalozeniami.',
+          description:
+            'Kazda praca startuje z jawnym celem, zakresem, danymi wejsciowymi i zalozeniami.',
           icon: Workflow,
         },
         {
@@ -136,7 +150,8 @@ const COPY: Record<'en' | 'pl', Record<ToolsV8CanonMode, LocalizedCopy>> = {
         {
           id: 'outputs',
           title: 'Finalizuj i promuj outputy',
-          description: 'Wynik przechodzi do inicjatyw, raportow, prezentacji i wiedzy wielokrotnego uzytku.',
+          description:
+            'Wynik przechodzi do inicjatyw, raportow, prezentacji i wiedzy wielokrotnego uzytku.',
           icon: FolderOutput,
         },
       ],
@@ -165,7 +180,8 @@ const COPY: Record<'en' | 'pl', Record<ToolsV8CanonMode, LocalizedCopy>> = {
         {
           id: 'assist',
           title: 'Akceptuj sugestie AI swiadomie',
-          description: 'Propozycje AI pozostaja widoczne i mozna je przyjmowac lub odrzucac krok po kroku.',
+          description:
+            'Propozycje AI pozostaja widoczne i mozna je przyjmowac lub odrzucac krok po kroku.',
           icon: Sparkles,
         },
         {
@@ -214,12 +230,16 @@ export const ToolsV8CanonPanel: React.FC<ToolsV8CanonPanelProps> = ({
           >
             {copy.title}
           </h2>
-          <p className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
+          >
             {copy.subtitle}
           </p>
         </div>
 
-        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}>
+        <div
+          className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.3fr_0.9fr]'}`}
+        >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
               {copy.journeyTitle}

@@ -1,11 +1,4 @@
-import {
-  AlertTriangle,
-  ChevronRight,
-  ClipboardList,
-  Scale,
-  Shield,
-  Users,
-} from 'lucide-react';
+import { AlertTriangle, ChevronRight, ClipboardList, Scale, Shield, Users } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -32,8 +25,7 @@ type ManagementSubview = 'all' | ManagerModuleId;
 const CHIP_BASE =
   'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
 
-const BADGE_BASE =
-  'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+const BADGE_BASE = 'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
 
 export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = ({
   managerLaneCounts,
@@ -56,8 +48,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
     }
   }, [subview]);
 
-  const laneCount = (id: string) =>
-    managerLaneCounts[id] || { total: 0, critical: 0, warning: 0 };
+  const laneCount = (id: string) => managerLaneCounts[id] || { total: 0, critical: 0, warning: 0 };
 
   const presets = useMemo(
     () => [

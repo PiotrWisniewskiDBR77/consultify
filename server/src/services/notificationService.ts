@@ -222,9 +222,10 @@ class NotificationService {
     const typeConfig = await this.getNotificationTypeConfig(input.type);
 
     // Determine channels
-    let channels = Array.isArray(input.channels) && input.channels.length > 0
-      ? Array.from(new Set(input.channels))
-      : typeConfig?.defaultChannels || ['in_app'];
+    let channels =
+      Array.isArray(input.channels) && input.channels.length > 0
+        ? Array.from(new Set(input.channels))
+        : typeConfig?.defaultChannels || ['in_app'];
     if (!bypassPreferences && prefs?.typeSettings) {
       const key =
         Object.keys(prefs.typeSettings).find(
@@ -1409,10 +1410,16 @@ class NotificationService {
     const explicit = [
       ...(Array.isArray(input.recipientEmails) ? input.recipientEmails : []),
       typeof input.recipientEmail === 'string' ? input.recipientEmail : '',
-      typeof input.metadata?.recipientEmail === 'string' ? String(input.metadata.recipientEmail) : '',
+      typeof input.metadata?.recipientEmail === 'string'
+        ? String(input.metadata.recipientEmail)
+        : '',
       ...metadataRecipientEmails,
     ]
-      .map((email) => String(email || '').trim().toLowerCase())
+      .map((email) =>
+        String(email || '')
+          .trim()
+          .toLowerCase()
+      )
       .filter(Boolean);
 
     if (explicit.length > 0) {
@@ -1636,8 +1643,7 @@ class NotificationService {
       .trim()
       .toUpperCase()
       .replace(/[^A-Z0-9]+/g, '_');
-    const envUrl =
-      process.env[`SLACK_WEBHOOK_URL_${envName}`] || process.env.SLACK_WEBHOOK_URL;
+    const envUrl = process.env[`SLACK_WEBHOOK_URL_${envName}`] || process.env.SLACK_WEBHOOK_URL;
     if (envUrl && String(envUrl).trim()) return String(envUrl).trim();
     return null;
   }

@@ -495,7 +495,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       try {
         if (isInterviewDemoId(insightId) && applyDemoInsight(insightId)) return;
 
-        const data = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`).catch(() => null));
+        const data = await V8InterviewApi.getInsight(insightId)
+          .then((r) => r.insight)
+          .catch(() => Api.get(`/interview/insights/${insightId}`).catch(() => null));
         if (!data) {
           if (applyDemoInsight(insightId)) return;
           throw new Error('Failed to load insight');
@@ -506,21 +508,20 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         if (data.sourceSessionIds?.length > 0) {
           try {
             const sessionsData = await Promise.all(
-              data.sourceSessionIds
-                .slice(0, 10)
-                .map((id: string) =>
-                  V8InterviewApi.getSession(id)
-                    .then((r) => r.session)
-                    .catch(() => Api.get(`/interview/sessions/${id}`).catch(() => null))
-                )
+              data.sourceSessionIds.slice(0, 10).map((id: string) =>
+                V8InterviewApi.getSession(id)
+                  .then((r) => r.session)
+                  .catch(() => Api.get(`/interview/sessions/${id}`).catch(() => null))
+              )
             );
             const validSessions = (sessionsData || []).filter(Boolean);
             setSourceSessions(validSessions);
 
             const summaryEntries = await Promise.all(
               validSessions.map(async (session: SourceSession) => {
-                const summary = await V8InterviewApi.getSessionSummary(session.id)
-                  .catch(() => Api.get(`/interview/sessions/${session.id}/summary`).catch(() => null));
+                const summary = await V8InterviewApi.getSessionSummary(session.id).catch(() =>
+                  Api.get(`/interview/sessions/${session.id}/summary`).catch(() => null)
+                );
                 return [session.id, summary] as const;
               })
             );
@@ -550,8 +551,12 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         }
 
         const [activityRes, commentsRes] = await Promise.all([
-          V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])),
-          V8InterviewApi.getInsightComments(insightId).then(r => r.comments).catch(() => Api.get(`/interview/insights/${insightId}/comments`).catch(() => [])),
+          V8InterviewApi.getInsightActivity(insightId)
+            .then((r) => r.activity)
+            .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])),
+          V8InterviewApi.getInsightComments(insightId)
+            .then((r) => r.comments)
+            .catch(() => Api.get(`/interview/insights/${insightId}/comments`).catch(() => [])),
         ]);
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         setNComments(Array.isArray(commentsRes) ? commentsRes : []);
@@ -573,16 +578,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           clearInterval(interval);
           return;
         }
-        const data = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
+        const data = await V8InterviewApi.getInsight(insightId)
+          .then((r) => r.insight)
+          .catch(() => Api.get(`/interview/insights/${insightId}`));
         setInsight(data);
         const nextStatus = data?.status as InsightStatus | undefined;
         if (lastStatus === null) lastStatus = nextStatus ?? null;
 
         if (lastStatus === 'generating' && nextStatus && nextStatus !== 'generating') {
           clearInterval(interval);
-          const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
-            () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
-          );
+          const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+            .then((r) => r.activity)
+            .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
           setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         }
 
@@ -713,18 +720,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setSaving(true);
     try {
-      await V8InterviewApi.updateInsight(insight.id, { title }).catch(() => Api.patch(`/interview/insights/${insight.id}`, { title }));
+      await V8InterviewApi.updateInsight(insight.id, { title }).catch(() =>
+        Api.patch(`/interview/insights/${insight.id}`, { title })
+      );
       toast.success(isPolish ? 'Zapisano' : 'Saved');
-      const refreshed = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`).catch(() => null));
+      const refreshed = await V8InterviewApi.getInsight(insightId)
+        .then((r) => r.insight)
+        .catch(() => Api.get(`/interview/insights/${insightId}`).catch(() => null));
       if (refreshed) {
         setInsight(refreshed);
         onSaved?.(refreshed);
       } else {
         onSaved?.({ ...insight, title });
       }
-      const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
-        () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
-      );
+      const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+        .then((r) => r.activity)
+        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
     } catch {
       toast.error(isPolish ? 'Nie udało się zapisać' : 'Failed to save');
@@ -788,13 +799,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsRegenerating(true);
     try {
-      await V8InterviewApi.regenerateInsight(insight.id).catch(() => Api.post(`/interview/insights/${insight.id}/regenerate`, {}));
-      toast.success(isPolish ? 'Regenerowanie rozpoczęte...' : 'Regeneration started...');
-      const data = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
-      setInsight(data);
-      const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
-        () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
+      await V8InterviewApi.regenerateInsight(insight.id).catch(() =>
+        Api.post(`/interview/insights/${insight.id}/regenerate`, {})
       );
+      toast.success(isPolish ? 'Regenerowanie rozpoczęte...' : 'Regeneration started...');
+      const data = await V8InterviewApi.getInsight(insightId)
+        .then((r) => r.insight)
+        .catch(() => Api.get(`/interview/insights/${insightId}`));
+      setInsight(data);
+      const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+        .then((r) => r.activity)
+        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       onRegenerate?.();
     } catch {
@@ -830,11 +845,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsExportingTools(true);
     try {
-      const exportRes = await V8InterviewApi.exportInsight(insight.id, { target: 'tools' }).catch(() => Api.post(`/interview/insights/${insight.id}/export`, { target: 'tools' }));
-      toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
-      const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
-        () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
+      const exportRes = await V8InterviewApi.exportInsight(insight.id, { target: 'tools' }).catch(
+        () => Api.post(`/interview/insights/${insight.id}/export`, { target: 'tools' })
       );
+      toast.success(isPolish ? 'Wyeksportowano do Tools' : 'Exported to Tools');
+      const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+        .then((r) => r.activity)
+        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       const toolId = exportRes?.targetId;
       if (toolId) navigate(`${ROUTES.DISCOVERY_TOOLS.STRATEGIC}?tool=${toolId}`);
@@ -849,11 +866,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     if (!insight) return;
     setIsExportingAssessment(true);
     try {
-      const exportRes = await V8InterviewApi.exportInsight(insight.id, { target: 'assessment' }).catch(() => Api.post(`/interview/insights/${insight.id}/export`, { target: 'assessment' }));
-      toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
-      const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
-        () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
+      const exportRes = await V8InterviewApi.exportInsight(insight.id, {
+        target: 'assessment',
+      }).catch(() =>
+        Api.post(`/interview/insights/${insight.id}/export`, { target: 'assessment' })
       );
+      toast.success(isPolish ? 'Wyeksportowano do Assessment' : 'Exported to Assessment');
+      const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+        .then((r) => r.activity)
+        .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
       setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       const assessmentId = exportRes?.targetId;
       const assessmentType = String(exportRes?.assessmentType || 'DRD').toLowerCase();
@@ -927,7 +948,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           lastError = err;
           const errMsg = err instanceof Error ? err.message : String(err);
 
-          if (errMsg.includes('403') || errMsg.includes('permission') || errMsg.includes('forbidden')) {
+          if (
+            errMsg.includes('403') ||
+            errMsg.includes('permission') ||
+            errMsg.includes('forbidden')
+          ) {
             toast.error(
               isPolish
                 ? 'Brak uprawnień do przekazania do Inicjatyw. Dostępny jest eksport lub link.'
@@ -986,11 +1011,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       setLifecycleTransitioning(true);
       try {
         await V8InterviewApi.lifecycleTransition(insight.id, backendAction);
-        const refreshed = await V8InterviewApi.getInsight(insightId).then(r => r.insight).catch(() => Api.get(`/interview/insights/${insightId}`));
+        const refreshed = await V8InterviewApi.getInsight(insightId)
+          .then((r) => r.insight)
+          .catch(() => Api.get(`/interview/insights/${insightId}`));
         setInsight(refreshed);
-        const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
-          () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
-        );
+        const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+          .then((r) => r.activity)
+          .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         const labels: Record<string, { en: string; pl: string }> = {
           submit_review: { en: 'Submitted for review', pl: 'Wysłano do recenzji' },
@@ -1001,7 +1028,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         toast.success(isPolish ? labels[uiAction].pl : labels[uiAction].en);
       } catch (err: unknown) {
         const errMsg = err instanceof Error ? err.message : '';
-        if (errMsg.includes('403') || errMsg.includes('permission') || errMsg.includes('forbidden')) {
+        if (
+          errMsg.includes('403') ||
+          errMsg.includes('permission') ||
+          errMsg.includes('forbidden')
+        ) {
           toast.error(
             isPolish
               ? 'Brak uprawnień do zmiany statusu. Skontaktuj się z administratorem.'
@@ -1059,14 +1090,22 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           return;
         }
 
-        const created = await V8InterviewApi.createInsightComment(insightId, { content: text, priority: draftPriority }).catch(() => Api.post(`/interview/insights/${insightId}/comments`, { content: text, priority: draftPriority }));
+        const created = await V8InterviewApi.createInsightComment(insightId, {
+          content: text,
+          priority: draftPriority,
+        }).catch(() =>
+          Api.post(`/interview/insights/${insightId}/comments`, {
+            content: text,
+            priority: draftPriority,
+          })
+        );
         setNComments((prev) => [...prev, created]);
         setCommentDraft('');
         setDraftPriority('normal');
 
-        const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
-          () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
-        );
+        const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+          .then((r) => r.activity)
+          .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
         setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
       } catch {
         toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
@@ -1101,11 +1140,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             return;
           }
 
-          await V8InterviewApi.deleteInsightComment(insightId, commentId).catch(() => Api.delete(`/interview/insights/${insightId}/comments/${commentId}`));
-          setNComments((prev) => prev.filter((c) => c.id !== commentId));
-          const activityRes = await V8InterviewApi.getInsightActivity(insightId).then(r => r.activity).catch(
-            () => Api.get(`/interview/insights/${insightId}/activity`).catch(() => [])
+          await V8InterviewApi.deleteInsightComment(insightId, commentId).catch(() =>
+            Api.delete(`/interview/insights/${insightId}/comments/${commentId}`)
           );
+          setNComments((prev) => prev.filter((c) => c.id !== commentId));
+          const activityRes = await V8InterviewApi.getInsightActivity(insightId)
+            .then((r) => r.activity)
+            .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
           setActivityEntries(Array.isArray(activityRes) ? activityRes : []);
         } catch {
           toast.error(isPolish ? 'Nie udało się usunąć komentarza' : 'Failed to delete comment');
@@ -1391,7 +1432,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           component = (
             <div className="space-y-5">
               {contradictionSignals.length > 0 && (
-                <Callout variant="critical" title={isPolish ? 'Sprzeczności wykryte' : 'Contradictions detected'}>
+                <Callout
+                  variant="critical"
+                  title={isPolish ? 'Sprzeczności wykryte' : 'Contradictions detected'}
+                >
                   <ul className="list-disc list-inside space-y-1">
                     {contradictionSignals.map((s, idx) => (
                       <li key={idx} className="text-sm">
@@ -1519,124 +1563,195 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               ) : (
                 <div className="space-y-3">
                   {v6Themes.map((theme, idx) => {
-                    const confidenceBadgeMap: Record<P10ConfidenceLevel, { bg: string; label: string; labelPl: string }> = {
-                      high: { bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400', label: 'High confidence', labelPl: 'Wysoka pewność' },
-                      medium: { bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', label: 'Medium confidence', labelPl: 'Średnia pewność' },
-                      low: { bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400', label: 'Hypothesis', labelPl: 'Hipoteza' },
-                      insufficient: { bg: 'bg-red-500/15 text-red-600 dark:text-red-400', label: 'Insufficient data', labelPl: 'Niewystarczające dane' },
-                      contradicted: { bg: 'bg-red-500/15 text-red-600 dark:text-red-400', label: 'Contradiction', labelPl: 'Sprzeczność' },
+                    const confidenceBadgeMap: Record<
+                      P10ConfidenceLevel,
+                      { bg: string; label: string; labelPl: string }
+                    > = {
+                      high: {
+                        bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+                        label: 'High confidence',
+                        labelPl: 'Wysoka pewność',
+                      },
+                      medium: {
+                        bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+                        label: 'Medium confidence',
+                        labelPl: 'Średnia pewność',
+                      },
+                      low: {
+                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        label: 'Hypothesis',
+                        labelPl: 'Hipoteza',
+                      },
+                      insufficient: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Insufficient data',
+                        labelPl: 'Niewystarczające dane',
+                      },
+                      contradicted: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Contradiction',
+                        labelPl: 'Sprzeczność',
+                      },
                     };
                     const limitsKey = `theme-${idx}`;
                     const limitsExpanded = expandedLimits.has(limitsKey);
                     return (
-                    <div
-                      key={idx}
-                      className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                          {theme.title}
-                        </div>
-                        <div className="flex items-center gap-1.5 flex-shrink-0">
-                          <span
-                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                              theme.strength === 'strong'
-                                ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                      <div
+                        key={idx}
+                        className="rounded-xl bg-slate-50/90 dark:bg-navy-900/50 px-4 py-4 space-y-2"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                            {theme.title}
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            <span
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
+                                theme.strength === 'strong'
+                                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+                                  : theme.strength === 'moderate'
+                                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                                    : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'
+                              }`}
+                            >
+                              {theme.strength === 'strong'
+                                ? isPolish
+                                  ? 'Silny'
+                                  : 'Strong'
                                 : theme.strength === 'moderate'
-                                  ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                                  : 'bg-slate-500/15 text-slate-500 dark:text-slate-400'
-                            }`}
-                          >
-                            {theme.strength === 'strong'
-                              ? isPolish ? 'Silny' : 'Strong'
-                              : theme.strength === 'moderate'
-                                ? isPolish ? 'Umiarkowany' : 'Moderate'
-                                : isPolish ? 'Słaby' : 'Weak'}
-                          </span>
-                          {theme.confidence && (
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confidenceBadgeMap[theme.confidence].bg}`}>
-                              {isPolish ? confidenceBadgeMap[theme.confidence].labelPl : confidenceBadgeMap[theme.confidence].label}
+                                  ? isPolish
+                                    ? 'Umiarkowany'
+                                    : 'Moderate'
+                                  : isPolish
+                                    ? 'Słaby'
+                                    : 'Weak'}
                             </span>
-                          )}
-                        </div>
-                      </div>
-                      {theme.confidence === 'contradicted' && (
-                        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
-                          <AlertCircle size={14} />
-                          {isPolish ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją' : 'Contradiction detected in data — verify before publishing'}
-                        </div>
-                      )}
-                      <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                        {theme.description}
-                      </p>
-                      <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
-                        <button
-                          onClick={() => toggleLimitsExpand(limitsKey)}
-                          className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
-                        >
-                          <AlertTriangle size={12} />
-                          <span className="font-medium">{isPolish ? 'Limity i założenia' : 'Limits & assumptions'}</span>
-                          {limitsExpanded ? <ChevronUp size={12} className="ml-auto" /> : <ChevronDown size={12} className="ml-auto" />}
-                        </button>
-                        {limitsExpanded && (
-                          <div className="px-3 pb-2">
-                            {theme.limits && theme.limits.length > 0 ? (
-                              <ul className="space-y-1">
-                                {theme.limits.map((limit, li) => (
-                                  <li key={li} className="text-xs italic text-slate-500 dark:text-slate-400">{limit}</li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="text-xs italic text-slate-400 dark:text-slate-500">{isPolish ? 'Brak określonych limitów' : 'No limits specified'}</p>
+                            {theme.confidence && (
+                              <span
+                                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confidenceBadgeMap[theme.confidence].bg}`}
+                              >
+                                {isPolish
+                                  ? confidenceBadgeMap[theme.confidence].labelPl
+                                  : confidenceBadgeMap[theme.confidence].label}
+                              </span>
                             )}
                           </div>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 pt-1">
-                        {theme.evidence_refs?.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5">
-                            {theme.evidence_refs.map((ref) => {
-                              const evidence = findEvidenceForRef(ref);
-                              const isExpanded = expandedEvidenceRef === ref;
-                              return (
-                                <div key={ref} className="inline-flex flex-col">
-                                  <button
-                                    onClick={() => toggleEvidenceRef(ref)}
-                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
-                                  >
-                                    <Zap size={10} />
-                                    {evidence?.question_text
-                                      ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
-                                      : ref.slice(0, 20)}
-                                    {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
-                                  </button>
-                                  {isExpanded && evidence && (
-                                    <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                      <div className="font-medium text-slate-700 dark:text-slate-200">{evidence.question_text}</div>
-                                      <div className="text-slate-500 dark:text-slate-400 italic">"{evidence.answer_snippet}"</div>
-                                      {evidence.linked_themes?.length > 0 && (
-                                        <div className="flex flex-wrap gap-1 pt-0.5">
-                                          {evidence.linked_themes.map((t) => (
-                                            <span key={t} className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400">{t}</span>
-                                          ))}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })}
+                        </div>
+                        {theme.confidence === 'contradicted' && (
+                          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
+                            <AlertCircle size={14} />
+                            {isPolish
+                              ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
+                              : 'Contradiction detected in data — verify before publishing'}
                           </div>
                         )}
-                        <button
-                          onClick={() => handleOpenHandoff({ title: theme.title, description: theme.description, confidence: theme.confidence, limits: theme.limits, sectionType: 'theme', index: idx })}
-                          className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
-                        >
-                          <ExternalLink size={10} />
-                          {isPolish ? 'Inicjatywa' : 'Handoff'}
-                        </button>
+                        <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                          {theme.description}
+                        </p>
+                        <div className="border border-slate-200/60 dark:border-navy-700/50 rounded-lg">
+                          <button
+                            onClick={() => toggleLimitsExpand(limitsKey)}
+                            className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
+                          >
+                            <AlertTriangle size={12} />
+                            <span className="font-medium">
+                              {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
+                            </span>
+                            {limitsExpanded ? (
+                              <ChevronUp size={12} className="ml-auto" />
+                            ) : (
+                              <ChevronDown size={12} className="ml-auto" />
+                            )}
+                          </button>
+                          {limitsExpanded && (
+                            <div className="px-3 pb-2">
+                              {theme.limits && theme.limits.length > 0 ? (
+                                <ul className="space-y-1">
+                                  {theme.limits.map((limit, li) => (
+                                    <li
+                                      key={li}
+                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                    >
+                                      {limit}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 pt-1">
+                          {theme.evidence_refs?.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {theme.evidence_refs.map((ref) => {
+                                const evidence = findEvidenceForRef(ref);
+                                const isExpanded = expandedEvidenceRef === ref;
+                                return (
+                                  <div key={ref} className="inline-flex flex-col">
+                                    <button
+                                      onClick={() => toggleEvidenceRef(ref)}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium hover:bg-purple-500/20 transition-colors"
+                                    >
+                                      <Zap size={10} />
+                                      {evidence?.question_text
+                                        ? evidence.question_text.slice(0, 40) +
+                                          (evidence.question_text.length > 40 ? '…' : '')
+                                        : ref.slice(0, 20)}
+                                      {isExpanded ? (
+                                        <ChevronUp size={10} />
+                                      ) : (
+                                        <ChevronDown size={10} />
+                                      )}
+                                    </button>
+                                    {isExpanded && evidence && (
+                                      <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
+                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                          {evidence.question_text}
+                                        </div>
+                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                          "{evidence.answer_snippet}"
+                                        </div>
+                                        {evidence.linked_themes?.length > 0 && (
+                                          <div className="flex flex-wrap gap-1 pt-0.5">
+                                            {evidence.linked_themes.map((t) => (
+                                              <span
+                                                key={t}
+                                                className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-navy-700 text-[10px] text-slate-500 dark:text-slate-400"
+                                              >
+                                                {t}
+                                              </span>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          <button
+                            onClick={() =>
+                              handleOpenHandoff({
+                                title: theme.title,
+                                description: theme.description,
+                                confidence: theme.confidence,
+                                limits: theme.limits,
+                                sectionType: 'theme',
+                                index: idx,
+                              })
+                            }
+                            className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
+                          >
+                            <ExternalLink size={10} />
+                            {isPolish ? 'Inicjatywa' : 'Handoff'}
+                          </button>
+                        </div>
                       </div>
-                    </div>
                     );
                   })}
                 </div>
@@ -1675,12 +1790,35 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         : issue.severity === 'medium'
                           ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
                           : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
-                    const confMap: Record<P10ConfidenceLevel, { bg: string; label: string; labelPl: string }> = {
-                      high: { bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400', label: 'High confidence', labelPl: 'Wysoka pewność' },
-                      medium: { bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', label: 'Medium confidence', labelPl: 'Średnia pewność' },
-                      low: { bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400', label: 'Hypothesis', labelPl: 'Hipoteza' },
-                      insufficient: { bg: 'bg-red-500/15 text-red-600 dark:text-red-400', label: 'Insufficient data', labelPl: 'Niewystarczające dane' },
-                      contradicted: { bg: 'bg-red-500/15 text-red-600 dark:text-red-400', label: 'Contradiction', labelPl: 'Sprzeczność' },
+                    const confMap: Record<
+                      P10ConfidenceLevel,
+                      { bg: string; label: string; labelPl: string }
+                    > = {
+                      high: {
+                        bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+                        label: 'High confidence',
+                        labelPl: 'Wysoka pewność',
+                      },
+                      medium: {
+                        bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+                        label: 'Medium confidence',
+                        labelPl: 'Średnia pewność',
+                      },
+                      low: {
+                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        label: 'Hypothesis',
+                        labelPl: 'Hipoteza',
+                      },
+                      insufficient: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Insufficient data',
+                        labelPl: 'Niewystarczające dane',
+                      },
+                      contradicted: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Contradiction',
+                        labelPl: 'Sprzeczność',
+                      },
                     };
                     const limitsKey = `issue-${idx}`;
                     const limitsExpanded = expandedLimits.has(limitsKey);
@@ -1694,16 +1832,28 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {issue.title}
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}>
+                            <span
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${severityBadge}`}
+                            >
                               {issue.severity === 'high'
-                                ? isPolish ? 'Wysoki' : 'High'
+                                ? isPolish
+                                  ? 'Wysoki'
+                                  : 'High'
                                 : issue.severity === 'medium'
-                                  ? isPolish ? 'Średni' : 'Medium'
-                                  : isPolish ? 'Niski' : 'Low'}
+                                  ? isPolish
+                                    ? 'Średni'
+                                    : 'Medium'
+                                  : isPolish
+                                    ? 'Niski'
+                                    : 'Low'}
                             </span>
                             {issue.confidence && (
-                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[issue.confidence].bg}`}>
-                                {isPolish ? confMap[issue.confidence].labelPl : confMap[issue.confidence].label}
+                              <span
+                                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[issue.confidence].bg}`}
+                              >
+                                {isPolish
+                                  ? confMap[issue.confidence].labelPl
+                                  : confMap[issue.confidence].label}
                               </span>
                             )}
                           </div>
@@ -1711,7 +1861,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {issue.confidence === 'contradicted' && (
                           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
                             <AlertCircle size={14} />
-                            {isPolish ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją' : 'Contradiction detected in data — verify before publishing'}
+                            {isPolish
+                              ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
+                              : 'Contradiction detected in data — verify before publishing'}
                           </div>
                         )}
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1723,19 +1875,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
                           >
                             <AlertTriangle size={12} />
-                            <span className="font-medium">{isPolish ? 'Limity i założenia' : 'Limits & assumptions'}</span>
-                            {limitsExpanded ? <ChevronUp size={12} className="ml-auto" /> : <ChevronDown size={12} className="ml-auto" />}
+                            <span className="font-medium">
+                              {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
+                            </span>
+                            {limitsExpanded ? (
+                              <ChevronUp size={12} className="ml-auto" />
+                            ) : (
+                              <ChevronDown size={12} className="ml-auto" />
+                            )}
                           </button>
                           {limitsExpanded && (
                             <div className="px-3 pb-2">
                               {issue.limits && issue.limits.length > 0 ? (
                                 <ul className="space-y-1">
                                   {issue.limits.map((limit, li) => (
-                                    <li key={li} className="text-xs italic text-slate-500 dark:text-slate-400">{limit}</li>
+                                    <li
+                                      key={li}
+                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                    >
+                                      {limit}
+                                    </li>
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-400 dark:text-slate-500">{isPolish ? 'Brak określonych limitów' : 'No limits specified'}</p>
+                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                                </p>
                               )}
                             </div>
                           )}
@@ -1754,14 +1919,23 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
-                                        ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                        ? evidence.question_text.slice(0, 40) +
+                                          (evidence.question_text.length > 40 ? '…' : '')
                                         : ref.slice(0, 20)}
-                                      {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                      {isExpanded ? (
+                                        <ChevronUp size={10} />
+                                      ) : (
+                                        <ChevronDown size={10} />
+                                      )}
                                     </button>
                                     {isExpanded && evidence && (
                                       <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                        <div className="font-medium text-slate-700 dark:text-slate-200">{evidence.question_text}</div>
-                                        <div className="text-slate-500 dark:text-slate-400 italic">"{evidence.answer_snippet}"</div>
+                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                          {evidence.question_text}
+                                        </div>
+                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                          "{evidence.answer_snippet}"
+                                        </div>
                                       </div>
                                     )}
                                   </div>
@@ -1770,7 +1944,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             </div>
                           )}
                           <button
-                            onClick={() => handleOpenHandoff({ title: issue.title, description: issue.description, confidence: issue.confidence, limits: issue.limits, sectionType: 'issue', index: idx })}
+                            onClick={() =>
+                              handleOpenHandoff({
+                                title: issue.title,
+                                description: issue.description,
+                                confidence: issue.confidence,
+                                limits: issue.limits,
+                                sectionType: 'issue',
+                                index: idx,
+                              })
+                            }
                             className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
                           >
                             <ExternalLink size={10} />
@@ -1810,12 +1993,35 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         : opp.impact === 'medium'
                           ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
                           : 'bg-slate-500/15 text-slate-500 dark:text-slate-400';
-                    const confMap: Record<P10ConfidenceLevel, { bg: string; label: string; labelPl: string }> = {
-                      high: { bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400', label: 'High confidence', labelPl: 'Wysoka pewność' },
-                      medium: { bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400', label: 'Medium confidence', labelPl: 'Średnia pewność' },
-                      low: { bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400', label: 'Hypothesis', labelPl: 'Hipoteza' },
-                      insufficient: { bg: 'bg-red-500/15 text-red-600 dark:text-red-400', label: 'Insufficient data', labelPl: 'Niewystarczające dane' },
-                      contradicted: { bg: 'bg-red-500/15 text-red-600 dark:text-red-400', label: 'Contradiction', labelPl: 'Sprzeczność' },
+                    const confMap: Record<
+                      P10ConfidenceLevel,
+                      { bg: string; label: string; labelPl: string }
+                    > = {
+                      high: {
+                        bg: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+                        label: 'High confidence',
+                        labelPl: 'Wysoka pewność',
+                      },
+                      medium: {
+                        bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+                        label: 'Medium confidence',
+                        labelPl: 'Średnia pewność',
+                      },
+                      low: {
+                        bg: 'bg-slate-500/15 text-slate-500 dark:text-slate-400',
+                        label: 'Hypothesis',
+                        labelPl: 'Hipoteza',
+                      },
+                      insufficient: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Insufficient data',
+                        labelPl: 'Niewystarczające dane',
+                      },
+                      contradicted: {
+                        bg: 'bg-red-500/15 text-red-600 dark:text-red-400',
+                        label: 'Contradiction',
+                        labelPl: 'Sprzeczność',
+                      },
                     };
                     const limitsKey = `opp-${idx}`;
                     const limitsExpanded = expandedLimits.has(limitsKey);
@@ -1829,16 +2035,28 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {opp.title}
                           </div>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
-                            <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}>
+                            <span
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${impactBadge}`}
+                            >
                               {opp.impact === 'high'
-                                ? isPolish ? 'Wysoki wpływ' : 'High impact'
+                                ? isPolish
+                                  ? 'Wysoki wpływ'
+                                  : 'High impact'
                                 : opp.impact === 'medium'
-                                  ? isPolish ? 'Średni wpływ' : 'Medium impact'
-                                  : isPolish ? 'Niski wpływ' : 'Low impact'}
+                                  ? isPolish
+                                    ? 'Średni wpływ'
+                                    : 'Medium impact'
+                                  : isPolish
+                                    ? 'Niski wpływ'
+                                    : 'Low impact'}
                             </span>
                             {opp.confidence && (
-                              <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[opp.confidence].bg}`}>
-                                {isPolish ? confMap[opp.confidence].labelPl : confMap[opp.confidence].label}
+                              <span
+                                className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${confMap[opp.confidence].bg}`}
+                              >
+                                {isPolish
+                                  ? confMap[opp.confidence].labelPl
+                                  : confMap[opp.confidence].label}
                               </span>
                             )}
                           </div>
@@ -1846,7 +2064,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         {opp.confidence === 'contradicted' && (
                           <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-medium">
                             <AlertCircle size={14} />
-                            {isPolish ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją' : 'Contradiction detected in data — verify before publishing'}
+                            {isPolish
+                              ? 'Wykryto sprzeczność w danych — zweryfikuj przed publikacją'
+                              : 'Contradiction detected in data — verify before publishing'}
                           </div>
                         )}
                         <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
@@ -1858,19 +2078,32 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             className="flex items-center gap-2 w-full px-3 py-2 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-navy-800/30 transition-colors rounded-lg"
                           >
                             <AlertTriangle size={12} />
-                            <span className="font-medium">{isPolish ? 'Limity i założenia' : 'Limits & assumptions'}</span>
-                            {limitsExpanded ? <ChevronUp size={12} className="ml-auto" /> : <ChevronDown size={12} className="ml-auto" />}
+                            <span className="font-medium">
+                              {isPolish ? 'Limity i założenia' : 'Limits & assumptions'}
+                            </span>
+                            {limitsExpanded ? (
+                              <ChevronUp size={12} className="ml-auto" />
+                            ) : (
+                              <ChevronDown size={12} className="ml-auto" />
+                            )}
                           </button>
                           {limitsExpanded && (
                             <div className="px-3 pb-2">
                               {opp.limits && opp.limits.length > 0 ? (
                                 <ul className="space-y-1">
                                   {opp.limits.map((limit, li) => (
-                                    <li key={li} className="text-xs italic text-slate-500 dark:text-slate-400">{limit}</li>
+                                    <li
+                                      key={li}
+                                      className="text-xs italic text-slate-500 dark:text-slate-400"
+                                    >
+                                      {limit}
+                                    </li>
                                   ))}
                                 </ul>
                               ) : (
-                                <p className="text-xs italic text-slate-400 dark:text-slate-500">{isPolish ? 'Brak określonych limitów' : 'No limits specified'}</p>
+                                <p className="text-xs italic text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                                </p>
                               )}
                             </div>
                           )}
@@ -1889,14 +2122,23 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                     >
                                       <Zap size={10} />
                                       {evidence?.question_text
-                                        ? evidence.question_text.slice(0, 40) + (evidence.question_text.length > 40 ? '…' : '')
+                                        ? evidence.question_text.slice(0, 40) +
+                                          (evidence.question_text.length > 40 ? '…' : '')
                                         : ref.slice(0, 20)}
-                                      {isExpanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+                                      {isExpanded ? (
+                                        <ChevronUp size={10} />
+                                      ) : (
+                                        <ChevronDown size={10} />
+                                      )}
                                     </button>
                                     {isExpanded && evidence && (
                                       <div className="mt-1.5 p-3 rounded-lg bg-white dark:bg-navy-800 border border-slate-200/50 dark:border-navy-700/50 text-xs space-y-1.5 max-w-sm">
-                                        <div className="font-medium text-slate-700 dark:text-slate-200">{evidence.question_text}</div>
-                                        <div className="text-slate-500 dark:text-slate-400 italic">"{evidence.answer_snippet}"</div>
+                                        <div className="font-medium text-slate-700 dark:text-slate-200">
+                                          {evidence.question_text}
+                                        </div>
+                                        <div className="text-slate-500 dark:text-slate-400 italic">
+                                          "{evidence.answer_snippet}"
+                                        </div>
                                       </div>
                                     )}
                                   </div>
@@ -1905,7 +2147,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             </div>
                           )}
                           <button
-                            onClick={() => handleOpenHandoff({ title: opp.title, description: opp.description, confidence: opp.confidence, limits: opp.limits, sectionType: 'opportunity', index: idx })}
+                            onClick={() =>
+                              handleOpenHandoff({
+                                title: opp.title,
+                                description: opp.description,
+                                confidence: opp.confidence,
+                                limits: opp.limits,
+                                sectionType: 'opportunity',
+                                index: idx,
+                              })
+                            }
                             className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-medium hover:bg-blue-500/20 transition-colors"
                           >
                             <ExternalLink size={10} />
@@ -2007,14 +2258,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   : 'This table links source answers to themes and issues. Click a row to see the full quote.'}
               </Callout>
               {entriesWithNoPointers.length > 0 && (
-                <Callout variant="warning" title={isPolish ? 'Brakujące dowody' : 'Missing evidence'} compact>
+                <Callout
+                  variant="warning"
+                  title={isPolish ? 'Brakujące dowody' : 'Missing evidence'}
+                  compact
+                >
                   {isPolish
                     ? `${entriesWithNoPointers.length} wpisów nie ma wskaźników dowodowych — publikacja zablokowana do uzupełnienia.`
                     : `${entriesWithNoPointers.length} entries have no evidence pointers — publish blocked until resolved.`}
                 </Callout>
               )}
-              {v6EvidenceMap.some((e) => e.answer_snippet === '[REDACTED]' || e.answer_snippet?.includes('[redacted]')) && (
-                <Callout variant="critical" title={isPolish ? 'Zredagowane dane' : 'Redacted data'} compact>
+              {v6EvidenceMap.some(
+                (e) => e.answer_snippet === '[REDACTED]' || e.answer_snippet?.includes('[redacted]')
+              ) && (
+                <Callout
+                  variant="critical"
+                  title={isPolish ? 'Zredagowane dane' : 'Redacted data'}
+                  compact
+                >
                   {isPolish
                     ? 'Niektóre odpowiedzi źródłowe zostały zredagowane. Wskaźniki dowodowe zostają w audycie, ale treść jest niedostępna.'
                     : 'Some source answers have been redacted. Evidence pointers remain for audit but content is unavailable.'}
@@ -2060,7 +2321,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         key: 'linked',
                         header: isPolish ? 'Powiązania' : 'Links',
                         render: (row) => {
-                          const hasPointers = row.evidence_pointers && row.evidence_pointers.length > 0;
+                          const hasPointers =
+                            row.evidence_pointers && row.evidence_pointers.length > 0;
                           return (
                             <div className="space-y-1">
                               <div className="flex flex-wrap gap-1">
@@ -2084,7 +2346,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               {!hasPointers && (
                                 <div className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
                                   <AlertTriangle size={10} />
-                                  {isPolish ? 'Brak dowodu — publikacja zablokowana' : 'Missing evidence — publish blocked'}
+                                  {isPolish
+                                    ? 'Brak dowodu — publikacja zablokowana'
+                                    : 'Missing evidence — publish blocked'}
                                 </div>
                               )}
                             </div>
@@ -2224,7 +2488,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             {isPolish ? 'Źródło niedostępne' : 'Source unavailable'}
                           </div>
                           <div className="text-xs">
-                            {isPolish ? `Sesja ${sessionId.slice(0, 12)}… nie załadowała się` : `Session ${sessionId.slice(0, 12)}… failed to load`}
+                            {isPolish
+                              ? `Sesja ${sessionId.slice(0, 12)}… nie załadowała się`
+                              : `Session ${sessionId.slice(0, 12)}… failed to load`}
                           </div>
                         </div>
                       </div>
@@ -2570,16 +2836,21 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
           <div className="w-px h-5 bg-slate-300/50 dark:bg-navy-600/50 mx-1" />
 
-          {(!insight?.reviewStatus || insight.reviewStatus === 'draft') && (insight?.status === 'completed' || insight?.status === 'failed') && (
-            <button
-              onClick={() => handleLifecycleTransition('submit_review')}
-              disabled={lifecycleTransitioning}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
-            >
-              {lifecycleTransitioning ? <Loader2 size={14} className="animate-spin" /> : <Eye size={14} />}
-              {isPolish ? 'Wyślij do recenzji' : 'Submit for Review'}
-            </button>
-          )}
+          {(!insight?.reviewStatus || insight.reviewStatus === 'draft') &&
+            (insight?.status === 'completed' || insight?.status === 'failed') && (
+              <button
+                onClick={() => handleLifecycleTransition('submit_review')}
+                disabled={lifecycleTransitioning}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20 text-xs font-medium transition-all disabled:opacity-50"
+              >
+                {lifecycleTransitioning ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Eye size={14} />
+                )}
+                {isPolish ? 'Wyślij do recenzji' : 'Submit for Review'}
+              </button>
+            )}
 
           {insight?.reviewStatus === 'in_review' && (
             <>
@@ -2588,7 +2859,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 disabled={lifecycleTransitioning}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-medium transition-all disabled:opacity-50"
               >
-                {lifecycleTransitioning ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                {lifecycleTransitioning ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={14} />
+                )}
                 {isPolish ? 'Zatwierdź i opublikuj' : 'Approve & Publish'}
               </button>
               <button
@@ -2625,7 +2900,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => { setHandoffModalOpen(false); setHandoffFinding(null); }}
+            onClick={() => {
+              setHandoffModalOpen(false);
+              setHandoffFinding(null);
+            }}
           />
           <div className="relative w-full max-w-lg mx-4 bg-white dark:bg-navy-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-navy-700 overflow-hidden">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-navy-700">
@@ -2633,7 +2911,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 {isPolish ? 'Utwórz inicjatywę z finding' : 'Create initiative from finding'}
               </h3>
               <button
-                onClick={() => { setHandoffModalOpen(false); setHandoffFinding(null); }}
+                onClick={() => {
+                  setHandoffModalOpen(false);
+                  setHandoffFinding(null);
+                }}
                 className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-400 transition-colors"
               >
                 <X size={16} />
@@ -2673,10 +2954,16 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 <div className="mt-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-navy-800 text-sm text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-navy-700 min-h-[40px]">
                   {handoffFinding.limits && handoffFinding.limits.length > 0 ? (
                     <ul className="list-disc list-inside space-y-0.5">
-                      {handoffFinding.limits.map((l, i) => <li key={i} className="text-xs italic">{l}</li>)}
+                      {handoffFinding.limits.map((l, i) => (
+                        <li key={i} className="text-xs italic">
+                          {l}
+                        </li>
+                      ))}
                     </ul>
                   ) : (
-                    <span className="text-xs italic text-slate-400">{isPolish ? 'Brak określonych limitów' : 'No limits specified'}</span>
+                    <span className="text-xs italic text-slate-400">
+                      {isPolish ? 'Brak określonych limitów' : 'No limits specified'}
+                    </span>
                   )}
                 </div>
               </div>
@@ -2687,7 +2974,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 disabled={handoffSubmitting}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-navy-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-600 text-sm font-medium transition-all disabled:opacity-50"
               >
-                {handoffSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
+                {handoffSubmitting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Link2 size={14} />
+                )}
                 {isPolish ? 'Połącz z istniejącą' : 'Link to existing'}
               </button>
               <button
@@ -2695,7 +2986,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 disabled={handoffSubmitting}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium transition-all disabled:opacity-50"
               >
-                {handoffSubmitting ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                {handoffSubmitting ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <Plus size={14} />
+                )}
                 {isPolish ? 'Utwórz nową inicjatywę' : 'Create new initiative'}
               </button>
             </div>

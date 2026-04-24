@@ -23,8 +23,8 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
 import { Link, useParams } from 'react-router-dom';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -213,9 +213,7 @@ export const DocsArticleView: React.FC = () => {
                 className="flex items-center gap-1 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
               >
                 {copied ? <Check size={14} /> : <Share2 size={14} />}
-                {copied
-                  ? t('docs.article.copied', 'Copied!')
-                  : t('docs.article.share', 'Share')}
+                {copied ? t('docs.article.copied', 'Copied!') : t('docs.article.share', 'Share')}
               </button>
             </div>
           </header>

@@ -1,4 +1,4 @@
 export { AiRecommendationPanel } from './AiRecommendationPanel';
-export { ProblemTable } from './ProblemTable';
 export { ProblemPreview } from './ProblemPreview';
+export { ProblemTable } from './ProblemTable';
 export * from './types';

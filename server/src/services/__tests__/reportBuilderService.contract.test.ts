@@ -10,13 +10,13 @@
  *   - Version management
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
-  setDependencies,
+  createBlockType,
   createReport,
   listBlockTypes,
-  createBlockType,
+  setDependencies,
 } from '../reportBuilderService.js';
 
 type DbCallback<T> = (err: Error | null, result: T) => void;
@@ -70,9 +70,11 @@ describe('reportBuilderService — contract tests', () => {
           cb(null, null);
         }
       });
-      mockDb.all.mockImplementation((_sql: string, _params: unknown[], cb: DbCallback<unknown[]>) => {
-        cb(null, []);
-      });
+      mockDb.all.mockImplementation(
+        (_sql: string, _params: unknown[], cb: DbCallback<unknown[]>) => {
+          cb(null, []);
+        }
+      );
       mockDb.run.mockImplementation(function (
         this: any,
         _sql: string,
@@ -100,12 +102,14 @@ describe('reportBuilderService — contract tests', () => {
 
   describe('listBlockTypes', () => {
     it('returns an array of block types', async () => {
-      mockDb.all.mockImplementation((_sql: string, _params: unknown[], cb: DbCallback<unknown[]>) => {
-        cb(null, [
-          { id: 'bt-1', name: 'Text', category: 'basic', is_active: 1 },
-          { id: 'bt-2', name: 'Chart', category: 'visual', is_active: 1 },
-        ]);
-      });
+      mockDb.all.mockImplementation(
+        (_sql: string, _params: unknown[], cb: DbCallback<unknown[]>) => {
+          cb(null, [
+            { id: 'bt-1', name: 'Text', category: 'basic', is_active: 1 },
+            { id: 'bt-2', name: 'Chart', category: 'visual', is_active: 1 },
+          ]);
+        }
+      );
 
       const result = await listBlockTypes('org-1');
       expect(result).toHaveLength(2);

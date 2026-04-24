@@ -1,7 +1,6 @@
+import { AlertTriangle, ArrowRight, ChevronRight } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
-import { AlertTriangle, ArrowRight, ChevronRight } from 'lucide-react';
 
 import type { DegradedAlert } from './hooks/useFinanceLane';
 
@@ -35,9 +34,7 @@ export const FinanceDegradedBanner: React.FC<FinanceDegradedBannerProps> = ({
     >
       <AlertTriangle
         size={16}
-        className={`mt-0.5 flex-shrink-0 ${
-          isDestructive ? 'text-rose-500' : 'text-amber-500'
-        }`}
+        className={`mt-0.5 flex-shrink-0 ${isDestructive ? 'text-rose-500' : 'text-amber-500'}`}
       />
       <div className="flex-1 min-w-0">
         <p
@@ -47,7 +44,9 @@ export const FinanceDegradedBanner: React.FC<FinanceDegradedBannerProps> = ({
               : 'text-amber-700 dark:text-amber-300'
           }`}
         >
-          {t('finance.lane.degraded.activeIssues', 'Finance lane has {{count}} active issue(s)', { count: degradedAlerts.length })}
+          {t('finance.lane.degraded.activeIssues', 'Finance lane has {{count}} active issue(s)', {
+            count: degradedAlerts.length,
+          })}
         </p>
         <p
           className={`text-xs mt-0.5 ${

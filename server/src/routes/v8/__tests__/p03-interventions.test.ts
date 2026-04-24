@@ -57,8 +57,10 @@ vi.mock('../../../services/executionBudgetService.js', () => ({
   detectOverspendSignals: (...args: unknown[]) => mockDetectOverspendSignals(...args),
 }));
 vi.mock('../../../services/v8ExecutionControlTowerService.js', () => ({
-  getExecutionControlTowerQueues: (...args: unknown[]) => mockGetExecutionControlTowerQueues(...args),
-  getExecutionControlTowerItemDetail: (...args: unknown[]) => mockGetExecutionControlTowerItemDetail(...args),
+  getExecutionControlTowerQueues: (...args: unknown[]) =>
+    mockGetExecutionControlTowerQueues(...args),
+  getExecutionControlTowerItemDetail: (...args: unknown[]) =>
+    mockGetExecutionControlTowerItemDetail(...args),
   V8_EXECUTION_CONTROL_TOWER_CONTRACT: 'execution_control_tower_v1',
 }));
 vi.mock('../../../utils/DbPromise.js', () => ({
@@ -80,11 +82,15 @@ vi.mock('../../../middleware/v8Metrics.middleware.js', () => ({
   v8MetricsMiddleware: (_req: unknown, _res: unknown, next: () => void) => next(),
 }));
 
-let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null = null;
+let mockUser: { id: string; role: string; organizationId: string; isSuperAdmin: boolean } | null =
+  null;
 
 vi.mock('../../../middleware/auth.middleware.js', () => {
   const mw = (req: any, res: any, next: () => void) => {
-    if (!mockUser) { res.status(401).json({ error: 'No token' }); return; }
+    if (!mockUser) {
+      res.status(401).json({ error: 'No token' });
+      return;
+    }
     req.userId = mockUser.id;
     req.userRole = mockUser.role;
     req.organizationId = mockUser.organizationId;
@@ -175,9 +181,12 @@ describe('P03-B §7.2 — intervention write→refresh→agree', () => {
     mockDbAll.mockResolvedValueOnce([{ due_date: '2026-04-01', estimated_hours: 8 }]);
 
     const app = createApp();
-    const res = await request(app)
-      .post('/api/v8/execution-control/interventions/smooth')
-      .send({ entityType: 'TASK', entityId: 't1', forecastEndDate: '2026-04-15', allocatedHours: 12 });
+    const res = await request(app).post('/api/v8/execution-control/interventions/smooth').send({
+      entityType: 'TASK',
+      entityId: 't1',
+      forecastEndDate: '2026-04-15',
+      allocatedHours: 12,
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.data?.action).toBe('smooth');
@@ -185,17 +194,17 @@ describe('P03-B §7.2 — intervention write→refresh→agree', () => {
   });
 
   it('POST /interventions/replan updates initiative forecast and returns readback', async () => {
-    mockDbAll.mockResolvedValueOnce([{ planned_start_date: '2026-03-01', planned_end_date: '2026-04-01' }]);
+    mockDbAll.mockResolvedValueOnce([
+      { planned_start_date: '2026-03-01', planned_end_date: '2026-04-01' },
+    ]);
 
     const app = createApp();
-    const res = await request(app)
-      .post('/api/v8/execution-control/interventions/replan')
-      .send({
-        entityType: 'INITIATIVE',
-        entityId: 'i1',
-        forecastEndDate: '2026-05-01',
-        reason: 'Scope expanded',
-      });
+    const res = await request(app).post('/api/v8/execution-control/interventions/replan').send({
+      entityType: 'INITIATIVE',
+      entityId: 'i1',
+      forecastEndDate: '2026-05-01',
+      reason: 'Scope expanded',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.data?.action).toBe('replan');
@@ -206,15 +215,13 @@ describe('P03-B §7.2 — intervention write→refresh→agree', () => {
     mockDbAll.mockResolvedValueOnce([{ initiative_id: 'i1' }]);
 
     const app = createApp();
-    const res = await request(app)
-      .post('/api/v8/execution-control/interventions/escalate')
-      .send({
-        entityType: 'TASK',
-        entityId: 't1',
-        escalationType: 'RISK',
-        title: 'Vendor delay risk',
-        description: 'Vendor may miss deadline',
-      });
+    const res = await request(app).post('/api/v8/execution-control/interventions/escalate').send({
+      entityType: 'TASK',
+      entityId: 't1',
+      escalationType: 'RISK',
+      title: 'Vendor delay risk',
+      description: 'Vendor may miss deadline',
+    });
 
     expect(res.status).toBe(200);
     expect(res.body.data?.action).toBe('escalate');
@@ -235,13 +242,15 @@ describe('P03-B §7.2 — intervention write→refresh→agree', () => {
   });
 
   it('GET /baseline-variance/:id returns variance when baseline exists', async () => {
-    mockDbAll.mockResolvedValueOnce([{
-      planned_start_date: '2026-03-01',
-      planned_end_date: '2026-04-01',
-      start_date: '2026-03-05',
-      actual_end_date: null,
-      progress: 40,
-    }]);
+    mockDbAll.mockResolvedValueOnce([
+      {
+        planned_start_date: '2026-03-01',
+        planned_end_date: '2026-04-01',
+        start_date: '2026-03-05',
+        actual_end_date: null,
+        progress: 40,
+      },
+    ]);
     mockDbAll.mockResolvedValueOnce([]);
 
     const app = createApp();
@@ -254,13 +263,15 @@ describe('P03-B §7.2 — intervention write→refresh→agree', () => {
   });
 
   it('GET /baseline-variance/:id returns missing_baseline posture when no dates', async () => {
-    mockDbAll.mockResolvedValueOnce([{
-      planned_start_date: null,
-      planned_end_date: null,
-      start_date: null,
-      actual_end_date: null,
-      progress: 0,
-    }]);
+    mockDbAll.mockResolvedValueOnce([
+      {
+        planned_start_date: null,
+        planned_end_date: null,
+        start_date: null,
+        actual_end_date: null,
+        progress: 0,
+      },
+    ]);
 
     const app = createApp();
     const res = await request(app).get('/api/v8/execution-control/baseline-variance/i2');

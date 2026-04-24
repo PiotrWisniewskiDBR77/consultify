@@ -84,31 +84,28 @@ export interface CalendarProviderAdapter {
   fetchEvents(
     connection: ConnectionRef,
     window: { startAt: string; endAt: string },
-    cursor?: string | null,
+    cursor?: string | null
   ): Promise<FetchEventsResult>;
 
   createEvent?(
     connection: ConnectionRef,
     item: CalendarItemPayload,
-    transactionId?: string,
+    transactionId?: string
   ): Promise<ProviderEvent>;
 
   updateEvent?(
     connection: ConnectionRef,
     item: CalendarItemPayload,
-    providerEtag: string,
+    providerEtag: string
   ): Promise<ProviderEvent | ProviderConflictError>;
 
   deleteEvent?(
     connection: ConnectionRef,
     providerEventId: string,
-    providerEtag: string,
+    providerEtag: string
   ): Promise<void | ProviderConflictError>;
 
-  watchChanges?(
-    connection: ConnectionRef,
-    callbackUrl: string,
-  ): Promise<WatchSubscription>;
+  watchChanges?(connection: ConnectionRef, callbackUrl: string): Promise<WatchSubscription>;
 }
 
 export function isProviderConflict(value: unknown): value is ProviderConflictError {

@@ -25,10 +25,10 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import {
-  V8ExecutionControlApi,
   type V8AiRecommendation,
   type V8AiStep,
   type V8AiTriageResult,
+  V8ExecutionControlApi,
   type V8LaneAnalysisResponse,
 } from '../../../services/api/v8/execution-control';
 import type { ManagerProblemRow } from './types';
@@ -151,7 +151,9 @@ const ConfidenceBadge: React.FC<{ value: number }> = ({ value }) => {
         ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
         : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20';
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${color}`}>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${color}`}
+    >
       AI Confidence: {value}%
     </span>
   );
@@ -263,7 +265,14 @@ const SuggestionCard: React.FC<{
   onApprove?: () => void;
   onDefer?: () => void;
   approveLabel?: string;
-}> = ({ suggestion, decisionState, busy = false, onApprove, onDefer, approveLabel = 'Approve' }) => (
+}> = ({
+  suggestion,
+  decisionState,
+  busy = false,
+  onApprove,
+  onDefer,
+  approveLabel = 'Approve',
+}) => (
   <div className="rounded-lg border border-slate-200/70 p-3 dark:border-white/[0.06]">
     <div className="mb-2 flex flex-wrap items-center gap-2">
       <span className="text-[12px] font-semibold text-slate-900 dark:text-white">
@@ -329,17 +338,24 @@ function getWorkspaceRows(mode: ManagementWorkspaceMode, rows: ManagerProblemRow
     case 'decision-pack':
       return rows
         .filter((row) =>
-          ['overdue_decision', 'pending_decision', 'deferred_decision', 'no_decision_maker'].includes(
-            row.problemType
-          )
+          [
+            'overdue_decision',
+            'pending_decision',
+            'deferred_decision',
+            'no_decision_maker',
+          ].includes(row.problemType)
         )
         .slice(0, 12);
     case 'recovery-plan':
       return rows
         .filter((row) =>
-          ['blocked_initiative', 'blocked_task', 'dependency_block', 'decision_block', 'critical_issue'].includes(
-            row.problemType
-          )
+          [
+            'blocked_initiative',
+            'blocked_task',
+            'dependency_block',
+            'decision_block',
+            'critical_issue',
+          ].includes(row.problemType)
         )
         .slice(0, 12);
     case 'watchlist':
@@ -347,21 +363,29 @@ function getWorkspaceRows(mode: ManagementWorkspaceMode, rows: ManagerProblemRow
         .filter(
           (row) =>
             row.severity !== 'critical' ||
-            ['high_risk', 'missing_baseline', 'stale_item', 'delay_risk', 'delay_late_start'].includes(
-              row.problemType
-            )
+            [
+              'high_risk',
+              'missing_baseline',
+              'stale_item',
+              'delay_risk',
+              'delay_late_start',
+            ].includes(row.problemType)
         )
         .slice(0, 12);
     case 'rebalance':
       return rows
         .filter((row) =>
-          ['overloaded_person', 'unassigned_task', 'no_estimate', 'due_soon'].includes(row.problemType)
+          ['overloaded_person', 'unassigned_task', 'no_estimate', 'due_soon'].includes(
+            row.problemType
+          )
         )
         .slice(0, 12);
     case 'ownership-fix':
       return rows
         .filter((row) =>
-          ['no_owner', 'no_sponsor', 'no_dates', 'bus_factor', 'low_clarity'].includes(row.problemType)
+          ['no_owner', 'no_sponsor', 'no_dates', 'bus_factor', 'low_clarity'].includes(
+            row.problemType
+          )
         )
         .slice(0, 12);
     default:
@@ -442,7 +466,10 @@ const TriageView: React.FC<{
     <CollapsibleSection title={`Clusters (${data.clusters.length})`}>
       <div className="space-y-3">
         {data.clusters.map((cluster, idx) => (
-          <div key={idx} className="rounded-lg border border-slate-200/70 p-3 dark:border-white/[0.06]">
+          <div
+            key={idx}
+            className="rounded-lg border border-slate-200/70 p-3 dark:border-white/[0.06]"
+          >
             <div className="mb-1.5 flex items-center gap-2">
               <SeverityBadge severity={cluster.severity} />
               <span className="text-[12px] font-semibold text-slate-900 dark:text-white">
@@ -693,7 +720,9 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
     try {
       if (mode === 'recommend' && problemId) {
         const resp = await V8ExecutionControlApi.getAiRecommendation(laneId, problemId, projectId);
-        setRecommendData(((resp as { data?: V8AiRecommendation }).data || resp) as V8AiRecommendation);
+        setRecommendData(
+          ((resp as { data?: V8AiRecommendation }).data || resp) as V8AiRecommendation
+        );
         setTriageData(null);
         setLaneAnalysis(null);
       } else if (mode === 'triage') {
@@ -703,7 +732,9 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
         setLaneAnalysis(null);
       } else {
         const resp = await V8ExecutionControlApi.getLaneAnalysis(laneId, projectId);
-        setLaneAnalysis(((resp as { data?: V8LaneAnalysisResponse }).data || resp) as V8LaneAnalysisResponse);
+        setLaneAnalysis(
+          ((resp as { data?: V8LaneAnalysisResponse }).data || resp) as V8LaneAnalysisResponse
+        );
         setRecommendData(null);
         setTriageData(null);
       }
@@ -771,9 +802,7 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
           <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
             {MODE_TITLES[mode]}
           </h2>
-          <p className="text-[10px] text-slate-400 dark:text-slate-500">
-            {MODE_SUBTITLES[mode]}
-          </p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500">{MODE_SUBTITLES[mode]}</p>
         </div>
         <button
           type="button"
@@ -826,7 +855,14 @@ export const AiRecommendationPanel: React.FC<AiRecommendationPanelProps> = ({
 
         {!loading &&
           !error &&
-          ['due-soon', 'decision-pack', 'recovery-plan', 'watchlist', 'rebalance', 'ownership-fix'].includes(mode) && (
+          [
+            'due-soon',
+            'decision-pack',
+            'recovery-plan',
+            'watchlist',
+            'rebalance',
+            'ownership-fix',
+          ].includes(mode) && (
             <FocusWorkspaceView
               mode={mode}
               rows={rows}

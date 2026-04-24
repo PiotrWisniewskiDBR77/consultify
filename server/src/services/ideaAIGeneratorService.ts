@@ -653,9 +653,8 @@ const SCHEMA_MAP: Record<GeneratorType, z.ZodSchema<any>> = {
 async function buildOrgContext(orgId: string): Promise<OrgContext> {
   const ctx: OrgContext = {};
   try {
-    const { default: orgContextService } = await import(
-      './organizationContext/OrganizationContextService.js'
-    );
+    const { default: orgContextService } =
+      await import('./organizationContext/OrganizationContextService.js');
     const resolved = await orgContextService.buildResolvedContext(orgId);
     if (resolved) {
       ctx.name = resolved.profile.companyName || undefined;

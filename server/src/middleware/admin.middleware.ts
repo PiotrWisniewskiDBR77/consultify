@@ -7,10 +7,10 @@
 
 import type { NextFunction, Request, Response } from 'express';
 
-import type { AuthRequest } from './auth.middleware.js';
-import { getRequestAccessRole, isRequestSuperAdmin } from './requestAccess.js';
 import { normalizeOrganizationRole } from '../services/organizationService.js';
 import { get as dbGet } from '../utils/DbPromise.js';
+import type { AuthRequest } from './auth.middleware.js';
+import { getRequestAccessRole, isRequestSuperAdmin } from './requestAccess.js';
 
 // ==========================================
 // TYPES

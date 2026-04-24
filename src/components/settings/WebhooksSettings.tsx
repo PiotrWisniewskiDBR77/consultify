@@ -86,9 +86,7 @@ const AVAILABLE_EVENTS = [
   'user.left',
 ];
 
-export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
-  className = '',
-}) => {
+export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [showNew, setShowNew] = useState(false);

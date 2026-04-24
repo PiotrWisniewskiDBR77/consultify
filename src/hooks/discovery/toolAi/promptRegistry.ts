@@ -31,9 +31,7 @@ export function getToolSuggestionPrompt(
   inputData: unknown
 ): string {
   if (toolType === 'market-forces') {
-    if (
-      ['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(stepId)
-    ) {
+    if (['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(stepId)) {
       return `Act as an AI strategy mentor. Analyze the ${stepId} force for this industry.
 
 Provide:
@@ -49,9 +47,12 @@ Be specific to the organization's industry and market position. Explain the "why
 
   if (toolType === 'growth-paths') {
     if (
-      ['market-penetration', 'market-development', 'product-development', 'diversification'].includes(
-        stepId
-      )
+      [
+        'market-penetration',
+        'market-development',
+        'product-development',
+        'diversification',
+      ].includes(stepId)
     ) {
       return `Act as an AI growth mentor. Suggest 3-5 initiatives for the ${stepId} quadrant.
 

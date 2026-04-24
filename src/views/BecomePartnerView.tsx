@@ -87,7 +87,10 @@ export const BecomePartnerView: React.FC = () => {
             </h1>
 
             <p className="text-xl md:text-2xl text-white/60 font-light max-w-3xl mx-auto mb-12 leading-relaxed">
-              {t('pages.partner.hero.subtitle', 'Join a network of partners using Consultify for digital transformation. Professional PMO standards combined with the power of AI.')}
+              {t(
+                'pages.partner.hero.subtitle',
+                'Join a network of partners using Consultify for digital transformation. Professional PMO standards combined with the power of AI.'
+              )}
             </p>
 
             {/* CTA Buttons */}
@@ -125,9 +128,14 @@ export const BecomePartnerView: React.FC = () => {
           {/* BENEFITS SECTION */}
           <section className="max-w-6xl mx-auto mb-24">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.partner.benefits.heading', 'What You Get as a Partner')}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                {t('pages.partner.benefits.heading', 'What You Get as a Partner')}
+              </h2>
               <p className="text-white/50 text-lg max-w-2xl mx-auto">
-                {t('pages.partner.benefits.sub', 'Partnership with Consultify opens new opportunities for growing your consulting practice.')}
+                {t(
+                  'pages.partner.benefits.sub',
+                  'Partnership with Consultify opens new opportunities for growing your consulting practice.'
+                )}
               </p>
             </div>
 
@@ -144,7 +152,9 @@ export const BecomePartnerView: React.FC = () => {
                       className={`text-${visual.color}-400 mb-4 group-hover:scale-110 transition-transform duration-500 relative z-10`}
                       size={32}
                     />
-                    <h3 className="text-lg font-semibold mb-2 relative z-10">{t(`${prefix}.title`)}</h3>
+                    <h3 className="text-lg font-semibold mb-2 relative z-10">
+                      {t(`${prefix}.title`)}
+                    </h3>
                     <p className="text-white/50 text-sm leading-relaxed relative z-10">
                       {t(`${prefix}.description`)}
                     </p>
@@ -157,9 +167,14 @@ export const BecomePartnerView: React.FC = () => {
           {/* PARTNERSHIP TIERS SECTION */}
           <section className="max-w-6xl mx-auto mb-24">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.partner.tiers.heading', 'Partnership Tiers')}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                {t('pages.partner.tiers.heading', 'Partnership Tiers')}
+              </h2>
               <p className="text-white/50 text-lg max-w-2xl mx-auto">
-                {t('pages.partner.tiers.sub', 'Choose the tier that matches your goals. Advance as your partnership grows.')}
+                {t(
+                  'pages.partner.tiers.sub',
+                  'Choose the tier that matches your goals. Advance as your partnership grows.'
+                )}
               </p>
             </div>
 
@@ -167,8 +182,10 @@ export const BecomePartnerView: React.FC = () => {
               {TIER_KEYS.map((key, index) => {
                 const visual = TIER_VISUALS[index];
                 const prefix = `pages.partner.tiers.items.${key}`;
-                const requirements = (t(`${prefix}.requirements`, { returnObjects: true }) || []) as string[];
-                const tierBenefits = (t(`${prefix}.benefits`, { returnObjects: true }) || []) as string[];
+                const requirements = (t(`${prefix}.requirements`, { returnObjects: true }) ||
+                  []) as string[];
+                const tierBenefits = (t(`${prefix}.benefits`, { returnObjects: true }) ||
+                  []) as string[];
                 return (
                   <div
                     key={key}
@@ -193,7 +210,10 @@ export const BecomePartnerView: React.FC = () => {
                       <ul className="space-y-1.5">
                         {(Array.isArray(requirements) ? requirements : []).map((req, rIndex) => (
                           <li key={rIndex} className="flex items-start gap-2 text-sm text-white/60">
-                            <CheckCircle2 size={14} className="mt-0.5 text-white/30 flex-shrink-0" />
+                            <CheckCircle2
+                              size={14}
+                              className="mt-0.5 text-white/30 flex-shrink-0"
+                            />
                             {req}
                           </li>
                         ))}
@@ -205,15 +225,20 @@ export const BecomePartnerView: React.FC = () => {
                         {t('pages.partner.tiers.benefitsLabel', 'Benefits')}
                       </h4>
                       <ul className="space-y-1.5">
-                        {(Array.isArray(tierBenefits) ? tierBenefits : []).map((benefit, bIndex) => (
-                          <li key={bIndex} className="flex items-start gap-2 text-sm text-white/70">
-                            <CheckCircle2
-                              size={14}
-                              className={`mt-0.5 text-${visual.color}-400 flex-shrink-0`}
-                            />
-                            {benefit}
-                          </li>
-                        ))}
+                        {(Array.isArray(tierBenefits) ? tierBenefits : []).map(
+                          (benefit, bIndex) => (
+                            <li
+                              key={bIndex}
+                              className="flex items-start gap-2 text-sm text-white/70"
+                            >
+                              <CheckCircle2
+                                size={14}
+                                className={`mt-0.5 text-${visual.color}-400 flex-shrink-0`}
+                              />
+                              {benefit}
+                            </li>
+                          )
+                        )}
                       </ul>
                     </div>
                   </div>
@@ -225,7 +250,9 @@ export const BecomePartnerView: React.FC = () => {
           {/* PROCESS SECTION */}
           <section className="max-w-4xl mx-auto mb-24">
             <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">{t('pages.partner.process.heading', 'How to Join?')}</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                {t('pages.partner.process.heading', 'How to Join?')}
+              </h2>
               <p className="text-white/50 text-lg">
                 {t('pages.partner.process.sub', 'Simple 4-step process to start the partnership.')}
               </p>
@@ -257,9 +284,14 @@ export const BecomePartnerView: React.FC = () => {
           {/* FINAL CTA SECTION */}
           <section className="max-w-3xl mx-auto text-center py-16 px-8 bg-navy-900/30 backdrop-blur-sm rounded-xl border border-white/10">
             <BadgeCheck size={48} className="text-violet-400 mx-auto mb-6" />
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">{t('pages.partner.cta.heading', 'Ready to Partner?')}</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              {t('pages.partner.cta.heading', 'Ready to Partner?')}
+            </h2>
             <p className="text-white/60 text-lg mb-8 max-w-xl mx-auto">
-              {t('pages.partner.cta.body', 'Join the Consultify partner community and together deliver professional PMO + AI solutions for organizations in transformation.')}
+              {t(
+                'pages.partner.cta.body',
+                'Join the Consultify partner community and together deliver professional PMO + AI solutions for organizations in transformation.'
+              )}
             </p>
             <button
               onClick={handleApplyClick}
@@ -272,7 +304,9 @@ export const BecomePartnerView: React.FC = () => {
                 size={24}
               />
             </button>
-            <p className="mt-6 text-white/30 text-sm">{t('pages.partner.cta.noObligation', 'No obligations • We respond within 24h')}</p>
+            <p className="mt-6 text-white/30 text-sm">
+              {t('pages.partner.cta.noObligation', 'No obligations • We respond within 24h')}
+            </p>
           </section>
         </main>
       </div>

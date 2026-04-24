@@ -65,10 +65,7 @@ class GraphRagService {
           });
 
           if (entities.length < maxEntities) {
-            const relations = await knowledgeGraphService.getRelations(
-              organizationId,
-              entity.id
-            );
+            const relations = await knowledgeGraphService.getRelations(organizationId, entity.id);
 
             for (const rel of relations) {
               relationships.push({
@@ -110,20 +107,20 @@ class GraphRagService {
   async linkEntities(input: {
     vectorResults: Array<{ content: string; metadata?: Record<string, unknown> }>;
     graphEntities: GraphRagResult['entities'];
-  }): Promise<Array<{
-    content: string;
-    linkedEntities: string[];
-    enrichedContext?: string;
-  }>> {
+  }): Promise<
+    Array<{
+      content: string;
+      linkedEntities: string[];
+      enrichedContext?: string;
+    }>
+  > {
     return input.vectorResults.map((result) => {
       const contentLower = result.content.toLowerCase();
       const linked = input.graphEntities
         .filter((e) => contentLower.includes(e.name.toLowerCase()))
         .map((e) => e.name);
 
-      const enrichment = linked.length > 0
-        ? `\n[Related entities: ${linked.join(', ')}]`
-        : '';
+      const enrichment = linked.length > 0 ? `\n[Related entities: ${linked.join(', ')}]` : '';
 
       return {
         content: result.content,
@@ -136,7 +133,9 @@ class GraphRagService {
   private extractQueryEntities(query: string): string[] {
     const entities: string[] = [];
 
-    const properNouns = query.match(/\b[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]{2,}(?:\s+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]{2,})*/g) || [];
+    const properNouns =
+      query.match(/\b[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]{2,}(?:\s+[A-ZĄĆĘŁŃÓŚŹŻ][a-ząćęłńóśźż]{2,})*/g) ||
+      [];
     entities.push(...properNouns);
 
     const quotedTerms = query.match(/"([^"]+)"/g) || [];

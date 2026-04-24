@@ -10,26 +10,26 @@ import {
   all as dbAll,
   get as dbGet,
   run as dbRun,
-  transaction as dbTransaction,
   tableExists,
+  transaction as dbTransaction,
 } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 import {
+  exportToMarkdown,
+  type MindmapExportFormat,
+  type MindmapNodeKind,
+  type MindmapNodeOperation,
   P12_ACCEPTANCE_CHECKLIST,
-  P12_NODE_OPERATIONS,
+  P12_AI_COBUILDING_RULES,
   P12_CALM_LOOP_RULES,
+  P12_DEGRADED_SCENARIOS,
   P12_EXPORT_FORMATS,
   P12_EXPORT_RULES,
-  P12_AI_COBUILDING_RULES,
-  P12_UNDO_REDO_RULES,
-  P12_DEGRADED_SCENARIOS,
   P12_NODE_KINDS,
-  type MindmapNodeOperation,
-  type MindmapNodeKind,
-  type MindmapExportFormat,
-  wouldCreateCycle,
+  P12_NODE_OPERATIONS,
+  P12_UNDO_REDO_RULES,
   resolveDeleteAnchor,
-  exportToMarkdown,
+  wouldCreateCycle,
 } from './mindmapCanon.js';
 
 const LOG_PREFIX = '[P12-MindmapService]';
@@ -199,10 +199,7 @@ async function mindmapTableReady(): Promise<boolean> {
   }
 }
 
-async function loadNodes(
-  mindmapId: string,
-  organizationId: string
-): Promise<MindmapNode[]> {
+async function loadNodes(mindmapId: string, organizationId: string): Promise<MindmapNode[]> {
   const rows = await dbAll<MindmapNodeRow>(
     `SELECT id, mindmap_id, organization_id, parent_id, label, kind, position_index, collapsed, metadata, created_at, updated_at
      FROM ${NODES_TABLE}
@@ -808,11 +805,21 @@ export async function resolveAIProposal(
 
   const tableOk = await mindmapTableReady();
   if (!tableOk) {
-    return { success: false, error: 'Mindmap storage is not available', error_code: 'TABLE_MISSING' };
+    return {
+      success: false,
+      error: 'Mindmap storage is not available',
+      error_code: 'TABLE_MISSING',
+    };
   }
 
   const { nodes } = await getNodes(stored.mindmap_id, stored.organization_id);
-  if (nodes.length + stored.operations.filter((o) => o.op === 'create_root' || o.op === 'add_child' || o.op === 'add_sibling').length > MAX_NODES) {
+  if (
+    nodes.length +
+      stored.operations.filter(
+        (o) => o.op === 'create_root' || o.op === 'add_child' || o.op === 'add_sibling'
+      ).length >
+    MAX_NODES
+  ) {
     return {
       success: false,
       error: `Applying proposal would exceed ${MAX_NODES} nodes`,
@@ -923,8 +930,7 @@ export async function validateOperation(
       const self = nodes.find((n) => n.id === nodeId);
       if (!self) return { valid: false, reason: 'Node not found' };
       const rawNp = params?.newParentId;
-      const np =
-        rawNp === undefined || rawNp === null ? getRootId(nodes) : String(rawNp);
+      const np = rawNp === undefined || rawNp === null ? getRootId(nodes) : String(rawNp);
       if (!np) return { valid: false, reason: 'move requires newParentId or an existing root' };
       const parent = nodes.find((n) => n.id === np);
       if (!parent) return { valid: false, reason: 'New parent not found' };

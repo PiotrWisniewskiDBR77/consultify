@@ -277,9 +277,7 @@ export async function handleChatAction(
         if (!artifactId) {
           return { success: false, error: 'Artifact ID is required' };
         }
-        deps.navigate(
-          `/presentations?tab=all&artifactId=${encodeURIComponent(artifactId)}`
-        );
+        deps.navigate(`/presentations?tab=all&artifactId=${encodeURIComponent(artifactId)}`);
         return { success: true };
       }
 
@@ -290,9 +288,13 @@ export async function handleChatAction(
         }
         const outputType = String(params.outputType || '').toLowerCase();
         if (outputType === 'presentation') {
-          deps.navigate(`/presentations/wizard?templateArtifactId=${encodeURIComponent(templateArtifactId)}`);
+          deps.navigate(
+            `/presentations/wizard?templateArtifactId=${encodeURIComponent(templateArtifactId)}`
+          );
         } else {
-          deps.navigate(`/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateArtifactId)}`);
+          deps.navigate(
+            `/reports/builder?new=true&templateArtifactId=${encodeURIComponent(templateArtifactId)}`
+          );
         }
         return { success: true };
       }

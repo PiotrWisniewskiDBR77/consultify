@@ -67,7 +67,12 @@ export type HomeScreenAction =
       id: string;
     }
   | { type: 'create'; target: 'idea' | 'note' | 'task' | 'decision' }
-  | { type: 'handoff'; signalId: string; targetModule: TriageTargetModule; handoffIntent: TriageHandoffIntent };
+  | {
+      type: 'handoff';
+      signalId: string;
+      targetModule: TriageTargetModule;
+      handoffIntent: TriageHandoffIntent;
+    };
 
 export interface HomePrimaryAction {
   title: string;
@@ -414,11 +419,21 @@ export const TRIAGE_CATEGORIES = [
 export type TriageCategory = (typeof TRIAGE_CATEGORIES)[number];
 
 export type TriagePriorityLevel = 'P0' | 'P1' | 'P2';
-export type TriagePrimaryDriver = 'deadline' | 'blocker' | 'variance' | 'escalation' | 'opportunity';
+export type TriagePrimaryDriver =
+  | 'deadline'
+  | 'blocker'
+  | 'variance'
+  | 'escalation'
+  | 'opportunity';
 export type TriageTimeWindow = 'next_24h' | 'this_week' | 'this_month';
 export type TriageHandoffIntent = 'open' | 'create' | 'append';
 export type TriageTargetModule = 'Inicjatywy' | 'Wdrożenia' | 'Notatki';
-export type TriageState = 'ready' | 'degraded_missing_data' | 'degraded_conflict' | 'degraded_stale' | 'blocked_permission';
+export type TriageState =
+  | 'ready'
+  | 'degraded_missing_data'
+  | 'degraded_conflict'
+  | 'degraded_stale'
+  | 'blocked_permission';
 
 export interface TriageBands {
   impact: 1 | 2 | 3;

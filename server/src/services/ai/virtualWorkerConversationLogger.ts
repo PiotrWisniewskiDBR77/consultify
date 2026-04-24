@@ -244,9 +244,7 @@ export async function logMessage(opts: {
   );
 
   const conversationPatch =
-    opts.role === 'user'
-      ? 'last_user_message = $2'
-      : 'last_assistant_message = $2';
+    opts.role === 'user' ? 'last_user_message = $2' : 'last_assistant_message = $2';
 
   await db()
     .query(
@@ -431,7 +429,9 @@ export async function listConversations(opts: {
   };
 }
 
-export async function getConversationMessages(conversationId: string): Promise<ConversationMessage[]> {
+export async function getConversationMessages(
+  conversationId: string
+): Promise<ConversationMessage[]> {
   const result = await db().query<Row>(
     'SELECT * FROM virtual_worker_messages WHERE conversation_id = $1 ORDER BY created_at ASC',
     [conversationId]
@@ -480,7 +480,12 @@ export async function redactConversation(opts: {
          metadata = $4,
          updated_at = NOW()
      WHERE id = $1`,
-    [opts.conversationId, 'Conversation redacted by admin.', redactionMarker, JSON.stringify(metadata)]
+    [
+      opts.conversationId,
+      'Conversation redacted by admin.',
+      redactionMarker,
+      JSON.stringify(metadata),
+    ]
   );
 
   return true;
@@ -493,11 +498,13 @@ export async function deleteConversation(opts: {
   const existing = await getConversationById(opts.conversationId);
   if (!existing || existing.worker_id !== opts.workerId) return false;
 
-  await db().query('DELETE FROM virtual_worker_messages WHERE conversation_id = $1', [opts.conversationId]);
-  const result = await db().query('DELETE FROM virtual_worker_conversations WHERE id = $1 AND worker_id = $2', [
+  await db().query('DELETE FROM virtual_worker_messages WHERE conversation_id = $1', [
     opts.conversationId,
-    opts.workerId,
   ]);
+  const result = await db().query(
+    'DELETE FROM virtual_worker_conversations WHERE id = $1 AND worker_id = $2',
+    [opts.conversationId, opts.workerId]
+  );
   return (result.rowCount ?? 0) > 0;
 }
 
@@ -549,12 +556,12 @@ export async function getWorkerAnalytics(opts: {
   );
 
   const summary = summaryResult.rows[0] || {};
-  const distributionFromQuery = async (
-    sql: string
-  ): Promise<Record<string, number>> => {
-    const result = await db().query<{ label: string; count: string }>(sql, params).catch(() => ({
-      rows: [] as Array<{ label: string; count: string }>,
-    }));
+  const distributionFromQuery = async (sql: string): Promise<Record<string, number>> => {
+    const result = await db()
+      .query<{ label: string; count: string }>(sql, params)
+      .catch(() => ({
+        rows: [] as Array<{ label: string; count: string }>,
+      }));
     return (result.rows || []).reduce<Record<string, number>>((acc, row) => {
       acc[String(row.label || 'unknown')] = parseInt(String(row.count || '0'), 10);
       return acc;
@@ -671,10 +678,13 @@ export async function getWorkerAnalytics(opts: {
     intentDistribution,
     topicDistribution,
     fallbackReasons,
-    qualityFlagDistribution: (qualityResult.rows || []).reduce<Record<string, number>>((acc, row) => {
-      acc[String(row.flag || 'unknown')] = parseInt(String(row.count || '0'), 10);
-      return acc;
-    }, {}),
+    qualityFlagDistribution: (qualityResult.rows || []).reduce<Record<string, number>>(
+      (acc, row) => {
+        acc[String(row.flag || 'unknown')] = parseInt(String(row.count || '0'), 10);
+        return acc;
+      },
+      {}
+    ),
     conversationsPerDay: (dailyResult.rows || []).map((row) => ({
       date: String(row.date || ''),
       count: parseInt(String(row.count || '0'), 10),

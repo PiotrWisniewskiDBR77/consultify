@@ -354,7 +354,9 @@ export const WorkerAnalyticsDashboard: React.FC<WorkerAnalyticsDashboardProps> =
           className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6"
         />
         <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-          <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">Top Products</h4>
+          <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+            Top Products
+          </h4>
           {data.topProducts.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">No product data yet.</p>
           ) : (

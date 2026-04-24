@@ -12,18 +12,18 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { KnowledgeGraphExplorer } from '../components/Organization/KnowledgeGraphExplorer';
 import { OrganizationAdminPanel } from '../components/Organization/OrganizationAdminPanel';
-import { OrganizationV8CanonPanel } from '../components/Organization/OrganizationV8CanonPanel';
-import { OrganizationContextOverview } from '../components/settings/OrganizationContextOverview';
 import OrganizationSidebar, {
   type OrganizationSection,
 } from '../components/Organization/OrganizationSidebar';
+import { OrganizationV8CanonPanel } from '../components/Organization/OrganizationV8CanonPanel';
+import { OrganizationContextOverview } from '../components/settings/OrganizationContextOverview';
 import { ROUTES } from '../routes/routeConfig';
 import { trackFunnelEvent } from '../services/funnelAnalytics';
 import { useAppStore } from '../store/useAppStore';
 import { AppView } from '../types';
 import { ChallengeMapModule } from './ContextBuilder/modules/ChallengeMapModule';
-import { OrganizationProfileModule } from './ContextBuilder/modules/OrganizationProfileModule';
 import { GoalsExpectationsModule } from './ContextBuilder/modules/GoalsExpectationsModule';
+import { OrganizationProfileModule } from './ContextBuilder/modules/OrganizationProfileModule';
 import { StrategicSynthesisModule } from './ContextBuilder/modules/StrategicSynthesisModule';
 
 const ADMIN_SECTIONS: OrganizationSection[] = [

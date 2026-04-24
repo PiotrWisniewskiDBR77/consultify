@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from 'react';
 import {
   AlertTriangle,
   ArrowRight,
@@ -12,6 +11,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 
 export interface AIProposalOp {
   action: 'create' | 'delete' | 'connect' | 'move' | 'update_label';
@@ -108,8 +108,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
 
   const pending = proposal?.status === 'pending';
   const improved =
-    proposal &&
-    proposal.validation_after.issue_count < proposal.validation_before.issue_count;
+    proposal && proposal.validation_after.issue_count < proposal.validation_before.issue_count;
 
   return (
     <div className={`flex flex-col gap-3 ${panelShell}`}>
@@ -137,9 +136,7 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
         </button>
       </div>
 
-      {error ? (
-        <p className="text-xs font-medium text-red-600 dark:text-red-400">{error}</p>
-      ) : null}
+      {error ? <p className="text-xs font-medium text-red-600 dark:text-red-400">{error}</p> : null}
 
       {isGenerating ? (
         <div className="flex flex-col items-center justify-center gap-2 py-8 text-slate-600 dark:text-slate-300">
@@ -168,9 +165,13 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
                     className="flex items-center gap-2 rounded-lg border border-slate-200/60 bg-slate-50/80 px-2 py-1.5 text-[11px] dark:border-navy-700 dark:bg-navy-900/40"
                   >
                     <Icon size={14} className="shrink-0 text-slate-600 dark:text-slate-300" />
-                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{op.action}</span>
+                    <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">
+                      {op.action}
+                    </span>
                     {op.target_id ? (
-                      <span className="truncate text-slate-600 dark:text-slate-300">{op.target_id}</span>
+                      <span className="truncate text-slate-600 dark:text-slate-300">
+                        {op.target_id}
+                      </span>
                     ) : null}
                   </li>
                 );
@@ -228,13 +229,17 @@ export const AIProposalPanel: React.FC<AIProposalPanelProps> = ({
             <span className="text-slate-400">→</span>
             <span
               className={`font-semibold ${
-                improved ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-slate-100'
+                improved
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : 'text-slate-800 dark:text-slate-100'
               }`}
             >
               {t.issues(proposal.validation_after.issue_count)}
             </span>
             {improved ? (
-              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">({t.improved})</span>
+              <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                ({t.improved})
+              </span>
             ) : null}
           </div>
 

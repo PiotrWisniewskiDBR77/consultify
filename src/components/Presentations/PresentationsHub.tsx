@@ -378,7 +378,8 @@ export const PresentationsHub: React.FC = () => {
         trackFunnelEvent('presentation_exported', { deckId: deck.id });
         fetchDecks();
       } catch (err: any) {
-        const message = err?.message || t('presentations.exportFailed', 'Export failed. Please try again.');
+        const message =
+          err?.message || t('presentations.exportFailed', 'Export failed. Please try again.');
         toast.error(message);
         trackFunnelEvent('presentation_export_failed', { deckId: deck.id });
       }

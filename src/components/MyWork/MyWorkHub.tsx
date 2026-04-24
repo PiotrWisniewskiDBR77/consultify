@@ -105,8 +105,8 @@ import {
 } from './ideaWorkspaceState';
 import { getIdeaWorkspaceToolLabel } from './IdeaWorkspaceToolbar';
 import { type InboxBulkBarPayload, InboxContent, type InboxCounts } from './InboxContent';
-import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyIdeasListContent } from './MyIdeasListContent';
+import type { IdeasBulkBarPayload, IdeaStage, MyIdea } from './myIdeasTypes';
 import { MyTasksListContent } from './MyTasksListContent';
 import { IdeaStartupTemplates } from './table/IdeaStartupTemplates';
 
@@ -3160,7 +3160,11 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                     }}
                     className={isActive ? BUTTON_ACTIVE : BUTTON_INACTIVE}
                     data-testid={`mywork-tab-${tab.id}`}
-                    title={tab.isLocked ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message : undefined}
+                    title={
+                      tab.isLocked
+                        ? getPilotLockedAreaDetail('IDEAS_TAB', tab.label).message
+                        : undefined
+                    }
                   >
                     {tab.icon}
                     <span>{tab.label}</span>

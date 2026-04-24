@@ -18,16 +18,29 @@ export function analyzeActionQueue(input: HeuristicInput): HeuristicOutput {
 
   const overdueTasks = tasks.filter((t: any) => {
     if (!t.due_date) return false;
-    return new Date(t.due_date).getTime() < Date.now() && !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase());
+    return (
+      new Date(t.due_date).getTime() < Date.now() &&
+      !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase())
+    );
   });
 
-  const noDateTasks = tasks.filter((t: any) => !t.due_date && !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase()));
-  const unownedTasks = tasks.filter((t: any) => !t.assignee_id && !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase()));
+  const noDateTasks = tasks.filter(
+    (t: any) =>
+      !t.due_date && !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase())
+  );
+  const unownedTasks = tasks.filter(
+    (t: any) =>
+      !t.assignee_id && !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase())
+  );
 
-  const pendingDecisions = decisions.filter((d: any) => String(d.status).toUpperCase() === 'PENDING');
+  const pendingDecisions = decisions.filter(
+    (d: any) => String(d.status).toUpperCase() === 'PENDING'
+  );
   const overdueDecisions = decisions.filter((d: any) => {
     if (!d.dueDate) return false;
-    return new Date(d.dueDate).getTime() < Date.now() && String(d.status).toUpperCase() === 'PENDING';
+    return (
+      new Date(d.dueDate).getTime() < Date.now() && String(d.status).toUpperCase() === 'PENDING'
+    );
   });
 
   // Observations
@@ -108,7 +121,7 @@ export function analyzeActionQueue(input: HeuristicInput): HeuristicOutput {
       const owner = t.assigneeName || t.assignee_id || 'Unassigned';
       byOwner[owner] = (byOwner[owner] || 0) + 1;
     });
-    const topOwner = Object.entries(byOwner).sort(([,a],[,b]) => b - a)[0];
+    const topOwner = Object.entries(byOwner).sort(([, a], [, b]) => b - a)[0];
     if (topOwner && topOwner[1] > 2) {
       const insId = uid('ins-aq');
       insights.push({
@@ -152,7 +165,9 @@ export function analyzeActionQueue(input: HeuristicInput): HeuristicOutput {
   if (noDateTasks.length > 5) {
     insights.push({
       id: uid('ins-aq'),
-      observationIds: observations.filter((o) => o.metric.includes('without due date')).map((o) => o.id),
+      observationIds: observations
+        .filter((o) => o.metric.includes('without due date'))
+        .map((o) => o.id),
       interpretation: 'Many tasks lack due dates — delivery forecasting is unreliable',
       isSystemic: true,
       requiresAction: true,

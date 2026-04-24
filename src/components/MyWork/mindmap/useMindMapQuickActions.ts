@@ -361,7 +361,9 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
             { includeMetadata: true },
             `${ideaTitle || 'mindmap'}.md`
           );
-          toast.success(isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard');
+          toast.success(
+            isPolish ? 'Markdown skopiowany do schowka' : 'Markdown copied to clipboard'
+          );
         }
       } catch {
         toast.error(isPolish ? 'Nie udało się wyeksportować Markdown' : 'Markdown export failed');
@@ -784,7 +786,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           const parentId = sel?.id || 'root';
           const parentNode = nodes.find((n) => n.id === parentId);
           const baseX = (parentNode?.position?.x ?? 0) + 250;
-          const baseY = (parentNode?.position?.y ?? 0) - ((pages.length - 1) * 40);
+          const baseY = (parentNode?.position?.y ?? 0) - (pages.length - 1) * 40;
 
           const newNodes: Node[] = pages.slice(0, 8).map((page: any, i: number) => ({
             id: `kb-${Date.now()}-${i}`,
@@ -811,7 +813,7 @@ export function useMindMapQuickActions(opts: UseMindMapQuickActionsOpts): void {
           toast.success(
             isPolish
               ? `Wstawiono ${newNodes.length} stron z notatnika`
-              : `Inserted ${newNodes.length} notebook pages`,
+              : `Inserted ${newNodes.length} notebook pages`
           );
         } catch {
           toast.error(isPolish ? 'Nie udało się pobrać notatnika' : 'Failed to fetch notebook');

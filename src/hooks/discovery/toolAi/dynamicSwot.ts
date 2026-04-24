@@ -1,4 +1,7 @@
-import { createConsultingMissionContext, type ConsultingMissionContext } from '@/config/consultingToolsStandard';
+import {
+  type ConsultingMissionContext,
+  createConsultingMissionContext,
+} from '@/config/consultingToolsStandard';
 import type {
   SessionGenerationStatus,
   SWOTCorrelation,
@@ -22,9 +25,7 @@ interface DynamicSwotActionHandlers {
   addCorrelation: (correlation: Omit<SWOTCorrelation, 'id'>) => void;
   setSWOTTensions: (tensions: Omit<SWOTData['tensions'][number], 'id'>[]) => void;
   setSWOTMoves: (moves: Omit<SWOTData['recommendedMoves'][number], 'id'>[]) => void;
-  setSWOTOutputCandidates: (
-    candidates: Omit<SWOTData['outputCandidates'][number], 'id'>[]
-  ) => void;
+  setSWOTOutputCandidates: (candidates: Omit<SWOTData['outputCandidates'][number], 'id'>[]) => void;
   setSWOTSummary: (summary: NonNullable<SWOTData['summary']>) => void;
   setInitiatives: (initiatives: any[]) => void;
   setSessionGenerationStatus: (status: SessionGenerationStatus) => void;
@@ -146,7 +147,9 @@ export function buildDynamicSwotRethinkPrompt(
   let cardContent = '';
   if (cardType === 'signal') {
     const signal = swotData.signals.find((s) => s.id === cardId);
-    cardContent = signal ? `[${signal.type}] ${signal.content} (source: ${signal.sourceLabel})` : '';
+    cardContent = signal
+      ? `[${signal.type}] ${signal.content} (source: ${signal.sourceLabel})`
+      : '';
   } else if (cardType === 'item') {
     const item = swotData.items.find((i) => i.id === cardId);
     cardContent = item ? `[${item.quadrant}] ${item.text} (impact: ${item.impact})` : '';
@@ -189,7 +192,9 @@ If the card type is conclusion, return:
 {"executiveSummary":"...","keyInsights":["..."],"appliedConclusions":["..."]}`;
 }
 
-function normalizeMissionSuggestion(parsed: Record<string, any>): Partial<ConsultingMissionContext> | null {
+function normalizeMissionSuggestion(
+  parsed: Record<string, any>
+): Partial<ConsultingMissionContext> | null {
   if (!parsed.mission) return null;
   return {
     goal: typeof parsed.mission.goal === 'string' ? parsed.mission.goal : undefined,
@@ -202,8 +207,10 @@ function normalizeMissionSuggestion(parsed: Record<string, any>): Partial<Consul
       parsed.mission.timeframe === 'long'
         ? parsed.mission.timeframe
         : undefined,
-    constraints: typeof parsed.mission.constraints === 'string' ? parsed.mission.constraints : undefined,
-    assumptions: typeof parsed.mission.assumptions === 'string' ? parsed.mission.assumptions : undefined,
+    constraints:
+      typeof parsed.mission.constraints === 'string' ? parsed.mission.constraints : undefined,
+    assumptions:
+      typeof parsed.mission.assumptions === 'string' ? parsed.mission.assumptions : undefined,
     kpiTarget: typeof parsed.mission.kpiTarget === 'string' ? parsed.mission.kpiTarget : undefined,
   };
 }

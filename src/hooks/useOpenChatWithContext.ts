@@ -31,7 +31,7 @@ export interface OpenChatOptions {
   /** Additional context data to send with workspace context */
   contextData?: Record<string, unknown>;
   /** PMO context fields */
-    pmoContext?: {
+  pmoContext?: {
     assessmentId?: string;
     initiativeIds?: string[];
     roadmapId?: string;

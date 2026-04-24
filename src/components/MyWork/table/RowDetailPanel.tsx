@@ -38,15 +38,15 @@ import {
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import toast from 'react-hot-toast';
 
-import type { TablePlatformField } from '@/types/tablePlatform';
-import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { OrganizationApi } from '@/services/api/organizations.api';
+import * as TablePlatformApi from '@/services/api/tablePlatform.api';
 import { useAppStore } from '@/store/useAppStore';
+import type { TablePlatformField } from '@/types/tablePlatform';
 
 import { CellRenderer } from './CellRenderer';
 import { MiniCanvas } from './MiniCanvas';
@@ -72,7 +72,12 @@ function extractLinkedIds(val: unknown): string[] {
         const s = v.trim();
         return s ? [s] : [];
       }
-      if (v && typeof v === 'object' && 'id' in v && typeof (v as { id: unknown }).id === 'string') {
+      if (
+        v &&
+        typeof v === 'object' &&
+        'id' in v &&
+        typeof (v as { id: unknown }).id === 'string'
+      ) {
         return [(v as { id: string }).id];
       }
       return [];
@@ -184,7 +189,8 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
       .then((watchers: any[]) => {
         setIsWatching(
           (watchers || []).some(
-            (w: any) => String(w.user_id ?? w.userId ?? '') === currentUserId && currentUserId !== ''
+            (w: any) =>
+              String(w.user_id ?? w.userId ?? '') === currentUserId && currentUserId !== ''
           )
         );
       })
@@ -311,19 +317,14 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     const q = mentionQuery.toLowerCase();
     return mentionPool
       .filter(
-        (u) =>
-          !q ||
-          u.name.toLowerCase().includes(q) ||
-          String(u.id).toLowerCase().includes(q)
+        (u) => !q || u.name.toLowerCase().includes(q) || String(u.id).toLowerCase().includes(q)
       )
       .slice(0, 12);
   }, [mentionQuery, mentionPool]);
 
   const auditActivities = useMemo(
     () =>
-      activities.filter((a) =>
-        ['edited', 'status_change', 'created'].includes(String(a.action))
-      ),
+      activities.filter((a) => ['edited', 'status_change', 'created'].includes(String(a.action))),
     [activities]
   );
 
@@ -422,7 +423,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
     if (!node?.id || watchLoading || !resolvedPlatformTableId) return;
     setWatchLoading(true);
     try {
-      const { watching } = await TablePlatformApi.toggleRecordWatch(node.id, resolvedPlatformTableId);
+      const { watching } = await TablePlatformApi.toggleRecordWatch(
+        node.id,
+        resolvedPlatformTableId
+      );
       setIsWatching(watching);
     } catch {
       toast.error(isPl ? 'Nie udało się zmienić obserwacji' : 'Failed to update watch status');
@@ -638,7 +642,15 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
                       : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
-                  title={isWatching ? (isPl ? 'Przestań obserwować' : 'Stop watching') : isPl ? 'Obserwuj zmiany' : 'Watch for changes'}
+                  title={
+                    isWatching
+                      ? isPl
+                        ? 'Przestań obserwować'
+                        : 'Stop watching'
+                      : isPl
+                        ? 'Obserwuj zmiany'
+                        : 'Watch for changes'
+                  }
                 >
                   {isWatching ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -1098,7 +1110,11 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         }
                       }}
                       rows={2}
-                      placeholder={isPl ? 'Dodaj komentarz... (@ aby wspomnieć)' : 'Add a comment... (@ to mention)'}
+                      placeholder={
+                        isPl
+                          ? 'Dodaj komentarz... (@ aby wspomnieć)'
+                          : 'Add a comment... (@ to mention)'
+                      }
                       className="flex-1 min-h-[40px] rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-violet-500/30 resize-y"
                     />
                     <button

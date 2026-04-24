@@ -9,11 +9,7 @@ export type SuggestionFeasibility =
   | 'leadership_decision'
   | 'not_feasible_now';
 
-export type SuggestionCategory =
-  | 'operational'
-  | 'organizational'
-  | 'governance'
-  | 'quality';
+export type SuggestionCategory = 'operational' | 'organizational' | 'governance' | 'quality';
 
 export interface ObservationItem {
   id: string;

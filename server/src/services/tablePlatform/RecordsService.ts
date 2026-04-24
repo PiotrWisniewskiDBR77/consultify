@@ -282,7 +282,9 @@ const recordsService = {
     const id = uuidv4();
     try {
       // Apply default values before validation
-      const allFieldsResult = await db.query('SELECT * FROM tp_fields WHERE table_id = $1', [tableId]);
+      const allFieldsResult = await db.query('SELECT * FROM tp_fields WHERE table_id = $1', [
+        tableId,
+      ]);
       const allFields = allFieldsResult.rows as Array<{
         id: string;
         name: string;
@@ -291,7 +293,11 @@ const recordsService = {
       }>;
       for (const field of allFields) {
         const opts = field.options;
-        if (opts?.default !== undefined && data[field.id] === undefined && data[field.name] === undefined) {
+        if (
+          opts?.default !== undefined &&
+          data[field.id] === undefined &&
+          data[field.name] === undefined
+        ) {
           data[field.id] = opts.default;
         }
       }

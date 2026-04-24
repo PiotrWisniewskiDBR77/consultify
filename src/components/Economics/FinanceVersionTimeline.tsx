@@ -1,7 +1,6 @@
+import { CheckCircle2, Clock, GitCommit } from 'lucide-react';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-
-import { CheckCircle2, Clock, GitCommit } from 'lucide-react';
 
 import type { FinanceVersionSnapshot } from '../../services/api/v8/finance';
 
@@ -54,8 +53,10 @@ export const FinanceVersionTimeline: React.FC<FinanceVersionTimelineProps> = ({ 
             </div>
             {snap.switchoverDate && (
               <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                {t('finance.lane.versions.switchover', 'Switchover')} {new Date(snap.switchoverDate).toLocaleDateString()}
-                {snap.switchoverActor && ` ${t('finance.lane.versions.by', 'by')} ${snap.switchoverActor}`}
+                {t('finance.lane.versions.switchover', 'Switchover')}{' '}
+                {new Date(snap.switchoverDate).toLocaleDateString()}
+                {snap.switchoverActor &&
+                  ` ${t('finance.lane.versions.by', 'by')} ${snap.switchoverActor}`}
               </p>
             )}
           </div>

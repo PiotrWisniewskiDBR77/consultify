@@ -13,4 +13,3 @@ export function isPublicProductionHost(hostname: string): boolean {
   const host = normalizeHostname(hostname);
   return host === 'consultify.ai' || host === 'www.consultify.ai';
 }
-

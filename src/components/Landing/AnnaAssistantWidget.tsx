@@ -9,14 +9,14 @@ import { useNavigate } from 'react-router-dom';
 import { KNOWLEDGE_BASE_SITE, type KnowledgeBaseSiteKey } from '../../config/knowledgeBaseSite';
 import { normalizeLanguageCode } from '../../i18n';
 import { ROUTES } from '../../routes/routeConfig';
+import { persistAnnaLpCtaContext } from '../../services/annaLpCtaContext';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
 import type {
   AnnaLpChannel,
   AnnaLpCtaType,
   AnnaLpSourceIntent,
 } from '../../services/publicAnnaAnalytics';
-import { persistAnnaLpCtaContext } from '../../services/annaLpCtaContext';
+import { postPublicAnnaFunnelEvent } from '../../services/publicAnnaAnalytics';
 
 type AnnaMessage = {
   id: string;
@@ -156,7 +156,8 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     voiceReady: 'Toca el microfono para iniciar una conversacion de voz en vivo.',
     voiceConnecting: 'Conectando modo de voz...',
     voiceListening: 'Anna esta escuchando en vivo.',
-    voiceUnavailable: 'La voz en vivo no esta disponible temporalmente. Aun puedes chatear por texto.',
+    voiceUnavailable:
+      'La voz en vivo no esta disponible temporalmente. Aun puedes chatear por texto.',
     voiceError: 'La voz en vivo tuvo un problema. Puedes continuar por texto.',
     voiceStart: 'Iniciar conversacion de voz',
     voiceStop: 'Detener conversacion de voz',
@@ -187,7 +188,8 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     voiceReady: 'Tippe auf das Mikrofon, um ein Live-Sprachgesprach zu starten.',
     voiceConnecting: 'Sprachmodus wird verbunden...',
     voiceListening: 'Anna hort live zu.',
-    voiceUnavailable: 'Live-Sprachmodus ist vorubergehend nicht verfugbar. Du kannst weiter tippen.',
+    voiceUnavailable:
+      'Live-Sprachmodus ist vorubergehend nicht verfugbar. Du kannst weiter tippen.',
     voiceError: 'Live-Sprachmodus hatte ein Problem. Du kannst per Text fortfahren.',
     voiceStart: 'Sprachgesprach starten',
     voiceStop: 'Sprachgesprach stoppen',
@@ -462,7 +464,11 @@ function buildGenericSiteSuggestions(lang: AnnaUiLanguage, brandName: string): s
   ];
 }
 
-function buildAnnaCopy(lang: AnnaUiLanguage, siteKey: KnowledgeBaseSiteKey, brandName: string): AnnaCopy {
+function buildAnnaCopy(
+  lang: AnnaUiLanguage,
+  siteKey: KnowledgeBaseSiteKey,
+  brandName: string
+): AnnaCopy {
   const base = COPY[lang];
   const override = ANNA_SITE_OVERRIDES[siteKey];
   if (!override) return base;
@@ -647,10 +653,7 @@ type AnnaContextEventDetail = {
 function buildSurfaceContextInstruction(context?: AnnaSurfaceContext | null): string {
   if (!context || context.surface !== 'knowledge_article') return '';
 
-  const lines = [
-    'Current public article context:',
-    `- Article title: ${context.articleTitle}`,
-  ];
+  const lines = ['Current public article context:', `- Article title: ${context.articleTitle}`];
 
   if (context.categoryName) {
     lines.push(`- Category: ${context.categoryName}`);
@@ -1332,7 +1335,8 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
       }
 
       const sources =
-        Array.isArray(data?.knowledgeSources) && data.knowledgeSources.every((s: unknown) => typeof s === 'string')
+        Array.isArray(data?.knowledgeSources) &&
+        data.knowledgeSources.every((s: unknown) => typeof s === 'string')
           ? (data.knowledgeSources as string[]).map((s) => s.trim()).filter(Boolean)
           : [];
 
@@ -1670,10 +1674,7 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
                       void startVoiceConversation();
                     }
                   }}
-                  disabled={
-                    isLoading ||
-                    actionMode === 'connecting'
-                  }
+                  disabled={isLoading || actionMode === 'connecting'}
                   className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-white transition-all disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/30 ${
                     actionMode === 'stop'
                       ? 'bg-rose-500 shadow-[0_0_28px_rgba(244,63,94,0.45)] hover:bg-rose-400'

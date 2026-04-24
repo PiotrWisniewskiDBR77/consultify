@@ -1,6 +1,3 @@
-import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
-
 import {
   AlertTriangle,
   ArrowRight,
@@ -13,6 +10,8 @@ import {
   Shield,
   XCircle,
 } from 'lucide-react';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type {
   FinanceLaneRun,
@@ -65,8 +64,18 @@ function getStepStatus(
   if (stepIdx < currentIdx) return 'done';
   if (stepIdx > currentIdx) return 'pending';
 
-  if (step === 'import' && (run.importOutcome === 'failed' || run.importOutcome === 'mapping_missing' || run.importOutcome === 'schema_drift')) return 'failed';
-  if (step === 'mutation' && (run.mutationOutcome === 'failed' || run.mutationOutcome === 'conflict')) return 'failed';
+  if (
+    step === 'import' &&
+    (run.importOutcome === 'failed' ||
+      run.importOutcome === 'mapping_missing' ||
+      run.importOutcome === 'schema_drift')
+  )
+    return 'failed';
+  if (
+    step === 'mutation' &&
+    (run.mutationOutcome === 'failed' || run.mutationOutcome === 'conflict')
+  )
+    return 'failed';
   if (step === 'readback' && run.readbackConfirmed) return 'done';
 
   return 'active';
@@ -120,8 +129,16 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
   };
 
   return (
-    <Sheet open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
-      <SheetContent side="right" className="flex w-full max-w-lg flex-col p-0 shadow-2xl dark:bg-slate-900">
+    <Sheet
+      open={open}
+      onOpenChange={(v) => {
+        if (!v) onClose();
+      }}
+    >
+      <SheetContent
+        side="right"
+        className="flex w-full max-w-lg flex-col p-0 shadow-2xl dark:bg-slate-900"
+      >
         <SheetHeader className="shrink-0 border-b border-slate-200 dark:border-slate-700 px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -157,25 +174,35 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                       <div className="flex flex-col items-center">
                         <StepIcon status={status} />
                         {idx < STEPS.length - 1 && (
-                          <div className={`w-px flex-1 min-h-[24px] ${status === 'done' ? 'bg-emerald-300 dark:bg-emerald-500/40' : 'bg-slate-200 dark:bg-slate-700'}`} />
+                          <div
+                            className={`w-px flex-1 min-h-[24px] ${status === 'done' ? 'bg-emerald-300 dark:bg-emerald-500/40' : 'bg-slate-200 dark:bg-slate-700'}`}
+                          />
                         )}
                       </div>
                       <div className="pb-4 flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{stepLabels[step]}</span>
+                          <span className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                            {stepLabels[step]}
+                          </span>
                           {outcome && (
-                            <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
-                              status === 'failed' ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300' :
-                              status === 'done' ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300' :
-                              'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
-                            }`}>
+                            <span
+                              className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                                status === 'failed'
+                                  ? 'bg-rose-100 text-rose-600 dark:bg-rose-500/20 dark:text-rose-300'
+                                  : status === 'done'
+                                    ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-300'
+                                    : 'bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                              }`}
+                            >
                               {outcome}
                             </span>
                           )}
                         </div>
                         {auditEntry.length > 0 && (
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                            {auditEntry.at(-1)?.at ? new Date(auditEntry.at(-1)!.at).toLocaleString() : ''}{' '}
+                            {auditEntry.at(-1)?.at
+                              ? new Date(auditEntry.at(-1)!.at).toLocaleString()
+                              : ''}{' '}
                             {auditEntry.at(-1)?.detail && `— ${auditEntry.at(-1)!.detail}`}
                           </p>
                         )}
@@ -197,7 +224,10 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                                     type="text"
                                     value={advanceDetail}
                                     onChange={(e) => setAdvanceDetail(e.target.value)}
-                                    placeholder={t('finance.lane.advanceDetailPlaceholder', 'Optional detail / note…')}
+                                    placeholder={t(
+                                      'finance.lane.advanceDetailPlaceholder',
+                                      'Optional detail / note…'
+                                    )}
                                     className="w-full text-xs px-2 py-1.5 rounded border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 placeholder:text-slate-400"
                                   />
                                 </div>
@@ -227,7 +257,10 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
               </div>
             ) : (
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t('finance.lane.noActiveRunHint', 'No active lane run. Start one from the Analyze menu.')}
+                {t(
+                  'finance.lane.noActiveRunHint',
+                  'No active lane run. Start one from the Analyze menu.'
+                )}
               </p>
             )}
           </section>
@@ -287,8 +320,13 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                         {new Date(a.createdAt).toLocaleTimeString()}
                       </span>
                       <span className="text-slate-600 dark:text-slate-300">
-                        {a.mutationType} → <span className={a.outcome === 'applied' ? 'text-emerald-500' : 'text-rose-500'}>{a.outcome}</span>
-                        {' '}{t('finance.lane.on', 'on')} {a.targetEntity}
+                        {a.mutationType} →{' '}
+                        <span
+                          className={a.outcome === 'applied' ? 'text-emerald-500' : 'text-rose-500'}
+                        >
+                          {a.outcome}
+                        </span>{' '}
+                        {t('finance.lane.on', 'on')} {a.targetEntity}
                       </span>
                     </div>
                   ))}
@@ -306,23 +344,38 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
             {kpiCoherence ? (
               <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3">
                 <div className="flex items-center gap-2">
-                  <span className={`h-2 w-2 rounded-full ${
-                    kpiCoherence.status === 'coherent' ? 'bg-emerald-400' :
-                    kpiCoherence.status === 'stale' ? 'bg-amber-400' : 'bg-rose-400'
-                  }`} />
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">{kpiCoherence.status}</span>
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      kpiCoherence.status === 'coherent'
+                        ? 'bg-emerald-400'
+                        : kpiCoherence.status === 'stale'
+                          ? 'bg-amber-400'
+                          : 'bg-rose-400'
+                    }`}
+                  />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300 capitalize">
+                    {kpiCoherence.status}
+                  </span>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{kpiCoherence.detail}</p>
-                {kpiCoherence.reconciliationMismatches && kpiCoherence.reconciliationMismatches.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {kpiCoherence.reconciliationMismatches.map((m) => (
-                      <div key={m.reconciliationId} className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                        <span className="font-mono">{m.reconciliationId.slice(0, 8)}…</span>
-                        <span className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300 text-[10px]">{m.mismatchCategory}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  {kpiCoherence.detail}
+                </p>
+                {kpiCoherence.reconciliationMismatches &&
+                  kpiCoherence.reconciliationMismatches.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {kpiCoherence.reconciliationMismatches.map((m) => (
+                        <div
+                          key={m.reconciliationId}
+                          className="text-[11px] text-slate-500 dark:text-slate-400 flex items-center gap-1"
+                        >
+                          <span className="font-mono">{m.reconciliationId.slice(0, 8)}…</span>
+                          <span className="px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-300 text-[10px]">
+                            {m.mismatchCategory}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 {onRefreshCoherence && (
                   <button
                     type="button"
@@ -360,7 +413,8 @@ export const FinanceLanePanel: React.FC<FinanceLanePanelProps> = ({
                       className="text-xs font-medium text-primary-500 hover:text-primary-600 transition-colors"
                       onClick={() => onFinalizeVersion?.(snap.snapshotId)}
                     >
-                      {t('finance.lane.finalizeSwitchover', 'Finalize')} {snap.snapshotId.slice(0, 8)}…
+                      {t('finance.lane.finalizeSwitchover', 'Finalize')}{' '}
+                      {snap.snapshotId.slice(0, 8)}…
                     </button>
                   ))}
               </div>

@@ -9,7 +9,15 @@
  * Step 6: Enterprise+ Ready
  */
 
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { CARD_DOCS, CardDocumentation } from '../config/cardDocumentation';
 import { FAQItem, getFAQsForModule } from '../config/faqContent';
@@ -160,7 +168,9 @@ export const HelpProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isHelpSidePanelOpen = activeSidePanel === 'HELP';
   const [activeHelpTab, setActiveHelpTab] = useState<HelpTab>('overview');
   const [knowledgeModuleIdOverride, setKnowledgeModuleIdOverride] = useState<string | null>(null);
-  const [knowledgeArticleSlugOverride, setKnowledgeArticleSlugOverride] = useState<string | null>(null);
+  const [knowledgeArticleSlugOverride, setKnowledgeArticleSlugOverride] = useState<string | null>(
+    null
+  );
   const [helpDocumentIdOverride, setHelpDocumentIdOverride] = useState<string | null>(null);
 
   // Toggle help side panel

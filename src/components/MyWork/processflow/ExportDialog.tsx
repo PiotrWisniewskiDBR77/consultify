@@ -1,13 +1,14 @@
-import React from 'react';
 import { Download, FileJson, FileText, Image, Loader2 } from 'lucide-react';
+import React from 'react';
+
+import { Button } from '@/components/ui/Button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/Button';
 
 export type ExportFormat = 'json' | 'readback' | 'png';
 
@@ -70,7 +71,9 @@ export const ExportDialog: React.FC<ExportDialogProps> = ({
             >
               <div className="text-primary-500 flex-shrink-0">{f.icon}</div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-slate-800 dark:text-slate-200">{f.title}</div>
+                <div className="text-sm font-medium text-slate-800 dark:text-slate-200">
+                  {f.title}
+                </div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">{f.desc}</div>
               </div>
               {isExporting ? (

@@ -86,8 +86,12 @@ export const ExtendedScopeSection: React.FC = () => {
                 <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-primary-500/12 bg-primary-500/10">
                   <Icon size={22} className="text-primary-600 dark:text-primary-300" />
                 </div>
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">{scope.title}</h3>
-                <p className="text-sm text-slate-500 dark:text-white/58 leading-relaxed mb-5">{scope.description}</p>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">
+                  {scope.title}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-white/58 leading-relaxed mb-5">
+                  {scope.description}
+                </p>
                 <div className="space-y-2">
                   {scope.bullets.map((bullet) => (
                     <div

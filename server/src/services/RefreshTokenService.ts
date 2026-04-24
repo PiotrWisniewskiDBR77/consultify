@@ -103,7 +103,9 @@ async function isDemoOrganizationId(db: IDatabase, organizationId: string): Prom
       'SELECT organization_type FROM organizations WHERE id = ? LIMIT 1',
       [organizationId]
     );
-    const t = String(row?.organization_type || '').trim().toUpperCase();
+    const t = String(row?.organization_type || '')
+      .trim()
+      .toUpperCase();
     return t === 'DEMO';
   } catch {
     return false;

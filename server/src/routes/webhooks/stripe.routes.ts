@@ -375,7 +375,10 @@ async function handleSubscriptionUpdated(
     });
   }
 
-  if (!isManualOverride && (subscription.status === 'active' || subscription.status === 'trialing')) {
+  if (
+    !isManualOverride &&
+    (subscription.status === 'active' || subscription.status === 'trialing')
+  ) {
     try {
       await dbRun(
         `UPDATE organizations SET organization_type = 'PAID', updated_at = datetime('now') WHERE id = ?`,

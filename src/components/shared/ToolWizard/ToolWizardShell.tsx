@@ -33,10 +33,10 @@ import {
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { ToolsV8CanonPanel } from '../../Discovery/ToolsV8CanonPanel';
 import { Callout } from '../NModeBlocks/Callout';
 import { ChecklistBlock } from '../NModeBlocks/ChecklistBlock';
 import { EmptyStateInline } from '../NModeBlocks/EmptyStateInline';
-import { ToolsV8CanonPanel } from '../../Discovery/ToolsV8CanonPanel';
 import { ToolWizardHeader } from './ToolWizardHeader';
 import { ToolWizardStepNav } from './ToolWizardStepNav';
 import type {

@@ -33,7 +33,8 @@ interface PreviewPayload {
 
 const DEFAULT_PROMPTS: Record<string, string> = {
   anna: 'Jak w 2-3 zdaniach opiszesz wartość produktu i najbliższy sensowny next step dla klienta?',
-  teresa: 'Pomóż mi zrozumieć, jak ten worker powinien prowadzić użytkownika przez najbliższy krok w aplikacji.',
+  teresa:
+    'Pomóż mi zrozumieć, jak ten worker powinien prowadzić użytkownika przez najbliższy krok w aplikacji.',
 };
 
 export const WorkerPreviewPanel: React.FC<WorkerPreviewPanelProps> = ({
@@ -42,7 +43,8 @@ export const WorkerPreviewPanel: React.FC<WorkerPreviewPanelProps> = ({
   localeDefault,
 }) => {
   const [message, setMessage] = useState(
-    DEFAULT_PROMPTS[workerSlug] || 'Jak ten worker powinien odpowiedzieć na typowe pytanie użytkownika?'
+    DEFAULT_PROMPTS[workerSlug] ||
+      'Jak ten worker powinien odpowiedzieć na typowe pytanie użytkownika?'
   );
   const [locale, setLocale] = useState(localeDefault || 'pl');
   const [webSearch, setWebSearch] = useState(false);
@@ -74,7 +76,9 @@ export const WorkerPreviewPanel: React.FC<WorkerPreviewPanelProps> = ({
       <section className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
         <div className="flex items-center justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">Preview Sandbox</h3>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+              Preview Sandbox
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
               Generate a real operator preview using the active worker profile, governed knowledge,
               and optional governed web search.
@@ -189,7 +193,9 @@ export const WorkerPreviewPanel: React.FC<WorkerPreviewPanelProps> = ({
                 Knowledge sources
               </h5>
               {preview.knowledgeSources.length === 0 ? (
-                <p className="text-sm text-slate-500 dark:text-slate-400">No explicit sources returned.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  No explicit sources returned.
+                </p>
               ) : (
                 <div className="space-y-2">
                   {preview.knowledgeSources.map((source) => (

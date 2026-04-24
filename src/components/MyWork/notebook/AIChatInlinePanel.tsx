@@ -294,10 +294,7 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
 
   /* ---- Convert actions (notebook-specific) ---- */
   const handleConvertAction = (target: ConvertTarget) => {
-    if (
-      ['assessment', 'report', 'presentation'].includes(target) &&
-      !canConvertDeliverable
-    ) {
+    if (['assessment', 'report', 'presentation'].includes(target) && !canConvertDeliverable) {
       toast.error(
         convertBlockedReason ||
           (isPl
@@ -465,30 +462,35 @@ export const AIChatInlinePanel: React.FC<AIChatInlinePanelProps> = ({
             const isDeliverable = ['assessment', 'report', 'presentation'].includes(id);
             const disabled = !page || (isDeliverable && !canConvertDeliverable);
             return (
-            <button
-              key={id}
-              onClick={() => handleConvertAction(id)}
-              disabled={disabled}
-              className="group flex items-center gap-2 px-2.5 py-2 rounded-xl bg-slate-50/40 dark:bg-white/[0.02] border border-slate-200/25 dark:border-white/[0.04] hover:bg-slate-100/60 dark:hover:bg-white/[0.05] hover:border-slate-300/30 dark:hover:border-white/[0.08] transition-all duration-200 hover:shadow-sm disabled:opacity-40"
-              title={disabled && isDeliverable && convertBlockedReason ? convertBlockedReason : undefined}
-            >
-              <div
-                className={`w-6 h-6 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center ${iconColor} shrink-0`}
+              <button
+                key={id}
+                onClick={() => handleConvertAction(id)}
+                disabled={disabled}
+                className="group flex items-center gap-2 px-2.5 py-2 rounded-xl bg-slate-50/40 dark:bg-white/[0.02] border border-slate-200/25 dark:border-white/[0.04] hover:bg-slate-100/60 dark:hover:bg-white/[0.05] hover:border-slate-300/30 dark:hover:border-white/[0.08] transition-all duration-200 hover:shadow-sm disabled:opacity-40"
+                title={
+                  disabled && isDeliverable && convertBlockedReason
+                    ? convertBlockedReason
+                    : undefined
+                }
               >
-                <Icon size={13} />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">
-                  {isPl ? labelPl : labelEn}
+                <div
+                  className={`w-6 h-6 rounded-lg bg-slate-100/80 dark:bg-white/[0.06] flex items-center justify-center ${iconColor} shrink-0`}
+                >
+                  <Icon size={13} />
                 </div>
-                {disabled && isDeliverable && convertBlockedReason ? (
-                  <div className="mt-0.5 text-[9px] text-slate-400 dark:text-slate-500 line-clamp-2">
-                    {convertBlockedReason}
+                <div className="flex-1 min-w-0 text-left">
+                  <div className="text-[10px] font-bold text-slate-700 dark:text-slate-200 truncate">
+                    {isPl ? labelPl : labelEn}
                   </div>
-                ) : null}
-              </div>
-            </button>
-          )})}
+                  {disabled && isDeliverable && convertBlockedReason ? (
+                    <div className="mt-0.5 text-[9px] text-slate-400 dark:text-slate-500 line-clamp-2">
+                      {convertBlockedReason}
+                    </div>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 

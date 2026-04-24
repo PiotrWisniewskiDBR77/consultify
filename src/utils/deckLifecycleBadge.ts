@@ -14,7 +14,8 @@ export function deriveDeckLifecycleBadge(
   publishState?: string | null,
   exportHistory?: ExportHistoryItem[] | null
 ): DeckBadge {
-  const hasSuccessfulExport = Array.isArray(exportHistory) &&
+  const hasSuccessfulExport =
+    Array.isArray(exportHistory) &&
     exportHistory.some((e) => e.status === 'completed' || e.status === 'success');
 
   if (hasSuccessfulExport) return 'Exported';

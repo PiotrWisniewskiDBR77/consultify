@@ -88,9 +88,7 @@ const groupModels = (models: LLMProvider[]) => {
   return { platform, cloud, local };
 };
 
-export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
-  className = '',
-}) => {
+export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [models, setModels] = useState<LLMProvider[]>([]);
   const [prefs, setPrefs] = useState<UserModelPrefs>({
@@ -138,9 +136,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
         setOriginalPrefs(loaded);
       } catch (err) {
         console.error('Failed to load model settings:', err);
-        setLoadError(
-          err instanceof Error ? err.message : 'Failed to load model settings'
-        );
+        setLoadError(err instanceof Error ? err.message : 'Failed to load model settings');
       } finally {
         setLoading(false);
       }
@@ -219,10 +215,7 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <span
-                className={cn(
-                  'text-sm font-medium',
-                  isPlatform ? 'text-violet-200' : 'text-white'
-                )}
+                className={cn('text-sm font-medium', isPlatform ? 'text-violet-200' : 'text-white')}
               >
                 {model.name}
               </span>
@@ -249,7 +242,8 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({
             </div>
             <span className="text-xs text-slate-500">
               {model.provider} &middot; {model.model_id}
-              {model.context_window > 0 && ` &middot; ${(model.context_window / 1000).toFixed(0)}K ctx`}
+              {model.context_window > 0 &&
+                ` &middot; ${(model.context_window / 1000).toFixed(0)}K ctx`}
             </span>
           </div>
         </div>

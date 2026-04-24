@@ -145,7 +145,10 @@ export const CommandDock: React.FC<CommandDockProps> = ({ block, onAction }) => 
   );
 };
 
-function getPrimaryActionLabel(actionType: 'open' | 'create' | 'navigate' | 'chat', isPolish: boolean) {
+function getPrimaryActionLabel(
+  actionType: 'open' | 'create' | 'navigate' | 'chat',
+  isPolish: boolean
+) {
   switch (actionType) {
     case 'open':
       return isPolish ? 'Otwórz' : 'Open';

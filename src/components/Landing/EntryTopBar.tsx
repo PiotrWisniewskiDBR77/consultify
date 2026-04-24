@@ -373,7 +373,11 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                 ? 'rgba(255,255,255,0.40)'
                 : 'rgba(0,0,0,0.40)';
             }}
-            aria-label={isDark ? t('landing.topBar.switchLight', 'Switch to light mode') : t('landing.topBar.switchDark', 'Switch to dark mode')}
+            aria-label={
+              isDark
+                ? t('landing.topBar.switchLight', 'Switch to light mode')
+                : t('landing.topBar.switchDark', 'Switch to dark mode')
+            }
           >
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
@@ -549,17 +553,21 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
                       onClick={() => toggleTheme()}
                       className="text-xs px-3 py-1 rounded-full border transition-colors font-medium flex items-center gap-1"
                       style={{
-                        borderColor: isDark
-                          ? 'rgba(255,255,255,0.12)'
-                          : 'rgba(0,0,0,0.10)',
-                        color: isDark
-                          ? 'rgba(255,255,255,0.50)'
-                          : 'rgba(0,0,0,0.50)',
+                        borderColor: isDark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.10)',
+                        color: isDark ? 'rgba(255,255,255,0.50)' : 'rgba(0,0,0,0.50)',
                       }}
-                      aria-label={isDark ? t('landing.topBar.switchLight', 'Switch to light mode') : t('landing.topBar.switchDark', 'Switch to dark mode')}
+                      aria-label={
+                        isDark
+                          ? t('landing.topBar.switchLight', 'Switch to light mode')
+                          : t('landing.topBar.switchDark', 'Switch to dark mode')
+                      }
                     >
                       {isDark ? <Sun size={12} /> : <Moon size={12} />}
-                      <span>{isDark ? t('landing.topBar.lightMode', 'Light') : t('landing.topBar.darkMode', 'Dark')}</span>
+                      <span>
+                        {isDark
+                          ? t('landing.topBar.lightMode', 'Light')
+                          : t('landing.topBar.darkMode', 'Dark')}
+                      </span>
                     </button>
                     {languages.slice(0, 3).map((lang) => (
                       <button

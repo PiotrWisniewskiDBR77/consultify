@@ -42,10 +42,10 @@ class ConversationCollaborationService {
     participantIds: string[];
     defaultRole?: ParticipantRole;
   }): Promise<SharedConversation> {
-    const conv = await dbGet(
-      `SELECT * FROM conversations WHERE id = ? AND organization_id = ?`,
-      [input.conversationId, input.organizationId]
-    ) as any;
+    const conv = (await dbGet(`SELECT * FROM conversations WHERE id = ? AND organization_id = ?`, [
+      input.conversationId,
+      input.organizationId,
+    ])) as any;
 
     if (!conv) throw new Error('Conversation not found');
 
@@ -61,12 +61,7 @@ class ConversationCollaborationService {
           `INSERT INTO conversation_participants
             (id, conversation_id, user_id, role, joined_at, last_seen_at)
            VALUES (?, ?, ?, ?, datetime('now'), datetime('now'))`,
-          [
-            randomUUID(),
-            input.conversationId,
-            userId,
-            input.defaultRole || 'viewer',
-          ]
+          [randomUUID(), input.conversationId, userId, input.defaultRole || 'viewer']
         );
       }
     }
@@ -99,17 +94,17 @@ class ConversationCollaborationService {
     conversationId: string,
     organizationId: string
   ): Promise<SharedConversation> {
-    const conv = await dbGet(
-      `SELECT * FROM conversations WHERE id = ? AND organization_id = ?`,
-      [conversationId, organizationId]
-    ) as any;
+    const conv = (await dbGet(`SELECT * FROM conversations WHERE id = ? AND organization_id = ?`, [
+      conversationId,
+      organizationId,
+    ])) as any;
 
     if (!conv) throw new Error('Conversation not found');
 
-    const participantRows = await dbAll(
+    const participantRows = (await dbAll(
       `SELECT * FROM conversation_participants WHERE conversation_id = ?`,
       [conversationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     const onlineSet = onlineUsers.get(conversationId) || new Set();
 
@@ -137,11 +132,11 @@ class ConversationCollaborationService {
     userId: string,
     requiredRole: ParticipantRole
   ): Promise<boolean> {
-    const participant = await dbGet(
+    const participant = (await dbGet(
       `SELECT role FROM conversation_participants
        WHERE conversation_id = ? AND user_id = ?`,
       [conversationId, userId]
-    ) as any;
+    )) as any;
 
     if (!participant) return false;
 
@@ -177,10 +172,10 @@ class ConversationCollaborationService {
     const isOwner = await this.checkPermission(conversationId, removedBy, 'owner');
     if (!isOwner) throw new Error('Only conversation owners can remove participants');
 
-    await dbRun(
-      `DELETE FROM conversation_participants WHERE conversation_id = ? AND user_id = ?`,
-      [conversationId, targetUserId]
-    );
+    await dbRun(`DELETE FROM conversation_participants WHERE conversation_id = ? AND user_id = ?`, [
+      conversationId,
+      targetUserId,
+    ]);
   }
 
   markUserOnline(conversationId: string, userId: string): void {

@@ -129,14 +129,13 @@ export const FloatingSubmenu: React.FC<FloatingSubmenuProps> = ({
                     ? isDark
                       ? 'text-slate-400 hover:bg-white/[0.04]'
                       : 'text-slate-500 hover:bg-slate-50'
-                    : 
-                  isActive
-                    ? isDark
-                      ? 'bg-white/[0.08] text-slate-100'
-                      : 'bg-primary-50 text-primary-700'
-                    : isDark
-                      ? 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-200'
-                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    : isActive
+                      ? isDark
+                        ? 'bg-white/[0.08] text-slate-100'
+                        : 'bg-primary-50 text-primary-700'
+                      : isDark
+                        ? 'text-slate-400 hover:bg-white/[0.05] hover:text-slate-200'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                 }
               `}
             >

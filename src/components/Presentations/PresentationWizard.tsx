@@ -75,7 +75,9 @@ export const PresentationWizard: React.FC<{ onClose?: () => void }> = ({ onClose
     const templateArtifactId = params.get('templateArtifactId');
     const cloneTemplateArtifactId = params.get('cloneTemplateArtifactId');
 
-    async function resolveLegacyTemplateIdFromArtifactId(artifactId: string): Promise<string | null> {
+    async function resolveLegacyTemplateIdFromArtifactId(
+      artifactId: string
+    ): Promise<string | null> {
       try {
         const res = await Api.get(`/artifacts/${artifactId}`);
         const data = unwrap(res);

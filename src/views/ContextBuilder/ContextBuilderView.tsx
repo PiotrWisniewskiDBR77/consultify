@@ -32,9 +32,9 @@ import { useAppStore } from '../../store/useAppStore';
 import { useContextBuilderStore } from '../../store/useContextBuilderStore';
 import { AppView } from '../../types';
 import { ChallengeMapModule } from './modules/ChallengeMapModule';
-import { OrganizationProfileModule } from './modules/OrganizationProfileModule';
 import { GoalsExpectationsModule } from './modules/GoalsExpectationsModule';
 import { MegatrendScannerModule } from './modules/MegatrendScannerModule';
+import { OrganizationProfileModule } from './modules/OrganizationProfileModule';
 import { StrategicSynthesisModule } from './modules/StrategicSynthesisModule';
 
 // ==========================================

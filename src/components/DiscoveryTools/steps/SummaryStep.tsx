@@ -942,7 +942,9 @@ export const SummaryStep: React.FC<SummaryStepProps> = ({
         >
           <div className="p-4 rounded-lg bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700">
             <h3 className="font-medium text-slate-900 dark:text-white mb-2">
-              {isPolish ? 'Final source summary (AI proposal)' : 'Final source summary (AI proposal)'}
+              {isPolish
+                ? 'Final source summary (AI proposal)'
+                : 'Final source summary (AI proposal)'}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {summaryData.summary ||

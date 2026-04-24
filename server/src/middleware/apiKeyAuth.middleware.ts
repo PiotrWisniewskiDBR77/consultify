@@ -129,7 +129,10 @@ export async function apiKeyAuth(
     }
 
     // Check rate limit
-    const rateLimit = checkRateLimit(`${validatedKey.kind}:${validatedKey.id}`, validatedKey.rateLimit);
+    const rateLimit = checkRateLimit(
+      `${validatedKey.kind}:${validatedKey.id}`,
+      validatedKey.rateLimit
+    );
 
     res.setHeader('X-RateLimit-Limit', validatedKey.rateLimit.toString());
     res.setHeader('X-RateLimit-Remaining', rateLimit.remaining.toString());

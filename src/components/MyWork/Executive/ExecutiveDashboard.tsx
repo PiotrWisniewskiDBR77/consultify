@@ -325,22 +325,14 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
           const blockedCount = stats.byStatus?.blocked || 0;
           const riskScore =
             stats.total > 0
-              ? Math.round(
-                  Math.max(0, 100 - (blockedCount / Math.max(1, stats.total)) * 100)
-                )
+              ? Math.round(Math.max(0, 100 - (blockedCount / Math.max(1, stats.total)) * 100))
               : 80;
 
           const currentHealthScore = Math.round(
-            executionScore * 0.4 +
-              decisionsScore * 0.2 +
-              capacityScore * 0.2 +
-              riskScore * 0.2
+            executionScore * 0.4 + decisionsScore * 0.2 + capacityScore * 0.2 + riskScore * 0.2
           );
           const previousHealthScore = Math.round(
-            prevCompletionRate * 0.4 +
-              50 * 0.2 +
-              0 * 0.2 +
-              80 * 0.2
+            prevCompletionRate * 0.4 + 50 * 0.2 + 0 * 0.2 + 80 * 0.2
           );
 
           setHealthScore({
@@ -840,7 +832,9 @@ export const ExecutiveDashboard: React.FC<ExecutiveDashboardProps> = ({
                     ? insight
                     : t(`executive.patterns.insight.${insight.key}`, insight.key, insight.params);
                 const renderedText =
-                  typeof text === 'string' || typeof text === 'number' ? text : JSON.stringify(text);
+                  typeof text === 'string' || typeof text === 'number'
+                    ? text
+                    : JSON.stringify(text);
                 return (
                   <p key={i} className="text-xs text-slate-600 dark:text-slate-400">
                     💡 {renderedText}

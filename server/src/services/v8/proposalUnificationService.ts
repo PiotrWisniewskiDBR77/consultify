@@ -212,7 +212,10 @@ export async function getConversationProposals(
 
   // Group messages by proposalId, preserving first-seen chronological order.
   const orderedProposalIds: string[] = [];
-  const messagesByProposalId = new Map<string, Array<{ row: MessageRow; meta: ExtractedMetadata }>>();
+  const messagesByProposalId = new Map<
+    string,
+    Array<{ row: MessageRow; meta: ExtractedMetadata }>
+  >();
 
   for (const row of messages) {
     const meta = extractProposalMeta(row.metadata);

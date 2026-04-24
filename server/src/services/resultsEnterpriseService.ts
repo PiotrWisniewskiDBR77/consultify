@@ -9,11 +9,11 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import * as ReportBuilderService from './reportBuilderService.js';
 import { handleTimeSeriesRecorded } from './results/kpiDeviationService.js';
 import { createKpiReportSnapshot } from './results/kpiReportSnapshotService.js';
-import * as queryHelpers from '../utils/queryHelpers.js';
-import logger from '../utils/Logger.js';
 
 type MetricAuditEntry = {
   id: string;
@@ -164,10 +164,12 @@ class ResultsEnterpriseService {
         data.actorUserId || null,
       ]
     );
-    await queryHelpers.queryRun(
-      `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
-      [data.value, data.kpiId]
-    ).catch(() => null);
+    await queryHelpers
+      .queryRun(
+        `UPDATE initiative_kpis SET current_value = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+        [data.value, data.kpiId]
+      )
+      .catch(() => null);
     await queryHelpers.queryRun(
       `UPDATE kpi_connectors
        SET last_run_at = ?, last_run_status = 'success', last_run_message = ?, next_run_at = COALESCE(next_run_at, ?)
@@ -410,7 +412,12 @@ class ResultsEnterpriseService {
     if (!schedule) {
       throw new Error('Schedule not found');
     }
-    return this.executeReportSchedule(orgId, schedule, userId || schedule.created_by || 'system', 'manual_run');
+    return this.executeReportSchedule(
+      orgId,
+      schedule,
+      userId || schedule.created_by || 'system',
+      'manual_run'
+    );
   }
 
   async runConnectorNow(orgId: string, connectorId: string, userId?: string | null) {
@@ -418,7 +425,12 @@ class ResultsEnterpriseService {
     if (!connector) {
       throw new Error('Connector not found');
     }
-    return this.executeConnector(orgId, connector, userId || connector.created_by || 'system', 'manual_run');
+    return this.executeConnector(
+      orgId,
+      connector,
+      userId || connector.created_by || 'system',
+      'manual_run'
+    );
   }
 
   async runDueWork(orgId?: string) {
@@ -471,7 +483,11 @@ class ResultsEnterpriseService {
     return { id };
   }
 
-  async getMetricAuditLog(orgId: string, kpiId: string, limit: number = 50): Promise<MetricAuditEntry[]> {
+  async getMetricAuditLog(
+    orgId: string,
+    kpiId: string,
+    limit: number = 50
+  ): Promise<MetricAuditEntry[]> {
     const rows =
       (await queryHelpers.queryAll<any>(
         `SELECT * FROM kpi_metric_audit_log
@@ -643,14 +659,23 @@ class ResultsEnterpriseService {
       const nextRunAt = connector.next_run_at ? new Date(connector.next_run_at) : null;
       if (!connector.schedule_cron) continue;
       if (!nextRunAt) {
-        await queryHelpers.queryRun(`UPDATE kpi_connectors SET next_run_at = ? WHERE id = ?`, [
-          resolveNextRunAt({ scheduleCron: connector.schedule_cron }),
-          connector.id,
-        ]).catch(() => null);
+        await queryHelpers
+          .queryRun(`UPDATE kpi_connectors SET next_run_at = ? WHERE id = ?`, [
+            resolveNextRunAt({ scheduleCron: connector.schedule_cron }),
+            connector.id,
+          ])
+          .catch(() => null);
         continue;
       }
       if (Number.isNaN(nextRunAt.getTime()) || nextRunAt > now) continue;
-      runs.push(await this.executeConnector(connector.organization_id, connector, connector.created_by, 'scheduled'));
+      runs.push(
+        await this.executeConnector(
+          connector.organization_id,
+          connector,
+          connector.created_by,
+          'scheduled'
+        )
+      );
     }
     return runs;
   }
@@ -673,13 +698,15 @@ class ResultsEnterpriseService {
       const nextRunAt = schedule.next_run_at ? new Date(schedule.next_run_at) : null;
       if (!schedule.schedule_cron && !schedule.send_at) continue;
       if (!nextRunAt) {
-        await queryHelpers.queryRun(`UPDATE kpi_report_schedules SET next_run_at = ? WHERE id = ?`, [
-          resolveNextRunAt({
-            scheduleCron: schedule.schedule_cron,
-            sendAt: schedule.send_at,
-          }),
-          schedule.id,
-        ]).catch(() => null);
+        await queryHelpers
+          .queryRun(`UPDATE kpi_report_schedules SET next_run_at = ? WHERE id = ?`, [
+            resolveNextRunAt({
+              scheduleCron: schedule.schedule_cron,
+              sendAt: schedule.send_at,
+            }),
+            schedule.id,
+          ])
+          .catch(() => null);
         continue;
       }
       if (Number.isNaN(nextRunAt.getTime()) || nextRunAt > now) continue;
@@ -782,7 +809,9 @@ class ResultsEnterpriseService {
     }
 
     const templateConfig = safeJson(schedule.template_config);
-    const kpiIds = safeJsonArray(schedule.kpi_ids).map((entry) => String(entry)).filter(Boolean);
+    const kpiIds = safeJsonArray(schedule.kpi_ids)
+      .map((entry) => String(entry))
+      .filter(Boolean);
     const periodEnd = new Date().toISOString().slice(0, 10);
     const lookbackDays = deriveLookbackDays(schedule.schedule_cron || null, templateConfig);
     const periodStart = addDays(periodEnd, -lookbackDays + 1);
@@ -942,7 +971,10 @@ function deriveLookbackDays(
   return 90;
 }
 
-function resolveNextRunAt(input: { scheduleCron?: string | null; sendAt?: string | null }): string | null {
+function resolveNextRunAt(input: {
+  scheduleCron?: string | null;
+  sendAt?: string | null;
+}): string | null {
   const now = new Date();
   if (input.scheduleCron) {
     return calculateNextRunFromCron(input.scheduleCron, now)?.toISOString() || null;
@@ -1028,7 +1060,10 @@ function normalizeConnectorPayloads(
         kpiId,
         value,
         period: raw.period ? String(raw.period) : undefined,
-        provenance: typeof raw.provenance === 'object' ? (raw.provenance as Record<string, unknown>) : undefined,
+        provenance:
+          typeof raw.provenance === 'object'
+            ? (raw.provenance as Record<string, unknown>)
+            : undefined,
         qualityScore: raw.qualityScore != null ? Number(raw.qualityScore) : undefined,
       };
     })
@@ -1060,7 +1095,9 @@ function normalizeConnectorPayloads(
           value,
           period: entry.period ? String(entry.period) : undefined,
           provenance:
-            typeof entry.provenance === 'object' ? (entry.provenance as Record<string, unknown>) : undefined,
+            typeof entry.provenance === 'object'
+              ? (entry.provenance as Record<string, unknown>)
+              : undefined,
           qualityScore: entry.qualityScore != null ? Number(entry.qualityScore) : undefined,
         };
       })

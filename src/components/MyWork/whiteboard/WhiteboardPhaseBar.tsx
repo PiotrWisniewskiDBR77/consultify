@@ -4,9 +4,9 @@ import { useTranslation } from 'react-i18next';
 
 import { TRANSITION_COLORS } from '../canvas/motionTokens';
 import {
-  type FacilitationPhase,
   FACILITATION_PHASES,
   FACILITATION_TRANSITIONS,
+  type FacilitationPhase,
 } from './whiteboardContracts';
 
 const PHASE_HINTS: Record<FacilitationPhase, { hintEn: string; hintPl: string }> = {
@@ -50,7 +50,11 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
       <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
         {t('myWork.whiteboard.phaseBar.title')}
       </div>
-      <div className="flex items-center gap-0.5" role="tablist" aria-label={t('myWork.whiteboard.phaseBar.tabsAria')}>
+      <div
+        className="flex items-center gap-0.5"
+        role="tablist"
+        aria-label={t('myWork.whiteboard.phaseBar.tabsAria')}
+      >
         {FACILITATION_PHASES.map((phase, idx) => {
           const isCurrent = phase === currentPhase;
           const isCompleted = idx < currentIdx;
@@ -95,7 +99,9 @@ export const WhiteboardPhaseBar: React.FC<WhiteboardPhaseBarProps> = ({
         })}
       </div>
       <div className="text-[9px] text-slate-400 dark:text-slate-500 italic">
-        {t(`myWork.whiteboard.phaseBar.hint_${currentPhase}`, { defaultValue: PHASE_HINTS[currentPhase].hintEn })}
+        {t(`myWork.whiteboard.phaseBar.hint_${currentPhase}`, {
+          defaultValue: PHASE_HINTS[currentPhase].hintEn,
+        })}
       </div>
     </div>
   );

@@ -292,7 +292,10 @@ export const GlobalHelpSearch: React.FC<GlobalHelpSearchProps> = ({ onNavigate }
                     {t('help.search.noResults', 'No results for')} <strong>"{query}"</strong>
                   </p>
                   <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-                    {t('help.search.tryDifferentKeywords', 'Try different keywords or browse categories below')}
+                    {t(
+                      'help.search.tryDifferentKeywords',
+                      'Try different keywords or browse categories below'
+                    )}
                   </p>
                 </div>
 

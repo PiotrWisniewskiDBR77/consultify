@@ -13,6 +13,7 @@ import { z } from 'zod';
 
 import { isAuthenticated, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody } from '../middleware/validation.middleware.js';
+import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import {
   connectIntegration,
   CONNECTORS,
@@ -24,7 +25,6 @@ import {
 } from '../services/integrationHubService.js';
 import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
 import { consumeSyncExternalAuthSession } from '../services/syncExternalAuthSessionService.js';
-import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import {
   checkRateLimit,
   getIntegrationHealth,
@@ -44,7 +44,10 @@ import { all as dbAll, run as dbRun } from '../utils/DbPromise.js';
 const router = Router();
 
 router.use((_req, res, next) => {
-  res.setHeader('X-Deprecated', 'This endpoint is deprecated. Use /api/v8/sync equivalents instead.');
+  res.setHeader(
+    'X-Deprecated',
+    'This endpoint is deprecated. Use /api/v8/sync equivalents instead.'
+  );
   res.setHeader('Sunset', '2026-09-01');
   next();
 });
@@ -347,7 +350,11 @@ router.post(
     if (!connector) return res.status(400).json({ error: 'Unknown connector' });
 
     const result = await connectIntegration(orgId, connectorId, config);
-    await setIntegrationOwner({ integrationId: result.id, organizationId: orgId, ownerUserId: userId });
+    await setIntegrationOwner({
+      integrationId: result.id,
+      organizationId: orgId,
+      ownerUserId: userId,
+    });
     await logIntegrationConnectionEvent({
       organizationId: orgId,
       userId,
@@ -375,7 +382,10 @@ router.post(
     await updateIntegrationStatus(result.id, 'pending');
 
     const actorName = `${req.user?.firstName || ''} ${req.user?.lastName || ''}`.trim() || userId;
-    await logAudit(orgId, result.id, 'connect_initiated', userId, actorName, { connectorId, displayName });
+    await logAudit(orgId, result.id, 'connect_initiated', userId, actorName, {
+      connectorId,
+      displayName,
+    });
 
     return res.json({ success: true, integration: result });
   })
@@ -458,9 +468,8 @@ router.post(
 
     if (connectorId) {
       try {
-        const { getRefreshExecutionSecret, executeRefreshExecution } = await import(
-          '../services/v8/pmSyncRefreshExecutionService.js'
-        );
+        const { getRefreshExecutionSecret, executeRefreshExecution } =
+          await import('../services/v8/pmSyncRefreshExecutionService.js');
         const secret = await getRefreshExecutionSecret(connectorId, orgId);
         if (secret) {
           const tokenResult = await executeRefreshExecution(connectorId, orgId);
@@ -477,11 +486,17 @@ router.post(
           } else {
             refreshResult = {
               success: false,
-              error: 'error' in tokenResult ? tokenResult.error || 'Token refresh failed' : 'Token refresh failed',
+              error:
+                'error' in tokenResult
+                  ? tokenResult.error || 'Token refresh failed'
+                  : 'Token refresh failed',
             };
           }
         } else {
-          refreshResult = { success: false, error: 'No refresh secret stored — manual OAuth required' };
+          refreshResult = {
+            success: false,
+            error: 'No refresh secret stored — manual OAuth required',
+          };
         }
       } catch (err) {
         refreshResult = { success: false, error: (err as Error).message };
@@ -492,13 +507,22 @@ router.post(
       await updateIntegrationStatus(intId, 'requires_reauth', refreshResult.error);
     }
 
-    await logAudit(orgId, intId, refreshResult.success ? 'reauth_completed' : 'reauth_failed', userId, actorName, {
-      refreshResult,
-    });
+    await logAudit(
+      orgId,
+      intId,
+      refreshResult.success ? 'reauth_completed' : 'reauth_failed',
+      userId,
+      actorName,
+      {
+        refreshResult,
+      }
+    );
 
     return res.json({
       success: refreshResult.success,
-      message: refreshResult.success ? 'Re-authorization completed' : 'Re-authorization requires manual OAuth',
+      message: refreshResult.success
+        ? 'Re-authorization completed'
+        : 'Re-authorization requires manual OAuth',
       requiresManualOAuth: !refreshResult.success,
       error: refreshResult.error,
     });

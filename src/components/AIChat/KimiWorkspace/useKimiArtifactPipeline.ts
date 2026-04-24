@@ -216,9 +216,7 @@ function mapRunToSteps(
   return steps;
 }
 
-async function fetchWorkbookPreview(
-  workbookId: string
-): Promise<{
+async function fetchWorkbookPreview(workbookId: string): Promise<{
   sheetNames: string[];
   kpiItems: Array<{ label: string; value: string }>;
   downloadUrl: string;
@@ -232,9 +230,7 @@ async function fetchWorkbookPreview(
   }
 }
 
-async function fetchSheetPreviewData(
-  tableId: string
-): Promise<{
+async function fetchSheetPreviewData(tableId: string): Promise<{
   sheetNames: string[];
   kpiItems: Array<{ label: string; value: string }>;
   rows: Array<Record<string, unknown>>;
@@ -299,8 +295,7 @@ export interface KimiPipelineState {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const isUuidLike = (v: unknown): v is string =>
-  typeof v === 'string' && UUID_RE.test(v.trim());
+const isUuidLike = (v: unknown): v is string => typeof v === 'string' && UUID_RE.test(v.trim());
 
 export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const conversationId = useConversationStore((s) => s.activeConversationId);
@@ -313,9 +308,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const artifactFamily: ArtifactFamily =
     lane === 'wordy' ? 'document' : lane === 'excele' ? 'sheet' : 'presentation';
 
-  const { data: snapshots } = useV8Snapshots(
-    conversationId ? conversationId : undefined
-  );
+  const { data: snapshots } = useV8Snapshots(conversationId ? conversationId : undefined);
   const captureSnapshot = useV8CaptureSnapshot();
   const createRun = useV8CreateArtifactRunFromChat();
   const acceptPlan = useV8AcceptArtifactRunPlan();
@@ -371,10 +364,14 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   const completedSteps = taskSteps.filter((s) => s.status === 'completed').length;
   const isGenerating =
     isStartingPipeline ||
-    (!!currentRun && effectiveStatus !== 'completed' && effectiveStatus !== 'failed' && effectiveStatus !== 'cancelled') ||
+    (!!currentRun &&
+      effectiveStatus !== 'completed' &&
+      effectiveStatus !== 'failed' &&
+      effectiveStatus !== 'cancelled') ||
     (effectiveStatus === 'completed' && !contentGenerated);
   const isCompleted = effectiveStatus === 'completed' && contentGenerated;
-  const isFailed = Boolean(startupError) || effectiveStatus === 'failed' || effectiveStatus === 'cancelled';
+  const isFailed =
+    Boolean(startupError) || effectiveStatus === 'failed' || effectiveStatus === 'cancelled';
 
   useEffect(() => {
     if (effectiveStatus !== 'completed' || !currentRun || contentGenerationTriggered.current) {
@@ -392,7 +389,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         const deckId = origin.originRecordId;
 
         const generateAndFetch = async () => {
-          const unwrap = <T = any,>(res: any): T => {
+          const unwrap = <T = any>(res: any): T => {
             const data = res?.data;
             if (data && typeof data === 'object' && 'data' in data) return data.data as T;
             return data as T;
@@ -478,12 +475,11 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
                 { label: 'Format', value: 'PPTX / PDF' },
                 {
                   label: 'Status',
-                  value:
-                    deckStatus === 'exported' || deckData?.export_path ? 'Exported' : 'Draft',
+                  value: deckStatus === 'exported' || deckData?.export_path ? 'Exported' : 'Draft',
                 },
               ],
               deckId,
-              deckStatus: deckData?.export_path ? 'exported' : (deckData?.status || 'draft'),
+              deckStatus: deckData?.export_path ? 'exported' : deckData?.status || 'draft',
               deckSlides: slides,
             });
             setContentGenerated(true);
@@ -774,10 +770,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
               runId: accepted.runId,
               params: {
                 title: accepted.plan.titleHint,
-                config:
-                  outputType === 'sheet'
-                    ? { tableName: accepted.plan.titleHint }
-                    : undefined,
+                config: outputType === 'sheet' ? { tableName: accepted.plan.titleHint } : undefined,
               },
             });
             setCurrentRun(materialized);
@@ -792,9 +785,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
         setStartupError(
           error instanceof Error ? error.message : 'Failed to start artifact generation'
         );
-        toast.error(
-          error instanceof Error ? error.message : 'Failed to start artifact generation'
-        );
+        toast.error(error instanceof Error ? error.message : 'Failed to start artifact generation');
       } finally {
         setIsStartingPipeline(false);
       }
@@ -854,9 +845,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
       }
     } catch (error) {
       setStartupError(error instanceof Error ? error.message : 'Failed to advance pipeline');
-      toast.error(
-        error instanceof Error ? error.message : 'Failed to advance pipeline'
-      );
+      toast.error(error instanceof Error ? error.message : 'Failed to advance pipeline');
     }
   }, [currentRun, effectiveStatus, submitReview, approveRun, materializeRun, outputType]);
 
@@ -891,9 +880,7 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
     if (!currentRun) return;
 
     if (lane === 'excele' && currentRun.materializationOrigin?.originRecordId) {
-      const ok = await downloadSheetArtifactXlsx(
-        currentRun.materializationOrigin.originRecordId
-      );
+      const ok = await downloadSheetArtifactXlsx(currentRun.materializationOrigin.originRecordId);
       if (!ok) toast.error('Download failed');
       return;
     }
@@ -914,10 +901,10 @@ export function useKimiArtifactPipeline(lane: KimiLane): KimiPipelineState {
   }, [currentRun, lane]);
 
   const failureReason = isFailed
-    ? startupError ??
+    ? (startupError ??
       (currentRun as any)?.failureReason ??
       (currentRun as any)?.failurePackage?.message ??
-      null
+      null)
     : null;
 
   const myWorkNotified = useRef(false);

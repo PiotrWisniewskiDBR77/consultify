@@ -82,7 +82,9 @@ class RetrievalFeedbackService {
           chunkId,
           signal,
         ]
-      ).catch((err) => logger.debug(`[RetrievalFeedback] Implicit record skipped: ${err?.message}`));
+      ).catch((err) =>
+        logger.debug(`[RetrievalFeedback] Implicit record skipped: ${err?.message}`)
+      );
     }
   }
 
@@ -94,7 +96,7 @@ class RetrievalFeedbackService {
     if (!chunkIds.length) return scores;
 
     const placeholders = chunkIds.map(() => '?').join(',');
-    const rows = await dbAll(
+    const rows = (await dbAll(
       `SELECT chunk_id,
               SUM(CASE WHEN signal = 'cited' THEN 1.0
                        WHEN signal = 'helpful' THEN 1.5
@@ -107,12 +109,16 @@ class RetrievalFeedbackService {
        WHERE organization_id = ? AND chunk_id IN (${placeholders})
        GROUP BY chunk_id`,
       [organizationId, ...chunkIds]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     for (const row of rows || []) {
-      const normalizedScore = Math.max(0, Math.min(1,
-        0.5 + (Number(row.quality_score) / Math.max(Number(row.feedback_count), 1)) * 0.3
-      ));
+      const normalizedScore = Math.max(
+        0,
+        Math.min(
+          1,
+          0.5 + (Number(row.quality_score) / Math.max(Number(row.feedback_count), 1)) * 0.3
+        )
+      );
       scores.set(row.chunk_id, Math.round(normalizedScore * 10000) / 10000);
     }
 
@@ -143,16 +149,14 @@ class RetrievalFeedbackService {
       .sort((a, b) => b.score - a.score);
   }
 
-  async checkDocumentFreshness(
-    organizationId: string
-  ): Promise<DocumentFreshness[]> {
-    const rows = await dbAll(
+  async checkDocumentFreshness(organizationId: string): Promise<DocumentFreshness[]> {
+    const rows = (await dbAll(
       `SELECT id, name, updated_at, created_at
        FROM knowledge_documents
        WHERE organization_id = ?
        ORDER BY updated_at ASC`,
       [organizationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     const now = Date.now();
 
@@ -191,16 +195,16 @@ class RetrievalFeedbackService {
     unhelpfulRate: number;
     topUnhelpfulDocuments: Array<{ documentId: string; unhelpfulCount: number }>;
   }> {
-    const totalRow = await dbGet(
+    const totalRow = (await dbGet(
       `SELECT COUNT(*) as total,
               AVG(CASE WHEN signal = 'cited' THEN 1.0 ELSE 0.0 END) as cited_rate,
               AVG(CASE WHEN signal = 'unhelpful' THEN 1.0 ELSE 0.0 END) as unhelpful_rate
        FROM rag_retrieval_feedback
        WHERE organization_id = ?`,
       [organizationId]
-    ).catch(() => null) as any;
+    ).catch(() => null)) as any;
 
-    const topUnhelpful = await dbAll(
+    const topUnhelpful = (await dbAll(
       `SELECT document_id, COUNT(*) as unhelpful_count
        FROM rag_retrieval_feedback
        WHERE organization_id = ? AND signal = 'unhelpful' AND document_id IS NOT NULL
@@ -208,7 +212,7 @@ class RetrievalFeedbackService {
        ORDER BY unhelpful_count DESC
        LIMIT 10`,
       [organizationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     return {
       totalFeedback: Number(totalRow?.total) || 0,

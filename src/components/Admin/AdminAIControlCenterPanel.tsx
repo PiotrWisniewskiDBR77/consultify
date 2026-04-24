@@ -3,9 +3,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
+import { cn } from '../../utils/cn';
 import { AIModule } from '../../views/admin/AIModule';
 import { OrgAISettingsView } from '../../views/admin/OrgAISettingsView';
-import { cn } from '../../utils/cn';
 
 type AiSummaryResponse = {
   summary?: {
@@ -112,8 +112,8 @@ export const AdminAIControlCenterPanel: React.FC = () => {
           AI Governance & AI Operations
         </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          Tenant AI policy, risk controls, model posture, and operational AI tooling now live
-          inside the primary Admin shell.
+          Tenant AI policy, risk controls, model posture, and operational AI tooling now live inside
+          the primary Admin shell.
         </p>
       </div>
 

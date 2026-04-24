@@ -19,18 +19,24 @@ export function analyzeRisk(input: HeuristicInput): HeuristicOutput {
   const blockedCount = controlTowerCounts['blocked'] || 0;
   const staleCount = controlTowerCounts['stale'] || 0;
 
-  const noBaseline = initiatives.filter((i: any) =>
-    !i.planned_end_date && !i.sla_deadline && !['DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT'].includes(String(i.status).toUpperCase())
+  const noBaseline = initiatives.filter(
+    (i: any) =>
+      !i.planned_end_date &&
+      !i.sla_deadline &&
+      !['DONE', 'CANCELLED', 'ARCHIVED', 'DRAFT'].includes(String(i.status).toUpperCase())
   );
-  const noEstimate = tasks.filter((t: any) =>
-    !t.estimated_hours && !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase())
+  const noEstimate = tasks.filter(
+    (t: any) =>
+      !t.estimated_hours &&
+      !['DONE', 'CANCELLED', 'COMPLETED'].includes(String(t.status).toUpperCase())
   );
 
   // Delivery confidence score (0-100)
   const totalItems = initiatives.length + tasks.length;
   const problemItems = lateCount + blockedCount + staleCount;
   const dataQualityPenalty = (noBaseline.length + noEstimate.length) * 2;
-  const rawConfidence = totalItems > 0 ? Math.max(0, 100 - (problemItems / totalItems) * 100 - dataQualityPenalty) : 50;
+  const rawConfidence =
+    totalItems > 0 ? Math.max(0, 100 - (problemItems / totalItems) * 100 - dataQualityPenalty) : 50;
   const confidence = Math.round(rawConfidence);
 
   // Observations
@@ -91,7 +97,8 @@ export function analyzeRisk(input: HeuristicInput): HeuristicOutput {
     insights.push({
       id: insId,
       observationIds: observations.map((o) => o.id),
-      interpretation: 'Primary risk factor is data quality — missing baselines and estimates undermine all analytics',
+      interpretation:
+        'Primary risk factor is data quality — missing baselines and estimates undermine all analytics',
       isSystemic: true,
       requiresAction: true,
       confidence: 'high',
@@ -186,7 +193,8 @@ export function analyzeRisk(input: HeuristicInput): HeuristicOutput {
   if (confidence < 30) {
     suggestions.push({
       id: stableHeuristicId('sug-rsk', 'leadership-escalation-review'),
-      action: 'Escalation review with leadership — consider stop/slow/continue for at-risk initiatives',
+      action:
+        'Escalation review with leadership — consider stop/slow/continue for at-risk initiatives',
       reason: `Delivery confidence critically low (${confidence}%) — strategic intervention needed`,
       expectedOutcome: 'Clear go/no-go decisions for high-risk initiatives',
       cost: 'High',

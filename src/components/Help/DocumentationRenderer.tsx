@@ -47,8 +47,7 @@ export const DocumentationRenderer: React.FC<DocumentationRendererProps> = ({
 }) => {
   const { i18n, t } = useTranslation();
   const baseLang = (i18n.language || 'en').split('-')[0].toLowerCase();
-  const lang: 'en' | 'pl' =
-    language === 'pl' || (!language && baseLang === 'pl') ? 'pl' : 'en';
+  const lang: 'en' | 'pl' = language === 'pl' || (!language && baseLang === 'pl') ? 'pl' : 'en';
 
   const getLocalized = (value: any, fallback = ''): string => {
     if (!value) return fallback;

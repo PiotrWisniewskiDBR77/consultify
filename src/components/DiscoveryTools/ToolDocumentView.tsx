@@ -561,7 +561,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }, 2000);
 
     return () => clearTimeout(timeout);
-  }, [completionReady, currentSession, missingItemsPayload, progress, toolSessionId, wizardStatePayload]);
+  }, [
+    completionReady,
+    currentSession,
+    missingItemsPayload,
+    progress,
+    toolSessionId,
+    wizardStatePayload,
+  ]);
 
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;

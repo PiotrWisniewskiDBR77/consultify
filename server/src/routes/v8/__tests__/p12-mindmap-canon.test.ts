@@ -8,6 +8,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  exportToMarkdown,
   P12_ACCEPTANCE_CHECKLIST,
   P12_AI_COBUILDING_RULES,
   P12_CALM_LOOP_RULES,
@@ -18,7 +19,6 @@ import {
   P12_NODE_OPERATIONS,
   P12_OWNERSHIP,
   P12_UNDO_REDO_RULES,
-  exportToMarkdown,
   resolveDeleteAnchor,
   wouldCreateCycle,
 } from '../../../services/v8/mindmapCanon.js';
@@ -32,7 +32,16 @@ describe('P12 Mindmap Canon', () => {
     });
 
     it('includes all required operations', () => {
-      const required = ['create_root', 'add_child', 'add_sibling', 'rename', 'move', 'delete', 'collapse', 'expand'];
+      const required = [
+        'create_root',
+        'add_child',
+        'add_sibling',
+        'rename',
+        'move',
+        'delete',
+        'collapse',
+        'expand',
+      ];
       for (const op of required) {
         expect(P12_NODE_OPERATIONS).toContain(op);
       }
@@ -144,7 +153,9 @@ describe('P12 Mindmap Canon', () => {
     });
 
     it('returns sibling when parent is the deleted node', () => {
-      expect(resolveDeleteAnchor('node', 'node', ['sibling1', 'sibling2'], 'root')).toBe('sibling1');
+      expect(resolveDeleteAnchor('node', 'node', ['sibling1', 'sibling2'], 'root')).toBe(
+        'sibling1'
+      );
     });
 
     it('returns root when no parent or sibling', () => {
@@ -333,8 +344,12 @@ describe('P12 Mindmap Canon', () => {
 
     it('lists infrastructure dependencies', () => {
       expect(P12_OWNERSHIP.infrastructure.length).toBeGreaterThanOrEqual(3);
-      expect(P12_OWNERSHIP.infrastructure.some((i) => i.includes('toolCollaborationAdapter'))).toBe(true);
-      expect(P12_OWNERSHIP.infrastructure.some((i) => i.includes('multiplayerHardening'))).toBe(true);
+      expect(P12_OWNERSHIP.infrastructure.some((i) => i.includes('toolCollaborationAdapter'))).toBe(
+        true
+      );
+      expect(P12_OWNERSHIP.infrastructure.some((i) => i.includes('multiplayerHardening'))).toBe(
+        true
+      );
     });
   });
 });

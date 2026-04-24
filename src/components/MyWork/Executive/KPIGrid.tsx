@@ -193,16 +193,29 @@ export const KPIGrid: React.FC<KPIGridProps> = ({ data, loading = false, onNavig
 
   const kpiData = {
     tasks: data?.tasks ?? {
-      completed: 0, total: 0, overdueCount: 0, onTimeRate: 0, trend: 'stable' as const,
+      completed: 0,
+      total: 0,
+      overdueCount: 0,
+      onTimeRate: 0,
+      trend: 'stable' as const,
     },
     decisions: data?.decisions ?? {
-      pending: 0, avgWaitDays: 0, critical: 0, trend: 'stable' as const,
+      pending: 0,
+      avgWaitDays: 0,
+      critical: 0,
+      trend: 'stable' as const,
     },
     team: data?.team ?? {
-      avgCapacity: 0, overloaded: 0, available: 0, trend: 'stable' as const,
+      avgCapacity: 0,
+      overloaded: 0,
+      available: 0,
+      trend: 'stable' as const,
     },
     risk: data?.risk ?? {
-      level: 'low' as const, blockers: 0, escalations: 0, trend: 'stable' as const,
+      level: 'low' as const,
+      blockers: 0,
+      escalations: 0,
+      trend: 'stable' as const,
     },
   };
 

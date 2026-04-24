@@ -139,7 +139,15 @@ function renderNodesWithCitations(
       }
       if (lastIndex < node.length) parts.push(node.slice(lastIndex));
       CITATION_MARKER_RE.lastIndex = 0;
-      return parts.length === 1 ? parts[0] : <>{parts.map((p, idx) => <React.Fragment key={`${path}-f-${idx}`}>{p}</React.Fragment>)}</>;
+      return parts.length === 1 ? (
+        parts[0]
+      ) : (
+        <>
+          {parts.map((p, idx) => (
+            <React.Fragment key={`${path}-f-${idx}`}>{p}</React.Fragment>
+          ))}
+        </>
+      );
     }
     if (Array.isArray(node)) {
       return node.map((n, idx) => (
@@ -958,24 +966,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                               // citation rewiring on all text-carrying block
                               // elements so `[N]` markers become clickable
                               // pills linked to `msg.citations`.
-                              p: ({ children }: any) => (
-                                <p>{withCitations(children, 'p')}</p>
-                              ),
-                              li: ({ children }: any) => (
-                                <li>{withCitations(children, 'li')}</li>
-                              ),
-                              td: ({ children }: any) => (
-                                <td>{withCitations(children, 'td')}</td>
-                              ),
-                              th: ({ children }: any) => (
-                                <th>{withCitations(children, 'th')}</th>
-                              ),
+                              p: ({ children }: any) => <p>{withCitations(children, 'p')}</p>,
+                              li: ({ children }: any) => <li>{withCitations(children, 'li')}</li>,
+                              td: ({ children }: any) => <td>{withCitations(children, 'td')}</td>,
+                              th: ({ children }: any) => <th>{withCitations(children, 'th')}</th>,
                               strong: ({ children }: any) => (
                                 <strong>{withCitations(children, 'strong')}</strong>
                               ),
-                              em: ({ children }: any) => (
-                                <em>{withCitations(children, 'em')}</em>
-                              ),
+                              em: ({ children }: any) => <em>{withCitations(children, 'em')}</em>,
                             }}
                           >
                             {cleanContent}

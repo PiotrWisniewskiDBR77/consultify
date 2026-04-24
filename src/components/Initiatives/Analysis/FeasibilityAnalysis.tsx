@@ -23,9 +23,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import {
-  getMenu3AiButtonClass,
-} from './menu3ActionButtonStyles';
+import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   InitiativeFeasibility,
@@ -213,7 +211,10 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
         if (editOwner) updates.ownerBusinessId = editOwner;
         if (editStartDate) updates.plannedStartDate = editStartDate;
         if (editEndDate) updates.plannedEndDate = editEndDate;
-        if (Object.keys(updates).length === 0) { setExpandedId(null); return; }
+        if (Object.keys(updates).length === 0) {
+          setExpandedId(null);
+          return;
+        }
         await onQuickUpdate(initiativeId, updates);
         toast.success(t('initiatives.analysis.feasibility.updated', 'Initiative updated'));
         setExpandedId(null);
@@ -363,7 +364,7 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
 
   const explainedInitiative =
     explainerId != null
-      ? feasibilities.find((item) => item.initiativeId === explainerId) ?? null
+      ? (feasibilities.find((item) => item.initiativeId === explainerId) ?? null)
       : null;
 
   const closeWorkspacePanels = useCallback(() => {
@@ -372,84 +373,85 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
     setExplainerId(null);
   }, []);
 
-  const aiOptimizerPanel = aiOptProposals !== null ? (
-    <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-      <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-          <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-            {t('initiatives.analysis.feasibility.aiProposals', 'AI optimization proposals')}
-          </h3>
-          <span className="text-xs text-purple-500 dark:text-purple-400">
-            ({aiOptProposals.length})
-          </span>
+  const aiOptimizerPanel =
+    aiOptProposals !== null ? (
+      <div className="m-4 rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
+        <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+              {t('initiatives.analysis.feasibility.aiProposals', 'AI optimization proposals')}
+            </h3>
+            <span className="text-xs text-purple-500 dark:text-purple-400">
+              ({aiOptProposals.length})
+            </span>
+          </div>
+          <button
+            onClick={closeWorkspacePanels}
+            className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+          >
+            <X size={14} />
+          </button>
         </div>
-        <button
-          onClick={closeWorkspacePanels}
-          className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
-        >
-          <X size={14} />
-        </button>
-      </div>
-      {aiOptProposals.length === 0 ? (
-        <div className="px-4 py-6 text-center">
-          <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t(
-              'initiatives.analysis.feasibility.allGood',
-              'All initiatives have healthy feasibility'
-            )}
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
-          {aiOptProposals.map((p, idx) => (
-            <div
-              key={`${p.initiativeId}-${p.dimension}-${idx}`}
-              className="flex items-center gap-3 px-4 py-3 text-sm"
-            >
-              <span className={`shrink-0 w-2.5 h-2.5 rounded-full ${DIM_BG.red}`} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-900 dark:text-white truncate">
-                    {p.initiativeName}
-                  </span>
-                  <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
-                    {DIM_LABELS[p.dimension]}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {p.problem} — {p.suggestion}
-                </p>
-              </div>
-              {p.autoPayload && onQuickUpdate ? (
-                <button
-                  onClick={() => handleApplyOptProposal(p, idx)}
-                  disabled={applyingOptIdx === idx}
-                  className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
-                >
-                  {applyingOptIdx === idx ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <Check size={12} />
-                  )}
-                  {t('initiatives.analysis.resources.accept', 'Apply')}
-                </button>
-              ) : (
-                <button
-                  onClick={() => onOpenInitiative(p.initiativeId)}
-                  className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
-                >
-                  <ExternalLink size={12} />
-                  {t('initiatives.analysis.previewInitiative', 'Preview')}
-                </button>
+        {aiOptProposals.length === 0 ? (
+          <div className="px-4 py-6 text-center">
+            <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {t(
+                'initiatives.analysis.feasibility.allGood',
+                'All initiatives have healthy feasibility'
               )}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  ) : null;
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            {aiOptProposals.map((p, idx) => (
+              <div
+                key={`${p.initiativeId}-${p.dimension}-${idx}`}
+                className="flex items-center gap-3 px-4 py-3 text-sm"
+              >
+                <span className={`shrink-0 w-2.5 h-2.5 rounded-full ${DIM_BG.red}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-slate-900 dark:text-white truncate">
+                      {p.initiativeName}
+                    </span>
+                    <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
+                      {DIM_LABELS[p.dimension]}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                    {p.problem} — {p.suggestion}
+                  </p>
+                </div>
+                {p.autoPayload && onQuickUpdate ? (
+                  <button
+                    onClick={() => handleApplyOptProposal(p, idx)}
+                    disabled={applyingOptIdx === idx}
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                  >
+                    {applyingOptIdx === idx ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Check size={12} />
+                    )}
+                    {t('initiatives.analysis.resources.accept', 'Apply')}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => onOpenInitiative(p.initiativeId)}
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                  >
+                    <ExternalLink size={12} />
+                    {t('initiatives.analysis.previewInitiative', 'Preview')}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ) : null;
 
   const rankingPanel = showRanking ? (
     <div className="m-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-500/5 dark:bg-indigo-500/10 overflow-hidden">
@@ -582,20 +584,28 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             AI Optimize
           </button>
         )}
-          <button
-            onClick={() => {
-              setAiOptProposals(null);
-              setExplainerId(null);
-              setShowRanking((v) => !v);
-            }}
-            className={getMenu3AiButtonClass(showRanking)}
-          >
+        <button
+          onClick={() => {
+            setAiOptProposals(null);
+            setExplainerId(null);
+            setShowRanking((v) => !v);
+          }}
+          className={getMenu3AiButtonClass(showRanking)}
+        >
           <ListOrdered size={12} />
           AI Ranking
         </button>
       </>
     );
-  }, [onRegisterActions, onQuickUpdate, computeAiOptimizer, aiOptProposals, aiOptRunning, showRanking, closeWorkspacePanels]);
+  }, [
+    onRegisterActions,
+    onQuickUpdate,
+    computeAiOptimizer,
+    aiOptProposals,
+    aiOptRunning,
+    showRanking,
+    closeWorkspacePanels,
+  ]);
 
   useEffect(() => {
     if (!onRegisterWorkspacePanel) return;
@@ -695,21 +705,36 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
             <tr className="bg-slate-50 dark:bg-navy-800/50 border-b border-slate-200 dark:border-navy-700">
               <th className="w-8 px-4 py-2.5" />
               <th className="text-left px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                <button onClick={() => handleSort('initiative')} className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                <button
+                  onClick={() => handleSort('initiative')}
+                  className="inline-flex items-center gap-1 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                >
                   {t('initiatives.analysis.feasibility.initiative', 'Initiative')}
                   <SortIcon col="initiative" cur={sortCol} dir={sortDir} />
                 </button>
               </th>
               {(['budget', 'skills', 'time', 'risk'] as SortCol[]).map((col) => (
-                <th key={col} className="text-center px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">
-                  <button onClick={() => handleSort(col)} className="inline-flex items-center gap-1 mx-auto hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
-                    {t(`initiatives.analysis.feasibility.${col}`, col.charAt(0).toUpperCase() + col.slice(1))}
+                <th
+                  key={col}
+                  className="text-center px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300"
+                >
+                  <button
+                    onClick={() => handleSort(col)}
+                    className="inline-flex items-center gap-1 mx-auto hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                  >
+                    {t(
+                      `initiatives.analysis.feasibility.${col}`,
+                      col.charAt(0).toUpperCase() + col.slice(1)
+                    )}
                     <SortIcon col={col} cur={sortCol} dir={sortDir} />
                   </button>
                 </th>
               ))}
               <th className="text-right px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300 w-20">
-                <button onClick={() => handleSort('score')} className="inline-flex items-center gap-1 ml-auto hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                <button
+                  onClick={() => handleSort('score')}
+                  className="inline-flex items-center gap-1 ml-auto hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                >
                   {t('initiatives.analysis.feasibility.score', 'Score')}
                   <SortIcon col="score" cur={sortCol} dir={sortDir} />
                 </button>
@@ -734,9 +759,13 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                       {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-medium text-slate-900 dark:text-white">{f.initiativeName}</div>
+                      <div className="font-medium text-slate-900 dark:text-white">
+                        {f.initiativeName}
+                      </div>
                       {f.ownerName && (
-                        <div className="text-xs text-slate-400 dark:text-slate-500">{f.ownerName}</div>
+                        <div className="text-xs text-slate-400 dark:text-slate-500">
+                          {f.ownerName}
+                        </div>
                       )}
                     </td>
                     {(['budget', 'skills', 'time', 'risk'] as DimKey[]).map((dim) => (
@@ -751,13 +780,15 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                       </td>
                     ))}
                     <td className="px-4 py-3 text-right">
-                      <span className={`font-semibold tabular-nums ${
-                        f.overallScore < 50
-                          ? 'text-red-600 dark:text-red-400'
-                          : f.overallScore < 75
-                            ? 'text-amber-600 dark:text-amber-400'
-                            : 'text-emerald-600 dark:text-emerald-400'
-                      }`}>
+                      <span
+                        className={`font-semibold tabular-nums ${
+                          f.overallScore < 50
+                            ? 'text-red-600 dark:text-red-400'
+                            : f.overallScore < 75
+                              ? 'text-amber-600 dark:text-amber-400'
+                              : 'text-emerald-600 dark:text-emerald-400'
+                        }`}
+                      >
                         {f.overallScore}%
                       </span>
                     </td>
@@ -819,49 +850,89 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                             <div className="space-y-4">
                               <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Budget</label>
-                                  <input type="number" value={editBudget} onChange={(e) => setEditBudget(e.target.value)}
+                                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                    Budget
+                                  </label>
+                                  <input
+                                    type="number"
+                                    value={editBudget}
+                                    onChange={(e) => setEditBudget(e.target.value)}
                                     onClick={(e) => e.stopPropagation()}
                                     className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
-                                    placeholder="0" />
+                                    placeholder="0"
+                                  />
                                 </div>
                                 <div>
-                                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Business Owner</label>
-                                  <select value={editOwner} onChange={(e) => setEditOwner(e.target.value)}
+                                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                    Business Owner
+                                  </label>
+                                  <select
+                                    value={editOwner}
+                                    onChange={(e) => setEditOwner(e.target.value)}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white">
+                                    className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                                  >
                                     <option value="">{f.ownerName || 'No change'}</option>
                                     {users.map((u) => (
-                                      <option key={u.id} value={u.id}>{u.firstName} {u.lastName}</option>
+                                      <option key={u.id} value={u.id}>
+                                        {u.firstName} {u.lastName}
+                                      </option>
                                     ))}
                                   </select>
                                 </div>
                                 <div>
-                                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Start date</label>
-                                  <input type="date" value={editStartDate} onChange={(e) => setEditStartDate(e.target.value)}
+                                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                    Start date
+                                  </label>
+                                  <input
+                                    type="date"
+                                    value={editStartDate}
+                                    onChange={(e) => setEditStartDate(e.target.value)}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white" />
+                                    className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                                  />
                                 </div>
                                 <div>
-                                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">End date</label>
-                                  <input type="date" value={editEndDate} onChange={(e) => setEditEndDate(e.target.value)}
+                                  <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                    End date
+                                  </label>
+                                  <input
+                                    type="date"
+                                    value={editEndDate}
+                                    onChange={(e) => setEditEndDate(e.target.value)}
                                     onClick={(e) => e.stopPropagation()}
-                                    className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white" />
+                                    className="w-full px-3 py-2 text-sm bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                                  />
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
-                                <button onClick={(e) => { e.stopPropagation(); handleSaveChanges(f.initiativeId); }}
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleSaveChanges(f.initiativeId);
+                                  }}
                                   disabled={saving}
-                                  className="px-4 py-2 text-xs font-medium rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors">
+                                  className="px-4 py-2 text-xs font-medium rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 transition-colors"
+                                >
                                   {saving ? 'Saving...' : 'Save changes'}
                                 </button>
-                                <button onClick={(e) => { e.stopPropagation(); setExpandedId(null); }}
-                                  className="px-4 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setExpandedId(null);
+                                  }}
+                                  className="px-4 py-2 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                                >
                                   Cancel
                                 </button>
                                 <div className="ml-auto">
-                                  <button onClick={(e) => { e.stopPropagation(); onOpenInitiative(f.initiativeId); }}
-                                    className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onOpenInitiative(f.initiativeId);
+                                    }}
+                                    className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                                  >
                                     <ExternalLink size={12} />
                                     {t('initiatives.analysis.previewInitiative', 'Preview')}
                                   </button>
@@ -874,8 +945,13 @@ export const FeasibilityAnalysis: React.FC<FeasibilityAnalysisProps> = ({
                                 {f.ownerName && `Owner: ${f.ownerName}`}
                                 {f.budget != null && ` · Budget: ${f.budget.toLocaleString()}`}
                               </span>
-                              <button onClick={(e) => { e.stopPropagation(); onOpenInitiative(f.initiativeId); }}
-                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onOpenInitiative(f.initiativeId);
+                                }}
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 transition-colors"
+                              >
                                 <ExternalLink size={12} />
                                 {t('initiatives.analysis.previewInitiative', 'Preview')}
                               </button>

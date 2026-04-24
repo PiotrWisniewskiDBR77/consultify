@@ -100,7 +100,13 @@ const hasBillingAccess = (req: AuthRequest): boolean => {
   const role = String(req.user?.role || '')
     .trim()
     .toLowerCase();
-  const allowedRoles = new Set(['superadmin', 'admin', 'administrator', 'billing_manager', 'owner']);
+  const allowedRoles = new Set([
+    'superadmin',
+    'admin',
+    'administrator',
+    'billing_manager',
+    'owner',
+  ]);
   return Boolean(req.user && (req.user.isSuperAdmin || allowedRoles.has(role)));
 };
 

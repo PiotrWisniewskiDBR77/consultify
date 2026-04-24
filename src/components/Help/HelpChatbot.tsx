@@ -84,12 +84,42 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
   };
 
   const suggestionsByLang: Record<string, string[]> = {
-    en: ['How do I create a new initiative?', 'How do I manage project team?', 'How to use AI for analysis?', 'How to generate reports?'],
-    pl: ['Jak stworzyć nową inicjatywę?', 'Jak zarządzać zespołem projektu?', 'Jak używać AI do analizy?', 'Jak generować raporty?'],
-    de: ['Wie erstelle ich eine neue Initiative?', 'Wie verwalte ich das Projektteam?', 'Wie nutze ich KI für Analysen?', 'Wie erstelle ich Berichte?'],
-    ar: ['كيف أنشئ مبادرة جديدة؟', 'كيف أدير فريق المشروع؟', 'كيف أستخدم الذكاء الاصطناعي للتحليل؟', 'كيف أنشئ التقارير؟'],
-    jp: ['新しいイニシアチブの作成方法は？', 'プロジェクトチームの管理方法は？', 'AI分析の使い方は？', 'レポートの生成方法は？'],
-    es: ['¿Cómo creo una nueva iniciativa?', '¿Cómo gestiono el equipo del proyecto?', '¿Cómo uso la IA para análisis?', '¿Cómo genero informes?'],
+    en: [
+      'How do I create a new initiative?',
+      'How do I manage project team?',
+      'How to use AI for analysis?',
+      'How to generate reports?',
+    ],
+    pl: [
+      'Jak stworzyć nową inicjatywę?',
+      'Jak zarządzać zespołem projektu?',
+      'Jak używać AI do analizy?',
+      'Jak generować raporty?',
+    ],
+    de: [
+      'Wie erstelle ich eine neue Initiative?',
+      'Wie verwalte ich das Projektteam?',
+      'Wie nutze ich KI für Analysen?',
+      'Wie erstelle ich Berichte?',
+    ],
+    ar: [
+      'كيف أنشئ مبادرة جديدة؟',
+      'كيف أدير فريق المشروع؟',
+      'كيف أستخدم الذكاء الاصطناعي للتحليل؟',
+      'كيف أنشئ التقارير؟',
+    ],
+    jp: [
+      '新しいイニシアチブの作成方法は？',
+      'プロジェクトチームの管理方法は？',
+      'AI分析の使い方は？',
+      'レポートの生成方法は？',
+    ],
+    es: [
+      '¿Cómo creo una nueva iniciativa?',
+      '¿Cómo gestiono el equipo del proyecto?',
+      '¿Cómo uso la IA para análisis?',
+      '¿Cómo genero informes?',
+    ],
   };
 
   useEffect(() => {
@@ -146,14 +176,14 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
           id: `error-${Date.now()}`,
           role: 'assistant',
           content:
-            ({
+            {
               en: 'Sorry, an error occurred. Please try again later.',
               pl: 'Przepraszam, wystąpił błąd. Spróbuj ponownie później.',
               de: 'Entschuldigung, ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.',
               ar: 'عذراً، حدث خطأ. يرجى المحاولة مرة أخرى لاحقاً.',
               jp: '申し訳ございません。エラーが発生しました。後でもう一度お試しください。',
               es: 'Lo sentimos, ocurrió un error. Inténtalo de nuevo más tarde.',
-            }[lang] || 'Sorry, an error occurred. Please try again later.'),
+            }[lang] || 'Sorry, an error occurred. Please try again later.',
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, errorMessage]);
@@ -215,15 +245,71 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
   type L6 = Record<string, string>;
   const l = (dict: L6) => dict[lang] || dict.en;
   const t: Record<string, L6> = {
-    title:       { en: 'Teresa — Help', pl: 'Teresa — Pomoc', de: 'Teresa — Hilfe', ar: 'تيريزا — مساعدة', jp: 'テレサ — ヘルプ', es: 'Teresa — Ayuda' },
-    placeholder: { en: 'Ask Teresa a question...', pl: 'Zapytaj Teresę...', de: 'Fragen Sie Teresa...', ar: 'اسأل تيريزا...', jp: 'テレサに質問...', es: 'Pregunta a Teresa...' },
-    send:        { en: 'Send', pl: 'Wyślij', de: 'Senden', ar: 'إرسال', jp: '送信', es: 'Enviar' },
-    typing:      { en: 'Typing...', pl: 'Pisze...', de: 'Schreibt...', ar: 'يكتب...', jp: '入力中...', es: 'Escribiendo...' },
-    clear:       { en: 'Clear chat', pl: 'Wyczyść czat', de: 'Chat löschen', ar: 'مسح المحادثة', jp: 'チャットをクリア', es: 'Borrar chat' },
-    sources:     { en: 'Sources', pl: 'Źródła', de: 'Quellen', ar: 'المصادر', jp: '出典', es: 'Fuentes' },
-    helpful:     { en: 'Was this helpful?', pl: 'Czy to było pomocne?', de: 'War das hilfreich?', ar: 'هل كان هذا مفيداً؟', jp: '役に立ちましたか？', es: '¿Fue útil?' },
-    suggestions: { en: 'Suggested questions', pl: 'Sugerowane pytania', de: 'Vorgeschlagene Fragen', ar: 'أسئلة مقترحة', jp: 'おすすめの質問', es: 'Preguntas sugeridas' },
-    poweredBy:   { en: 'Knowledge-grounded AI', pl: 'AI oparte na bazie wiedzy', de: 'Wissensbasierte KI', ar: 'ذكاء اصطناعي مبني على المعرفة', jp: 'ナレッジベースAI', es: 'IA basada en conocimiento' },
+    title: {
+      en: 'Teresa — Help',
+      pl: 'Teresa — Pomoc',
+      de: 'Teresa — Hilfe',
+      ar: 'تيريزا — مساعدة',
+      jp: 'テレサ — ヘルプ',
+      es: 'Teresa — Ayuda',
+    },
+    placeholder: {
+      en: 'Ask Teresa a question...',
+      pl: 'Zapytaj Teresę...',
+      de: 'Fragen Sie Teresa...',
+      ar: 'اسأل تيريزا...',
+      jp: 'テレサに質問...',
+      es: 'Pregunta a Teresa...',
+    },
+    send: { en: 'Send', pl: 'Wyślij', de: 'Senden', ar: 'إرسال', jp: '送信', es: 'Enviar' },
+    typing: {
+      en: 'Typing...',
+      pl: 'Pisze...',
+      de: 'Schreibt...',
+      ar: 'يكتب...',
+      jp: '入力中...',
+      es: 'Escribiendo...',
+    },
+    clear: {
+      en: 'Clear chat',
+      pl: 'Wyczyść czat',
+      de: 'Chat löschen',
+      ar: 'مسح المحادثة',
+      jp: 'チャットをクリア',
+      es: 'Borrar chat',
+    },
+    sources: {
+      en: 'Sources',
+      pl: 'Źródła',
+      de: 'Quellen',
+      ar: 'المصادر',
+      jp: '出典',
+      es: 'Fuentes',
+    },
+    helpful: {
+      en: 'Was this helpful?',
+      pl: 'Czy to było pomocne?',
+      de: 'War das hilfreich?',
+      ar: 'هل كان هذا مفيداً؟',
+      jp: '役に立ちましたか？',
+      es: '¿Fue útil?',
+    },
+    suggestions: {
+      en: 'Suggested questions',
+      pl: 'Sugerowane pytania',
+      de: 'Vorgeschlagene Fragen',
+      ar: 'أسئلة مقترحة',
+      jp: 'おすすめの質問',
+      es: 'Preguntas sugeridas',
+    },
+    poweredBy: {
+      en: 'Knowledge-grounded AI',
+      pl: 'AI oparte na bazie wiedzy',
+      de: 'Wissensbasierte KI',
+      ar: 'ذكاء اصطناعي مبني على المعرفة',
+      jp: 'ナレッジベースAI',
+      es: 'IA basada en conocimiento',
+    },
   };
 
   return (
@@ -376,8 +462,22 @@ export const HelpChatbot: React.FC<HelpChatbotProps> = ({
                         }`}
                       >
                         {message.feedback === 'helpful'
-                          ? (({ en: '✓ Thanks for your feedback!', pl: '✓ Dziękujemy za opinię!', de: '✓ Danke für Ihr Feedback!', ar: '✓ شكراً على ملاحظاتك!', jp: '✓ フィードバックありがとうございます！', es: '✓ ¡Gracias por tu opinión!' })[lang] || '✓ Thanks for your feedback!')
-                          : (({ en: "✓ Sorry, we'll try to improve!", pl: '✓ Przepraszamy, postaramy się poprawić!', de: '✓ Entschuldigung, wir werden versuchen uns zu verbessern!', ar: '✓ عذراً، سنحاول التحسين!', jp: '✓ 申し訳ございません、改善に努めます！', es: '✓ Lo sentimos, intentaremos mejorar!' })[lang] || "✓ Sorry, we'll try to improve!")}
+                          ? {
+                              en: '✓ Thanks for your feedback!',
+                              pl: '✓ Dziękujemy za opinię!',
+                              de: '✓ Danke für Ihr Feedback!',
+                              ar: '✓ شكراً على ملاحظاتك!',
+                              jp: '✓ フィードバックありがとうございます！',
+                              es: '✓ ¡Gracias por tu opinión!',
+                            }[lang] || '✓ Thanks for your feedback!'
+                          : {
+                              en: "✓ Sorry, we'll try to improve!",
+                              pl: '✓ Przepraszamy, postaramy się poprawić!',
+                              de: '✓ Entschuldigung, wir werden versuchen uns zu verbessern!',
+                              ar: '✓ عذراً، سنحاول التحسين!',
+                              jp: '✓ 申し訳ございません、改善に努めます！',
+                              es: '✓ Lo sentimos, intentaremos mejorar!',
+                            }[lang] || "✓ Sorry, we'll try to improve!"}
                       </div>
                     )}
 

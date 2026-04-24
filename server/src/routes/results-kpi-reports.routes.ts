@@ -292,9 +292,13 @@ router.get(
         updatedAt: r.updated_at,
         templateKey: filters?.templateKey || 'benefits-review',
         aiNarrativeHint: filters?.aiNarrativeHint || null,
-        initiativeCount: Array.isArray(filters?.initiativeIds) ? filters.initiativeIds.length : null,
+        initiativeCount: Array.isArray(filters?.initiativeIds)
+          ? filters.initiativeIds.length
+          : null,
         kpiCount: Number.isFinite(Number(stats?.kpisTotal)) ? Number(stats.kpisTotal) : null,
-        openActionCount: Number.isFinite(Number(stats?.openActions)) ? Number(stats.openActions) : null,
+        openActionCount: Number.isFinite(Number(stats?.openActions))
+          ? Number(stats.openActions)
+          : null,
       };
     });
 

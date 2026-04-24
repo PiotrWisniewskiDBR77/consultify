@@ -29,18 +29,18 @@ const RoleString = z
   .string()
   .min(1)
   .max(64)
-  .regex(/^[A-Za-z0-9_\-]+$/, 'role must be a simple token');
+  .regex(/^[A-Za-z0-9_-]+$/, 'role must be a simple token');
 const StatusString = z
   .string()
   .min(1)
   .max(32)
-  .regex(/^[A-Za-z0-9_\-]+$/, 'status must be a simple token');
+  .regex(/^[A-Za-z0-9_-]+$/, 'status must be a simple token');
 // Organization IDs in this platform are slugs (or legacy UUIDs). Accept either.
 const OrganizationIdString = z
   .string()
   .min(1)
   .max(128)
-  .regex(/^[A-Za-z0-9_\-]+$/, 'organizationId must be a slug or UUID');
+  .regex(/^[A-Za-z0-9_-]+$/, 'organizationId must be a slug or UUID');
 
 export const UpdateOrganizationAdminSchema = z.object({
   plan: z.enum(['free', 'starter', 'professional', 'enterprise']).optional(),

@@ -1,10 +1,4 @@
-export type KnowledgeBaseSiteKey =
-  | 'consultify'
-  | 'iot'
-  | 'iris'
-  | 'dt'
-  | 'marketplace'
-  | 'vector';
+export type KnowledgeBaseSiteKey = 'consultify' | 'iot' | 'iris' | 'dt' | 'marketplace' | 'vector';
 
 interface KnowledgeBaseSiteConfig {
   key: KnowledgeBaseSiteKey;
@@ -45,7 +39,8 @@ const SITE_CONFIGS: Record<KnowledgeBaseSiteKey, KnowledgeBaseSiteConfig> = {
       'Use the library to make machine visibility, rollout, and signal-driven decisions easier to defend.',
     sectionsEyebrow: 'Choose your operational tension',
     sectionsTitle: 'Three ways into the IoT library',
-    sectionsSubtitle: 'Enter through downtime, rollout, or decision logic depending on what the plant needs next.',
+    sectionsSubtitle:
+      'Enter through downtime, rollout, or decision logic depending on what the plant needs next.',
   },
   iris: {
     key: 'iris',
@@ -58,7 +53,8 @@ const SITE_CONFIGS: Record<KnowledgeBaseSiteKey, KnowledgeBaseSiteConfig> = {
       'Use the library to clarify how execution, AI assistance, and governance work together in daily operations.',
     sectionsEyebrow: 'Choose the operating question',
     sectionsTitle: 'Three ways into the IRIS library',
-    sectionsSubtitle: 'Start from AI decisions, rollout, or governance depending on where execution is breaking down.',
+    sectionsSubtitle:
+      'Start from AI decisions, rollout, or governance depending on where execution is breaking down.',
   },
   dt: {
     key: 'dt',
@@ -71,7 +67,8 @@ const SITE_CONFIGS: Record<KnowledgeBaseSiteKey, KnowledgeBaseSiteConfig> = {
       'Use the library to compare layout, flow, CAPEX, and governance decisions before live change is committed.',
     sectionsEyebrow: 'Choose the scenario question',
     sectionsTitle: 'Three ways into the Digital Twin library',
-    sectionsSubtitle: 'Start from flow, CAPEX, or governance depending on what decision must become more defensible.',
+    sectionsSubtitle:
+      'Start from flow, CAPEX, or governance depending on what decision must become more defensible.',
   },
   marketplace: {
     key: 'marketplace',
@@ -84,7 +81,8 @@ const SITE_CONFIGS: Record<KnowledgeBaseSiteKey, KnowledgeBaseSiteConfig> = {
       'Use the library to compare suppliers, defend CAPEX, and keep execution clean after award.',
     sectionsEyebrow: 'Choose the sourcing problem',
     sectionsTitle: 'Three ways into the Marketplace library',
-    sectionsSubtitle: 'Start from sourcing, investment, or rollout depending on where the buying decision is at risk.',
+    sectionsSubtitle:
+      'Start from sourcing, investment, or rollout depending on where the buying decision is at risk.',
   },
   vector: {
     key: 'vector',
@@ -97,11 +95,14 @@ const SITE_CONFIGS: Record<KnowledgeBaseSiteKey, KnowledgeBaseSiteConfig> = {
       'Use the library to evaluate AI decision quality, deployment control, and governance before scale.',
     sectionsEyebrow: 'Choose the AI control question',
     sectionsTitle: 'Three ways into the Vector library',
-    sectionsSubtitle: 'Start from decision quality, governance, or rollout depending on the AI risk you need to resolve.',
+    sectionsSubtitle:
+      'Start from decision quality, governance, or rollout depending on the AI risk you need to resolve.',
   },
 };
 
-const envSite = (import.meta.env.VITE_KB_SITE_KEY || 'consultify').toLowerCase() as KnowledgeBaseSiteKey;
+const envSite = (
+  import.meta.env.VITE_KB_SITE_KEY || 'consultify'
+).toLowerCase() as KnowledgeBaseSiteKey;
 
 export const KNOWLEDGE_BASE_SITE = SITE_CONFIGS[envSite] || SITE_CONFIGS.consultify;
 

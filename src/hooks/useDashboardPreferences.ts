@@ -68,7 +68,11 @@ export function useDashboardPreferences(): UseDashboardPreferencesReturn {
         preferences?: Partial<DashboardPreferences>;
       };
       if (data?.preferences && mountedRef.current) {
-        const merged = { ...DEFAULT_PREFERENCES, ...data.preferences, widgets: { ...DEFAULT_PREFERENCES.widgets, ...data.preferences.widgets } };
+        const merged = {
+          ...DEFAULT_PREFERENCES,
+          ...data.preferences,
+          widgets: { ...DEFAULT_PREFERENCES.widgets, ...data.preferences.widgets },
+        };
         cachedPreferences = merged;
         cacheTimestamp = Date.now();
         setPreferences(merged);

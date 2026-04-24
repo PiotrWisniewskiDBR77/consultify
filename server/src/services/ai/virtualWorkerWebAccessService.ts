@@ -1,10 +1,6 @@
-import type { VirtualWorkerProfile } from './virtualWorkerService.js';
-
 import logger from '../../utils/Logger.js';
-import {
-  detectWebSearchIntent,
-  type WebSearchIntent,
-} from './webSearchIntentDetector.js';
+import { RuntimeWebSearchService } from './runtimeWebSearchService.js';
+import type { VirtualWorkerProfile } from './virtualWorkerService.js';
 import {
   filterResults,
   getCached,
@@ -14,7 +10,7 @@ import {
   setCache,
   type WebSearchPolicy,
 } from './webSearchGovernance.js';
-import { RuntimeWebSearchService } from './runtimeWebSearchService.js';
+import { detectWebSearchIntent, type WebSearchIntent } from './webSearchIntentDetector.js';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -54,9 +50,7 @@ export interface WorkerWebAccessResult {
 }
 
 function toStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.map((item) => String(item || '').trim()).filter(Boolean)
-    : [];
+  return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
 }
 
 function asRecord(value: unknown): JsonRecord {
@@ -97,9 +91,7 @@ export function extractWorkerWebAccessPolicy(
         : Array.isArray(source.domainAllowlist)
           ? toStringArray(source.domainAllowlist)
           : base.domainAllowlist,
-    domainDenylist: [
-      ...new Set([...base.domainDenylist, ...toStringArray(source.domainDenylist)]),
-    ],
+    domainDenylist: [...new Set([...base.domainDenylist, ...toStringArray(source.domainDenylist)])],
     maxCitations: Math.max(1, Math.min(12, toNumber(source.maxCitations, base.maxCitations))),
     maxContentChars: Math.max(
       500,
@@ -146,11 +138,14 @@ export function mergeWorkerWebAccessPolicy(args: {
     domainAllowlist:
       workerPolicy.domainAllowlist && workerPolicy.domainAllowlist.length > 0
         ? workerPolicy.domainAllowlist
-        : orgPolicy?.domainAllowlist ?? null,
+        : (orgPolicy?.domainAllowlist ?? null),
     domainDenylist: [
       ...new Set([...(orgPolicy?.domainDenylist || []), ...workerPolicy.domainDenylist]),
     ],
-    maxCitations: Math.min(workerPolicy.maxCitations, orgPolicy?.maxCitations || workerPolicy.maxCitations),
+    maxCitations: Math.min(
+      workerPolicy.maxCitations,
+      orgPolicy?.maxCitations || workerPolicy.maxCitations
+    ),
     maxContentChars: Math.min(
       workerPolicy.maxContentChars,
       orgPolicy?.maxContentChars || workerPolicy.maxContentChars
@@ -219,7 +214,9 @@ export async function buildWorkerWebAccessResult(args: {
 
   const webSearch = new RuntimeWebSearchService();
   const baseQueries =
-    searchIntent.queries.length > 0 ? searchIntent.queries : [String(args.message || '').slice(0, 150)];
+    searchIntent.queries.length > 0
+      ? searchIntent.queries
+      : [String(args.message || '').slice(0, 150)];
   const queries = baseQueries.slice(0, 3);
   const cacheNamespace = args.organizationId || `public:${String(args.workerSlug || 'worker')}`;
   const answers: string[] = [];
@@ -235,9 +232,7 @@ export async function buildWorkerWebAccessResult(args: {
           maxResults: Math.min(effectivePolicy.maxResults, effectivePolicy.maxCitations),
           includeNews: true,
           searchDepth:
-            effectivePolicy.searchDepth === 'advanced'
-              ? 'advanced'
-              : searchIntent.searchDepth,
+            effectivePolicy.searchDepth === 'advanced' ? 'advanced' : searchIntent.searchDepth,
           language: args.locale,
         }));
       const resultRows = Array.isArray((response as any)?.results) ? (response as any).results : [];
@@ -301,9 +296,12 @@ export async function buildWorkerWebAccessResult(args: {
   }
 
   const sourcesText = citations
-    .map((citation, index) => `[${index + 1}] ${citation.title}\n${citation.link}\n${citation.excerpt}`)
+    .map(
+      (citation, index) => `[${index + 1}] ${citation.title}\n${citation.link}\n${citation.excerpt}`
+    )
     .join('\n\n');
-  const answerText = answers.length > 0 ? `\n\n## WEB SEARCH SYNTHESIS\n${answers.join('\n\n')}` : '';
+  const answerText =
+    answers.length > 0 ? `\n\n## WEB SEARCH SYNTHESIS\n${answers.join('\n\n')}` : '';
 
   return {
     policy: effectivePolicy,

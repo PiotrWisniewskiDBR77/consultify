@@ -114,7 +114,10 @@ export const StickyNoteNode: React.FC<NodeProps> = ({ id: nodeId, data, selected
       )}
       {/* Converted/promoted badge */}
       {data?._converted && (
-        <div className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[8px] shadow-sm" title="Converted">
+        <div
+          className="absolute top-1 right-1 z-10 flex items-center justify-center w-4 h-4 rounded-full bg-emerald-500 text-white text-[8px] shadow-sm"
+          title="Converted"
+        >
           ✓
         </div>
       )}

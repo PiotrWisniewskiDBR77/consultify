@@ -5,8 +5,8 @@
 
 import { useMemo } from 'react';
 
-import { useArtifactOutputsList } from '@/components/ReportsAndPresentations/useRapData';
 import type { UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
+import { useArtifactOutputsList } from '@/components/ReportsAndPresentations/useRapData';
 
 import type { KimiLane } from './KimiWorkspaceShell';
 
@@ -21,11 +21,8 @@ export function useModuleRecentArtifacts(lane: KimiLane, limit = 6) {
   const targetKind = LANE_TO_KIND[lane];
 
   const filtered = useMemo(
-    () =>
-      rows
-        .filter((r: UnifiedOutputRow) => r.kind === targetKind)
-        .slice(0, limit),
-    [rows, targetKind, limit],
+    () => rows.filter((r: UnifiedOutputRow) => r.kind === targetKind).slice(0, limit),
+    [rows, targetKind, limit]
   );
 
   return { artifacts: filtered, loading, error, refetch };

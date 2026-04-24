@@ -11,8 +11,8 @@ import { useCallback, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import Api from '../services/api';
 import { normalizeLanguageCode } from '../i18n';
+import Api from '../services/api';
 import { useAppStore } from '../store/useAppStore';
 
 const normalizeDemoLocaleClient = (value?: string | null): 'en' | 'pl' | null => {
@@ -45,7 +45,8 @@ export const useDemo = () => {
     resetDemoState,
   } = useAppStore();
 
-  const currentAppLocale = normalizeDemoLocaleClient(i18n.resolvedLanguage || i18n.language) || 'en';
+  const currentAppLocale =
+    normalizeDemoLocaleClient(i18n.resolvedLanguage || i18n.language) || 'en';
   const isDemoLocaleMismatch = Boolean(demoLocale && demoLocale !== currentAppLocale);
 
   /**
@@ -87,9 +88,12 @@ export const useDemo = () => {
             setDemoStats(null);
             setDemoHints([]);
 
-            toast.success(t('demo.toast.disabled', 'Demo mode disabled. You are back in your own workspace.'), {
-              duration: 3000,
-            });
+            toast.success(
+              t('demo.toast.disabled', 'Demo mode disabled. You are back in your own workspace.'),
+              {
+                duration: 3000,
+              }
+            );
           }
         }
       } catch (error: any) {

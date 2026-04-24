@@ -74,8 +74,8 @@ import { MarketInboxTab } from './Operations/MarketInboxTab';
 // Operations Tab Components
 import { MissionControlTab } from './Operations/MissionControlTab';
 import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
-import { PolicyEnforcementTab } from './Policy/PolicyEnforcementTab';
 import { SLAManagementTab } from './Operations/SLAManagementTab';
+import { PolicyEnforcementTab } from './Policy/PolicyEnforcementTab';
 import { AccessControlTab } from './Security/AccessControlTab';
 // Security Tab Components
 import { APIKeysTab } from './Security/APIKeysTab';

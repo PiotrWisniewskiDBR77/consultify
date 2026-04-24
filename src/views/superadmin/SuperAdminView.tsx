@@ -208,7 +208,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case AppView.SUPERADMIN_SSO:
             case AppView.SUPERADMIN_SECURITY_POLICIES:
               return (
-                <SecurityModule initialTab={currentView === AppView.SUPERADMIN_SSO ? 'sso' : 'policies'} />
+                <SecurityModule
+                  initialTab={currentView === AppView.SUPERADMIN_SSO ? 'sso' : 'policies'}
+                />
               );
 
             case AppView.SUPERADMIN_COMPLIANCE:

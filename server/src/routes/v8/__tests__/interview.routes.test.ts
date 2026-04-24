@@ -2,7 +2,11 @@ import express, { type Express } from 'express';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT, V8_INTERVIEW_INSIGHT_READ_CONTRACT, V8_INTERVIEW_READ_CONTRACT } from '../interview.routes.js';
+import {
+  V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT,
+  V8_INTERVIEW_INSIGHT_READ_CONTRACT,
+  V8_INTERVIEW_READ_CONTRACT,
+} from '../interview.routes.js';
 
 const mockListSessions = vi.fn();
 const mockListAcceptedSessions = vi.fn();
@@ -35,8 +39,7 @@ vi.mock('../../../controllers/InterviewController.js', () => ({
   loadInterviewSessionsForOrganization: (...args: unknown[]) => mockListSessions(...args),
   loadAcceptedInterviewSessionsForManager: (...args: unknown[]) =>
     mockListAcceptedSessions(...args),
-  loadManagedInterviewSessionsForManager: (...args: unknown[]) =>
-    mockListManagedSessions(...args),
+  loadManagedInterviewSessionsForManager: (...args: unknown[]) => mockListManagedSessions(...args),
   loadInterviewSessionForOrganization: (...args: unknown[]) => mockGetSession(...args),
 }));
 
@@ -249,7 +252,9 @@ describe('V8 Interview read-only routes', () => {
       userId: UID,
       role: 'ADMIN',
     });
-    expect(mockListManagedSessions).toHaveBeenCalledWith(ORG, UID, { scope: { kind: 'organization' } });
+    expect(mockListManagedSessions).toHaveBeenCalledWith(ORG, UID, {
+      scope: { kind: 'organization' },
+    });
   });
 
   it('GET /api/v8/interview/assignments/my returns V8 envelope and forwards user + org to service', async () => {
@@ -434,7 +439,9 @@ describe('V8 Interview insight routes', () => {
   });
 
   it('GET /api/v8/interview/insights returns list in V8 envelope', async () => {
-    mockInsightList.mockResolvedValue([{ id: 'ins-1', title: 'Test Insight', status: 'completed' }]);
+    mockInsightList.mockResolvedValue([
+      { id: 'ins-1', title: 'Test Insight', status: 'completed' },
+    ]);
 
     const res = await request(createApp())
       .get('/api/v8/interview/insights')
@@ -448,7 +455,12 @@ describe('V8 Interview insight routes', () => {
   });
 
   it('GET /api/v8/interview/insights/:id returns insight in V8 envelope', async () => {
-    mockInsightGetById.mockResolvedValue({ id: 'ins-1', organizationId: ORG, title: 'Test', status: 'completed' });
+    mockInsightGetById.mockResolvedValue({
+      id: 'ins-1',
+      organizationId: ORG,
+      title: 'Test',
+      status: 'completed',
+    });
 
     const res = await request(createApp())
       .get('/api/v8/interview/insights/ins-1')
@@ -471,7 +483,12 @@ describe('V8 Interview insight routes', () => {
   });
 
   it('POST /api/v8/interview/insights creates insight and returns 201', async () => {
-    mockInsightCreate.mockResolvedValue({ id: 'ins-new', organizationId: ORG, title: 'New', status: 'generating' });
+    mockInsightCreate.mockResolvedValue({
+      id: 'ins-new',
+      organizationId: ORG,
+      title: 'New',
+      status: 'generating',
+    });
 
     const res = await request(createApp())
       .post('/api/v8/interview/insights')
@@ -533,7 +550,16 @@ describe('V8 Interview insight routes', () => {
 
   it('GET /api/v8/interview/insights/:id/activity returns activity in V8 envelope', async () => {
     mockQueryOne.mockResolvedValue({ organization_id: ORG });
-    mockQueryAll.mockResolvedValue([{ id: 'act-1', type: 'created', description: 'Created', created_at: '2026-01-01', first_name: 'Jan', last_name: 'Kowalski' }]);
+    mockQueryAll.mockResolvedValue([
+      {
+        id: 'act-1',
+        type: 'created',
+        description: 'Created',
+        created_at: '2026-01-01',
+        first_name: 'Jan',
+        last_name: 'Kowalski',
+      },
+    ]);
 
     const res = await request(createApp())
       .get('/api/v8/interview/insights/ins-1/activity')
@@ -547,7 +573,15 @@ describe('V8 Interview insight routes', () => {
 
   it('GET /api/v8/interview/insights/:id/comments returns comments in V8 envelope', async () => {
     mockQueryOne.mockResolvedValue({ organization_id: ORG });
-    mockCommentGetContent.mockResolvedValue([{ id: 'c-1', commentText: 'Great', user: { firstName: 'Anna', lastName: 'N' }, createdAt: '2026-01-01', positionRef: '{"priority":"high"}' }]);
+    mockCommentGetContent.mockResolvedValue([
+      {
+        id: 'c-1',
+        commentText: 'Great',
+        user: { firstName: 'Anna', lastName: 'N' },
+        createdAt: '2026-01-01',
+        positionRef: '{"priority":"high"}',
+      },
+    ]);
 
     const res = await request(createApp())
       .get('/api/v8/interview/insights/ins-1/comments')
@@ -561,7 +595,12 @@ describe('V8 Interview insight routes', () => {
 
   it('POST /api/v8/interview/insights/:id/comments creates comment and returns 201', async () => {
     mockQueryOne.mockResolvedValue({ organization_id: ORG });
-    mockCommentCreate.mockResolvedValue({ id: 'c-new', commentText: 'Nice', user: { firstName: 'Jan', lastName: 'K' }, createdAt: '2026-01-01' });
+    mockCommentCreate.mockResolvedValue({
+      id: 'c-new',
+      commentText: 'Nice',
+      user: { firstName: 'Jan', lastName: 'K' },
+      createdAt: '2026-01-01',
+    });
 
     const res = await request(createApp())
       .post('/api/v8/interview/insights/ins-1/comments')
@@ -575,7 +614,12 @@ describe('V8 Interview insight routes', () => {
 
   it('DELETE /api/v8/interview/insights/:id/comments/:commentId deletes comment', async () => {
     mockQueryOne.mockResolvedValue({ organization_id: ORG });
-    mockCommentGetById.mockResolvedValue({ id: 'c-1', contentId: 'ins-1', contentType: 'interview_insight', userId: UID });
+    mockCommentGetById.mockResolvedValue({
+      id: 'c-1',
+      contentId: 'ins-1',
+      contentType: 'interview_insight',
+      userId: UID,
+    });
     mockCommentDelete.mockResolvedValue(true);
 
     const res = await request(createApp())
@@ -588,8 +632,18 @@ describe('V8 Interview insight routes', () => {
 
   it('POST /api/v8/interview/insights/:id/export returns success for tools target', async () => {
     mockQueryOne
-      .mockResolvedValueOnce({ id: 'ins-1', organization_id: ORG, title: 'Test', session_id: 'sess-1' })
-      .mockResolvedValueOnce({ id: 'sess-1', status: 'completed', assignment_id: null, project_id: null })
+      .mockResolvedValueOnce({
+        id: 'ins-1',
+        organization_id: ORG,
+        title: 'Test',
+        session_id: 'sess-1',
+      })
+      .mockResolvedValueOnce({
+        id: 'sess-1',
+        status: 'completed',
+        assignment_id: null,
+        project_id: null,
+      })
       .mockResolvedValueOnce(null);
     mockQueryRun.mockResolvedValue(undefined);
 

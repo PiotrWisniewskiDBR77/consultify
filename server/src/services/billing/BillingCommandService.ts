@@ -221,7 +221,9 @@ export class BillingCommandService {
         billingData.external_invoice_ref ?? null,
         billingData.notes ?? null,
         billingData.managed_by_user_id ?? null,
-        billingData.is_manual_override == null ? null : Number(Boolean(billingData.is_manual_override)),
+        billingData.is_manual_override == null
+          ? null
+          : Number(Boolean(billingData.is_manual_override)),
         billingData.stripe_customer_id ?? null,
         billingData.stripe_subscription_id ?? null,
         billingData.billing_email ?? null,
@@ -641,7 +643,8 @@ export class BillingCommandService {
     if (!deps.stripe || !billing.stripe_subscription_id) {
       await this.upsertOrgBilling(orgId, {
         status: 'active',
-        contract_status: billing.billing_rail === 'manual_invoice' ? 'active' : billing.contract_status,
+        contract_status:
+          billing.billing_rail === 'manual_invoice' ? 'active' : billing.contract_status,
         access_expires_at: null,
       });
       return { success: true };
@@ -1044,7 +1047,11 @@ export class BillingCommandService {
         }),
       ]
     ) as Promise<any>);
-    this.eventService.emitEvent('billing.invoice.recorded', { invoiceId: id, orgId, source: 'manual' });
+    this.eventService.emitEvent('billing.invoice.recorded', {
+      invoiceId: id,
+      orgId,
+      source: 'manual',
+    });
     return { id };
   }
 

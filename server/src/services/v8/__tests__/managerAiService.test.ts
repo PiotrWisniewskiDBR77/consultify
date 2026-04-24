@@ -13,11 +13,7 @@ vi.mock('../managerProblemsService.js', () => ({
   getManagerProblems: (...args: unknown[]) => mockGetManagerProblems(...args),
 }));
 
-import {
-  getAiManageAll,
-  getAiRecommendation,
-  getAiTriage,
-} from '../managerAiService.js';
+import { getAiManageAll, getAiRecommendation, getAiTriage } from '../managerAiService.js';
 
 const ORG = 'org-test-001';
 const LANE = 'action-queue';

@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+
 import llmService from '../ai/llmService.js';
 import { getManagerProblems } from './managerProblemsService.js';
 
@@ -81,26 +82,34 @@ const SingleRecommendationSchema = z.object({
 });
 
 const TriageSchema = z.object({
-  clusters: z.array(z.object({
-    theme: z.string(),
-    severity: z.enum(['critical', 'warning', 'info']),
-    problemIds: z.array(z.string()),
-    summary: z.string(),
-    suggestedAction: z.string(),
-  })).max(10),
+  clusters: z
+    .array(
+      z.object({
+        theme: z.string(),
+        severity: z.enum(['critical', 'warning', 'info']),
+        problemIds: z.array(z.string()),
+        summary: z.string(),
+        suggestedAction: z.string(),
+      })
+    )
+    .max(10),
   topPriority: z.array(z.string()).max(5),
   executiveSummary: z.string(),
 });
 
 const ManageAllSchema = z.object({
   executiveSummary: z.string(),
-  clusters: z.array(z.object({
-    theme: z.string(),
-    severity: z.enum(['critical', 'warning', 'info']),
-    diagnosis: z.string(),
-    steps: z.array(AiStepSchema).max(5),
-    affectedProblemIds: z.array(z.string()),
-  })).max(8),
+  clusters: z
+    .array(
+      z.object({
+        theme: z.string(),
+        severity: z.enum(['critical', 'warning', 'info']),
+        diagnosis: z.string(),
+        steps: z.array(AiStepSchema).max(5),
+        affectedProblemIds: z.array(z.string()),
+      })
+    )
+    .max(8),
   quickWins: z.array(z.string()).max(5),
   escalationNeeded: z.array(z.string()).max(5),
 });
@@ -112,32 +121,41 @@ const ManageAllSchema = z.object({
 const LANE_CONTEXT: Record<string, { role: string; focus: string }> = {
   'action-queue': {
     role: 'execution triage specialist',
-    focus: 'overdue tasks, blocked items, overdue decisions, and critical issues that require immediate managerial attention. Prioritize by blast radius and critical path impact.',
+    focus:
+      'overdue tasks, blocked items, overdue decisions, and critical issues that require immediate managerial attention. Prioritize by blast radius and critical path impact.',
   },
   decisions: {
     role: 'decision acceleration advisor',
-    focus: 'pending, overdue, and deferred decisions. Generate decision briefs, recommend approve/reject/defer based on context, and identify downstream blocking impact.',
+    focus:
+      'pending, overdue, and deferred decisions. Generate decision briefs, recommend approve/reject/defer based on context, and identify downstream blocking impact.',
   },
   blockers: {
     role: 'blocker resolution specialist',
-    focus: 'blocked initiatives, tasks, dependency blocks, and critical issues. Analyze root cause chains, propose workarounds, and draft escalation briefs.',
+    focus:
+      'blocked initiatives, tasks, dependency blocks, and critical issues. Analyze root cause chains, propose workarounds, and draft escalation briefs.',
   },
   workload: {
     role: 'capacity optimization advisor',
-    focus: 'overloaded team members, unassigned tasks, missing estimates, and upcoming deadlines. Propose reassignments, workload balancing, and estimate predictions.',
+    focus:
+      'overloaded team members, unassigned tasks, missing estimates, and upcoming deadlines. Propose reassignments, workload balancing, and estimate predictions.',
   },
   risk: {
     role: 'execution risk intelligence analyst',
-    focus: 'open risks, missing baselines, overdue initiatives, and stale items. Recalibrate risk scores, generate mitigation plans, and detect emerging risk patterns.',
+    focus:
+      'open risks, missing baselines, overdue initiatives, and stale items. Recalibrate risk scores, generate mitigation plans, and detect emerging risk patterns.',
   },
   'people-change': {
     role: 'governance and change management advisor',
-    focus: 'missing owners/sponsors, governance gaps, bus-factor risks, and date gaps. Recommend owner assignments, governance health improvements, and change readiness.',
+    focus:
+      'missing owners/sponsors, governance gaps, bus-factor risks, and date gaps. Recommend owner assignments, governance health improvements, and change readiness.',
   },
 };
 
 function buildSystemPrompt(laneId: string): string {
-  const ctx = LANE_CONTEXT[laneId] || { role: 'management advisor', focus: 'all execution problems' };
+  const ctx = LANE_CONTEXT[laneId] || {
+    role: 'management advisor',
+    focus: 'all execution problems',
+  };
   return `You are an experienced ${ctx.role} in a corporate transformation program management system.
 
 Your focus area: ${ctx.focus}
@@ -154,26 +172,31 @@ Rules:
 }
 
 function serializeProblems(problems: any[]): string {
-  return problems.map((p, i) => {
-    const parts = [
-      `[${i + 1}] ID: ${p.id}`,
-      `Severity: ${p.severity}`,
-      `Type: ${p.problemType}`,
-      `Title: ${p.title}`,
-      `Root cause: ${p.rootCause}`,
-      `Source: ${p.sourceEntityType} "${p.sourceEntityName}" (${p.sourceEntityId})`,
-    ];
-    if (p.ownerName) parts.push(`Owner: ${p.ownerName}`);
-    if (p.daysOverdue != null) parts.push(`Days overdue: ${p.daysOverdue}`);
-    if (p.impactCount > 0) parts.push(`Impact count: ${p.impactCount}`);
-    if (p.affectedEntities?.length) {
-      parts.push(`Affected: ${p.affectedEntities.map((e: any) => `${e.type}:"${e.name}"`).join(', ')}`);
-    }
-    if (p.actions?.length) parts.push(`Available actions: ${p.actions.map((a: any) => a.label).join(', ')}`);
-    const metaKeys = Object.entries(p.meta || {}).filter(([, v]) => v != null);
-    if (metaKeys.length) parts.push(`Meta: ${metaKeys.map(([k, v]) => `${k}=${v}`).join(', ')}`);
-    return parts.join('\n  ');
-  }).join('\n\n');
+  return problems
+    .map((p, i) => {
+      const parts = [
+        `[${i + 1}] ID: ${p.id}`,
+        `Severity: ${p.severity}`,
+        `Type: ${p.problemType}`,
+        `Title: ${p.title}`,
+        `Root cause: ${p.rootCause}`,
+        `Source: ${p.sourceEntityType} "${p.sourceEntityName}" (${p.sourceEntityId})`,
+      ];
+      if (p.ownerName) parts.push(`Owner: ${p.ownerName}`);
+      if (p.daysOverdue != null) parts.push(`Days overdue: ${p.daysOverdue}`);
+      if (p.impactCount > 0) parts.push(`Impact count: ${p.impactCount}`);
+      if (p.affectedEntities?.length) {
+        parts.push(
+          `Affected: ${p.affectedEntities.map((e: any) => `${e.type}:"${e.name}"`).join(', ')}`
+        );
+      }
+      if (p.actions?.length)
+        parts.push(`Available actions: ${p.actions.map((a: any) => a.label).join(', ')}`);
+      const metaKeys = Object.entries(p.meta || {}).filter(([, v]) => v != null);
+      if (metaKeys.length) parts.push(`Meta: ${metaKeys.map(([k, v]) => `${k}=${v}`).join(', ')}`);
+      return parts.join('\n  ');
+    })
+    .join('\n\n');
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -187,7 +210,7 @@ export async function getAiRecommendation(
   organizationId: string,
   laneId: string,
   problemId: string,
-  projectId?: string,
+  projectId?: string
 ): Promise<AiRecommendation> {
   const allProblems = await getManagerProblems(organizationId, laneId, projectId);
   const problem = allProblems.find((p) => p.id === problemId);
@@ -195,12 +218,13 @@ export async function getAiRecommendation(
 
   const nearby = allProblems
     .filter((p) => p.id !== problemId)
-    .filter((p) =>
-      p.sourceEntityId === problem.sourceEntityId ||
-      p.ownerId === problem.ownerId ||
-      problem.affectedEntities?.some((ae: any) =>
-        p.affectedEntities?.some((pe: any) => pe.id === ae.id)
-      )
+    .filter(
+      (p) =>
+        p.sourceEntityId === problem.sourceEntityId ||
+        p.ownerId === problem.ownerId ||
+        problem.affectedEntities?.some((ae: any) =>
+          p.affectedEntities?.some((pe: any) => pe.id === ae.id)
+        )
     )
     .slice(0, 5);
 
@@ -251,11 +275,15 @@ Provide:
 export async function getAiTriage(
   organizationId: string,
   laneId: string,
-  projectId?: string,
+  projectId?: string
 ): Promise<AiTriageResult> {
   const problems = await getManagerProblems(organizationId, laneId, projectId);
   if (problems.length === 0) {
-    return { clusters: [], topPriority: [], executiveSummary: 'No problems detected in this area.' };
+    return {
+      clusters: [],
+      topPriority: [],
+      executiveSummary: 'No problems detected in this area.',
+    };
   }
 
   const cap = Math.min(problems.length, 60);
@@ -295,7 +323,7 @@ Tasks:
 export async function getAiManageAll(
   organizationId: string,
   laneId: string,
-  projectId?: string,
+  projectId?: string
 ): Promise<AiManageAllResult> {
   const problems = await getManagerProblems(organizationId, laneId, projectId);
   if (problems.length === 0) {

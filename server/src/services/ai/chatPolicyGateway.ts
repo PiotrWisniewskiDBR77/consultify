@@ -103,13 +103,7 @@ export interface EvaluateChatPolicyArgs {
 // RETRIEVAL POLICY TYPES (single gateway)
 // ==========================================
 
-export type RetrievalConsumerClass =
-  | 'chat'
-  | 'teresa'
-  | 'anna'
-  | 'agent'
-  | 'worker'
-  | 'background';
+export type RetrievalConsumerClass = 'chat' | 'teresa' | 'anna' | 'agent' | 'worker' | 'background';
 
 export interface EvaluateRetrievalPolicyArgs {
   consumerClass: RetrievalConsumerClass;
@@ -178,7 +172,10 @@ function looksLikeCyberMisuse(message: string): boolean {
 
 function looksLikeSelfHarm(message: string): boolean {
   const m = String(message || '').toLowerCase();
-  return /\b(suicide|kill myself|self[-\s]?harm)\b/i.test(m) || /\b(jak się zabić|samobójstwo)\b/i.test(m);
+  return (
+    /\b(suicide|kill myself|self[-\s]?harm)\b/i.test(m) ||
+    /\b(jak się zabić|samobójstwo)\b/i.test(m)
+  );
 }
 
 function looksLikeHateOrHarassment(message: string): boolean {
@@ -249,10 +246,7 @@ function resolveScope(args: {
 // SOURCE LEDGER BUILDER
 // ==========================================
 
-function buildSourceLedger(
-  scopeResolution: ScopeResolution,
-  allowed: boolean
-): SourceLedger {
+function buildSourceLedger(scopeResolution: ScopeResolution, allowed: boolean): SourceLedger {
   if (!allowed) {
     return {
       type: 'source_ledger',
@@ -265,23 +259,18 @@ function buildSourceLedger(
     };
   }
 
-  const usedSources: SourceLedgerEntry[] = scopeResolution.allowedScopes.map(
-    (scope) => ({
-      category: scope,
-      reason: 'allowed_by_policy',
-    })
-  );
+  const usedSources: SourceLedgerEntry[] = scopeResolution.allowedScopes.map((scope) => ({
+    category: scope,
+    reason: 'allowed_by_policy',
+  }));
 
-  const blockedSources: SourceLedgerEntry[] =
-    scopeResolution.blockedScopes.map((b) => ({
-      category: b.category,
-      reason: b.reason,
-    }));
+  const blockedSources: SourceLedgerEntry[] = scopeResolution.blockedScopes.map((b) => ({
+    category: b.category,
+    reason: b.reason,
+  }));
 
   const degraded =
-    usedSources.length === 0
-      ? { mode: 'no_sources', reason: 'no_citations_collected' }
-      : null;
+    usedSources.length === 0 ? { mode: 'no_sources', reason: 'no_citations_collected' } : null;
 
   return {
     type: 'source_ledger',
@@ -355,20 +344,20 @@ function buildRefusal(lang: 'pl' | 'en', category: PolicyDecisionCategory) {
   if (category === 'prompt_injection') {
     return {
       userMessage:
-        'I can\'t comply with that request — it looks like an attempt to override safeguards or extract system instructions. I can still help in a safe way.',
+        "I can't comply with that request — it looks like an attempt to override safeguards or extract system instructions. I can still help in a safe way.",
       nextSteps: [
         'Tell me your goal without asking to reveal prompts/secrets.',
         'Paste the data you want analyzed (without sensitive information).',
-        'If you\'re debugging AI behavior, describe the symptom and expected result.',
+        "If you're debugging AI behavior, describe the symptom and expected result.",
       ],
     };
   }
   if (category === 'sensitive_data_request') {
     return {
       userMessage:
-        'I can\'t help with obtaining or revealing sensitive data (passwords, API keys, card details, etc.).',
+        "I can't help with obtaining or revealing sensitive data (passwords, API keys, card details, etc.).",
       nextSteps: [
-        'If your goal is security: describe what you\'re trying to protect.',
+        "If your goal is security: describe what you're trying to protect.",
         'I can help with key rotation policy, a security checklist, or incident response steps.',
         'For account access, use official reset/admin channels.',
       ],
@@ -377,7 +366,7 @@ function buildRefusal(lang: 'pl' | 'en', category: PolicyDecisionCategory) {
   if (category === 'cybersecurity_misuse') {
     return {
       userMessage:
-        'I can\'t help with instructions that enable hacking, bypassing security, or harmful actions.',
+        "I can't help with instructions that enable hacking, bypassing security, or harmful actions.",
       nextSteps: [
         'I can help with defensive security: hardening, monitoring, detection, response.',
         'Share your environment and defensive objective.',
@@ -387,7 +376,7 @@ function buildRefusal(lang: 'pl' | 'en', category: PolicyDecisionCategory) {
   if (category === 'self_harm') {
     return {
       userMessage:
-        'I\'m really sorry you\'re feeling this way. I can\'t help with self-harm instructions. If you\'re in immediate danger, please contact local emergency services or someone you trust right now.',
+        "I'm really sorry you're feeling this way. I can't help with self-harm instructions. If you're in immediate danger, please contact local emergency services or someone you trust right now.",
       nextSteps: [
         'If you tell me your country/city, I can help find immediate support options.',
         'If you want, I can help draft a short message to a friend, family member, or clinician.',
@@ -396,13 +385,13 @@ function buildRefusal(lang: 'pl' | 'en', category: PolicyDecisionCategory) {
   }
   if (category === 'hate_or_harassment') {
     return {
-      userMessage: 'I can\'t help with content promoting hate or violence against groups of people.',
+      userMessage: "I can't help with content promoting hate or violence against groups of people.",
       nextSteps: ['If you want, I can help with a neutral, educational framing.'],
     };
   }
   return {
-    userMessage: 'I can\'t comply with that request due to safety policy.',
-    nextSteps: ['Please rephrase your question and I\'ll help within safe bounds.'],
+    userMessage: "I can't comply with that request due to safety policy.",
+    nextSteps: ["Please rephrase your question and I'll help within safe bounds."],
   };
 }
 
@@ -570,11 +559,7 @@ export async function evaluateRetrievalPolicyDecision(
   let sanitizedQuery = query;
   let injectionBlocked = false;
   try {
-    const scan = await enterpriseSecurity.scanAndSanitize(
-      query,
-      args.userId,
-      args.organizationId
-    );
+    const scan = await enterpriseSecurity.scanAndSanitize(query, args.userId, args.organizationId);
     injectionBlocked = Boolean(scan?.blocked);
     if (scan?.sanitizedText) sanitizedQuery = String(scan.sanitizedText).trim();
   } catch (e: any) {
@@ -594,9 +579,7 @@ export async function evaluateRetrievalPolicyDecision(
   let { category, rationale } = safety;
 
   const STRUCTURAL = new Set(['forbidden_by_policy', 'tenant_boundary']);
-  const hasExtraRestrictions = scopeResolution.blockedScopes.some(
-    (b) => !STRUCTURAL.has(b.reason)
-  );
+  const hasExtraRestrictions = scopeResolution.blockedScopes.some((b) => !STRUCTURAL.has(b.reason));
 
   if (!safety.allowed) {
     outcome = 'refuse';

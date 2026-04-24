@@ -593,9 +593,11 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.SUPERADMIN_BULK_OPERATIONS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_FEEDBACK))
     return AppView.SUPERADMIN_FEEDBACK;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_INVOICES)) return AppView.SUPERADMIN_INVOICES;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_INVOICES))
+    return AppView.SUPERADMIN_INVOICES;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_BILLING)) return AppView.SUPERADMIN_BILLING;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL)) return AppView.SUPERADMIN_REVENUE;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMERCIAL))
+    return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_COMMUNICATION))
     return AppView.SUPERADMIN_COMMUNICATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CUSTOMERS_USERS)) return AppView.SUPERADMIN_USERS;
@@ -625,7 +627,8 @@ export function getAppViewFromPath(path: string): AppView | null {
     return AppView.SUPERADMIN_WHITELABEL;
   if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION_SETTINGS))
     return AppView.SUPERADMIN_SETTINGS;
-  if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION)) return AppView.SUPERADMIN_CONFIGURATION;
+  if (normalized.startsWith(ROUTES.SUPERADMIN.CONFIGURATION))
+    return AppView.SUPERADMIN_CONFIGURATION;
   if (normalized.startsWith(ROUTES.SUPERADMIN.REVENUE)) return AppView.SUPERADMIN_REVENUE;
   if (normalized.startsWith(ROUTES.SUPERADMIN.ANALYTICS)) return AppView.SUPERADMIN_ANALYTICS;
   if (normalized.startsWith(ROUTES.SUPERADMIN.VIRTUAL_WORKERS))

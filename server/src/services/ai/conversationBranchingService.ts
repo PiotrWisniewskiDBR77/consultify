@@ -36,11 +36,11 @@ class ConversationBranchingService {
   }): Promise<ConversationBranch> {
     const branchId = randomUUID();
 
-    const parentBranch = await dbGet(
+    const parentBranch = (await dbGet(
       `SELECT id FROM conversation_branches
        WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 1`,
       [input.conversationId]
-    ) as any;
+    )) as any;
 
     await dbRun(
       `INSERT INTO conversation_branches
@@ -88,7 +88,7 @@ class ConversationBranchingService {
   }
 
   async getBranchTree(conversationId: string): Promise<BranchTree> {
-    const branches = await dbAll(
+    const branches = (await dbAll(
       `SELECT b.*,
               (SELECT COUNT(*) FROM conversation_messages m
                JOIN conversations c ON c.id = m.conversation_id
@@ -97,7 +97,7 @@ class ConversationBranchingService {
        WHERE b.conversation_id = ?
        ORDER BY b.created_at`,
       [conversationId]
-    ).catch(() => []) as any[];
+    ).catch(() => [])) as any[];
 
     const mapped: ConversationBranch[] = (branches || []).map((b: any) => ({
       id: b.id,
@@ -126,20 +126,23 @@ class ConversationBranchingService {
     return { rootConversationId: conversationId, branches: mapped, depth };
   }
 
-  async compareBranches(branchId1: string, branchId2: string): Promise<{
+  async compareBranches(
+    branchId1: string,
+    branchId2: string
+  ): Promise<{
     branch1Messages: Array<{ role: string; content: string; createdAt: string }>;
     branch2Messages: Array<{ role: string; content: string; createdAt: string }>;
     divergencePoint: number;
   }> {
     const getMessages = async (branchId: string) => {
-      const rows = await dbAll(
+      const rows = (await dbAll(
         `SELECT m.role, m.content, m.created_at
          FROM conversation_messages m
          JOIN conversations c ON c.id = m.conversation_id
          WHERE c.branch_id = ?
          ORDER BY m.created_at`,
         [branchId]
-      ).catch(() => []) as any[];
+      ).catch(() => [])) as any[];
 
       return (rows || []).map((r: any) => ({
         role: r.role,
@@ -148,10 +151,7 @@ class ConversationBranchingService {
       }));
     };
 
-    const [msgs1, msgs2] = await Promise.all([
-      getMessages(branchId1),
-      getMessages(branchId2),
-    ]);
+    const [msgs1, msgs2] = await Promise.all([getMessages(branchId1), getMessages(branchId2)]);
 
     let divergence = 0;
     for (let i = 0; i < Math.min(msgs1.length, msgs2.length); i++) {

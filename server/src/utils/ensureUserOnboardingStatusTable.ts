@@ -7,7 +7,8 @@ export function ensureUserOnboardingStatusTable(db: {
 }) {
   if (!ensurePromise) {
     ensurePromise = db
-      .query(`
+      .query(
+        `
         CREATE TABLE IF NOT EXISTS user_onboarding_status (
           user_id TEXT PRIMARY KEY,
           terms_accepted BOOLEAN DEFAULT FALSE,
@@ -25,7 +26,8 @@ export function ensureUserOnboardingStatusTable(db: {
           completed_at TIMESTAMP NULL,
           updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-      `)
+      `
+      )
       .then(() => undefined)
       .catch((error) => {
         ensurePromise = null;

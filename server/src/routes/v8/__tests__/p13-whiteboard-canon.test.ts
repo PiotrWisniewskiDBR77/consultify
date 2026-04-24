@@ -8,6 +8,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  isFacilitationTerminal,
+  isValidFacilitationTransition,
+  isValidToolbeltAction,
   P13_ACCEPTANCE_CHECKLIST,
   P13_AI_COBUILDING_RULES,
   P13_ANTI_DUPLICATE_RULES,
@@ -21,9 +24,6 @@ import {
   P13_TOOLBELT,
   P13_TOOLBELT_RULES,
   P13_WHITEBOARD_NODE_KINDS,
-  isFacilitationTerminal,
-  isValidFacilitationTransition,
-  isValidToolbeltAction,
 } from '../../../services/v8/whiteboardCanon.js';
 
 describe('P13 Whiteboard Canon', () => {
@@ -36,8 +36,15 @@ describe('P13 Whiteboard Canon', () => {
 
     it('includes all required tools', () => {
       const required = [
-        'select', 'pan_zoom_fit', 'sticky', 'shape', 'text',
-        'group_ungroup', 'align_distribute', 'undo_redo', 'export',
+        'select',
+        'pan_zoom_fit',
+        'sticky',
+        'shape',
+        'text',
+        'group_ungroup',
+        'align_distribute',
+        'undo_redo',
+        'export',
       ];
       for (const tool of required) {
         expect(P13_TOOLBELT).toContain(tool);
@@ -246,7 +253,9 @@ describe('P13 Whiteboard Canon', () => {
     });
 
     it('prevents parallel collaboration layer', () => {
-      expect(P13_ANTI_DUPLICATE_RULES.noParallelCollaboration).toContain('toolCollaborationAdapter');
+      expect(P13_ANTI_DUPLICATE_RULES.noParallelCollaboration).toContain(
+        'toolCollaborationAdapter'
+      );
     });
 
     it('enforces single facilitation session', () => {
@@ -329,7 +338,9 @@ describe('P13 Whiteboard Canon', () => {
 
     it('lists infrastructure dependencies', () => {
       expect(P13_OWNERSHIP.infrastructure.length).toBeGreaterThanOrEqual(3);
-      expect(P13_OWNERSHIP.infrastructure.some((i) => i.includes('toolCollaborationAdapter'))).toBe(true);
+      expect(P13_OWNERSHIP.infrastructure.some((i) => i.includes('toolCollaborationAdapter'))).toBe(
+        true
+      );
     });
 
     it('includes Facilitation Engine as consumer', () => {

@@ -1,13 +1,4 @@
-import {
-  ArrowRight,
-  BookOpen,
-  FileText,
-  Gavel,
-  Search,
-  Shield,
-  Users,
-  Wallet,
-} from 'lucide-react';
+import { ArrowRight, BookOpen, FileText, Gavel, Search, Shield, Users, Wallet } from 'lucide-react';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
@@ -97,7 +88,10 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
   };
 
   return (
-    <section className={`relative py-24 md:py-32 overflow-hidden ${className}`} onMouseEnter={handleSectionView}>
+    <section
+      className={`relative py-24 md:py-32 overflow-hidden ${className}`}
+      onMouseEnter={handleSectionView}
+    >
       <div className="absolute inset-0 bg-[#0A0A1F]" />
       <div className="absolute top-[20%] right-[-5%] w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(109,40,217,0.10)_0%,transparent_65%)] blur-[80px]" />
       <div className="absolute bottom-[10%] left-[-5%] w-[400px] h-[400px] rounded-full bg-[radial-gradient(circle,rgba(6,182,212,0.06)_0%,transparent_65%)] blur-[90px]" />
@@ -172,9 +166,7 @@ export const DocumentationSection: React.FC<DocumentationSectionProps> = ({ clas
                   <IconComp size={18} className="text-white" />
                 </div>
 
-                <h3 className="text-sm font-bold text-white mb-1.5">
-                  {tp(card.titleKey)}
-                </h3>
+                <h3 className="text-sm font-bold text-white mb-1.5">{tp(card.titleKey)}</h3>
                 <p className="text-xs text-white/35 leading-relaxed mb-4 line-clamp-2">
                   {tp(card.descKey)}
                 </p>

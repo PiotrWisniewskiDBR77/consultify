@@ -149,7 +149,8 @@ export async function createRetrievalRequest(
     requestId,
     organizationId: validated.organizationId,
     contextSnapshotId: validated.contextSnapshotId ?? null,
-    retrievalScopeToken: (validated.retrievalScopeToken ?? null) as RetrievalRequest['retrievalScopeToken'],
+    retrievalScopeToken: (validated.retrievalScopeToken ??
+      null) as RetrievalRequest['retrievalScopeToken'],
     consumerClass: validated.consumerClass,
     query: validated.query,
     searchPreset: validated.searchPreset,

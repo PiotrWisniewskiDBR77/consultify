@@ -44,10 +44,7 @@ import { TrustPanel } from './TrustPanel';
 // Types
 // ============================================================================
 
-export type ExecutionMessageType =
-  | 'execution_proposal'
-  | 'execution_progress'
-  | 'execution_result';
+export type ExecutionMessageType = 'execution_proposal' | 'execution_progress' | 'execution_result';
 
 export interface ExecutionProposalMessageProps {
   msg: ChatMessage;
@@ -99,7 +96,9 @@ function extractProposalMetadata(msg: ChatMessage): ProposalMetadata {
   return {
     proposalId: (proposal?.proposalId || proposal?.id || raw.proposalId) as string | undefined,
     runId: (proposal?.runId || raw.runId) as string | undefined,
-    lifecycleState: (proposal?.lifecycleState || raw.lifecycleState) as V8LifecycleState | undefined,
+    lifecycleState: (proposal?.lifecycleState || raw.lifecycleState) as
+      | V8LifecycleState
+      | undefined,
     planSummary: (proposal?.planSummary || proposal?.summary || raw.planSummary) as
       | string
       | undefined,
@@ -287,8 +286,7 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
   const freshProposal = useProposalLifecycle(meta.proposalId);
   const effectiveLifecycleState: V8LifecycleState | undefined =
     freshProposal?.lifecycleState || meta.lifecycleState;
-  const effectiveRejectionReason =
-    freshProposal?.rejectionReason ?? meta.rejectionReason ?? null;
+  const effectiveRejectionReason = freshProposal?.rejectionReason ?? meta.rejectionReason ?? null;
 
   // V8 / Wave A7 (Gap #10 — Output trust as one contract).
   //
@@ -333,19 +331,13 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
       data-lifecycle-state={effectiveLifecycleState || undefined}
       data-message-type={messageType}
     >
-      <div
-        className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'}`}
-        dir={isRtl ? 'rtl' : 'ltr'}
-      >
+      <div className={`flex gap-2 ${isCompact ? 'gap-2' : 'gap-3'}`} dir={isRtl ? 'rtl' : 'ltr'}>
         {/* Avatar */}
         <div
           className={`${isCompact ? 'w-5 h-5' : 'w-6 h-6'} rounded-full flex items-center justify-center shrink-0 mt-0.5 border bg-primary-50 dark:bg-primary-900/50 border-primary-200 dark:border-primary-700`}
           aria-hidden="true"
         >
-          <Gavel
-            size={isCompact ? 12 : 14}
-            className="text-primary-600 dark:text-primary-400"
-          />
+          <Gavel size={isCompact ? 12 : 14} className="text-primary-600 dark:text-primary-400" />
         </div>
 
         <div className="flex flex-col max-w-[85%] w-full">
@@ -393,9 +385,7 @@ export const ExecutionProposalMessage: React.FC<ExecutionProposalMessageProps> =
 
             {/* Plan summary */}
             {planSummary && (
-              <div
-                className={`text-slate-700 dark:text-slate-200 whitespace-pre-wrap ${textSize}`}
-              >
+              <div className={`text-slate-700 dark:text-slate-200 whitespace-pre-wrap ${textSize}`}>
                 {planSummary}
               </div>
             )}

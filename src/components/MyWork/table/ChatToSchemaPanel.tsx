@@ -459,7 +459,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
         );
         setExecuted(true);
         onExecuted?.({
-          ...((result && typeof result === 'object') ? result : {}),
+          ...(result && typeof result === 'object' ? result : {}),
           type: 'table_proposal',
           proposalId: proposal.id,
           workspaceId,

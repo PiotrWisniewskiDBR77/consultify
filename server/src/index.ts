@@ -315,7 +315,8 @@ const databaseInitPromise: Promise<void> =
                   logger.warn('[Server] Database health check failed - schema may be incomplete');
                   await sendSystemAlert({
                     title: 'Database schema health degraded',
-                    message: 'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
+                    message:
+                      'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
                     severity: 'WARNING',
                     source: 'Database',
                     throttleKey: 'database_schema_health_failed',
@@ -1232,9 +1233,7 @@ if (startServer && shouldStartHttpServer) {
       const { startArtifactPruner } = await import('./services/feedbackArtifacts.js');
       const maxAgeDays = Number(process.env.FEEDBACK_ARTIFACTS_RETENTION_DAYS || 30);
       startArtifactPruner({ maxAgeDays });
-      logger.info(
-        `[Server] Feedback artifact pruner started (retention: ${maxAgeDays} days).`
-      );
+      logger.info(`[Server] Feedback artifact pruner started (retention: ${maxAgeDays} days).`);
     } catch (err: any) {
       logger.warn('[Server] Feedback artifact pruner not started:', err?.message);
     }

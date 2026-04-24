@@ -22,7 +22,12 @@ interface UseProcessFlowValidationOpts {
   autoValidate?: boolean;
 }
 
-export function useProcessFlowValidation({ processId, nodes, edges, autoValidate = true }: UseProcessFlowValidationOpts) {
+export function useProcessFlowValidation({
+  processId,
+  nodes,
+  edges,
+  autoValidate = true,
+}: UseProcessFlowValidationOpts) {
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>();
@@ -50,8 +55,12 @@ export function useProcessFlowValidation({ processId, nodes, edges, autoValidate
   useEffect(() => {
     if (!autoValidate || !processId) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { validate(); }, 500);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    debounceRef.current = setTimeout(() => {
+      validate();
+    }, 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [autoValidate, nodes, edges, processId, validate]);
 
   const issuesForObject = useCallback(

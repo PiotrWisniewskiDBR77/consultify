@@ -17,9 +17,9 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { useDemoSession } from '../../hooks/useDemoSession';
+import { Api } from '../../services/api';
 import { trackTourCompleted, trackUpgradeClick } from '../../services/demoAnalyticsService';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { DemoConversionCTA, type ValueMomentType } from './DemoConversionCTA';
 import { DemoLoadingOverlay } from './DemoLoadingOverlay';

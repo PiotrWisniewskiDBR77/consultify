@@ -562,7 +562,14 @@ export const V8ResultsApi = {
       payload
     ),
   getWorkflowSignals: () =>
-    v8Get<{ data: Array<{ signalId: string; kpiId: string; severity: string; description: string; createdAt: string; kpiName?: string }> }>(
-      '/results/workflow/signals'
-    ),
+    v8Get<{
+      data: Array<{
+        signalId: string;
+        kpiId: string;
+        severity: string;
+        description: string;
+        createdAt: string;
+        kpiName?: string;
+      }>;
+    }>('/results/workflow/signals'),
 };

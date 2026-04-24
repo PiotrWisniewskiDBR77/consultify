@@ -7,11 +7,11 @@ import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { AuthenticatedRequest, AuthenticatedUser as GlobalUser, UserRole } from '../types/index.js';
-import { DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
 const isProductionEnv = process.env.NODE_ENV === 'production';
@@ -229,7 +229,10 @@ const splitDisplayName = (name?: string): { firstName?: string; lastName?: strin
 };
 
 const READ_ONLY_IMPERSONATION_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-const READ_ONLY_IMPERSONATION_PATHS = new Set(['/api/auth/revert-impersonation', '/api/auth/logout']);
+const READ_ONLY_IMPERSONATION_PATHS = new Set([
+  '/api/auth/revert-impersonation',
+  '/api/auth/logout',
+]);
 
 /**
  * Attach user data to request
@@ -327,9 +330,7 @@ const trackSessionActivity = (req: AuthRequest, res: Response): void => {
   (async () => {
     try {
       const { activityColumn, hasIsActive } = await getUserSessionCompatibility();
-      const activeFilter = hasIsActive
-        ? `AND is_active = true`
-        : '';
+      const activeFilter = hasIsActive ? `AND is_active = true` : '';
       const session = await dbGet<{ id: string; is_active?: boolean | number | null }>(
         `SELECT id${hasIsActive ? ', is_active' : ''}
          FROM user_sessions
@@ -409,18 +410,19 @@ const checkTokenRevocation = async (
     if (isRevoked === undefined) {
       let inflight = _revokeInflight.get(decoded.jti);
       if (!inflight) {
-        inflight = dbGet<{ jti: string }>(
-          'SELECT jti FROM revoked_tokens WHERE jti = ?',
-          [decoded.jti]
-        ).then((row) => {
-          const revoked = !!row;
-          _revokeCache.set(decoded.jti!, { revoked, ts: Date.now() });
-          _revokeInflight.delete(decoded.jti!);
-          return revoked;
-        }).catch((err) => {
-          _revokeInflight.delete(decoded.jti!);
-          throw err;
-        });
+        inflight = dbGet<{ jti: string }>('SELECT jti FROM revoked_tokens WHERE jti = ?', [
+          decoded.jti,
+        ])
+          .then((row) => {
+            const revoked = !!row;
+            _revokeCache.set(decoded.jti!, { revoked, ts: Date.now() });
+            _revokeInflight.delete(decoded.jti!);
+            return revoked;
+          })
+          .catch((err) => {
+            _revokeInflight.delete(decoded.jti!);
+            throw err;
+          });
         _revokeInflight.set(decoded.jti, inflight);
       }
       isRevoked = await inflight;
@@ -439,15 +441,17 @@ const checkTokenRevocation = async (
         inflight = dbGet<{ jti: string }>(
           "SELECT jti FROM revoked_tokens WHERE user_id = ? AND reason = 'revoke-all' AND expires_at > NOW()",
           [decoded.id]
-        ).then((row) => {
-          const entry = { jti: row?.jti ?? null };
-          _revokeAllCache.set(decoded.id, { jti: entry.jti, ts: Date.now() });
-          _revokeAllInflight.delete(decoded.id);
-          return entry;
-        }).catch((err) => {
-          _revokeAllInflight.delete(decoded.id);
-          throw err;
-        });
+        )
+          .then((row) => {
+            const entry = { jti: row?.jti ?? null };
+            _revokeAllCache.set(decoded.id, { jti: entry.jti, ts: Date.now() });
+            _revokeAllInflight.delete(decoded.id);
+            return entry;
+          })
+          .catch((err) => {
+            _revokeAllInflight.delete(decoded.id);
+            throw err;
+          });
         _revokeAllInflight.set(decoded.id, inflight);
       }
       revokeAllEntry = await inflight;

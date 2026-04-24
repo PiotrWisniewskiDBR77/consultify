@@ -81,7 +81,11 @@ export function mapOrgRoleToChatRole(orgRole: string | undefined | null): ChatRo
 /**
  * Build a human-readable denial reason for a role/action combination.
  */
-function buildDenialReason(action: ChatAction, role: ChatRole, ctx: ChatPermissionContext = {}): string {
+function buildDenialReason(
+  action: ChatAction,
+  role: ChatRole,
+  ctx: ChatPermissionContext = {}
+): string {
   if (role === 'none') {
     return 'You are not a member of this organization.';
   }

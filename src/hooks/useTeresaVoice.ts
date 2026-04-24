@@ -87,7 +87,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
   useEffect(() => {
     const browserWindow = window as BrowserWindow;
     const hasAudioContext = !!(window.AudioContext || browserWindow.webkitAudioContext);
-    const hasGetUserMedia = !!(navigator.mediaDevices?.getUserMedia);
+    const hasGetUserMedia = !!navigator.mediaDevices?.getUserMedia;
     setVoiceAvailable(hasAudioContext && hasGetUserMedia && !!effectiveKey);
   }, [effectiveKey]);
 
@@ -102,24 +102,38 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     }
 
     activeSourcesRef.current.forEach((source) => {
-      try { source.stop(); } catch { /* already stopped */ }
+      try {
+        source.stop();
+      } catch {
+        /* already stopped */
+      }
     });
     activeSourcesRef.current = [];
     nextPlayTimeRef.current = 0;
 
     if (sessionRef.current) {
-      try { sessionRef.current.close(); } catch { /* already closed */ }
+      try {
+        sessionRef.current.close();
+      } catch {
+        /* already closed */
+      }
       sessionRef.current = null;
     }
 
     if (audioContextRef.current) {
-      try { await audioContextRef.current.close(); } catch { /* already closing */ }
+      try {
+        await audioContextRef.current.close();
+      } catch {
+        /* already closing */
+      }
       audioContextRef.current = null;
     }
   }, []);
 
   useEffect(() => {
-    return () => { void teardownVoice(); };
+    return () => {
+      void teardownVoice();
+    };
   }, [teardownVoice]);
 
   const startVoiceConversation = useCallback(async () => {
@@ -209,14 +223,20 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
 
             if (message.serverContent?.interrupted) {
               activeSourcesRef.current.forEach((s) => {
-                try { s.stop(); } catch { /* noop */ }
+                try {
+                  s.stop();
+                } catch {
+                  /* noop */
+                }
               });
               activeSourcesRef.current = [];
               nextPlayTimeRef.current = audioContext.currentTime;
             }
 
             const sc = message.serverContent as Record<string, unknown> | undefined;
-            const userTranscript = (sc?.inputTranscript ?? sc?.outputTranscript) as string | undefined;
+            const userTranscript = (sc?.inputTranscript ?? sc?.outputTranscript) as
+              | string
+              | undefined;
             if (userTranscript && onTranscriptRef.current) {
               onTranscriptRef.current(userTranscript);
             }
@@ -226,9 +246,8 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
               onModelAudioTextRef.current(textPart.text);
             }
 
-            const base64Audio = message.serverContent?.modelTurn?.parts?.find(
-              (p) => p.inlineData
-            )?.inlineData?.data;
+            const base64Audio = message.serverContent?.modelTurn?.parts?.find((p) => p.inlineData)
+              ?.inlineData?.data;
             if (!base64Audio) return;
 
             const binaryString = atob(base64Audio);
@@ -241,7 +260,7 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
             const audioBuffer = audioContext.createBuffer(
               1,
               pcm16.length,
-              TERESA_VOICE_CONFIG.sampleRateOutput,
+              TERESA_VOICE_CONFIG.sampleRateOutput
             );
             const channelData = audioBuffer.getChannelData(0);
             for (let i = 0; i < pcm16.length; i++) {
@@ -280,7 +299,11 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
 
       const session = await sessionPromise;
       if (attemptRef.current !== token) {
-        try { session.close(); } catch { /* noop */ }
+        try {
+          session.close();
+        } catch {
+          /* noop */
+        }
         return;
       }
       sessionRef.current = session;
@@ -306,31 +329,28 @@ export function useTeresaVoice(options: UseTeresaVoiceOptions): UseTeresaVoiceRe
     if (!stream) return;
     const tracks = stream.getAudioTracks();
     const nextMuted = !isMuted;
-    tracks.forEach((track) => { track.enabled = !nextMuted; });
+    tracks.forEach((track) => {
+      track.enabled = !nextMuted;
+    });
     setIsMuted(nextMuted);
   }, [isMuted]);
 
-  const sendTextHistory = useCallback(
-    (turns: Array<{ role: string; content: string }>) => {
-      const session = sessionRef.current;
-      if (!session || typeof session.sendClientContent !== 'function') return;
+  const sendTextHistory = useCallback((turns: Array<{ role: string; content: string }>) => {
+    const session = sessionRef.current;
+    if (!session || typeof session.sendClientContent !== 'function') return;
 
-      const geminiTurns = turns
-        .filter((t) => t.content.trim())
-        .slice(-TERESA_VOICE_CONFIG.maxHistoryTurns)
-        .map((t) => ({
-          role: t.role === 'assistant' || t.role === 'model' ? 'model' : 'user',
-          parts: [{ text: t.content.trim() }],
-        }));
+    const geminiTurns = turns
+      .filter((t) => t.content.trim())
+      .slice(-TERESA_VOICE_CONFIG.maxHistoryTurns)
+      .map((t) => ({
+        role: t.role === 'assistant' || t.role === 'model' ? 'model' : 'user',
+        parts: [{ text: t.content.trim() }],
+      }));
 
-      if (geminiTurns.length > 0) {
-        void Promise.resolve(
-          session.sendClientContent({ turns: geminiTurns, turnComplete: false }),
-        );
-      }
-    },
-    [],
-  );
+    if (geminiTurns.length > 0) {
+      void Promise.resolve(session.sendClientContent({ turns: geminiTurns, turnComplete: false }));
+    }
+  }, []);
 
   return {
     voiceStatus,

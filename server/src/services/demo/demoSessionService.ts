@@ -1,11 +1,11 @@
 import { DEMO_ORG_ID } from '../../middleware/demoGuard.middleware.js';
-import { get as dbGet, all as dbAll, run as dbRun } from '../../utils/DbPromise.js';
+import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
+import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
 import {
   deleteDemoDatasetForOrganization,
   getDemoDatasetStats,
   seedAtelierToysDemoDataset,
 } from './demoSeedService.js';
-import { type DemoLocale, normalizeDemoLocale } from './demoLocale.js';
 
 const DEMO_SESSION_DURATION_MS = 24 * 60 * 60 * 1000;
 const DEMO_PREF_SESSION_ID = 'demo:session_id';
@@ -60,11 +60,9 @@ async function requireUserPreferencesTable(): Promise<void> {
 
 async function upsertPreference(userId: string, key: string, value: string): Promise<void> {
   await requireUserPreferencesTable();
-  await dbRun(
-    `DELETE FROM user_preferences WHERE user_id = ? AND key = ?`,
-    [userId, key],
-    { fallback: true }
-  );
+  await dbRun(`DELETE FROM user_preferences WHERE user_id = ? AND key = ?`, [userId, key], {
+    fallback: true,
+  });
   await dbRun(
     `INSERT INTO user_preferences (user_id, key, value, updated_at)
      VALUES (?, ?, ?, ?)`,
@@ -152,7 +150,9 @@ async function expireDemoSession(session: DemoSessionRecord): Promise<void> {
     [nowIso(), session.id],
     { fallback: false }
   );
-  await dbRun(`DELETE FROM demo_session_tenants WHERE session_id = ?`, [session.id], { fallback: false });
+  await dbRun(`DELETE FROM demo_session_tenants WHERE session_id = ?`, [session.id], {
+    fallback: false,
+  });
 }
 
 async function persistSessionPreferences(session: DemoSessionRecord): Promise<void> {

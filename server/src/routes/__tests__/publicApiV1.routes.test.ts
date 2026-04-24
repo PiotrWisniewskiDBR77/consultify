@@ -125,4 +125,3 @@ describe('Public API v1 (PO1) - API key auth', () => {
     expect(res.body.yourPermissions).toEqual([]);
   });
 });
-

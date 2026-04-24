@@ -286,7 +286,12 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                 }
               } catch (err: any) {
                 if (err?.response?.data?.code === 'EXPORT_TOO_LARGE') {
-                  window.alert(t('aiChat.exportTooLarge', 'This conversation is too large for full export. Please use date filters.'));
+                  window.alert(
+                    t(
+                      'aiChat.exportTooLarge',
+                      'This conversation is too large for full export. Please use date filters.'
+                    )
+                  );
                 }
               }
             }}

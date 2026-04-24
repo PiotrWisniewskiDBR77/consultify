@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import {
   type ActionRow,
   type MetaPill,
@@ -13,6 +12,7 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 
 import type { FilterChip } from '../shared/ModuleHub/ActiveFilters';
@@ -21,7 +21,7 @@ import {
   type TableColumn,
   type TableRow,
 } from '../shared/ModuleHub/FilterableTable';
-import { TableWithPreviewLayout, type PreviewableItem } from '../shared/TableWithPreviewLayout';
+import { type PreviewableItem, TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import type { ResultsTrackedInitiative } from './kpiDomain';
 import { createResultsShowcaseGoals, shouldUseResultsShowcaseData } from './resultsShowcaseData';
 
@@ -265,7 +265,7 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
   }, [initiatives, items, selectedId]);
 
   const selectedItem = useMemo(
-    () => (selectedId ? items.find((item) => item.id === selectedId) ?? null : null),
+    () => (selectedId ? (items.find((item) => item.id === selectedId) ?? null) : null),
     [items, selectedId]
   );
 
@@ -296,7 +296,8 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
             <div>
               <div className="text-sm font-medium text-slate-900 dark:text-white">{item.title}</div>
               <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {formatGoalType(item.goalType)}{item.parentGoalId ? ' · child' : ''}
+                {formatGoalType(item.goalType)}
+                {item.parentGoalId ? ' · child' : ''}
               </div>
             </div>
           );
@@ -314,7 +315,11 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
         width: '16%',
         render: (row) => `${Math.round(Number(row.rollup || 0))}%`,
       },
-      { id: 'linkedInitiatives', label: t('results.tabs.initiatives', 'Initiatives'), width: '14%' },
+      {
+        id: 'linkedInitiatives',
+        label: t('results.tabs.initiatives', 'Initiatives'),
+        width: '14%',
+      },
       { id: 'status', label: t('common.status', 'Status'), width: '16%' },
     ],
     [t]
@@ -363,7 +368,9 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
 
       const goalId = created?.id;
       if (goalId && selectedInitiativeIds.length > 0) {
-        await Promise.all(selectedInitiativeIds.map((initiativeId) => Api.goalsLinkInitiative(goalId, initiativeId)));
+        await Promise.all(
+          selectedInitiativeIds.map((initiativeId) => Api.goalsLinkInitiative(goalId, initiativeId))
+        );
       }
 
       toast.success('Scorecard created');
@@ -442,7 +449,11 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
   const metaPills = (item: GoalItem): MetaPill[] => [
     { label: t('common.type', 'Type'), value: formatGoalType(item.goalType), tone: 'info' },
     { label: t('common.status', 'Status'), value: item.status, tone: 'neutral' },
-    { label: t('common.progress', 'Progress'), value: `${Math.round(item.progress)}%`, tone: 'success' },
+    {
+      label: t('common.progress', 'Progress'),
+      value: `${Math.round(item.progress)}%`,
+      tone: 'success',
+    },
   ];
 
   const relationItems = (item: GoalItem): RelationItem[] => [
@@ -462,7 +473,9 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
       id: `${item.id}-target`,
       label: t('common.target', 'Target'),
       value:
-        item.targetValue != null ? `${item.targetValue}${item.unit ? ` ${item.unit}` : ''}` : t('common.none', '—'),
+        item.targetValue != null
+          ? `${item.targetValue}${item.unit ? ` ${item.unit}` : ''}`
+          : t('common.none', '—'),
       icon: <Target size={14} />,
     },
   ];
@@ -474,27 +487,42 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {t('results.kpi.scorecards.total', 'Scorecards')}
           </div>
-          <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{stats.total}</div>
+          <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+            {stats.total}
+          </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('results.kpi.scorecards.totalHint', 'Managed goal and scorecard artifacts in Results.')}
+            {t(
+              'results.kpi.scorecards.totalHint',
+              'Managed goal and scorecard artifacts in Results.'
+            )}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {t('common.active', 'Active')}
           </div>
-          <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{stats.active}</div>
+          <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+            {stats.active}
+          </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('results.kpi.scorecards.activeHint', 'Scorecards currently tracking delivery or benefits.')}
+            {t(
+              'results.kpi.scorecards.activeHint',
+              'Scorecards currently tracking delivery or benefits.'
+            )}
           </div>
         </div>
         <div className="rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/90 dark:bg-white/[0.03] px-4 py-3">
           <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
             {t('results.kpi.scorecards.scorecardsOnly', 'Formal scorecards')}
           </div>
-          <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">{stats.scorecards}</div>
+          <div className="mt-1 text-xl font-semibold text-slate-900 dark:text-white">
+            {stats.scorecards}
+          </div>
           <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-            {t('results.kpi.scorecards.scorecardsOnlyHint', 'Explicit operator scorecards backed by goals API.')}
+            {t(
+              'results.kpi.scorecards.scorecardsOnlyHint',
+              'Explicit operator scorecards backed by goals API.'
+            )}
           </div>
         </div>
       </div>
@@ -527,7 +555,11 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {t('common.type', 'Type')}
               </span>
-              <select value={goalType} onChange={(event) => setGoalType(event.target.value)} className={INPUT_CLASS}>
+              <select
+                value={goalType}
+                onChange={(event) => setGoalType(event.target.value)}
+                className={INPUT_CLASS}
+              >
                 <option value="scorecard">Scorecard</option>
                 <option value="objective">Objective</option>
                 <option value="key_result">Key result</option>
@@ -537,7 +569,11 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {t('common.name', 'Name')}
               </span>
-              <input value={title} onChange={(event) => setTitle(event.target.value)} className={INPUT_CLASS} />
+              <input
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                className={INPUT_CLASS}
+              />
             </label>
             <label className="space-y-1.5 lg:col-span-2">
               <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
@@ -569,7 +605,11 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
                   onChange={(event) => setTargetValue(event.target.value)}
                   className={INPUT_CLASS}
                 />
-                <input value={unit} onChange={(event) => setUnit(event.target.value)} className={INPUT_CLASS} />
+                <input
+                  value={unit}
+                  onChange={(event) => setUnit(event.target.value)}
+                  className={INPUT_CLASS}
+                />
               </div>
             </label>
           </div>
@@ -581,7 +621,10 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
             <div className="mt-2 rounded-xl border border-slate-200/70 dark:border-white/[0.08] bg-white/80 dark:bg-white/[0.03] p-3 max-h-44 overflow-y-auto space-y-2">
               {initiativeOptions.length === 0 ? (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t('results.kpi.scorecards.noInitiatives', 'No initiatives available in current scope.')}
+                  {t(
+                    'results.kpi.scorecards.noInitiatives',
+                    'No initiatives available in current scope.'
+                  )}
                 </div>
               ) : (
                 initiativeOptions.map((initiative) => (
@@ -596,7 +639,9 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
                       className="mt-0.5 rounded border-slate-300 dark:border-white/[0.1]"
                     />
                     <span className="min-w-0">
-                      <span className="block text-sm text-slate-700 dark:text-slate-200">{initiative.label}</span>
+                      <span className="block text-sm text-slate-700 dark:text-slate-200">
+                        {initiative.label}
+                      </span>
                       <span className="block text-xs text-slate-500 dark:text-slate-400">
                         {initiative.sublabel}
                       </span>
@@ -637,7 +682,13 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
           <div className="space-y-4">
             <PreviewMetaCard
               title={item.title}
-              subtitle={item.description || t('results.kpi.scorecards.previewSubtitle', 'Governed scorecard built on KPI truth.')}
+              subtitle={
+                item.description ||
+                t(
+                  'results.kpi.scorecards.previewSubtitle',
+                  'Governed scorecard built on KPI truth.'
+                )
+              }
               metaPills={metaPills(item)}
             />
             <PreviewDetailsSection
@@ -676,7 +727,9 @@ export const ResultsKpiScorecardsView: React.FC<ResultsKpiScorecardsViewProps> =
           activeFilters={activeFilters}
           onFilterChange={onFilterChange}
           emptyMessage={
-            loading ? t('common.loading', 'Loading...') : t('results.kpi.scorecards.empty', 'No scorecards yet.')
+            loading
+              ? t('common.loading', 'Loading...')
+              : t('results.kpi.scorecards.empty', 'No scorecards yet.')
           }
           hideRowActions
         />

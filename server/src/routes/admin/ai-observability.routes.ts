@@ -30,8 +30,7 @@ router.get(
     const defaultFrom = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const defaultTo = now.toISOString();
 
-    const orgId =
-      (organization_id as string) || req.user?.organizationId || null;
+    const orgId = (organization_id as string) || req.user?.organizationId || null;
 
     const metrics = await aiObservabilityService.getMetrics(
       orgId,
@@ -55,8 +54,7 @@ router.get(
     const defaultFrom = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
     const defaultTo = now.toISOString();
 
-    const orgId =
-      (organization_id as string) || req.user?.organizationId || null;
+    const orgId = (organization_id as string) || req.user?.organizationId || null;
 
     const metrics = await aiObservabilityService.getMetrics(
       orgId,
