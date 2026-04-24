@@ -10,6 +10,7 @@
 
 import {
   BookOpen,
+  Brain,
   Briefcase,
   Calculator,
   CheckCircle2,
