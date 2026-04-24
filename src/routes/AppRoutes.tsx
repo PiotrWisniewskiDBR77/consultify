@@ -167,9 +167,6 @@ const SuperAdminView = React.lazy(() =>
 );
 
 // AI Chat (canonical full-screen surface)
-const AIChatWelcomeView = React.lazy(() =>
-  import('@/views/AIChatWelcomeView').then((m) => ({ default: m.AIChatWelcomeView }))
-);
 const UnifiedChatPanelView = React.lazy(() =>
   import('@/components/AIChat/UnifiedChatPanel').then((m) => ({ default: m.UnifiedChatPanel }))
 );
@@ -1080,7 +1077,7 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <UnifiedChatPanelView />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
