@@ -1,8 +1,11 @@
 name: Railway Deploy
 
+permissions:
+  contents: read
+
 on:
   push:
-    branches: [develop, feat/ai-chat-v9]
+    branches: [develop]
     paths:
       - 'src/**'
       - 'server/**'
@@ -12,6 +15,7 @@ on:
       - 'railway*.json'
       - 'infrastructure/**'
       - 'scripts/deploy-gate.sh'
+      - 'scripts/validate-deploy-target.sh'
       - '.github/workflows/railway-deploy.yml'
   workflow_dispatch:
     inputs:
@@ -36,20 +40,26 @@ concurrency:
 jobs:
   deploy-staging:
     name: Deploy Staging
-    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/feat/ai-chat-v9'))
+    if: github.event_name == 'push' || (github.event.inputs.environment == 'staging' && github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
     container: ghcr.io/railwayapp/cli:latest
     environment: staging
+    permissions:
+      contents: write
     env:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_STAGING_TOKEN }}
       PROJECT_ID: ${{ vars.RAILWAY_STAGING_PROJECT_ID }}
       TARGET_ENVIRONMENT: ${{ vars.RAILWAY_STAGING_ENVIRONMENT }}
-      APP_SERVICE: ${{ vars.RAILWAY_STAGING_APP_SERVICE }}
-      SECONDARY_SERVICE: ${{ vars.RAILWAY_STAGING_SECONDARY_SERVICE }}
+      # Backwards-compatible naming: APP_SERVICE/SECONDARY_SERVICE are canonical,
+      # *_BACKEND_SERVICE/*_FRONTEND_SERVICE are legacy docs aliases.
+      APP_SERVICE: ${{ vars.RAILWAY_STAGING_APP_SERVICE || vars.RAILWAY_STAGING_BACKEND_SERVICE }}
+      SECONDARY_SERVICE: ${{ vars.RAILWAY_STAGING_SECONDARY_SERVICE || vars.RAILWAY_STAGING_FRONTEND_SERVICE }}
       API_HEALTH_URL: ${{ vars.STAGING_API_HEALTH_URL }}
       FRONTEND_URL: ${{ vars.STAGING_FRONTEND_URL }}
     steps:
       - uses: actions/checkout@v5.0.1
+        with:
+          fetch-depth: 1
 
       - name: Validate staging configuration
         run: |
@@ -57,6 +67,14 @@ jobs:
           test -n "$PROJECT_ID"
           test -n "$TARGET_ENVIRONMENT"
           test -n "$APP_SERVICE"
+
+      - name: Validate staging target mapping
+        env:
+          DEPLOY_ENVIRONMENT: staging
+          GIT_REF: ${{ github.ref }}
+        run: |
+          chmod +x scripts/validate-deploy-target.sh
+          bash scripts/validate-deploy-target.sh
 
       - name: Deploy app to staging
         run: |
@@ -136,6 +154,15 @@ jobs:
             fetch_url "$FRONTEND_URL"
           fi
 
+      - name: Record successful staging SHA (tag)
+        env:
+          STAGING_TAG: staging-deployed
+        run: |
+          apk add --no-cache git >/dev/null
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git tag -f "$STAGING_TAG" "$GITHUB_SHA"
+          git push origin -f "refs/tags/$STAGING_TAG"
+
   deploy-production:
     name: Deploy Production
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && github.event.inputs.environment == 'production' && github.event.inputs.confirm_production == 'yes'
@@ -146,8 +173,8 @@ jobs:
       RAILWAY_TOKEN: ${{ secrets.RAILWAY_PRODUCTION_TOKEN }}
       PROJECT_ID: ${{ vars.RAILWAY_PRODUCTION_PROJECT_ID }}
       TARGET_ENVIRONMENT: ${{ vars.RAILWAY_PRODUCTION_ENVIRONMENT }}
-      APP_SERVICE: ${{ vars.RAILWAY_PRODUCTION_APP_SERVICE }}
-      SECONDARY_SERVICE: ${{ vars.RAILWAY_PRODUCTION_SECONDARY_SERVICE }}
+      APP_SERVICE: ${{ vars.RAILWAY_PRODUCTION_APP_SERVICE || vars.RAILWAY_PRODUCTION_BACKEND_SERVICE }}
+      SECONDARY_SERVICE: ${{ vars.RAILWAY_PRODUCTION_SECONDARY_SERVICE || vars.RAILWAY_PRODUCTION_FRONTEND_SERVICE }}
       API_HEALTH_URL: ${{ vars.PRODUCTION_API_HEALTH_URL }}
       FRONTEND_URL: ${{ vars.PRODUCTION_FRONTEND_URL }}
     steps:
@@ -159,6 +186,40 @@ jobs:
           test -n "$PROJECT_ID"
           test -n "$TARGET_ENVIRONMENT"
           test -n "$APP_SERVICE"
+
+      - name: Verify promotion source (must match last staging deploy)
+        env:
+          STAGING_TAG: staging-deployed
+        run: |
+          apk add --no-cache git >/dev/null
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --tags origin
+          if ! git show-ref --verify --quiet "refs/tags/$STAGING_TAG"; then
+            echo "Missing required staging tag '$STAGING_TAG'. Deploy to staging first." >&2
+            exit 1
+          fi
+          tag_sha="$(git rev-parse "refs/tags/$STAGING_TAG")"
+          if [ "$tag_sha" != "$GITHUB_SHA" ]; then
+            echo "Production deploy blocked: $GITHUB_SHA is not the last staged revision ($STAGING_TAG=$tag_sha)." >&2
+            echo "Deploy this SHA to staging (develop) and try again." >&2
+            exit 1
+          fi
+
+      - name: Deploy gate (quality checks)
+        run: |
+          # Needed for npm + build tooling inside the railway CLI container.
+          apk add --no-cache nodejs npm git python3 make g++ >/dev/null
+          npm ci
+          chmod +x scripts/deploy-gate.sh
+          bash scripts/deploy-gate.sh
+
+      - name: Validate production target mapping
+        env:
+          DEPLOY_ENVIRONMENT: production
+          GIT_REF: ${{ github.ref }}
+        run: |
+          chmod +x scripts/validate-deploy-target.sh
+          bash scripts/validate-deploy-target.sh
 
       - name: Deploy app to production
         run: |
