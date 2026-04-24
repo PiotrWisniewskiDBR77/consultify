@@ -686,7 +686,8 @@ export const AnnaAssistantWidget: React.FC<AnnaAssistantWidgetProps> = ({
     typeof window !== 'undefined' &&
     (window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1' ||
-      window.location.hostname.startsWith('stage.'));
+      window.location.hostname.startsWith('stage.') ||
+      window.location.hostname.startsWith('staging.'));
   const resolvedLanguage = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language);
   const lang: AnnaUiLanguage =
     resolvedLanguage === 'pl' ||
