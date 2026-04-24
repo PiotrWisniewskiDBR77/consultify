@@ -11,6 +11,7 @@ import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
 
 import { RouterSync } from './components/RouterSync';
+import { EnvironmentBadge } from './components/layout/EnvironmentBadge';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
 import { LoadingScreen } from './components/ui/LoadingScreen';
 import { AppProviders } from './providers/AppProviders';
@@ -213,6 +214,7 @@ function AppContent() {
       <ImpersonationBanner />
       {/* Single source of truth for URL ↔ State sync */}
       <RouterSync />
+      <EnvironmentBadge />
       <Routes>
         <Route path="/invite/:token" element={<InviteRouteWrapper />} />
         <Route
