@@ -32,7 +32,7 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { SubscriptionAnalytics } from '../../components/billing';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
-import { safeMoney, safeNumber } from '../../utils/safeFormat';
+import { EMPTY_VALUE, safeDate, safeMoney, safeNumber, safePercent } from '../../utils/safeFormat';
 import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
@@ -58,10 +58,131 @@ interface RevenueStats {
 }
 
 interface UsageStats {
-  totalTokensThisMonth: number;
-  totalStorageGB: number;
-  activeOrganizations: number;
+  totalTokensThisMonth?: number | null;
+  totalStorageGB?: number | null;
+  activeOrganizations?: number | null;
 }
+
+const normalizeRevenueStats = (payload: any): RevenueStats | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  const planDistribution = Array.isArray(source.planDistribution)
+    ? source.planDistribution.map((plan: any) => ({
+        name: plan.name ?? plan.plan ?? plan.plan_name ?? EMPTY_VALUE,
+        price_monthly: safeNumber(plan.price_monthly ?? plan.price ?? plan.monthlyPrice, 0),
+        count: safeNumber(plan.count ?? plan.subscribers ?? plan.subscriber_count, 0),
+      }))
+    : [];
+  return {
+    mrr: safeNumber(source.mrr, Number.NaN),
+    arr: safeNumber(source.arr, Number.NaN),
+    activeSubscriptions: safeNumber(source.activeSubscriptions, Number.NaN),
+    planDistribution,
+  };
+};
+
+const normalizeUsageStats = (payload: any): UsageStats | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  return {
+    totalTokensThisMonth: safeNumber(source.totalTokensThisMonth, Number.NaN),
+    totalStorageGB:
+      source.totalStorageGB === null ? null : safeNumber(source.totalStorageGB, Number.NaN),
+    activeOrganizations: safeNumber(source.activeOrganizations, Number.NaN),
+  };
+};
+
+const normalizeOperationalCosts = (payload: any): { items: any[]; totalCost: number } | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  const items = Array.isArray(source.items)
+    ? source.items
+    : Array.isArray(source.costs)
+      ? source.costs
+      : [];
+  return {
+    items,
+    totalCost: safeNumber(source.totalCost, Number.NaN),
+  };
+};
+
+const normalizePlansPayload = (payload: any) => {
+  const source = payload?.data ?? payload;
+  const plans = Array.isArray(source) ? source : Array.isArray(source?.plans) ? source.plans : [];
+  return {
+    plans: plans.map((plan: any) => ({
+      ...plan,
+      price_monthly: safeNumber(plan.price_monthly ?? plan.priceMonthly, 0),
+      token_limit: safeNumber(
+        plan.token_limit ?? plan.limits?.token_limit ?? plan.limits?.maxTotalTokens,
+        Number.NaN
+      ),
+      storage_limit_gb: safeNumber(
+        plan.storage_limit_gb ?? plan.limits?.storage_limit_gb ?? plan.limits?.maxStorageGb,
+        Number.NaN
+      ),
+      token_overage_rate: safeNumber(
+        plan.token_overage_rate ?? plan.limits?.token_overage_rate,
+        Number.NaN
+      ),
+      storage_overage_rate: safeNumber(
+        plan.storage_overage_rate ?? plan.limits?.storage_overage_rate,
+        Number.NaN
+      ),
+      is_active:
+        plan.is_active === undefined
+          ? plan.isActive === false
+            ? 0
+            : 1
+          : safeNumber(plan.is_active, 0),
+    })),
+    notConfigured: source?.type === 'not_configured',
+  };
+};
+
+const parseFeatureList = (features: any): string[] => {
+  if (Array.isArray(features)) return features.map(String).filter(Boolean);
+  if (typeof features !== 'string' || !features.trim()) return [];
+  try {
+    const parsed = JSON.parse(features);
+    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+    if (parsed && typeof parsed === 'object') {
+      return Object.entries(parsed)
+        .filter(([, enabled]) => Boolean(enabled))
+        .map(([feature]) => feature);
+    }
+  } catch {
+    return features
+      .split('\n')
+      .map((feature) => feature.trim())
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const buildOrganizationPlanPayload = (formData: any) => ({
+  name: String(formData.name || '').trim(),
+  priceMonthly: safeNumber(formData.price_monthly, 0),
+  priceYearly: safeNumber(formData.price_yearly, 0),
+  currency: formData.currency || 'USD',
+  features: parseFeatureList(formData.features),
+  limits: {
+    token_limit: safeNumber(formData.token_limit, 0),
+    maxTotalTokens: safeNumber(formData.token_limit, 0),
+    storage_limit_gb: safeNumber(formData.storage_limit_gb, 0),
+    maxStorageGb: safeNumber(formData.storage_limit_gb, 0),
+    token_overage_rate: safeNumber(formData.token_overage_rate, 0),
+    storage_overage_rate: safeNumber(formData.storage_overage_rate, 0),
+    stripe_price_id: formData.stripe_price_id || null,
+  },
+  isActive: formData.is_active === undefined ? true : Boolean(formData.is_active),
+});
+
+const formatCompactNumber = (value: unknown) => {
+  const parsed = safeNumber(value, Number.NaN);
+  if (!Number.isFinite(parsed)) return EMPTY_VALUE;
+  return parsed.toLocaleString();
+};
 
 const OverviewTab: React.FC = () => {
   const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
@@ -80,37 +201,45 @@ const OverviewTab: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     setWarning(null);
+    const warnings: string[] = [];
     try {
       const [revenue, usage, costs] = await Promise.all([
-        Api.get('/billing/admin/revenue'),
-        Api.get('/billing/admin/usage'),
+        Api.get('/billing/admin/revenue').catch((error) => {
+          console.warn('[BillingCenterView] Revenue metrics unavailable', error);
+          warnings.push('Revenue metrics are temporarily unavailable.');
+          return null;
+        }),
+        Api.get('/billing/admin/usage').catch((error) => {
+          console.warn('[BillingCenterView] Usage metrics unavailable', error);
+          warnings.push('Usage metrics are temporarily unavailable.');
+          return null;
+        }),
         Api.get('/billing/admin/operational-costs').catch((error) => {
           console.warn('[BillingCenterView] Operational costs unavailable', error);
-          setWarning('Operational cost metrics are temporarily unavailable.');
-          return { items: [], totalCost: 0, degraded: true };
+          warnings.push('Operational cost metrics are temporarily unavailable.');
+          return null;
         }),
       ]);
-      setRevenueStats(revenue);
-      setUsageStats(usage);
-      setOperationalCosts(costs);
+      setRevenueStats(normalizeRevenueStats(revenue));
+      setUsageStats(normalizeUsageStats(usage));
+      setOperationalCosts(normalizeOperationalCosts(costs));
+      setWarning(warnings.length > 0 ? warnings.join(' ') : null);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      setRevenueStats(null);
+      setUsageStats(null);
+      setOperationalCosts(null);
+      setWarning('Billing metrics are temporarily unavailable.');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: unknown) => safeMoney(amount, 'USD', { fallback: EMPTY_VALUE });
 
-  const formatNumber = (num: number) => {
-    const value = safeNumber(num);
+  const formatNumber = (num: unknown) => {
+    const value = safeNumber(num, Number.NaN);
+    if (!Number.isFinite(value)) return EMPTY_VALUE;
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
     return value.toString();
@@ -126,11 +255,15 @@ const OverviewTab: React.FC = () => {
 
   const totalPlanSubscriptions =
     revenueStats?.planDistribution.reduce((sum, p) => sum + p.count, 0) || 0;
-  const grossProfit = (revenueStats?.mrr || 0) - (operationalCosts?.totalCost || 0);
+  const grossProfit =
+    Number.isFinite(safeNumber(revenueStats?.mrr, Number.NaN)) &&
+    Number.isFinite(safeNumber(operationalCosts?.totalCost, Number.NaN))
+      ? safeNumber(revenueStats?.mrr) - safeNumber(operationalCosts?.totalCost)
+      : Number.NaN;
 
   return (
     <div className="space-y-6">
-      {warning && <DegradedState title="Operational cost metrics degraded" description={warning} />}
+      {warning && <DegradedState title="Billing metrics degraded" description={warning} />}
 
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -141,7 +274,7 @@ const OverviewTab: React.FC = () => {
               <ArrowUpRight className="w-3 h-3" /> MRR
             </span>
           </div>
-          <p className="text-3xl font-bold mt-3">{formatCurrency(revenueStats?.mrr || 0)}</p>
+          <p className="text-3xl font-bold mt-3">{formatCurrency(revenueStats?.mrr)}</p>
           <p className="text-emerald-100 text-xs mt-1">Monthly Recurring Revenue</p>
         </div>
 
@@ -152,7 +285,7 @@ const OverviewTab: React.FC = () => {
               <ArrowUpRight className="w-3 h-3" /> ARR
             </span>
           </div>
-          <p className="text-3xl font-bold mt-3">{formatCurrency(revenueStats?.arr || 0)}</p>
+          <p className="text-3xl font-bold mt-3">{formatCurrency(revenueStats?.arr)}</p>
           <p className="text-blue-100 text-xs mt-1">Annual Recurring Revenue</p>
         </div>
 
@@ -161,7 +294,9 @@ const OverviewTab: React.FC = () => {
             <Users className="w-7 h-7 opacity-80" />
             <span className="text-xs text-purple-100">Active</span>
           </div>
-          <p className="text-3xl font-bold mt-3">{revenueStats?.activeSubscriptions || 0}</p>
+          <p className="text-3xl font-bold mt-3">
+            {formatNumber(revenueStats?.activeSubscriptions)}
+          </p>
           <p className="text-purple-100 text-xs mt-1">Active Subscriptions</p>
         </div>
 
@@ -171,7 +306,7 @@ const OverviewTab: React.FC = () => {
             <span className="text-xs text-orange-100">This Month</span>
           </div>
           <p className="text-3xl font-bold mt-3">
-            {formatNumber(usageStats?.totalTokensThisMonth || 0)}
+            {formatNumber(usageStats?.totalTokensThisMonth)}
           </p>
           <p className="text-orange-100 text-xs mt-1">Tokens Consumed</p>
         </div>
@@ -205,7 +340,7 @@ const OverviewTab: React.FC = () => {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-900 dark:text-slate-200">{plan.name}</span>
                     <span className="text-slate-500 dark:text-slate-400">
-                      {plan.count} ({percentage}%)
+                      {formatNumber(plan.count)} ({safePercent(plan.count, totalPlanSubscriptions)})
                     </span>
                   </div>
                   <div className="h-2 bg-slate-100 dark:bg-navy-950 rounded-full overflow-hidden">
@@ -237,7 +372,7 @@ const OverviewTab: React.FC = () => {
             <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">Total Tokens</p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {formatNumber(usageStats?.totalTokensThisMonth || 0)}
+                {formatNumber(usageStats?.totalTokensThisMonth)}
               </p>
               <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">This month</p>
             </div>
@@ -245,7 +380,9 @@ const OverviewTab: React.FC = () => {
             <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">Storage Used</p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {(usageStats?.totalStorageGB || 0).toFixed(2)} GB
+                {Number.isFinite(safeNumber(usageStats?.totalStorageGB, Number.NaN))
+                  ? `${safeNumber(usageStats?.totalStorageGB).toFixed(2)} GB`
+                  : EMPTY_VALUE}
               </p>
               <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">Across all orgs</p>
             </div>
@@ -253,7 +390,7 @@ const OverviewTab: React.FC = () => {
             <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">Active Orgs</p>
               <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">
-                {usageStats?.activeOrganizations || 0}
+                {formatNumber(usageStats?.activeOrganizations)}
               </p>
               <p className="text-[10px] text-slate-600 dark:text-slate-400 mt-1">With usage</p>
             </div>
@@ -261,7 +398,13 @@ const OverviewTab: React.FC = () => {
             <div className="bg-slate-50 dark:bg-navy-950 rounded-lg p-4">
               <p className="text-xs text-slate-500 dark:text-slate-400">Gross Profit</p>
               <p
-                className={`text-2xl font-bold mt-1 ${grossProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}
+                className={`text-2xl font-bold mt-1 ${
+                  Number.isFinite(grossProfit)
+                    ? grossProfit >= 0
+                      ? 'text-emerald-400'
+                      : 'text-red-400'
+                    : 'text-slate-400'
+                }`}
               >
                 {formatCurrency(grossProfit)}
               </p>
@@ -295,9 +438,14 @@ const OverviewTab: React.FC = () => {
                   <td className="py-3 text-slate-400 dark:text-slate-500">
                     {formatCurrency(plan.price_monthly)}/mo
                   </td>
-                  <td className="py-3 text-slate-400 dark:text-slate-500">{plan.count}</td>
+                  <td className="py-3 text-slate-400 dark:text-slate-500">
+                    {formatNumber(plan.count)}
+                  </td>
                   <td className="py-3 text-right font-semibold text-emerald-400">
-                    {formatCurrency(plan.price_monthly * plan.count)}
+                    {formatCurrency(
+                      safeNumber(plan.price_monthly, Number.NaN) *
+                        safeNumber(plan.count, Number.NaN)
+                    )}
                   </td>
                 </tr>
               ))}
@@ -420,20 +568,30 @@ const PlansTab: React.FC = () => {
   const fetchPlans = async () => {
     setLoading(true);
     setNotice(null);
+    const notices: string[] = [];
     try {
       const [orgData, userData] = await Promise.all([
-        Api.get('/billing/admin/plans'),
-        Api.get('/billing/admin/user-plans'),
+        Api.get('/billing/admin/plans').catch((error) => {
+          console.warn('[BillingCenterView] Organization plans unavailable', error);
+          notices.push('Organization plans are temporarily unavailable.');
+          return null;
+        }),
+        Api.get('/billing/admin/user-plans').catch((error) => {
+          console.warn('[BillingCenterView] User plans unavailable', error);
+          notices.push('User license plans are not configured for this environment.');
+          return null;
+        }),
       ]);
-      const orgPayload = orgData?.data ?? orgData;
-      const userPayload = userData?.data ?? userData;
-      setOrgPlans(Array.isArray(orgPayload?.plans) ? orgPayload.plans : []);
-      setUserPlans(Array.isArray(userPayload?.plans) ? userPayload.plans : []);
-      if (orgPayload?.type === 'not_configured' || userPayload?.type === 'not_configured') {
-        setNotice(
+      const orgPayload = normalizePlansPayload(orgData);
+      const userPayload = normalizePlansPayload(userData);
+      setOrgPlans(orgPayload.plans);
+      setUserPlans(userPayload.plans);
+      if (orgPayload.notConfigured || userPayload.notConfigured) {
+        notices.push(
           'Some billing plan surfaces are not configured yet and are shown in degraded mode.'
         );
       }
+      setNotice(notices.length > 0 ? notices.join(' ') : null);
     } catch (error) {
       console.error('Failed to fetch plans:', error);
       setOrgPlans([]);
@@ -445,22 +603,31 @@ const PlansTab: React.FC = () => {
   };
 
   const handleSave = async () => {
+    const activeForm = planType === 'organization' ? orgFormData : userFormData;
+    if (!String(activeForm.name || '').trim()) {
+      toast.error('Plan name is required');
+      return;
+    }
+    if (
+      !Number.isFinite(safeNumber(activeForm.price_monthly, Number.NaN)) ||
+      safeNumber(activeForm.price_monthly) < 0
+    ) {
+      toast.error('Plan price must be a non-negative number');
+      return;
+    }
     setSaving(true);
     try {
       if (planType === 'organization') {
         const endpoint = '/billing/admin/plans';
+        const payload = buildOrganizationPlanPayload(orgFormData);
         if (editingId) {
-          await Api.put(`${endpoint}/${editingId}`, orgFormData);
+          await Api.put(`${endpoint}/${editingId}`, payload);
         } else {
-          await Api.post(endpoint, orgFormData);
+          await Api.post(endpoint, payload);
         }
       } else {
-        const endpoint = '/billing/admin/user-plans';
-        if (editingId) {
-          await Api.put(`${endpoint}/${editingId}`, userFormData);
-        } else {
-          await Api.post(endpoint, userFormData);
-        }
+        toast.error('User license plans are not configured for this environment');
+        return;
       }
       await fetchPlans();
       resetForm();
@@ -474,6 +641,10 @@ const PlansTab: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (planType === 'user') {
+      toast.error('User license plans are not configured for this environment');
+      return;
+    }
     if (!confirm('Are you sure you want to deactivate this plan?')) return;
     try {
       const endpoint =
@@ -669,8 +840,17 @@ const PlanForm: React.FC<{
       </label>
       <input
         type="number"
-        value={formData.price_monthly || 0}
-        onChange={(e) => setFormData({ ...formData, price_monthly: parseFloat(e.target.value) })}
+        value={
+          Number.isFinite(safeNumber(formData.price_monthly, Number.NaN))
+            ? formData.price_monthly
+            : ''
+        }
+        onChange={(e) =>
+          setFormData({
+            ...formData,
+            price_monthly: e.target.value === '' ? '' : Number(e.target.value),
+          })
+        }
         className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
       />
     </div>
@@ -684,8 +864,17 @@ const PlanForm: React.FC<{
             </label>
             <input
               type="number"
-              value={formData.token_limit || 0}
-              onChange={(e) => setFormData({ ...formData, token_limit: parseInt(e.target.value) })}
+              value={
+                Number.isFinite(safeNumber(formData.token_limit, Number.NaN))
+                  ? formData.token_limit
+                  : ''
+              }
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  token_limit: e.target.value === '' ? '' : Number(e.target.value),
+                })
+              }
               className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
             />
           </div>
@@ -695,9 +884,16 @@ const PlanForm: React.FC<{
             </label>
             <input
               type="number"
-              value={formData.storage_limit_gb || 0}
+              value={
+                Number.isFinite(safeNumber(formData.storage_limit_gb, Number.NaN))
+                  ? formData.storage_limit_gb
+                  : ''
+              }
               onChange={(e) =>
-                setFormData({ ...formData, storage_limit_gb: parseFloat(e.target.value) })
+                setFormData({
+                  ...formData,
+                  storage_limit_gb: e.target.value === '' ? '' : Number(e.target.value),
+                })
               }
               className="w-full bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm focus:border-blue-500 outline-none"
             />
@@ -778,7 +974,9 @@ const PlanCard: React.FC<{
 
     <h3 className="text-xl font-bold text-slate-900 dark:text-white">{plan.name}</h3>
     <div className="mt-2 flex items-baseline gap-1">
-      <span className="text-3xl font-bold text-blue-400">${plan.price_monthly}</span>
+      <span className="text-3xl font-bold text-blue-400">
+        {safeMoney(plan.price_monthly, 'USD')}
+      </span>
       <span className="text-slate-500 dark:text-slate-400">/mo</span>
     </div>
 
@@ -786,11 +984,13 @@ const PlanCard: React.FC<{
       <div className="mt-4 space-y-2 text-sm text-slate-400 dark:text-slate-500">
         <div className="flex items-center gap-2">
           <Database className="w-4 h-4" />
-          {(plan.token_limit || 0).toLocaleString()} tokens
+          {formatCompactNumber(plan.token_limit)} tokens
         </div>
         <div className="flex items-center gap-2">
           <Package className="w-4 h-4" />
-          {plan.storage_limit_gb || 0} GB storage
+          {Number.isFinite(safeNumber(plan.storage_limit_gb, Number.NaN))
+            ? `${safeNumber(plan.storage_limit_gb)} GB storage`
+            : `${EMPTY_VALUE} storage`}
         </div>
       </div>
     )}
@@ -1040,10 +1240,10 @@ const TransactionsTab: React.FC = () => {
                   className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
                 >
                   <td className="py-4 px-6 text-slate-500 dark:text-slate-400 text-sm">
-                    {tx.created_at ? new Date(tx.created_at).toLocaleString() : '-'}
+                    {safeDate(tx.created_at)}
                   </td>
                   <td className="py-4 px-6 text-slate-900 dark:text-white font-medium text-sm">
-                    {tx.organization_name || tx.organization_id?.slice(0, 8) || '-'}
+                    {tx.organization_name || tx.organization_id?.slice(0, 8) || EMPTY_VALUE}
                   </td>
                   <td className="py-4 px-6">
                     <span
@@ -1053,21 +1253,28 @@ const TransactionsTab: React.FC = () => {
                     </span>
                   </td>
                   <td className="py-4 px-6 text-slate-400 dark:text-slate-500 text-sm max-w-xs truncate">
-                    {tx.description || '-'}
+                    {tx.description || EMPTY_VALUE}
                   </td>
                   <td className="py-4 px-6 text-right">
-                    {tx.amount_usd ? (
-                      <span className={tx.amount_usd > 0 ? 'text-emerald-400' : 'text-red-400'}>
-                        {tx.amount_usd > 0 ? '+' : ''}${tx.amount_usd.toFixed(2)}
+                    {Number.isFinite(safeNumber(tx.amount_usd, Number.NaN)) ? (
+                      <span
+                        className={
+                          safeNumber(tx.amount_usd) > 0 ? 'text-emerald-400' : 'text-red-400'
+                        }
+                      >
+                        {safeNumber(tx.amount_usd) > 0 ? '+' : ''}
+                        {safeMoney(tx.amount_usd, 'USD')}
                       </span>
                     ) : (
-                      <span className="text-slate-600 dark:text-slate-400">-</span>
+                      <span className="text-slate-600 dark:text-slate-400">{EMPTY_VALUE}</span>
                     )}
                   </td>
                   <td className="py-4 px-6 text-right font-mono text-sm">
-                    <span className={tx.tokens > 0 ? 'text-emerald-400' : 'text-red-400'}>
-                      {tx.tokens > 0 ? '+' : ''}
-                      {(tx.tokens || 0).toLocaleString()}
+                    <span
+                      className={safeNumber(tx.tokens) > 0 ? 'text-emerald-400' : 'text-red-400'}
+                    >
+                      {safeNumber(tx.tokens) > 0 ? '+' : ''}
+                      {formatNumber(tx.tokens)}
                     </span>
                   </td>
                 </tr>
@@ -1340,7 +1547,7 @@ const ContractsTab: React.FC = () => {
                 </div>
                 <div className="text-right text-xs text-slate-500 dark:text-slate-400">
                   <p>{contract.external_invoice_ref || 'No invoice ref'}</p>
-                  <p className="mt-1">{contract.updated_at || ''}</p>
+                  <p className="mt-1">{safeDate(contract.updated_at)}</p>
                 </div>
               </div>
             ))}

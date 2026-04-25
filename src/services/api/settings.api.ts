@@ -95,6 +95,24 @@ type AIPrivacyPreferences = {
   anonymizeExports: boolean;
 };
 
+type RegionalPreferences = {
+  timezone: string;
+  units: 'metric' | 'imperial';
+  currency: string;
+  numberFormat: 'en-US' | 'de-DE' | 'pl-PL' | 'fr-FR';
+  dateFormat: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD' | 'DD.MM.YYYY';
+  timeFormat: '12h' | '24h';
+  firstDayOfWeek: 'monday' | 'sunday';
+};
+
+type AIMemoryPreferences = {
+  enabled: boolean;
+  retentionDays: number;
+  includeConversations: boolean;
+  includePreferences: boolean;
+  includeContext: boolean;
+};
+
 export interface PromptLibraryItem {
   id: string;
   name: string;
@@ -349,6 +367,47 @@ export const SettingsApi = {
       '/settings/preferences/ai-voice',
       { preferences },
       'Failed to save AI voice preferences'
+    );
+  },
+
+  getRegionalPreferences: async (): Promise<{ preferences: Partial<RegionalPreferences> }> => {
+    return apiGet<{ preferences: Partial<RegionalPreferences> }>(
+      '/settings/preferences/regional',
+      'Failed to fetch regional preferences'
+    );
+  },
+
+  updateRegionalPreferences: async (
+    preferences: RegionalPreferences
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/preferences/regional',
+      { preferences },
+      'Failed to save regional preferences'
+    );
+  },
+
+  getAIMemoryPreferences: async (): Promise<{ preferences: AIMemoryPreferences }> => {
+    return apiGet<{ preferences: AIMemoryPreferences }>(
+      '/settings/preferences/ai-memory',
+      'Failed to fetch AI memory preferences'
+    );
+  },
+
+  updateAIMemoryPreferences: async (
+    preferences: AIMemoryPreferences
+  ): Promise<{ success: boolean }> => {
+    return apiPut<{ success: boolean }>(
+      '/settings/preferences/ai-memory',
+      { preferences },
+      'Failed to save AI memory preferences'
+    );
+  },
+
+  clearAIMemoryPreferences: async (): Promise<{ success: boolean }> => {
+    return apiDelete<{ success: boolean }>(
+      '/settings/preferences/ai-memory/clear',
+      'Failed to clear AI memory'
     );
   },
 

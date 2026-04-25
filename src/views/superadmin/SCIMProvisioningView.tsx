@@ -110,11 +110,15 @@ const SCIMProvisioningView: React.FC = () => {
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [newMapping, setNewMapping] = useState({
     externalGroupId: '',
     externalGroupName: '',
     internalRole: 'member',
   });
+
+  const getErrorMessage = (error: unknown, fallback: string) =>
+    error instanceof Error ? error.message : fallback;
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -149,11 +153,13 @@ const SCIMProvisioningView: React.FC = () => {
 
   // Enable SCIM
   const handleEnableSCIM = async () => {
+    setActionError(null);
     try {
       await api.post('/scim/admin/service-provider', { isActive: true });
       fetchData();
     } catch (error) {
       console.error('[SCIM] Enable error:', error);
+      setActionError(getErrorMessage(error, 'Failed to enable SCIM service provider'));
     }
   };
 
@@ -161,12 +167,14 @@ const SCIMProvisioningView: React.FC = () => {
   const handleGenerateToken = async () => {
     if (!newToken.name) return;
 
+    setActionError(null);
     try {
       const response = await api.post('/scim/admin/tokens', newToken);
       setGeneratedToken(response.data.data.token);
       setTokens([...tokens, response.data.data]);
     } catch (error) {
       console.error('[SCIM] Generate token error:', error);
+      setActionError(getErrorMessage(error, 'Failed to generate SCIM token'));
     }
   };
 
@@ -175,11 +183,13 @@ const SCIMProvisioningView: React.FC = () => {
     if (!confirm('Are you sure you want to revoke this token? This action cannot be undone.'))
       return;
 
+    setActionError(null);
     try {
       await api.delete(`/scim/admin/tokens/${tokenId}`);
       setTokens(tokens.filter((t) => t.id !== tokenId));
     } catch (error) {
       console.error('[SCIM] Revoke token error:', error);
+      setActionError(getErrorMessage(error, 'Failed to revoke SCIM token'));
     }
   };
 
@@ -187,6 +197,7 @@ const SCIMProvisioningView: React.FC = () => {
   const handleCreateMapping = async () => {
     if (!newMapping.externalGroupId || !newMapping.externalGroupName) return;
 
+    setActionError(null);
     try {
       const response = await api.post('/scim/admin/group-mappings', newMapping);
       fetchData();
@@ -194,6 +205,7 @@ const SCIMProvisioningView: React.FC = () => {
       setNewMapping({ externalGroupId: '', externalGroupName: '', internalRole: 'member' });
     } catch (error) {
       console.error('[SCIM] Create mapping error:', error);
+      setActionError(getErrorMessage(error, 'Failed to create SCIM group mapping'));
     }
   };
 
@@ -201,22 +213,26 @@ const SCIMProvisioningView: React.FC = () => {
   const handleDeleteMapping = async (mappingId: string) => {
     if (!confirm('Delete this group mapping?')) return;
 
+    setActionError(null);
     try {
       await api.delete(`/scim/admin/group-mappings/${mappingId}`);
       setGroupMappings(groupMappings.filter((m) => m.id !== mappingId));
     } catch (error) {
       console.error('[SCIM] Delete mapping error:', error);
+      setActionError(getErrorMessage(error, 'Failed to delete SCIM group mapping'));
     }
   };
 
   // Trigger Full Sync
   const handleTriggerSync = async () => {
+    setActionError(null);
     setSyncing(true);
     try {
       await api.post('/scim/admin/sync', {});
       fetchData();
     } catch (error) {
       console.error('[SCIM] Sync error:', error);
+      setActionError(getErrorMessage(error, 'Failed to trigger SCIM sync'));
     } finally {
       setSyncing(false);
     }
@@ -227,6 +243,7 @@ const SCIMProvisioningView: React.FC = () => {
     conflictId: string,
     resolution: 'merge' | 'skip' | 'overwrite'
   ) => {
+    setActionError(null);
     try {
       await api.post(`/scim/admin/conflicts/${conflictId}/resolve`, { resolution });
       setConflicts(
@@ -236,6 +253,7 @@ const SCIMProvisioningView: React.FC = () => {
       );
     } catch (error) {
       console.error('[SCIM] Resolve conflict error:', error);
+      setActionError(getErrorMessage(error, 'Failed to resolve SCIM conflict'));
     }
   };
 
@@ -1043,6 +1061,19 @@ const SCIMProvisioningView: React.FC = () => {
       </div>
 
       {/* Content */}
+      {actionError && !loadError && (
+        <div className="mb-4 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
+          <div className="flex items-start justify-between gap-3">
+            <span>{actionError}</span>
+            <button
+              onClick={() => setActionError(null)}
+              className="font-medium hover:text-amber-900 dark:hover:text-amber-200"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="animate-spin text-violet-500" size={32} />

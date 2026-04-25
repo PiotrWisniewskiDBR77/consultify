@@ -76,7 +76,10 @@ export const AIMemorySettings: React.FC<{ className?: string }> = ({ className =
     setSaving(true);
     try {
       await Api.saveAIMemory(preferences);
-      setOriginalPreferences(preferences);
+      const response = await Api.getAIMemory();
+      const persisted = { ...defaultPreferences, ...response.preferences };
+      setPreferences(persisted);
+      setOriginalPreferences(persisted);
       toast.success(t('settings.ai.memorySaved', 'AI memory settings saved'));
     } catch {
       toast.error(t('settings.ai.memoryError', 'Failed to save memory settings'));

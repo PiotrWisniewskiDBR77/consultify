@@ -343,15 +343,10 @@ export const ComplianceCenterView: React.FC = () => {
   ).length;
   const activeAudits = audits.filter((a) => a.status === 'in_progress').length;
 
-  const handleEditControl = (control: any) => {
-    setEditControlForm({
-      name: control.title || control.name || '',
-      description: control.description || '',
-      status: 'pending',
-      category: control.category || '',
-      priority: 'medium',
-    });
-    setEditControlModal({ open: true, control });
+  const handleEditControl = (_control: any) => {
+    showNotice(
+      'Control editing is unavailable: framework requirements are read-only until control persistence is connected.'
+    );
   };
 
   const handleSaveControl = async () => {
@@ -747,6 +742,10 @@ export const ComplianceCenterView: React.FC = () => {
           </div>
 
           <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+            <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+              Framework requirements are read-only here. Persisted DSAR, audit and processing
+              records remain editable through their dedicated flows.
+            </div>
             <table className="w-full">
               <thead>
                 <tr className="border-b border-slate-200 dark:border-navy-700">
@@ -795,7 +794,8 @@ export const ComplianceCenterView: React.FC = () => {
                     <td className="px-6 py-4 text-right">
                       <button
                         onClick={() => handleEditControl(req)}
-                        className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                        className="p-2 cursor-not-allowed opacity-60 rounded-lg"
+                        title="Control editing unavailable until persisted controls are connected"
                       >
                         <Edit size={16} className="text-slate-400 dark:text-slate-500" />
                       </button>

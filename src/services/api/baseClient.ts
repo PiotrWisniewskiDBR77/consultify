@@ -125,6 +125,7 @@ export const handleResponse = async <T = unknown>(
   })();
 
   const data = parsed.kind === 'json' ? parsed.json : {};
+  const errorInput = parsed.kind === 'json' ? data : parsed.kind === 'text' ? parsed.text : {};
 
   // Check for Demo Block
   if (
@@ -155,7 +156,7 @@ export const handleResponse = async <T = unknown>(
   }
 
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-  const message = normalizeApiErrorMessage(data, fallbackHttp || defaultError);
+  const message = normalizeApiErrorMessage(errorInput, fallbackHttp || defaultError);
 
   const err: any = new Error(message);
   err.status = res.status;

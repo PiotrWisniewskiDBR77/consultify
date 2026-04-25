@@ -1,12 +1,8 @@
 import {
   AlertCircle,
   Check,
-  ChevronDown,
-  ChevronRight,
   Clock,
   Database,
-  Eye,
-  EyeOff,
   FileText,
   HardDrive,
   Mail,
@@ -23,9 +19,11 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
-import { User } from '../../types';
+import { User, UserRole } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { isSuperAdminRole } from '../../utils/roleGuards';
 import { SuperAdminStorageDetailModal } from './SuperAdminStorageDetailModal';
 
@@ -43,9 +41,14 @@ export const SystemSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('GENERAL');
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [savingSettingKey, setSavingSettingKey] = useState<string | null>(null);
 
   // Admin Management State
   const [admins, setAdmins] = useState<User[]>([]);
+  const [adminsLoading, setAdminsLoading] = useState(false);
+  const [adminsLoadError, setAdminsLoadError] = useState<string | null>(null);
+  const [savingAdmin, setSavingAdmin] = useState(false);
   const [showAddAdmin, setShowAddAdmin] = useState(false);
   const [newAdmin, setNewAdmin] = useState({
     email: '',
@@ -65,7 +68,6 @@ export const SystemSettings: React.FC = () => {
   const [auditHasMore, setAuditHasMore] = useState(true);
 
   // Database State (Advanced)
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [tables, setTables] = useState<string[]>([]);
   const [selectedTable, setSelectedTable] = useState<string>('');
   const [tableRows, setTableRows] = useState<any[]>([]);
@@ -82,23 +84,32 @@ export const SystemSettings: React.FC = () => {
   const fetchSettings = async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const data = await Api.getSystemSettings();
       setSettings(data || {});
     } catch (err) {
       console.error('[SystemSettings] fetchSettings error:', err);
       if (activeTab === 'ADVANCED') return;
-      toast.error('Failed to load settings');
+      const message = normalizeApiErrorMessage(err, 'Failed to load settings');
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
   const fetchAdmins = async () => {
+    setAdminsLoading(true);
     try {
+      setAdminsLoadError(null);
       const users = await Api.getSuperAdminUsers();
       setAdmins(users.filter((u) => isSuperAdminRole(u.role) && u.status === 'active'));
-    } catch (_) {
-      toast.error('Failed to load admins');
+    } catch (err) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load admins');
+      setAdminsLoadError(message);
+      toast.error(message);
+    } finally {
+      setAdminsLoading(false);
     }
   };
 
@@ -107,7 +118,7 @@ export const SystemSettings: React.FC = () => {
       const data = await Api.adminGetStorageStats();
       setStorageStats(data);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to load storage stats');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to load storage stats'));
     }
   };
 
@@ -117,7 +128,7 @@ export const SystemSettings: React.FC = () => {
       setAuditLogs(data);
       setAuditHasMore(data.length >= limit);
     } catch (err) {
-      toast.error('Failed to load audit logs');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to load audit logs'));
     }
   };
 
@@ -129,7 +140,7 @@ export const SystemSettings: React.FC = () => {
         setSelectedTable(data[0]);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Failed to load tables');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to load tables'));
     }
   };
 
@@ -138,7 +149,7 @@ export const SystemSettings: React.FC = () => {
       const data = await Api.adminGetTableRows(tableName);
       setTableRows(data);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to load rows');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to load rows'));
     }
   };
 
@@ -158,25 +169,35 @@ export const SystemSettings: React.FC = () => {
   };
 
   const handleSaveSetting = async (key: string, value: string) => {
+    setSavingSettingKey(key);
     try {
-      await Api.saveSetting(key, value);
-      setSettings((prev) => ({ ...prev, [key]: value }));
+      await Api.saveSetting(key, value ?? '');
+      await fetchSettings();
       toast.success('Setting saved');
-    } catch (_) {
-      toast.error('Failed to save setting');
+    } catch (err) {
+      toast.error(normalizeApiErrorMessage(err, 'Failed to save setting'));
+    } finally {
+      setSavingSettingKey(null);
     }
   };
 
   const handleCreateAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSavingAdmin(true);
     try {
-      await Api.createSuperAdminUser(newAdmin);
+      await Api.createSuperAdminUser({
+        ...newAdmin,
+        role: UserRole.SUPERADMIN,
+        status: 'active',
+      });
       toast.success('Super Admin created');
       setShowAddAdmin(false);
       setNewAdmin({ email: '', password: '', firstName: '', lastName: '' });
-      fetchAdmins();
+      await fetchAdmins();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to create admin');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to create admin'));
+    } finally {
+      setSavingAdmin(false);
     }
   };
 
@@ -192,11 +213,13 @@ export const SystemSettings: React.FC = () => {
     try {
       await Api.deleteSuperAdminUser(id);
       toast.success('Admin removed');
-      fetchAdmins();
-    } catch (_) {
-      toast.error('Failed to remove admin');
+      await fetchAdmins();
+    } catch (err) {
+      toast.error(normalizeApiErrorMessage(err, 'Failed to remove admin'));
     }
   };
+
+  const isSavingSetting = (key: string) => savingSettingKey === key;
 
   const renderTabs = () => (
     <div className="flex items-center gap-1 mb-8 overflow-x-auto pb-2 border-b border-slate-200 dark:border-white/[0.04]">
@@ -304,7 +327,8 @@ export const SystemSettings: React.FC = () => {
               />
               <button
                 onClick={() => handleSaveSetting('app_name', settings['app_name'])}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+                disabled={isSavingSetting('app_name')}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-60"
               >
                 <Save size={16} />
               </button>
@@ -318,6 +342,7 @@ export const SystemSettings: React.FC = () => {
               <select
                 value={settings['default_language'] || 'EN'}
                 onChange={(e) => handleSaveSetting('default_language', e.target.value)}
+                disabled={isSavingSetting('default_language')}
                 className="flex-1 px-3.5 py-2.5 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-white/[0.06] rounded-lg text-slate-900 dark:text-slate-200 text-sm focus:border-primary-500/50 focus:outline-none"
               >
                 <option value="EN">English</option>
@@ -346,6 +371,7 @@ export const SystemSettings: React.FC = () => {
               className="sr-only peer"
               checked={settings['maintenance_mode'] === 'true'}
               onChange={(e) => handleSaveSetting('maintenance_mode', String(e.target.checked))}
+              disabled={isSavingSetting('maintenance_mode')}
             />
             <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
           </label>
@@ -374,7 +400,8 @@ export const SystemSettings: React.FC = () => {
               onClick={() =>
                 handleSaveSetting('system_announcement', settings['system_announcement'])
               }
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+              disabled={isSavingSetting('system_announcement')}
+              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
             >
               <Save size={18} />
             </button>
@@ -404,6 +431,7 @@ export const SystemSettings: React.FC = () => {
                 className="sr-only peer"
                 checked={settings['enforce_mfa'] === 'true'}
                 onChange={(e) => handleSaveSetting('enforce_mfa', String(e.target.checked))}
+                disabled={isSavingSetting('enforce_mfa')}
               />
               <div className="w-11 h-6 bg-slate-200 dark:bg-navy-900 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
@@ -426,7 +454,8 @@ export const SystemSettings: React.FC = () => {
                 onClick={() =>
                   handleSaveSetting('session_timeout_mins', settings['session_timeout_mins'])
                 }
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                disabled={isSavingSetting('session_timeout_mins')}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
               >
                 <Save size={18} />
               </button>
@@ -458,7 +487,8 @@ export const SystemSettings: React.FC = () => {
               />
               <button
                 onClick={() => handleSaveSetting('smtp_host', settings['smtp_host'])}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                disabled={isSavingSetting('smtp_host')}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
               >
                 <Save size={18} />
               </button>
@@ -479,7 +509,8 @@ export const SystemSettings: React.FC = () => {
                 />
                 <button
                   onClick={() => handleSaveSetting('smtp_port', settings['smtp_port'])}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                  disabled={isSavingSetting('smtp_port')}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
                 >
                   <Save size={18} />
                 </button>
@@ -499,7 +530,8 @@ export const SystemSettings: React.FC = () => {
                 />
                 <button
                   onClick={() => handleSaveSetting('smtp_from', settings['smtp_from'])}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                  disabled={isSavingSetting('smtp_from')}
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
                 >
                   <Save size={18} />
                 </button>
@@ -534,7 +566,8 @@ export const SystemSettings: React.FC = () => {
               />
               <button
                 onClick={() => handleSaveSetting('legal_tos_url', settings['legal_tos_url'])}
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                disabled={isSavingSetting('legal_tos_url')}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
               >
                 <Save size={18} />
               </button>
@@ -558,7 +591,8 @@ export const SystemSettings: React.FC = () => {
                 onClick={() =>
                   handleSaveSetting('legal_privacy_url', settings['legal_privacy_url'])
                 }
-                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                disabled={isSavingSetting('legal_privacy_url')}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-60"
               >
                 <Save size={18} />
               </button>
@@ -577,11 +611,18 @@ export const SystemSettings: React.FC = () => {
         </h3>
         <button
           onClick={() => setShowAddAdmin(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+          disabled={adminsLoading || savingAdmin}
+          className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors disabled:opacity-60"
         >
           <Plus size={16} /> Add Super Admin
         </button>
       </div>
+
+      {adminsLoadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {adminsLoadError}
+        </div>
+      )}
 
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden">
         <table className="w-full text-left border-collapse">
@@ -595,41 +636,56 @@ export const SystemSettings: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 dark:divide-white/5 text-sm">
-            {admins.map((admin) => (
-              <tr
-                key={admin.id}
-                className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
-              >
-                <td className="p-4 font-medium text-slate-900 dark:text-slate-100">
-                  {admin.firstName} {admin.lastName}
-                </td>
-                <td className="p-4 text-slate-700 dark:text-slate-300">{admin.email}</td>
-                <td className="p-4">
-                  <span
-                    className={`flex items-center gap-1.5 ${
-                      admin.status === 'active'
-                        ? 'text-emerald-700 dark:text-emerald-400'
-                        : 'text-red-700 dark:text-red-400'
-                    }`}
-                  >
-                    {admin.status === 'active' ? <Check size={14} /> : <AlertCircle size={14} />}
-                    {admin.status}
-                  </span>
-                </td>
-                <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                  {admin.lastLogin ? new Date(admin.lastLogin).toLocaleString() : 'Never'}
-                </td>
-                <td className="p-4 text-right">
-                  <button
-                    onClick={() => handleDeleteAdmin(admin.id)}
-                    className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors"
-                    title="Remove Admin"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+            {adminsLoading ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                  Loading admins...
                 </td>
               </tr>
-            ))}
+            ) : admins.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
+                  No active super administrators found.
+                </td>
+              </tr>
+            ) : (
+              admins.map((admin) => (
+                <tr
+                  key={admin.id}
+                  className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
+                >
+                  <td className="p-4 font-medium text-slate-900 dark:text-slate-100">
+                    {admin.firstName} {admin.lastName}
+                  </td>
+                  <td className="p-4 text-slate-700 dark:text-slate-300">{admin.email}</td>
+                  <td className="p-4">
+                    <span
+                      className={`flex items-center gap-1.5 ${
+                        admin.status === 'active'
+                          ? 'text-emerald-700 dark:text-emerald-400'
+                          : 'text-red-700 dark:text-red-400'
+                      }`}
+                    >
+                      {admin.status === 'active' ? <Check size={14} /> : <AlertCircle size={14} />}
+                      {admin.status}
+                    </span>
+                  </td>
+                  <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
+                    {admin.lastLogin ? new Date(admin.lastLogin).toLocaleString() : 'Never'}
+                  </td>
+                  <td className="p-4 text-right">
+                    <button
+                      onClick={() => handleDeleteAdmin(admin.id)}
+                      disabled={savingAdmin}
+                      className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors disabled:opacity-60"
+                      title="Remove Admin"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
@@ -692,15 +748,17 @@ export const SystemSettings: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowAddAdmin(false)}
-                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-300 transition-colors"
+                  disabled={savingAdmin}
+                  className="flex-1 py-2 bg-transparent border border-white/10 hover:bg-slate-50 dark:hover:bg-navy-800/20 rounded text-slate-300 transition-colors disabled:opacity-60"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium transition-colors"
+                  disabled={savingAdmin}
+                  className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-medium transition-colors disabled:opacity-60"
                 >
-                  Create Admin
+                  {savingAdmin ? 'Creating...' : 'Create Admin'}
                 </button>
               </div>
             </form>
@@ -933,6 +991,10 @@ export const SystemSettings: React.FC = () => {
     return (
       <div className="space-y-6">
         {/* Warning Banner */}
+        <ReadOnlyState
+          title="Database viewer is read-only"
+          description="This surface can inspect selected tables only. Inline edits and destructive actions are intentionally unavailable here."
+        />
         <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
           <AlertCircle className="text-red-400 shrink-0 mt-0.5" size={20} />
           <div>
@@ -1048,14 +1110,21 @@ export const SystemSettings: React.FC = () => {
           />
           <button
             onClick={fetchSettings}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 border border-slate-200 dark:border-white/10 rounded-lg text-sm transition-colors text-slate-900 dark:text-slate-100"
+            disabled={loading}
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-navy-800 hover:bg-slate-50 dark:hover:bg-navy-700 border border-slate-200 dark:border-white/10 rounded-lg text-sm transition-colors text-slate-900 dark:text-slate-100 disabled:opacity-60"
           >
-            <RefreshCw size={16} /> Refresh
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} /> Refresh
           </button>
         </div>
       </div>
 
       {renderTabs()}
+
+      {loadError && (
+        <div className="mb-6 rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
 
       {loading && activeTab !== 'STORAGE' && activeTab !== 'AUDIT' && activeTab !== 'ADVANCED' ? (
         <div className="text-slate-500 dark:text-slate-400">Loading settings...</div>

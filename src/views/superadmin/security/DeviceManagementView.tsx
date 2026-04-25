@@ -14,6 +14,8 @@ export const DeviceManagementView: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const blockUnavailableMessage =
+    'Device blocking is unavailable: the backend only exposes read-only device inventory in this environment.';
 
   useEffect(() => {
     fetchUsers();
@@ -50,15 +52,8 @@ export const DeviceManagementView: React.FC = () => {
     }
   };
 
-  const handleBlockDevice = async (deviceId: string, reason: string) => {
-    if (!confirm('Block this device?')) return;
-    try {
-      await Api.blockDevice(deviceId, reason);
-      toast.success('Device blocked');
-      fetchDevices();
-    } catch (err) {
-      toast.error('Failed to block device');
-    }
+  const handleBlockDevice = (_deviceId: string, _reason: string) => {
+    toast.error(blockUnavailableMessage);
   };
 
   return (
@@ -88,6 +83,9 @@ export const DeviceManagementView: React.FC = () => {
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
       ) : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+          <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+            Device inventory is read-only. Blocking requires a configured device management backend.
+          </div>
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
               <tr>
@@ -163,8 +161,9 @@ export const DeviceManagementView: React.FC = () => {
                       {!device.is_blocked && (
                         <button
                           onClick={() => handleBlockDevice(device.id, 'Admin action')}
-                          className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                          title="Block device"
+                          disabled
+                          className="text-slate-400 cursor-not-allowed opacity-60"
+                          title={blockUnavailableMessage}
                         >
                           <Ban size={18} />
                         </button>

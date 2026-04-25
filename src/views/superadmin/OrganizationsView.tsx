@@ -26,6 +26,7 @@ import { toast } from 'react-hot-toast';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { SuperAdminOrgDetailsModal } from './SuperAdminOrgDetailsModal';
 
 interface AccessRequest {
@@ -121,7 +122,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       }
     } catch (err) {
       console.error(err);
-      toast.error('Failed to load data');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to load data'));
     } finally {
       setLoading(false);
     }
@@ -141,12 +142,15 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       )
     )
       return;
+    setProcessingId(id);
     try {
       await Api.deleteOrganization(id);
       toast.success('Organization deleted');
-      fetchData();
+      await fetchData();
     } catch (err) {
-      toast.error('Failed to delete organization');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to delete organization'));
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -164,6 +168,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   };
 
   const saveInlineEdit = async (orgId: string) => {
+    setProcessingId(orgId);
     try {
       await Api.updateOrganization(orgId, {
         plan: editForm.plan,
@@ -172,9 +177,11 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       });
       toast.success('Organization updated');
       setEditingOrgId(null);
-      fetchData();
+      await fetchData();
     } catch (err) {
-      toast.error('Failed to update organization');
+      toast.error(normalizeApiErrorMessage(err, 'Failed to update organization'));
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -520,14 +527,20 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                             <div className="flex items-center justify-end gap-2">
                               <button
                                 onClick={() => saveInlineEdit(org.id)}
-                                className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded transition-colors"
+                                disabled={processingId === org.id}
+                                className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 rounded transition-colors disabled:opacity-60"
                                 title="Save"
                               >
-                                <Check size={16} />
+                                {processingId === org.id ? (
+                                  <RefreshCw size={16} className="animate-spin" />
+                                ) : (
+                                  <Check size={16} />
+                                )}
                               </button>
                               <button
                                 onClick={cancelInlineEdit}
-                                className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded transition-colors"
+                                disabled={processingId === org.id}
+                                className="p-1.5 bg-red-500/20 text-red-400 hover:bg-red-500/30 rounded transition-colors disabled:opacity-60"
                                 title="Cancel"
                               >
                                 <X size={16} />
@@ -560,7 +573,8 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                               </button>
                               <button
                                 onClick={() => handleDeleteOrg(org.id, getOrgName(org))}
-                                className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors"
+                                disabled={processingId === org.id}
+                                className="p-1.5 hover:bg-red-500/20 text-slate-400 dark:text-slate-500 hover:text-red-400 rounded transition-colors disabled:opacity-60"
                                 title="Delete"
                               >
                                 <Trash2 size={16} />

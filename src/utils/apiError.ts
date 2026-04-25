@@ -15,20 +15,50 @@ const cleanMessage = (value: unknown): string | null => {
   const trimmed = value.trim();
   if (!trimmed || trimmed === '[object Object]') return null;
   if (trimmed === 'INTERNAL_ERROR') return GENERIC_INTERNAL_ERROR;
+  if (/^<!doctype html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) return null;
   return trimmed;
 };
 
+const formatValidationEntry = (value: unknown): string | null => {
+  const direct = cleanMessage(value);
+  if (direct) return direct;
+
+  if (isRecord(value)) {
+    return (
+      cleanMessage(value.message) ||
+      cleanMessage(value.error) ||
+      cleanMessage(value.reason) ||
+      cleanMessage(value.description)
+    );
+  }
+
+  if (value === null || value === undefined) return null;
+  const stringValue = String(value).trim();
+  return stringValue && stringValue !== '[object Object]' ? stringValue : null;
+};
+
 const flattenValidationDetails = (details: unknown): string | null => {
+  if (Array.isArray(details)) {
+    const messages = details
+      .map(formatValidationEntry)
+      .filter((entry): entry is string => Boolean(entry));
+    return messages.length > 0 ? messages.join(', ') : null;
+  }
+
   if (!isRecord(details)) return null;
-  const fieldMessages = Object.entries(details)
-    .flatMap(([field, value]) => {
-      if (Array.isArray(value)) {
-        return value.map((entry) => `${field}: ${String(entry)}`);
-      }
-      if (typeof value === 'string') return [`${field}: ${value}`];
-      return [];
-    })
-    .filter(Boolean);
+
+  const fieldMessages = Object.entries(details).flatMap(([field, value]) => {
+    if (Array.isArray(value)) {
+      return value
+        .map(formatValidationEntry)
+        .filter((entry): entry is string => Boolean(entry))
+        .map((entry) => `${field}: ${entry}`);
+    }
+
+    const formatted = formatValidationEntry(value);
+    return formatted ? [`${field}: ${formatted}`] : [];
+  });
+
   return fieldMessages.length > 0 ? fieldMessages.join(', ') : null;
 };
 
@@ -40,7 +70,7 @@ export function normalizeApiError(input: unknown, fallback = 'Request failed'): 
       message,
       code: typeof maybeAny.code === 'string' ? maybeAny.code : undefined,
       status: typeof maybeAny.status === 'number' ? maybeAny.status : undefined,
-      details: maybeAny.data || maybeAny.details,
+      details: maybeAny.data ?? maybeAny.details,
     };
   }
 
@@ -59,7 +89,7 @@ export function normalizeApiError(input: unknown, fallback = 'Request failed'): 
         ? input.errorCode
         : undefined;
   const status = typeof input.status === 'number' ? input.status : undefined;
-  const details = input.details || input.errors || input.fieldErrors;
+  const details = input.details ?? input.errors ?? input.fieldErrors;
   const validationMessage = flattenValidationDetails(details);
   const directMessage =
     cleanMessage(input.message) ||

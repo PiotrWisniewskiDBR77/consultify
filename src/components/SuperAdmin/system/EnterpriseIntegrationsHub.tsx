@@ -224,6 +224,9 @@ const WEBHOOK_EVENTS = [
   { id: 'user.joined', label: 'User Joined' },
 ];
 
+const CATALOG_CONNECT_UNAVAILABLE =
+  'Connector setup is not wired from this catalog yet. Existing integrations and webhook reads remain available.';
+
 const STATUS_CONFIG = {
   connected: { color: 'text-emerald-400', bg: 'bg-emerald-500/20', icon: CheckCircle },
   disconnected: {
@@ -640,6 +643,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           {/* Catalog Tab */}
           {activeTab === 'catalog' && (
             <div className="space-y-4">
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
+                {CATALOG_CONNECT_UNAVAILABLE}
+              </div>
               <div className="flex items-center gap-4">
                 <div className="flex-1 relative">
                   <Search
@@ -725,11 +731,12 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               isConnected
                                 ? 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
-                                : 'bg-primary-600 hover:bg-primary-700 text-white'
+                                : 'bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                             }`}
-                            disabled={isConnected}
+                            disabled
+                            title={isConnected ? 'Already connected' : CATALOG_CONNECT_UNAVAILABLE}
                           >
-                            {isConnected ? 'Connected' : 'Connect'}
+                            {isConnected ? 'Connected' : 'Unavailable'}
                           </button>
                         )}
                       </div>

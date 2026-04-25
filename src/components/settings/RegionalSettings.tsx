@@ -26,6 +26,7 @@ import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { SettingsApi } from '../../services/api/settings.api';
 import { User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
@@ -42,10 +43,6 @@ interface RegionalPreferences {
   dateFormat: 'DD/MM/YYYY' | 'MM/DD/YYYY' | 'YYYY-MM-DD' | 'DD.MM.YYYY';
   timeFormat: '12h' | '24h';
   firstDayOfWeek: 'monday' | 'sunday';
-}
-
-interface RegionalPreferencesResponse {
-  preferences?: Partial<RegionalPreferences>;
 }
 
 interface OrganizationRegionalDefaults {
@@ -130,7 +127,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
 
   const loadPreferences = async () => {
     try {
-      const data = (await Api.get('/settings/preferences/regional')) as RegionalPreferencesResponse;
+      const data = await SettingsApi.getRegionalPreferences();
       if (data?.preferences) {
         setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
       } else {
@@ -157,15 +154,9 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
   const handleSave = async () => {
     setSaving(true);
     try {
-      await Api.put('/settings/preferences/regional', {
-        preferences,
-      } as RegionalPreferencesResponse);
-      const data = (await Api.get('/settings/preferences/regional').catch(
-        () => null
-      )) as RegionalPreferencesResponse | null;
-      const persisted = data?.preferences
-        ? ({ ...DEFAULT_PREFERENCES, ...data.preferences } as RegionalPreferences)
-        : preferences;
+      await SettingsApi.updateRegionalPreferences(preferences);
+      const data = await SettingsApi.getRegionalPreferences();
+      const persisted = { ...DEFAULT_PREFERENCES, ...data.preferences } as RegionalPreferences;
       setPreferences(persisted);
       // Also update user object for backwards compatibility
       await onUpdateUser({

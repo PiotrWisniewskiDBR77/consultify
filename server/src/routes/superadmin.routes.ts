@@ -57,6 +57,86 @@ interface AtomicGatedResult {
   response: Record<string, unknown>;
 }
 
+function isSchemaMissingError(err: unknown): boolean {
+  const msg = String((err as any)?.message || '').toLowerCase();
+  return (
+    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+  );
+}
+
+function respondSchemaUnavailable(res: Response) {
+  return res.status(503).json({
+    statusCode: 503,
+    status: false,
+    type: 'not_configured',
+    message: 'Invoice service is unavailable because billing tables are not configured',
+  });
+}
+
+function parseInvoiceJsonField<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeInvoiceLineItems(lineItems: any[]) {
+  return lineItems.map((item) => {
+    const quantity = Number(item.quantity ?? 1);
+    const unitPrice = Number(item.unitPrice ?? item.amount);
+    const amount = Number((quantity * unitPrice).toFixed(2));
+    return {
+      description: String(item.description || 'Invoice item').trim(),
+      quantity,
+      unitPrice,
+      amount,
+    };
+  });
+}
+
+function mapInvoiceRow(inv: any) {
+  const lineItems = parseInvoiceJsonField<any[]>(inv.line_items, []);
+  const metadata = parseInvoiceJsonField<Record<string, unknown>>(inv.metadata, {});
+  const subtotal = Number(inv.subtotal ?? inv.amount ?? 0);
+  const taxAmount = Number(inv.tax_amount ?? inv.tax ?? 0);
+  const total = Number(inv.total ?? subtotal + taxAmount);
+
+  return {
+    ...inv,
+    line_items: lineItems,
+    lineItems,
+    items: lineItems,
+    metadata,
+    invoiceNumber: inv.invoice_number,
+    organizationId: inv.organization_id,
+    organizationName: inv.organization_name,
+    amount: subtotal,
+    tax: taxAmount,
+    total,
+    amountDue: Number(inv.amount_due ?? total),
+    amountPaid: Number(inv.amount_paid ?? 0),
+    dueDate: inv.due_date,
+    paidAt: inv.paid_at,
+    createdAt: inv.created_at,
+    updatedAt: inv.updated_at,
+  };
+}
+
+async function getPersistedInvoice(id: string) {
+  const invoice = await dbGet(
+    `
+      SELECT i.*, o.name as organization_name
+      FROM invoices i
+      LEFT JOIN organizations o ON i.organization_id = o.id
+      WHERE i.id = ?
+    `,
+    [id]
+  );
+  return invoice ? mapInvoiceRow(invoice) : null;
+}
+
 async function insertAuditEventAtomic(
   req: AuthRequest,
   input: AtomicAuditEventInput
@@ -1331,8 +1411,45 @@ router.get(
 
 router.get(
   '/invoices',
-  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
-    await SuperAdminController.getInvoices(req, res, next);
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { period = '30d' } = req.query;
+      const periodDays = period === '7d' ? 7 : period === '90d' ? 90 : period === '1y' ? 365 : 30;
+      const params: any[] = [];
+      let where = `WHERE 1=1`;
+
+      if (period !== 'all') {
+        where += ` AND i.created_at >= ?`;
+        params.push(new Date(Date.now() - periodDays * 24 * 60 * 60 * 1000).toISOString());
+      }
+
+      const rows = await dbAll(
+        `
+          SELECT i.*, o.name as organization_name
+          FROM invoices i
+          LEFT JOIN organizations o ON i.organization_id = o.id
+          ${where}
+          ORDER BY i.created_at DESC
+          LIMIT 100
+        `,
+        params,
+        { fallback: false }
+      );
+      const total = (await dbGet(`SELECT COUNT(*) as total FROM invoices i ${where}`, params, {
+        fallback: false,
+      })) as { total?: number } | null;
+
+      return res.json({
+        invoices: (rows || []).map(mapInvoiceRow),
+        total: total?.total ?? (rows || []).length,
+      });
+    } catch (error: any) {
+      logger.error('[SuperAdmin] Error fetching invoices:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res);
+      }
+      return res.status(500).json({ error: 'Failed to fetch invoices' });
+    }
   })
 );
 router.get(
@@ -1362,33 +1479,90 @@ router.get(
 router.post(
   '/invoices',
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    const { organizationId, lineItems, currency, dueDate, description } = req.body;
-    if (!organizationId) {
-      return res.status(400).json({ error: 'organizationId is required' });
-    }
     try {
-      const { createInvoice } = (await import('../services/InvoiceService.js')) as any;
-      const items =
-        Array.isArray(lineItems) && lineItems.length > 0
-          ? lineItems.map((item: any) => ({
-              description: item.description || description || 'Invoice item',
-              quantity: Number(item.quantity || 1),
-              unitPrice: Number(item.unitPrice ?? item.amount ?? 0),
-            }))
-          : [{ description: description || 'Invoice item', quantity: 1, unitPrice: 0 }];
-      if (items.some((item: any) => !Number.isFinite(item.unitPrice) || item.unitPrice <= 0)) {
+      const { organizationId, lineItems, currency, dueDate, description, metadata } = req.body;
+      if (!organizationId || typeof organizationId !== 'string') {
+        return res.status(400).json({ error: 'organizationId is required' });
+      }
+      if (!Array.isArray(lineItems) || lineItems.length === 0) {
+        return res.status(400).json({ error: 'At least one invoice line item is required' });
+      }
+
+      const organization = await dbGet(
+        `SELECT id FROM organizations WHERE id = ?`,
+        [organizationId],
+        { fallback: false }
+      );
+      if (!organization) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+
+      const items = normalizeInvoiceLineItems(
+        lineItems.map((item: any) => ({
+          ...item,
+          description: item.description || description || 'Invoice item',
+        }))
+      );
+      if (
+        items.some(
+          (item: any) =>
+            !item.description ||
+            !Number.isFinite(item.quantity) ||
+            item.quantity <= 0 ||
+            !Number.isFinite(item.unitPrice) ||
+            item.unitPrice <= 0
+        )
+      ) {
         return res.status(400).json({ error: 'Invoice line item price must be greater than zero' });
       }
-      const invoice = await createInvoice({
-        organizationId,
-        items,
-        currency: currency || 'USD',
-        dueDate:
+
+      const subtotal = items.reduce((sum: number, item: any) => sum + item.amount, 0);
+      const taxAmount = 0;
+      const total = subtotal + taxAmount;
+      const count = (await dbGet(`SELECT COUNT(*) as count FROM invoices`, [], {
+        fallback: false,
+      })) as { count?: number } | null;
+      const invoiceNumber = `INV-${String((count?.count || 0) + 1).padStart(6, '0')}`;
+      const id = randomUUID();
+
+      await dbRun(
+        `
+          INSERT INTO invoices (
+            id, organization_id, invoice_number, status, currency,
+            subtotal, tax_amount, total, amount_due, amount_paid, due_date,
+            line_items, metadata
+          ) VALUES (?, ?, ?, 'draft', ?, ?, ?, ?, ?, 0, ?, ?, ?)
+        `,
+        [
+          id,
+          organizationId,
+          invoiceNumber,
+          currency || 'USD',
+          subtotal,
+          taxAmount,
+          total,
+          total,
           dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          JSON.stringify(items),
+          JSON.stringify(metadata || {}),
+        ],
+        { fallback: false }
+      );
+
+      const invoice = await getPersistedInvoice(id);
+      return res.status(201).json({
+        success: true,
+        id,
+        invoiceNumber,
+        organizationId,
+        invoice,
       });
-      return res.status(201).json(invoice);
     } catch (error: any) {
-      return res.status(500).json({ error: error.message || 'Failed to create invoice' });
+      logger.error('[SuperAdmin] Error creating invoice:', error);
+      if (isSchemaMissingError(error)) {
+        return respondSchemaUnavailable(res);
+      }
+      return res.status(500).json({ error: 'Failed to create invoice' });
     }
   })
 );

@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
-import { safeMoney, safeNumber } from '../../utils/safeFormat';
+import { EMPTY_VALUE, safeMoney, safeNumber, safePercent } from '../../utils/safeFormat';
 
 interface RevenueStats {
   mrr: number;
@@ -27,11 +27,53 @@ interface RevenueStats {
 }
 
 interface UsageStats {
-  totalTokensThisMonth: number;
-  totalStorageGB: number;
-  activeOrganizations: number;
+  totalTokensThisMonth?: number | null;
+  totalStorageGB?: number | null;
+  activeOrganizations?: number | null;
   periodStart: string;
 }
+
+const normalizeRevenueStats = (payload: any): RevenueStats | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  return {
+    mrr: safeNumber(source.mrr, Number.NaN),
+    arr: safeNumber(source.arr, Number.NaN),
+    activeSubscriptions: safeNumber(source.activeSubscriptions, Number.NaN),
+    planDistribution: Array.isArray(source.planDistribution)
+      ? source.planDistribution.map((plan: any) => ({
+          name: plan.name ?? plan.plan ?? plan.plan_name ?? EMPTY_VALUE,
+          price_monthly: safeNumber(plan.price_monthly ?? plan.price ?? plan.monthlyPrice, 0),
+          count: safeNumber(plan.count ?? plan.subscribers ?? plan.subscriber_count, 0),
+        }))
+      : [],
+  };
+};
+
+const normalizeUsageStats = (payload: any): UsageStats | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  return {
+    totalTokensThisMonth: safeNumber(source.totalTokensThisMonth, Number.NaN),
+    totalStorageGB:
+      source.totalStorageGB === null ? null : safeNumber(source.totalStorageGB, Number.NaN),
+    activeOrganizations: safeNumber(source.activeOrganizations, Number.NaN),
+    periodStart: source.periodStart || '',
+  };
+};
+
+const normalizeOperationalCosts = (payload: any): { items: any[]; totalCost: number } | null => {
+  const source = payload?.data ?? payload;
+  if (!source || typeof source !== 'object' || source.type === 'not_configured') return null;
+  return {
+    items: Array.isArray(source.items)
+      ? source.items
+      : Array.isArray(source.costs)
+        ? source.costs
+        : [],
+    totalCost: safeNumber(source.totalCost, Number.NaN),
+  };
+};
 
 export const SuperAdminRevenueView: React.FC = () => {
   const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
@@ -48,38 +90,47 @@ export const SuperAdminRevenueView: React.FC = () => {
   }, []);
 
   const fetchData = async () => {
+    setLoading(true);
+    const notices: string[] = [];
     try {
       setNotice(null);
       const [revenue, usage, costs] = await Promise.all([
-        Api.get('/billing/admin/revenue'),
-        Api.get('/billing/admin/usage'),
+        Api.get('/billing/admin/revenue').catch((error) => {
+          console.warn('[SuperAdminRevenueView] Revenue metrics unavailable', error);
+          notices.push('Revenue metrics are temporarily unavailable.');
+          return null;
+        }),
+        Api.get('/billing/admin/usage').catch((error) => {
+          console.warn('[SuperAdminRevenueView] Usage metrics unavailable', error);
+          notices.push('Usage metrics are temporarily unavailable.');
+          return null;
+        }),
         Api.get('/billing/admin/operational-costs').catch((error) => {
           console.warn('[SuperAdminRevenueView] Operational costs unavailable', error);
-          setNotice('Operational cost metrics are temporarily unavailable.');
-          return { items: [], totalCost: 0, degraded: true };
+          notices.push('Operational cost metrics are temporarily unavailable.');
+          return null;
         }),
       ]);
-      setRevenueStats(revenue);
-      setUsageStats(usage);
-      setOperationalCosts(costs);
+      setRevenueStats(normalizeRevenueStats(revenue));
+      setUsageStats(normalizeUsageStats(usage));
+      setOperationalCosts(normalizeOperationalCosts(costs));
+      setNotice(notices.length > 0 ? notices.join(' ') : null);
     } catch (error) {
       console.error('Failed to fetch stats:', error);
+      setRevenueStats(null);
+      setUsageStats(null);
+      setOperationalCosts(null);
+      setNotice('Revenue dashboard metrics are temporarily unavailable.');
     } finally {
       setLoading(false);
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: unknown) => safeMoney(amount, 'USD', { fallback: EMPTY_VALUE });
 
-  const formatNumber = (num: number) => {
-    const value = safeNumber(num);
+  const formatNumber = (num: unknown) => {
+    const value = safeNumber(num, Number.NaN);
+    if (!Number.isFinite(value)) return EMPTY_VALUE;
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
     return value.toString();
@@ -98,7 +149,7 @@ export const SuperAdminRevenueView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {notice && <DegradedState title="Operational cost metrics degraded" description={notice} />}
+      {notice && <DegradedState title="Revenue metrics degraded" description={notice} />}
 
       {/* Header */}
       <div>
@@ -122,7 +173,7 @@ export const SuperAdminRevenueView: React.FC = () => {
               MRR
             </span>
           </div>
-          <p className="text-3xl font-bold mt-4">{formatCurrency(revenueStats?.mrr || 0)}</p>
+          <p className="text-3xl font-bold mt-4">{formatCurrency(revenueStats?.mrr)}</p>
           <p className="text-emerald-100 text-sm mt-1">Monthly Recurring Revenue</p>
         </div>
 
@@ -135,7 +186,7 @@ export const SuperAdminRevenueView: React.FC = () => {
               ARR
             </span>
           </div>
-          <p className="text-3xl font-bold mt-4">{formatCurrency(revenueStats?.arr || 0)}</p>
+          <p className="text-3xl font-bold mt-4">{formatCurrency(revenueStats?.arr)}</p>
           <p className="text-blue-100 text-sm mt-1">Annual Recurring Revenue</p>
         </div>
 
@@ -145,7 +196,9 @@ export const SuperAdminRevenueView: React.FC = () => {
             <Users className="w-8 h-8 opacity-80" />
             <span className="text-sm text-purple-100">Active</span>
           </div>
-          <p className="text-3xl font-bold mt-4">{revenueStats?.activeSubscriptions || 0}</p>
+          <p className="text-3xl font-bold mt-4">
+            {formatNumber(revenueStats?.activeSubscriptions)}
+          </p>
           <p className="text-purple-100 text-sm mt-1">Active Subscriptions</p>
         </div>
 
@@ -156,7 +209,7 @@ export const SuperAdminRevenueView: React.FC = () => {
             <span className="text-sm text-orange-100">This Month</span>
           </div>
           <p className="text-3xl font-bold mt-4">
-            {formatNumber(usageStats?.totalTokensThisMonth || 0)}
+            {formatNumber(usageStats?.totalTokensThisMonth)}
           </p>
           <p className="text-orange-100 text-sm mt-1">Tokens Consumed</p>
         </div>
@@ -190,7 +243,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-gray-700 dark:text-gray-300">{plan.name}</span>
                     <span className="text-gray-500 dark:text-gray-400">
-                      {plan.count} ({percentage}%)
+                      {formatNumber(plan.count)} ({safePercent(plan.count, totalPlanSubscriptions)})
                     </span>
                   </div>
                   <div className="h-2 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
@@ -222,7 +275,7 @@ export const SuperAdminRevenueView: React.FC = () => {
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">Total Tokens</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {formatNumber(usageStats?.totalTokensThisMonth || 0)}
+                {formatNumber(usageStats?.totalTokensThisMonth)}
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">This month</p>
             </div>
@@ -230,7 +283,9 @@ export const SuperAdminRevenueView: React.FC = () => {
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">Storage Used</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {(usageStats?.totalStorageGB || 0).toFixed(2)} GB
+                {Number.isFinite(safeNumber(usageStats?.totalStorageGB, Number.NaN))
+                  ? `${safeNumber(usageStats?.totalStorageGB).toFixed(2)} GB`
+                  : EMPTY_VALUE}
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Across all orgs</p>
             </div>
@@ -238,7 +293,7 @@ export const SuperAdminRevenueView: React.FC = () => {
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">Active Orgs</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {usageStats?.activeOrganizations || 0}
+                {formatNumber(usageStats?.activeOrganizations)}
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">With usage</p>
             </div>
@@ -246,13 +301,15 @@ export const SuperAdminRevenueView: React.FC = () => {
             <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">Avg/Org</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {usageStats?.activeOrganizations
+                {Number.isFinite(safeNumber(usageStats?.activeOrganizations, Number.NaN)) &&
+                safeNumber(usageStats?.activeOrganizations) > 0
                   ? formatNumber(
                       Math.round(
-                        (usageStats?.totalTokensThisMonth || 0) / usageStats.activeOrganizations
+                        safeNumber(usageStats?.totalTokensThisMonth, 0) /
+                          safeNumber(usageStats?.activeOrganizations, 1)
                       )
                     )
-                  : '0'}
+                  : EMPTY_VALUE}
               </p>
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">Tokens/org</p>
             </div>
@@ -282,9 +339,12 @@ export const SuperAdminRevenueView: React.FC = () => {
                 <tr key={plan.name} className="text-gray-900 dark:text-white">
                   <td className="py-3 font-medium">{plan.name}</td>
                   <td className="py-3">{formatCurrency(plan.price_monthly)}/mo</td>
-                  <td className="py-3">{plan.count}</td>
+                  <td className="py-3">{formatNumber(plan.count)}</td>
                   <td className="py-3 text-right font-semibold text-emerald-600 dark:text-emerald-400">
-                    {formatCurrency(plan.price_monthly * plan.count)}
+                    {formatCurrency(
+                      safeNumber(plan.price_monthly, Number.NaN) *
+                        safeNumber(plan.count, Number.NaN)
+                    )}
                   </td>
                 </tr>
               ))}

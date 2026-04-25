@@ -13559,25 +13559,15 @@ export const Api = {
   },
 
   getAIMemory: async () => {
-    const userSettings = await Api.getAIUserSettings();
-    return {
-      preferences: {
-        enabled: true,
-        retentionDays: 30,
-        contextRetention: userSettings?.context_retention || 'session',
-      },
-    };
+    return SettingsApi.getAIMemoryPreferences();
   },
 
   saveAIMemory: async (settings: any) => {
-    return Api.updateAIUserSettings({
-      context_retention:
-        settings.contextRetention || settings.retentionDays ? 'extended' : 'session',
-    });
+    return SettingsApi.updateAIMemoryPreferences(settings);
   },
 
   clearAIMemoryData: async () => {
-    return Api.updateAIUserSettings({ context_retention: 'none' });
+    return SettingsApi.clearAIMemoryPreferences();
   },
 
   getAIModelPreferences: async () => {

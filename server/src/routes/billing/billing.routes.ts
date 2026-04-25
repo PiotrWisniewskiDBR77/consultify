@@ -83,8 +83,13 @@ interface InvoiceRow {
   id: string;
   organization_id: string;
   organization_name?: string;
+  invoice_number?: string;
   status: string;
-  amount: number;
+  amount?: number;
+  subtotal?: number;
+  tax_amount?: number;
+  total?: number;
+  amount_due?: number;
   amount_paid: number;
   currency: string;
   due_date: string;
@@ -93,6 +98,77 @@ interface InvoiceRow {
   metadata?: string;
   created_at: string;
   updated_at: string;
+}
+
+function parseJsonField<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeInvoiceLineItems(lineItems: any[]) {
+  return lineItems.map((item) => {
+    const quantity = Number(item.quantity ?? 1);
+    const unitPrice = Number(item.unitPrice ?? item.amount);
+    const amount = Number((quantity * unitPrice).toFixed(2));
+    return {
+      description: String(item.description || 'Invoice item').trim(),
+      quantity,
+      unitPrice,
+      amount,
+    };
+  });
+}
+
+function mapInvoiceRow(inv: InvoiceRow) {
+  const lineItems = parseJsonField<any[]>(inv.line_items, []);
+  const metadata = parseJsonField<Record<string, unknown>>(inv.metadata, {});
+  const subtotal = Number(inv.subtotal ?? inv.amount ?? 0);
+  const taxAmount = Number(inv.tax_amount ?? 0);
+  const total = Number(inv.total ?? subtotal + taxAmount);
+
+  return {
+    ...inv,
+    line_items: lineItems,
+    lineItems,
+    items: lineItems,
+    metadata,
+    invoiceNumber: inv.invoice_number,
+    organizationId: inv.organization_id,
+    organizationName: inv.organization_name,
+    amount: subtotal,
+    tax: taxAmount,
+    total,
+    amountDue: Number(inv.amount_due ?? total),
+    amountPaid: Number(inv.amount_paid ?? 0),
+    dueDate: inv.due_date,
+    paidAt: inv.paid_at,
+    createdAt: inv.created_at,
+    updatedAt: inv.updated_at,
+  };
+}
+
+async function fetchInvoiceById(id: string) {
+  const invoice = await dbGet<InvoiceRow>(
+    `
+      SELECT i.*, o.name as organization_name
+      FROM invoices i
+      LEFT JOIN organizations o ON i.organization_id = o.id
+      WHERE i.id = ?
+    `,
+    [id]
+  );
+  return invoice ? mapInvoiceRow(invoice) : null;
+}
+
+async function organizationExists(organizationId: string) {
+  const organization = await dbGet<{ id: string }>(`SELECT id FROM organizations WHERE id = ?`, [
+    organizationId,
+  ]);
+  return Boolean(organization);
 }
 
 // Billing access middleware
@@ -1027,11 +1103,7 @@ router.get(
       }
       const total = (await dbGet(countQuery, countParams)) as { total: number } | null;
 
-      const mapped = invoices.map((inv) => ({
-        ...inv,
-        line_items: inv.line_items ? JSON.parse(inv.line_items) : [],
-        metadata: inv.metadata ? JSON.parse(inv.metadata) : {},
-      }));
+      const mapped = invoices.map(mapInvoiceRow);
 
       return res.json({
         invoices: mapped,
@@ -1077,13 +1149,7 @@ router.get(
         return res.status(403).json({ error: 'Access denied' });
       }
 
-      return res.json({
-        invoice: {
-          ...invoice,
-          line_items: invoice.line_items ? JSON.parse(invoice.line_items) : [],
-          metadata: invoice.metadata ? JSON.parse(invoice.metadata) : {},
-        },
-      });
+      return res.json({ invoice: mapInvoiceRow(invoice) });
     } catch (error: unknown) {
       logger.error('[Billing] Get invoice error:', error);
       return res.status(500).json({ error: 'Failed to get invoice' });
@@ -1158,8 +1224,13 @@ router.post(
     try {
       const { organizationId, lineItems, currency, dueDate, metadata } = req.body;
 
-      const subtotal = lineItems.reduce(
-        (sum: number, item: { amount: number }) => sum + (item.amount || 0),
+      if (!(await organizationExists(organizationId))) {
+        return res.status(404).json({ error: 'Organization not found' });
+      }
+
+      const normalizedLineItems = normalizeInvoiceLineItems(lineItems);
+      const subtotal = normalizedLineItems.reduce(
+        (sum: number, item: { amount: number }) => sum + item.amount,
         0
       );
       const taxAmount = 0;
@@ -1189,12 +1260,13 @@ router.post(
           total,
           total,
           dueDate,
-          JSON.stringify(lineItems),
+          JSON.stringify(normalizedLineItems),
           JSON.stringify(metadata || {}),
         ]
       );
 
-      return res.json({ success: true, id, invoiceNumber });
+      const invoice = await fetchInvoiceById(id);
+      return res.status(201).json({ success: true, id, invoiceNumber, invoice });
     } catch (error: unknown) {
       logger.error('[Billing] Create invoice error:', error);
       return res.status(500).json({ error: 'Failed to create invoice' });
@@ -1228,12 +1300,13 @@ router.put(
       }
 
       if (lineItems) {
-        const subtotal = lineItems.reduce(
-          (sum: number, item: { amount: number }) => sum + (item.amount || 0),
+        const normalizedLineItems = normalizeInvoiceLineItems(lineItems);
+        const subtotal = normalizedLineItems.reduce(
+          (sum: number, item: { amount: number }) => sum + item.amount,
           0
         );
         updates.push('line_items = ?');
-        params.push(JSON.stringify(lineItems));
+        params.push(JSON.stringify(normalizedLineItems));
         updates.push('subtotal = ?');
         params.push(subtotal);
         updates.push('total = subtotal + tax_amount');

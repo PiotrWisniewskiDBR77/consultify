@@ -1,9 +1,9 @@
 import { AlertTriangle, EyeOff, Lock, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-type AdminStateKind = 'unavailable' | 'readOnly' | 'degraded' | 'hidden';
+export type AdminStateKind = 'unavailable' | 'readOnly' | 'degraded' | 'hidden';
 
-interface AdminStateProps {
+export interface AdminStateProps {
   kind: AdminStateKind;
   title?: string;
   description?: string;
@@ -84,4 +84,8 @@ export const ReadOnlyState = (props: Omit<AdminStateProps, 'kind'>) => (
 
 export const DegradedState = (props: Omit<AdminStateProps, 'kind'>) => (
   <AdminState {...props} kind="degraded" />
+);
+
+export const HiddenState = (props: Omit<AdminStateProps, 'kind'>) => (
+  <AdminState {...props} kind="hidden" />
 );
