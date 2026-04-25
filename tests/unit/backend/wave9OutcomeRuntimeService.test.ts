@@ -36,6 +36,9 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         currentValue,
         confidence,
         assumptionsJson,
+        taskIdsJson,
+        sourceRefsJson,
+        complianceJson,
         roiJson,
         auditJson,
       ] = params;
@@ -50,6 +53,9 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         current_value: currentValue,
         confidence,
         assumptions_json: assumptionsJson,
+        task_ids_json: taskIdsJson,
+        source_refs_json: sourceRefsJson,
+        compliance_json: complianceJson,
         roi_json: roiJson,
         audit_json: auditJson,
         created_at: new Date().toISOString(),
@@ -157,6 +163,21 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
       })
     ).rejects.toThrow('requires explicit assumptions');
 
+    await expect(
+      createWave9Outcome({
+        organizationId: 'org-1',
+        userId: 'user-1',
+        initiativeId: 'initiative-1',
+        kpiName: 'Savings',
+        ownerUserId: 'owner-1',
+        baseline: 10,
+        target: 30,
+        confidence: 0.8,
+        assumptions: ['Assumption exists'],
+        sourceRefs: [],
+      })
+    ).rejects.toThrow('requires source references');
+
     const outcome = await createWave9Outcome({
       organizationId: 'org-1',
       userId: 'user-1',
@@ -167,6 +188,8 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
       target: 30,
       confidence: 0.8,
       assumptions: ['Savings measured against baseline', 'Adoption reaches 70%'],
+      taskIds: ['task-1', 'task-2'],
+      sourceRefs: [{ sourceType: 'initiative', sourceId: 'initiative-1', title: 'PMO evidence' }],
       investment: 100000,
       annualBenefit: 180000,
     });
@@ -175,6 +198,8 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
     expect(outcome.roi.available).toBe(true);
     expect(outcome.roi.riskAdjustedRoiPercent).toBeGreaterThan(0);
     expect(outcome.audit.noHallucinatedKpi).toBe(true);
+    expect(outcome.taskIds).toEqual(['task-1', 'task-2']);
+    expect(outcome.compliance.dataLineageCaptured).toBe(true);
   });
 
   it('builds CFO scenarios and reports with assumptions, confidence and audit', async () => {
@@ -191,6 +216,7 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
       target: 150,
       confidence: 0.7,
       assumptions: ['Pipeline conversion improves'],
+      sourceRefs: [{ sourceType: 'kpi', sourceId: 'kpi-1' }],
       investment: 50000,
       annualBenefit: 120000,
     });
@@ -211,6 +237,7 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
     expect(report.businessEffectSummary.assumptions).toContain('Pipeline conversion improves');
     expect(report.audit.assumptionsVisible).toBe(true);
     expect(report.audit.confidenceVisible).toBe(true);
+    expect(report.audit.complianceVisible).toBe(true);
   });
 
   it('tracks provider health, incidents, rollback flags and final acceptance decisions', async () => {
@@ -249,8 +276,15 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
       cisoPackPassed: true,
       businessPersonaPackPassed: true,
       providerHealthOk: false,
+      complianceAuditPassed: true,
       openP0: 0,
       openP1: 0,
+      evidenceRefs: {
+        regressionRunId: 'reg-1',
+        cisoPackRunId: 'ciso-1',
+        businessPersonaPackRunId: 'persona-1',
+        complianceAuditRef: 'audit-1',
+      },
     });
     expect(blocked.decision).toBe('BLOCKED');
 
@@ -261,8 +295,15 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
       cisoPackPassed: true,
       businessPersonaPackPassed: true,
       providerHealthOk: true,
+      complianceAuditPassed: true,
       openP0: 0,
       openP1: 0,
+      evidenceRefs: {
+        regressionRunId: 'reg-1',
+        cisoPackRunId: 'ciso-1',
+        businessPersonaPackRunId: 'persona-1',
+        complianceAuditRef: 'audit-1',
+      },
     });
     expect(pass.decision).toBe('PASS');
     expect(pass.report.releaseNote).toContain('Consultify AI OS');
