@@ -63,9 +63,12 @@ import {
   PortfolioItemsPhase,
   PortfolioOutputsPhase,
 } from './tools/PortfolioPriority/PortfolioPriorityPhases';
-import { AssumptionsStep } from './tools/RiskUncertainty/AssumptionsStep';
-import { RisksStep } from './tools/RiskUncertainty/RisksStep';
-import { ScenariosStep } from './tools/RiskUncertainty/ScenariosStep';
+import {
+  RiskInputPhase,
+  RiskInsightsPhase,
+  RiskMapPhase,
+  RiskOutputsPhase,
+} from './tools/RiskUncertainty/RiskUncertaintyPhases';
 
 // ==================== TYPES ====================
 
@@ -503,14 +506,59 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     }
 
     if (toolType === 'risk-uncertainty') {
+      if (stepDefinition.id === 'input') {
+        return (
+          <RiskInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
       if (stepDefinition.id === 'assumptions') {
-        return <AssumptionsStep session={session} isPolish={isPolish} />;
+        return (
+          <RiskMapPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
-      if (stepDefinition.id === 'risks') {
-        return <RisksStep session={session} isPolish={isPolish} />;
+      if (stepDefinition.id === 'insights') {
+        return (
+          <RiskInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
-      if (stepDefinition.id === 'scenarios') {
-        return <ScenariosStep session={session} isPolish={isPolish} />;
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <RiskOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
       }
     }
 

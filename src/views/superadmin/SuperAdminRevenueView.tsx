@@ -11,7 +11,9 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
+import { safeMoney, safeNumber } from '../../utils/safeFormat';
 
 interface RevenueStats {
   mrr: number;
@@ -77,9 +79,10 @@ export const SuperAdminRevenueView: React.FC = () => {
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
+    const value = safeNumber(num);
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+    return value.toString();
   };
 
   if (loading) {
@@ -95,11 +98,7 @@ export const SuperAdminRevenueView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {notice && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-          {notice}
-        </div>
-      )}
+      {notice && <DegradedState title="Operational cost metrics degraded" description={notice} />}
 
       {/* Header */}
       <div>
@@ -340,13 +339,11 @@ export const SuperAdminRevenueView: React.FC = () => {
                   <td className="py-3 text-gray-500 dark:text-gray-400 font-mono text-xs">
                     {item.model}
                   </td>
-                  <td className="py-3 text-right">{formatNumber(item.totalTokens)}</td>
+                  <td className="py-3 text-right">
+                    {formatNumber(item.totalTokens || item.requests)}
+                  </td>
                   <td className="py-3 text-right font-semibold text-red-500">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                      minimumFractionDigits: 4,
-                    }).format(item.cost)}
+                    {safeMoney(item.cost, 'USD')}
                   </td>
                 </tr>
               ))}
@@ -365,11 +362,7 @@ export const SuperAdminRevenueView: React.FC = () => {
                     Total Operational Cost
                   </td>
                   <td className="py-3 text-right font-bold text-xl text-red-500">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                      minimumFractionDigits: 2,
-                    }).format(operationalCosts.totalCost)}
+                    {safeMoney(operationalCosts.totalCost, 'USD')}
                   </td>
                 </tr>
               </tfoot>

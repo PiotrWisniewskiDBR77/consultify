@@ -28,9 +28,11 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { SubscriptionAnalytics } from '../../components/billing';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
+import { safeMoney, safeNumber } from '../../utils/safeFormat';
 import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
@@ -108,9 +110,10 @@ const OverviewTab: React.FC = () => {
   };
 
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
+    const value = safeNumber(num);
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
+    return value.toString();
   };
 
   if (loading) {
@@ -127,11 +130,7 @@ const OverviewTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {warning && (
-        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-          {warning}
-        </div>
-      )}
+      {warning && <DegradedState title="Operational cost metrics degraded" description={warning} />}
 
       {/* Key Metrics Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -347,7 +346,7 @@ const OverviewTab: React.FC = () => {
                     {formatNumber(item.totalTokens)}
                   </td>
                   <td className="py-3 text-right font-semibold text-red-400">
-                    ${item.cost.toFixed(4)}
+                    {safeMoney(item.cost, 'USD')}
                   </td>
                 </tr>
               ))}
@@ -366,7 +365,7 @@ const OverviewTab: React.FC = () => {
                     Total Operational Cost
                   </td>
                   <td className="py-3 text-right font-bold text-lg text-red-400">
-                    ${operationalCosts.totalCost.toFixed(2)}
+                    {safeMoney(operationalCosts.totalCost, 'USD')}
                   </td>
                 </tr>
               </tfoot>

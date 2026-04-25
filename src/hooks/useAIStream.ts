@@ -252,7 +252,18 @@ type StreamOptions = {
   ) => void;
   onStreamError?: (error: Error) => void;
   onThinkingUpdate?: (steps: ThinkingStep[]) => void;
-  onArtifactDetected?: (artifact: Artifact) => void;
+  onArtifactDetected?: (
+    artifact: Artifact,
+    meta?: {
+      citations?: any[];
+      sessionId?: string;
+      policyDecision?: any;
+      policyNotices?: any[];
+      sourceLedger?: any;
+      trustBundle?: any;
+      proposal?: TeresaChatProposal | null;
+    }
+  ) => void;
 };
 
 export type UseAIStreamReturn = {
@@ -290,6 +301,7 @@ export type UseAIStreamReturn = {
   policyDecision: any | null;
   policyNotices: any[];
   sourceLedger: any | null;
+  memoryCandidate: any | null;
   trustBundle: any | null;
   teresaProposal: TeresaChatProposal | null;
   deepThinkingState: any | null;
@@ -403,6 +415,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const [policyDecision, setPolicyDecision] = useState<any | null>(null);
   const [policyNotices, setPolicyNotices] = useState<any[]>([]);
   const [sourceLedger, setSourceLedger] = useState<any | null>(null);
+  const [memoryCandidate, setMemoryCandidate] = useState<any | null>(null);
   const [trustBundle, setTrustBundle] = useState<any | null>(null);
   const [teresaProposal, setTeresaProposal] = useState<TeresaChatProposal | null>(null);
   const [retryInfo, setRetryInfo] = useState<{
@@ -440,6 +453,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
   const policyDecisionRef = useRef<any | null>(null);
   const policyNoticesRef = useRef<any[]>([]);
   const sourceLedgerRef = useRef<any | null>(null);
+  const memoryCandidateRef = useRef<any | null>(null);
   const trustBundleRef = useRef<any | null>(null);
   const teresaProposalRef = useRef<TeresaChatProposal | null>(null);
   const lastRequestRef = useRef<{
@@ -469,6 +483,8 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     policyNoticesRef.current = [];
     setSourceLedger(null);
     sourceLedgerRef.current = null;
+    setMemoryCandidate(null);
+    memoryCandidateRef.current = null;
     setTrustBundle(null);
     trustBundleRef.current = null;
     setTeresaProposal(null);
@@ -736,9 +752,18 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         const visibleText =
           parsedArtifacts.length > 0 ? stripArtifactsFromResponse(fullText) : fullText;
         if (parsedArtifacts.length) {
+          const artifactMeta = {
+            citations: citationsRef.current,
+            sessionId: streamSessionIdRef.current || undefined,
+            policyDecision: policyDecisionRef.current,
+            policyNotices: policyNoticesRef.current,
+            sourceLedger: sourceLedgerRef.current,
+            trustBundle: trustBundleRef.current,
+            proposal: teresaProposalRef.current,
+          };
           parsedArtifacts.forEach((artifact) => {
             if (options.onArtifactDetected) {
-              options.onArtifactDetected(artifact);
+              options.onArtifactDetected(artifact, artifactMeta);
             } else {
               addArtifact(artifact);
             }
@@ -781,6 +806,11 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
         if (evt.type === 'source_ledger') {
           setSourceLedger(evt);
           sourceLedgerRef.current = evt;
+          return;
+        }
+        if (evt.type === 'memory_candidate') {
+          setMemoryCandidate(evt);
+          memoryCandidateRef.current = evt;
           return;
         }
         if (evt.type === 'trust_bundle') {
@@ -1311,6 +1341,7 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
     policyDecision,
     policyNotices,
     sourceLedger,
+    memoryCandidate,
     trustBundle,
     teresaProposal,
     deepThinkingState,

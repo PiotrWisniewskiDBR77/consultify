@@ -249,10 +249,14 @@ export async function ensureResearchSessionSchema(): Promise<void> {
         content_markdown TEXT NOT NULL,
         citations_json TEXT NOT NULL DEFAULT '[]',
         evidence_node_ids_json TEXT NOT NULL DEFAULT '[]',
+        wave5_artifact_id TEXT,
         created_by TEXT,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await dbRun(`ALTER TABLE research_report_artifacts ADD COLUMN wave5_artifact_id TEXT`).catch(
+      () => undefined
+    );
     await dbRun(
       `CREATE INDEX IF NOT EXISTS idx_research_sessions_org_status ON research_sessions(organization_id, status)`
     );
@@ -884,7 +888,7 @@ export async function createFinalResearchArtifact(params: {
       params.actorUserId,
     ]
   );
-  await createWave5Artifact({
+  const wave5Artifact = await createWave5Artifact({
     organizationId: params.session.organizationId,
     userId: params.actorUserId,
     artifactType: 'research_report',
@@ -904,15 +908,14 @@ export async function createFinalResearchArtifact(params: {
       researchArtifactId: artifactId,
     },
     externalArtifactId: artifactId,
-  }).catch((err: any) => {
-    logger.warn('[ResearchSession] Failed to mirror final report into Wave 5 runtime', {
-      sessionId: params.session.sessionId,
-      artifactId,
-      error: err?.message || String(err),
-    });
   });
+  await dbRun(`UPDATE research_report_artifacts SET wave5_artifact_id = ? WHERE artifact_id = ?`, [
+    wave5Artifact.artifactId,
+    artifactId,
+  ]);
   return {
     artifactId,
+    wave5ArtifactId: wave5Artifact.artifactId,
     artifactType: 'research_report',
     title,
     contentMarkdown: content,
@@ -949,7 +952,7 @@ export async function getResearchSession(
   const artifact = row.final_artifact_id
     ? await dbGet(
         `SELECT artifact_id, artifact_type, title, content_markdown, citations_json,
-                evidence_node_ids_json, created_at
+                evidence_node_ids_json, wave5_artifact_id, created_at
          FROM research_report_artifacts
          WHERE artifact_id = ? AND organization_id = ?`,
         [row.final_artifact_id, organizationId]
@@ -986,6 +989,7 @@ export async function getResearchSession(
           contentMarkdown: (artifact as any).content_markdown,
           citations: safeJsonParse((artifact as any).citations_json, []),
           evidenceNodeIds: safeJsonParse((artifact as any).evidence_node_ids_json, []),
+          wave5ArtifactId: (artifact as any).wave5_artifact_id || null,
           createdAt: (artifact as any).created_at,
         }
       : null

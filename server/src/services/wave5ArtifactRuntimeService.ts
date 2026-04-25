@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import { v4 as uuidv4 } from 'uuid';
 
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
@@ -68,6 +70,21 @@ export interface MirrorLegacyArtifactInput {
   originRecordId?: string | null;
   executionRunId?: string | null;
   contextSnapshotId?: string | null;
+}
+
+export interface GenerateWave5ArtifactInput {
+  organizationId: string;
+  userId: string;
+  outputKind: 'executive_report' | 'board_deck' | 'kpi_table';
+  prompt: string;
+  title?: string | null;
+  projectId?: string | null;
+  conversationId?: string | null;
+  researchSessionId?: string | null;
+  aiRunId?: string | null;
+  trustBundleId?: string | null;
+  citations?: unknown[];
+  sourceRefs?: unknown[];
 }
 
 let schemaReady: Promise<void> | null = null;
@@ -163,9 +180,11 @@ function fillTemplate(template: string, values: Record<string, unknown>): string
 
 function buildExportManifest(artifact: any): Record<string, unknown> {
   const artifactType = artifact.artifact_type || artifact.artifactType;
+  const content = String(artifact.content || '');
+  const checksum = crypto.createHash('sha256').update(content).digest('hex');
   const formatsByType: Record<string, string[]> = {
-    spreadsheet: ['json', 'csv'],
-    slide_deck: ['markdown', 'deck_outline_json'],
+    spreadsheet: ['json', 'csv', 'xlsx_ready_json'],
+    slide_deck: ['markdown', 'deck_outline_json', 'pptx_ready_json'],
     diagram: ['markdown', 'mermaid'],
   };
   return {
@@ -175,9 +194,95 @@ function buildExportManifest(artifact: any): Record<string, unknown> {
     version: Number(artifact.current_version || artifact.version || 1),
     formats: formatsByType[artifactType] || ['markdown', 'pdf_print'],
     generatedAt: new Date().toISOString(),
+    checksumSha256: checksum,
+    byteLength: Buffer.byteLength(content, 'utf8'),
     provenance: safeJsonParse(artifact.provenance_json || artifact.provenance, {}),
     citations: safeJsonParse(artifact.citations_json || artifact.citations, []),
   };
+}
+
+function buildExecutiveReportContent(input: GenerateWave5ArtifactInput): string {
+  return [
+    `# ${input.title || 'Executive Report'}`,
+    '',
+    '## Executive Summary',
+    input.prompt,
+    '',
+    '## Key Findings',
+    '- Finding 1: clarify the strategic implication and supporting evidence.',
+    '- Finding 2: identify operational impact, owner and risk.',
+    '- Finding 3: define measurable business outcome.',
+    '',
+    '## Recommendations',
+    '- Convert the highest-confidence finding into an initiative.',
+    '- Assign owner, deadline and KPI acceptance criteria.',
+    '- Review evidence freshness before executive distribution.',
+    '',
+    '## Assumptions And Risks',
+    '- Assumptions must be validated before commit to client-facing use.',
+    '- Risks with weak evidence should remain marked for review.',
+  ].join('\n');
+}
+
+function buildBoardDeckContent(input: GenerateWave5ArtifactInput): string {
+  const title = input.title || 'Board Deck';
+  const slides = [
+    ['Executive Context', 'Why this topic matters now', 'Decision needed from the board'],
+    ['Current State', 'Baseline facts', 'Constraints and operating risks'],
+    ['Options', 'Strategic option A', 'Strategic option B', 'Trade-offs'],
+    ['Recommendation', 'Preferred path', 'Expected impact', 'Risk controls'],
+    ['Next Steps', 'Owner', 'Timeline', 'KPI acceptance criteria'],
+  ];
+  return [
+    `# ${title}`,
+    '',
+    '```json',
+    JSON.stringify(
+      {
+        deckTitle: title,
+        sourcePrompt: input.prompt,
+        slides: slides.map(([slideTitle, ...bullets], index) => ({
+          slideNumber: index + 1,
+          title: slideTitle,
+          bullets,
+          speakerNotes: `Narrate ${slideTitle.toLowerCase()} using cited evidence and explicit assumptions.`,
+        })),
+      },
+      null,
+      2
+    ),
+    '```',
+  ].join('\n');
+}
+
+function buildKpiTableContent(input: GenerateWave5ArtifactInput): string {
+  const rows = [
+    ['KPI', 'Baseline', 'Target', 'Owner', 'Cadence', 'Evidence'],
+    ['Revenue impact', 'TBD', 'TBD', 'CFO', 'Monthly', 'Requires finance source'],
+    ['Cycle time', 'TBD', 'TBD', 'COO', 'Weekly', 'Requires process source'],
+    ['Adoption', 'TBD', 'TBD', 'Transformation Lead', 'Bi-weekly', 'Requires usage source'],
+  ];
+  return [
+    `# ${input.title || 'KPI Table'}`,
+    '',
+    `Source prompt: ${input.prompt}`,
+    '',
+    rows.map((row) => row.join(',')).join('\n'),
+  ].join('\n');
+}
+
+function artifactTypeForGeneratedKind(
+  kind: GenerateWave5ArtifactInput['outputKind']
+): Wave5ArtifactType {
+  if (kind === 'board_deck') return 'slide_deck';
+  if (kind === 'kpi_table') return 'spreadsheet';
+  return 'report';
+}
+
+function contentForGeneratedKind(input: GenerateWave5ArtifactInput): string {
+  if (input.outputKind === 'board_deck') return buildBoardDeckContent(input);
+  if (input.outputKind === 'kpi_table') return buildKpiTableContent(input);
+  return buildExecutiveReportContent(input);
 }
 
 function mapArtifact(row: any, versions: any[] = [], mutations: any[] = []): any {
@@ -688,6 +793,39 @@ export async function fillWave5DocumentTemplate(params: {
     metadata: { documentFill: { requiredFields, filledFields: Object.keys(fields) } },
   });
   return { success: true, needsInput: false, artifact };
+}
+
+export async function generateWave5StructuredArtifact(
+  input: GenerateWave5ArtifactInput
+): Promise<any> {
+  await ensureWave5ArtifactRuntimeSchema();
+  const artifactType = artifactTypeForGeneratedKind(input.outputKind);
+  const content = contentForGeneratedKind(input);
+  return createWave5Artifact({
+    organizationId: input.organizationId,
+    userId: input.userId,
+    artifactType,
+    title:
+      input.title ||
+      (input.outputKind === 'board_deck'
+        ? 'Board deck'
+        : input.outputKind === 'kpi_table'
+          ? 'KPI table'
+          : 'Executive report'),
+    content,
+    projectId: input.projectId || null,
+    conversationId: input.conversationId || null,
+    researchSessionId: input.researchSessionId || null,
+    aiRunId: input.aiRunId || null,
+    trustBundleId: input.trustBundleId || null,
+    citations: input.citations || [],
+    sourceRefs: input.sourceRefs || [],
+    metadata: {
+      generatedBy: 'wave5_structured_generator',
+      outputKind: input.outputKind,
+      prompt: input.prompt,
+    },
+  });
 }
 
 export async function mirrorLegacyArtifactIntoWave5(

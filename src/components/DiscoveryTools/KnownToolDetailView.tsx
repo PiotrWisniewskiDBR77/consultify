@@ -19,6 +19,7 @@ import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
 import { GrowthPathsLibraryGraphic } from './GrowthPathsLibraryGraphic';
 import { MarketForcesLibraryGraphic } from './MarketForcesLibraryGraphic';
 import { PortfolioPriorityLibraryGraphic } from './PortfolioPriorityLibraryGraphic';
+import { RiskUncertaintyLibraryGraphic } from './RiskUncertaintyLibraryGraphic';
 
 type KnownTool = Awaited<ReturnType<typeof Api.getKnownTool>>['tool'];
 
@@ -196,6 +197,72 @@ export function KnownToolDetailView(props: {
         </div>
       );
     };
+
+    const caseGrid = (
+      cases: Array<{
+        title: string;
+        context: string;
+        question: string;
+        evidence: string[];
+        aiDraft: string;
+        approvedUse: string;
+        outcome: string;
+      }>
+    ) => (
+      <div className="grid gap-4 lg:grid-cols-3">
+        {cases.map((item) => (
+          <div
+            key={item.title}
+            className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30"
+          >
+            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+              {isPolish ? 'Case' : 'Case'}
+            </div>
+            <h3 className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {item.title}
+            </h3>
+            <div className="mt-3 space-y-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {isPolish ? 'Kontekst: ' : 'Context: '}
+                </span>
+                {item.context}
+              </div>
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {isPolish ? 'Pytanie: ' : 'Question: '}
+                </span>
+                {item.question}
+              </div>
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {isPolish ? 'Evidence: ' : 'Evidence: '}
+                </span>
+                {item.evidence.join(' ')}
+              </div>
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {isPolish ? 'AI draft: ' : 'AI draft: '}
+                </span>
+                {item.aiDraft}
+              </div>
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {isPolish ? 'Po akceptacji: ' : 'After approval: '}
+                </span>
+                {item.approvedUse}
+              </div>
+              <div>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {isPolish ? 'Rezultat: ' : 'Outcome: '}
+                </span>
+                {item.outcome}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
 
     const goalSection = (
       <div className="space-y-6">
@@ -961,6 +1028,104 @@ export function KnownToolDetailView(props: {
           </div>
         </div>
 
+        {caseGrid(
+          isPolish
+            ? [
+                {
+                  title: 'Premium producent przed CAPEX-em',
+                  context: 'Marża spada, lead times są niestabilne, a zarząd rozważa automatyzację.',
+                  question: 'Czy zaczynać od inwestycji technologicznej, czy od diagnozy strat i bottlenecków?',
+                  evidence: [
+                    'Wywiady pokazują silną markę i zaufanie klientów premium, ale też decyzje operacyjne podejmowane intuicyjnie.',
+                    'Dane wskazują straty w przepływie, brak wspólnej definicji bottlenecków i rosnące koszty ekspresowych dostaw.',
+                  ],
+                  aiDraft:
+                    'AI proponuje SWOT z mocnymi stronami w reputacji i relacjach B2B, słabościami w widoczności procesu, szansą w diagnostyce danych oraz zagrożeniem automatyzacji złego problemu.',
+                  approvedUse:
+                    'Użytkownik akceptuje tylko te karty, które mają evidence, a odrzuca ogólniki typu “wdrożyć AI”. Zaakceptowane elementy przechodzą do napięć i ruchów.',
+                  outcome:
+                    'Powstaje decyzja: przed CAPEX-em uruchomić diagnozę strat, mapę bottlenecków i warstwę danych, a automatyzację potraktować jako drugi etap.',
+                },
+                {
+                  title: 'Software house po utracie dużego klienta',
+                  context: 'Firma ma mocny zespół ekspercki, ale pipeline sprzedażowy jest zbyt zależny od rekomendacji.',
+                  question: 'Czy skalować sprzedaż outbound, czy najpierw zawęzić pozycjonowanie oferty?',
+                  evidence: [
+                    'CRM pokazuje długi cykl sprzedaży poza rekomendacjami, a rozmowy z klientami wskazują niejasne rozróżnienie oferty.',
+                    'Zespół ma mocne kompetencje techniczne, ale materiały sprzedażowe nie pokazują mierzalnych efektów projektów.',
+                  ],
+                  aiDraft:
+                    'AI proponuje czynniki SWOT dotyczące eksperckiego delivery, słabej narracji wartości, szansy w pionizacji oferty i zagrożenia dalszą zależnością od pojedynczych kont.',
+                  approvedUse:
+                    'Po akceptacji kart AI buduje napięcie między jakością delivery a brakiem ostrego ICP oraz proponuje ruchy przed skalowaniem outboundu.',
+                  outcome:
+                    'Powstaje sekwencja: zawęzić ICP, stworzyć proof pack z efektami klientów, przetestować 2 kampanie segmentowe i dopiero potem zwiększać sprzedaż.',
+                },
+                {
+                  title: 'Sieć usług lokalnych przed ekspansją',
+                  context: 'Popyt rośnie, ale jakość operacyjna różni się między lokalizacjami.',
+                  question: 'Czy otwierać kolejne punkty, czy najpierw standaryzować model działania?',
+                  evidence: [
+                    'Opinie klientów są bardzo dobre w najlepszych lokalizacjach, ale reklamacje koncentrują się wokół kilku powtarzalnych etapów usługi.',
+                    'Managerowie lokalni różnie rozumieją standard jakości, a onboarding nowych pracowników trwa zbyt długo.',
+                  ],
+                  aiDraft:
+                    'AI proponuje mocne strony w marce lokalnej i relacji z klientem, słabości w standardzie operacyjnym, szansę w playbooku ekspansji i zagrożenie utraty jakości przy skalowaniu.',
+                  approvedUse:
+                    'Zaakceptowane karty są używane do wyboru, czy przewaga jest naprawdę skalowalna, czy zależy od pojedynczych ludzi i lokalnych praktyk.',
+                  outcome:
+                    'Rekomendacja: najpierw stworzyć standard usługi, dashboard jakości i model szkolenia, a dopiero potem otwierać kolejne punkty.',
+                },
+              ]
+            : [
+                {
+                  title: 'Premium manufacturer before CAPEX',
+                  context: 'Margin is falling, lead times are unstable, and leadership is considering automation.',
+                  question: 'Should the company start with technology investment or diagnose losses and bottlenecks first?',
+                  evidence: [
+                    'Interviews show strong brand trust and premium customer relationships, but operational decisions are still intuition-led.',
+                    'Data points to flow losses, no shared bottleneck definition, and rising expediting costs.',
+                  ],
+                  aiDraft:
+                    'AI proposes SWOT cards around reputation and B2B trust, weak process visibility, a data-diagnosis opportunity, and the threat of automating the wrong problem.',
+                  approvedUse:
+                    'The user accepts only evidence-backed cards and rejects generic “implement AI” recommendations. Approved cards feed tensions and moves.',
+                  outcome:
+                    'The decision becomes: run loss diagnosis, bottleneck mapping, and a data layer before CAPEX, with automation as the second stage.',
+                },
+                {
+                  title: 'Software firm after losing a major client',
+                  context: 'The team is strong, but the sales pipeline depends too heavily on referrals.',
+                  question: 'Should it scale outbound sales or first sharpen offer positioning?',
+                  evidence: [
+                    'CRM data shows long sales cycles outside referrals, while customer interviews reveal unclear offer differentiation.',
+                    'The team has strong technical capability, but sales materials do not show measurable customer outcomes.',
+                  ],
+                  aiDraft:
+                    'AI proposes SWOT cards on expert delivery, weak value narrative, an opportunity to verticalize the offer, and the threat of continued key-account dependency.',
+                  approvedUse:
+                    'Approved cards create the tension between delivery quality and weak ICP clarity, then shape moves before outbound scale.',
+                  outcome:
+                    'The sequence is: narrow ICP, build a customer proof pack, test two segment campaigns, and only then expand sales effort.',
+                },
+                {
+                  title: 'Local services network before expansion',
+                  context: 'Demand is growing, but operating quality varies across locations.',
+                  question: 'Should the company open more sites or standardize the operating model first?',
+                  evidence: [
+                    'Customer reviews are excellent in the best locations, but complaints cluster around repeatable service steps.',
+                    'Local managers interpret quality standards differently, and onboarding new staff takes too long.',
+                  ],
+                  aiDraft:
+                    'AI proposes strengths in local brand and customer trust, weaknesses in operating standard, an expansion-playbook opportunity, and the threat of quality loss while scaling.',
+                  approvedUse:
+                    'Approved cards help decide whether the advantage is truly scalable or dependent on individual people and local habits.',
+                  outcome:
+                    'The recommendation is to build a service standard, quality dashboard, and training model before opening more sites.',
+                },
+              ]
+        )}
+
         <div className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
             <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
@@ -1319,6 +1484,103 @@ export function KnownToolDetailView(props: {
               : 'A premium company is considering entering a new marketplace channel. Market Forces checks whether growth attractiveness will be consumed by buyer power, platform pressure, and easy offer imitation.'}
           </div>
         </div>
+        {caseGrid(
+          isPolish
+            ? [
+                {
+                  title: 'Marketplace dla marki premium',
+                  context: 'Firma rozważa nowy kanał sprzedaży z dużym zasięgiem, ale niską kontrolą relacji.',
+                  question: 'Czy wzrost wolumenu nie zostanie zjedzony przez siłę platformy i presję cenową?',
+                  evidence: [
+                    'Wywiady wskazują, że klienci lubią markę, ale w marketplace porównują głównie cenę i czas dostawy.',
+                    'Dane kanału pokazują wysokie prowizje, duży koszt promocji oraz łatwość kopiowania bestsellerów.',
+                  ],
+                  aiDraft:
+                    'AI ocenia wysoką siłę kupujących i platformy, średnią groźbę nowych wejść oraz dużą presję substytutów w tańszych segmentach.',
+                  approvedUse:
+                    'Użytkownik akceptuje drivery, które mają dowody, a AI buduje z nich implikacje marżowe i warunki defensible entry.',
+                  outcome:
+                    'Decyzja nie brzmi “wejść albo nie”, tylko: wejść pilotażowo z ograniczonym SKU, kontrolą ceny i unikalnym bundlem, którego nie da się łatwo porównać.',
+                },
+                {
+                  title: 'Nowy segment B2B w branży usług',
+                  context: 'Firma chce wejść do większych klientów, gdzie proces zakupowy jest dłuższy i bardziej formalny.',
+                  question: 'Czy atrakcyjność rynku równoważy siłę kupujących i koszt sprzedaży?',
+                  evidence: [
+                    'Rozmowy z handlowcami pokazują większe kontrakty, ale też silniejsze procurement, dłuższe RFP i presję na referencje.',
+                    'Benchmark konkurencji wskazuje, że liderzy segmentu mają certyfikacje, case studies i długi proces pre-sales.',
+                  ],
+                  aiDraft:
+                    'AI proponuje scorecard z wysoką siłą kupujących, wysokimi barierami reputacyjnymi i umiarkowaną rywalizacją w wyspecjalizowanych niszach.',
+                  approvedUse:
+                    'Po akceptacji kart narzędzie wskazuje, które bariery wejścia trzeba zbudować przed pełnym skalowaniem sprzedaży.',
+                  outcome:
+                    'Rekomendacja: zacząć od niszy B2B, przygotować referencje i proof assets, a dopiero potem wejść w szeroki segment enterprise.',
+                },
+                {
+                  title: 'Producent przed wejściem zagranicznym',
+                  context: 'Rynek wygląda duży, ale lokalni gracze mają dystrybucję i relacje z kanałem.',
+                  question: 'Czy wejście ma sens bez partnerstwa lub unikalnej przewagi kosztowej?',
+                  evidence: [
+                    'Analiza rynku pokazuje duży popyt, ale także dominację kilku dystrybutorów i wysokie koszty pozyskania półki.',
+                    'Wywiady sugerują, że lokalni klienci ufają obecnym dostawcom i wymagają serwisu posprzedażowego na miejscu.',
+                  ],
+                  aiDraft:
+                    'AI wskazuje wysoką siłę dostawców kanału, wysokie bariery wejścia oraz ryzyko substytucji przez lokalne marki.',
+                  approvedUse:
+                    'Zaakceptowane siły przechodzą do implikacji: bez partnera firma może kupić przychód kosztem marży i kontroli.',
+                  outcome:
+                    'Powstaje model testu: partner dystrybucyjny, ograniczony region, jasne progi marży i decyzja scale/stop po 90 dniach.',
+                },
+              ]
+            : [
+                {
+                  title: 'Marketplace entry for a premium brand',
+                  context: 'The company considers a high-reach channel with low control over customer relationship.',
+                  question: 'Will volume growth be eaten by platform power and price pressure?',
+                  evidence: [
+                    'Interviews show customers like the brand, but marketplace buying is driven by price and delivery comparison.',
+                    'Channel data shows high commissions, promotion cost, and easy imitation of best-selling items.',
+                  ],
+                  aiDraft:
+                    'AI scores buyer and platform power high, new entrants medium, and substitutes high in cheaper segments.',
+                  approvedUse:
+                    'The user approves evidence-backed drivers, and AI turns them into margin implications and defensible-entry conditions.',
+                  outcome:
+                    'The decision becomes a controlled pilot with limited SKU, price discipline, and a unique bundle that is hard to compare directly.',
+                },
+                {
+                  title: 'New B2B segment for a services firm',
+                  context: 'The company wants larger clients with longer and more formal buying processes.',
+                  question: 'Does market attractiveness offset buyer power and sales cost?',
+                  evidence: [
+                    'Sales interviews show larger contracts, but stronger procurement, longer RFPs, and higher reference requirements.',
+                    'Competitive benchmarks show segment leaders with certifications, case studies, and heavier pre-sales.',
+                  ],
+                  aiDraft:
+                    'AI proposes high buyer power, high reputation barriers, and moderate rivalry in specialized niches.',
+                  approvedUse:
+                    'Approved cards identify which entry barriers must be built before broad sales scaling.',
+                  outcome:
+                    'The recommendation is to start with a B2B niche, build references and proof assets, then expand into enterprise.',
+                },
+                {
+                  title: 'Manufacturer before international entry',
+                  context: 'The market is large, but local players own distribution and channel relationships.',
+                  question: 'Can entry work without a partner or a distinct cost advantage?',
+                  evidence: [
+                    'Market data shows strong demand, but a few distributors dominate access and shelf acquisition is expensive.',
+                    'Interviews suggest local customers trust current suppliers and require local after-sales service.',
+                  ],
+                  aiDraft:
+                    'AI flags high channel supplier power, high entry barriers, and substitution risk from local brands.',
+                  approvedUse:
+                    'Accepted forces feed implications: without a partner, revenue may be bought at the expense of margin and control.',
+                  outcome:
+                    'The output is a test model: distribution partner, limited region, clear margin gates, and a 90-day scale/stop decision.',
+                },
+              ]
+        )}
         <MarketForcesLibraryGraphic isPolish={isPolish} variant="example" />
       </div>
     );
@@ -1430,6 +1692,103 @@ export function KnownToolDetailView(props: {
               : 'A premium company wants to grow without margin erosion. Growth Paths compares scaling the current segment, entering a new geography, building a new product, and diversification, then sequences the moves.'}
           </div>
         </div>
+        {caseGrid(
+          isPolish
+            ? [
+                {
+                  title: 'Premium firma szuka wzrostu bez erozji marży',
+                  context: 'Core segment jest rentowny, ale tempo wzrostu spada.',
+                  question: 'Czy skalować obecny rynek, wejść do nowej geografii, czy budować nowy produkt?',
+                  evidence: [
+                    'Sprzedaż pokazuje stabilną marżę w obecnym segmencie, ale malejącą liczbę nowych leadów.',
+                    'Wywiady wskazują zapytania z sąsiednich segmentów, lecz bez jasnego dopasowania oferty i kanałów.',
+                  ],
+                  aiDraft:
+                    'AI proponuje opcje w czterech polach: mocniejsza penetracja core, test nowej geografii, lekka wersja produktu i ostrożna dywersyfikacja.',
+                  approvedUse:
+                    'Użytkownik akceptuje opcje z jasnym pierwszym krokiem i odrzuca pomysły, które są tylko życzeniową ekspansją.',
+                  outcome:
+                    'Powstaje sekwencja: najpierw zwiększyć udział w core, równolegle przetestować jeden segment, a większy bet uruchomić dopiero po walidacji.',
+                },
+                {
+                  title: 'SaaS po nasyceniu obecnego ICP',
+                  context: 'Produkt ma dobrą retencję, ale nowy pipeline w obecnym segmencie słabnie.',
+                  question: 'Czy rosnąć przez nowy segment, dodatki produktowe, czy pricing?',
+                  evidence: [
+                    'Retencja i expansion revenue są dobre, ale win-rate na nowych logo spada trzeci kwartał z rzędu.',
+                    'Feedback klientów pokazuje popyt na funkcje raportowe, a sprzedaż słyszy zapytania z większych firm.',
+                  ],
+                  aiDraft:
+                    'AI tworzy opcje: pricing packaging w core, wejście w mid-market, moduł analityczny i ryzykowną platformę dla enterprise.',
+                  approvedUse:
+                    'Zaakceptowane karty trafiają do porównania impact/effort/risk, a AI wskazuje, które opcje wymagają walidacji przed roadmapą.',
+                  outcome:
+                    'Rekomendacja: przetestować nowy pakiet cenowy i moduł analityczny na obecnych klientach przed kosztownym ruchem enterprise.',
+                },
+                {
+                  title: 'Firma usługowa z silną relacją klienta',
+                  context: 'Klienci proszą o dodatkowe usługi, ale zespół boi się rozmycia specjalizacji.',
+                  question: 'Czy rozwijać produkt/usługę dla obecnych klientów, czy chronić focus?',
+                  evidence: [
+                    'Najlepsi klienci proszą o usługi komplementarne, ale rentowność projektów spada, gdy zakres jest zbyt szeroki.',
+                    'Zespół wskazuje przeciążenie ekspertów i brak powtarzalnych standardów delivery dla nowych usług.',
+                  ],
+                  aiDraft:
+                    'AI proponuje opcje rozwoju produktu dla obecnych klientów, selektywną penetrację key accounts i odrzuca szeroką dywersyfikację bez proofu.',
+                  approvedUse:
+                    'Akceptowane są tylko opcje z wyraźnym ICP, zakresem delivery i pierwszym eksperymentem komercyjnym.',
+                  outcome:
+                    'Powstaje plan: stworzyć jedną productized service dla obecnych klientów, przetestować cenę i dopiero potem rozwijać kolejne dodatki.',
+                },
+              ]
+            : [
+                {
+                  title: 'Premium company seeking growth without margin erosion',
+                  context: 'The core segment is profitable, but growth is slowing.',
+                  question: 'Should it scale the current market, enter a new geography, or build a new product?',
+                  evidence: [
+                    'Sales data shows stable margin in the current segment but a declining number of new leads.',
+                    'Interviews surface demand from adjacent segments, but offer and channel fit are still unclear.',
+                  ],
+                  aiDraft:
+                    'AI proposes options across all four fields: deeper core penetration, a geography test, a lighter product version, and cautious diversification.',
+                  approvedUse:
+                    'The user approves options with a clear first step and rejects ideas that are just wishful expansion.',
+                  outcome:
+                    'The sequence becomes: grow share in core, test one adjacent segment in parallel, and only then commit to a bigger bet.',
+                },
+                {
+                  title: 'SaaS after current ICP saturation',
+                  context: 'Retention is strong, but pipeline in the current segment is weakening.',
+                  question: 'Should growth come from a new segment, product add-ons, or pricing?',
+                  evidence: [
+                    'Retention and expansion revenue are healthy, but new-logo win rate has declined for three quarters.',
+                    'Customer feedback shows demand for reporting features, while sales hears requests from larger companies.',
+                  ],
+                  aiDraft:
+                    'AI creates options around core pricing packaging, mid-market entry, an analytics module, and a riskier enterprise platform move.',
+                  approvedUse:
+                    'Approved cards move into impact/effort/risk comparison, and AI identifies what must be validated before roadmap commitment.',
+                  outcome:
+                    'The recommendation is to test a new pricing package and analytics module with current customers before an expensive enterprise move.',
+                },
+                {
+                  title: 'Services firm with strong client relationships',
+                  context: 'Clients ask for adjacent services, but the team fears diluting specialization.',
+                  question: 'Should it develop new offers for current clients or protect focus?',
+                  evidence: [
+                    'Top clients request complementary services, but project profitability drops when scope becomes too broad.',
+                    'The team reports expert overload and no repeatable delivery standard for new service lines.',
+                  ],
+                  aiDraft:
+                    'AI proposes product-development options for current clients, selective key-account penetration, and rejects broad diversification without proof.',
+                  approvedUse:
+                    'Only options with a clear ICP, delivery scope, and first commercial experiment are accepted.',
+                  outcome:
+                    'The plan is to create one productized service for current clients, test pricing, and then decide whether to add more offers.',
+                },
+              ]
+        )}
         <GrowthPathsLibraryGraphic isPolish={isPolish} variant="example" />
       </div>
     );
@@ -1520,7 +1879,267 @@ export function KnownToolDetailView(props: {
             ? 'Firma ma kilka produktów i inicjatyw, ale budżet pozwala sfinansować tylko część z nich. Portfolio Priority porządkuje karty BCG, pokazuje koszt alternatywny i buduje rekomendowany portfel działań.'
             : 'A company has several products and initiatives, but budget only supports a subset. Portfolio Priority organizes the BCG cards, exposes opportunity cost, and builds the recommended action portfolio.'}
         </div>
+        {caseGrid(
+          isPolish
+            ? [
+                {
+                  title: 'Budżet inwestycyjny tylko na 3 z 9 inicjatyw',
+                  context: 'Lista projektów jest długa, a sponsorzy naciskają na swoje tematy.',
+                  question: 'Które inicjatywy finansować, utrzymać, testować albo zatrzymać?',
+                  evidence: [
+                    'Każda inicjatywa ma innego sponsora, ale tylko część ma dowody wpływu na wzrost lub marżę.',
+                    'Dane PMO pokazują przeciążenie zespołów i brak jasnego kryterium stop/continue.',
+                  ],
+                  aiDraft:
+                    'AI proponuje karty portfolio z oceną growth/share/investment, uzasadnieniem oraz rekomendacją invest, maintain, test, harvest albo stop.',
+                  approvedUse:
+                    'Użytkownik akceptuje scoring tylko tam, gdzie zgadza się z evidence, a potem AI buduje trade-offy zasobów.',
+                  outcome:
+                    'Powstaje portfel decyzji: trzy inicjatywy do finansowania, dwie do testu z bramkami, reszta do zatrzymania lub odłożenia.',
+                },
+                {
+                  title: 'Portfolio produktów po szybkim wzroście',
+                  context: 'Część produktów ma wolumen, ale niską marżę; inne są małe, lecz perspektywiczne.',
+                  question: 'Gdzie przesunąć zasoby produktowe i sprzedażowe?',
+                  evidence: [
+                    'Raport sprzedaży pokazuje produkty o wysokim wolumenie i niskiej marży oraz małe produkty z szybkim wzrostem.',
+                    'Wywiady z sales wskazują, że zespół sprzedaje to, co łatwe, niekoniecznie to, co strategiczne.',
+                  ],
+                  aiDraft:
+                    'AI klasyfikuje produkty jako stars, cash cows, question marks i dogs oraz proponuje przesunięcia uwagi sprzedaży.',
+                  approvedUse:
+                    'Po akceptacji kart narzędzie pokazuje koszt alternatywny utrzymywania zbyt szerokiego portfolio.',
+                  outcome:
+                    'Rekomendacja: utrzymać cash cow, dofinansować jednego question marka, harvestować niskomarżowy wolumen i zatrzymać produkty bez strategicznej roli.',
+                },
+                {
+                  title: 'Transformacja z nadmiarem projektów',
+                  context: 'PMO prowadzi wiele równoległych strumieni i traci zdolność dowożenia.',
+                  question: 'Które prace są strategiczne, a które tylko zużywają przepustowość?',
+                  evidence: [
+                    'Statusy projektów są zielone na papierze, ale zależności blokują kluczowe milestone’y.',
+                    'Rozmowy z liderami pokazują, że te same osoby są krytyczne dla kilku inicjatyw jednocześnie.',
+                  ],
+                  aiDraft:
+                    'AI ocenia inicjatywy według strategicznego potencjału, pozycji, poziomu inwestycji i realnej przepustowości organizacji.',
+                  approvedUse:
+                    'Zaakceptowane karty przechodzą do syntezy: co finansować, co utrzymać minimalnie, co zakończyć, a co zamienić w krótki test.',
+                  outcome:
+                    'Powstaje plan odciążenia PMO: mniej aktywnych strumieni, jasne kryteria restartu i lista tematów do zamknięcia.',
+                },
+              ]
+            : [
+                {
+                  title: 'Investment budget for only 3 of 9 initiatives',
+                  context: 'The project list is long and sponsors push their own priorities.',
+                  question: 'Which initiatives should be funded, maintained, tested, or stopped?',
+                  evidence: [
+                    'Each initiative has a different sponsor, but only some have evidence of growth or margin impact.',
+                    'PMO data shows team overload and no clear stop/continue criteria.',
+                  ],
+                  aiDraft:
+                    'AI proposes portfolio cards with growth/share/investment scores, rationale, and an invest/maintain/test/harvest/stop recommendation.',
+                  approvedUse:
+                    'The user approves scoring only where evidence fits, then AI builds resource trade-offs.',
+                  outcome:
+                    'The portfolio decision funds three initiatives, tests two with gates, and stops or defers the rest.',
+                },
+                {
+                  title: 'Product portfolio after rapid growth',
+                  context: 'Some products have volume but low margin; others are small but promising.',
+                  question: 'Where should product and sales resources move?',
+                  evidence: [
+                    'Sales reports show high-volume low-margin products and smaller products with faster growth.',
+                    'Sales interviews show the team sells what is easiest, not always what is strategic.',
+                  ],
+                  aiDraft:
+                    'AI classifies products as stars, cash cows, question marks, and dogs, then proposes sales-focus shifts.',
+                  approvedUse:
+                    'Approved cards expose the opportunity cost of keeping the portfolio too broad.',
+                  outcome:
+                    'The recommendation maintains the cash cow, funds one question mark, harvests low-margin volume, and stops products without strategic role.',
+                },
+                {
+                  title: 'Transformation overloaded with projects',
+                  context: 'PMO runs many parallel streams and loses delivery capacity.',
+                  question: 'Which work is strategic and which only consumes throughput?',
+                  evidence: [
+                    'Project statuses look green on paper, but dependencies block key milestones.',
+                    'Leader interviews show the same people are critical to several initiatives at once.',
+                  ],
+                  aiDraft:
+                    'AI scores initiatives by strategic potential, position, investment level, and real organizational capacity.',
+                  approvedUse:
+                    'Approved cards feed synthesis: what to fund, minimally maintain, stop, or convert into a short test.',
+                  outcome:
+                    'The result is a PMO relief plan: fewer active streams, restart criteria, and a list of topics to close.',
+                },
+              ]
+        )}
         <PortfolioPriorityLibraryGraphic isPolish={isPolish} variant="example" />
+      </div>
+    );
+
+    const riskGoalSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Po co używać' : 'Why use it'}
+          </div>
+          <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            {isPolish
+              ? 'Risk & Uncertainty pomaga sprawdzić, jakie założenia mogą się nie sprawdzić, które ryzyka są krytyczne i jakie ruchy odporności trzeba uruchomić przed decyzją.'
+              : 'Risk & Uncertainty helps test which assumptions may fail, which risks are critical, and which resilience moves need to happen before the decision.'}
+          </div>
+        </div>
+        <RiskUncertaintyLibraryGraphic isPolish={isPolish} variant="process" />
+      </div>
+    );
+
+    const riskProcessSection = (
+      <div className="grid gap-4 md:grid-cols-2">
+        {[
+          ['Mission', isPolish ? 'Decyzja, zakres niepewności i sygnał sukcesu.' : 'Decision, uncertainty scope, and success signal.'],
+          ['Evidence', isPolish ? 'Sygnały z wywiadu, rynku, danych i operacji.' : 'Interview, market, data, and operational signals.'],
+          ['Risk map', isPolish ? 'Założenia, ryzyka i scenariusze jako karty AI.' : 'Assumptions, risks, and scenarios as AI cards.'],
+          ['Outputs', isPolish ? 'Ruchy odporności, output candidates i inicjatywy.' : 'Resilience moves, output candidates, and initiatives.'],
+        ].map(([title, text]) => (
+          <div
+            key={title}
+            className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30"
+          >
+            <div className="font-semibold text-slate-900 dark:text-white">{title}</div>
+            <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {text}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+
+    const riskOutcomesSection = (
+      <div className="space-y-3">
+        {[
+          isPolish ? 'Zaakceptowana mapa założeń, ryzyk i scenariuszy' : 'Approved assumption, risk, and scenario map',
+          isPolish ? 'Ruchy: validate, mitigate, monitor, hedge, escalate' : 'Moves: validate, mitigate, monitor, hedge, escalate',
+          isPolish ? 'Early warnings i działania odporności' : 'Early warnings and resilience actions',
+          isPolish ? 'Kandydaci outputów i inicjatyw downstream' : 'Downstream output and initiative candidates',
+        ].map((text) => (
+          <div
+            key={text}
+            className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 text-sm text-slate-700 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300"
+          >
+            {text}
+          </div>
+        ))}
+      </div>
+    );
+
+    const riskExampleSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-sm leading-relaxed text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
+          {isPolish
+            ? 'Firma planuje transformację, ale niepewne są koszty, adopcja i zależności technologiczne. Risk & Uncertainty porządkuje założenia, ryzyka i scenariusze, a potem wskazuje ruchy walidacji i mitygacji.'
+            : 'A company plans a transformation, but costs, adoption, and technology dependencies are uncertain. Risk & Uncertainty structures assumptions, risks, and scenarios, then recommends validation and mitigation moves.'}
+        </div>
+        {caseGrid(
+          isPolish
+            ? [
+                {
+                  title: 'Transformacja z niepewną adopcją użytkowników',
+                  context: 'Plan zakłada szybkie wdrożenie, ale zespoły operacyjne mają różne poziomy gotowości.',
+                  question: 'Które założenia trzeba zwalidować przed commitmentem budżetu?',
+                  evidence: [
+                    'Wywiady pokazują entuzjazm zarządu, ale sceptycyzm kierowników liniowych i brak czasu na szkolenia.',
+                    'Poprzednie wdrożenia miały opóźnienia nie przez technologię, tylko przez brak ownershipu po stronie biznesu.',
+                  ],
+                  aiDraft:
+                    'AI proponuje założenia do walidacji, ryzyka adopcji, scenariusz opóźnienia oraz ruchy validate/monitor/mitigate.',
+                  approvedUse:
+                    'Użytkownik akceptuje karty, które mają realne wskaźniki ostrzegawcze, np. frekwencję szkoleń, aktywność użytkowników i liczbę workaroundów.',
+                  outcome:
+                    'Powstaje plan odporności: pilot adopcyjny, sponsorzy liniowi, early warnings i progi eskalacji przed pełnym rolloutem.',
+                },
+                {
+                  title: 'Ekspansja przy zmiennym popycie',
+                  context: 'Popyt rośnie, ale dane rynkowe są rozbieżne i zależne od kilku klientów.',
+                  question: 'Jaki scenariusz bazowy, downside i stress powinien sterować decyzją?',
+                  evidence: [
+                    'Sprzedaż widzi duże zapytania od kilku klientów, ale pipeline jest skoncentrowany i ma niską powtarzalność.',
+                    'Dane rynkowe pokazują wzrost kategorii, lecz też sezonowość i zależność od budżetów inwestycyjnych klientów.',
+                  ],
+                  aiDraft:
+                    'AI proponuje scenariusze base/downside/stress, ryzyka koncentracji popytu i sygnały do monitorowania przed decyzją scale.',
+                  approvedUse:
+                    'Po akceptacji scenariuszy narzędzie buduje ruchy hedge i monitor oraz sugeruje progi, przy których decyzja ma być zatrzymana.',
+                  outcome:
+                    'Decyzja ekspansyjna dostaje warunki: minimalna liczba niezależnych klientów, próg marży i early warning na spadek konwersji.',
+                },
+                {
+                  title: 'Program kosztowy pod presją czasu',
+                  context: 'Zarząd oczekuje szybkich oszczędności, ale ryzyko wpływu na jakość jest wysokie.',
+                  question: 'Jak ograniczyć ryzyko cięcia zdolności krytycznych?',
+                  evidence: [
+                    'Finanse widzą szybki potencjał oszczędności, ale operacje wskazują zależności między kosztami a SLA.',
+                    'Historia podobnych cięć pokazuje wzrost reklamacji i kosztów naprawczych po kilku miesiącach.',
+                  ],
+                  aiDraft:
+                    'AI proponuje ryzyka jakości, scenariusz odbicia kosztów, założenia do walidacji oraz ruchy mitigate/escalate.',
+                  approvedUse:
+                    'Akceptowane są tylko te mitygacje, które mają właściciela, trigger i jasny próg eskalacji.',
+                  outcome:
+                    'Powstaje program oszczędności z guardrailami: czego nie ciąć, co testować krótkim pilotażem i kiedy zatrzymać redukcję.',
+                },
+              ]
+            : [
+                {
+                  title: 'Transformation with uncertain user adoption',
+                  context: 'The plan assumes fast rollout, but operating teams have uneven readiness.',
+                  question: 'Which assumptions must be validated before budget commitment?',
+                  evidence: [
+                    'Interviews show executive enthusiasm, but line-manager skepticism and limited training capacity.',
+                    'Previous rollouts were delayed not by technology, but by lack of business ownership after go-live.',
+                  ],
+                  aiDraft:
+                    'AI proposes validation assumptions, adoption risks, a delay scenario, and validate/monitor/mitigate moves.',
+                  approvedUse:
+                    'The user accepts cards with real warning indicators such as training attendance, user activity, and workaround volume.',
+                  outcome:
+                    'The resilience plan includes an adoption pilot, line sponsors, early warnings, and escalation thresholds before full rollout.',
+                },
+                {
+                  title: 'Expansion under volatile demand',
+                  context: 'Demand is growing, but market data is mixed and dependent on a few customers.',
+                  question: 'Which base, downside, and stress scenarios should steer the decision?',
+                  evidence: [
+                    'Sales sees large requests from a few customers, but pipeline is concentrated and not yet repeatable.',
+                    'Market data shows category growth, but also seasonality and dependence on client investment budgets.',
+                  ],
+                  aiDraft:
+                    'AI proposes base/downside/stress scenarios, demand-concentration risks, and signals to monitor before scale.',
+                  approvedUse:
+                    'After scenario approval, the tool builds hedge and monitor moves and suggests thresholds that pause the decision.',
+                  outcome:
+                    'The expansion decision gets conditions: minimum independent customers, margin gate, and early warning for conversion decline.',
+                },
+                {
+                  title: 'Cost program under time pressure',
+                  context: 'Leadership expects quick savings, but quality impact risk is high.',
+                  question: 'How can the company avoid cutting critical capabilities?',
+                  evidence: [
+                    'Finance sees fast savings potential, but operations points to dependencies between cost and SLA.',
+                    'History of similar cuts shows complaints and rework costs rising several months later.',
+                  ],
+                  aiDraft:
+                    'AI proposes quality risks, a cost rebound scenario, assumptions to validate, and mitigate/escalate moves.',
+                  approvedUse:
+                    'Only mitigations with an owner, trigger, and clear escalation threshold are accepted.',
+                  outcome:
+                    'The cost program gets guardrails: what not to cut, what to test through a pilot, and when to stop reductions.',
+                },
+              ]
+        )}
+        <RiskUncertaintyLibraryGraphic isPolish={isPolish} variant="example" />
       </div>
     );
 
@@ -1636,6 +2255,35 @@ export function KnownToolDetailView(props: {
           icon: FileText,
           label: { en: 'Example', pl: 'Przykład' },
           component: portfolioExampleSection,
+        },
+      ];
+    }
+
+    if (tool?.toolType === 'risk-uncertainty' || toolType === 'risk-uncertainty') {
+      return [
+        {
+          id: 'goal',
+          icon: Target,
+          label: { en: 'Goal', pl: 'Cel' },
+          component: riskGoalSection,
+        },
+        {
+          id: 'process',
+          icon: CheckCircle2,
+          label: { en: 'Process', pl: 'Proces' },
+          component: riskProcessSection,
+        },
+        {
+          id: 'outcomes',
+          icon: Lightbulb,
+          label: { en: 'Outcomes', pl: 'Rezultat' },
+          component: riskOutcomesSection,
+        },
+        {
+          id: 'example',
+          icon: FileText,
+          label: { en: 'Example', pl: 'Przykład' },
+          component: riskExampleSection,
         },
       ];
     }

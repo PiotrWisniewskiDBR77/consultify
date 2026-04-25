@@ -5559,3 +5559,1558 @@ Brakuje testow dla:
 8. Wprowadzic audit trail: kto, kiedy, co zmienil, z prawidlowymi datami i historia polityk.
 9. Dodac automatyczne testy e2e i integracyjne dla wszystkich krytycznych sciezek.
 10. Komunikowac status funkcji: read-only, disabled z wyjasnieniem albo ukrycie, jesli backend nie istnieje.
+
+## 15. Cross-App Admin Surface Gaps
+
+> Status: uzupelnienie po analizie przekrojowej admin / superadmin / settings.
+> Cel: zebrac luki, ktore nie sa pelnie pokryte przez audyty modulowe 11-14.
+> Zakres: tenant admin P32, settings, organization routes, API client hygiene, billing contracts, SCIM multitenancy, assessment access requests i relacja Admin Integrations vs SuperAdmin Connector Ops.
+
+### 15A. Executive summary
+
+Dotychczasowe audyty dobrze pokrywaja SuperAdmin AI Ops, Connector Ops, Governance, Platform Security oraz Identity/Access. Nadal brakuje jednak osobnego planu dla powierzchni przecinajacych wiele modulow:
+
+- tenant admin / owner panel;
+- user settings i organization settings;
+- przeplywy `organization/*` vs `admin/*`;
+- hygiene klienta API;
+- billing endpoint mismatch;
+- tenant isolation w SCIM;
+- assessment access requests;
+- Admin V8 Sync Hub vs SuperAdmin Connector Ops.
+
+To sa ryzyka systemowe, bo moga powodowac sytuacje, w ktorej jedna funkcja administracyjna ma dwa UI, dwa endpointy albo dwa rozne wzorce zapisu i obslugi bledu.
+
+### 15B. Tenant Admin P32 contract audit
+
+Zakres:
+
+- `src/views/admin/AdminSettingsModule.tsx`;
+- panele admin: people, security, billing, ai, integrations, audit, operations;
+- backend `server/src/routes/adminP32.routes.ts`;
+- metody `/api/admin/*` w `src/services/api.ts`.
+
+Ryzyka:
+
+- tenant admin ma bogaty zestaw endpointow, ale nie ma osobnego backlogu naprawczego;
+- czesc operacji moze dzialac tylko w UI albo tylko w backendzie;
+- audit logs dla admina moga miec falszywa paginacje, jesli filtracja odbywa sie po pobraniu limitu rekordow;
+- czesc endpointow uzywa zwyklego `fetch` bez jednolitego retry/error handlingu.
+
+Definition of Done:
+
+- kazdy flow tenant admin ma UI -> API method -> backend endpoint -> walidacje -> zapis -> audit;
+- kazda mutacja ma toast i refetch/lokalny update;
+- admin widzi tylko dane swojej organizacji;
+- test izolacji tenantowej przechodzi dla people, billing, security, IAM i audit.
+
+### 15C. Settings persistence map
+
+Zakres:
+
+- `SettingsView`;
+- `src/components/settings/*`;
+- `src/services/api/settings.api.ts`;
+- ustawienia user/org/global;
+- profile, avatar, signatures, working hours, AI params, AI data/privacy, regional, security, notifications.
+
+Ryzyka:
+
+- rozdzial 14 opisuje problem ogolnie, ale nie mapuje kazdej zakladki settings na konkretny kontrakt;
+- czesc settings moze uzywac `SettingsApi`, czesc monolitycznego `Api`, a czesc surowego `fetch`;
+- sekcje moga miec `Save`, ktory nie zapisuje albo zapisuje w zlym scope: user/org/global;
+- `SettingsView` zawiera duzo hardcoded angielskich opisow zamiast i18n.
+
+Definition of Done:
+
+- kazdy przycisk `Save` ma okreslony scope: user, organization albo global;
+- kazde ustawienie ma endpoint, walidacje i persist po refreshu;
+- kazdy ekran settings ma loading, empty, error i success;
+- UI nie miesza surowych kluczy i hardcoded angielskich tekstow, jesli aktywne jest i18n.
+
+### 15D. Organization routes vs Admin routes
+
+Zakres:
+
+- `OrganizationView`;
+- `OrganizationAdminPanel`;
+- `/organization/*`;
+- `/admin/*`;
+- `ADMIN_REDIRECTS`;
+- endpointy `/api/organizations/:orgId/*` oraz `/api/admin/*`.
+
+Ryzyka:
+
+- istnieja dwa wejscia do podobnych tematow: organization panel i admin P32;
+- bezposrednie URL-e `/organization/members` moga renderowac inny komponent niz `/admin/people`;
+- user moze widziec dwa niespojnie dzialajace UI dla czlonkow, billing albo ustawien org;
+- dokumentacja i manualne testy moga mylic te powierzchnie.
+
+Definition of Done:
+
+- jedno zrodlo prawdy dla tenant admin flows;
+- jesli `/organization/*` ma byc tylko aliasem, zawsze przekierowuje do `/admin/*`;
+- jesli oba widoki zostaja, maja jawnie rozne role i zakresy;
+- test e2e potwierdza, ze admin trafia w ten sam kanoniczny flow.
+
+### 15E. API client hygiene
+
+Zakres:
+
+- `src/services/api.ts`;
+- `src/services/api/settings.api.ts`;
+- `src/services/api/baseClient.ts`;
+- surowe `fetch` w komponentach i kontekstach;
+- `OrgContext`;
+- `AccessPolicyContext`;
+- komponenty SuperAdmin z surowym `/api/...`.
+
+Ryzyka:
+
+- aplikacja uzywa wielu wzorcow HTTP: `fetch`, `fetchWithRetry`, `handleResponse`, `SettingsApi`, `apiGet/apiPost`;
+- bledy moga byc mapowane niespojnie, co prowadzi do `INTERNAL_ERROR` albo `[object Object]` w UI;
+- czesc komponentow moze omijac token handling i retry;
+- trudniej testowac kontrakty.
+
+Definition of Done:
+
+- mutacje admin/superadmin/settings uzywaja wspolnego error mappera;
+- brak surowego `[object Object]` i surowych JSON errors w UI;
+- `fetchWithRetry + handleResponse` albo `baseClient` jest standardem dla nowych i naprawianych przeplywow;
+- komponenty nie skladaja recznie `/api/...`, jesli istnieje metoda w service layer;
+- test jednostkowy error mappera pokrywa `INTERNAL_ERROR`, validation error i network error.
+
+### 15F. Billing endpoint mismatch
+
+Zakres:
+
+- `getOperationalCosts` w `src/services/api.ts`;
+- backend `server/src/routes/billing/billing.routes.ts`;
+- admin/superadmin FinOps dashboards.
+
+Ryzyka:
+
+- frontend wolal `/api/billing/admin/costs`, podczas gdy backend ma `/api/billing/admin/operational-costs`;
+- query string w kliencie moze zawierac bledny separator z odstepem po `?`;
+- backend czesto zwraca zera przy bledzie, przez co UI pokazuje fałszywy brak kosztow zamiast error/degraded.
+
+Definition of Done:
+
+- frontend endpoint jest zgodny z backendiem;
+- query string nie zawiera blednego `? `;
+- UI rozroznia realne zero, brak danych i blad backendu;
+- test kontraktowy sprawdza `operational-costs`.
+
+### 15G. SCIM multitenancy hardening
+
+Zakres:
+
+- `adminP32.routes.ts`;
+- SCIM group mappings;
+- tenant admin identity settings;
+- org admin SCIM summary.
+
+Ryzyka:
+
+- SCIM group mappings moga byc zapisywane bez `organization_id`;
+- brak filtrowania tenantowego grozi mieszaniem danych miedzy organizacjami;
+- admin moglby widziec albo modyfikowac mappingi spoza swojego tenanta.
+
+Definition of Done:
+
+- SCIM mappings maja `organization_id`;
+- wszystkie odczyty i zapisy sa filtrowane po organizacji aktora;
+- migracja/backfill uzupelnia tenant scope;
+- test izolacji tenantowej przechodzi dla dwoch organizacji.
+
+### 15H. Assessment access requests
+
+Zakres:
+
+- access requests zwiazane z assessment;
+- rozne od SuperAdmin access requests;
+- approve/reject/status/audit flow.
+
+Ryzyka:
+
+- system ma wiecej niz jeden typ access request;
+- manualne audyty skupily sie na superadmin pending requests i access codes;
+- assessment access requests moga miec osobny backend, UI i statusy;
+- brak wspolnego modelu moze prowadzic do niespojnych decyzji dostepowych.
+
+Definition of Done:
+
+- spisana jest mapa typow access request;
+- assessment access request ma create/list/approve/reject/status;
+- decyzje sa audytowane;
+- UI jasno rozroznia request tenant onboarding od request assessment/resource.
+
+### 15I. Admin V8 Sync Hub vs SuperAdmin Connector Ops
+
+Zakres:
+
+- Admin integrations / V8 Sync Hub;
+- SuperAdmin Connector Ops / Integrations Hub;
+- `UnifiedSyncHub`;
+- connector catalog, sync jobs, webhook/connectors.
+
+Ryzyka:
+
+- dwa moduly uzywaja podobnego jezyka: integrations/connectors/sync;
+- moga miec osobne endpointy, modele i statusy;
+- audyt Connector Ops nie pokrywa w pelni tenantowego V8 Sync Hub;
+- user/admin moze nie rozumiec, ktory panel sluzy do konfiguracji, a ktory do globalnego nadzoru.
+
+Definition of Done:
+
+- ustalona terminologia: Connector Ops global vs Admin Integrations tenant;
+- wspolny model statusow integracji albo jawnie rozne modele;
+- dokumentacja opisuje relacje miedzy hubami;
+- test e2e potwierdza tenantowy sync flow niezaleznie od SuperAdmin Connector Ops.
+
+### 15J. PlaybookTemplateReviews API hygiene
+
+Zakres:
+
+- `src/components/SuperAdmin/PlaybookTemplateReviews.tsx`;
+- content endpoints;
+- review/approval UI.
+
+Ryzyka:
+
+- komponent uzywa surowego `fetch('/api/content/...')`;
+- walidacja i bledy uzywaja `alert()` zamiast toastow;
+- moze omijac `Api`, token handling, retry i wspolne mapowanie bledow;
+- temat nie byl jasno ujety w poprzednich audytach.
+
+Definition of Done:
+
+- komponent uzywa service layer;
+- brak `alert()` w przeplywach admin;
+- kazda akcja review ma toast, loading state i refetch;
+- endpointy content review maja walidacje i audit.
+
+### 15K. Cross-app rekomendowana kolejnosc
+
+1. Tenant Admin P32 contract audit.
+2. Settings persistence map.
+3. Organization routes vs Admin routes.
+4. API client hygiene.
+5. Billing endpoint mismatch.
+6. SCIM multitenancy hardening.
+7. Assessment access requests.
+8. Admin V8 Sync Hub vs SuperAdmin Connector Ops.
+9. PlaybookTemplateReviews API hygiene.
+
+## 16. Audyt Billing / Commercial / Operations - SuperAdmin
+
+> Status: zlagly raport manualny; ostatni audyt szczegolowy nadal trwa.
+> Srodowisko: `https://demo.consultify.ai`.
+> Role testowe: superadmin `admin@dbr77.com`, user `piotr.wisniewski@dbr77.com`.
+> Cel: utrwalic obserwacje z obszaru billing, commercial, usage, limits, AI Ops, Connector/Ops i governance przed planem napraw.
+
+### 16A. Executive summary
+
+Podczas manualnego przegladu platformy Consultify w srodowisku demo sprawdzono moduly finansowe, subskrypcje, usage/limits, AI Ops, Connector/Ops i narzedzia governance.
+
+Wiekszosc danych w panelach jest pusta albo oznaczona jako `0`, `NaN`, `n/a`, co sugeruje brak integracji z backendem, fallbacki albo placeholdery. Wiele operacji tworzenia i edycji konczy sie komunikatem sukcesu, ale po odswiezeniu dane nie sa zapisane. Wystepuja bledy `[object Object]` i nieobslugiwane walidacje formularzy.
+
+Najpilniejsze problemy `P0` dotycza:
+
+- finansow: fakturowanie, platnosci, plany, usage;
+- generowania i zarzadzania API keys / webhookami;
+- backupow;
+- konfiguracji providerow AI;
+- security/compliance;
+- zapisu danych po refreshu.
+
+Wiele widokow wyswietla statyczne dane `0/n/a` i nie zwraca szczegolow po requestach API, co uniemozliwia pelny test produkcyjny.
+
+### 16B. P0 - krytyczne problemy
+
+#### Billing / Payments
+
+Problemy:
+
+- formularze tworzenia planow abonamentowych sa dostepne, ale zapis nowego planu nie dziala;
+- po `Save` nie pojawia sie toast ani nowy wpis na liscie;
+- tworzenie faktur nie jest mozliwe;
+- pole `Organization ID` jest tekstowym UUID zamiast wyboru organizacji;
+- dodanie tax rate pokazuje sukces, ale lista podatkow pozostaje pusta;
+- karty MRR/ARR, usage i tokens pokazuja `0`, `NaN`, `n/a`;
+- czesc formularzy zwraca `[object Object]` albo nie zapisuje danych.
+
+Ryzyko:
+
+- administrator moze zalozyc, ze plan, faktura lub tax rate zostaly utworzone, mimo ze backend nie zapisuje danych.
+
+Wymagane:
+
+- realne endpointy create/list/update dla plans, invoices, tax rates;
+- selector organizacji zamiast tekstowego UUID;
+- refetch po zapisie;
+- rozroznienie real zero / no data / backend error;
+- test kontraktowy billing.
+
+#### Subscriptions / Plans
+
+Problemy:
+
+- zmiana rabatu w General Info pokazuje toast `Organization updated`, ale po ponownym otwarciu wartosc sie nie zmienia;
+- brak przyciskow upgrade/downgrade;
+- `Billing & Settlement` jest read-only;
+- wartosci `Monthly Cost $0`, `Token Usage 0 of Unlimited (NaN%)` wygladaja na fallback.
+
+Wymagane:
+
+- trwaly zapis planu/rabatu/statusu;
+- jasny workflow upgrade/downgrade;
+- poprawne liczenie usage percent;
+- test po refreshu strony.
+
+#### Usage / Limits / Budgets
+
+Problemy:
+
+- CPU, Memory, Storage, Tokens pokazuja `0` albo `0% used`;
+- Monthly Budget pokazuje budget/spent/remaining `0`;
+- nie mozna ustawic limitow ani budzetow;
+- brak rozroznienia `no data`, `unlimited`, `0 usage`, `error`.
+
+Wymagane:
+
+- realne usage endpoints;
+- zapis limitow i budzetow;
+- walidacja kwot i progow;
+- UI dla `unlimited` zamiast `NaN%`.
+
+#### AI Operations
+
+Problemy:
+
+- LLM Providers maja liste, ale edycja wymagajaca API keys nie daje widocznego efektu zapisu;
+- Org AI Policy, Model Registry i Prompt Builder sa puste albo read-only;
+- czesc AI Governance wyglada jak konfiguracja, ale nie zapisuje zmian.
+
+Wymagane:
+
+- do czasu implementacji oznaczyc read-only;
+- naprawic provider config persistence;
+- rozroznic configuration, runtime i analytics.
+
+#### Connector Ops
+
+Problemy:
+
+- katalog integracji pokazuje Slack, Teams, Jira, ale `Connect` nie reaguje;
+- tworzenie webhooka konczy sie `Failed to create webhook`;
+- API Management pokazuje `0 total keys`;
+- backup/restore/DR sa informacyjne i nie wykonuja akcji.
+
+Wymagane:
+
+- connect integration;
+- create/test/delete webhook;
+- create/copy/revoke/rotate API key;
+- backup/restore/DR jako joby albo ukrycie przyciskow.
+
+#### Governance & Compliance / Security
+
+Problemy:
+
+- ladowanie MFA methods konczy sie `Failed to fetch MFA methods`;
+- zapis password policy zwraca `[object Object]`;
+- Security Events nie laduje danych;
+- IP Whitelist pokazuje toast po dodaniu IP, ale lista pozostaje pusta;
+- DSAR/Audit/Compliance actions sa nieskuteczne albo niedostepne.
+
+Wymagane:
+
+- endpointy MFA/password policy/security events;
+- prawdziwy zapis IP whitelist;
+- error mapper dla `[object Object]`;
+- audit log dla zmian security.
+
+#### Support / CS / Lifecycle
+
+Problemy:
+
+- support tickets nie zapisuja sie;
+- CS notes nie zapisuja sie;
+- Customer Health nie zawiera danych;
+- Contracts, Playbooks i Lifecycle sa puste;
+- utworzenie lifecycle stage nie zapisuje danych.
+
+Wymagane:
+
+- create/list/update support tickets;
+- create/list customer success notes;
+- lifecycle stages and transitions persistence;
+- playbook/contract CRUD;
+- refetch po kazdej mutacji.
+
+#### Uzytkownicy i organizacje
+
+Problemy:
+
+- dodawanie i zapraszanie uzytkownikow nie dziala;
+- formularze zwracaja `[object Object]` albo `Invalid option`;
+- przenoszenie uzytkownika do innej organizacji nie dziala;
+- rabaty/plan org nie utrwalaja sie mimo toasta.
+
+Wymagane:
+
+- create user;
+- invite user;
+- update role/status/org;
+- walidacja enumow;
+- persist po refreshu.
+
+### 16C. P1 - problemy wymagajace uwagi
+
+- `NaN`, `Invalid Date`, `n/a` i puste pola w statystykach.
+- Brak toastow albo nieczytelne komunikaty `[object Object]`.
+- Brak walidacji formularzy; puste pola trafiaja do backendu.
+- Po refreshu dane znikaja, czyli zapis nie jest trwaly.
+- Brak loading/empty/error states w wielu tabelach.
+- Brak informacji, czy `0` oznacza brak danych, realne zero, blad czy brak konfiguracji.
+
+### 16D. P2 - UX / tlumaczenia / klarownosc
+
+- Placeholdery bez wyjasnien, np. tekstowe `Organization ID`.
+- Mieszanie angielskiego i polskiego.
+- Dashboardy pokazuja same zera bez `No data yet`.
+- Brak linkow z pustych dashboardow do konfiguracji.
+- Brak spojnosci walut i formatowania dat.
+- Brak jasnych disabled/read-only states.
+
+### 16E. Macierz endpointow brakujacych albo niedzialajacych
+
+Kluczowe endpointy do weryfikacji i naprawy:
+
+- `POST /plans`
+- `POST /invoices`
+- `POST /tax`
+- `PUT /organizations/:id`
+- `POST /users/invite`
+- `POST /users`
+- `POST /lifecycle`
+- `POST /support/tickets`
+- `POST /webhooks`
+- `GET /security`
+- `PUT /security`
+- `GET /security/events`
+- `GET /usage`
+- endpointy MFA methods;
+- endpointy password policy;
+- endpointy IP whitelist;
+- endpointy API keys;
+- endpointy backup/restore/DR.
+
+Priorytet: wiekszosc powyzszych to `P0`, jesli przyciski sa widoczne w UI.
+
+### 16F. Funkcje do ukrycia albo zdegradowania
+
+Do czasu realnej implementacji ukryc, zablokowac albo oznaczyc jako `read-only / in preparation`:
+
+- tworzenie planow;
+- tworzenie faktur;
+- tax rates;
+- user invite/add;
+- lifecycle/playbooks/contracts;
+- support ticketing;
+- CS notes;
+- integrations connect;
+- webhooks;
+- API keys;
+- MFA methods;
+- password policy;
+- IP whitelist;
+- security events;
+- DSAR/Audit actions;
+- backup/restore/DR;
+- AI Ops Model Registry;
+- Prompt Builder;
+- Org AI Policy editing, jesli nie zapisuje.
+
+### 16G. Rekomendowana kolejnosc napraw
+
+1. **Funkcje finansowe i billing** - plany, faktury, tax rates, kontrakty, realne MRR/ARR i usage.
+2. **Uzytkownicy i organizacje** - invite/add user, licencje, rabaty, role/status, walidacja formularzy.
+3. **Connector Ops i API** - API keys, integracje, webhooki, backup/restore.
+4. **Security & Compliance** - MFA, password policy, IP whitelist, security logs, DSAR.
+5. **Support & CS oraz Lifecycle** - tickets, CS notes, customer health, lifecycle stages.
+6. **AI Operations & Governance** - provider config, model registry, prompt builder, policy editing; do czasu implementacji read-only.
+7. **UX & tlumaczenia** - placeholdery, jezyk, waluty, daty, toasty, zero/empty states.
+
+### 16H. Wnioski
+
+Srodowisko testowe Consultify jest bogate w moduly, ale wiekszosc funkcji jest obecnie szkieletowa albo konczy sie bledem. Aby platforma byla gotowa do uzycia, konieczne jest wdrozenie backendow dla operacji finansowych, uzytkownikow, integracji, bezpieczenstwa i supportu oraz poprawa UX.
+
+Najwazniejsze kryterium przed uznaniem dowolnego flow za naprawiony:
+
+- akcja ma realny endpoint;
+- backend waliduje payload;
+- frontend pokazuje toast;
+- lista/karta odswieza sie;
+- zmiana przetrwa refresh strony;
+- blad jest czytelny i nie pokazuje `[object Object]`.
+
+## 17. Audyt Tenant Admin P32 i Settings Persistence
+
+> Status: ostatni audyt manualno-techniczny przed planem napraw.
+> Srodowisko: `https://demo.consultify.ai`.
+> Zakres: Tenant Admin P32, Settings Persistence, Organization vs Admin routes, API hygiene.
+> Cel: zweryfikowac trwalosc zapisow w panelu admina organizacji i w ustawieniach uzytkownika/organizacji.
+
+### 17A. Executive summary
+
+Audyt Tenant Admin P32 oraz Settings Persistence pokazuje, ze panel tenant admin jest w wiekszosci atrapa. Prawie wszystkie formularze i przyciski `Save` albo `Add`:
+
+- nie wywoluja zadnej skutecznej akcji w backendzie;
+- generuja `INTERNAL_ERROR`;
+- wymagaja pol, ktore nie sa wyswietlane;
+- albo daja falszywy toast sukcesu bez trwalego zapisu.
+
+Jedynymi sekcjami settings, w ktorych potwierdzono czesciowa trwalosc danych, sa:
+
+- Email Signatures;
+- Working Hours.
+
+Pozostale ustawienia, m.in. Profile, Avatar, Security, Regional, AI Model & Parameters, AI Memory, AI Privacy oraz Voice/TTS, nie zapisuja sie trwale albo zwracaja blad.
+
+Najwieksze ryzyka:
+
+- user/admin widzi kompletne UI, ale backend nie zapisuje danych;
+- czesc toastow sukcesu jest falszywa;
+- `INTERNAL_ERROR`, `[object Object]` i `You do not have access to this organization` trafiaja do UI;
+- `/admin/*` i `/organization/*` moga prowadzic do niespojnych widokow;
+- brak audit trail dla prob zapisu i zmian.
+
+### 17B. Mapa przeplywow - Tenant Admin P32
+
+| UI path | Sekcja | Domniemane endpointy | Wynik | Persist po refreshu | Toast / blad | Ryzyko |
+|---|---|---|---|---|---|---|
+| `/admin/overview` | Overview dashboard | `GET /api/admin/overview` | Nie laduje sie poprawnie; `Admin overview is unavailable` | N/A | `INTERNAL_ERROR` | P0 |
+| `/admin/people` | People & Access | `/api/admin/people`, `/api/admin/access-codes` | `Add member` i `Generate code` nie dzialaja; brak pola email | Nie | Toast tylko `Enter an email address...` | P0 |
+| `/admin/security` | Security & Identity | `/api/admin/security/policy`, `/api/admin/collaboration`, `/api/admin/api-keys`, `/api/admin/iam` | MFA/SSO/session/collaboration nie zapisuja sie | Nie | `INTERNAL_ERROR`, `You do not have access to this organization` | P0 |
+| `/admin/billing` | Billing & FinOps | `/api/admin/billing/*` | Payment method, budgets, alerts zwracaja blad | Nie | `INTERNAL_ERROR` | P0 |
+| `/admin/ai` | AI Governance & Operations | `/api/admin/ai/policy`, `/api/admin/ai/limits` | Policy/limits/features nie zapisuja sie; walidacje sa niespojnie | Nie | `Failed to save settings`, validation errors | P0 |
+| `/admin/integrations` | Integrations & Sync | `/api/admin/integrations/connect/:provider` | `Connect` nie robi widocznej akcji | Nie | Brak | P1 |
+| `/admin/audit` | Audit, Compliance & Risk | `/api/admin/audit` | Logi puste; retention days zapisuje sie czesciowo mimo bledu | Czesciowo | `INTERNAL_ERROR` mimo utrwalenia wartosci | P1 |
+| `/admin/operations` | Organization Ops | `/api/admin/organization/domains` | Custom domain i approved email domain nie zapisuja sie | Nie | Brak | P1 |
+
+Wnioski:
+
+- zadna kluczowa sekcja P32 nie dziala w pelni;
+- formularze sa niepelne, np. brak pola email przy `Add member`;
+- `You do not have access to this organization` dla ownera wskazuje na blad organization scope / token / `organization_id`;
+- jedyny czesciowy sukces to audit retention days, ale UI pokazuje blad mimo zapisu.
+
+### 17C. Settings Persistence Matrix
+
+| Sekcja | Sciezka | Wynik | Uwagi |
+|---|---|---|---|
+| Profile | `/settings/profile` | Nie persistuje | Zmiana zaimkow wraca do domyslnej; brak toasta sukcesu |
+| Avatar & Photo | `/settings/avatar` | Nie persistuje | Avatar znika po zmianie zakladki albo refreshu |
+| Email Signatures | `/settings/email-signatures` | Dziala | `TestSig` utrzymuje sie po refreshu; default signature pokazuje toast |
+| Working Hours | `/settings/working-hours` | Dziala | Zmiana poniedzialku na `09:30` utrzymuje sie po refreshu |
+| Work Preferences | settings work prefs | Nie persistuje | `Failed to save preferences` |
+| Notifications | `/settings/notifications/*` | Niepotwierdzone / prawdopodobnie nie dziala | Wczesniejsze audyty wskazuja `Failed to save` albo brak efektu |
+| Language / Regional | `/settings/regional-settings` | Nie persistuje | `Failed to save preferences`; UI miesza PL/EN |
+| Security / MFA / Session | `/settings/security/*` | Nie persistuje | `INTERNAL_ERROR` |
+| AI Model & Parameters | `/settings/model-parameters` | Falszywy sukces | Toast `saved`, ale wartosci wracaja po refreshu |
+| AI Memory & Context | `/settings/ai-memory` | Falszywy sukces | Toast `AI memory settings saved`, ale stan wraca do domyslnego |
+| AI Data & Privacy | `/settings/ai-privacy` | Nie persistuje | `Failed to save AI privacy settings` |
+| Voice & TTS | `/settings/voice-tts` | Nie persistuje | `Failed to save voice settings`; brak wplywu na system |
+| AI Usage Dashboard / Prompt Library | settings AI sections | Nie dziala | Sekcje puste albo bez zapisu |
+| Import / Export Settings | settings import/export | Nie dziala | Eksportuje pusty JSON; import nie dziala |
+| Templates | settings templates | Nie dziala | Tworzenie template nie zapisuje danych |
+
+Wnioski:
+
+- tylko Email Signatures i Working Hours sa realnie funkcjonalne;
+- czesc settings pokazuje falszywy toast sukcesu;
+- brakuje rozroznienia `read-only`, `draft`, `failed save`, `saved`;
+- kazdy settings flow musi byc testowany po refreshu.
+
+### 17D. P0 - bledy blokujace
+
+1. **Podstawowe funkcje panelu admina sa martwe.** People, Security, Billing, AI, Integrations i Organization Ops nie wykonuja skutecznych zapisow.
+2. **Settings udaja zapis.** Profile, Security i AI Settings potrafia pokazac toast, ale po refreshu wartosci wracaja.
+3. **Brak albo zly backend contract.** `INTERNAL_ERROR` i `You do not have access to this organization` wskazuja na brak tras, zly org scope albo problem tenant isolation.
+4. **Niepelne formularze.** `Add member` nie ma pola email, wiec operacja jest niemozliwa.
+5. **Audit/security events nie dzialaja.** Logi sa puste, daty bledne, a retention zapisuje sie niespojnie z tostem.
+
+### 17E. P1 - problemy wysokiego priorytetu
+
+- Brak walidacji i jasnego feedbacku.
+- Brak automatycznego refetchu po zmianie.
+- AI Governance policy/limits/features nie zapisuja sie.
+- Admin owner otrzymuje `You do not have access to this organization`.
+- UI miesza jezyki i pokazuje surowe klucze albo angielskie fallbacki.
+- Dzialajace sekcje Settings nie stanowia jeszcze wzorca dla reszty.
+
+### 17F. P2 - problemy sredniego priorytetu
+
+- Dlugie formularze wymagaja przewijania w dwoch osiach.
+- Brak oznaczenia pol obowiazkowych.
+- `0`, `n/a`, `Invalid Date` sa pokazywane bez komentarza.
+- Brak historii zmian i audit log dla prob zapisu.
+- Brak trybu offline/read-only przy braku backendu.
+
+### 17G. Organization vs Admin routes
+
+W aplikacji istnieja rownolegle sciezki:
+
+- `/admin/*` - panel wlasciciela/admina organizacji;
+- `/organization/*` - widoki organizacyjne.
+
+Ryzyka:
+
+- `/admin/people` i `/organization/members` moga reprezentowac ten sam workflow innymi komponentami;
+- brak kanonicznego adresu prowadzi do dwoch niespojnych UI;
+- bezposrednie wejscie w URL moze pokazac niedzialajacy ekran zamiast redirectu;
+- manualne testy moga mylic admin P32 z organization panel.
+
+Rekomendacja:
+
+- wybrac jeden kanoniczny flow;
+- drugi adres przekierowac albo ukryc;
+- jesli oba zostaja, jasno opisac roznice zakresu i roli.
+
+### 17H. API Hygiene Findings
+
+Problemy:
+
+- UI pokazuje `[object Object]` i `INTERNAL_ERROR`;
+- czesc operacji prawdopodobnie uzywa surowego `fetch('/api/...')`;
+- brakuje centralnego `handleResponse`/error mappera w admin/settings;
+- brak retry i timeout messaging;
+- SCIM endpoint `api/scim/admin/service-provider` zwraca `NOT_FOUND` bez sensownego fallbacku;
+- placeholdery `0`, `n/a`, `Nieznany`, `NaN`, `Invalid Date` sa widoczne w produkcyjnym UI;
+- owner organizacji widzi `You do not have access to this organization`, co wskazuje na blad tokena albo `organization_id`;
+- w wielu mutacjach brakuje toastow.
+
+Wymagane:
+
+- wszystkie admin/settings calls przez jeden service layer;
+- jeden error mapper;
+- brak surowego `[object Object]`;
+- testy error mappingu;
+- jawny `feature unavailable` zamiast udawanego zapisu.
+
+### 17I. Missing tests
+
+Brakuje:
+
+- e2e dla panelu admina: add/edit user, generate code, save policies;
+- testow walidacji formularzy: email, required fields, daty, limity;
+- testow settings persistence po reloadzie;
+- testow uprawnien: admin nie edytuje innych org, user nie widzi admin tabs;
+- testow API error handling: `INTERNAL_ERROR`, `[object Object]`, `NOT_FOUND`;
+- testow integracyjnych backendu dla `/api/admin/*`;
+- testow i18n i surowych kluczy;
+- testow audit log przy mutacjach.
+
+### 17J. Recommended Fix Order
+
+1. **Naprawic Tenant Admin P32 P0.** Dodac/naprawic endpointy `adminP32.routes.ts` dla members, access codes, security policy, billing, AI limits i integrations. Ukryc funkcje bez backendu.
+2. **Zapewnic trwalosc Settings.** Ustalic scope user/org/global i naprawiac sekcje wedlug macierzy: najpierw Profile, Security, AI Model, AI Memory, Regional.
+3. **Wprowadzic globalna obsluge bledow i walidacje.** Wszystkie requesty przez jeden helper; brak `[object Object]`; jasne komunikaty.
+4. **Ujednolicic `/admin/*` i `/organization/*`.** Jeden kanoniczny flow albo jasne redirecty.
+5. **Zaimplementowac audit i logi.** Kazda proba zapisu i zmiana admin/settings powinna miec audit trail.
+6. **Dodac testy automatyczne.** E2E + integration dla admin panel i settings persistence.
+7. **Wprowadzic i18n cleanup.** Usunac mieszanie jezykow i surowe klucze.
+
+### 17K. Podsumowanie
+
+Tenant Admin P32 i wiekszosc Settings sa w fazie wczesnej implementacji albo nie sa obslugiwane backendowo. UI wyglada na kompletne, ale w praktyce nie zapisuje danych i nie komunikuje bledow poprawnie. To tworzy falszywe poczucie bezpieczenstwa i prowadzi do frustracji.
+
+Najwazniejszy standard na dalsze prace:
+
+- jesli funkcja nie ma backendu, ukryc ja albo oznaczyc `in progress`;
+- jesli przycisk `Save` jest widoczny, zmiana musi przetrwac refresh;
+- jesli backend zwraca blad, UI musi pokazac czytelny komunikat;
+- jesli admin zmienia dane tenantowe, musi powstac audit log.
+
+## 18. Program napraw Admin / SuperAdmin / Settings
+
+> Status: glowny program wykonawczy po audytach 11-17.
+> Cel: zamienic szeroka, czesciowo szkieletowa konsole administracyjna w wiarygodne narzedzie operacyjne.
+> Zakres: login, role, admin P32, superadmin, settings, billing, security, connectors, governance, AI operations, audit, testy i UX.
+> Zasada nadrzedna: `visible = working or honest`.
+
+### 18A. Diagnoza
+
+Audyt pokazal, ze Consultify ma bardzo szeroki interfejs administracyjny, ktory wizualnie opisuje docelowy produkt. Problem nie lezy w ambicji ani architekturze produktu, tylko w rozjezdzie dojrzalosci:
+
+- UI pokazuje wiele funkcji jako gotowe;
+- backend i kontrakty nie zawsze istnieja albo nie zapisuja danych;
+- czesc akcji pokazuje falszywy sukces;
+- czesc widokow ukrywa blad pod zerami, `n/a`, `NaN`, `Invalid Date`;
+- role admin/superadmin/user nie maja jeszcze jednego, twardego modelu dostepu i widocznosci;
+- mutacje nie maja wspolnego standardu: walidacja, toast, refetch, audit, test.
+
+Dlatego program napraw nie moze byc lista "popraw ekran X". To musi byc stabilizacja calej warstwy administracyjnej.
+
+### 18B. Zasady programu
+
+1. **Visible = working or honest.** Widoczna funkcja musi dzialac, byc read-only, disabled z wyjasnieniem albo ukryta.
+2. **No fake success.** Toast sukcesu jest dozwolony tylko wtedy, gdy backend potwierdzil zapis, a UI odswiezyl stan.
+3. **Refresh is truth.** Kazda mutacja musi przetrwac refresh strony.
+4. **Audit for admin mutations.** Kazda istotna akcja admin/superadmin musi zapisac audit event.
+5. **One error language.** Uzytkownik nie moze widziec `[object Object]`, surowego JSON ani golego `INTERNAL_ERROR`.
+6. **Scope is explicit.** Kazde ustawienie ma zakres: `user`, `organization`, `tenant admin`, `superadmin global`.
+7. **Security before convenience.** API keys, backup, billing, SSO, SCIM, DLP, approval i compliance nie moga byc atrapami.
+8. **Read-only is acceptable. Fake write is not.** Lepszy uczciwy panel read-only niz formularz, ktory udaje zapis.
+9. **Tests follow risk.** Najpierw testujemy logowanie, role, users/orgs, billing, settings persistence, audit i security.
+
+### 18C. Decision gate dla kazdej widocznej akcji
+
+Kazdy przycisk, formularz i akcja w admin/superadmin/settings przechodzi przez jedna decyzje:
+
+| Decyzja | Znaczenie | Kiedy uzyc |
+|---|---|---|
+| `FIX NOW` | Naprawiamy UI, backend, zapis, audit i test. | Core admin, billing, users, security, access, settings persistence. |
+| `READ-ONLY` | Widok zostaje, ale bez akcji zapisu. | Runtime, dashboards, AI diagnostics, compliance summaries bez backendu mutacji. |
+| `DISABLE WITH REASON` | Przycisk widoczny, ale nieaktywny z opisem. | Funkcja planowana, ale istotna kontekstowo. |
+| `HIDE` | Ukrywamy z UI. | Funkcja krytyczna, ktora nie dziala i moze wprowadzac w blad. |
+
+Minimalna karta decyzji:
+
+```text
+UI action:
+Role:
+Current state:
+Backend endpoint:
+Persists after refresh:
+Audit:
+Decision: FIX NOW / READ-ONLY / DISABLE WITH REASON / HIDE
+Owner:
+Test required:
+```
+
+### 18D. Program etapowy
+
+#### Faza 0 - Triage, degradacja i uczciwy UI
+
+Cel: natychmiast ograniczyc ryzyko funkcji pozornych.
+
+Zakres:
+
+- oznaczyc albo ukryc niedzialajace funkcje P0;
+- dodac `Feature unavailable`, `Read-only diagnostic view`, `No data yet`, `Telemetry unavailable`;
+- usunac falszywe toasty sukcesu;
+- zastapic `[object Object]`, `INTERNAL_ERROR`, `Invalid Date`, `NaN` czytelnymi stanami;
+- wprowadzic centralna liste feature availability dla admin/superadmin/settings;
+- zablokowac destrukcyjne akcje bez backendu: API keys, backup restore, DR test, legal publish, DSAR, approvals, billing create.
+
+Zadania:
+
+- `F0-01`: stworzyc macierz wszystkich widocznych akcji admin/superadmin/settings.
+- `F0-02`: oznaczyc kazda akcje decyzja `FIX NOW`, `READ-ONLY`, `DISABLE WITH REASON`, `HIDE`.
+- `F0-03`: dodac wspolne komponenty `UnavailableState`, `ReadOnlyBadge`, `DegradedState`.
+- `F0-04`: usunac falszywe success toasts z przeplywow, ktore nie potwierdzaja zapisu.
+- `F0-05`: zamienic `NaN`, `Invalid Date`, gole `n/a` na jawne formatery.
+- `F0-06`: dodac quick smoke route checklist dla najwiekszych P0.
+
+Definition of Done:
+
+- zaden widoczny P0 przycisk nie udaje dzialajacego;
+- user widzi, czy funkcja jest live, read-only, degraded albo unavailable;
+- bledy backendu nie renderuja sie jako `[object Object]`;
+- wszystkie znane `NaN` i `Invalid Date` maja fallback.
+
+### 18E. Faza 1 - Identity, Access, Users, Organizations
+
+Cel: podstawowa administracja tenantami i uzytkownikami dziala.
+
+Zakres:
+
+- login/sesja/role;
+- users CRUD;
+- organization CRUD;
+- access requests;
+- access codes;
+- invite/resend/reset password;
+- role/status/move user;
+- tenant isolation.
+
+Zadania:
+
+- `F1-01`: naprawic login dla superadmin, admin/owner, user/agent.
+- `F1-02`: dodac jasny expired session flow i blad logowania.
+- `F1-03`: ujednolicic macierz rol: user, agent, admin/owner, superadmin.
+- `F1-04`: naprawic create/edit/delete user.
+- `F1-05`: naprawic invite user, resend invite, reset password albo ukryc, jesli nie gotowe.
+- `F1-06`: naprawic role/status change i move user between organizations.
+- `F1-07`: naprawic organization update: name, plan, status, discount.
+- `F1-08`: naprawic access requests approve/reject.
+- `F1-09`: naprawic access codes: code, expiry, max uses, role, organization.
+- `F1-10`: dodac test tenant isolation: admin nie widzi/nie edytuje cudzej organizacji.
+
+Endpointy i obszary:
+
+- `/api/superadmin/users/*`;
+- `/api/superadmin/organizations/*`;
+- `/api/superadmin/access-requests/*`;
+- `/api/superadmin/access-codes/*`;
+- `/api/organizations/:orgId/members`;
+- `/api/access-control/codes`.
+
+Definition of Done:
+
+- kazda mutacja user/org/access ma toast, audit i refetch;
+- zmiana przetrwa refresh;
+- niedozwolona rola widzi 403 albo ukryta nawigacje, nie pusty ekran;
+- backend waliduje payload i enumy;
+- test e2e pokrywa create user, invite/access code, update org i role change.
+
+### 18F. Faza 2 - Settings Persistence i Tenant Admin P32
+
+Cel: admin organizacji i user maja realne ustawienia.
+
+Zakres:
+
+- `/admin/*`;
+- `/settings/*`;
+- `/organization/*` vs `/admin/*`;
+- user/org/global settings;
+- admin people/security/billing/ai/audit/operations.
+
+Zadania:
+
+- `F2-01`: ustalic kanoniczne trasy: `/admin/*` vs `/organization/*`.
+- `F2-02`: przekierowac albo ukryc duplikaty organization panel.
+- `F2-03`: naprawic `/admin/overview`.
+- `F2-04`: naprawic `/admin/people`: add member, generate code, remove/change role.
+- `F2-05`: naprawic `/admin/security`: security policy, collaboration, API access, IAM.
+- `F2-06`: naprawic `/admin/billing`: payment methods, budgets, alerts, tax.
+- `F2-07`: naprawic `/admin/ai`: AI policy, limits, features.
+- `F2-08`: naprawic `/admin/integrations`: connect provider albo read-only.
+- `F2-09`: naprawic `/admin/audit`: logs, retention, dates, export.
+- `F2-10`: naprawic `/admin/operations`: custom domains, approved email domains, branding.
+- `F2-11`: settings profile persistence.
+- `F2-12`: settings avatar persistence.
+- `F2-13`: settings regional/language persistence.
+- `F2-14`: settings security/MFA/session persistence.
+- `F2-15`: settings AI model, memory, privacy persistence.
+- `F2-16`: settings voice/TTS persistence albo read-only.
+- `F2-17`: zachowac i rozszerzyc dzialajacy wzorzec Email Signatures i Working Hours.
+
+Definition of Done:
+
+- kazda sekcja settings ma okreslony scope: user/org/global;
+- `Save` zapisuje i przetrwa refresh;
+- falszywe toasty sukcesu usuniete;
+- `/admin/*` i `/organization/*` nie dubluja niespojnych flows;
+- admin P32 ma audit log dla zmian;
+- test e2e potwierdza persist po reloadzie dla minimum 5 krytycznych settings.
+
+### 18G. Faza 3 - Billing, Commercial, Usage, Limits
+
+Cel: finanse i usage przestaja byc szkieletem.
+
+Zakres:
+
+- plans;
+- invoices;
+- tax rates;
+- payment methods;
+- discounts;
+- contracts;
+- subscriptions;
+- usage;
+- AI budgets;
+- operational costs.
+
+Zadania:
+
+- `F3-01`: naprawic endpoint mismatch `operational-costs`.
+- `F3-02`: naprawic create/list/update plans.
+- `F3-03`: naprawic create/list/update invoices.
+- `F3-04`: zastapic tekstowy `Organization ID` selectorem organizacji.
+- `F3-05`: naprawic tax rates create/list/delete.
+- `F3-06`: naprawic payment methods add/remove.
+- `F3-07`: naprawic discounts i org plan/status persistence.
+- `F3-08`: naprawic usage endpoints: tokens, storage, CPU, memory, costs.
+- `F3-09`: naprawic budgets i alerts.
+- `F3-10`: rozroznic `0`, `no data`, `unlimited`, `error`.
+- `F3-11`: naprawic MRR/ARR i revenue dashboards albo oznaczyc jako unavailable.
+- `F3-12`: dodac test faktury, tax rate, budget limit i operational costs.
+
+Definition of Done:
+
+- faktura, plan, tax rate i budget tworza rekord;
+- wartosci finansowe maja walute, format i walidacje;
+- `NaN%` nie wystepuje;
+- po refreshu dane zostaja;
+- billing actions maja audit log;
+- endpointy zwracaja czytelny blad, nie puste zera.
+
+### 18H. Faza 4 - Security, Audit, Compliance Core
+
+Cel: bezpieczenstwo i zgodnosc maja realne dane, audit trail i brak atrap.
+
+Zakres:
+
+- MFA;
+- SSO;
+- SCIM;
+- password policy;
+- IP whitelist;
+- sessions;
+- audit logs/events;
+- incidents;
+- threats;
+- DLP;
+- AI budgets security;
+- privileged sessions;
+- approvals.
+
+Zadania:
+
+- `F4-01`: naprawic centralny error mapper dla security.
+- `F4-02`: naprawic password policy save i persist.
+- `F4-03`: naprawic IP whitelist add/delete.
+- `F4-04`: naprawic MFA methods load albo oznaczyc unavailable.
+- `F4-05`: naprawic SSO config save albo read-only.
+- `F4-06`: naprawic SCIM service provider i tokens albo read-only.
+- `F4-07`: naprawic roles/permissions definitions.
+- `F4-08`: naprawic admin sessions.
+- `F4-09`: naprawic audit logs/events i `Invalid Date`.
+- `F4-10`: naprawic approval workflows: create, approve, reject, escalate.
+- `F4-11`: naprawic incidents/threats create/list/status.
+- `F4-12`: naprawic DLP policy create/list/delete.
+- `F4-13`: naprawic SCIM multitenancy: `organization_id`, filters, tests.
+
+Definition of Done:
+
+- security actions nie zwracaja `[object Object]`;
+- wszystkie daty audytu sa poprawne;
+- kazda mutacja security ma audit log;
+- admin nie widzi danych innego tenanta;
+- funkcje bez backendu sa read-only albo hidden.
+
+### 18I. Faza 5 - Connector Ops, Integrations, Backup, API Keys
+
+Cel: operacje integracyjne i klucze przestaja byc pozorne.
+
+Zakres:
+
+- integrations catalog;
+- connected integrations;
+- webhooks;
+- API keys;
+- feature flags;
+- system health;
+- connector audit log;
+- backup/restore/DR;
+- reports.
+
+Zadania:
+
+- `F5-01`: ustalic relacje Admin V8 Sync Hub vs SuperAdmin Connector Ops.
+- `F5-02`: naprawic integrations catalog i connect/configure.
+- `F5-03`: naprawic connected integrations list/status.
+- `F5-04`: naprawic webhook create/edit/test/delete.
+- `F5-05`: naprawic API keys create/reveal once/copy/revoke/rotate.
+- `F5-06`: naprawic feature flags CRUD.
+- `F5-07`: naprawic connector audit log i analytics.
+- `F5-08`: naprawic backup create/list/status.
+- `F5-09`: naprawic restore i DR test jako joby albo ukryc.
+- `F5-10`: naprawic report generate/schedule albo ukryc.
+
+Definition of Done:
+
+- API key secret pokazuje sie tylko raz;
+- webhook test pokazuje status HTTP/latency/result;
+- backup i DR sa jobami z realnym statusem;
+- connector actions sa audytowane;
+- brak pozornych `Connect`, `Create Webhook`, `Create Backup`.
+
+### 18J. Faza 6 - Governance & Compliance
+
+Cel: governance staje sie realnym systemem dowodowym, a nie dashboardem.
+
+Zakres:
+
+- audit timeline;
+- approvals;
+- compliance frameworks;
+- controls;
+- DSAR;
+- audits;
+- processing records;
+- exports & retention;
+- legal policies;
+- privileged sessions.
+
+Zadania:
+
+- `F6-01`: naprawic audit timeline: data ISO, filters, pagination, details.
+- `F6-02`: naprawic approvals queue i workflows.
+- `F6-03`: naprawic DSAR create/list/status.
+- `F6-04`: naprawic schedule audit i audit list.
+- `F6-05`: naprawic compliance controls edit i remediation actions.
+- `F6-06`: naprawic processing records.
+- `F6-07`: naprawic exports jako joby.
+- `F6-08`: naprawic retention policies z preview wplywu.
+- `F6-09`: naprawic legal policies draft/version/publish/rollback.
+- `F6-10`: naprawic privileged sessions start/end/audit trail.
+
+Definition of Done:
+
+- kazda compliance action zapisuje dane;
+- audit timeline pokazuje poprawne daty i szczegoly;
+- legal publish wymaga approval albo confirm;
+- DSAR i audits maja lifecycle status;
+- funkcje regulacyjne bez backendu sa ukryte.
+
+### 18K. Faza 7 - AI Operations
+
+Cel: AI Operations przestaje byc makieta i dzieli sie na configuration, runtime i analytics.
+
+Zakres:
+
+- LLM Providers;
+- Model Tiers;
+- Routing Rules;
+- Purposes & Assignments;
+- Org AI Policy;
+- AI Governance;
+- Prompt Builder;
+- Prompt Assistant;
+- Learning System;
+- Experiments;
+- Model Registry;
+- Health Monitoring;
+- Pricing Registry;
+- Custom Reports;
+- Policy Plane.
+
+Zadania:
+
+- `F7-01`: naprawic Add Provider.
+- `F7-02`: naprawic Clone Provider.
+- `F7-03`: naprawic delete/update provider z toast/refetch.
+- `F7-04`: dodac toasty Model Tiers i zapis kolejnosci.
+- `F7-05`: naprawic Routing Rules CRUD.
+- `F7-06`: naprawic Purposes & Assignments.
+- `F7-07`: naprawic Org AI Policy draft/publish/history/rollback.
+- `F7-08`: naprawic AI Governance switches persistence.
+- `F7-09`: naprawic Prompt Assistant albo zablokowac bez aktywnego modelu.
+- `F7-10`: uruchomic Prompt Templates i Block Builder MVP.
+- `F7-11`: naprawic Test Bench.
+- `F7-12`: naprawic Experiments i Model Registry albo read-only.
+- `F7-13`: naprawic Health Monitoring providerow.
+- `F7-14`: naprawic Pricing Registry snapshot create.
+- `F7-15`: naprawic Custom Reports create/list/export.
+
+Definition of Done:
+
+- konfiguracja AI zapisuje sie po refreshu;
+- read-only runtime widoki maja timestamp i source;
+- analytics rozroznia no data/error/zero;
+- Prompt Assistant odpowiada albo jasno komunikuje brak konfiguracji;
+- routing da sie zasymulowac: purpose + tier -> selected model.
+
+### 18L. Faza 8 - UX, i18n, polish and confidence
+
+Cel: aplikacja wyglada i zachowuje sie jak narzedzie, nie jak demo.
+
+Zakres:
+
+- i18n;
+- toasty;
+- empty/error/loading;
+- long forms;
+- horizontal scroll;
+- dates/numbers/currency;
+- destructive confirmations;
+- source/timestamp labels.
+
+Zadania:
+
+- `F8-01`: usunac surowe klucze tlumaczen.
+- `F8-02`: ujednolicic jezyk UI.
+- `F8-03`: zastapic native `alert()` i `confirm()` modalami/toastami.
+- `F8-04`: dodac standard `No data yet`.
+- `F8-05`: dodac standard `Telemetry unavailable`.
+- `F8-06`: dodac source/timestamp do dashboardow.
+- `F8-07`: poprawic formaty dat, liczb, walut.
+- `F8-08`: usunac poziomy scroll tam, gdzie ukrywa zakladki.
+- `F8-09`: dodac required markers i walidacje inline.
+- `F8-10`: dodac smoke checklist per modul.
+
+Definition of Done:
+
+- brak mieszania PL/EN w jednym widoku;
+- brak `NaN`, `Invalid Date`, golego `n/a`;
+- wszystkie puste widoki maja opis i CTA albo reason;
+- destrukcyjne akcje maja modal confirm;
+- user rozumie, czy patrzy na realne dane, brak danych czy blad.
+
+### 18M. Standard implementacyjny dla kazdego zadania
+
+Kazde zadanie naprawcze musi zawierac:
+
+1. **UI path** - gdzie user klika.
+2. **Role** - superadmin/admin/user.
+3. **Component** - plik frontendowy.
+4. **API method** - metoda service layer.
+5. **Endpoint** - backend route.
+6. **Validation** - frontend i backend.
+7. **Persistence** - tabela/rekord/ustawienie.
+8. **Audit** - event z aktorem, org, action, target.
+9. **Toast** - success/error.
+10. **Refetch** - albo lokalny update.
+11. **Refresh proof** - potwierdzenie po reloadzie.
+12. **Tests** - unit/integration/e2e wedlug ryzyka.
+
+Template zadania:
+
+```text
+id:
+title:
+phase:
+priority:
+roles:
+ui_paths:
+frontend_files:
+api_methods:
+backend_routes:
+db_tables:
+current_problem:
+decision:
+implementation_steps:
+validation:
+audit_event:
+test_plan:
+definition_of_done:
+manual_smoke:
+```
+
+### 18N. Test gates
+
+#### Gate 1 - Route renders
+
+- route laduje sie dla uprawnionej roli;
+- niedozwolona rola dostaje 403/redirect/hidden nav;
+- nie ma czarnego ekranu.
+
+#### Gate 2 - Mutation works
+
+- payload jest walidowany;
+- backend zapisuje;
+- UI pokazuje toast;
+- lista/karta odswieza sie.
+
+#### Gate 3 - Refresh proof
+
+- po refreshu zmiana nadal istnieje;
+- nie ma falszywego success.
+
+#### Gate 4 - Audit proof
+
+- mutacja admin/superadmin tworzy audit event;
+- daty sa poprawne;
+- event jest widoczny w odpowiednim audit view.
+
+#### Gate 5 - Error proof
+
+- backend error pokazuje czytelny komunikat;
+- validation error pokazuje pola;
+- network error pokazuje retry/degraded;
+- UI nie renderuje `[object Object]`.
+
+### 18O. Minimalny test pack przed kazdym merge
+
+P0 task wymaga minimum:
+
+- unit walidacji payload;
+- integration endpoint success;
+- integration endpoint validation error;
+- component test empty/error/success;
+- e2e happy path;
+- e2e refresh proof.
+
+P1 task wymaga minimum:
+
+- unit albo component;
+- integration endpoint;
+- manual smoke z refresh proof.
+
+P2 task wymaga minimum:
+
+- lint;
+- visual/manual smoke;
+- brak regresji w smoke route.
+
+### 18P. Kolejnosc uruchomienia prac
+
+1. **Start sprint: Faza 0 + error mapper.**
+2. **Core sprint: Faza 1 Identity/Access.**
+3. **Admin sprint: Faza 2 Tenant Admin P32 + Settings.**
+4. **Money sprint: Faza 3 Billing/Usage.**
+5. **Security sprint: Faza 4 Security/Audit.**
+6. **Ops sprint: Faza 5 Connector Ops/API Keys/Backup.**
+7. **Governance sprint: Faza 6 Governance/Compliance.**
+8. **AI Ops sprint: Faza 7 AI Operations.**
+9. **Polish sprint: Faza 8 UX/i18n.**
+
+### 18Q. Pierwsza paczka implementacyjna
+
+Pierwszy realny pakiet pracy powinien byc maly, ale systemowy:
+
+1. Centralny error mapper dla admin/superadmin/settings.
+2. `UnavailableState`, `ReadOnlyBadge`, `DegradedState`.
+3. Formatery `safeDate`, `safeNumber`, `safePercent`, `safeMoney`.
+4. Feature availability map dla P0 akcji.
+5. Ukrycie/degradacja najbardziej ryzykownych atrap:
+   - API keys create/revoke/rotate, jesli nie dziala;
+   - backup/restore/DR;
+   - legal publish;
+   - DSAR create;
+   - approvals approve/reject;
+   - billing create invoice/plan/tax, jesli endpoint nie zapisuje;
+   - Prompt Builder/Model Registry, jesli read-only.
+6. Test error mappera i smoke trzech krytycznych routes.
+
+Cel pierwszej paczki:
+
+- aplikacja przestaje udawac, ze niedzialajace rzeczy dzialaja;
+- user dostaje uczciwe stany;
+- kolejne fazy moga naprawiac funkcje bez chaosu.
+
+### 18R. Finalna definicja sukcesu programu
+
+Program mozna uznac za zakonczony, gdy:
+
+- kazdy widoczny przycisk admin/superadmin/settings ma realny efekt albo jasny status unavailable/read-only;
+- wszystkie P0 przeplywy dzialaja i przetrwaja refresh;
+- users/orgs/access/settings/billing/security maja audit trail;
+- admin nie moze naruszyc izolacji tenantowej;
+- dashboardy rozrozniaja `no data`, `zero`, `error`, `degraded`;
+- UI nie pokazuje `[object Object]`, `Invalid Date`, `NaN`;
+- testy e2e pokrywaja login, user/org CRUD, settings persistence, billing create, security policy, audit;
+- dokumentacja i nawigacja nie obiecuja funkcji, ktore nie istnieja.
+
+## 19. Launch readiness - start wdrozenia z 4 agentami
+
+> Status: przygotowanie do uruchomienia agentow implementacyjnych.
+> Cel: wejsc w naprawy bez chaosu, konfliktow plikow i rozjechania kontraktow.
+> Zasada: najpierw stabilizujemy wspolny backbone, potem rownolegle domykamy moduly.
+
+### 19A. Co trzeba ustalic przed pierwszym commitem
+
+Przed startem agentow trzeba przyjac te decyzje jako obowiazujace:
+
+1. **Nie naprawiamy wszystkiego naraz.** Pierwszy sprint ma usunac falszywe akcje, poprawic error handling i domknac core flows.
+2. **Wspolne pliki maja wlasciciela.** `src/services/api.ts`, shared UI states i formatery nie moga byc edytowane jednoczesnie przez kilku agentow bez koordynacji.
+3. **Kazdy agent pracuje w swojej domenie.** Jesli musi dotknac cudzej domeny, zapisuje to jako dependency albo robi minimalny adapter.
+4. **Kazdy visible write musi miec refresh proof.** Bez tego task nie jest skonczony.
+5. **Nie dodajemy nowych makiet.** Jesli backend nie jest gotowy, funkcja dostaje read-only/unavailable/hidden state.
+
+### 19B. Wspolny kontrakt implementacyjny
+
+Kazdy agent ma stosowac ten sam kontrakt:
+
+```text
+Mutation = validate -> call API -> backend validates -> persist -> audit -> response -> toast -> refetch -> refresh proof
+```
+
+Kazdy endpoint admin/superadmin/settings powinien zwracac bledy w ksztalcie:
+
+```json
+{
+  "error": "Human readable message",
+  "code": "VALIDATION_ERROR",
+  "details": {}
+}
+```
+
+Frontend nie moze pokazywac:
+
+- `[object Object]`;
+- surowego JSON;
+- golego `INTERNAL_ERROR`;
+- `Invalid Date`;
+- `NaN`;
+- sukcesu bez potwierdzonego zapisu.
+
+### 19C. Podzial na 4 agentow - pierwszy wave
+
+#### Agent A - Backbone, API hygiene i honest UI
+
+Cel: przygotowac fundament, z ktorego korzystaja pozostali agenci.
+
+Zakres:
+
+- centralny error mapper;
+- shared states: loading, empty, error, degraded, unavailable, read-only;
+- safe formatters: date, number, percent, money;
+- usuniecie najgorszych `[object Object]`, `NaN`, `Invalid Date`;
+- feature availability map dla P0 akcji;
+- standard toast/refetch dla nowych mutacji.
+
+Pliki startowe:
+
+- `src/services/api.ts`;
+- `src/services/api/baseClient.ts`;
+- `src/services/api/settings.api.ts`;
+- `src/components/common/*`;
+- `src/components/ui/*`;
+- shared helpers w `src/utils/*`;
+- ewentualnie testy helperow.
+
+Nie dotykac bez potrzeby:
+
+- duzych widokow billing/security/governance;
+- backend domenowy innych agentow;
+- masowego refaktoru `api.ts`.
+
+DoD:
+
+- istnieje jeden helper mapujacy bledy backendu do czytelnego tekstu;
+- istnieja komponenty albo wzorce `UnavailableState`, `ReadOnlyBadge`, `DegradedState`;
+- istnieja safe formatters;
+- minimum 3 najgorsze klasy bledow sa pokryte testem;
+- dokumentacja uzycia helperow jest widoczna w kodzie albo komentarzu.
+
+Pierwszy test pack:
+
+- unit error mapper;
+- unit safeDate/safePercent;
+- component empty/error/degraded state;
+- lint dotknietych plikow.
+
+#### Agent B - Identity, Access, Tenant Admin P32 i Settings
+
+Cel: admin i user moga wykonywac podstawowe operacje oraz settings przestaja udawac zapis.
+
+Zakres:
+
+- login/sesja/role tylko jesli wymagane przez admin/settings;
+- `/admin/people`;
+- `/admin/security`;
+- `/admin/audit`;
+- `/admin/operations`;
+- `/settings/profile`;
+- `/settings/regional-settings`;
+- `/settings/security/*`;
+- `/settings/model-parameters`;
+- `/settings/ai-memory`;
+- `/settings/ai-privacy`;
+- `/organization/*` vs `/admin/*` kanonicznosc.
+
+Pliki startowe:
+
+- `src/views/admin/AdminSettingsModule.tsx`;
+- `src/views/admin/*`;
+- `src/views/OrganizationView.tsx`;
+- `src/components/settings/*`;
+- `src/services/api.ts`;
+- `src/services/api/settings.api.ts`;
+- `server/src/routes/adminP32.routes.ts`;
+- `server/src/routes/settings.routes.ts`;
+- user/org routes wedlug potrzeb.
+
+Nie dotykac bez koordynacji:
+
+- billing superadmin;
+- Connector Ops;
+- Governance;
+- AI Operations.
+
+DoD:
+
+- admin P32 ma minimum dzialajace: people list/action albo uczciwy unavailable state;
+- settings profile/regional/security/AI ma albo persistence, albo read-only/unavailable;
+- falszywe success toasts w settings sa usuniete;
+- `/admin/*` vs `/organization/*` ma jasna decyzje: redirect/merge/keep separate;
+- minimum 2 settings sekcje przechodza refresh proof poza juz dzialajacymi Email Signatures i Working Hours.
+
+Pierwszy test pack:
+
+- e2e/manual smoke settings persistence;
+- integration `/api/admin/security` albo wybrany endpoint P32;
+- component test false success/error state;
+- tenant isolation smoke.
+
+#### Agent C - Billing, Commercial, Usage i Limits
+
+Cel: pieniadze, plany, faktury i usage przestaja byc pustymi kartami.
+
+Zakres:
+
+- plans;
+- invoices;
+- tax rates;
+- contracts;
+- payment methods;
+- discounts;
+- usage/limits/budgets;
+- operational costs endpoint mismatch;
+- MRR/ARR/revenue zero states.
+
+Pliki startowe:
+
+- `src/views/superadmin/InvoiceCenterView.tsx`;
+- `src/views/superadmin/revenue/*`;
+- `src/views/superadmin/RevenueModule.tsx`;
+- `src/views/superadmin/AIBudgetsView.tsx`;
+- `src/views/superadmin/OrganizationResourceManager.tsx`;
+- billing/admin panels;
+- `src/services/api.ts`;
+- `server/src/routes/billing/billing.routes.ts`;
+- `server/src/routes/superadmin.routes.ts`;
+- billing services/controllers.
+
+Nie dotykac bez koordynacji:
+
+- settings persistence;
+- security/DLP;
+- connector API keys;
+- AI provider configuration.
+
+DoD:
+
+- naprawiony `operational-costs` mismatch;
+- create invoice/plan/tax rate ma decyzje: fix now albo unavailable;
+- `NaN%` i falszywe `0` w billing/usage zastapione uczciwymi stanami;
+- minimum jedna finansowa mutacja zapisuje rekord i przechodzi refresh proof;
+- brak tekstowego `Organization ID` tam, gdzie powinien byc selector, albo funkcja disabled z reason.
+
+Pierwszy test pack:
+
+- integration operational costs endpoint;
+- component safe money/percent state;
+- e2e/manual create invoice albo tax rate;
+- lint dotknietych plikow.
+
+#### Agent D - Security, Connector Ops, Governance i AI Ops degradacja
+
+Cel: zabezpieczyc najwieksze atrapy operacyjne i regulatoryjne przed wprowadzaniem admina w blad.
+
+Zakres pierwszego wave:
+
+- nie pelna implementacja wszystkiego;
+- degradacja/ukrycie/read-only dla P0 atrap;
+- API keys;
+- webhooks;
+- backup/restore/DR;
+- approvals;
+- DSAR;
+- audit timeline `Invalid Date`;
+- Prompt Builder/Model Registry/Pricing Registry jesli nie dzialaja;
+- security incidents/threats/DLP jako unavailable albo fix minimalny.
+
+Pliki startowe:
+
+- `src/views/superadmin/SystemModule.tsx`;
+- `src/components/SuperAdmin/system/*`;
+- `src/views/superadmin/GovernanceModule.tsx`;
+- `src/views/superadmin/SecurityModule.tsx`;
+- `src/views/superadmin/AIPlatformModule/*`;
+- `src/services/api.ts`;
+- `server/src/routes/superadmin.routes.ts`;
+- connector/governance/security routes.
+
+Nie dotykac bez koordynacji:
+
+- billing flow;
+- admin P32 settings;
+- shared error mapper, jesli Agent A go wlasnie przebudowuje.
+
+DoD:
+
+- najbardziej ryzykowne P0 akcje sa fix now albo niedostepne z wyjasnieniem;
+- `Invalid Date` w audit timeline nie jest renderowane;
+- API keys/backup/webhooks nie udaja dzialajacych;
+- Prompt Builder/Model Registry maja read-only/coming soon jesli brak backendu;
+- minimum 3 P0 atrapy zdegradowane uczciwie.
+
+Pierwszy test pack:
+
+- component unavailable/read-only state;
+- manual smoke Connector Ops tabs;
+- manual smoke Governance tabs;
+- lint dotknietych plikow.
+
+### 19D. Kolejnosc pracy agentow
+
+Rekomendowany start:
+
+1. **Agent A startuje pierwszy** i przygotowuje error mapper + states + formatters.
+2. **Agent B i C startuja po szkielecie A** albo pracuja tylko w swoich backendach, nie dotykajac wspolnych helperow.
+3. **Agent D startuje od degradacji UI**, bez przebudowy service layer.
+4. Po pierwszym merge robimy smoke i dopiero wtedy rozszerzamy zakres fixow.
+
+Jesli pracujemy rownolegle bez merge:
+
+- Agent A nie robi wielkiego refaktoru `api.ts`;
+- Agent B/C/D dodaja minimalne adaptery w swoich domenach;
+- konflikty w `api.ts` rozwiazuje jedna osoba po zakonczeniu wave.
+
+### 19E. Pliki wysokiego konfliktu
+
+Te pliki powinny miec jednego wlasciciela na wave:
+
+- `src/services/api.ts` - Agent A jako owner kontraktu.
+- `server/src/routes/superadmin.routes.ts` - dzielic tylko przez jasno oznaczone sekcje.
+- `server/src/routes/adminP32.routes.ts` - Agent B.
+- `server/src/routes/billing/billing.routes.ts` - Agent C.
+- `src/views/superadmin/AIPlatformModule/*` - Agent D.
+- `src/views/superadmin/SystemModule.tsx` - Agent D.
+- `src/views/superadmin/GovernanceModule.tsx` - Agent D.
+- `src/views/superadmin/SecurityModule.tsx` - Agent D.
+- `docs/AI_dev_fin.md` - nie edytowac w trakcie implementacji, chyba ze user poprosi.
+
+### 19F. Daily merge gate dla 4 agentow
+
+Kazdy agent po swojej paczce musi podac:
+
+```text
+Changed files:
+Flows fixed:
+Flows degraded/hidden:
+Endpoints touched:
+Audit added:
+Refresh proof:
+Tests run:
+Known risks:
+Next dependency:
+```
+
+Nie merge'ujemy paczki, jesli:
+
+- dodaje nowy falszywy success;
+- zostawia `[object Object]`;
+- pokazuje `NaN` albo `Invalid Date`;
+- dodaje widoczny przycisk bez backendu i bez unavailable/read-only state;
+- nie ma testu albo manual smoke dla P0.
+
+### 19G. Pierwszy wspolny backlog startowy
+
+Pierwszy wave, zanim wejdziemy w pelne wdrazanie:
+
+1. `START-01`: error mapper i safe formatters.
+2. `START-02`: unavailable/read-only/degraded states.
+3. `START-03`: feature availability map dla P0 akcji.
+4. `START-04`: settings false-success cleanup dla AI/Profile/Security.
+5. `START-05`: operational-costs endpoint mismatch.
+6. `START-06`: admin P32 owner scope error investigation.
+7. `START-07`: degrade API keys/backup/webhooks/legal/DSAR/approvals, jesli backend nie gotowy.
+8. `START-08`: smoke test matrix dla login/admin/settings/billing/security.
+
+### 19H. Gotowosc do startu
+
+Mozemy startowac, gdy:
+
+- rozdzial 18 i 19 sa zaakceptowane jako program pracy;
+- kazdy agent ma przypisany workstream;
+- ustalono, kto jest wlascicielem `api.ts`;
+- pierwszy wave nie wymaga jednoczesnego przepisywania tych samych plikow;
+- mamy zgode, ze funkcje bez backendu beda ukrywane albo degradowane, nie pozostawiane jako martwe przyciski.

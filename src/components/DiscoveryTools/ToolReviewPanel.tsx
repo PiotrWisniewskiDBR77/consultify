@@ -107,9 +107,11 @@ export const ToolReviewPanel: React.FC<ToolReviewPanelProps> = ({
     if (toolType === 'risk-uncertainty') {
       const risk = inputData as RiskUncertaintyData;
       return [
+        `${isPolish ? 'Sygnały' : 'Signals'}: ${risk.signals?.length || 0}`,
         `${isPolish ? 'Założenia' : 'Assumptions'}: ${risk.assumptions.length}`,
         `${isPolish ? 'Ryzyka' : 'Risks'}: ${risk.risks.length}`,
         `${isPolish ? 'Scenariusze' : 'Scenarios'}: ${risk.scenarios.length}`,
+        `${isPolish ? 'Ruchy' : 'Moves'}: ${risk.recommendedMoves?.length || 0}`,
       ];
     }
     if (

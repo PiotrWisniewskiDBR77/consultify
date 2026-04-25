@@ -260,6 +260,10 @@ import verifyRoutes from './routes/verify.routes.js';
 import videoRoutes from './routes/videos.routes.js';
 import virtualWorkersRoutes from './routes/virtual-workers.routes.js';
 import voiceRoutes from './routes/voice.routes.js';
+import wave6ContextRoutes from './routes/wave6-context.routes.js';
+import wave7ConnectorsRoutes from './routes/wave7-connectors.routes.js';
+import wave8AgentsRoutes from './routes/wave8-agents.routes.js';
+import wave9OutcomesRoutes from './routes/wave9-outcomes.routes.js';
 import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
@@ -610,6 +614,10 @@ export class ApiGateway {
       app.use('/api/my-work', myWorkRoutes);
       app.use('/api/artifact-runs', v8FeatureGate, artifactRunsRoutes);
       app.use('/api/artifacts', v8FeatureGate, artifactsRoutes);
+      app.use('/api/ai-context', wave6ContextRoutes);
+      app.use('/api/ai-connectors', wave7ConnectorsRoutes);
+      app.use('/api/ai-agents', wave8AgentsRoutes);
+      app.use('/api/ai-outcomes', wave9OutcomesRoutes);
       app.use('/api/preview-ai', previewAiRoutes);
       app.use('/api/notebook', deprecationHeader('/api/v8/notebook'), notebookV4Routes);
 

@@ -18,6 +18,7 @@ import {
   commitWave5Mutation,
   createWave5Artifact,
   fillWave5DocumentTemplate,
+  generateWave5StructuredArtifact,
   getWave5Artifact,
   listWave5Artifacts,
   listWave5ArtifactVersions,
@@ -457,6 +458,29 @@ router.post(
       conversationId: req.body.conversationId || null,
     });
     return res.status(result.needsInput ? 200 : 201).json(result);
+  })
+);
+
+router.post(
+  '/wave5/generate',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const artifact = await generateWave5StructuredArtifact({
+      organizationId,
+      userId,
+      outputKind: req.body.outputKind,
+      prompt: String(req.body.prompt || ''),
+      title: req.body.title || null,
+      projectId: req.body.projectId || null,
+      conversationId: req.body.conversationId || null,
+      researchSessionId: req.body.researchSessionId || null,
+      aiRunId: req.body.aiRunId || null,
+      trustBundleId: req.body.trustBundleId || null,
+      citations: Array.isArray(req.body.citations) ? req.body.citations : [],
+      sourceRefs: Array.isArray(req.body.sourceRefs) ? req.body.sourceRefs : [],
+    });
+    return res.status(201).json({ success: true, artifact });
   })
 );
 

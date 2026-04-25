@@ -134,6 +134,11 @@ const LABELS: Record<string, ToolLabels> = {
       en: 'e.g., Enterprise transformation',
       pl: 'np. Transformacja całej organizacji',
     },
+    successLabel: { en: 'Success Signal', pl: 'Sygnał sukcesu' },
+    successPlaceholder: {
+      en: 'e.g., clear validation, mitigation, monitoring and escalation moves',
+      pl: 'np. jasne ruchy walidacji, mitygacji, monitoringu i eskalacji',
+    },
     timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
   },
   'sop-builder': {

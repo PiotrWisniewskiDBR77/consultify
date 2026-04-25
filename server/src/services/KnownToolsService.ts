@@ -198,6 +198,7 @@ const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
   'market-forces',
   'growth-paths',
   'portfolio-priority',
+  'risk-uncertainty',
 ]);
 
 const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [

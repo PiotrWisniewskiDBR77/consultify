@@ -14,6 +14,7 @@ import i18n from '@/i18n';
 
 import type { DemoExperienceType } from '../store/slices/demoSlice';
 import { FullSession, LLMProvider, SessionMode, User } from '../types';
+import { normalizeApiErrorMessage } from '../utils/apiError';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
@@ -358,30 +359,9 @@ const handleResponse = async (res: Response, defaultError: string) => {
 
   // Normalize error payloads to a readable string.
   // Some endpoints return { error: {...} } which would otherwise surface as "[object Object]".
-  const toErrorMessage = (payload: any, fallback: string): string => {
-    const msg = payload?.message;
-    const err = payload?.error;
-    if (typeof msg === 'string' && msg.trim()) return msg;
-    if (typeof err === 'string' && err.trim()) return err;
-    if (err != null) {
-      try {
-        return typeof err === 'string' ? err : JSON.stringify(err);
-      } catch {
-        // ignore
-      }
-    }
-    if (msg != null) {
-      try {
-        return typeof msg === 'string' ? msg : JSON.stringify(msg);
-      } catch {
-        // ignore
-      }
-    }
-    return fallback;
-  };
   // If payload isn't helpful, include HTTP status (avoids generic "Request failed").
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-  const normalizedMessage = toErrorMessage(data, '') || fallbackHttp || defaultError;
+  const normalizedMessage = normalizeApiErrorMessage(data, fallbackHttp || defaultError);
 
   // Check for Demo Block
   if (
@@ -397,7 +377,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       })
     );
     // We still throw to stop execution, but the UI will handle the modal
-    throw new Error(toErrorMessage(data, 'Action blocked in Demo Mode'));
+    throw new Error(normalizeApiErrorMessage(data, 'Action blocked in Demo Mode'));
   }
 
   // Check for AI Budget Freeze (Phase 8: Prestige)
@@ -409,7 +389,7 @@ const handleResponse = async (res: Response, defaultError: string) => {
       reason: data.error,
       scope: data.budgetStatus?.scope || 'Global',
     });
-    throw new Error(toErrorMessage(data, 'AI Budget Exhausted'));
+    throw new Error(normalizeApiErrorMessage(data, 'AI Budget Exhausted'));
   }
 
   // Unified access-blocked handling (Trial expiry, AI limits, token budgets, etc.)
@@ -2981,16 +2961,18 @@ export const Api = {
     startDate?: string,
     endDate?: string
   ): Promise<{ items: any[]; totalCost: number }> => {
-    let url = `${API_URL}/billing/admin/costs`;
+    let url = `${API_URL}/billing/admin/operational-costs`;
     const params = new URLSearchParams();
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
-    if (params.toString()) url += `? ${params.toString()}`;
+    if (params.toString()) url += `?${params.toString()}`;
 
-    const res = await fetch(url, { headers: getHeaders() });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed to fetch costs');
-    return data.costs;
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    const data = await handleResponse(res, 'Failed to fetch costs');
+    return {
+      items: Array.isArray(data?.items) ? data.items : Array.isArray(data?.costs) ? data.costs : [],
+      totalCost: Number.isFinite(Number(data?.totalCost)) ? Number(data.totalCost) : 0,
+    };
   },
 
   deleteLLMProvider: async (id: string): Promise<void> => {
@@ -12646,6 +12628,25 @@ export const Api = {
     return handleResponse(res, 'Failed to fill Wave 5 document template');
   },
 
+  generateWave5StructuredArtifact: async (payload: {
+    outputKind: 'executive_report' | 'board_deck' | 'kpi_table';
+    prompt: string;
+    title?: string | null;
+    projectId?: string | null;
+    conversationId?: string | null;
+    researchSessionId?: string | null;
+    aiRunId?: string | null;
+    trustBundleId?: string | null;
+    citations?: unknown[];
+    sourceRefs?: unknown[];
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/generate`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to generate Wave 5 structured artifact');
+  },
+
   getWave5ArtifactExportManifest: async (artifactId: string) => {
     const res = await fetchWithRetry(
       `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}/export-manifest`
@@ -12659,6 +12660,320 @@ export const Api = {
       { method: 'POST' }
     );
     return handleResponse(res, 'Failed to mark Wave 5 artifact exported');
+  },
+
+  getWave6ContextPanel: async (projectId?: string | null) => {
+    const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    const res = await fetchWithRetry(`${API_URL}/ai-context/panel${query}`);
+    return handleResponse(res, 'Failed to load Wave 6 context panel');
+  },
+
+  captureWave6ContextSnapshot: async (payload: {
+    snapshotType: 'org' | 'project' | 'user';
+    projectId?: string | null;
+    facts: Record<string, unknown>;
+    sourceRefs?: unknown[];
+    permissions?: Record<string, unknown>;
+    freshnessAt?: string | null;
+    privateMode?: boolean;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-context/snapshots`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to capture Wave 6 context snapshot');
+  },
+
+  captureWave6MemoryCandidate: async (payload: {
+    assistantScope: 'anna_public' | 'teresa_tenant';
+    memoryScope: 'public_product' | 'tenant' | 'user' | 'project';
+    key: string;
+    value: string;
+    projectId?: string | null;
+    sourceLabel?: string | null;
+    sourceRefs?: unknown[];
+    privateMode?: boolean;
+    retentionDays?: number | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-context/memory/candidates`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to capture Wave 6 memory candidate');
+  },
+
+  decideWave6MemoryCandidate: async (
+    candidateId: string,
+    payload: { decision: 'approve' | 'reject' | 'apply' | 'expire'; reason?: string | null }
+  ) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/ai-context/memory/candidates/${encodeURIComponent(candidateId)}/decision`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to decide Wave 6 memory candidate');
+  },
+
+  getWave7ConnectorCatalog: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/catalog`);
+    return handleResponse(res, 'Failed to load Wave 7 connector catalog');
+  },
+
+  listWave7Connectors: async (projectId?: string | null) => {
+    const query = projectId ? `?projectId=${encodeURIComponent(projectId)}` : '';
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors${query}`);
+    return handleResponse(res, 'Failed to load Wave 7 connectors');
+  },
+
+  registerWave7Connector: async (payload: {
+    provider: string;
+    status?: 'connected' | 'disconnected' | 'stale' | 'failed';
+    scopes?: string[];
+    projectIds?: string[];
+    tenantPolicy?: Record<string, unknown>;
+    freshnessTtlMinutes?: number | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to register Wave 7 connector');
+  },
+
+  updateWave7Connector: async (
+    connectorId: string,
+    payload: {
+      status?: 'connected' | 'disconnected' | 'stale' | 'failed';
+      externalConnectorId?: string | null;
+      projectIds?: string[];
+      failureState?: string | null;
+    }
+  ) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/${connectorId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update Wave 7 connector');
+  },
+
+  linkWave7Connector: async (connectorId: string, externalConnectorId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/${connectorId}/link`, {
+      method: 'POST',
+      body: JSON.stringify({ externalConnectorId }),
+    });
+    return handleResponse(res, 'Failed to link Wave 7 connector');
+  },
+
+  disconnectWave7Connector: async (connectorId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/${connectorId}/disconnect`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to disconnect Wave 7 connector');
+  },
+
+  reindexWave7Connector: async (connectorId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/${connectorId}/reindex`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to reindex Wave 7 connector');
+  },
+
+  executeWave7ConnectorTool: async (payload: {
+    connectorId: string;
+    toolName: string;
+    toolKind: 'read' | 'search' | 'write' | 'destructive';
+    query?: string | null;
+    projectId?: string | null;
+    aiRunId?: string | null;
+    payload?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/execute`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to execute Wave 7 connector tool');
+  },
+
+  getWave7ConnectorHealth: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/health`);
+    return handleResponse(res, 'Failed to load Wave 7 connector health');
+  },
+
+  listWave7ConnectorRuns: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-connectors/runs`);
+    return handleResponse(res, 'Failed to load Wave 7 connector runs');
+  },
+
+  getWave8AgentCatalog: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/catalog`);
+    return handleResponse(res, 'Failed to load Wave 8 agent catalog');
+  },
+
+  launchWave8Agent: async (payload: {
+    agentId: string;
+    goal: string;
+    projectId?: string | null;
+    requestedTools?: string[];
+    schedule?: {
+      cadence: 'once' | 'daily' | 'weekly';
+      nextRunAt?: string | null;
+      ownerUserId?: string | null;
+    } | null;
+    swarm?: {
+      enabled: boolean;
+      agentIds?: string[];
+      approved?: boolean;
+      budgetApproved?: boolean;
+    } | null;
+    approval?: {
+      aiRunId?: string | null;
+      budgetApproved?: boolean;
+    } | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/launch`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to launch Wave 8 agent');
+  },
+
+  executeWave8AgentTool: async (payload: {
+    agentId: string;
+    toolName: string;
+    toolInput?: Record<string, unknown>;
+    projectId?: string | null;
+    runId?: string | null;
+    aiRunId?: string | null;
+    budgetApproved?: boolean;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/tool`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to execute Wave 8 agent tool');
+  },
+
+  listWave8AgentRuns: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/runs`);
+    return handleResponse(res, 'Failed to load Wave 8 agent runs');
+  },
+
+  listWave8AgentSchedules: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/schedules`);
+    return handleResponse(res, 'Failed to load Wave 8 agent schedules');
+  },
+
+  processDueWave8AgentSchedules: async (now?: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/schedules/process-due`, {
+      method: 'POST',
+      body: JSON.stringify({ now }),
+    });
+    return handleResponse(res, 'Failed to process Wave 8 due schedules');
+  },
+
+  listWave8AgentNotifications: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/notifications`);
+    return handleResponse(res, 'Failed to load Wave 8 agent notifications');
+  },
+
+  listWave9Outcomes: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/outcomes`);
+    return handleResponse(res, 'Failed to load Wave 9 outcomes');
+  },
+
+  createWave9Outcome: async (payload: {
+    initiativeId: string;
+    taskIds?: string[];
+    kpiName: string;
+    ownerUserId?: string;
+    baseline: number;
+    target: number;
+    current?: number | null;
+    confidence: number;
+    assumptions: string[];
+    sourceRefs: Array<{ sourceType: string; sourceId: string; title?: string | null }>;
+    investment?: number | null;
+    annualBenefit?: number | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/outcomes`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create Wave 9 outcome');
+  },
+
+  getWave9FinanceScenarios: async (outcomeId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/outcomes/${outcomeId}/scenarios`);
+    return handleResponse(res, 'Failed to build Wave 9 finance scenarios');
+  },
+
+  buildWave9Report: async (payload: {
+    outcomeId: string;
+    reportType: 'client_ready' | 'investor_ready' | 'steering_committee' | 'ciso_security';
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/reports`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to build Wave 9 report');
+  },
+
+  recordWave9ProviderHealth: async (payload: {
+    provider: string;
+    model?: string | null;
+    status: 'healthy' | 'degraded' | 'unavailable';
+    latencyMs?: number | null;
+    errorRate?: number | null;
+    costUsd?: number | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/provider-health`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to record Wave 9 provider health');
+  },
+
+  recordWave9Incident: async (payload: {
+    severity: 'low' | 'medium' | 'high' | 'critical';
+    title: string;
+    rollbackFlag?: string | null;
+    playbook?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/incidents`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to record Wave 9 incident');
+  },
+
+  getWave9AIOpsDashboard: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/aiops`);
+    return handleResponse(res, 'Failed to load Wave 9 AI Ops dashboard');
+  },
+
+  runWave9FinalAcceptance: async (payload: {
+    regressionPassed: boolean;
+    cisoPackPassed: boolean;
+    businessPersonaPackPassed: boolean;
+    providerHealthOk: boolean;
+    complianceAuditPassed: boolean;
+    openP0: number;
+    openP1: number;
+    evidenceRefs: {
+      regressionRunId?: string | null;
+      cisoPackRunId?: string | null;
+      businessPersonaPackRunId?: string | null;
+      complianceAuditRef?: string | null;
+    };
+    acceptedLimitations?: string[];
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/acceptance`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to run Wave 9 final acceptance');
   },
 
   getAIActionHistory: async (conversationId: string) => {

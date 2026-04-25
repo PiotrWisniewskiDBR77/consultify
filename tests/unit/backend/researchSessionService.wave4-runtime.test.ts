@@ -129,7 +129,11 @@ vi.mock('../../../server/src/services/wave5ArtifactRuntimeService.js', () => ({
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.startsWith('CREATE TABLE') || normalized.startsWith('CREATE INDEX')) {
+    if (
+      normalized.startsWith('CREATE TABLE') ||
+      normalized.startsWith('CREATE INDEX') ||
+      normalized.startsWith('ALTER TABLE')
+    ) {
       return { changes: 0 };
     }
     if (normalized.startsWith('INSERT INTO research_sessions')) {
@@ -262,9 +266,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         content_markdown: contentMarkdown,
         citations_json: citationsJson,
         evidence_node_ids_json: evidenceNodeIdsJson,
+        wave5_artifact_id: null,
         created_by: createdBy,
         created_at: new Date().toISOString(),
       });
+      return { changes: 1 };
+    }
+    if (normalized.startsWith('UPDATE research_report_artifacts SET wave5_artifact_id')) {
+      const [wave5ArtifactId, artifactId] = params;
+      Object.assign(db.artifacts.get(artifactId), { wave5_artifact_id: wave5ArtifactId });
       return { changes: 1 };
     }
     if (normalized.includes("SET status = 'completed'")) {
@@ -403,6 +413,7 @@ describe('ResearchSession Wave 4 runtime lifecycle', () => {
     expect(completed.finalArtifact).toEqual(
       expect.objectContaining({
         artifactType: 'research_report',
+        wave5ArtifactId: 'wave5-research-artifact',
         contentMarkdown: expect.stringContaining('## Citations'),
       })
     );

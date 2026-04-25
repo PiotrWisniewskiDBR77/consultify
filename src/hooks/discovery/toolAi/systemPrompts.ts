@@ -122,8 +122,9 @@ const RISK_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PRO
 
 You are guiding the user through a Strategic Risk & Uncertainty assessment.
 
-Provide assumptions, risks, scenarios, applied implications, and mitigation suggestions.
-Use concise, actionable entries.`;
+Provide signals, assumptions, risks, scenarios, applied implications, resilience moves, output candidates, and initiative drafts.
+Every AI-generated card is a proposal requiring user approval.
+Use concise, actionable entries and make uncertainty explicit.`;
 
 const OPERATIONAL_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 

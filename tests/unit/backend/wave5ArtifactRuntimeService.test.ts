@@ -348,6 +348,49 @@ describe('Wave 5 artifact runtime', () => {
     expect(db.artifacts.size).toBe(1);
   });
 
+  it('generates report, deck and table as first-class structured artifacts', async () => {
+    const { generateWave5StructuredArtifact, buildWave5ExportManifest } = await import(
+      '../../../server/src/services/wave5ArtifactRuntimeService.js'
+    );
+
+    const report = await generateWave5StructuredArtifact({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      outputKind: 'executive_report',
+      prompt: 'Assess transformation portfolio',
+      title: 'Transformation report',
+    });
+    const deck = await generateWave5StructuredArtifact({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      outputKind: 'board_deck',
+      prompt: 'Prepare board decision deck',
+      title: 'Board deck',
+    });
+    const table = await generateWave5StructuredArtifact({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      outputKind: 'kpi_table',
+      prompt: 'Track value delivery',
+      title: 'KPI table',
+    });
+
+    expect(report.artifactType).toBe('report');
+    expect(report.content).toContain('## Executive Summary');
+    expect(deck.artifactType).toBe('slide_deck');
+    expect(deck.content).toContain('"slides"');
+    expect(table.artifactType).toBe('spreadsheet');
+    expect(table.content).toContain('KPI,Baseline,Target');
+
+    const tableManifest = await buildWave5ExportManifest(table.artifactId, 'org-1');
+    expect(tableManifest).toEqual(
+      expect.objectContaining({
+        checksumSha256: expect.any(String),
+        formats: expect.arrayContaining(['csv', 'xlsx_ready_json']),
+      })
+    );
+  });
+
   it('exposes the Wave 5 API and UI contract', () => {
     const routes = readFileSync('server/src/routes/artifacts.routes.ts', 'utf8');
     const api = readFileSync('src/services/api.ts', 'utf8');
@@ -359,19 +402,26 @@ describe('Wave 5 artifact runtime', () => {
 
     expect(routes).toContain('/wave5/:artifactId/mutations');
     expect(routes).toContain('/wave5/fill-template');
+    expect(routes).toContain('/wave5/generate');
     expect(routes).toContain('/wave5/:artifactId/export-manifest');
     expect(routes).toContain('/wave5/mutations/:mutationId/commit');
     expect(api).toContain('createWave5Artifact');
     expect(api).toContain('approveWave5ArtifactMutation');
     expect(api).toContain('commitWave5ArtifactMutation');
+    expect(api).toContain('generateWave5StructuredArtifact');
     expect(appRoutes).toContain('/ai/artifacts');
     expect(panel).toContain('Create mutation proposal');
     expect(panel).toContain('commitMutation');
     expect(panel).toContain('Missing fields return questions');
+    expect(panel).toContain('Generate Output');
     expect(chat).toContain('Api.createWave5Artifact');
     expect(chat).toContain('mapChatArtifactToWave5Type');
+    expect(chat).toContain('trustBundleId');
+    expect(chat).toContain('citations: Array.isArray');
+    expect(chat).toContain('Artifact was kept as a local draft');
     expect(artifactStore).toContain('requiresMutationProposal');
     expect(streamHook).toContain('if (options.onArtifactDetected)');
+    expect(streamHook).toContain('artifactMeta');
     expect(readFileSync('server/src/services/v8/artifactRegistryService.ts', 'utf8')).toContain(
       'mirrorLegacyArtifactIntoWave5'
     );

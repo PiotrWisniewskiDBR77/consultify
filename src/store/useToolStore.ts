@@ -62,6 +62,7 @@ export type DynamicSwotPhaseId =
   | 'forces'
   | 'options'
   | 'items'
+  | 'assumptions'
   | 'insights'
   | 'outputs';
 export type SWOTEvidenceType = 'fact' | 'observation' | 'hypothesis';
@@ -491,14 +492,26 @@ export interface RiskAssumption {
   id: string;
   text: string;
   confidence: number; // 1-5
+  evidence?: string[];
+  consequenceIfWrong?: string;
+  validationMethod?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface RiskItem {
   id: string;
+  title?: string;
   description: string;
   probability: number; // 1-5
   impact: number; // 1-5
   mitigation: string;
+  trigger?: string;
+  owner?: string;
+  evidence?: string[];
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface ScenarioItem {
@@ -506,14 +519,64 @@ export interface ScenarioItem {
   title: string;
   likelihood: number; // 1-5
   notes: string;
+  posture?: 'base' | 'upside' | 'downside' | 'stress';
+  signalsToWatch?: string[];
+  response?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface RiskSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface RiskMove {
+  id: string;
+  title: string;
+  category: 'validate' | 'mitigate' | 'monitor' | 'hedge' | 'escalate';
+  rationale: string;
+  linkedRiskIds: string[];
+  linkedAssumptionIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface RiskOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedRiskIds: string[];
+  linkedScenarioIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface RiskUncertaintyData {
   context: ConsultingMissionContext;
+  signals: RiskSignal[];
   assumptions: RiskAssumption[];
   risks: RiskItem[];
   scenarios: ScenarioItem[];
+  recommendedMoves: RiskMove[];
+  outputCandidates: RiskOutputCandidate[];
   summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    appliedConclusions: string[];
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -857,47 +920,47 @@ export const PORTFOLIO_PRIORITY_STEPS: StepDefinition[] = [
 
 export const RISK_UNCERTAINTY_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Risk Context',
-    namePl: 'Kontekst Ryzyka',
-    description: 'Define scope and time horizon for risk analysis',
-    descriptionPl: 'Zdefiniuj zakres i horyzont czasowy analizy ryzyka',
+    id: 'mission',
+    name: 'Risk Mission & Context',
+    namePl: 'Risk Mission & Context',
+    description: 'Define the decision, uncertainty scope, constraints, and success signal',
+    descriptionPl: 'Zdefiniuj decyzję, zakres niepewności, ograniczenia i sygnał sukcesu',
     required: true,
     aiAssisted: false,
   },
   {
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description: 'Capture weak signals, constraints, evidence, and uncertainty cues',
+    descriptionPl: 'Zbierz słabe sygnały, ograniczenia, evidence i wskazówki niepewności',
+    required: true,
+    aiAssisted: true,
+  },
+  {
     id: 'assumptions',
-    name: 'Key Assumptions',
-    namePl: 'Kluczowe Założenia',
-    description: 'List critical assumptions and confidence levels',
-    descriptionPl: 'Lista kluczowych założeń i poziomu pewności',
+    name: 'Assumptions & Risk Map',
+    namePl: 'Assumptions & Risk Map',
+    description: 'Turn signals into assumptions, risks, and plausible scenarios',
+    descriptionPl: 'Zamień sygnały w założenia, ryzyka i scenariusze',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'risks',
-    name: 'Strategic Risks',
-    namePl: 'Ryzyka Strategiczne',
-    description: 'Identify and score risks with mitigation actions',
-    descriptionPl: 'Identyfikuj ryzyka i działania mitygujące',
+    id: 'insights',
+    name: 'Risk Synthesis',
+    namePl: 'Risk Synthesis',
+    description: 'Synthesize risk posture, early warnings, and recommended resilience moves',
+    descriptionPl: 'Syntezuj postawę ryzyka, early warnings i rekomendowane ruchy odporności',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'scenarios',
-    name: 'Scenarios',
-    namePl: 'Scenariusze',
-    description: 'Describe possible scenarios and likelihood',
-    descriptionPl: 'Opisz scenariusze i prawdopodobieństwo',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Summarize risks and resilience initiatives',
-    descriptionPl: 'Podsumowanie ryzyk i inicjatyw odporności',
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and downstream resilience actions',
+    descriptionPl: 'Przygotuj final source summary oraz dalsze działania odporności',
     required: true,
     aiAssisted: true,
   },
@@ -1438,9 +1501,12 @@ const createInitialPortfolioPriorityData = (): PortfolioPriorityData => ({
 
 const createInitialRiskUncertaintyData = (): RiskUncertaintyData => ({
   context: createConsultingMissionContext(),
+  signals: [],
   assumptions: [],
   risks: [],
   scenarios: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialOperationalData = (steps: StepDefinition[]): OperationalToolData => {
@@ -1942,6 +2008,96 @@ const updatePortfolioProposalCard = (
   return portfolioData;
 };
 
+const normalizeRiskUncertaintyData = (input: RiskUncertaintyData): RiskUncertaintyData => {
+  const initial = createInitialRiskUncertaintyData();
+  return {
+    ...initial,
+    ...input,
+    context: {
+      ...initial.context,
+      ...(input.context || {}),
+    },
+    signals: (input.signals || []).map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+      proposalStatus: signal.proposalStatus || (signal.type === 'ai' ? 'ai-proposed' : 'accepted'),
+    })),
+    assumptions: (input.assumptions || []).map((assumption) => ({
+      ...assumption,
+      confidence: assumption.confidence ?? 3,
+      evidence: assumption.evidence || [],
+      proposalStatus: assumption.proposalStatus || 'accepted',
+    })),
+    risks: (input.risks || []).map((risk) => ({
+      ...risk,
+      probability: risk.probability ?? 3,
+      impact: risk.impact ?? 3,
+      mitigation: risk.mitigation || '',
+      evidence: risk.evidence || [],
+      confidence: risk.confidence ?? 3,
+      proposalStatus: risk.proposalStatus || 'accepted',
+    })),
+    scenarios: (input.scenarios || []).map((scenario) => ({
+      ...scenario,
+      likelihood: scenario.likelihood ?? 3,
+      posture: scenario.posture || 'base',
+      signalsToWatch: scenario.signalsToWatch || [],
+      proposalStatus: scenario.proposalStatus || 'accepted',
+    })),
+    recommendedMoves: (input.recommendedMoves || []).map((move) => ({
+      ...move,
+      linkedRiskIds: move.linkedRiskIds || [],
+      linkedAssumptionIds: move.linkedAssumptionIds || [],
+      proposalStatus: move.proposalStatus || 'accepted',
+    })),
+    outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+      ...candidate,
+      linkedRiskIds: candidate.linkedRiskIds || [],
+      linkedScenarioIds: candidate.linkedScenarioIds || [],
+      readiness: candidate.readiness || 'keep-as-idea',
+      proposalStatus: candidate.proposalStatus || 'accepted',
+    })),
+    summary: input.summary
+      ? {
+          ...input.summary,
+          keyInsights: input.summary.keyInsights || [],
+          appliedConclusions: input.summary.appliedConclusions || [],
+          recommendedInitiatives: input.summary.recommendedInitiatives || [],
+          proposalStatus: input.summary.proposalStatus || 'accepted',
+        }
+      : undefined,
+  };
+};
+
+const updateRiskProposalCard = (
+  riskData: RiskUncertaintyData,
+  cardType: ProposalCardType,
+  cardId: string,
+  updates: Record<string, unknown>
+): RiskUncertaintyData => {
+  const updateList = <T extends { id: string }>(items: T[]) =>
+    items.map((item) => (item.id === cardId ? ({ ...item, ...updates } as T) : item));
+
+  if (cardType === 'signal') return { ...riskData, signals: updateList(riskData.signals) };
+  if (cardType === 'item')
+    return {
+      ...riskData,
+      assumptions: updateList(riskData.assumptions),
+      risks: updateList(riskData.risks),
+      scenarios: updateList(riskData.scenarios),
+    };
+  if (cardType === 'tension' || cardType === 'move')
+    return { ...riskData, recommendedMoves: updateList(riskData.recommendedMoves) };
+  if (cardType === 'output-candidate')
+    return { ...riskData, outputCandidates: updateList(riskData.outputCandidates) };
+  if (cardType === 'conclusion' && riskData.summary) {
+    return { ...riskData, summary: { ...riskData.summary, ...updates } };
+  }
+  return riskData;
+};
+
 const mergeToolAnswersWithInitialData = (
   toolType: ToolType,
   answers: Record<string, unknown>
@@ -2018,6 +2174,10 @@ const mergeToolAnswersWithInitialData = (
 
   if (toolType === 'portfolio-priority') {
     return normalizePortfolioPriorityData(merged as PortfolioPriorityData);
+  }
+
+  if (toolType === 'risk-uncertainty') {
+    return normalizeRiskUncertaintyData(merged as RiskUncertaintyData);
   }
 
   return merged as any;
@@ -2182,6 +2342,45 @@ const computeStepStatusFromAnswers = (
       }
     }
 
+    if (toolType === 'risk-uncertainty') {
+      const riskAnswers = normalizeRiskUncertaintyData(answers as RiskUncertaintyData);
+
+      if (stepId === 'mission') {
+        return riskAnswers.context?.goal &&
+          riskAnswers.context?.scope &&
+          riskAnswers.context?.successSignal
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (riskAnswers.signals?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'assumptions') {
+        return (riskAnswers.assumptions?.length || 0) > 0 ||
+          (riskAnswers.risks?.length || 0) > 0 ||
+          (riskAnswers.scenarios?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (riskAnswers.recommendedMoves?.length || 0) > 0 ||
+          (riskAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return riskAnswers.summary?.executiveSummary ||
+          (riskAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (riskAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
     // Context step (all tools)
     if (stepId === 'context') {
       if (toolType === 'market-forces') {
@@ -2222,14 +2421,6 @@ const computeStepStatusFromAnswers = (
       };
       const key = map[stepId];
       if (key) return (answers?.quadrants?.[key]?.length || 0) > 0 ? 'completed' : 'pending';
-    }
-
-    if (toolType === 'risk-uncertainty') {
-      if (stepId === 'assumptions')
-        return (answers?.assumptions?.length || 0) > 0 ? 'completed' : 'pending';
-      if (stepId === 'risks') return (answers?.risks?.length || 0) > 0 ? 'completed' : 'pending';
-      if (stepId === 'scenarios')
-        return (answers?.scenarios?.length || 0) > 0 ? 'completed' : 'pending';
     }
 
     // Toolsets & operational: section arrays (generic)
@@ -2354,6 +2545,15 @@ const normalizeSessionForRuntime = (session: ToolSession): ToolSession => {
       ...normalizedBase,
       inputData,
       steps: buildToolSteps('portfolio-priority', inputData),
+    };
+  }
+
+  if (session.toolType === 'risk-uncertainty') {
+    const inputData = normalizeRiskUncertaintyData(normalizedBase.inputData as RiskUncertaintyData);
+    return {
+      ...normalizedBase,
+      inputData,
+      steps: buildToolSteps('risk-uncertainty', inputData),
     };
   }
 
@@ -2658,6 +2858,45 @@ export const useToolStore = create<ToolStoreState>()(
           }
         }
 
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+
+          if (stepDef.id === 'mission') {
+            return Boolean(
+              riskData.context?.goal && riskData.context?.scope && riskData.context?.successSignal
+            );
+          }
+
+          if (stepDef.id === 'input') {
+            return (riskData.signals?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'assumptions') {
+            return (
+              (riskData.assumptions?.length || 0) > 0 ||
+              (riskData.risks?.length || 0) > 0 ||
+              (riskData.scenarios?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (riskData.recommendedMoves?.length || 0) > 0 ||
+              (riskData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              riskData.summary?.executiveSummary ||
+                (riskData.summary?.keyInsights?.length || 0) > 0 ||
+                (riskData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
+
         // Context step: check if required fields are filled
         if (stepDef.id === 'context') {
           const data = currentSession.inputData as
@@ -2724,20 +2963,6 @@ export const useToolStore = create<ToolStoreState>()(
           };
           const key = keyMap[stepDef.id];
           return growthData.quadrants[key].length > 0;
-        }
-
-        // Risk & Uncertainty steps: require at least one item
-        if (stepDef.id === 'assumptions') {
-          const riskData = currentSession.inputData as RiskUncertaintyData;
-          return riskData.assumptions.length > 0;
-        }
-        if (stepDef.id === 'risks') {
-          const riskData = currentSession.inputData as RiskUncertaintyData;
-          return riskData.risks.length > 0;
-        }
-        if (stepDef.id === 'scenarios') {
-          const riskData = currentSession.inputData as RiskUncertaintyData;
-          return riskData.scenarios.length > 0;
         }
 
         // Operational tools: sections with list items
@@ -3053,6 +3278,16 @@ export const useToolStore = create<ToolStoreState>()(
       acceptCard: (cardType, cardId) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            proposalStatus: 'accepted' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'portfolio-priority') {
           const portfolioData = normalizePortfolioPriorityData(
             currentSession.inputData as PortfolioPriorityData
@@ -3126,6 +3361,16 @@ export const useToolStore = create<ToolStoreState>()(
       rejectCard: (cardType, cardId) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            proposalStatus: 'rejected' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'portfolio-priority') {
           const portfolioData = normalizePortfolioPriorityData(
             currentSession.inputData as PortfolioPriorityData
@@ -3199,6 +3444,16 @@ export const useToolStore = create<ToolStoreState>()(
       commentOnCard: (cardType, cardId, comment) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            userComment: comment,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'portfolio-priority') {
           const portfolioData = normalizePortfolioPriorityData(
             currentSession.inputData as PortfolioPriorityData
@@ -3265,6 +3520,16 @@ export const useToolStore = create<ToolStoreState>()(
       markRethinking: (cardType, cardId) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            proposalStatus: 'rethinking' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'portfolio-priority') {
           const portfolioData = normalizePortfolioPriorityData(
             currentSession.inputData as PortfolioPriorityData
@@ -3340,6 +3605,17 @@ export const useToolStore = create<ToolStoreState>()(
       updateCardAfterRethink: (cardType, cardId, updates) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const updated = updateRiskProposalCard(riskData, cardType, cardId, {
+            ...updates,
+            proposalStatus: 'ai-proposed' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'portfolio-priority') {
           const portfolioData = normalizePortfolioPriorityData(
             currentSession.inputData as PortfolioPriorityData
@@ -3425,6 +3701,36 @@ export const useToolStore = create<ToolStoreState>()(
       acceptAllInPhase: (phaseId) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'risk-uncertainty') {
+          const riskData = normalizeRiskUncertaintyData(
+            currentSession.inputData as RiskUncertaintyData
+          );
+          const acceptAll = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.proposalStatus === 'ai-proposed'
+                ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+                : item
+            );
+          const updated = { ...riskData };
+          if (phaseId === 'input') updated.signals = acceptAll(riskData.signals);
+          else if (phaseId === 'assumptions') {
+            updated.assumptions = acceptAll(riskData.assumptions);
+            updated.risks = acceptAll(riskData.risks);
+            updated.scenarios = acceptAll(riskData.scenarios);
+          } else if (phaseId === 'insights') {
+            updated.recommendedMoves = acceptAll(riskData.recommendedMoves);
+          } else if (phaseId === 'outputs') {
+            if (updated.summary?.proposalStatus === 'ai-proposed') {
+              updated.summary = {
+                ...updated.summary,
+                proposalStatus: 'accepted' as ProposalStatus,
+              };
+            }
+            updated.outputCandidates = acceptAll(riskData.outputCandidates);
+          }
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'portfolio-priority') {
           const portfolioData = normalizePortfolioPriorityData(
             currentSession.inputData as PortfolioPriorityData

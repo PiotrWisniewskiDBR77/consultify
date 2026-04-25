@@ -160,17 +160,41 @@ Return JSON:
   }
 
   if (toolType === 'risk-uncertainty') {
+    const riskData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI risk strategy mentor. Improve the mission brief for this Risk & Uncertainty session.
+
+Current mission context:
+- Decision goal: ${riskData?.context?.goal || 'missing'}
+- Scope: ${riskData?.context?.scope || 'missing'}
+- Success signal: ${riskData?.context?.successSignal || 'missing'}
+- Time horizon: ${riskData?.context?.timeframe || 'missing'}
+
+Return JSON:
+{"mission": {"goal": "...", "scope": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI risk analyst. Suggest high-value evidence signals for strategic risk and uncertainty.
+
+Use organization context, interview cues, market shifts, operational constraints, weak signals, and strategic assumptions.
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["risk"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
     if (stepId === 'assumptions') {
-      return `Act as an AI risk mentor. List 3-5 key assumptions with confidence (1-5). Return JSON:
-{"assumptions": [{"text": "...", "confidence": 3}]}`;
-    }
-    if (stepId === 'risks') {
-      return `Act as an AI risk mentor. List 3-5 strategic risks with probability/impact (1-5) and mitigation. Return JSON:
-{"risks": [{"description": "...", "probability": 3, "impact": 3, "mitigation": "..."}]}`;
-    }
-    if (stepId === 'scenarios') {
-      return `Act as an AI risk mentor. List 2-4 scenarios with likelihood (1-5) and notes. Return JSON:
-{"scenarios": [{"title": "...", "likelihood": 3, "notes": "..."}]}`;
+      const signalsSummary = (riskData?.signals || [])
+        .map((signal: any) => `- ${signal.content}`)
+        .join('\n');
+      return `Act as an AI risk mentor. Turn these signals into assumptions, strategic risks, and scenarios.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Return JSON:
+{
+  "assumptions": [{"text": "...", "confidence": 3, "evidence": ["..."], "consequenceIfWrong": "...", "validationMethod": "..."}],
+  "risks": [{"title": "...", "description": "...", "probability": 3, "impact": 3, "mitigation": "...", "trigger": "...", "owner": "...", "evidence": ["..."], "confidence": 4}],
+  "scenarios": [{"title": "...", "likelihood": 3, "notes": "...", "posture": "base|upside|downside|stress", "signalsToWatch": ["..."], "response": "..."}]
+}`;
     }
     return '';
   }
@@ -383,14 +407,30 @@ Return JSON:
   }
 
   if (toolType === 'risk-uncertainty') {
+    const risk = inputData as any;
+    const riskSummary = (risk?.risks || [])
+      .map((item: any) => `- ${item.title || item.description}: P${item.probability}/I${item.impact}`)
+      .join('\n');
+
     return `Summarize risks and scenarios in a consulting-grade way:
+
+${riskSummary || '- no explicit risks yet'}
+
 1. Executive Summary
 2. Top 3 insights
 3. Applied Conclusions
-4. 3-5 resilience initiatives
+4. 3-5 resilience moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
 
 Return JSON:
-{"summary": "...", "insights": ["..."], "appliedConclusions": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
+{
+  "summary": "executive summary",
+  "insights": ["..."],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"validate|mitigate|monitor|hedge|escalate","rationale":"...","linkedRiskIds":[],"linkedAssumptionIds":[],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": []}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedRiskIds": [], "linkedScenarioIds": [], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
   }
 
   if (OPERATIONAL_TOOL_TYPES.includes(toolType)) {

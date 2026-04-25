@@ -389,8 +389,39 @@ export function computeToolReviewGaps(
 
   if (toolType === 'risk-uncertainty') {
     const risk = data as RiskUncertaintyData;
-    if (!risk.assumptions?.length) gaps.push(isPolish ? 'Brak założeń' : 'Missing assumptions');
-    if (!risk.risks?.length) gaps.push(isPolish ? 'Brak ryzyk' : 'Missing risks');
+    const acceptedAssumptions = (risk.assumptions || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedRisks = (risk.risks || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedScenarios = (risk.scenarios || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedMoves = (risk.recommendedMoves || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedOutputs = (risk.outputCandidates || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedSummary =
+      !!risk.summary?.executiveSummary && risk.summary?.proposalStatus !== 'rejected';
+    if (!risk.context?.goal || !risk.context?.scope || !risk.context?.successSignal)
+      gaps.push(isPolish ? 'Brak risk mission' : 'Missing risk mission');
+    if (!(risk.signals?.length || 0))
+      gaps.push(isPolish ? 'Brak sygnałów ryzyka' : 'Missing risk signals');
+    if (!acceptedAssumptions)
+      gaps.push(isPolish ? 'Brak zaakceptowanych założeń' : 'Missing accepted assumptions');
+    if (!acceptedRisks)
+      gaps.push(isPolish ? 'Brak zaakceptowanych ryzyk' : 'Missing accepted risks');
+    if (!acceptedScenarios)
+      gaps.push(isPolish ? 'Brak scenariuszy' : 'Missing scenarios');
+    if (!acceptedMoves)
+      gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
+    if (!acceptedSummary)
+      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 
@@ -618,6 +649,16 @@ export function computeToolCompletionItems(
   if (toolType === 'risk-uncertainty') {
     const risk = data as RiskUncertaintyData;
     items.push({
+      label: isPolish ? 'Risk mission' : 'Risk mission',
+      done: !!risk?.context?.goal && !!risk?.context?.scope && !!risk?.context?.successSignal,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Sygnały ryzyka' : 'Risk signals',
+      done: (risk?.signals?.length || 0) > 0,
+      anchorId: 'tool-content',
+    });
+    items.push({
       label: isPolish ? 'Założenia' : 'Assumptions',
       done: (risk?.assumptions?.length || 0) > 0,
       anchorId: 'tool-content',
@@ -631,6 +672,16 @@ export function computeToolCompletionItems(
       label: isPolish ? 'Scenariusze' : 'Scenarios',
       done: (risk?.scenarios?.length || 0) > 0,
       anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Rekomendowane ruchy' : 'Recommended moves',
+      done: (risk?.recommendedMoves?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      done: !!risk?.summary?.executiveSummary,
+      anchorId: 'analysis',
     });
     return items;
   }

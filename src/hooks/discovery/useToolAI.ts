@@ -19,6 +19,7 @@ import { useAIStream } from '@/hooks/useAIStream';
 import {
   GrowthPathsData,
   PortfolioPriorityData,
+  RiskUncertaintyData,
   SWOTData,
   ToolType,
   useToolStore,
@@ -50,6 +51,12 @@ import {
   buildPortfolioRethinkPrompt,
   buildPortfolioSynthesisPrompt,
 } from './toolAi/portfolioPriority';
+import {
+  applyRiskPendingAction,
+  buildRiskFullSessionPrompt,
+  buildRiskRethinkPrompt,
+  buildRiskSynthesisPrompt,
+} from './toolAi/riskUncertainty';
 import { getToolStepOpeningQuestion } from './toolAi/openingQuestions';
 import { getToolSuggestionPrompt, getToolSummaryPrompt } from './toolAi/promptRegistry';
 import { getToolSystemPrompt } from './toolAi/systemPrompts';
@@ -199,6 +206,19 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   const generateCorrelations = useCallback(async () => {
     if (!currentSession) return;
 
+    if (toolType === 'risk-uncertainty') {
+      setError(null);
+      const prompt = buildRiskSynthesisPrompt(currentSession.inputData as RiskUncertaintyData);
+      if (!prompt) {
+        setError('Need assumptions or risks to generate synthesis');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('generate-correlations');
+      await sendMessage(prompt);
+      return;
+    }
+
     if (toolType === 'portfolio-priority') {
       setError(null);
       const prompt = buildPortfolioSynthesisPrompt(
@@ -276,7 +296,12 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     setError(null);
     setSessionGenerationStatus('generating');
     const prompt =
-      toolType === 'portfolio-priority'
+      toolType === 'risk-uncertainty'
+        ? buildRiskFullSessionPrompt(
+            currentSession.inputData as RiskUncertaintyData,
+            formatForPrompt()
+          )
+        : toolType === 'portfolio-priority'
         ? buildPortfolioFullSessionPrompt(
             currentSession.inputData as PortfolioPriorityData,
             formatForPrompt()
@@ -349,7 +374,8 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         (toolType !== 'dynamic-swot' &&
           toolType !== 'market-forces' &&
           toolType !== 'growth-paths' &&
-          toolType !== 'portfolio-priority')
+          toolType !== 'portfolio-priority' &&
+          toolType !== 'risk-uncertainty')
       )
         return;
 
@@ -357,7 +383,14 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       markRethinking(cardType as any, cardId);
       setRethinkTarget({ phaseId, cardType, cardId });
       const prompt =
-        toolType === 'portfolio-priority'
+        toolType === 'risk-uncertainty'
+          ? buildRiskRethinkPrompt(
+              currentSession.inputData as RiskUncertaintyData,
+              cardType,
+              cardId,
+              userComment
+            )
+          : toolType === 'portfolio-priority'
           ? buildPortfolioRethinkPrompt(
               currentSession.inputData as PortfolioPriorityData,
               cardType,
@@ -399,7 +432,8 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       (toolType !== 'dynamic-swot' &&
         toolType !== 'market-forces' &&
         toolType !== 'growth-paths' &&
-        toolType !== 'portfolio-priority')
+        toolType !== 'portfolio-priority' &&
+        toolType !== 'risk-uncertainty')
     )
       return;
 
@@ -411,7 +445,30 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     }
 
     const result =
-      toolType === 'portfolio-priority'
+      toolType === 'risk-uncertainty'
+        ? applyRiskPendingAction({
+            pendingAction,
+            parsed,
+            currentStepId: currentStepDef?.id,
+            riskData: (currentSession?.inputData as RiskUncertaintyData | undefined) || {
+              context: createEmptyMissionContext(),
+              signals: [],
+              assumptions: [],
+              risks: [],
+              scenarios: [],
+              recommendedMoves: [],
+              outputCandidates: [],
+            },
+            rethinkTarget,
+            toolType,
+            actions: {
+              updateInputData,
+              setInitiatives,
+              setSessionGenerationStatus,
+              updateCardAfterRethink,
+            },
+          })
+        : toolType === 'portfolio-priority'
         ? applyPortfolioPendingAction({
             pendingAction,
             parsed,

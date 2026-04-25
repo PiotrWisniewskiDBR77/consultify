@@ -183,6 +183,26 @@ const Wave5ArtifactRuntimePanel = React.lazy(() =>
     default: m.Wave5ArtifactRuntimePanel,
   }))
 );
+const Wave6ContextLearningPanel = React.lazy(() =>
+  import('@/components/AIChat/Wave6ContextLearningPanel').then((m) => ({
+    default: m.Wave6ContextLearningPanel,
+  }))
+);
+const Wave7ConnectorAdminPanel = React.lazy(() =>
+  import('@/components/AIChat/Wave7ConnectorAdminPanel').then((m) => ({
+    default: m.Wave7ConnectorAdminPanel,
+  }))
+);
+const Wave8AgentCatalogPanel = React.lazy(() =>
+  import('@/components/AIChat/Wave8AgentCatalogPanel').then((m) => ({
+    default: m.Wave8AgentCatalogPanel,
+  }))
+);
+const Wave9OutcomeAIOpsPanel = React.lazy(() =>
+  import('@/components/AIChat/Wave9OutcomeAIOpsPanel').then((m) => ({
+    default: m.Wave9OutcomeAIOpsPanel,
+  }))
+);
 
 // KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
 const WordyView = React.lazy(() =>
@@ -1130,6 +1150,62 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <Wave5ArtifactRuntimePanel />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Wave 6 - Org, Project, User Context and Controlled Learning */}
+        <Route
+          path="/ai/context"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Context']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <Wave6ContextLearningPanel />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Wave 7 - Enterprise Connectors, Tooling and AI App Management */}
+        <Route
+          path="/ai/connectors"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Connectors']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <Wave7ConnectorAdminPanel />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Wave 8 - Agent Catalog, Roles and Scheduled Work */}
+        <Route
+          path="/ai/agents"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Agents']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <Wave8AgentCatalogPanel />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Wave 9 - Outcome, KPI, ROI, AI Ops and Final Acceptance */}
+        <Route
+          path="/ai/outcomes"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Outcomes']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <Wave9OutcomeAIOpsPanel />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>

@@ -255,6 +255,28 @@ export const KnownToolPreviewV3Body: React.FC<{
           };
     }
 
+    if (tool.toolType === 'risk-uncertainty') {
+      return isPolish
+        ? {
+            goal:
+              'Zamienia kontekst decyzji i sygnały z wywiadu w mapę założeń, ryzyk i scenariuszy.',
+            outcome:
+              'Założenia do walidacji, ryzyka, scenariusze, ruchy odporności i kandydaci na inicjatywy.',
+            team: 'Zarząd, strategy lead, transformation lead, PMO lub właściciel ryzyka',
+            aiRole: 'Analityk ryzyka, generator kart do akceptacji i konsultant odporności',
+            duration: '60-90 min',
+          }
+        : {
+            goal:
+              'Turns decision context and interview signals into an assumption, risk, and scenario map.',
+            outcome:
+              'Assumptions to validate, risks, scenarios, resilience moves, and initiative candidates.',
+            team: 'Leadership, strategy lead, transformation lead, PMO, or risk owner',
+            aiRole: 'Risk analyst, card proposal generator, and resilience consultant',
+            duration: '60-90 min',
+          };
+    }
+
     const desc = String(full?.description || tool.description || '').trim();
     const fallbackGoal = desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
     const fallbackOutcome =

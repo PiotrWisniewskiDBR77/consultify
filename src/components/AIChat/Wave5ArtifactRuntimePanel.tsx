@@ -47,6 +47,10 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
   const [proposedContent, setProposedContent] = React.useState('');
   const [template, setTemplate] = React.useState('Business case for {{initiative}} in {{quarter}}');
   const [fieldsJson, setFieldsJson] = React.useState('{\n  "initiative": "",\n  "quarter": ""\n}');
+  const [generationKind, setGenerationKind] = React.useState<
+    'executive_report' | 'board_deck' | 'kpi_table'
+  >('executive_report');
+  const [generationPrompt, setGenerationPrompt] = React.useState('');
   const [message, setMessage] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
 
@@ -175,6 +179,30 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
     }
   };
 
+  const generateStructuredArtifact = async () => {
+    if (!generationPrompt.trim()) {
+      setMessage('Generation prompt is required.');
+      return;
+    }
+    setLoading(true);
+    setMessage(null);
+    try {
+      const res = await Api.generateWave5StructuredArtifact({
+        outputKind: generationKind,
+        prompt: generationPrompt.trim(),
+        title: title || undefined,
+      });
+      if (res?.success === false) throw new Error(res?.error || 'Generation failed');
+      if (res?.artifact) setSelected(res.artifact);
+      setGenerationPrompt('');
+      await load();
+    } catch (err: any) {
+      setMessage(err?.message || 'Structured artifact generation failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const exportManifest = async () => {
     if (!selected) return;
     const res = await Api.getWave5ArtifactExportManifest(selected.artifactId);
@@ -206,6 +234,39 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
       <div className="grid gap-4 xl:grid-cols-[360px_minmax(0,1fr)]">
         <section className="rounded-xl border border-slate-200 bg-white dark:border-navy-700 dark:bg-navy-900">
+          <div className="border-b border-slate-200 p-4 dark:border-navy-700">
+            <h2 className="font-semibold text-slate-900 dark:text-white">Generate Output</h2>
+            <p className="text-xs text-slate-500">
+              Create report, deck or table as a first-class artifact.
+            </p>
+            <div className="mt-3 space-y-2">
+              <select
+                value={generationKind}
+                onChange={(event) => setGenerationKind(event.target.value as typeof generationKind)}
+                className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+              >
+                <option value="executive_report">Executive report</option>
+                <option value="board_deck">Board deck</option>
+                <option value="kpi_table">KPI table</option>
+              </select>
+              <textarea
+                value={generationPrompt}
+                onChange={(event) => setGenerationPrompt(event.target.value)}
+                placeholder="Describe the artifact to generate"
+                rows={4}
+                className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+              />
+              <button
+                type="button"
+                onClick={generateStructuredArtifact}
+                disabled={loading || !generationPrompt.trim()}
+                className="rounded-md bg-sky-600 px-3 py-2 text-xs font-medium text-white disabled:opacity-50"
+              >
+                Generate artifact
+              </button>
+            </div>
+          </div>
+
           <div className="border-b border-slate-200 p-4 dark:border-navy-700">
             <h2 className="font-semibold text-slate-900 dark:text-white">Create Artifact</h2>
             <div className="mt-3 space-y-2">

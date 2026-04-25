@@ -328,6 +328,76 @@ export function getToolPhaseAiActions(
     }
   }
 
+  if (toolType === 'risk-uncertainty') {
+    switch (stepDefinition.id) {
+      case 'mission':
+        return [
+          createAction(
+            'suggest-step',
+            'sparkles',
+            'AI Risk Framing',
+            'AI framing ryzyka',
+            'Critique and sharpen the risk decision brief',
+            'Skrytykuj i wyostrz brief decyzji ryzyka'
+          ),
+          createAction(
+            'generate-full-session',
+            'wand',
+            'Full Session Draft',
+            'Szkic całej sesji',
+            'Generate a controlled first draft of the full risk session',
+            'Wygeneruj kontrolowany pierwszy szkic całej sesji ryzyka'
+          ),
+        ];
+      case 'input':
+        return [
+          createAction(
+            'suggest-step',
+            'search',
+            'AI Risk Signals',
+            'AI sygnały ryzyka',
+            'Suggest evidence and weak signals for risk exploration',
+            'Zaproponuj evidence i słabe sygnały do eksploracji ryzyka'
+          ),
+        ];
+      case 'assumptions':
+        return [
+          createAction(
+            'suggest-step',
+            'sparkles',
+            'AI Risk Map',
+            'AI mapa ryzyka',
+            'Turn signals into assumptions, risks, and scenarios',
+            'Zamień sygnały w założenia, ryzyka i scenariusze'
+          ),
+        ];
+      case 'insights':
+        return [
+          createAction(
+            'generate-correlations',
+            'wand',
+            'AI Risk Synthesis',
+            'AI synteza ryzyka',
+            'Synthesize resilience moves and early warnings',
+            'Syntezuj ruchy odporności i early warnings'
+          ),
+        ];
+      case 'outputs':
+        return [
+          createAction(
+            'generate-summary',
+            'wand',
+            'AI Final Summary',
+            'AI final summary',
+            'Generate final summary, output candidates, and initiatives',
+            'Wygeneruj final summary, output candidates i inicjatywy'
+          ),
+        ];
+      default:
+        return [];
+    }
+  }
+
   if (!stepDefinition.aiAssisted) return [];
 
   if (SUMMARY_STEP_IDS.has(stepDefinition.id)) {

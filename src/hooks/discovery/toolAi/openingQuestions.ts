@@ -46,11 +46,16 @@ const OPENING_QUESTIONS: Record<string, Record<string, string>> = {
       'Let me prepare the final source summary, output candidates, and initiative drafts from the approved portfolio direction.',
   },
   'risk-uncertainty': {
-    context: 'What risk scope and time horizon are you analyzing?',
-    assumptions: 'What key assumptions underpin the strategy?',
-    risks: 'What are the strategic risks and mitigations?',
-    scenarios: 'What scenarios could materially impact outcomes?',
-    summary: 'Let me summarize risks and propose resilience initiatives.',
+    mission:
+      'What decision, risk scope, success signal, and uncertainty constraints should this session support?',
+    input:
+      'What interview notes, weak signals, market changes, or assumptions should shape the risk map?',
+    assumptions:
+      'Let me turn the accepted signals into assumptions, strategic risks, and plausible scenarios.',
+    insights:
+      'I will synthesize the risk map into validation, mitigation, monitoring, and escalation moves.',
+    outputs:
+      'Let me prepare the final source summary, output candidates, and initiative drafts from the approved risk posture.',
   },
   'sop-builder': {
     context: 'What operational scope are you standardizing?',

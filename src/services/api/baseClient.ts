@@ -3,6 +3,7 @@
  * Core utilities for making API requests
  */
 
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { tokenService } from '../tokenService';
 
 export const API_URL = '/api';
@@ -154,7 +155,7 @@ export const handleResponse = async <T = unknown>(
   }
 
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-  const message = (data as any)?.error || (data as any)?.message || fallbackHttp || defaultError;
+  const message = normalizeApiErrorMessage(data, fallbackHttp || defaultError);
 
   const err: any = new Error(message);
   err.status = res.status;

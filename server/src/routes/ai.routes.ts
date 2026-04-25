@@ -1893,6 +1893,46 @@ router.post(
           null;
 
       const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
+      let wave6ProfilePrompt = '';
+      try {
+        if (!privateMode && req.organizationId && req.userId) {
+          const wave6 = await import('../services/wave6ContextLearningService.js');
+          const workProfile = await wave6.buildWave6UserWorkProfile({
+            organizationId: req.organizationId,
+            userId: req.userId,
+            projectId,
+            privateMode: Boolean(privateMode) || Boolean(aiModes?.deepResearch),
+          });
+          wave6ProfilePrompt = wave6.buildWave6UserWorkProfilePrompt(workProfile);
+          await wave6.captureWave6ContextSnapshot({
+            organizationId: req.organizationId,
+            userId: req.userId,
+            snapshotType: projectId ? 'project' : 'user',
+            projectId,
+            facts: {
+              conversationId: conversationId || null,
+              focusMode,
+              hasScreenContext: Boolean(screenContext),
+              userWorkProfilePreferences: workProfile.preferences.length,
+            },
+            sourceRefs: [
+              {
+                sourceType: 'chat_runtime',
+                sourceTitle: 'AI chat runtime context',
+                sourceId: conversationId || streamSessionId,
+              },
+            ],
+            permissions: {
+              assistantScope: 'teresa_tenant',
+              projectId,
+              privateMode: Boolean(privateMode),
+            },
+            privateMode: Boolean(privateMode),
+          });
+        }
+      } catch (wave6Err: any) {
+        logger.warn('[AI Stream] Wave 6 context snapshot skipped:', wave6Err?.message || wave6Err);
+      }
       const attachmentDocIdsForPurpose = Array.isArray((context as any)?.attachmentDocIds)
         ? ((context as any).attachmentDocIds as any[]).map((id: any) => String(id)).filter(Boolean)
         : [];
@@ -1946,7 +1986,9 @@ router.post(
         stream: true,
         options: {
           role: roleName,
-          systemInstruction: enhancedSystemInstruction,
+          systemInstruction: [enhancedSystemInstruction, wave6ProfilePrompt]
+            .filter((part) => String(part || '').trim().length > 0)
+            .join('\n\n'),
           language: language || undefined,
           // Tools & routing options
           aiModes,
@@ -4109,6 +4151,60 @@ router.post(
                 },
               };
               emitSSE(sourceLedgerSnapshot);
+
+              if (req.organizationId && req.userId) {
+                try {
+                  const wave6 = await import('../services/wave6ContextLearningService.js');
+                  if (!privateMode) {
+                    for (const source of used_sources.slice(0, 12)) {
+                      await wave6.recordWave6ContextLedgerEntry({
+                        organizationId: req.organizationId,
+                        userId: req.userId,
+                        projectId,
+                        sourceType: String(source.type || 'citation'),
+                        sourceId: source.id || source.reference || null,
+                        sourceTitle: source.title || source.reference || null,
+                        sourceUrl: source.link || source.reference || null,
+                        freshnessAt: new Date().toISOString(),
+                        permissionScope: projectId ? 'project' : 'tenant',
+                      });
+                    }
+                  }
+                  const memoryRequest = wave6.extractWave6MemoryRequest(String(message || ''));
+                  if (memoryRequest) {
+                    const memoryCandidate = await wave6.captureWave6MemoryCandidate({
+                      organizationId: req.organizationId,
+                      userId: req.userId,
+                      assistantScope: 'teresa_tenant',
+                      memoryScope: projectId ? 'project' : 'user',
+                      key: memoryRequest.key,
+                      value: memoryRequest.value,
+                      projectId,
+                      sourceLabel: 'chat_user_request',
+                      sourceRefs: [
+                        {
+                          sourceType: 'conversation',
+                          sourceId: conversationId || streamSessionId,
+                        },
+                      ],
+                      privateMode: Boolean(privateMode),
+                      retentionDays: 180,
+                    });
+                    emitSSE({
+                      type: 'memory_candidate',
+                      wave: 6,
+                      blocked: Boolean(memoryCandidate.blocked),
+                      reason: memoryCandidate.reason || null,
+                      candidate: memoryCandidate.candidate || null,
+                    });
+                  }
+                } catch (wave6Err: any) {
+                  logger.warn(
+                    '[AI Stream] Wave 6 context ledger/stewardship skipped:',
+                    wave6Err?.message || wave6Err
+                  );
+                }
+              }
 
               if (chatRunId) {
                 import('../services/ai/chatTraceService.js')

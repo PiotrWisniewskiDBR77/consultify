@@ -770,6 +770,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     streamedContent,
     policyDecision,
     policyNotices,
+    memoryCandidate,
     researchProgress,
     researchVisibility,
     deepThinkingState,
@@ -1131,7 +1132,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     onThinkingUpdate: (steps) => {
       setThinkingSteps(steps);
     },
-    onArtifactDetected: (artifact) => {
+    onArtifactDetected: (artifact, artifactMeta) => {
       const governedDraft = {
         ...artifact,
         metadata: {
@@ -1140,6 +1141,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             localDraftOnly: true,
             requiresMutationProposal: true,
             source: 'chat_artifact_detection',
+            citationsLinked: Array.isArray(artifactMeta?.citations)
+              ? artifactMeta.citations.length
+              : 0,
+            trustBundleId:
+              (artifactMeta?.trustBundle as any)?.id ||
+              (artifactMeta?.trustBundle as any)?.traceId ||
+              null,
           },
         },
       } as Artifact;
@@ -1149,13 +1157,42 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         title: artifact.title || 'Chat artifact',
         content: artifact.content || '',
         conversationId: activeConversationId || undefined,
+        projectId: (workspaceContext as any)?.projectId || undefined,
+        trustBundleId:
+          (artifactMeta?.trustBundle as any)?.id ||
+          (artifactMeta?.trustBundle as any)?.traceId ||
+          undefined,
+        aiRunId:
+          (artifactMeta?.proposal as any)?.runId ||
+          (artifactMeta?.proposal as any)?.metadata?.runId ||
+          undefined,
+        citations: Array.isArray(artifactMeta?.citations) ? artifactMeta?.citations : [],
+        sourceRefs: [
+          {
+            sourceClass: 'chat',
+            conversationId: activeConversationId || null,
+            streamSessionId: artifactMeta?.sessionId || null,
+          },
+          ...((Array.isArray((artifactMeta?.sourceLedger as any)?.sources)
+            ? (artifactMeta?.sourceLedger as any).sources
+            : []) as any[]),
+        ],
         metadata: {
           source: 'unified_chat',
           localArtifactId: artifact.id,
           localArtifactType: (artifact as any).type,
+          policyDecision: artifactMeta?.policyDecision || null,
         },
       }).catch((err: any) => {
         console.warn('[UnifiedChatPanel] Wave 5 artifact persistence failed', err?.message || err);
+        addChatMessage({
+          id: `wave5-artifact-persist-failed-${Date.now()}`,
+          role: 'ai',
+          content:
+            'Artifact was kept as a local draft, but saving it to the governed Wave 5 runtime failed. Try again from /ai/artifacts before treating it as committed workspace output.',
+          timestamp: new Date(),
+          type: 'text',
+        } as any);
       });
     },
   });
@@ -1240,6 +1277,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             researchVisibility,
             policyDecision,
             policyNotices,
+            memoryCandidate,
           },
         },
       ];
@@ -1257,7 +1295,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     researchVisibility,
     policyDecision,
     policyNotices,
+    memoryCandidate,
   ]);
+
+  useEffect(() => {
+    if (!memoryCandidate) return;
+    if (memoryCandidate.blocked) {
+      toast('Private mode blocked this memory request. Nothing was saved.');
+      return;
+    }
+    if (memoryCandidate.candidate?.candidateId) {
+      toast('Memory candidate created. Review it in AI Context before it is retained.');
+    }
+  }, [memoryCandidate]);
 
   const latestUserGoalHint = useMemo(() => {
     const latestUserMessage = [...displayMessages]
