@@ -53,7 +53,7 @@ describe('Wave 3 AI actions governance contract', () => {
     expect(api).toContain('getAIRunLedger');
     expect(api).toContain("scope?: 'mine' | 'org'");
     expect(api).toContain('getAIActionAuditTrail');
-    expect(appRoutes).toContain('path="/ai/action-center"');
+    expect(appRoutes).toContain('path={ROUTES.AI_OS.ACTION_CENTER}');
     expect(actionCenter).toContain('Action Center');
     expect(actionCenter).toContain('Audit Viewer');
     expect(actionCenter).toContain('Run Ledger');

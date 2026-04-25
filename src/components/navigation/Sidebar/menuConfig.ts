@@ -57,7 +57,7 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       id: 'AI_OS',
       label: t('sidebar.aiOs', 'AI OS'),
       icon: React.createElement(Brain, { size: 20 }),
-      viewId: AppView.AI_OS_ACTION_CENTER,
+      viewId: AppView.AI_OS_HOME,
       badge: 'new',
       subItems: [
         {

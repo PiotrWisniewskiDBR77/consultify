@@ -601,7 +601,7 @@ describe('Wave 7 connector runtime', () => {
     expect(panel).toContain('Write (requires AIRun)');
     expect(panel).toContain('Real Source Binding');
     expect(panel).toContain('OAuth Session Lifecycle');
-    expect(appRoutes).toContain('/ai/connectors');
+    expect(appRoutes).toContain('path={ROUTES.AI_OS.CONNECTORS}');
     expect(tools).toContain('list_enterprise_connectors');
     expect(tools).toContain('search_enterprise_connector');
     expect(migration).toContain('wave7_connector_runs');

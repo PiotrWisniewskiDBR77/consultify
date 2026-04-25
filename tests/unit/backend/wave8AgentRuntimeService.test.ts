@@ -441,7 +441,7 @@ describe('Wave 8 agent runtime', () => {
     expect(panel).toContain('Wave 8 Agent Catalog');
     expect(panel).toContain('Swarm mode');
     expect(panel).toContain('Notifications');
-    expect(appRoutes).toContain('/ai/agents');
+    expect(appRoutes).toContain('path={ROUTES.AI_OS.AGENTS}');
     expect(migration).toContain('wave8_agent_runs');
     expect(migration).toContain('wave8_agent_schedules');
     expect(migration).toContain('wave8_agent_notifications');

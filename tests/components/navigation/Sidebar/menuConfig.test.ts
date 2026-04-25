@@ -35,7 +35,7 @@ describe('Sidebar menuConfig (L2)', () => {
     const aiOs = menu.find((item) => item.id === 'AI_OS');
 
     expect(aiOs?.label).toBe('AI OS');
-    expect(aiOs?.viewId).toBe(AppView.AI_OS_ACTION_CENTER);
+    expect(aiOs?.viewId).toBe(AppView.AI_OS_HOME);
     expect(aiOs?.subItems?.map((item) => item.id)).toEqual([
       'AI_OS_ACTIONS',
       'AI_OS_MEMORY',

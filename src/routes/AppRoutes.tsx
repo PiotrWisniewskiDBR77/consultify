@@ -170,6 +170,9 @@ const SuperAdminView = React.lazy(() =>
 const UnifiedChatPanel = React.lazy(() =>
   import('@/components/AIChat/UnifiedChatPanel').then((m) => ({ default: m.UnifiedChatPanel }))
 );
+const AIOSHub = React.lazy(() =>
+  import('@/components/AIChat/AIOSHub').then((m) => ({ default: m.AIOSHub }))
+);
 const ActionCenter = React.lazy(() =>
   import('@/components/AIChat/ActionCenter').then((m) => ({ default: m.ActionCenter }))
 );
@@ -1114,9 +1117,36 @@ export const AppRoutes: React.FC = () => {
           }
         />
 
+        {/* AI OS - Manual acceptance hub for AI Actions, Memory, Connectors, Agents and Outcomes */}
+        <Route
+          path={ROUTES.AI_OS.ROOT}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI OS']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <AIOSHub />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route path={ROUTES.AI_OS.ALIAS} element={<Navigate to={ROUTES.AI_OS.ROOT} replace />} />
+        <Route
+          path={ROUTES.AI_OS.ACTIONS_ALIAS}
+          element={<Navigate to={ROUTES.AI_OS.ACTION_CENTER} replace />}
+        />
+        <Route
+          path={ROUTES.AI_OS.MEMORY_ALIAS}
+          element={<Navigate to={ROUTES.AI_OS.CONTEXT} replace />}
+        />
+        <Route
+          path={ROUTES.AI_OS.AIOPS_ALIAS}
+          element={<Navigate to={ROUTES.AI_OS.OUTCOMES} replace />}
+        />
+
         {/* Wave 3 - AI Action Center / AIRun ledger */}
         <Route
-          path="/ai/action-center"
+          path={ROUTES.AI_OS.ACTION_CENTER}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Action Center']}>
               <RouteErrorBoundary>
@@ -1130,7 +1160,7 @@ export const AppRoutes: React.FC = () => {
 
         {/* Wave 4 - Research Sessions Dock / Evidence reports */}
         <Route
-          path="/ai/research-sessions"
+          path={ROUTES.AI_OS.RESEARCH}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Research Sessions']}>
               <RouteErrorBoundary>
@@ -1144,7 +1174,7 @@ export const AppRoutes: React.FC = () => {
 
         {/* Wave 5 - Artifact Runtime / Document Work */}
         <Route
-          path="/ai/artifacts"
+          path={ROUTES.AI_OS.ARTIFACTS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Artifacts']}>
               <RouteErrorBoundary>
@@ -1158,7 +1188,7 @@ export const AppRoutes: React.FC = () => {
 
         {/* Wave 6 - Org, Project, User Context and Controlled Learning */}
         <Route
-          path="/ai/context"
+          path={ROUTES.AI_OS.CONTEXT}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Context']}>
               <RouteErrorBoundary>
@@ -1172,7 +1202,7 @@ export const AppRoutes: React.FC = () => {
 
         {/* Wave 7 - Enterprise Connectors, Tooling and AI App Management */}
         <Route
-          path="/ai/connectors"
+          path={ROUTES.AI_OS.CONNECTORS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Connectors']}>
               <RouteErrorBoundary>
@@ -1186,7 +1216,7 @@ export const AppRoutes: React.FC = () => {
 
         {/* Wave 8 - Agent Catalog, Roles and Scheduled Work */}
         <Route
-          path="/ai/agents"
+          path={ROUTES.AI_OS.AGENTS}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Agents']}>
               <RouteErrorBoundary>
@@ -1200,7 +1230,7 @@ export const AppRoutes: React.FC = () => {
 
         {/* Wave 9 - Outcome, KPI, ROI, AI Ops and Final Acceptance */}
         <Route
-          path="/ai/outcomes"
+          path={ROUTES.AI_OS.OUTCOMES}
           element={
             <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Outcomes']}>
               <RouteErrorBoundary>

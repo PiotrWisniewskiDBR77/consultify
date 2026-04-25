@@ -782,7 +782,7 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
     expect(panel).toContain('Wave 9 Outcome & AI Ops');
     expect(panel).toContain('Record golden eval PASS');
     expect(panel).toContain('Simulate provider unavailable');
-    expect(appRoutes).toContain('/ai/outcomes');
+    expect(appRoutes).toContain('path={ROUTES.AI_OS.OUTCOMES}');
     expect(migration).toContain('wave9_acceptance_decisions');
     expect(migration).toContain('wave9_acceptance_runs');
     expect(migration).toContain('wave9_evidence_registry');

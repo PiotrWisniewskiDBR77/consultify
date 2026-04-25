@@ -28,16 +28,22 @@ describe('routeConfig helpers', () => {
   });
 
   it('maps AI OS manual-test modules to mounted runtime panels', () => {
+    expect(getRouteFromAppView(AppView.AI_OS_HOME)).toBe('/ai');
     expect(getRouteFromAppView(AppView.AI_OS_ACTION_CENTER)).toBe('/ai/action-center');
     expect(getRouteFromAppView(AppView.AI_OS_CONTEXT_MEMORY)).toBe('/ai/context');
     expect(getRouteFromAppView(AppView.AI_OS_CONNECTORS)).toBe('/ai/connectors');
     expect(getRouteFromAppView(AppView.AI_OS_AGENTS)).toBe('/ai/agents');
     expect(getRouteFromAppView(AppView.AI_OS_OUTCOMES)).toBe('/ai/outcomes');
 
+    expect(getAppViewFromPath('/ai')).toBe(AppView.AI_OS_HOME);
+    expect(getAppViewFromPath('/ai-os')).toBe(AppView.AI_OS_HOME);
+    expect(getAppViewFromPath('/ai/actions')).toBe(AppView.AI_OS_ACTION_CENTER);
     expect(getAppViewFromPath('/ai/action-center')).toBe(AppView.AI_OS_ACTION_CENTER);
+    expect(getAppViewFromPath('/ai/memory')).toBe(AppView.AI_OS_CONTEXT_MEMORY);
     expect(getAppViewFromPath('/ai/context')).toBe(AppView.AI_OS_CONTEXT_MEMORY);
     expect(getAppViewFromPath('/ai/connectors')).toBe(AppView.AI_OS_CONNECTORS);
     expect(getAppViewFromPath('/ai/agents')).toBe(AppView.AI_OS_AGENTS);
+    expect(getAppViewFromPath('/ai/aiops')).toBe(AppView.AI_OS_OUTCOMES);
     expect(getAppViewFromPath('/ai/outcomes')).toBe(AppView.AI_OS_OUTCOMES);
   });
 

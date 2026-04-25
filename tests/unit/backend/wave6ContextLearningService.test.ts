@@ -520,7 +520,7 @@ describe('Wave 6 context and controlled learning runtime', () => {
     expect(panel).toContain('Memory Stewardship Queue');
     expect(streamHook).toContain("evt.type === 'memory_candidate'");
     expect(chat).toContain('Memory candidate created');
-    expect(appRoutes).toContain('/ai/context');
+    expect(appRoutes).toContain('path={ROUTES.AI_OS.CONTEXT}');
     expect(aiRoutes).toContain('captureWave6ContextSnapshot');
     expect(aiRoutes).toContain('recordWave6ContextLedgerEntry');
     expect(aiRoutes).toContain('memory_candidate');

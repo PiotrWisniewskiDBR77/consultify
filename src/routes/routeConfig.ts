@@ -211,13 +211,18 @@ export const ROUTES = {
   // AI Actions
   AI_ACTIONS: '/ai-actions',
   AI_OS: {
+    ROOT: '/ai',
+    ALIAS: '/ai-os',
     ACTION_CENTER: '/ai/action-center',
+    ACTIONS_ALIAS: '/ai/actions',
     RESEARCH: '/ai/research-sessions',
     ARTIFACTS: '/ai/artifacts',
     CONTEXT: '/ai/context',
+    MEMORY_ALIAS: '/ai/memory',
     CONNECTORS: '/ai/connectors',
     AGENTS: '/ai/agents',
     OUTCOMES: '/ai/outcomes',
+    AIOPS_ALIAS: '/ai/aiops',
   },
 
   // Vector
@@ -485,6 +490,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // AI Actions
   [AppView.AI_ACTION_PROPOSALS]: ROUTES.AI_ACTIONS,
+  [AppView.AI_OS_HOME]: ROUTES.AI_OS.ROOT,
   [AppView.AI_OS_ACTION_CENTER]: ROUTES.AI_OS.ACTION_CENTER,
   [AppView.AI_OS_RESEARCH]: ROUTES.AI_OS.RESEARCH,
   [AppView.AI_OS_ARTIFACTS]: ROUTES.AI_OS.ARTIFACTS,
@@ -580,6 +586,11 @@ export function getAppViewFromRoute(path: string): AppView | null {
 export function getAppViewFromPath(path: string): AppView | null {
   const normalized = path.replace(/\/+$/, '') || '/';
 
+  if (normalized === ROUTES.AI_OS.ROOT || normalized === ROUTES.AI_OS.ALIAS)
+    return AppView.AI_OS_HOME;
+  if (normalized === ROUTES.AI_OS.ACTIONS_ALIAS) return AppView.AI_OS_ACTION_CENTER;
+  if (normalized === ROUTES.AI_OS.MEMORY_ALIAS) return AppView.AI_OS_CONTEXT_MEMORY;
+  if (normalized === ROUTES.AI_OS.AIOPS_ALIAS) return AppView.AI_OS_OUTCOMES;
   if (normalized === ROUTES.AI_OS.ACTION_CENTER) return AppView.AI_OS_ACTION_CENTER;
   if (normalized === ROUTES.AI_OS.RESEARCH) return AppView.AI_OS_RESEARCH;
   if (normalized === ROUTES.AI_OS.ARTIFACTS) return AppView.AI_OS_ARTIFACTS;

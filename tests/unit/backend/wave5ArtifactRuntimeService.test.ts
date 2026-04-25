@@ -409,7 +409,7 @@ describe('Wave 5 artifact runtime', () => {
     expect(api).toContain('approveWave5ArtifactMutation');
     expect(api).toContain('commitWave5ArtifactMutation');
     expect(api).toContain('generateWave5StructuredArtifact');
-    expect(appRoutes).toContain('/ai/artifacts');
+    expect(appRoutes).toContain('path={ROUTES.AI_OS.ARTIFACTS}');
     expect(panel).toContain('Create mutation proposal');
     expect(panel).toContain('commitMutation');
     expect(panel).toContain('Missing fields return questions');
