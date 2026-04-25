@@ -467,11 +467,16 @@ export class ApiGateway {
           .then(({ recoverInterruptedResearchSessions }) => recoverInterruptedResearchSessions())
           .then((result) => {
             if (result.recovered > 0) {
-              logger.info(`[ApiGateway] Recovered ${result.recovered} interrupted research session(s)`);
+              logger.info(
+                `[ApiGateway] Recovered ${result.recovered} interrupted research session(s)`
+              );
             }
           })
           .catch((err) =>
-            logger.warn('[ApiGateway] Research session recovery skipped', err?.message || String(err))
+            logger.warn(
+              '[ApiGateway] Research session recovery skipped',
+              err?.message || String(err)
+            )
           );
       });
       app.use('/api/backups', backupRoutes);
