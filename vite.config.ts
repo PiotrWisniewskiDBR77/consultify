@@ -133,7 +133,10 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      entries: ['index.html', 'src/**/*.{ts,tsx}'],
+      // Keep dependency pre-bundling focused on real app entrypoints.
+      // A broad glob like `src/**/*.{ts,tsx}` can accidentally pull in vitest files
+      // (which may import server-only code) and break the dev server.
+      entries: ['index.html', 'src/index.tsx', 'src/App.tsx', 'src/routes/AppRoutes.tsx'],
       include: [
         'react',
         'react-dom',
