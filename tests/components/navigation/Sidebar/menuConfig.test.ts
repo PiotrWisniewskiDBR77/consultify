@@ -30,6 +30,28 @@ describe('Sidebar menuConfig (L2)', () => {
     expect(affiliate?.viewId).toBe(AppView.AFFILIATE_DASHBOARD);
   });
 
+  it('exposes AI OS manual-test entrypoints in the main sidebar', () => {
+    const menu = getMenuStructure(t);
+    const aiOs = menu.find((item) => item.id === 'AI_OS');
+
+    expect(aiOs?.label).toBe('AI OS');
+    expect(aiOs?.viewId).toBe(AppView.AI_OS_ACTION_CENTER);
+    expect(aiOs?.subItems?.map((item) => item.id)).toEqual([
+      'AI_OS_ACTIONS',
+      'AI_OS_MEMORY',
+      'AI_OS_CONNECTORS',
+      'AI_OS_AGENTS',
+      'AI_OS_OUTCOMES',
+    ]);
+    expect(aiOs?.subItems?.map((item) => item.viewId)).toEqual([
+      AppView.AI_OS_ACTION_CENTER,
+      AppView.AI_OS_CONTEXT_MEMORY,
+      AppView.AI_OS_CONNECTORS,
+      AppView.AI_OS_AGENTS,
+      AppView.AI_OS_OUTCOMES,
+    ]);
+  });
+
   it('builds other top-level items', () => {
     const admin = getAdminMenuItem(t);
     expect(admin.id).toBe('ADMIN');

@@ -210,6 +210,15 @@ export const ROUTES = {
 
   // AI Actions
   AI_ACTIONS: '/ai-actions',
+  AI_OS: {
+    ACTION_CENTER: '/ai/action-center',
+    RESEARCH: '/ai/research-sessions',
+    ARTIFACTS: '/ai/artifacts',
+    CONTEXT: '/ai/context',
+    CONNECTORS: '/ai/connectors',
+    AGENTS: '/ai/agents',
+    OUTCOMES: '/ai/outcomes',
+  },
 
   // Vector
   VECTOR: '/vector',
@@ -476,6 +485,13 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
 
   // AI Actions
   [AppView.AI_ACTION_PROPOSALS]: ROUTES.AI_ACTIONS,
+  [AppView.AI_OS_ACTION_CENTER]: ROUTES.AI_OS.ACTION_CENTER,
+  [AppView.AI_OS_RESEARCH]: ROUTES.AI_OS.RESEARCH,
+  [AppView.AI_OS_ARTIFACTS]: ROUTES.AI_OS.ARTIFACTS,
+  [AppView.AI_OS_CONTEXT_MEMORY]: ROUTES.AI_OS.CONTEXT,
+  [AppView.AI_OS_CONNECTORS]: ROUTES.AI_OS.CONNECTORS,
+  [AppView.AI_OS_AGENTS]: ROUTES.AI_OS.AGENTS,
+  [AppView.AI_OS_OUTCOMES]: ROUTES.AI_OS.OUTCOMES,
 
   // Legacy/Fallback
   [AppView.FULL_TRANSFORMATION_CHAT]: ROUTES.AI_CHAT,
@@ -563,6 +579,14 @@ export function getAppViewFromRoute(path: string): AppView | null {
  */
 export function getAppViewFromPath(path: string): AppView | null {
   const normalized = path.replace(/\/+$/, '') || '/';
+
+  if (normalized === ROUTES.AI_OS.ACTION_CENTER) return AppView.AI_OS_ACTION_CENTER;
+  if (normalized === ROUTES.AI_OS.RESEARCH) return AppView.AI_OS_RESEARCH;
+  if (normalized === ROUTES.AI_OS.ARTIFACTS) return AppView.AI_OS_ARTIFACTS;
+  if (normalized === ROUTES.AI_OS.CONTEXT) return AppView.AI_OS_CONTEXT_MEMORY;
+  if (normalized === ROUTES.AI_OS.CONNECTORS) return AppView.AI_OS_CONNECTORS;
+  if (normalized === ROUTES.AI_OS.AGENTS) return AppView.AI_OS_AGENTS;
+  if (normalized === ROUTES.AI_OS.OUTCOMES) return AppView.AI_OS_OUTCOMES;
 
   if (normalized === ROUTES.SETTINGS.PROFILE) return AppView.SETTINGS_PROFILE_MODULE;
   if (
