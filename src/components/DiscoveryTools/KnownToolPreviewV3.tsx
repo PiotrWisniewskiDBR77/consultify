@@ -233,6 +233,28 @@ export const KnownToolPreviewV3Body: React.FC<{
           };
     }
 
+    if (tool.toolType === 'portfolio-priority') {
+      return isPolish
+        ? {
+            goal:
+              'Zamienia kontekst organizacji i wywiadu w decyzje, które elementy portfolio finansować, testować, utrzymać lub wygasić.',
+            outcome:
+              'Macierz BCG, trade-offy alokacji zasobów, rekomendowane ruchy i kandydaci na inicjatywy.',
+            team: 'Zarząd, strategy lead, product lead, CFO lub właściciel portfolio',
+            aiRole: 'Analityk portfolio, generator kart do akceptacji i konsultant alokacji zasobów',
+            duration: '60-90 min',
+          }
+        : {
+            goal:
+              'Turns organization and interview context into decisions on which portfolio items to fund, test, maintain, or stop.',
+            outcome:
+              'BCG matrix, resource allocation trade-offs, recommended moves, and initiative candidates.',
+            team: 'Leadership, strategy lead, product lead, CFO, or portfolio owner',
+            aiRole: 'Portfolio analyst, card proposal generator, and resource allocation consultant',
+            duration: '60-90 min',
+          };
+    }
+
     const desc = String(full?.description || tool.description || '').trim();
     const fallbackGoal = desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
     const fallbackOutcome =

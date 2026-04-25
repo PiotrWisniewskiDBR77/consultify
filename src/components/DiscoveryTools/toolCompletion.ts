@@ -356,8 +356,34 @@ export function computeToolReviewGaps(
 
   if (toolType === 'portfolio-priority') {
     const portfolio = data as PortfolioPriorityData;
-    if (!portfolio.initiatives?.length)
-      gaps.push(isPolish ? 'Brak inicjatyw w portfolio' : 'Missing portfolio initiatives');
+    const acceptedItems = (portfolio.initiatives || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedTradeOffs = (portfolio.tradeOffs || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedMoves = (portfolio.recommendedMoves || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedOutputs = (portfolio.outputCandidates || []).filter(
+      (item) => item.proposalStatus !== 'rejected'
+    ).length;
+    const acceptedSummary =
+      !!portfolio.summary?.executiveSummary && portfolio.summary?.proposalStatus !== 'rejected';
+    if (!portfolio.context?.goal || !portfolio.context?.scope || !portfolio.context?.successSignal)
+      gaps.push(isPolish ? 'Brak portfolio mission' : 'Missing portfolio mission');
+    if (!(portfolio.signals?.length || 0))
+      gaps.push(isPolish ? 'Brak sygnałów portfolio' : 'Missing portfolio signals');
+    if (!acceptedItems)
+      gaps.push(isPolish ? 'Brak zaakceptowanych elementów portfolio' : 'Missing accepted portfolio items');
+    if (!acceptedTradeOffs)
+      gaps.push(isPolish ? 'Brak trade-offów portfolio' : 'Missing portfolio trade-offs');
+    if (!acceptedMoves)
+      gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
+    if (!acceptedSummary)
+      gaps.push(isPolish ? 'Brak final source summary' : 'Missing final source summary');
+    if (!acceptedOutputs)
+      gaps.push(isPolish ? 'Brak kandydatów outputów' : 'Missing output candidates');
     return gaps;
   }
 
@@ -557,13 +583,33 @@ export function computeToolCompletionItems(
   if (toolType === 'portfolio-priority') {
     const portfolio = data as PortfolioPriorityData;
     items.push({
-      label: isPolish ? 'Inicjatywy dodane' : 'Initiatives added',
+      label: isPolish ? 'Portfolio mission' : 'Portfolio mission',
+      done: !!portfolio?.context?.goal && !!portfolio?.context?.scope && !!portfolio?.context?.successSignal,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Sygnały portfolio' : 'Portfolio signals',
+      done: (portfolio?.signals?.length || 0) > 0,
+      anchorId: 'tool-content',
+    });
+    items.push({
+      label: isPolish ? 'Elementy portfolio' : 'Portfolio items',
       done: (portfolio?.initiatives?.length || 0) > 0,
       anchorId: 'tool-content',
     });
     items.push({
-      label: isPolish ? 'Kategorie przypisane' : 'Categories assigned',
-      done: portfolio?.initiatives?.some((i) => i.category) || false,
+      label: isPolish ? 'Trade-offy alokacji' : 'Allocation trade-offs',
+      done: (portfolio?.tradeOffs?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Rekomendowane ruchy' : 'Recommended moves',
+      done: (portfolio?.recommendedMoves?.length || 0) > 0,
+      anchorId: 'analysis',
+    });
+    items.push({
+      label: isPolish ? 'Final source summary gotowe' : 'Final source summary ready',
+      done: !!portfolio?.summary?.executiveSummary,
       anchorId: 'tool-content',
     });
     return items;

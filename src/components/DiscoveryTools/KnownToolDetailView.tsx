@@ -18,6 +18,7 @@ import {
 import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
 import { GrowthPathsLibraryGraphic } from './GrowthPathsLibraryGraphic';
 import { MarketForcesLibraryGraphic } from './MarketForcesLibraryGraphic';
+import { PortfolioPriorityLibraryGraphic } from './PortfolioPriorityLibraryGraphic';
 
 type KnownTool = Awaited<ReturnType<typeof Api.getKnownTool>>['tool'];
 
@@ -1433,6 +1434,96 @@ export function KnownToolDetailView(props: {
       </div>
     );
 
+    const portfolioGoalSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Po co używać' : 'Why use it'}
+          </div>
+          <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+            {isPolish
+              ? 'Portfolio Priority pomaga wybrać, które produkty, inicjatywy albo bety finansować, utrzymywać, testować, harvestować lub zatrzymać. AI proponuje pierwszy szkic na podstawie kontekstu i wywiadu, ale decyzje przechodzą przez akceptację użytkownika.'
+              : 'Portfolio Priority helps decide which products, initiatives, or bets to fund, maintain, test, harvest, or stop. AI proposes the first draft from context and interview evidence, but decisions flow through user approval.'}
+          </div>
+        </div>
+        <PortfolioPriorityLibraryGraphic isPolish={isPolish} variant="process" />
+      </div>
+    );
+
+    const portfolioProcessSection = (
+      <div className="grid gap-4 md:grid-cols-2">
+        {[
+          [
+            'Mission',
+            isPolish
+              ? 'Zakres portfolio, ograniczenia i sygnał sukcesu.'
+              : 'Portfolio scope, constraints, and success signal.',
+          ],
+          [
+            'Evidence',
+            isPolish
+              ? 'Sygnały z wywiadu, rynku, finansów i zasobów.'
+              : 'Interview, market, financial, and resource signals.',
+          ],
+          [
+            'Items',
+            isPolish
+              ? 'Karty BCG z oceną growth/share/investment.'
+              : 'BCG cards scored on growth/share/investment.',
+          ],
+          [
+            'Outputs',
+            isPolish
+              ? 'Trade-offy, ruchy, inicjatywy i final summary.'
+              : 'Trade-offs, moves, initiatives, and final summary.',
+          ],
+        ].map(([title, text]) => (
+          <div
+            key={title}
+            className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30"
+          >
+            <div className="font-semibold text-slate-900 dark:text-white">{title}</div>
+            <div className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {text}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+
+    const portfolioOutcomesSection = (
+      <div className="space-y-3">
+        {[
+          isPolish ? 'Zaakceptowana macierz portfolio BCG' : 'Approved BCG portfolio matrix',
+          isPolish ? 'Jawne trade-offy alokacji zasobów' : 'Explicit resource allocation trade-offs',
+          isPolish
+            ? 'Rekomendowane ruchy: invest, maintain, test, harvest, stop'
+            : 'Recommended moves: invest, maintain, test, harvest, stop',
+          isPolish
+            ? 'Kandydaci outputów i inicjatyw downstream'
+            : 'Downstream output and initiative candidates',
+        ].map((text) => (
+          <div
+            key={text}
+            className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 text-sm text-slate-700 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300"
+          >
+            {text}
+          </div>
+        ))}
+      </div>
+    );
+
+    const portfolioExampleSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 text-sm leading-relaxed text-slate-600 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-300">
+          {isPolish
+            ? 'Firma ma kilka produktów i inicjatyw, ale budżet pozwala sfinansować tylko część z nich. Portfolio Priority porządkuje karty BCG, pokazuje koszt alternatywny i buduje rekomendowany portfel działań.'
+            : 'A company has several products and initiatives, but budget only supports a subset. Portfolio Priority organizes the BCG cards, exposes opportunity cost, and builds the recommended action portfolio.'}
+        </div>
+        <PortfolioPriorityLibraryGraphic isPolish={isPolish} variant="example" />
+      </div>
+    );
+
     if (tool?.toolType === 'dynamic-swot') {
       return [
         {
@@ -1516,6 +1607,35 @@ export function KnownToolDetailView(props: {
           icon: FileText,
           label: { en: 'Example', pl: 'Przykład' },
           component: growthExampleSection,
+        },
+      ];
+    }
+
+    if (tool?.toolType === 'portfolio-priority' || toolType === 'portfolio-priority') {
+      return [
+        {
+          id: 'goal',
+          icon: Target,
+          label: { en: 'Goal', pl: 'Cel' },
+          component: portfolioGoalSection,
+        },
+        {
+          id: 'process',
+          icon: CheckCircle2,
+          label: { en: 'Process', pl: 'Proces' },
+          component: portfolioProcessSection,
+        },
+        {
+          id: 'outcomes',
+          icon: Lightbulb,
+          label: { en: 'Outcomes', pl: 'Rezultat' },
+          component: portfolioOutcomesSection,
+        },
+        {
+          id: 'example',
+          icon: FileText,
+          label: { en: 'Example', pl: 'Przykład' },
+          component: portfolioExampleSection,
         },
       ];
     }

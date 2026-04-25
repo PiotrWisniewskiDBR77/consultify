@@ -197,6 +197,7 @@ const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
   'dynamic-swot',
   'market-forces',
   'growth-paths',
+  'portfolio-priority',
 ]);
 
 const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [

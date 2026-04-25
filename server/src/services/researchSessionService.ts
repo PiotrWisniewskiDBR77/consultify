@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { conductDeepResearch, type DeepResearchOutput } from './ai/deepResearchService.js';
+import { createWave5Artifact } from './wave5ArtifactRuntimeService.js';
 
 export type ResearchSessionStatus =
   | 'planned'
@@ -883,6 +884,33 @@ export async function createFinalResearchArtifact(params: {
       params.actorUserId,
     ]
   );
+  await createWave5Artifact({
+    organizationId: params.session.organizationId,
+    userId: params.actorUserId,
+    artifactType: 'research_report',
+    title,
+    content,
+    researchSessionId: params.session.sessionId,
+    citations: params.output.citations || [],
+    sourceRefs: params.evidenceGraph.map((node) => ({
+      sourceClass: node.sourceClass,
+      sourceId: node.sourceId,
+      sourceTitle: node.sourceTitle,
+      sourceUrl: node.sourceUrl,
+      evidenceNodeId: node.nodeId,
+    })),
+    metadata: {
+      mirroredFrom: 'research_report_artifacts',
+      researchArtifactId: artifactId,
+    },
+    externalArtifactId: artifactId,
+  }).catch((err: any) => {
+    logger.warn('[ResearchSession] Failed to mirror final report into Wave 5 runtime', {
+      sessionId: params.session.sessionId,
+      artifactId,
+      error: err?.message || String(err),
+    });
+  });
   return {
     artifactId,
     artifactType: 'research_report',

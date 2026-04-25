@@ -98,6 +98,26 @@ interface ChatSaveIntent {
   cleanPrompt: string;
 }
 
+function mapChatArtifactToWave5Type(artifact: Artifact): string {
+  switch ((artifact as any).type) {
+    case 'table':
+      return 'spreadsheet';
+    case 'diagram':
+      return 'diagram';
+    case 'pmo-document':
+    case 'markdown':
+    case 'html':
+      return 'report';
+    case 'code':
+      return 'note';
+    case 'comparison-matrix':
+    case 'decision-timeline':
+      return 'decision';
+    default:
+      return 'note';
+  }
+}
+
 const firstMatchIndex = (input: string, patterns: RegExp[]): number => {
   const s = String(input || '');
   let best = -1;
@@ -1112,7 +1132,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setThinkingSteps(steps);
     },
     onArtifactDetected: (artifact) => {
-      addArtifact(artifact);
+      const governedDraft = {
+        ...artifact,
+        metadata: {
+          ...((artifact as any).metadata || {}),
+          wave5Governance: {
+            localDraftOnly: true,
+            requiresMutationProposal: true,
+            source: 'chat_artifact_detection',
+          },
+        },
+      } as Artifact;
+      addArtifact(governedDraft);
+      void Api.createWave5Artifact({
+        artifactType: mapChatArtifactToWave5Type(artifact),
+        title: artifact.title || 'Chat artifact',
+        content: artifact.content || '',
+        conversationId: activeConversationId || undefined,
+        metadata: {
+          source: 'unified_chat',
+          localArtifactId: artifact.id,
+          localArtifactType: (artifact as any).type,
+        },
+      }).catch((err: any) => {
+        console.warn('[UnifiedChatPanel] Wave 5 artifact persistence failed', err?.message || err);
+      });
     },
   });
 

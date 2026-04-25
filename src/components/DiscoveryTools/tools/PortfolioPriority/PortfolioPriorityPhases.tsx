@@ -1,0 +1,678 @@
+import { Check, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import React, { useState } from 'react';
+
+import {
+  PortfolioItem,
+  PortfolioPriorityData,
+  ProposalCardType,
+  ToolSession,
+  useToolStore,
+} from '@/store/useToolStore';
+
+type PhaseProps = {
+  session: ToolSession;
+  isPolish: boolean;
+  onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
+};
+
+const CATEGORIES: PortfolioItem['category'][] = ['star', 'question-mark', 'cash-cow', 'dog'];
+
+const CATEGORY_META: Record<PortfolioItem['category'], { en: string; pl: string; hint: string }> = {
+  star: { en: 'Stars', pl: 'Gwiazdy', hint: 'High growth, high relative share' },
+  'question-mark': {
+    en: 'Question Marks',
+    pl: 'Znaki zapytania',
+    hint: 'High growth, low relative share',
+  },
+  'cash-cow': { en: 'Cash Cows', pl: 'Dojne krowy', hint: 'Low growth, high relative share' },
+  dog: { en: 'Dogs', pl: 'Psy', hint: 'Low growth, low relative share' },
+};
+
+const getCategory = (growth: number, share: number): PortfolioItem['category'] => {
+  if (growth >= 4 && share >= 4) return 'star';
+  if (growth >= 4 && share < 4) return 'question-mark';
+  if (growth < 4 && share >= 4) return 'cash-cow';
+  return 'dog';
+};
+
+const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
+  if (proposalStatus === 'ai-proposed') return isPolish ? 'Propozycja AI' : 'AI proposal';
+  if (proposalStatus === 'rejected') return isPolish ? 'Odrzucone' : 'Rejected';
+  if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
+  return isPolish ? 'Zaakceptowane' : 'Accepted';
+};
+
+function CardActions({
+  cardType,
+  cardId,
+  isPolish,
+  onAcceptCard,
+  onRejectCard,
+  onRethinkCard,
+}: {
+  cardType: ProposalCardType;
+  cardId: string;
+  isPolish: boolean;
+  onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
+  onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
+}) {
+  const [isCommenting, setIsCommenting] = useState(false);
+  const [comment, setComment] = useState('');
+
+  const submitRethink = () => {
+    onRethinkCard?.(cardType, cardId, comment.trim() || undefined);
+    setComment('');
+    setIsCommenting(false);
+  };
+
+  return (
+    <div className="flex flex-col items-end gap-2">
+      <div className="flex gap-1">
+        <button
+          type="button"
+          onClick={() => onAcceptCard?.(cardType, cardId)}
+          className="rounded-lg bg-emerald-50 p-1.5 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
+          aria-label={isPolish ? 'Akceptuj' : 'Accept'}
+        >
+          <Check className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setIsCommenting((value) => !value)}
+          className="rounded-lg bg-violet-50 p-1.5 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/30 dark:text-violet-300"
+          aria-label={isPolish ? 'Przemyśl ponownie' : 'Rethink'}
+        >
+          <RefreshCw className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onRejectCard?.(cardType, cardId)}
+          className="rounded-lg bg-rose-50 p-1.5 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-300"
+          aria-label={isPolish ? 'Odrzuć' : 'Reject'}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      {isCommenting && (
+        <div className="w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-navy-700 dark:bg-navy-900">
+          <textarea
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            rows={2}
+            placeholder={isPolish ? 'Feedback dla AI...' : 'Feedback for AI...'}
+            className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-navy-700 dark:bg-navy-950"
+          />
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCommenting(false)}
+              className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+            >
+              {isPolish ? 'Anuluj' : 'Cancel'}
+            </button>
+            <button
+              type="button"
+              onClick={submitRethink}
+              className="rounded-lg bg-violet-600 px-2 py-1 text-xs font-medium text-white hover:bg-violet-700"
+            >
+              {isPolish ? 'Przemyśl' : 'Rethink'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function PortfolioInputPhase({
+  session,
+  isPolish,
+  onAcceptCard,
+  onRejectCard,
+  onRethinkCard,
+}: PhaseProps) {
+  const { updateInputData } = useToolStore();
+  const data = session.inputData as PortfolioPriorityData;
+  const [draft, setDraft] = useState('');
+
+  const addSignal = () => {
+    if (!draft.trim()) return;
+    updateInputData({
+      signals: [
+        ...(data.signals || []),
+        {
+          id: `portfolio-signal-${Date.now()}`,
+          type: 'interview',
+          content: draft.trim(),
+          sourceLabel: isPolish ? 'Wpis użytkownika' : 'User input',
+          confidence: 4,
+          tags: [],
+          evidenceType: 'observation',
+          state: 'accepted',
+          provenance: isPolish ? 'Wpis ręczny' : 'Manual entry',
+          proposalStatus: 'accepted',
+        },
+      ],
+    } as Partial<PortfolioPriorityData>);
+    setDraft('');
+  };
+
+  const removeSignal = (id: string) => {
+    updateInputData({
+      signals: (data.signals || []).filter((signal) => signal.id !== id),
+    } as Partial<PortfolioPriorityData>);
+  };
+
+  return (
+    <div className="space-y-5 p-5">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {isPolish ? 'Sygnały portfolio i evidence' : 'Portfolio Signals & Evidence'}
+        </h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Zbierz dane z wywiadu, finansów, rynku i ograniczeń zasobowych zanim AI zaproponuje portfel.'
+            : 'Capture interview, financial, market, and resource signals before AI proposes the portfolio.'}
+        </p>
+      </div>
+
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              addSignal();
+            }
+          }}
+          placeholder={isPolish ? 'Dodaj sygnał portfolio...' : 'Add a portfolio signal...'}
+          className="h-10 flex-1 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
+        />
+        <button
+          type="button"
+          onClick={addSignal}
+          disabled={!draft.trim()}
+          className="inline-flex h-10 items-center rounded-lg bg-slate-900 px-3 text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {(data.signals || []).map((signal) => (
+          <div
+            key={signal.id}
+            className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
+          >
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-navy-800 dark:text-slate-300">
+                {proposalBadge(signal.proposalStatus, isPolish)}
+              </span>
+              {signal.proposalStatus === 'ai-proposed' ? (
+                <CardActions
+                  cardType="signal"
+                  cardId={signal.id}
+                  isPolish={isPolish}
+                  onAcceptCard={onAcceptCard}
+                  onRejectCard={onRejectCard}
+                  onRethinkCard={onRethinkCard}
+                />
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => removeSignal(signal.id)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            <p className="text-sm font-medium leading-relaxed text-slate-900 dark:text-slate-100">
+              {signal.content}
+            </p>
+            <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+              {signal.sourceLabel} · {signal.evidenceType || 'observation'}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PortfolioItemsPhase({
+  session,
+  isPolish,
+  onAcceptCard,
+  onRejectCard,
+  onRethinkCard,
+}: PhaseProps) {
+  const { updateInputData } = useToolStore();
+  const data = session.inputData as PortfolioPriorityData;
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [marketGrowth, setMarketGrowth] = useState(3);
+  const [marketShare, setMarketShare] = useState(3);
+  const [investmentLevel, setInvestmentLevel] = useState(3);
+
+  const addItem = () => {
+    if (!title.trim()) return;
+    updateInputData({
+      initiatives: [
+        ...(data.initiatives || []),
+        {
+          id: `portfolio-item-${Date.now()}`,
+          title: title.trim(),
+          description: description.trim(),
+          marketGrowth,
+          marketShare,
+          investmentLevel,
+          category: getCategory(marketGrowth, marketShare),
+          evidence: [],
+          confidence: 4,
+          proposalStatus: 'accepted',
+        },
+      ],
+    } as Partial<PortfolioPriorityData>);
+    setTitle('');
+    setDescription('');
+    setMarketGrowth(3);
+    setMarketShare(3);
+    setInvestmentLevel(3);
+  };
+
+  const updateItem = (id: string, updates: Partial<PortfolioItem>) => {
+    updateInputData({
+      initiatives: data.initiatives.map((item) => {
+        if (item.id !== id) return item;
+        const next = { ...item, ...updates };
+        return { ...next, category: getCategory(next.marketGrowth, next.marketShare) };
+      }),
+    } as Partial<PortfolioPriorityData>);
+  };
+
+  const removeItem = (id: string) => {
+    updateInputData({
+      initiatives: data.initiatives.filter((item) => item.id !== id),
+    } as Partial<PortfolioPriorityData>);
+  };
+
+  return (
+    <div className="space-y-5 p-5">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {isPolish ? 'Macierz portfolio BCG' : 'BCG Portfolio Matrix'}
+        </h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'AI i użytkownik oceniają elementy według wzrostu rynku, udziału i poziomu inwestycji.'
+            : 'AI and the user score items by market growth, share, and investment level.'}
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
+        <div className="grid gap-3 lg:grid-cols-[1fr_1fr_auto]">
+          <input
+            value={title}
+            onChange={(event) => setTitle(event.target.value)}
+            placeholder={isPolish ? 'Nazwa inicjatywy / produktu...' : 'Initiative / product name...'}
+            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
+          />
+          <input
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder={isPolish ? 'Krótki opis...' : 'Short description...'}
+            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
+          />
+          <button
+            type="button"
+            onClick={addItem}
+            disabled={!title.trim()}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white disabled:opacity-50 dark:bg-white dark:text-slate-900"
+          >
+            <Plus className="h-4 w-4" />
+            {isPolish ? 'Dodaj' : 'Add'}
+          </button>
+        </div>
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          {[
+            ['marketGrowth', isPolish ? 'Wzrost rynku' : 'Market growth', marketGrowth, setMarketGrowth],
+            ['marketShare', isPolish ? 'Udział / pozycja' : 'Share / position', marketShare, setMarketShare],
+            [
+              'investmentLevel',
+              isPolish ? 'Poziom inwestycji' : 'Investment level',
+              investmentLevel,
+              setInvestmentLevel,
+            ],
+          ].map(([id, label, value, setter]) => (
+            <label key={id as string} className="text-xs font-medium text-slate-500">
+              {label as string}
+              <select
+                value={value as number}
+                onChange={(event) => (setter as (value: number) => void)(Number(event.target.value))}
+                className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
+              >
+                {[1, 2, 3, 4, 5].map((score) => (
+                  <option key={score} value={score}>
+                    {score}/5
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        {CATEGORIES.map((category) => (
+          <div
+            key={category}
+            className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
+          >
+            <div className="mb-3">
+              <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                {isPolish ? CATEGORY_META[category].pl : CATEGORY_META[category].en}
+              </h3>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {CATEGORY_META[category].hint}
+              </p>
+            </div>
+            <div className="space-y-3">
+              {(data.initiatives || [])
+                .filter((item) => item.category === category)
+                .map((item) => (
+                  <div key={item.id} className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wide text-pink-500">
+                          {proposalBadge(item.proposalStatus, isPolish)}
+                        </div>
+                        <h4 className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                          {item.title}
+                        </h4>
+                      </div>
+                      {item.proposalStatus === 'ai-proposed' ? (
+                        <CardActions
+                          cardType="item"
+                          cardId={item.id}
+                          isPolish={isPolish}
+                          onAcceptCard={onAcceptCard}
+                          onRejectCard={onRejectCard}
+                          onRethinkCard={onRethinkCard}
+                        />
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => removeItem(item.id)}
+                          className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                      {item.description}
+                    </p>
+                    <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                      {(['marketGrowth', 'marketShare', 'investmentLevel'] as const).map((field) => (
+                        <label key={field} className="text-xs font-medium text-slate-500">
+                          {field === 'marketGrowth'
+                            ? isPolish
+                              ? 'Wzrost'
+                              : 'Growth'
+                            : field === 'marketShare'
+                              ? isPolish
+                                ? 'Udział'
+                                : 'Share'
+                              : isPolish
+                                ? 'Inwestycje'
+                                : 'Investment'}
+                          <select
+                            value={item[field]}
+                            onChange={(event) =>
+                              updateItem(item.id, { [field]: Number(event.target.value) })
+                            }
+                            className="mt-1 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
+                          >
+                            {[1, 2, 3, 4, 5].map((score) => (
+                              <option key={score} value={score}>
+                                {score}/5
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ))}
+                    </div>
+                    {item.rationale && (
+                      <div className="mt-3 rounded-lg bg-white p-2 text-xs text-slate-600 dark:bg-navy-950 dark:text-slate-300">
+                        {item.rationale}
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PortfolioInsightsPhase({
+  session,
+  isPolish,
+  onAcceptCard,
+  onRejectCard,
+  onRethinkCard,
+}: PhaseProps) {
+  const data = session.inputData as PortfolioPriorityData;
+
+  return (
+    <div className="space-y-5 p-5">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {isPolish ? 'Trade-offy i priorytety' : 'Trade-offs & Priorities'}
+        </h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Tu portfolio zamienia się w decyzje o alokacji zasobów.'
+            : 'This is where the portfolio becomes resource allocation decisions.'}
+        </p>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {(data.tradeOffs || []).map((tradeOff) => (
+          <div
+            key={tradeOff.id}
+            className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
+          >
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-violet-500">
+                  {proposalBadge(tradeOff.proposalStatus, isPolish)}
+                </div>
+                <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                  {tradeOff.title}
+                </h3>
+              </div>
+              {tradeOff.proposalStatus === 'ai-proposed' && (
+                <CardActions
+                  cardType="tension"
+                  cardId={tradeOff.id}
+                  isPolish={isPolish}
+                  onAcceptCard={onAcceptCard}
+                  onRejectCard={onRejectCard}
+                  onRethinkCard={onRethinkCard}
+                />
+              )}
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {tradeOff.insight}
+            </p>
+            <div className="mt-3 rounded-xl bg-slate-50 p-3 text-sm text-slate-700 dark:bg-navy-900/60 dark:text-slate-300">
+              {tradeOff.recommendation}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {(data.recommendedMoves || []).map((move) => (
+          <div
+            key={move.id}
+            className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
+          >
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-emerald-500">
+                  {move.category}
+                </div>
+                <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                  {move.title}
+                </h3>
+              </div>
+              {move.proposalStatus === 'ai-proposed' && (
+                <CardActions
+                  cardType="move"
+                  cardId={move.id}
+                  isPolish={isPolish}
+                  onAcceptCard={onAcceptCard}
+                  onRejectCard={onRejectCard}
+                  onRethinkCard={onRethinkCard}
+                />
+              )}
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {move.rationale}
+            </p>
+            {move.firstStep && (
+              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                {isPolish ? 'Pierwszy krok: ' : 'First step: '}
+                {move.firstStep}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PortfolioOutputsPhase({
+  session,
+  isPolish,
+  onAcceptCard,
+  onRejectCard,
+  onRethinkCard,
+}: PhaseProps) {
+  const data = session.inputData as PortfolioPriorityData;
+  const summary = data.summary;
+  const initiatives = [
+    ...(summary?.recommendedInitiatives || []),
+    ...(session.generatedInitiatives || []),
+  ];
+
+  return (
+    <div className="space-y-5 p-5">
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+          {isPolish ? 'Outputy i inicjatywy' : 'Outputs & Initiatives'}
+        </h2>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+          {isPolish
+            ? 'Final source summary i kandydaci outputów bazują na zaakceptowanych decyzjach portfolio.'
+            : 'The final source summary and output candidates are based on approved portfolio decisions.'}
+        </p>
+      </div>
+
+      {summary?.executiveSummary && (
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
+          <div className="mb-2 flex items-start justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                Final source summary
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                {summary.executiveSummary}
+              </p>
+            </div>
+            {summary.proposalStatus === 'ai-proposed' && (
+              <CardActions
+                cardType="conclusion"
+                cardId={summary.proposalId || 'portfolio-summary'}
+                isPolish={isPolish}
+                onAcceptCard={onAcceptCard}
+                onRejectCard={onRejectCard}
+                onRethinkCard={onRethinkCard}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {(data.outputCandidates || []).map((candidate) => (
+          <div
+            key={candidate.id}
+            className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50"
+          >
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wide text-sky-500">
+                  {candidate.outputType} · {candidate.readiness || 'keep-as-idea'}
+                </div>
+                <h3 className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                  {candidate.title}
+                </h3>
+              </div>
+              {candidate.proposalStatus === 'ai-proposed' && (
+                <CardActions
+                  cardType="output-candidate"
+                  cardId={candidate.id}
+                  isPolish={isPolish}
+                  onAcceptCard={onAcceptCard}
+                  onRejectCard={onRejectCard}
+                  onRethinkCard={onRethinkCard}
+                />
+              )}
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              {candidate.description}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-950/50">
+        <div className="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">
+          {isPolish ? 'Drafty inicjatyw' : 'Initiative drafts'}
+        </div>
+        {initiatives.length === 0 ? (
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Brak inicjatyw.' : 'No initiatives yet.'}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {initiatives.map((initiative) => (
+              <div
+                key={initiative.id || initiative.title}
+                className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60"
+              >
+                <div className="font-medium text-slate-900 dark:text-slate-100">
+                  {initiative.title}
+                </div>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                  {initiative.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

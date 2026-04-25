@@ -178,6 +178,11 @@ const ResearchSessionsDock = React.lazy(() =>
     default: m.ResearchSessionsDock,
   }))
 );
+const Wave5ArtifactRuntimePanel = React.lazy(() =>
+  import('@/components/AIChat/Wave5ArtifactRuntimePanel').then((m) => ({
+    default: m.Wave5ArtifactRuntimePanel,
+  }))
+);
 
 // KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
 const WordyView = React.lazy(() =>
@@ -1111,6 +1116,20 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ResearchSessionsDock />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Wave 5 - Artifact Runtime / Document Work */}
+        <Route
+          path="/ai/artifacts"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Artifacts']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <Wave5ArtifactRuntimePanel />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>

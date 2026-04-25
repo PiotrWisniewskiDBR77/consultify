@@ -30,6 +30,10 @@ import {
 import type { RunState } from '../../types/executionSpine.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
+import {
+  buildWave5LineDiffForPreview,
+  mirrorLegacyArtifactIntoWave5,
+} from '../wave5ArtifactRuntimeService.js';
 import * as chatExecutionService from './chatExecutionService.js';
 import * as contextSnapshotService from './contextSnapshotService.js';
 import * as executionSpineService from './executionSpineService.js';
@@ -2502,8 +2506,23 @@ export async function acceptArtifactRunPlan(params: {
     riskClass: current.artifactId ? 'safe_update' : 'safe_additive',
     approvalClass: 'requires_human_approval',
     previewPayload: {
-      diff: null,
-      beforeState: null,
+      diff: buildWave5LineDiffForPreview(
+        current.artifactId
+          ? `Existing artifact ${current.artifactId} will be updated by ArtifactRun ${current.runId}.`
+          : '',
+        [
+          `ArtifactRun ${current.runId} will create ${current.plan.outputType}.`,
+          `Family: ${current.plan.artifactFamily}`,
+          `Title: ${current.plan.titleHint}`,
+          `Visibility: ${current.plan.visibilityScope}`,
+        ].join('\n')
+      ),
+      beforeState: current.artifactId
+        ? {
+            artifactId: current.artifactId,
+            governance: 'existing_artifact_update_requires_review',
+          }
+        : null,
       afterState: {
         artifactFamily: current.plan.artifactFamily,
         outputType: current.plan.outputType,
@@ -2908,6 +2927,26 @@ export async function materializeArtifactRun(
         originRuntime: materializationOrigin?.originRuntime,
       },
     });
+
+    if (resolvedArtifactId) {
+      await mirrorLegacyArtifactIntoWave5({
+        organizationId: validated.organizationId,
+        userId: validated.actorUserId,
+        legacyArtifactId: resolvedArtifactId,
+        outputType: current.plan.outputType,
+        title: current.plan.titleHint,
+        originRuntime: materializationOrigin?.originRuntime || null,
+        originRecordId: materializationOrigin?.originRecordId || null,
+        executionRunId: current.executionRunId,
+        contextSnapshotId: current.contextSnapshotId,
+      }).catch((err) => {
+        logger.warn(`${LOG_PREFIX} Wave 5 mirror failed after materialization`, {
+          runId: validated.runId,
+          artifactId: resolvedArtifactId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      });
+    }
 
     const completed = await getArtifactRun(validated.runId, validated.organizationId);
     if (!completed) {

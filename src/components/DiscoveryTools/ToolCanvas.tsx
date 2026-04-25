@@ -57,8 +57,12 @@ import {
   SOPChecklistsStep,
   SOPStandardsStep,
 } from './tools/Operational';
-import { PortfolioItemsStep } from './tools/PortfolioPriority/PortfolioItemsStep';
-import { PortfolioMatrixStep } from './tools/PortfolioPriority/PortfolioMatrixStep';
+import {
+  PortfolioInputPhase,
+  PortfolioInsightsPhase,
+  PortfolioItemsPhase,
+  PortfolioOutputsPhase,
+} from './tools/PortfolioPriority/PortfolioPriorityPhases';
 import { AssumptionsStep } from './tools/RiskUncertainty/AssumptionsStep';
 import { RisksStep } from './tools/RiskUncertainty/RisksStep';
 import { ScenariosStep } from './tools/RiskUncertainty/ScenariosStep';
@@ -442,11 +446,59 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     }
 
     if (toolType === 'portfolio-priority') {
-      if (stepDefinition.id === 'portfolio-items') {
-        return <PortfolioItemsStep session={session} isPolish={isPolish} />;
+      if (stepDefinition.id === 'input') {
+        return (
+          <PortfolioInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
       }
-      if (stepDefinition.id === 'portfolio-matrix') {
-        return <PortfolioMatrixStep session={session} isPolish={isPolish} />;
+      if (stepDefinition.id === 'items') {
+        return (
+          <PortfolioItemsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+      if (stepDefinition.id === 'insights') {
+        return (
+          <PortfolioInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <PortfolioOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
+        );
       }
     }
 

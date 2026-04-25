@@ -258,6 +258,76 @@ export function getToolPhaseAiActions(
     }
   }
 
+  if (toolType === 'portfolio-priority') {
+    switch (stepDefinition.id) {
+      case 'mission':
+        return [
+          createAction(
+            'suggest-step',
+            'sparkles',
+            'AI Portfolio Framing',
+            'AI framing portfolio',
+            'Critique and sharpen the portfolio decision brief',
+            'Skrytykuj i wyostrz brief decyzji portfolio'
+          ),
+          createAction(
+            'generate-full-session',
+            'wand',
+            'Full Session Draft',
+            'Szkic całej sesji',
+            'Generate a controlled first draft of the full portfolio session',
+            'Wygeneruj kontrolowany pierwszy szkic całej sesji portfolio'
+          ),
+        ];
+      case 'input':
+        return [
+          createAction(
+            'suggest-step',
+            'search',
+            'AI Portfolio Signals',
+            'AI sygnały portfolio',
+            'Suggest evidence and constraints for portfolio prioritization',
+            'Zaproponuj dowody i ograniczenia do priorytetyzacji portfolio'
+          ),
+        ];
+      case 'items':
+        return [
+          createAction(
+            'suggest-step',
+            'sparkles',
+            'AI Portfolio Matrix',
+            'AI macierz portfolio',
+            'Turn signals into scored BCG portfolio cards',
+            'Zamień sygnały w ocenione karty portfolio BCG'
+          ),
+        ];
+      case 'insights':
+        return [
+          createAction(
+            'generate-correlations',
+            'wand',
+            'AI Trade-offs',
+            'AI trade-offy',
+            'Synthesize portfolio trade-offs and recommended moves',
+            'Syntezuj trade-offy portfolio i rekomendowane ruchy'
+          ),
+        ];
+      case 'outputs':
+        return [
+          createAction(
+            'generate-summary',
+            'wand',
+            'AI Final Summary',
+            'AI final summary',
+            'Generate final summary, output candidates, and initiatives',
+            'Wygeneruj final summary, output candidates i inicjatywy'
+          ),
+        ];
+      default:
+        return [];
+    }
+  }
+
   if (!stepDefinition.aiAssisted) return [];
 
   if (SUMMARY_STEP_IDS.has(stepDefinition.id)) {

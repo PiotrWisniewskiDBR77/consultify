@@ -16,7 +16,13 @@ import {
 } from '@/components/DiscoveryTools/toolAiActions';
 import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
 import { useAIStream } from '@/hooks/useAIStream';
-import { GrowthPathsData, SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
+import {
+  GrowthPathsData,
+  PortfolioPriorityData,
+  SWOTData,
+  ToolType,
+  useToolStore,
+} from '@/store/useToolStore';
 
 import {
   applyDynamicSwotPendingAction,
@@ -38,6 +44,12 @@ import {
   buildGrowthPathsRethinkPrompt,
   buildGrowthPathsSynthesisPrompt,
 } from './toolAi/growthPaths';
+import {
+  applyPortfolioPendingAction,
+  buildPortfolioFullSessionPrompt,
+  buildPortfolioRethinkPrompt,
+  buildPortfolioSynthesisPrompt,
+} from './toolAi/portfolioPriority';
 import { getToolStepOpeningQuestion } from './toolAi/openingQuestions';
 import { getToolSuggestionPrompt, getToolSummaryPrompt } from './toolAi/promptRegistry';
 import { getToolSystemPrompt } from './toolAi/systemPrompts';
@@ -187,6 +199,21 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   const generateCorrelations = useCallback(async () => {
     if (!currentSession) return;
 
+    if (toolType === 'portfolio-priority') {
+      setError(null);
+      const prompt = buildPortfolioSynthesisPrompt(
+        currentSession.inputData as PortfolioPriorityData
+      );
+      if (!prompt) {
+        setError('Need portfolio items to generate synthesis');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('generate-correlations');
+      await sendMessage(prompt);
+      return;
+    }
+
     if (toolType === 'growth-paths') {
       setError(null);
       const prompt = buildGrowthPathsSynthesisPrompt(currentSession.inputData as GrowthPathsData);
@@ -249,7 +276,12 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     setError(null);
     setSessionGenerationStatus('generating');
     const prompt =
-      toolType === 'growth-paths'
+      toolType === 'portfolio-priority'
+        ? buildPortfolioFullSessionPrompt(
+            currentSession.inputData as PortfolioPriorityData,
+            formatForPrompt()
+          )
+        : toolType === 'growth-paths'
         ? buildGrowthPathsFullSessionPrompt(currentSession.inputData as GrowthPathsData, formatForPrompt())
         : toolType === 'market-forces'
         ? buildMarketForcesFullSessionPrompt(currentSession.inputData as any, formatForPrompt())
@@ -314,7 +346,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     async (phaseId: string, cardType: string, cardId: string, userComment?: string) => {
       if (
         !currentSession ||
-        (toolType !== 'dynamic-swot' && toolType !== 'market-forces' && toolType !== 'growth-paths')
+        (toolType !== 'dynamic-swot' &&
+          toolType !== 'market-forces' &&
+          toolType !== 'growth-paths' &&
+          toolType !== 'portfolio-priority')
       )
         return;
 
@@ -322,7 +357,14 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       markRethinking(cardType as any, cardId);
       setRethinkTarget({ phaseId, cardType, cardId });
       const prompt =
-        toolType === 'growth-paths'
+        toolType === 'portfolio-priority'
+          ? buildPortfolioRethinkPrompt(
+              currentSession.inputData as PortfolioPriorityData,
+              cardType,
+              cardId,
+              userComment
+            )
+          : toolType === 'growth-paths'
           ? buildGrowthPathsRethinkPrompt(
               currentSession.inputData as GrowthPathsData,
               cardType,
@@ -354,7 +396,10 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       isStreaming ||
       !pendingAction ||
       !streamedContent ||
-      (toolType !== 'dynamic-swot' && toolType !== 'market-forces' && toolType !== 'growth-paths')
+      (toolType !== 'dynamic-swot' &&
+        toolType !== 'market-forces' &&
+        toolType !== 'growth-paths' &&
+        toolType !== 'portfolio-priority')
     )
       return;
 
@@ -366,7 +411,29 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     }
 
     const result =
-      toolType === 'growth-paths'
+      toolType === 'portfolio-priority'
+        ? applyPortfolioPendingAction({
+            pendingAction,
+            parsed,
+            currentStepId: currentStepDef?.id,
+            portfolioData: (currentSession?.inputData as PortfolioPriorityData | undefined) || {
+              context: createEmptyMissionContext(),
+              signals: [],
+              initiatives: [],
+              tradeOffs: [],
+              recommendedMoves: [],
+              outputCandidates: [],
+            },
+            rethinkTarget,
+            toolType,
+            actions: {
+              updateInputData,
+              setInitiatives,
+              setSessionGenerationStatus,
+              updateCardAfterRethink,
+            },
+          })
+        : toolType === 'growth-paths'
         ? applyGrowthPathsPendingAction({
             pendingAction,
             parsed,

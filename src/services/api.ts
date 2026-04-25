@@ -12446,7 +12446,7 @@ export const Api = {
     }
   },
 
-  listResearchSessions: async (params?: {
+  listLegacyAIResearchSessions: async (params?: {
     status?: string;
     scope?: 'mine' | 'org';
     limit?: number;
@@ -12460,7 +12460,7 @@ export const Api = {
       const res = await fetchWithRetry(`${API_URL}/research/sessions${suffix}`);
       return handleResponse(res, 'Failed to fetch research sessions');
     } catch (err: any) {
-      console.error('[Api] listResearchSessions error:', err);
+      console.error('[Api] listLegacyAIResearchSessions error:', err);
       return { success: false, sessions: [], error: err.message };
     }
   },
@@ -12531,6 +12531,134 @@ export const Api = {
       method: 'POST',
     });
     return handleResponse(res, 'Failed to retry research session');
+  },
+
+  getWave5ArtifactSchema: async () => {
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/schema`);
+    return handleResponse(res, 'Failed to fetch artifact schema');
+  },
+
+  listWave5Artifacts: async (params?: {
+    status?: string;
+    artifactType?: string;
+    limit?: number;
+  }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.artifactType) qs.set('artifactType', params.artifactType);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5${suffix}`);
+    return handleResponse(res, 'Failed to fetch Wave 5 artifacts');
+  },
+
+  createWave5Artifact: async (payload: {
+    artifactType: string;
+    title: string;
+    content: string;
+    projectId?: string | null;
+    conversationId?: string | null;
+    researchSessionId?: string | null;
+    aiRunId?: string | null;
+    trustBundleId?: string | null;
+    citations?: unknown[];
+    sourceRefs?: unknown[];
+    metadata?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to create Wave 5 artifact');
+  },
+
+  getWave5Artifact: async (artifactId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}`
+    );
+    return handleResponse(res, 'Failed to fetch Wave 5 artifact');
+  },
+
+  proposeWave5ArtifactMutation: async (
+    artifactId: string,
+    payload: {
+      proposedContent: string;
+      summary?: string;
+      mutationType?: string;
+      metadata?: Record<string, unknown>;
+    }
+  ) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}/mutations`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to propose Wave 5 mutation');
+  },
+
+  approveWave5ArtifactMutation: async (mutationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/mutations/${encodeURIComponent(mutationId)}/approve`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to approve Wave 5 mutation');
+  },
+
+  commitWave5ArtifactMutation: async (mutationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/mutations/${encodeURIComponent(mutationId)}/commit`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to commit Wave 5 mutation');
+  },
+
+  approveAndCommitWave5ArtifactMutation: async (mutationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/mutations/${encodeURIComponent(mutationId)}/approve-and-commit`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to approve and commit Wave 5 mutation');
+  },
+
+  rejectWave5ArtifactMutation: async (mutationId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/mutations/${encodeURIComponent(mutationId)}/reject`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to reject Wave 5 mutation');
+  },
+
+  fillWave5DocumentTemplate: async (payload: {
+    artifactId?: string | null;
+    artifactType?: string;
+    title?: string;
+    template: string;
+    fields?: Record<string, unknown>;
+    projectId?: string | null;
+    conversationId?: string | null;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/artifacts/wave5/fill-template`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to fill Wave 5 document template');
+  },
+
+  getWave5ArtifactExportManifest: async (artifactId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}/export-manifest`
+    );
+    return handleResponse(res, 'Failed to fetch Wave 5 export manifest');
+  },
+
+  markWave5ArtifactExported: async (artifactId: string) => {
+    const res = await fetchWithRetry(
+      `${API_URL}/artifacts/wave5/${encodeURIComponent(artifactId)}/exported`,
+      { method: 'POST' }
+    );
+    return handleResponse(res, 'Failed to mark Wave 5 artifact exported');
   },
 
   getAIActionHistory: async (conversationId: string) => {
@@ -12844,7 +12972,7 @@ export const Api = {
     }
   },
 
-  getResearchSession: async (id: string) => {
+  getLegacyAIResearchSession: async (id: string) => {
     try {
       const res = await fetchWithRetry(
         `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}`,
@@ -12853,12 +12981,12 @@ export const Api = {
       if (!res.ok) return null;
       return (await res.json()) as { session: any };
     } catch (err: any) {
-      console.error('[Api] getResearchSession error:', err);
+      console.error('[Api] getLegacyAIResearchSession error:', err);
       return null;
     }
   },
 
-  createResearchSession: async (body: {
+  createLegacyAIResearchSession: async (body: {
     topic: string;
     conversationId?: string;
     messageId?: string;
@@ -12874,12 +13002,12 @@ export const Api = {
       if (!res.ok) return null;
       return (await res.json()) as { session: any };
     } catch (err: any) {
-      console.error('[Api] createResearchSession error:', err);
+      console.error('[Api] createLegacyAIResearchSession error:', err);
       return null;
     }
   },
 
-  cancelResearchSession: async (id: string) => {
+  cancelLegacyAIResearchSession: async (id: string) => {
     try {
       const res = await fetchWithRetry(
         `${API_URL}/ai/research/sessions/${encodeURIComponent(id)}/cancel`,
@@ -12888,7 +13016,7 @@ export const Api = {
       if (!res.ok) return null;
       return (await res.json()) as { session: any };
     } catch (err: any) {
-      console.error('[Api] cancelResearchSession error:', err);
+      console.error('[Api] cancelLegacyAIResearchSession error:', err);
       return null;
     }
   },

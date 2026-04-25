@@ -115,6 +115,11 @@ const LABELS: Record<string, ToolLabels> = {
       en: 'e.g., Strategic initiatives for 2026',
       pl: 'np. Inicjatywy strategiczne na 2026',
     },
+    successLabel: { en: 'Success Signal', pl: 'Sygnał sukcesu' },
+    successPlaceholder: {
+      en: 'e.g., clear invest/maintain/test/harvest/stop decisions',
+      pl: 'np. jasne decyzje invest/maintain/test/harvest/stop',
+    },
     timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
   },
   'risk-uncertainty': {

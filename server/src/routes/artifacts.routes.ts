@@ -11,6 +11,23 @@ import * as artifactRegistryService from '../services/v8/artifactRegistryService
 import * as executionSpineService from '../services/v8/executionSpineService.js';
 import * as publishReviewService from '../services/v8/publishReviewService.js';
 import * as reportsPresModelService from '../services/v8/reportsPresModelService.js';
+import {
+  approveAndCommitWave5Mutation,
+  approveWave5Mutation,
+  buildWave5ExportManifest,
+  commitWave5Mutation,
+  createWave5Artifact,
+  fillWave5DocumentTemplate,
+  getWave5Artifact,
+  listWave5Artifacts,
+  listWave5ArtifactVersions,
+  listWave5Mutations,
+  markWave5ArtifactExported,
+  proposeWave5Mutation,
+  rejectWave5Mutation,
+  WAVE5_ARTIFACT_LIFECYCLE,
+  WAVE5_ARTIFACT_TYPES,
+} from '../services/wave5ArtifactRuntimeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -371,6 +388,196 @@ router.get(
       return res.status(404).json({ error: 'Artifact not found' });
     }
     res.json({ data: artifact });
+  })
+);
+
+router.get(
+  '/wave5/schema',
+  asyncHandler(async (_req: Request, res: Response) =>
+    res.json({
+      success: true,
+      artifactTypes: WAVE5_ARTIFACT_TYPES,
+      lifecycle: WAVE5_ARTIFACT_LIFECYCLE,
+    })
+  )
+);
+
+router.get(
+  '/wave5',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const artifacts = await listWave5Artifacts({
+      organizationId,
+      status: typeof req.query.status === 'string' ? req.query.status : null,
+      artifactType: typeof req.query.artifactType === 'string' ? req.query.artifactType : null,
+      limit: req.query.limit ? Number(req.query.limit) : 50,
+    });
+    return res.json({ success: true, artifacts });
+  })
+);
+
+router.post(
+  '/wave5',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const artifact = await createWave5Artifact({
+      organizationId,
+      userId,
+      artifactType: req.body.artifactType,
+      title: String(req.body.title || 'Untitled artifact'),
+      content: String(req.body.content || ''),
+      projectId: req.body.projectId || null,
+      conversationId: req.body.conversationId || null,
+      researchSessionId: req.body.researchSessionId || null,
+      aiRunId: req.body.aiRunId || null,
+      trustBundleId: req.body.trustBundleId || null,
+      citations: Array.isArray(req.body.citations) ? req.body.citations : [],
+      sourceRefs: Array.isArray(req.body.sourceRefs) ? req.body.sourceRefs : [],
+      metadata: req.body.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
+    });
+    return res.status(201).json({ success: true, artifact });
+  })
+);
+
+router.post(
+  '/wave5/fill-template',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const result = await fillWave5DocumentTemplate({
+      organizationId,
+      userId,
+      artifactId: req.body.artifactId || null,
+      artifactType: req.body.artifactType,
+      title: req.body.title,
+      template: String(req.body.template || ''),
+      fields: req.body.fields && typeof req.body.fields === 'object' ? req.body.fields : {},
+      projectId: req.body.projectId || null,
+      conversationId: req.body.conversationId || null,
+    });
+    return res.status(result.needsInput ? 200 : 201).json(result);
+  })
+);
+
+router.get(
+  '/wave5/:artifactId',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const artifact = await getWave5Artifact(String(req.params.artifactId), organizationId);
+    if (!artifact) return res.status(404).json({ success: false, error: 'Artifact not found' });
+    return res.json({ success: true, artifact });
+  })
+);
+
+router.get(
+  '/wave5/:artifactId/versions',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const versions = await listWave5ArtifactVersions(String(req.params.artifactId), organizationId);
+    return res.json({ success: true, versions });
+  })
+);
+
+router.get(
+  '/wave5/:artifactId/mutations',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const mutations = await listWave5Mutations(String(req.params.artifactId), organizationId);
+    return res.json({ success: true, mutations });
+  })
+);
+
+router.post(
+  '/wave5/:artifactId/mutations',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const mutation = await proposeWave5Mutation({
+      organizationId,
+      userId,
+      artifactId: String(req.params.artifactId),
+      proposedContent: String(req.body.proposedContent || ''),
+      summary: req.body.summary || null,
+      mutationType: req.body.mutationType || null,
+      metadata: req.body.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {},
+    });
+    return res.status(201).json({ success: true, mutation });
+  })
+);
+
+router.post(
+  '/wave5/mutations/:mutationId/reject',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const mutation = await rejectWave5Mutation({
+      mutationId: String(req.params.mutationId),
+      organizationId,
+      userId,
+    });
+    return res.json({ success: true, mutation });
+  })
+);
+
+router.post(
+  '/wave5/mutations/:mutationId/approve',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const mutation = await approveWave5Mutation({
+      mutationId: String(req.params.mutationId),
+      organizationId,
+      userId,
+    });
+    return res.json({ success: true, mutation });
+  })
+);
+
+router.post(
+  '/wave5/mutations/:mutationId/commit',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const artifact = await commitWave5Mutation({
+      mutationId: String(req.params.mutationId),
+      organizationId,
+      userId,
+    });
+    return res.json({ success: true, artifact });
+  })
+);
+
+router.post(
+  '/wave5/mutations/:mutationId/approve-and-commit',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const artifact = await approveAndCommitWave5Mutation({
+      mutationId: String(req.params.mutationId),
+      organizationId,
+      userId,
+    });
+    return res.json({ success: true, artifact });
+  })
+);
+
+router.get(
+  '/wave5/:artifactId/export-manifest',
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const manifest = await buildWave5ExportManifest(String(req.params.artifactId), organizationId);
+    return res.json({ success: true, manifest });
+  })
+);
+
+router.post(
+  '/wave5/:artifactId/exported',
+  requireAudit,
+  asyncHandler(async (req: Request, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const artifact = await markWave5ArtifactExported(String(req.params.artifactId), organizationId);
+    return res.json({ success: true, artifact });
   })
 );
 

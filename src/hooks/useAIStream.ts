@@ -737,8 +737,11 @@ export const useAIStream = (options: StreamOptions = {}): UseAIStreamReturn => {
           parsedArtifacts.length > 0 ? stripArtifactsFromResponse(fullText) : fullText;
         if (parsedArtifacts.length) {
           parsedArtifacts.forEach((artifact) => {
-            addArtifact(artifact);
-            options.onArtifactDetected?.(artifact);
+            if (options.onArtifactDetected) {
+              options.onArtifactDetected(artifact);
+            } else {
+              addArtifact(artifact);
+            }
           });
           setArtifacts(parsedArtifacts);
         }

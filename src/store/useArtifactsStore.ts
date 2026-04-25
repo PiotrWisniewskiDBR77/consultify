@@ -74,7 +74,21 @@ export const useArtifactsStore = create<ArtifactsState>()(
           const updateInArray = (artifacts: Artifact[]) =>
             artifacts.map((a) =>
               a.id === id
-                ? { ...a, content, version: (a.version ?? 0) + 1, updatedAt: new Date() }
+                ? ({
+                    ...a,
+                    content,
+                    updatedAt: new Date(),
+                    metadata: {
+                      ...((a as any).metadata || {}),
+                      wave5Governance: {
+                        ...(((a as any).metadata || {}).wave5Governance || {}),
+                        localDraftOnly: true,
+                        requiresMutationProposal: true,
+                        lastLocalEditAt: new Date().toISOString(),
+                        note: 'Local artifact edits are draft-only. Workspace commit requires a Wave 5 mutation proposal.',
+                      },
+                    },
+                  } as Artifact)
                 : a
             );
 

@@ -34,10 +34,16 @@ const OPENING_QUESTIONS: Record<string, Record<string, string>> = {
       'Let me prepare the final source summary, output candidates, and initiative drafts from the approved growth direction.',
   },
   'portfolio-priority': {
-    context: 'What portfolio scope and constraints are you analyzing?',
-    'portfolio-items': 'List initiatives and assess growth and share.',
-    'portfolio-matrix': 'Let me summarize the portfolio matrix.',
-    summary: 'Let me summarize portfolio priorities and initiatives.',
+    mission:
+      'What portfolio decision, scope, success signal, and constraints should this prioritization support?',
+    input:
+      'What interview notes, performance signals, market evidence, or resource constraints should shape the portfolio?',
+    items:
+      'Let me turn the accepted signals into BCG-style portfolio cards with growth, share, investment, and confidence.',
+    insights:
+      'I will synthesize the portfolio into resource trade-offs and recommended allocation moves.',
+    outputs:
+      'Let me prepare the final source summary, output candidates, and initiative drafts from the approved portfolio direction.',
   },
   'risk-uncertainty': {
     context: 'What risk scope and time horizon are you analyzing?',

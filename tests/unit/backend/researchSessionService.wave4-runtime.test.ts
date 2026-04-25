@@ -122,6 +122,10 @@ vi.mock('../../../server/src/services/ai/llmService.js', () => ({
   },
 }));
 
+vi.mock('../../../server/src/services/wave5ArtifactRuntimeService.js', () => ({
+  createWave5Artifact: vi.fn().mockResolvedValue({ artifactId: 'wave5-research-artifact' }),
+}));
+
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();

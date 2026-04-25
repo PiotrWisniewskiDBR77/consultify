@@ -61,6 +61,7 @@ export type DynamicSwotPhaseId =
   | 'swot'
   | 'forces'
   | 'options'
+  | 'items'
   | 'insights'
   | 'outputs';
 export type SWOTEvidenceType = 'fact' | 'observation' | 'hypothesis';
@@ -412,12 +413,75 @@ export interface PortfolioItem {
   marketShare: number; // 1-5
   investmentLevel: number; // 1-5
   category: 'star' | 'cash-cow' | 'question-mark' | 'dog';
+  rationale?: string;
+  evidence?: string[];
+  recommendation?: 'invest' | 'maintain' | 'test' | 'harvest' | 'stop';
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PortfolioSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PortfolioTradeOff {
+  id: string;
+  title: string;
+  insight: string;
+  linkedItemIds: string[];
+  recommendation: string;
+  priority: 'high' | 'medium' | 'low';
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PortfolioMove {
+  id: string;
+  title: string;
+  category: 'invest' | 'maintain' | 'test' | 'harvest' | 'stop';
+  rationale: string;
+  linkedItemIds: string[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PortfolioOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedItemIds: string[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface PortfolioPriorityData {
   context: ConsultingMissionContext;
+  signals: PortfolioSignal[];
   initiatives: PortfolioItem[];
+  tradeOffs: PortfolioTradeOff[];
+  recommendedMoves: PortfolioMove[];
+  outputCandidates: PortfolioOutputCandidate[];
   summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    appliedConclusions: string[];
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -745,38 +809,47 @@ export const GROWTH_PATHS_STEPS: StepDefinition[] = [
 
 export const PORTFOLIO_PRIORITY_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Portfolio Context',
-    namePl: 'Kontekst Portfolio',
-    description: 'Define the portfolio scope and constraints',
-    descriptionPl: 'Zdefiniuj zakres portfolio i ograniczenia',
+    id: 'mission',
+    name: 'Portfolio Mission & Context',
+    namePl: 'Portfolio Mission & Context',
+    description: 'Define the portfolio scope, decision frame, constraints, and success signal',
+    descriptionPl: 'Zdefiniuj zakres portfolio, ramę decyzji, ograniczenia i sygnał sukcesu',
     required: true,
     aiAssisted: false,
   },
   {
-    id: 'portfolio-items',
-    name: 'Portfolio Items',
-    namePl: 'Elementy Portfolio',
-    description: 'List initiatives with growth and share assessments',
-    descriptionPl: 'Lista inicjatyw z oceną wzrostu i udziału',
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description: 'Capture portfolio evidence, constraints, performance signals, and sponsor context',
+    descriptionPl: 'Zbierz dowody portfolio, ograniczenia, sygnały wyników i kontekst sponsora',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'portfolio-matrix',
-    name: 'BCG Matrix',
-    namePl: 'Macierz BCG',
-    description: 'Review portfolio categories and priorities',
-    descriptionPl: 'Przegląd kategorii i priorytetów portfolio',
+    id: 'items',
+    name: 'Portfolio Items & Matrix',
+    namePl: 'Portfolio Items & Matrix',
+    description: 'Score portfolio items and classify them into BCG-style categories',
+    descriptionPl: 'Oceń elementy portfolio i sklasyfikuj je w kategoriach BCG',
     required: true,
-    aiAssisted: false,
+    aiAssisted: true,
   },
   {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Summarize portfolio priorities and initiatives',
-    descriptionPl: 'Podsumowanie priorytetów i inicjatyw',
+    id: 'insights',
+    name: 'Trade-offs & Priorities',
+    namePl: 'Trade-offs & Priorities',
+    description: 'Synthesize trade-offs, portfolio bets, and recommended resource moves',
+    descriptionPl: 'Syntezuj trade-offy, top bety i rekomendowane przesunięcia zasobów',
+    required: true,
+    aiAssisted: true,
+  },
+  {
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and downstream portfolio actions',
+    descriptionPl: 'Przygotuj final source summary oraz dalsze działania portfolio',
     required: true,
     aiAssisted: true,
   },
@@ -1356,7 +1429,11 @@ const createInitialGrowthPathsData = (): GrowthPathsData => ({
 
 const createInitialPortfolioPriorityData = (): PortfolioPriorityData => ({
   context: createConsultingMissionContext(),
+  signals: [],
   initiatives: [],
+  tradeOffs: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialRiskUncertaintyData = (): RiskUncertaintyData => ({
@@ -1779,6 +1856,92 @@ const updateGrowthProposalCard = (
   return growthData;
 };
 
+const getPortfolioCategory = (growth: number, share: number): PortfolioItem['category'] => {
+  if (growth >= 4 && share >= 4) return 'star';
+  if (growth >= 4 && share < 4) return 'question-mark';
+  if (growth < 4 && share >= 4) return 'cash-cow';
+  return 'dog';
+};
+
+const normalizePortfolioPriorityData = (input: PortfolioPriorityData): PortfolioPriorityData => {
+  const initial = createInitialPortfolioPriorityData();
+  return {
+    ...initial,
+    ...input,
+    context: {
+      ...initial.context,
+      ...(input.context || {}),
+    },
+    signals: (input.signals || []).map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+      proposalStatus: signal.proposalStatus || (signal.type === 'ai' ? 'ai-proposed' : 'accepted'),
+    })),
+    initiatives: (input.initiatives || []).map((item) => ({
+      ...item,
+      marketGrowth: item.marketGrowth ?? 3,
+      marketShare: item.marketShare ?? 3,
+      investmentLevel: item.investmentLevel ?? 3,
+      category: item.category || getPortfolioCategory(item.marketGrowth ?? 3, item.marketShare ?? 3),
+      evidence: item.evidence || [],
+      confidence: item.confidence ?? 3,
+      proposalStatus: item.proposalStatus || 'accepted',
+    })),
+    tradeOffs: (input.tradeOffs || []).map((tradeOff) => ({
+      ...tradeOff,
+      linkedItemIds: tradeOff.linkedItemIds || [],
+      priority: tradeOff.priority || 'medium',
+      proposalStatus: tradeOff.proposalStatus || 'accepted',
+    })),
+    recommendedMoves: (input.recommendedMoves || []).map((move) => ({
+      ...move,
+      linkedItemIds: move.linkedItemIds || [],
+      proposalStatus: move.proposalStatus || 'accepted',
+    })),
+    outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+      ...candidate,
+      linkedItemIds: candidate.linkedItemIds || [],
+      readiness: candidate.readiness || 'keep-as-idea',
+      proposalStatus: candidate.proposalStatus || 'accepted',
+    })),
+    summary: input.summary
+      ? {
+          ...input.summary,
+          keyInsights: input.summary.keyInsights || [],
+          appliedConclusions: input.summary.appliedConclusions || [],
+          recommendedInitiatives: input.summary.recommendedInitiatives || [],
+          proposalStatus: input.summary.proposalStatus || 'accepted',
+        }
+      : undefined,
+  };
+};
+
+const updatePortfolioProposalCard = (
+  portfolioData: PortfolioPriorityData,
+  cardType: ProposalCardType,
+  cardId: string,
+  updates: Record<string, unknown>
+): PortfolioPriorityData => {
+  const updateList = <T extends { id: string }>(items: T[]) =>
+    items.map((item) => (item.id === cardId ? ({ ...item, ...updates } as T) : item));
+
+  if (cardType === 'signal') return { ...portfolioData, signals: updateList(portfolioData.signals) };
+  if (cardType === 'item')
+    return { ...portfolioData, initiatives: updateList(portfolioData.initiatives) };
+  if (cardType === 'tension' || cardType === 'correlation')
+    return { ...portfolioData, tradeOffs: updateList(portfolioData.tradeOffs) };
+  if (cardType === 'move')
+    return { ...portfolioData, recommendedMoves: updateList(portfolioData.recommendedMoves) };
+  if (cardType === 'output-candidate')
+    return { ...portfolioData, outputCandidates: updateList(portfolioData.outputCandidates) };
+  if (cardType === 'conclusion' && portfolioData.summary) {
+    return { ...portfolioData, summary: { ...portfolioData.summary, ...updates } };
+  }
+  return portfolioData;
+};
+
 const mergeToolAnswersWithInitialData = (
   toolType: ToolType,
   answers: Record<string, unknown>
@@ -1851,6 +2014,10 @@ const mergeToolAnswersWithInitialData = (
 
   if (toolType === 'growth-paths') {
     return normalizeGrowthPathsData(merged as GrowthPathsData);
+  }
+
+  if (toolType === 'portfolio-priority') {
+    return normalizePortfolioPriorityData(merged as PortfolioPriorityData);
   }
 
   return merged as any;
@@ -1979,6 +2146,42 @@ const computeStepStatusFromAnswers = (
       }
     }
 
+    if (toolType === 'portfolio-priority') {
+      const portfolioAnswers = normalizePortfolioPriorityData(answers as PortfolioPriorityData);
+
+      if (stepId === 'mission') {
+        return portfolioAnswers.context?.goal &&
+          portfolioAnswers.context?.scope &&
+          portfolioAnswers.context?.successSignal
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (portfolioAnswers.signals?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'items') {
+        return (portfolioAnswers.initiatives?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (portfolioAnswers.tradeOffs?.length || 0) > 0 ||
+          (portfolioAnswers.recommendedMoves?.length || 0) > 0 ||
+          (portfolioAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return portfolioAnswers.summary?.executiveSummary ||
+          (portfolioAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (portfolioAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
     // Context step (all tools)
     if (stepId === 'context') {
       if (toolType === 'market-forces') {
@@ -2019,13 +2222,6 @@ const computeStepStatusFromAnswers = (
       };
       const key = map[stepId];
       if (key) return (answers?.quadrants?.[key]?.length || 0) > 0 ? 'completed' : 'pending';
-    }
-
-    if (toolType === 'portfolio-priority') {
-      if (stepId === 'portfolio-items')
-        return (answers?.initiatives?.length || 0) > 0 ? 'completed' : 'pending';
-      if (stepId === 'portfolio-matrix')
-        return answers?.initiatives?.some((i: any) => i.category) ? 'completed' : 'pending';
     }
 
     if (toolType === 'risk-uncertainty') {
@@ -2147,6 +2343,17 @@ const normalizeSessionForRuntime = (session: ToolSession): ToolSession => {
       ...normalizedBase,
       inputData,
       steps: buildToolSteps('growth-paths', inputData),
+    };
+  }
+
+  if (session.toolType === 'portfolio-priority') {
+    const inputData = normalizePortfolioPriorityData(
+      normalizedBase.inputData as PortfolioPriorityData
+    );
+    return {
+      ...normalizedBase,
+      inputData,
+      steps: buildToolSteps('portfolio-priority', inputData),
     };
   }
 
@@ -2375,6 +2582,82 @@ export const useToolStore = create<ToolStoreState>()(
           }
         }
 
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+
+          if (stepDef.id === 'mission') {
+            return Boolean(
+              growthData.context?.goal &&
+                growthData.context?.scope &&
+                growthData.context?.successSignal
+            );
+          }
+
+          if (stepDef.id === 'input') {
+            return (growthData.signals?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'options') {
+            return Object.values(growthData.quadrants || {}).some(
+              (items) => (items?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (growthData.comparisons?.length || 0) > 0 ||
+              (growthData.recommendedMoves?.length || 0) > 0 ||
+              (growthData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              growthData.summary?.executiveSummary ||
+                (growthData.summary?.keyInsights?.length || 0) > 0 ||
+                (growthData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
+
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+
+          if (stepDef.id === 'mission') {
+            return Boolean(
+              portfolioData.context?.goal &&
+                portfolioData.context?.scope &&
+                portfolioData.context?.successSignal
+            );
+          }
+
+          if (stepDef.id === 'input') {
+            return (portfolioData.signals?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'items') {
+            return (portfolioData.initiatives?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (portfolioData.tradeOffs?.length || 0) > 0 ||
+              (portfolioData.recommendedMoves?.length || 0) > 0 ||
+              (portfolioData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              portfolioData.summary?.executiveSummary ||
+                (portfolioData.summary?.keyInsights?.length || 0) > 0 ||
+                (portfolioData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
+
         // Context step: check if required fields are filled
         if (stepDef.id === 'context') {
           const data = currentSession.inputData as
@@ -2441,12 +2724,6 @@ export const useToolStore = create<ToolStoreState>()(
           };
           const key = keyMap[stepDef.id];
           return growthData.quadrants[key].length > 0;
-        }
-
-        // Portfolio items step: require at least one initiative
-        if (stepDef.id === 'portfolio-items') {
-          const portfolioData = currentSession.inputData as PortfolioPriorityData;
-          return portfolioData.initiatives.length > 0;
         }
 
         // Risk & Uncertainty steps: require at least one item
@@ -2776,6 +3053,16 @@ export const useToolStore = create<ToolStoreState>()(
       acceptCard: (cardType, cardId) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            proposalStatus: 'accepted' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'growth-paths') {
           const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
           const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
@@ -2839,6 +3126,16 @@ export const useToolStore = create<ToolStoreState>()(
       rejectCard: (cardType, cardId) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            proposalStatus: 'rejected' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'growth-paths') {
           const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
           const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
@@ -2902,6 +3199,16 @@ export const useToolStore = create<ToolStoreState>()(
       commentOnCard: (cardType, cardId, comment) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            userComment: comment,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'growth-paths') {
           const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
           const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
@@ -2958,6 +3265,16 @@ export const useToolStore = create<ToolStoreState>()(
       markRethinking: (cardType, cardId) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            proposalStatus: 'rethinking' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'growth-paths') {
           const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
           const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
@@ -3023,6 +3340,17 @@ export const useToolStore = create<ToolStoreState>()(
       updateCardAfterRethink: (cardType, cardId, updates) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const updated = updatePortfolioProposalCard(portfolioData, cardType, cardId, {
+            ...updates,
+            proposalStatus: 'ai-proposed' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'growth-paths') {
           const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
           const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
@@ -3097,6 +3425,34 @@ export const useToolStore = create<ToolStoreState>()(
       acceptAllInPhase: (phaseId) => {
         const { currentSession } = get();
         if (!currentSession) return;
+        if (currentSession.toolType === 'portfolio-priority') {
+          const portfolioData = normalizePortfolioPriorityData(
+            currentSession.inputData as PortfolioPriorityData
+          );
+          const acceptAll = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.proposalStatus === 'ai-proposed'
+                ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+                : item
+            );
+          const updated = { ...portfolioData };
+          if (phaseId === 'input') updated.signals = acceptAll(portfolioData.signals);
+          else if (phaseId === 'items') updated.initiatives = acceptAll(portfolioData.initiatives);
+          else if (phaseId === 'insights') {
+            updated.tradeOffs = acceptAll(portfolioData.tradeOffs);
+            updated.recommendedMoves = acceptAll(portfolioData.recommendedMoves);
+          } else if (phaseId === 'outputs') {
+            if (updated.summary?.proposalStatus === 'ai-proposed') {
+              updated.summary = {
+                ...updated.summary,
+                proposalStatus: 'accepted' as ProposalStatus,
+              };
+            }
+            updated.outputCandidates = acceptAll(portfolioData.outputCandidates);
+          }
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
         if (currentSession.toolType === 'growth-paths') {
           const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
           const acceptAll = (arr: any[]) =>

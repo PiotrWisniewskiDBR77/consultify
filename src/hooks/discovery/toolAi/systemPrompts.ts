@@ -107,14 +107,16 @@ When generating initiatives, return JSON:
 const PORTFOLIO_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 
 You are guiding the user through a BCG-style portfolio prioritization.
-Push toward explicit trade-offs, sequencing, and what should not be prioritized.
+Push toward explicit trade-offs, sequencing, resource allocation, and what should not be prioritized.
 
 DIMENSIONS:
 - Market Growth (1-5)
 - Market Share (1-5)
+- Investment Level (1-5)
 
 Categories: star, cash-cow, question-mark, dog.
-Provide priority and rationale where relevant.`;
+Every AI-generated card is a proposal requiring user approval.
+When generating portfolio content, prefer JSON with signals, items, tradeOffs, moves, outputCandidates, summary, and initiatives.`;
 
 const RISK_SYSTEM_PROMPT = `${BASE_SYSTEM_PROMPT}${CONSULTING_TOOLS_STANDARD_PROMPT}
 

@@ -4514,3 +4514,1048 @@ Definition of Done:
 - **Brak obslugi bledow:** surowe `INTERNAL_ERROR` i `[object Object]` musza zostac zastapione czytelnymi komunikatami.
 - **Bezpieczenstwo:** API Keys, Webhooks, Backup i DR Test sa krytyczne operacyjnie. Ich niedostepnosc albo pozorne dzialanie jest ryzykiem P0.
 - **Brak testow:** trzeba dodac testy jednostkowe, integracyjne i e2e dla mutacji, bo obecny stan latwo regresuje.
+
+### 12J. Uzupelnienie audytu z pliku `audyt_connector_ops_governance_compliance.md`
+
+> Status: szczegolowe uzupelnienie do rozdzialu 12.
+> Zrodlo: `/Users/piotrwisniewski/Downloads/audyt_connector_ops_governance_compliance.md`.
+> Cel: zachowac dokladniejsza wersje raportu z mapowaniem plikow, endpointow, testow, DoD i kolejnosci napraw.
+
+#### Executive summary - wersja szczegolowa
+
+W audycie Connector Ops oraz Governance & Compliance zidentyfikowano duza liczbe funkcji niedokonczonych, pozornych albo niepodpietych do realnej warstwy backendowej.
+
+Najwazniejszy wniosek: oba moduly wygladaja jak zaawansowane panele administracyjne, ale wiele funkcji dziala tylko na poziomie UI. Czesc ekranow pokazuje dane zerowe, statyczne albo demonstracyjne. W wielu miejscach przyciski otwieraja modal, ale nie wykonuja zapisu. W innych miejscach akcje sa widoczne, lecz nie maja zauwazalnego efektu, nie pokazuja toastow, nie odswiezaja danych i nie obsluguja bledow w sposob czytelny.
+
+Najwieksze ryzyka:
+
+- `P0`: funkcje krytyczne pozorne: API Keys, Webhooks, Backup, Audit Timeline, Approvals, DSAR, planowanie audytow.
+- `P0/P1`: brak wiarygodnosci danych: `0`, `n/a`, `100%`, `0 ms`, `0 errors` moga wynikac z fallbackow.
+- `P1`: bledy obslugi danych: `INTERNAL_ERROR`, `[object Object]`, `Invalid Date`.
+- `P1`: brak refetchu po mutacjach.
+- `P1`: brak walidacji i toastow.
+- `P2`: placeholdery i UX, ktore sprawiaja wrazenie gotowych funkcji.
+
+Rekomendacja ogolna: przed dalszym rozwojem nalezy rozdzielic funkcje realnie dzialajace od demonstracyjnych. Funkcje bez backendu powinny zostac ukryte, oznaczone jako niedostepne albo zdegradowane do trybu read-only.
+
+#### Connector Ops - szczegolowe wymagane endpointy
+
+Health:
+
+- `GET /api/super-admin/connector-ops/health`
+- `GET /api/super-admin/connector-ops/health/services`
+- `GET /api/super-admin/connector-ops/metrics`
+- `POST /api/super-admin/connector-ops/alerts`
+
+Audit Log:
+
+- `GET /api/super-admin/connector-ops/audit-logs`
+- `GET /api/super-admin/connector-ops/audit-logs/analytics`
+- `GET /api/super-admin/connector-ops/audit-logs/export`
+
+Feature Flags:
+
+- `GET /api/super-admin/feature-flags`
+- `POST /api/super-admin/feature-flags`
+- `PATCH /api/super-admin/feature-flags/:id`
+- `DELETE /api/super-admin/feature-flags/:id`
+
+Integrations:
+
+- `GET /api/super-admin/integrations/connected`
+- `GET /api/super-admin/integrations/catalog`
+- `POST /api/super-admin/integrations`
+- `PATCH /api/super-admin/integrations/:id`
+- `DELETE /api/super-admin/integrations/:id`
+- `GET /api/super-admin/webhooks`
+- `POST /api/super-admin/webhooks`
+- `PATCH /api/super-admin/webhooks/:id`
+- `POST /api/super-admin/webhooks/:id/test`
+- `DELETE /api/super-admin/webhooks/:id`
+
+Security:
+
+- `GET /api/super-admin/connector-ops/security/events`
+- `GET /api/super-admin/connector-ops/security/ip-rules`
+- `POST /api/super-admin/connector-ops/security/ip-rules`
+- `DELETE /api/super-admin/connector-ops/security/ip-rules/:id`
+- `GET /api/super-admin/connector-ops/security/policies`
+- `PATCH /api/super-admin/connector-ops/security/policies/:id`
+
+Configuration:
+
+- `GET /api/super-admin/connector-ops/configurations`
+- `POST /api/super-admin/connector-ops/configurations`
+- `PATCH /api/super-admin/connector-ops/configurations/:id`
+- `DELETE /api/super-admin/connector-ops/configurations/:id`
+
+Analytics:
+
+- `GET /api/super-admin/connector-ops/analytics`
+- `POST /api/super-admin/connector-ops/reports/generate`
+- `POST /api/super-admin/connector-ops/reports/schedule`
+- `GET /api/super-admin/connector-ops/reports/scheduled`
+
+Backup:
+
+- `GET /api/super-admin/connector-ops/backups`
+- `POST /api/super-admin/connector-ops/backups`
+- `POST /api/super-admin/connector-ops/backups/:id/restore`
+- `GET /api/super-admin/connector-ops/backup-schedules`
+- `POST /api/super-admin/connector-ops/backup-schedules`
+- `PATCH /api/super-admin/connector-ops/backup-settings`
+- `POST /api/super-admin/connector-ops/dr-tests`
+
+API Keys:
+
+- `GET /api/super-admin/api-keys`
+- `POST /api/super-admin/api-keys`
+- `POST /api/super-admin/api-keys/:id/revoke`
+- `POST /api/super-admin/api-keys/:id/rotate`
+- `GET /api/super-admin/api-keys/usage`
+
+#### Connector Ops - dodatkowe rekomendacje techniczne
+
+Health:
+
+- wprowadzic strukture `ConnectorHealthSummary`;
+- dodac `lastCheckedAt`;
+- pokazac osobne stany `loading`, `error`, `empty`, `degraded`, `healthy`;
+- alerty zapisywac w backendzie i po zapisie odswiezac liste.
+
+Audit Log:
+
+- zaimplementowac realne logowanie akcji Connector Ops;
+- dodac backendowa paginacje i filtry;
+- dodac drawer szczegolow rekordu;
+- eksport powinien zwracac plik CSV/JSON/PDF i pokazywac toast.
+
+Feature Flags:
+
+- dodac pola `environment`, `scope`, `owner`, `description`, `defaultValue`;
+- po zmianie flagi wymuszac refetch;
+- dodac audit log dla kazdej zmiany flagi.
+
+Integrations:
+
+- zdefiniowac modele `IntegrationDefinition` i `ConnectedIntegration`;
+- dodac realny proces connect/configure;
+- dodac CRUD webhookow;
+- dodac test webhooka z HTTP status, latency i response;
+- dodac statusy `connected`, `degraded`, `failed`, `pending`, `disabled`;
+- kazda akcja ma trafic do audit logu.
+
+Security:
+
+- walidowac CIDR/IP;
+- dodac ostrzezenie przy regule mogacej zablokowac admina;
+- dodac confirm dialog przy usuwaniu reguly;
+- polityki security oznaczyc jako read-only, jesli nie maja realnego wplywu;
+- kazda zmiana security musi zapisac audit log.
+
+Configuration:
+
+- wprowadzic model `ConnectorConfiguration`;
+- dodac rozroznienie srodowisk `development`, `staging`, `production`;
+- dodac walidacje klucza i typu wartosci;
+- kazda zmiana powinna byc audytowana.
+
+Analytics:
+
+- raporty generowac jako job asynchroniczny;
+- dodac statusy `queued`, `running`, `completed`, `failed`;
+- po zakonczeniu udostepniac link do pobrania;
+- dodac historie raportow.
+
+Backup:
+
+- traktowac jako funkcje krytyczna;
+- do czasu realnej implementacji ukryc `Create Backup`, `Restore`, `DR Test` albo oznaczyc jako niedostepne;
+- wdrozyc backend jobowy;
+- dodac statusy, logi, historie i audit.
+
+API Keys:
+
+- nie pokazywac jako gotowej funkcji, jesli create/revoke/rotate nie dziala;
+- sekret pokazywac tylko raz po utworzeniu;
+- przechowywac tylko hash sekretu;
+- dodac revoke/rotate z confirm dialogiem;
+- kazda operacja musi miec audit log.
+
+#### Governance & Compliance - szczegolowe wymagane endpointy
+
+Overview:
+
+- `GET /api/super-admin/governance/overview`
+- `GET /api/super-admin/governance/operator-timeline`
+- `GET /api/super-admin/governance/compliance-posture`
+
+Audit Timeline:
+
+- `GET /api/super-admin/governance/audit-events`
+- `GET /api/super-admin/governance/audit-events/:id`
+- `GET /api/super-admin/governance/audit-events/export`
+
+Approvals:
+
+- `GET /api/super-admin/governance/approvals`
+- `POST /api/super-admin/governance/approval-workflows`
+- `GET /api/super-admin/governance/approval-workflows/:id`
+- `POST /api/super-admin/governance/approvals/:id/approve`
+- `POST /api/super-admin/governance/approvals/:id/reject`
+- `POST /api/super-admin/governance/approvals/:id/escalate`
+
+Compliance:
+
+- `GET /api/super-admin/governance/compliance/frameworks`
+- `GET /api/super-admin/governance/compliance/frameworks/:id`
+- `PATCH /api/super-admin/governance/compliance/controls/:id`
+- `GET /api/super-admin/governance/dsar`
+- `POST /api/super-admin/governance/dsar`
+- `GET /api/super-admin/governance/audits`
+- `POST /api/super-admin/governance/audits`
+- `GET /api/super-admin/governance/processing-records`
+- `POST /api/super-admin/governance/processing-records`
+
+Exports & Retention:
+
+- `GET /api/super-admin/governance/exports`
+- `POST /api/super-admin/governance/exports`
+- `GET /api/super-admin/governance/exports/:id/download`
+- `GET /api/super-admin/governance/retention-policies`
+- `POST /api/super-admin/governance/retention-policies`
+- `PATCH /api/super-admin/governance/retention-policies/:id`
+- `DELETE /api/super-admin/governance/retention-policies/:id`
+
+Legal & Policies:
+
+- `GET /api/super-admin/governance/legal-policies`
+- `POST /api/super-admin/governance/legal-policies`
+- `PATCH /api/super-admin/governance/legal-policies/:id`
+- `POST /api/super-admin/governance/legal-policies/:id/publish`
+- `GET /api/super-admin/governance/legal-policies/:id/versions`
+- `POST /api/super-admin/governance/legal-policies/:id/rollback`
+
+#### Governance & Compliance - dodatkowe rekomendacje techniczne
+
+Overview:
+
+- kazda karta musi miec zrodlo danych, definicje i link do szczegolowego widoku;
+- `0` ma byc pokazywane tylko jako swiadoma odpowiedz backendu, nigdy jako fallback po bledzie;
+- dodac `lastComputedAt` dla posture.
+
+Audit Timeline:
+
+- naprawic kontrakt backendu;
+- daty zwracac jako ISO 8601;
+- frontend nie moze renderowac `Invalid Date`, powinien pokazac `-` i zalogowac problem;
+- dodac drawer szczegolow;
+- dodac paginacje i filtry po typie akcji, uzytkowniku, module, dacie i ryzyku.
+
+Approvals:
+
+- zmapowac obiekt bledu do tekstu zamiast `[object Object]`;
+- workflowy zatwierdzen musza byc realnym modelem backendowym;
+- decyzje approve/reject/escalate musza tworzyc rekord audytowy;
+- po kazdej decyzji kolejka musi zostac odswiezona.
+
+Compliance:
+
+- DSAR i Audits musza byc pelnymi CRUD-ami, nie modalami bez akcji;
+- controls powinny miec status, ownera, due date i remediation action;
+- Compliance Posture musi miec transparentna kalkulacje;
+- kazda zmiana w compliance musi trafiac do audit timeline.
+
+Exports & Retention:
+
+- dodac jawny widok albo usunac z nawigacji, jesli nie jest gotowy;
+- eksporty wykonywac asynchronicznie jako joby;
+- retention policies powinny miec symulacje wplywu przed aktywacja.
+
+Legal & Policies:
+
+- wdrozyc jako pelny modul wersjonowania dokumentow;
+- publikacja powinna wymagac approval flow;
+- kazda publikacja musi tworzyc wpis w audit timeline.
+
+#### Szczegolowy plan naprawy - Connector Ops
+
+`CO-001 - Integrations Hub`
+
+- Pliki: `IntegrationsHub.tsx`, `IntegrationCatalog.tsx`, `ConnectedIntegrations.tsx`, `Webhooks.tsx`, `AddIntegrationModal.tsx`, `CreateWebhookModal.tsx`, `src/services/api.ts`.
+- DoD: katalog laduje realne definicje, `Connect` zapisuje integracje, `Connected` pokazuje realny stan, webhook mozna utworzyc/testowac/edytowac/usunac, po kazdej mutacji jest refetch, toast i audit log.
+- Testy: e2e connect integration, e2e create/test/delete webhook, unit walidacja URL, integration backend zapisuje integracje.
+
+`CO-002 - API Keys`
+
+- Pliki: `ApiKeys.tsx`, `CreateApiKeyModal.tsx`, `ApiKeyTable.tsx`, `ApiUsageAnalytics.tsx`, `src/services/api.ts`.
+- DoD: lista laduje backend, create wymaga organizacji i scope, sekret widoczny tylko raz, copy/revoke/rotate dzialaja, usage analytics pokazuje realne uzycie, operacje sa audytowane.
+- Testy: e2e create key and copy secret, e2e revoke key, unit scope validation, security test secret nie wraca po refreshu.
+
+`CO-003 - Backup & Recovery`
+
+- Pliki: `Backup.tsx`, `CreateBackupModal.tsx`, `BackupSettings.tsx`, `DRTesting.tsx`, `src/services/api.ts`.
+- DoD: full/incremental backup tworzy job, UI pokazuje status, lista odswieza sie po zakonczeniu, restore wymaga confirm dialogu, DR Test zapisuje wynik, operacje sa audytowane.
+- Testy: integration create backup job, e2e start backup and see status, e2e run DR test, unit retencja nie moze byc ujemna.
+
+`CO-004 - Feature Flags`
+
+- Pliki: `FeatureFlags.tsx`, `CreateFlagModal.tsx`, `FeatureFlagTable.tsx`, `src/services/api.ts`.
+- DoD: mozna utworzyc flage, zmienic status, usunac, lista odswieza sie po mutacji, duplikat klucza jest blokowany.
+- Testy: unit flag key validation, e2e create/toggle/delete, integration backend blokuje duplikaty.
+
+`CO-005 - Centralny error/loading/toast/refetch pattern`
+
+- Pliki: `src/services/api.ts`, `src/hooks/useApiMutation.ts`, `src/components/common/EmptyState.tsx`, `src/components/common/ErrorState.tsx`, `src/components/common/LoadingState.tsx`.
+- DoD: kazde pobranie ma loading/error/empty/success, kazda mutacja ma toast i refetch albo lokalny update, bledy nie pokazuja `[object Object]`.
+- Testy: unit error mapper, component empty state, component loading state, e2e mutacja pokazuje toast i aktualizuje liste.
+
+#### Szczegolowy plan naprawy - Governance & Compliance
+
+`GC-001 - Audit Timeline`
+
+- Pliki: `AuditTimeline.tsx`, `AuditTimelineTable.tsx`, `AuditTimelineFilters.tsx`, `AuditEventDetailsDrawer.tsx`, `src/services/api.ts`.
+- DoD: endpoint zwraca daty ISO, UI nie pokazuje `Invalid Date`, filtry i paginacja dzialaja, klikniecie rekordu otwiera szczegoly, bledy sa czytelne.
+- Testy: unit date parser, integration audit events contract, e2e filter/open details, e2e backend error shows friendly message.
+
+`GC-002 - Approvals`
+
+- Pliki: `Approvals.tsx`, `ApprovalQueue.tsx`, `CreateWorkflowModal.tsx`, `ApprovalDetailsDrawer.tsx`, `src/services/api.ts`.
+- DoD: nie ma `[object Object]`, workflow mozna utworzyc, queue pokazuje realne requesty, approve/reject/escalate zmienia status, lista sie odswieza, decyzja trafia do audit timeline.
+- Testy: e2e create workflow, e2e approve request, e2e reject request with reason, unit error mapper.
+
+`GC-003 - Compliance DSAR`
+
+- Pliki: `Compliance.tsx`, `DsarRequests.tsx`, `CreateDsarRequestModal.tsx`, `src/services/api.ts`.
+- DoD: `New Request` tworzy DSAR, email jest walidowany, DSAR pojawia sie na liscie, status mozna zmieniac, kazda zmiana ma audit log.
+- Testy: unit email validation, e2e create DSAR, e2e update status, integration DSAR zapisuje owner/status/due date.
+
+`GC-004 - Compliance Audits`
+
+- Pliki: `Compliance.tsx`, `Audits.tsx`, `ScheduleAuditModal.tsx`, `src/services/api.ts`.
+- DoD: `Schedule Audit` zapisuje audyt, lista pokazuje audyty, audyt ma framework/ownera/date/status, po zapisie jest toast i refetch.
+- Testy: e2e schedule audit, unit required fields validation, integration audit appears in list.
+
+`GC-005 - Compliance Controls i Remediation`
+
+- Pliki: `ComplianceControls.tsx`, `ComplianceControlDetailsDrawer.tsx`, `RemediationActionModal.tsx`, `src/services/api.ts`.
+- DoD: edit control dziala, status kontroli da sie zmienic, mozna dodac remediation action, posture aktualizuje sie po zmianie, zmiany trafiaja do audit timeline.
+- Testy: e2e edit control, e2e create remediation action, integration posture recalculates.
+
+`GC-006 - Exports & Retention`
+
+- Pliki: `ExportsRetention.tsx`, `CreateExportModal.tsx`, `RetentionPolicies.tsx`, `src/services/api.ts`.
+- DoD: mozna utworzyc eksport jako job, eksport ma status i plik do pobrania, mozna utworzyc polityke retencji, retention policy ma preview wplywu, operacje sa audytowane.
+- Testy: e2e create export and download, e2e create retention policy, unit retention period validation.
+
+`GC-007 - Legal & Policies`
+
+- Pliki: `LegalPolicies.tsx`, `PoliciesTable.tsx`, `CreatePolicyModal.tsx`, `PolicyVersionHistory.tsx`, `src/services/api.ts`.
+- DoD: mozna utworzyc polityke jako draft, edytowac draft, opublikowac wersje, historia wersji jest widoczna, publikacja wymaga approval albo confirm dialogu, publikacja trafia do audit timeline.
+- Testy: e2e create/edit/publish policy, integration version history, unit cannot publish empty policy.
+
+#### Funkcje do ukrycia albo zdegradowania do czasu implementacji
+
+1. Connector Ops / API Keys: nie pokazywac jako gotowej funkcji, jesli create/revoke/rotate nie dziala.
+2. Connector Ops / Backup & Recovery: ukryc `Create Backup`, `Restore`, `DR Test`, jesli backend nie wykonuje realnych jobow.
+3. Connector Ops / Webhooks: ukryc testowanie i tworzenie, jesli system ich nie zapisuje i nie wykonuje test calla.
+4. Governance / Approvals: ukryc approve/reject/escalate, jesli nie zapisuja decyzji i audit trail.
+5. Governance / Audit Timeline: do czasu naprawy `INTERNAL_ERROR` i `Invalid Date` pokazywac prosty error state zamiast tabeli z blednymi danymi.
+6. Governance / DSAR: ukryc `New Request`, jesli zgloszenie nie zapisuje sie w backendzie.
+7. Governance / Legal Policies: jesli nie ma wersjonowania i publikacji, oznaczyc jako `read-only / planned`.
+
+#### Decyzje produktowe do podjecia
+
+1. Czy Super Admin Console ma pokazywac moduly niedokonczone jako zapowiedz, czy tylko funkcje dzialajace?
+2. Czy Connector Ops ma byc operacyjnym centrum integracji, czy tylko panelem obserwacyjnym?
+3. Czy Governance & Compliance ma byc realnym systemem dowodowym/audytowym, czy tylko dashboardem statusow?
+4. Czy wszystkie mutacje administracyjne maja wymagac approval flow?
+5. Czy backup, API keys, webhooks i compliance actions maja wspolny audit envelope?
+6. Czy raporty i backupy maja byc wykonywane jako joby asynchroniczne z kolejka?
+7. Czy retention policies maja dzialac realnie na danych produkcyjnych, czy tylko jako dokumentacja polityk?
+
+#### Minimalny standard techniczny dla obu modulow
+
+Kazda funkcja w Connector Ops oraz Governance & Compliance powinna spelniac minimum:
+
+1. Frontend: widok, formularz, walidacja, loading, empty, error, success.
+2. API service: metoda w `src/services/api.ts` z typowanym request/response.
+3. Backend: endpoint, walidacja, zapis, autoryzacja, spojny kontrakt.
+4. Audit: kazda mutacja zapisuje audyt.
+5. Toast: kazda mutacja pokazuje sukces albo blad.
+6. Refetch: po kazdej mutacji lista/karta aktualizuje stan.
+7. Tests: unit + integration + minimum jeden test e2e dla krytycznej sciezki.
+8. Security: API keys, backup, webhooks, approvals i compliance musza miec osobne zabezpieczenia i audyt.
+
+#### Rekomendowana kolejnosc naprawy
+
+1. `P0 / API Keys` - bezpieczenstwo i wiarygodnosc systemu.
+2. `P0 / Backup & Recovery` - krytyczna funkcja operacyjna.
+3. `P0 / Audit Timeline` - bez audytu nie ma Governance.
+4. `P0 / Approvals` - bez decyzji i sladu zatwierdzen Governance jest atrapa.
+5. `P0 / Integrations & Webhooks` - rdzen Connector Ops.
+6. `P0 / DSAR & Audits` - funkcje compliance musza zapisywac dane.
+7. `P1 / Feature Flags, Configuration, Security Rules` - wazne funkcje administracyjne.
+8. `P1 / Analytics & Reporting` - raportowanie po naprawie zrodel danych.
+9. `P2 / UX cleanup, placeholder cleanup, tlumaczenia, tooltipy`.
+
+## 13. Audyt modulu Platform Security - Agent
+
+> Status: audyt manualny modulu Platform Security z perspektywy roli agent / zwykly uzytkownik.
+> Zrodlo: `/Users/piotrwisniewski/Downloads/agent_module_security_audit.md`.
+> Srodowisko: `https://demo.consultify.ai`.
+> Cel: sprawdzic, czy zwykly uzytkownik ma dostep do analogicznego panelu security oraz ktore funkcje dzialaja.
+
+### 13A. Kontekst audytu
+
+Raport powstal po audytach wersji `superadmin` i `admin`. Celem bylo zweryfikowanie, czy zwykly uzytkownik lub agent ma dostep do analogicznego panelu Platform Security oraz jaki jest realny zakres funkcji w tej roli.
+
+Testy zostaly wykonane na `https://demo.consultify.ai`.
+
+### 13B. Dostep do modulu
+
+Wynik audytu dostepu:
+
+1. Po wylogowaniu z superadmina probowano przejsc pod `/login`. Strona logowania byla pusta, bez formularza logowania. Po odczekaniu kilku minut interfejs nadal sie nie zaladowal.
+2. Proba wejscia na `demo.consultify.ai` zamiast `.../login` rowniez konczyla sie czarnym ekranem albo nieskonczonym ladowaniem.
+3. Poniewaz nie udalo sie uzyskac widoku logowania, nie bylo mozliwe sprawdzenie, jak wyglada modul Platform Security dla roli agent / uzytkownik.
+
+Wniosek: panel Platform Security dla roli agent nie zostal potwierdzony. Mozliwe, ze nie istnieje, nie jest udostepniony tej roli albo jest blokowany przez problem z logowaniem.
+
+Z braku mozliwosci zalogowania sie do roli agent kontynuowano analize na podstawie wczesniejszych audytow wersji superadmin. Zidentyfikowane problemy najprawdopodobniej dotycza rowniez obszarow agent/admin, jesli wspoldziela te same komponenty albo backend.
+
+### 13C. Potencjalne funkcje modulu agent
+
+Na podstawie wersji superadmin mozna zalozyc, ze wersja agent moglaby zawierac uproszczone wersje nastepujacych funkcji.
+
+#### Podstawowa postawa bezpieczenstwa
+
+Potencjalny zakres:
+
+- podglad liczby aktywnych sesji uprzywilejowanych;
+- liczba krytycznych incydentow;
+- status health planu, np. `operational`.
+
+Wersja superadmin pokazuje te metryki jako widok tylko do odczytu.
+
+#### MFA / SSO posture
+
+Potencjalny zakres:
+
+- ocena, czy organizacja wlaczyla MFA;
+- ocena, czy organizacja wlaczyla SSO;
+- karta stanu security controls.
+
+Wersja superadmin ma kafle `MFA posture` i `SSO posture`, ale bez pelnej konfiguracji polityk z poziomu tego widoku.
+
+#### Evidence checklist
+
+Potencjalny zakres:
+
+- lista kontrolna pokazujaca, jakie dowody sa zbierane;
+- np. komunikat typu `Privileged activity is visible through admin session stats`.
+
+Ten typ sekcji powinien byc wyraznie oznaczony jako read-only.
+
+#### Podglad incydentow i zagrozen
+
+Potencjalny zakres:
+
+- lista wlasnych incydentow security;
+- zgloszenia DLP dotyczace uzytkownika;
+- incydenty dotyczace konta.
+
+Ryzyko: w wersji superadmin moduly `Incidents` i `Threats` nie dzialaly poprawnie, zwracaly bledy lub nie zapisywaly zmian. Jesli agent korzysta z tych samych endpointow, funkcjonalnosc prawdopodobnie tez jest niekompletna.
+
+### 13D. Ogolne problemy zidentyfikowane w wersji superadmin
+
+Poniewaz modul agent nie wczytal sie, ponizsze problemy zostaly przeniesione z audytu Platform Security w wersji superadmin jako ryzyka wspoldzielone.
+
+#### Brak zapisu ustawien i brak komunikatow sukcesu
+
+W wielu miejscach mozna wprowadzic dane, ale po `Save` nie ma trwalego efektu. Dotyczy to m.in.:
+
+- konfiguracji SSO;
+- SCIM;
+- polityk;
+- DLP;
+- ograniczen budzetu;
+- incydentow;
+- zagrozen.
+
+Przyklady:
+
+- zapis konfiguracji SSO konczyl sie komunikatem `Failed to save configuration`;
+- utworzenie polityki DLP nie powodowalo pojawienia sie jej na liscie.
+
+Wymagane dzialanie:
+
+- kazdy formularz musi miec realny endpoint zapisu;
+- kazda mutacja musi miec toast sukcesu albo bledu;
+- po zapisie musi nastapic refetch albo lokalny update stanu.
+
+#### Bledy systemowe
+
+Wiele stron zwraca surowe bledy:
+
+- `INTERNAL_ERROR`;
+- `[object Object]`;
+- brak szczegolow dla uzytkownika.
+
+Przyklady:
+
+- `Admin Sessions`: `INTERNAL_ERROR` przy odswiezaniu i brak danych;
+- `Workflows`: po utworzeniu approval workflow pojawia sie `[object Object]`, a workflow nie jest tworzony;
+- `Incidents` i `Threats`: przy ladowaniu danych pojawia sie `INTERNAL_ERROR`, a zgloszenie incydentu albo zagrozenia nic nie zmienia.
+
+Wymagane dzialanie:
+
+- opakowac bledy backendu w czytelny komunikat;
+- nie renderowac surowego JSON ani `[object Object]`;
+- logowac techniczne szczegoly po stronie backendu;
+- pokazywac userowi konkretna informacje, co moze zrobic.
+
+#### Brak danych i bledne dane
+
+Wiele tabel i licznikow pokazuje:
+
+- `0`;
+- `n/a`;
+- puste listy;
+- bledne daty.
+
+Dotyczy to m.in.:
+
+- Audit Logs;
+- Audit Events;
+- Policies;
+- Admin Sessions;
+- DLP;
+- Budgets.
+
+W module `Audit Events` widoczna byla lista 35 zdarzen, ale daty mialy wartosc `Invalid Date`, a filtr zasobow nie dzialal.
+
+Wymagane dzialanie:
+
+- rozroznic `no data`, `loading`, `error`, `filtered empty`, `degraded`;
+- naprawic parsowanie dat;
+- dodac walidacje danych z backendu;
+- nie pokazywac pustych zer jako prawdziwych metryk bez wyjasnienia.
+
+#### Nieaktywne przyciski
+
+W wielu miejscach przyciski nie wywoluja akcji:
+
+- `Add`;
+- `Generate`;
+- `Apply`;
+- generowanie kodu w SSO/SCIM;
+- tworzenie access codes;
+- generowanie API tokens.
+
+Wymagane dzialanie:
+
+- kazdy widoczny przycisk musi miec dzialanie;
+- jesli funkcja nie jest gotowa, przycisk powinien byc disabled z wyjasnieniem albo ukryty;
+- wszystkie mutacje musza miec test smoke.
+
+#### Brak spojnych tlumaczen
+
+Interfejs miesza jezyk angielski i polski. Przyklady:
+
+- w Health Monitoring statusy providerow `Nieznany` sa obok angielskich etykiet typu `Provider`;
+- podobne mieszanie wystepuje w `Threats` i `Incidents`.
+
+Wymagane dzialanie:
+
+- wybrac jeden jezyk bazowy dla Super Admin albo wdrozyc pelne i18n;
+- usunac surowe klucze i mieszane fallbacki;
+- tlumaczyc statusy i etykiety konsekwentnie.
+
+#### Zbyt duzy poziomy scroll
+
+W wielu miejscach, szczegolnie przy kaflach i tabach, konieczne jest przewijanie poziome. Utrudnia to korzystanie z panelu security.
+
+Wymagane dzialanie:
+
+- poprawic responsywnosc tabow;
+- zawijac karty albo grupowac sekcje;
+- unikac ukrywania krytycznych akcji poza widocznym obszarem.
+
+### 13E. Rekomendacje dla modulu agent
+
+#### 1. Naprawic logowanie
+
+Formularz logowania musi ladowac sie zawsze. Obecnie `demo.consultify.ai/login` zwraca pusta strone, co uniemozliwia dostep do paneli agentow.
+
+Definition of Done:
+
+- `/login` renderuje formularz;
+- bledy ladowania aplikacji sa widoczne;
+- user moze zalogowac sie rola agent;
+- istnieje smoke test dla login page.
+
+#### 2. Przemyslec zakres funkcji dla roli agent
+
+Jesli uzytkownik koncowy ma miec tylko wglad w incydenty i swoj stan MFA/SSO, panel powinien byc uproszczony.
+
+Sekcje, ktore zwykle nie maja sensu dla agenta:
+
+- SCIM configuration;
+- SSO configuration;
+- Roles;
+- Permissions;
+- global security policy;
+- tenant-wide DLP configuration.
+
+Rekomendacja:
+
+- ukryc konfiguracje administracyjne;
+- pokazac agentowi tylko informacyjne karty i akcje, ktore moze realnie wykonac;
+- jasno oznaczyc read-only posture i evidence.
+
+#### 3. Zapewnic pelna obsluge zapisu
+
+W miejscach, gdzie agent albo admin moze wprowadzac dane, backend musi zapisywac dane trwale.
+
+Dotyczy to:
+
+- raportu incydentu;
+- zgloszenia zagrozenia;
+- edycji polityki;
+- zgloszenia DLP;
+- komentarzy i statusow incydentow.
+
+Definition of Done:
+
+- `Save/Create/Submit` wysyla request;
+- backend waliduje payload;
+- frontend pokazuje toast;
+- po refreshu zmiana zostaje;
+- istnieje test mutacji i test bledu.
+
+#### 4. Poprawic obsluge bledow
+
+Bledy typu `INTERNAL_ERROR` i `[object Object]` powinny byc przechwytywane i zamieniane na czytelny komunikat.
+
+Przykladowy komunikat:
+
+```text
+Wystapil blad zapisu danych. Sprobuj ponownie pozniej.
+```
+
+Wersja techniczna bledu powinna trafic do logow serwera albo konsoli developerskiej, nie bezposrednio do UI.
+
+#### 5. Uspojnic jezyk
+
+Interfejs powinien byc w calosci po polsku albo po angielsku. Jesli ma dzialac wersja PL, wszystkie karty, etykiety i statusy powinny byc przetlumaczone konsekwentnie.
+
+#### 6. Odróżnic read-only od konfiguracji
+
+Sekcje tylko informacyjne, np. `Evidence checklist`, powinny byc wyraznie oznaczone jako read-only. Sekcje z formularzami powinny zapisywac dane i odswiezac widok.
+
+Minimalny standard:
+
+- read-only badge;
+- opis zrodla danych;
+- timestamp ostatniego odczytu;
+- brak aktywnych przyciskow `Save`, jesli zapis nie istnieje.
+
+#### 7. Poprawic responsywnosc
+
+Nalezy ograniczyc koniecznosc przewijania poziomego i dopasowac karty oraz zakladki do szerokosci ekranu.
+
+### 13F. P0 / P1 / P2 dla Platform Security Agent
+
+#### P0
+
+- Login page `/login` jest pusty albo laduje sie w nieskonczonosc.
+- Nie da sie zweryfikowac panelu agent, bo rola agent nie jest osiagalna.
+- Formularze security w wersji superadmin czesto nie zapisuja danych.
+- Incidents i Threats zwracaja `INTERNAL_ERROR` albo nie zmieniaja stanu.
+- Approval workflows zwracaja `[object Object]` i nie tworza workflowow.
+
+#### P1
+
+- Brak toastow sukcesu/bledu.
+- Brak refetchu po mutacjach.
+- `Invalid Date` w audit events.
+- Puste listy bez wyjasnienia.
+- Nieaktywne przyciski `Add`, `Generate`, `Apply`.
+- Brak rozroznienia read-only od konfiguracji.
+
+#### P2
+
+- Mieszanie PL/EN w statusach i etykietach.
+- Nadmierny poziomy scroll.
+- Brak spójnych empty states.
+- Brak opisow zrodel danych i timestampow.
+
+### 13G. Proponowany plan naprawy
+
+#### PSA-1. Naprawa dostepu i login page
+
+Pliki startowe:
+
+- routing frontendowy logowania;
+- komponent login page;
+- auth middleware;
+- konfiguracja demo/staging.
+
+Definition of Done:
+
+- `/login` zawsze renderuje formularz;
+- bledy inicjalizacji aplikacji sa widoczne;
+- mozna zalogowac sie testowym agentem;
+- smoke test potwierdza render login page.
+
+#### PSA-2. Ustalenie zakresu Platform Security dla roli agent
+
+Definition of Done:
+
+- spisana jest macierz uprawnien agent/admin/superadmin;
+- agent widzi tylko dozwolone sekcje;
+- konfiguracje admin-only sa ukryte;
+- read-only panele maja opis i badge.
+
+#### PSA-3. Incident and Threat reporting
+
+Definition of Done:
+
+- agent moze zglosic incydent albo zagrozenie;
+- backend zapisuje rekord;
+- lista odswieza sie po zgloszeniu;
+- status jest widoczny po refreshu;
+- bledy sa czytelne.
+
+#### PSA-4. Security posture read-only dashboard
+
+Definition of Done:
+
+- agent widzi MFA/SSO posture;
+- widzi evidence checklist;
+- dane maja timestamp i zrodlo;
+- brak danych nie wyglada jak blad ani jak falszywa metryka.
+
+#### PSA-5. Error handling and i18n cleanup
+
+Definition of Done:
+
+- `INTERNAL_ERROR` i `[object Object]` nie trafiaja do UI;
+- statusy sa w jednym jezyku;
+- wszystkie formularze maja walidacje;
+- kazda mutacja ma toast.
+
+### 13H. Podsumowanie
+
+Modul Platform Security w wersji superadmin ma potencjal, ale w praktyce jest w duzej mierze makieta. Wiele funkcji nie dziala poprawnie, formularze nie zapisuja danych, a liczne bledy systemowe uniemozliwiaja korzystanie.
+
+Na podstawie testow mozna wnioskowac, ze wersja agent, o ile istnieje, jest niedostepna przez problem z logowaniem albo dziedziczy te same problemy z backendem i UI.
+
+Aby modul mogl zostac wykorzystany przez uzytkownikow koncowych, nalezy najpierw:
+
+1. naprawic logowanie;
+2. ustalic realny zakres funkcji roli agent;
+3. podlaczyc backend mutacji security;
+4. zapewnic trwaly zapis ustawien i zgloszen;
+5. ujednolicic obsluge bledow;
+6. dopiero potem rozszerzac funkcjonalnosci przenoszone z wersji superadmin.
+
+## 14. Audyt Identity / Access / Settings / Security w Consultify
+
+> Status: audyt manualny przekrojowy dla identity, access, settings i security.
+> Srodowisko: `https://demo.consultify.ai`.
+> Role testowe: superadmin, admin/owner, zwykly uzytkownik / agent.
+> Cel: sprawdzic kompletność przeplywow administracyjnych przed budowa planu napraw.
+
+### 14A. Executive summary
+
+Testy manualne objely trzy role: superadmin, admin/owner i zwykly uzytkownik / agent. Celem bylo sprawdzenie kompletności przeplywow administracyjnych w obszarach loginu/sesji, zarzadzania uzytkownikami i organizacjami, ustawien aplikacji oraz bezpieczenstwa.
+
+Wyniki wskazuja, ze moduly settings i security sa niedokonczone. Wiekszosc formularzy nie zapisuje danych, wielu funkcji brakuje, a liczne ekrany wyswietlaja `INTERNAL_ERROR`, `[object Object]` albo pozostaja puste.
+
+Superadmin widzi pelne menu, admin widzi tylko wlasna organizacje, a agent ma dostep jedynie do podstawowych funkcji. Kluczowe bledy `P0` to:
+
+- brak dzialajacego logowania dla konta zwyklego uzytkownika / agenta;
+- brak mozliwosci tworzenia i edycji uzytkownikow;
+- brak mozliwosci tworzenia i edycji organizacji;
+- brak zapisu polityk bezpieczenstwa;
+- brak trwalego zapisu ustawien user/org/security.
+
+### 14B. Macierz rol i dostepu
+
+| Modul / akcja | Superadmin | Admin / owner | User / agent | Priorytet / uwagi |
+|---|---|---|---|---|
+| Logowanie / sesja | Dostep do loginu, sesja zachowana po refreshu, logout dziala. | Login wymaga dedykowanego linku; sesja nie zawsze sie laduje, czasem przekierowuje na strone marketingowa. | Nie udalo sie zalogowac; formularz loginu sie nie laduje albo po zalogowaniu wraca na marketing page. | P0 |
+| Podglad tenantow | Widzi wszystkie organizacje i uzytkownikow. | Widzi tylko wlasna organizacje, ale wiele akcji nie dziala. | Brak dostepu. | - |
+| Zarzadzanie uzytkownikami | Nie dziala Add member, generate access, zmiana roli/statusu; brak toastow. | Podobnie jak superadmin; nie mozna utworzyc ani edytowac uzytkownika. | Brak dostepu. | P0 |
+| Ustawienia organizacji / tenant | Plan, status, rabat widoczne, ale zapis wywoluje `INTERNAL_ERROR` albo nie zapisuje. | Widzi swoje dane; edycja nie dziala. | Brak. | P1 |
+| Pending access requests | Lista widoczna, ale akcje approve/reject sa niedostepne albo nieskuteczne. | Widzi tylko swoje pending requests; brak akcji. | Brak. | P1 |
+| Ustawienia uzytkownika | Settings ma wiele zakladek, ale zmiany nie zapisuja sie po refreshu. | Podobnie. | Widzi tylko podstawowe ustawienia albo czesc zakladek jest niedostepna. | P0 |
+| MFA / SSO / SCIM | Panele istnieja, ale konfiguracja nie zapisuje sie; `Failed to save configuration`. | Brak dostepu do globalnej konfiguracji. | Brak dostepu. | P0 |
+| Password policy / IP whitelist | Pola edytowalne, ale Save nie zapisuje; IP whitelist nie dodaje nowych adresow. | Brak. | Brak. | P1 |
+| Audit / Sessions | Admin Sessions i Audit Logs zwracaja `INTERNAL_ERROR`; Audit Events ma `Invalid Date`. | Brak dostepu. | Brak. | P0 |
+| Incidents / Threats / DLP / Budgets | Moduly laduja sie z bledami albo nie zapisuja rekordow; Model Access dziala czesciowo, usuwanie nie dziala. | Brak dostepu. | Brak. | P0 |
+| Org AI Policy / Governance | AI Governance pokazuje polityki i przelaczniki, ale zmiany nie zapisuja sie; `Failed to save settings`. | Brak dostepu. | Brak. | P1 |
+| Approval workflows | Modal tworzenia workflowu istnieje, ale zapis pokazuje `[object Object]` i nic nie tworzy. | Brak. | Brak. | P1 |
+
+### 14C. P0 - bledy blokujace
+
+1. **Brak dzialajacego logowania dla user/agent.** Formularz logowania dla zwyklego uzytkownika czesto sie nie laduje; proby logowania koncza sie przekierowaniem na strone marketingowa.
+2. **Brak zapisywania ustawien i konfiguracji.** Zmiany w profilu, parametrach modelu, ustawieniach organizacji i politykach security nie sa zachowywane po `Save`; po refreshu wraca poprzedni stan.
+3. **Brak funkcji zarzadzania uzytkownikami.** `Add member` nie dziala; nie mozna tworzyc, edytowac ani usuwac uzytkownikow; brak toastow.
+4. **`INTERNAL_ERROR` i `[object Object]` w security/audit.** Admin Sessions, Audit Logs, Incidents, Threats, DLP i Budgets zwracaja wewnetrzne bledy przy odswiezaniu albo zapisie.
+5. **SSO/MFA/SCIM sa atrapa.** Formularze SSO Google Workspace/SAML i SCIM tokenow istnieja, ale zapis konczy sie `Failed to save configuration`.
+6. **Incident/threat management nie dziala.** Zgloszenie incydentu albo zagrozenia nie tworzy rekordow.
+7. **AI Budgets nie dziala w pelni.** Budzet i alerty nie tworza wpisow; Model Access dziala czesciowo, ale usuwanie nie dziala.
+8. **Bledne formaty danych.** `Invalid Date`, `NaN`, `n/a`, `0` sa widoczne bez wyjasnienia.
+
+### 14D. P1 - problemy wysokiego priorytetu
+
+- Formularze nie waliduja pol; puste lub niepoprawne wartosci przechodza bez czytelnego bledu.
+- Po dodaniu/usunieciu elementu lista nie aktualizuje sie automatycznie.
+- Brakuje komunikatow sukcesu i bledu; uzytkownik nie wie, czy operacja sie wykonala.
+- Puste tabele nie rozrozniaja `no data`, `loading`, `error`, `filtered empty`.
+- UI miesza polski i angielski; widoczne sa czasem surowe klucze tlumaczen, np. `auth.email`, `superadmin.customers.playbooks.title`.
+- Zakladki superadmin/admin powinny byc ukryte dla nizszych rol; obecnie czasem pojawiaja sie puste strony, redirect albo internal error.
+- Expired token/session timeout nie ma jasnego komunikatu.
+- Platform Security wymaga poziomego scrolla w gornej nawigacji, przez co czesc zakladek jest ukryta.
+
+### 14E. P2 - problemy sredniego priorytetu
+
+- Brak jasnego rozgraniczenia sekcji read-only i edytowalnych.
+- Placeholdery `n/a`, `0`, `Nieznany` sa pokazywane bez wyjasnienia.
+- Brak historii zmian polityk i ustawien.
+- Workflowy approval maja nieintuicyjny proces tworzenia i bledy `[object Object]`.
+- `Invalid Date`, `NaN%` i brak separatorow tysiecy obnizaja wiarygodnosc danych.
+- Tworzenie rol pozwala wybrac kolor, ale lista `Permission Definitions` jest pusta i nie ma realnego przypisania uprawnien.
+- Dlugie formularze SSO/DLP wymagaja przewijania w dwoch osiach.
+- SCIM/API keys/Access codes nie generuja tokenow/kodow w sposob uzyteczny.
+
+### 14F. Szczegolowy raport per obszar
+
+#### Login / logout / sesja
+
+Superadmin:
+
+- `/login` dziala i prowadzi do konsoli superadmina;
+- sesja utrzymuje sie po odswiezeniu;
+- logout z menu bocznego dziala, ale czasem wymaga podwojnego klikniecia.
+
+Admin / owner:
+
+- formularz loginu czasem sie nie laduje;
+- po zalogowaniu user bywa przenoszony na strone marketingowa zamiast do aplikacji;
+- testy konta owner/admin byly przez to ograniczone.
+
+User / agent:
+
+- formularz logowania praktycznie sie nie laduje albo przekierowuje na strone glowna;
+- nie udalo sie zweryfikowac expired tokenow i re-loginu.
+
+Braki:
+
+- brak czytelnych bledow logowania;
+- brak komunikatu o wygasnieciu sesji;
+- brak stabilnego smoke flow dla wszystkich rol.
+
+#### Role i uprawnienia
+
+Superadmin:
+
+- ma pelny dostep do modulow;
+- wiele widocznych modulow jest jednak atrapa albo nie zapisuje zmian.
+
+Admin / owner:
+
+- powinien miec dostep do panelu tenantowego;
+- widzi tylko wlasna organizacje;
+- w Admin Panel przyciski `Add member` i `Generate code` nie dzialaja.
+
+User / agent:
+
+- powinien widziec podstawowe moduly, np. Chat, My Work, Settings;
+- nie udalo sie tego potwierdzic przez problem z loginem.
+
+Braki:
+
+- brak jasnego 403;
+- niedozwolone widoki czasem laduja puste strony albo internal error.
+
+#### Zarzadzanie uzytkownikami
+
+Problemy:
+
+- w People & Access przycisk `Add member` nie reaguje;
+- `Generate code` nic nie robi;
+- modal edycji usera da sie otworzyc, ale zapis nie dziala;
+- move user i zmiana roli nie przynosza efektu;
+- Pending Requests pokazuje liste, ale brakuje approve/reject;
+- brak reset password i invite link.
+
+Wymagania naprawy:
+
+- create/edit/delete user;
+- role/status change;
+- move user between organizations;
+- invite/resend invite/reset password;
+- toast + refetch + persist after refresh.
+
+#### Organizacje i tenant settings
+
+Problemy:
+
+- lista organizacji i userow jest widoczna;
+- edycja organizacji jest read-only albo nieskuteczna;
+- Plan/Status/Discount w Billing & FinOps koncza sie `INTERNAL_ERROR`;
+- brak brandingu i custom domain;
+- admin widzi tylko swoja organizacje, ale nie moze edytowac pol.
+
+Wymagania naprawy:
+
+- zapis danych organizacji;
+- walidacja plan/status/discount;
+- jasne rozroznienie global vs tenant settings;
+- refetch po zapisie.
+
+#### Access requests / onboarding
+
+Problemy:
+
+- Access Codes otwiera modal, ale `Generate` nie tworzy kodu;
+- Pending Requests nie ma skutecznego approve/reject;
+- brak wysylki zaproszenia email;
+- brak informacji o expiry/max uses.
+
+Wymagania naprawy:
+
+- generate access code;
+- approve/reject pending request;
+- invite email;
+- success/error toast;
+- request znika albo zmienia status po decyzji.
+
+#### Ustawienia aplikacji
+
+Zakres:
+
+- Profile;
+- Avatar;
+- Email Signatures;
+- Working Hours;
+- Model & Parameters;
+- AI Data & Privacy;
+- Regional Settings;
+- Security Settings;
+- Voice & TTS;
+- Prompt Library;
+- AI Usage Dashboard.
+
+Problemy:
+
+- formularze przyjmuja dane i `Save`, ale dane znikaja po zmianie zakladki albo refreshu;
+- brak walidacji, np. dowolny tekst w polu telefonu;
+- ustawienia AI/Data/Privacy/Regional/Security pokazuja `Failed to save ...`;
+- superadmin settings czesto pokazuja puste widoki albo bledy.
+
+Wymagania naprawy:
+
+- okreslic zakres ustawien: user/org/global;
+- podlaczyc backend zapisu;
+- walidowac pola;
+- zachowywac dane po refreshu.
+
+#### Platform Security
+
+SSO:
+
+- Google Workspace i SAML nie zapisuja konfiguracji;
+- widoczny `Failed to save configuration`.
+
+SCIM:
+
+- ladowanie danych konczy sie `NOT_FOUND`;
+- prawdopodobnie brak endpointu.
+
+Roles:
+
+- mozna stworzyc role testowa, ale brak przypisywania uprawnien;
+- lista permission definitions jest pusta.
+
+Permissions:
+
+- definicje uprawnien sa puste;
+- kopiowanie permission nie dziala;
+- `Add permission` nie dziala.
+
+Policies:
+
+- MFA, SSO, Password policy, Data Governance sa widoczne;
+- zapis nie dziala;
+- `Apply compliance preset` nic nie robi.
+
+Admin Sessions / Audit:
+
+- Admin Sessions zwraca `INTERNAL_ERROR`;
+- Audit Logs zwraca `INTERNAL_ERROR`;
+- Audit Events ma wpisy, ale daty `Invalid Date`, filtr nie dziala.
+
+Workflows:
+
+- utworzenie workflowu konczy sie `[object Object]`;
+- workflow nie pojawia sie na liscie.
+
+Incidents / Threats / DLP:
+
+- formularze nie zapisuja danych;
+- strona czesto zglasza `INTERNAL_ERROR`.
+
+AI Budgets:
+
+- utworzenie budzetu nie dziala;
+- Model Access dodaje restrykcje czesciowo;
+- usuwanie restrykcji nie dziala.
+
+#### Governance / Compliance z perspektywy dostepu
+
+Problemy:
+
+- superadmin widzi AI Governance, ale przelaczniki nie zapisuja zmian;
+- admin nie ma dostepu do globalnego governance;
+- approval queue nie dziala;
+- Workflows nie tworzy flow;
+- audit timeline pokazuje `Invalid Date` i `NaN`;
+- brak klarownych stanow dla `n/a`, `unknown`, pustych list.
+
+### 14G. Braki testow automatycznych
+
+Brakuje testow dla:
+
+- login/session dla superadmin/admin/user;
+- wygasniecia tokenu i re-loginu;
+- matrix permissions i ukrywania zakladek;
+- create/edit/delete user;
+- create/edit organization;
+- approve/reject access request;
+- generate access code;
+- zapisu ustawien user/org/global;
+- SSO/MFA/SCIM save;
+- IP whitelist;
+- password policy;
+- audit events date formatting;
+- incidents/threats/DLP create;
+- AI budgets create/delete;
+- tlumaczen i surowych kluczy i18n.
+
+### 14H. Rekomendowana kolejnosc napraw
+
+1. Naprawic login i sesje dla wszystkich rol. `/login` musi sie ladowac, bledne loginy musza miec czytelny komunikat, a expired session musi pokazac jasny alert.
+2. Zaimplementowac podstawowe CRUD dla uzytkownikow i organizacji w admin/superadmin: create, edit, delete, role/status, toasty i refetch.
+3. Zabezpieczyc uprawnienia: ukrywac niedostepne zakladki, zwracac czytelny 403, unikac pustych stron.
+4. Naprawic zapisywanie ustawien: profile, AI params, org settings, policies, SSO, SCIM, DLP, budgets, workflows.
+5. Obslugiwac bledy backendu: mapowac `INTERNAL_ERROR` i `[object Object]` na czytelne komunikaty.
+6. Dopracowac security: SSO/MFA/SCIM, password policy, IP whitelist, incident management, threat intelligence, DLP, AI budgets.
+7. Poprawic UI/UX: usunac poziomy scroll, ujednolicic jezyk, dodac loading/no data/error states, poprawic daty i liczby.
+8. Wprowadzic audit trail: kto, kiedy, co zmienil, z prawidlowymi datami i historia polityk.
+9. Dodac automatyczne testy e2e i integracyjne dla wszystkich krytycznych sciezek.
+10. Komunikowac status funkcji: read-only, disabled z wyjasnieniem albo ukrycie, jesli backend nie istnieje.

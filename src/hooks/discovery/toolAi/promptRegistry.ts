@@ -119,13 +119,42 @@ Return JSON:
   }
 
   if (toolType === 'portfolio-priority') {
-    if (stepId === 'portfolio-items') {
-      return `Act as an AI portfolio mentor. Propose 3-5 portfolio initiatives with market growth and share scores.
+    const portfolioData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI portfolio strategy mentor. Improve the mission brief for this Portfolio Priority session.
 
-Bias toward explicit trade-offs and prioritization clarity.
+Current mission context:
+- Decision goal: ${portfolioData?.context?.goal || 'missing'}
+- Scope: ${portfolioData?.context?.scope || 'missing'}
+- Success signal: ${portfolioData?.context?.successSignal || 'missing'}
+- Time horizon: ${portfolioData?.context?.timeframe || 'missing'}
 
 Return JSON:
-{"items": [{"title": "...", "description": "...", "marketGrowth": 3, "marketShare": 3, "investmentLevel": 3}]}`;
+{"mission": {"goal": "...", "scope": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI portfolio analyst. Suggest high-value evidence signals for portfolio prioritization.
+
+Use organization context, interview cues, resource constraints, performance signals, customer demand, and strategic fit.
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["portfolio"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'items') {
+      const signalsSummary = (portfolioData?.signals || [])
+        .map((signal: any) => `- ${signal.content}`)
+        .join('\n');
+      return `Act as an AI portfolio mentor. Turn these signals into BCG-style portfolio items.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- score marketGrowth, marketShare, and investmentLevel from 1 to 5
+- include concrete rationale, evidence, confidence, and recommendation
+- recommendation must be invest, maintain, test, harvest, or stop
+
+Return JSON:
+{"items": [{"title": "...", "description": "...", "marketGrowth": 3, "marketShare": 3, "investmentLevel": 3, "rationale": "...", "evidence": ["..."], "recommendation": "invest|maintain|test|harvest|stop", "confidence": 4}]}`;
     }
     return '';
   }
@@ -324,14 +353,33 @@ Return JSON:
   }
 
   if (toolType === 'portfolio-priority') {
+    const portfolio = inputData as any;
+    const itemsSummary = (portfolio?.initiatives || [])
+      .map(
+        (item: any) =>
+          `- ${item.title}: ${item.category}, growth ${item.marketGrowth}/5, share ${item.marketShare}/5, investment ${item.investmentLevel}/5`
+      )
+      .join('\n');
+
     return `Summarize portfolio priorities in a consulting-grade way:
+
+${itemsSummary || '- no portfolio items yet'}
+
 1. Executive Summary
 2. Top 3 insights
 3. Applied Conclusions
-4. 3-5 initiatives (with rationale)
+4. 3-5 resource allocation moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
 
 Return JSON:
-{"summary": "...", "insights": ["..."], "appliedConclusions": ["..."], "initiatives": [{"title": "...", "description": "...", "rationale": "..."}]}`;
+{
+  "summary": "executive summary",
+  "insights": ["..."],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"invest|maintain|test|harvest|stop","rationale":"...","linkedItemIds":[],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|growth|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": []}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedItemIds": [], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
   }
 
   if (toolType === 'risk-uncertainty') {
