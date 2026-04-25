@@ -32,6 +32,13 @@ type ResearchSessionView = {
   updatedAt?: string;
 };
 
+const SOURCE_OPTIONS: Array<'web' | 'attachment' | 'product' | 'org'> = [
+  'web',
+  'attachment',
+  'product',
+  'org',
+];
+
 const STATUS_ICON = {
   planned: Clock3,
   approved: CheckCircle2,
@@ -47,6 +54,13 @@ export const ResearchSessionsDock: React.FC = () => {
   const [selected, setSelected] = React.useState<ResearchSessionView | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [busyById, setBusyById] = React.useState<Record<string, boolean>>({});
+  const [mission, setMission] = React.useState('');
+  const [scope, setScope] = React.useState('');
+  const [questions, setQuestions] = React.useState('');
+  const [allowedSources, setAllowedSources] = React.useState<
+    Array<'web' | 'attachment' | 'product' | 'org'>
+  >(['web', 'attachment', 'product', 'org']);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -73,35 +87,110 @@ export const ResearchSessionsDock: React.FC = () => {
     load();
   }, [load]);
 
+  React.useEffect(() => {
+    const hasRunning = sessions.some((session) => session.status === 'running');
+    if (!hasRunning) return undefined;
+    const timer = window.setInterval(() => {
+      load();
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [load, sessions]);
+
   const refreshSelected = async (sessionId: string) => {
     const res = await Api.getResearchSession(sessionId);
     if (res?.session) setSelected(res.session);
     await load();
   };
 
+  const withBusy = async (sessionId: string, action: () => Promise<void>) => {
+    setBusyById((prev) => ({ ...prev, [sessionId]: true }));
+    setError(null);
+    try {
+      await action();
+    } catch (err: any) {
+      setError(err?.message || 'Research action failed');
+    } finally {
+      setBusyById((prev) => {
+        const next = { ...prev };
+        delete next[sessionId];
+        return next;
+      });
+    }
+  };
+
+  const createSession = async () => {
+    if (!mission.trim()) {
+      setError('Mission is required to create a research session.');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await Api.createResearchSession({
+        mission: mission.trim(),
+        scope: scope.trim() || undefined,
+        questions: questions
+          .split('\n')
+          .map((item) => item.trim())
+          .filter(Boolean),
+        allowedSources,
+        expectedOutput: 'research_report',
+      });
+      if (res?.success === false) throw new Error(res?.error || 'Failed to create session');
+      if (res?.session) setSelected(res.session);
+      setMission('');
+      setScope('');
+      setQuestions('');
+      await load();
+    } catch (err: any) {
+      setError(err?.message || 'Failed to create research session');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleSource = (source: 'web' | 'attachment' | 'product' | 'org') => {
+    setAllowedSources((prev) => {
+      const next = prev.includes(source)
+        ? prev.filter((item) => item !== source)
+        : [...prev, source];
+      return next.length > 0 ? next : prev;
+    });
+  };
+
   const approve = async (sessionId: string) => {
-    await Api.approveResearchSession(sessionId);
-    await refreshSelected(sessionId);
+    await withBusy(sessionId, async () => {
+      await Api.approveResearchSession(sessionId);
+      await refreshSelected(sessionId);
+    });
   };
 
   const start = async (sessionId: string) => {
-    await Api.startResearchSession(sessionId);
-    await refreshSelected(sessionId);
+    await withBusy(sessionId, async () => {
+      await Api.startResearchSession(sessionId);
+      await refreshSelected(sessionId);
+    });
   };
 
   const cancel = async (sessionId: string) => {
-    await Api.cancelResearchSessionV1(sessionId);
-    await refreshSelected(sessionId);
+    await withBusy(sessionId, async () => {
+      await Api.cancelResearchSessionV1(sessionId);
+      await refreshSelected(sessionId);
+    });
   };
 
   const resume = async (sessionId: string) => {
-    await Api.resumeResearchSession(sessionId);
-    await refreshSelected(sessionId);
+    await withBusy(sessionId, async () => {
+      await Api.resumeResearchSession(sessionId);
+      await refreshSelected(sessionId);
+    });
   };
 
   const retry = async (sessionId: string) => {
-    await Api.retryResearchSession(sessionId);
-    await refreshSelected(sessionId);
+    await withBusy(sessionId, async () => {
+      await Api.retryResearchSession(sessionId);
+      await refreshSelected(sessionId);
+    });
   };
 
   return (
@@ -125,10 +214,64 @@ export const ResearchSessionsDock: React.FC = () => {
 
       <div className="grid gap-4 lg:grid-cols-[minmax(320px,0.8fr)_minmax(0,1.2fr)]">
         <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
+          <div className="border-b border-slate-200 dark:border-navy-700 p-4 space-y-3">
+            <div>
+              <h2 className="font-semibold text-slate-900 dark:text-white">Create Session</h2>
+              <p className="text-xs text-slate-500">
+                Plan research first, then approve and run it as a governed background job.
+              </p>
+            </div>
+            <input
+              value={mission}
+              onChange={(event) => setMission(event.target.value)}
+              placeholder="Mission, e.g. assess ERP modernization risks"
+              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+            />
+            <textarea
+              value={scope}
+              onChange={(event) => setScope(event.target.value)}
+              placeholder="Scope and constraints"
+              rows={2}
+              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+            />
+            <textarea
+              value={questions}
+              onChange={(event) => setQuestions(event.target.value)}
+              placeholder="Optional questions, one per line"
+              rows={2}
+              className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+            />
+            <div className="flex flex-wrap gap-2">
+              {SOURCE_OPTIONS.map((source) => (
+                <button
+                  key={source}
+                  type="button"
+                  onClick={() => toggleSource(source)}
+                  className={`rounded-full border px-2.5 py-1 text-xs ${
+                    allowedSources.includes(source)
+                      ? 'border-sky-500 bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-200'
+                      : 'border-slate-200 text-slate-500 dark:border-navy-700'
+                  }`}
+                >
+                  {source}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={createSession}
+              disabled={loading || !mission.trim()}
+              className="rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white disabled:opacity-50 dark:bg-white dark:text-navy-950"
+            >
+              Create planned session
+            </button>
+          </div>
           <div className="px-4 py-3 border-b border-slate-200 dark:border-navy-700 flex justify-between">
             <div>
               <h2 className="font-semibold text-slate-900 dark:text-white">Session Dock</h2>
-              <p className="text-xs text-slate-500">Start, pause, resume and retry research.</p>
+              <p className="text-xs text-slate-500">
+                Start, pause, resume and retry research. Running jobs auto-refresh every 5 seconds.
+              </p>
             </div>
             <button type="button" onClick={load} className="text-xs rounded-md border px-3 py-1.5">
               Refresh
@@ -194,46 +337,51 @@ export const ResearchSessionsDock: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => approve(selected.sessionId)}
+                    disabled={busyById[selected.sessionId]}
                     className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs text-white"
                   >
-                    Approve
+                    {busyById[selected.sessionId] ? 'Approving...' : 'Approve'}
                   </button>
                 )}
                 {selected.status === 'approved' && (
                   <button
                     type="button"
                     onClick={() => start(selected.sessionId)}
+                    disabled={busyById[selected.sessionId]}
                     className="rounded-md bg-sky-600 px-3 py-1.5 text-xs text-white"
                   >
                     <Play size={12} className="inline mr-1" />
-                    Start
+                    {busyById[selected.sessionId] ? 'Starting...' : 'Start'}
                   </button>
                 )}
                 {selected.status === 'running' && (
                   <button
                     type="button"
                     onClick={() => cancel(selected.sessionId)}
+                    disabled={busyById[selected.sessionId]}
                     className="rounded-md border px-3 py-1.5 text-xs"
                   >
-                    Pause
+                    {busyById[selected.sessionId] ? 'Pausing...' : 'Pause'}
                   </button>
                 )}
                 {selected.status === 'paused' && (
                   <button
                     type="button"
                     onClick={() => resume(selected.sessionId)}
+                    disabled={busyById[selected.sessionId]}
                     className="rounded-md bg-sky-600 px-3 py-1.5 text-xs text-white"
                   >
-                    Resume
+                    {busyById[selected.sessionId] ? 'Resuming...' : 'Resume'}
                   </button>
                 )}
                 {selected.status === 'failed' && (
                   <button
                     type="button"
                     onClick={() => retry(selected.sessionId)}
+                    disabled={busyById[selected.sessionId]}
                     className="rounded-md bg-sky-600 px-3 py-1.5 text-xs text-white"
                   >
-                    Retry
+                    {busyById[selected.sessionId] ? 'Retrying...' : 'Retry'}
                   </button>
                 )}
               </div>
@@ -243,6 +391,11 @@ export const ResearchSessionsDock: React.FC = () => {
                 <div className="mt-1 text-slate-700 dark:text-slate-200">
                   {selected.progress?.stage || selected.status} · {selected.progress?.percent ?? 0}%
                 </div>
+                {selected.status === 'running' && (
+                  <div className="mt-1 text-xs text-slate-500">
+                    Background job accepted. This panel refreshes while the report is generated.
+                  </div>
+                )}
               </div>
 
               <div>
