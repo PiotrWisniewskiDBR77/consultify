@@ -146,7 +146,7 @@ export default defineConfig({
       },
       {
         find: /.*\/learningSystem\.js$/,
-        replacement: path.resolve(__dirname, 'server/services/ai/learningSystem.js'),
+        replacement: path.resolve(__dirname, 'server/src/services/ai/learningSystem.ts'),
       },
       {
         find: /.*\/src\/database\/index\.js$/,

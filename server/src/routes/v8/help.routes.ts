@@ -13,7 +13,14 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
 
-export type HelpRecoRationaleV1 = { en: string; pl: string; de?: string; ar?: string; jp?: string; es?: string };
+export type HelpRecoRationaleV1 = {
+  en: string;
+  pl: string;
+  de?: string;
+  ar?: string;
+  jp?: string;
+  es?: string;
+};
 
 export type HelpRecoContextV1 = {
   surface_id: string;
@@ -45,7 +52,9 @@ type HelpLang = 'en' | 'pl' | 'de' | 'ar' | 'jp' | 'es';
 const HELP_LANGUAGES: HelpLang[] = ['en', 'pl', 'de', 'ar', 'jp', 'es'];
 
 function normalizeHelpLang(locale: string): HelpLang {
-  const raw = String(locale || '').toLowerCase().split('-')[0];
+  const raw = String(locale || '')
+    .toLowerCase()
+    .split('-')[0];
   if (raw === 'ja') return 'jp';
   if ((HELP_LANGUAGES as string[]).includes(raw)) return raw as HelpLang;
   return 'en';
@@ -84,7 +93,8 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     getV8Context(req);
 
-    const surface_id = firstParam(req.query.surface_id) || firstParam(req.query.surface) || 'unknown';
+    const surface_id =
+      firstParam(req.query.surface_id) || firstParam(req.query.surface) || 'unknown';
     const module_id = firstParam(req.query.module_id) || firstParam(req.query.module) || surface_id;
     const view_id = firstParam(req.query.view_id) || firstParam(req.query.view) || undefined;
     const artifact_type = firstParam(req.query.artifact_type) || undefined;
@@ -118,4 +128,3 @@ router.get(
 );
 
 export default router;
-

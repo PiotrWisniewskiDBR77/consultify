@@ -360,7 +360,10 @@ const DataGrid: React.FC<DataGridProps> = ({
     (row: TableNode, col: ColumnDef) => {
       if (isMissingField(col.key, viewConfig)) {
         return (
-          <div className="text-xs text-amber-500 dark:text-amber-400 italic select-none" aria-hidden>
+          <div
+            className="text-xs text-amber-500 dark:text-amber-400 italic select-none"
+            aria-hidden
+          >
             —
           </div>
         );
@@ -376,7 +379,8 @@ const DataGrid: React.FC<DataGridProps> = ({
           : {});
       const rawValue = row.data?.[col.key];
       const isLinked = fieldType === 'linkedRecord';
-      const linkedTableId = (fieldOptions as LinkedRecordFieldOptions)?.linkedTableId ?? '';
+      const linkedTableId =
+        (fieldOptions as unknown as LinkedRecordFieldOptions)?.linkedTableId ?? '';
 
       if (isEditing) {
         return (
@@ -510,9 +514,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                     >
                       <div className="flex items-center gap-1.5 pr-2">
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                        <span className="min-w-0 truncate">
-                          [Missing: {missingFieldName}]
-                        </span>
+                        <span className="min-w-0 truncate">[Missing: {missingFieldName}]</span>
                         <button
                           type="button"
                           onClick={() => onRemoveMissingField?.(col.key)}

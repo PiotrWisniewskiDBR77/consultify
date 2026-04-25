@@ -152,54 +152,49 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
     apiEndpoint: process.env.NEXT_PUBLIC_API_URL || '/api',
   };
 
+  const applyPersistedSettings = useCallback((settings: Record<string, unknown>) => {
+    const enabledBetaFeatures = Array.isArray(settings.betaFeatures)
+      ? (settings.betaFeatures as string[])
+      : [];
+    setDeveloperMode(Boolean(settings.developerMode));
+    setApiLogging(Boolean(settings.apiLogging));
+    setShowDebugInfo(Boolean(settings.showDebugInfo));
+    setVerboseErrors(Boolean(settings.verboseErrors));
+    setBetaFeatures((prev) =>
+      prev.map((feature) => ({
+        ...feature,
+        enabled: enabledBetaFeatures.includes(feature.id),
+      }))
+    );
+  }, []);
+
+  const refreshDeveloperSettings = useCallback(async () => {
+    const response = await Api.getDeveloperSettings();
+    if (response?.settings) {
+      applyPersistedSettings(response.settings);
+    }
+  }, [applyPersistedSettings]);
+
+  const getBetaFeatureName = (feature: BetaFeature) =>
+    t(`settings.beta.features.${feature.id}.name`, feature.name);
+
+  const getBetaFeatureDescription = (feature: BetaFeature) =>
+    t(`settings.beta.features.${feature.id}.description`, feature.description);
+
+  const getFeatureFlagDescription = (flag: FeatureFlag) =>
+    t(`settings.flags.descriptions.${flag.key}`, flag.description || '');
+
   // Load settings from backend API
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await Api.getDeveloperSettings();
-        if (response?.settings) {
-          setDeveloperMode(response.settings.developerMode || false);
-          setApiLogging(response.settings.apiLogging || false);
-          setShowDebugInfo(response.settings.showDebugInfo || false);
-          setVerboseErrors(response.settings.verboseErrors || false);
-          if (response.settings.betaFeatures?.length) {
-            setBetaFeatures((prev) =>
-              prev.map((f) => ({
-                ...f,
-                enabled: response.settings.betaFeatures.includes(f.id),
-              }))
-            );
-          }
-        } else {
-          // Fallback to localStorage for migration
-          const savedSettings = localStorage.getItem('developerSettings');
-          if (savedSettings) {
-            const settings = JSON.parse(savedSettings);
-            setDeveloperMode(settings.developerMode || false);
-            setApiLogging(settings.apiLogging || false);
-            setShowDebugInfo(settings.showDebugInfo || false);
-            setVerboseErrors(settings.verboseErrors || false);
-          }
-        }
+        await refreshDeveloperSettings();
       } catch (e) {
         console.error('Failed to load developer settings:', e);
-        // Fallback to localStorage
-        const savedSettings = localStorage.getItem('developerSettings');
-        if (savedSettings) {
-          try {
-            const settings = JSON.parse(savedSettings);
-            setDeveloperMode(settings.developerMode || false);
-            setApiLogging(settings.apiLogging || false);
-            setShowDebugInfo(settings.showDebugInfo || false);
-            setVerboseErrors(settings.verboseErrors || false);
-          } catch (parseError) {
-            console.error('Failed to parse developer settings:', parseError);
-          }
-        }
       }
     };
     loadSettings();
-  }, []);
+  }, [refreshDeveloperSettings]);
 
   // Save settings to backend API
   const saveSettings = useCallback(async () => {
@@ -212,16 +207,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         verboseErrors,
         betaFeatures: enabledBetaIds,
       });
-      // Also save to localStorage for immediate page loads
-      localStorage.setItem(
-        'developerSettings',
-        JSON.stringify({
-          developerMode,
-          apiLogging,
-          showDebugInfo,
-          verboseErrors,
-        })
-      );
+      await refreshDeveloperSettings();
       toast({
         title: t('settings.developer.saved', 'Settings Saved'),
         description: t(
@@ -237,7 +223,16 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         variant: 'destructive',
       });
     }
-  }, [developerMode, apiLogging, showDebugInfo, verboseErrors, betaFeatures, toast, t]);
+  }, [
+    developerMode,
+    apiLogging,
+    showDebugInfo,
+    verboseErrors,
+    betaFeatures,
+    refreshDeveloperSettings,
+    toast,
+    t,
+  ]);
 
   // Toggle beta feature and save to backend
   const toggleBetaFeature = async (featureId: string) => {
@@ -255,6 +250,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
         verboseErrors,
         betaFeatures: enabledBetaIds,
       });
+      await refreshDeveloperSettings();
       toast({
         title: t('settings.beta.updated', 'Feature Updated'),
         description: t('settings.beta.updatedDesc', 'Beta feature setting has been saved'),
@@ -518,12 +514,12 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium text-slate-900 dark:text-white">
-                            {feature.name}
+                            {getBetaFeatureName(feature)}
                           </h4>
                           {getStatusBadge(feature.status)}
                         </div>
                         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                          {feature.description}
+                          {getBetaFeatureDescription(feature)}
                         </p>
                         {feature.releaseDate && (
                           <p className="text-xs text-slate-400 dark:text-slate-500 mt-2">
@@ -583,7 +579,7 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                       </code>
                       {flag.description && (
                         <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {flag.description}
+                          {getFeatureFlagDescription(flag)}
                         </p>
                       )}
                     </div>

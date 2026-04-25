@@ -123,7 +123,13 @@ export interface FinanceLaneRun {
   mutationOutcome: MutationOutcome | null;
   readbackConfirmed: boolean;
   degraded: Array<{ reason: FinanceDegradedReason; detail: string; nextAction: string }>;
-  auditTrail: Array<{ at: string; step: FinanceLaneStep; actor: string; outcome: string; detail?: string }>;
+  auditTrail: Array<{
+    at: string;
+    step: FinanceLaneStep;
+    actor: string;
+    outcome: string;
+    detail?: string;
+  }>;
   versionType: VersionType;
   kpiLinkageStatus: 'coherent' | 'stale' | 'unavailable';
   createdAt: string;
@@ -264,7 +270,8 @@ export async function advanceLaneStep(
 
   if (context?.modelUpdatedAt) {
     const staleDays = 30;
-    const modelAge = (Date.now() - new Date(context.modelUpdatedAt).getTime()) / (1000 * 60 * 60 * 24);
+    const modelAge =
+      (Date.now() - new Date(context.modelUpdatedAt).getTime()) / (1000 * 60 * 60 * 24);
     if (modelAge > staleDays) {
       run.degraded.push({
         reason: 'stale_model',
@@ -293,7 +300,9 @@ export async function advanceLaneStep(
   const allowed = validOutcomes[run.currentStep];
   if (allowed && !allowed.includes(outcome)) {
     throw Object.assign(
-      new Error(`Invalid outcome '${outcome}' for step '${run.currentStep}'. Valid: ${allowed.join(', ')}`),
+      new Error(
+        `Invalid outcome '${outcome}' for step '${run.currentStep}'. Valid: ${allowed.join(', ')}`
+      ),
       { code: 'P05_INVALID_OUTCOME' }
     );
   }
@@ -473,7 +482,10 @@ export async function advanceLaneStep(
   return run;
 }
 
-export async function getLaneRun(runId: string, organizationId: string): Promise<FinanceLaneRun | null> {
+export async function getLaneRun(
+  runId: string,
+  organizationId: string
+): Promise<FinanceLaneRun | null> {
   const row = await dbGet<Record<string, unknown>>(
     `SELECT * FROM v8_finance_lane_runs WHERE run_id = ? AND organization_id = ?`,
     [runId, organizationId],
@@ -544,7 +556,10 @@ export async function recordMutationAudit(params: {
   return audit;
 }
 
-export async function getMutationAudits(organizationId: string, runId?: string): Promise<FinanceMutationAudit[]> {
+export async function getMutationAudits(
+  organizationId: string,
+  runId?: string
+): Promise<FinanceMutationAudit[]> {
   let sql = `SELECT * FROM v8_finance_mutation_audit WHERE organization_id = ?`;
   const bind: unknown[] = [organizationId];
   if (runId) {
@@ -622,7 +637,8 @@ export async function finalizeSwitchover(
     [snapshotId, organizationId],
     { fallback: true }
   );
-  if (!pre) throw Object.assign(new Error('Snapshot not found'), { code: 'P05_SNAPSHOT_NOT_FOUND' });
+  if (!pre)
+    throw Object.assign(new Error('Snapshot not found'), { code: 'P05_SNAPSHOT_NOT_FOUND' });
 
   const pushSwitchoverDegraded = async (detail: string) => {
     try {
@@ -634,7 +650,10 @@ export async function finalizeSwitchover(
         { fallback: true }
       );
       if (activeRun) {
-        const degraded = safeJsonParse(activeRun.degraded_json as string | null | undefined, []) as Array<Record<string, unknown>>;
+        const degraded = safeJsonParse(
+          activeRun.degraded_json as string | null | undefined,
+          []
+        ) as Array<Record<string, unknown>>;
         degraded.push({
           reason: 'switchover_misconfigured',
           detail,
@@ -652,10 +671,10 @@ export async function finalizeSwitchover(
 
   if (pre.is_finalized) {
     await pushSwitchoverDegraded('Snapshot already finalized');
-    throw Object.assign(
-      new Error('Switchover misconfigured: snapshot already finalized'),
-      { code: 'P05_SWITCHOVER_MISCONFIGURED', degradedReason: 'switchover_misconfigured' as const }
-    );
+    throw Object.assign(new Error('Switchover misconfigured: snapshot already finalized'), {
+      code: 'P05_SWITCHOVER_MISCONFIGURED',
+      degradedReason: 'switchover_misconfigured' as const,
+    });
   }
   if (pre.version_type !== 'actual') {
     await pushSwitchoverDegraded('Only "actual" snapshots can be finalized');
@@ -678,7 +697,10 @@ export async function finalizeSwitchover(
     [snapshotId, organizationId],
     { fallback: true }
   );
-  if (!row) throw Object.assign(new Error('Snapshot not found after update'), { code: 'P05_SNAPSHOT_NOT_FOUND' });
+  if (!row)
+    throw Object.assign(new Error('Snapshot not found after update'), {
+      code: 'P05_SNAPSHOT_NOT_FOUND',
+    });
 
   const result: FinanceVersionSnapshot = {
     snapshotId: String(row.snapshot_id),

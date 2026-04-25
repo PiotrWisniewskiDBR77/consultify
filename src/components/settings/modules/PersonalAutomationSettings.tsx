@@ -152,6 +152,27 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
     loadData();
   }, [currentUser.id]);
 
+  const getTemplateName = (template: AutomationTemplate) =>
+    t(`settings.personalAutomation.templates.${template.id}.name`, template.name);
+
+  const getTemplateDescription = (template: AutomationTemplate) =>
+    t(`settings.personalAutomation.templates.${template.id}.description`, template.description);
+
+  const getTemplateCategory = (category: string) =>
+    t(`settings.personalAutomation.categories.${category.toLowerCase()}`, category);
+
+  const getTriggerLabel = (triggerId: string) =>
+    t(
+      `settings.personalAutomation.triggers.${triggerId}`,
+      triggerTypes.find((trigger) => trigger.id === triggerId)?.label || triggerId
+    );
+
+  const getActionLabel = (actionId?: string) =>
+    t(
+      `settings.personalAutomation.actions.${actionId || 'unknown'}`,
+      actionTypes.find((action) => action.id === actionId)?.label || actionId || ''
+    );
+
   const loadData = async () => {
     try {
       setLoading(true);
@@ -186,29 +207,34 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
     try {
       await Api.put(`/api/user/automations/${ruleId}`, { enabled: !rule.enabled });
       setRules(rules.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r)));
-      toast.success(rule.enabled ? 'Automation paused' : 'Automation enabled');
+      toast.success(
+        rule.enabled
+          ? t('settings.personalAutomation.paused', 'Automation paused')
+          : t('settings.personalAutomation.enabled', 'Automation enabled')
+      );
     } catch (error) {
-      toast.error('Failed to update automation');
+      toast.error(t('settings.personalAutomation.updateError', 'Failed to update automation'));
     }
   };
 
   const deleteRule = async (ruleId: string) => {
-    if (!window.confirm('Delete this automation?')) return;
+    if (!window.confirm(t('settings.personalAutomation.deleteConfirm', 'Delete this automation?')))
+      return;
 
     try {
       await Api.delete(`/api/user/automations/${ruleId}`);
       setRules(rules.filter((r) => r.id !== ruleId));
-      toast.success('Automation deleted');
+      toast.success(t('settings.personalAutomation.deleted', 'Automation deleted'));
     } catch (error) {
-      toast.error('Failed to delete automation');
+      toast.error(t('settings.personalAutomation.deleteError', 'Failed to delete automation'));
     }
   };
 
   const createFromTemplate = (template: AutomationTemplate) => {
     const newRule: AutomationRule = {
       id: `rule_${Date.now()}`,
-      name: template.name,
-      description: template.description,
+      name: getTemplateName(template),
+      description: getTemplateDescription(template),
       enabled: false,
       trigger: template.trigger,
       actions: template.actions,
@@ -235,10 +261,10 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <Zap size={28} className="text-amber-500" />
-            Personal Automations
+            {t('settings.personalAutomation.title', 'Personal Automations')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Automate repetitive tasks and workflows
+            {t('settings.personalAutomation.subtitle', 'Automate repetitive tasks and workflows')}
           </p>
         </div>
         <button
@@ -246,7 +272,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
           className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors"
         >
           <Plus size={16} />
-          Create Automation
+          {t('settings.personalAutomation.createAutomation', 'Create Automation')}
         </button>
       </div>
 
@@ -254,28 +280,42 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">{rules.length}</p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Active Automations</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('settings.personalAutomation.stats.active', 'Active Automations')}
+          </p>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
             {rules.reduce((sum, r) => sum + r.runCount, 0)}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Total Runs</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('settings.personalAutomation.stats.totalRuns', 'Total Runs')}
+          </p>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-600">
             {logs.filter((l) => l.status === 'success').length}
           </p>
-          <p className="text-sm text-slate-500 dark:text-slate-400">Successful (24h)</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            {t('settings.personalAutomation.stats.successful24h', 'Successful (24h)')}
+          </p>
         </div>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700 pb-4">
         {[
-          { id: 'rules', label: 'My Automations', icon: Zap },
-          { id: 'templates', label: 'Templates', icon: Copy },
-          { id: 'logs', label: 'History', icon: Clock },
+          {
+            id: 'rules',
+            label: t('settings.personalAutomation.tabs.rules', 'My Automations'),
+            icon: Zap,
+          },
+          {
+            id: 'templates',
+            label: t('settings.personalAutomation.tabs.templates', 'Templates'),
+            icon: Copy,
+          },
+          { id: 'logs', label: t('settings.personalAutomation.tabs.logs', 'History'), icon: Clock },
         ].map((tab) => {
           const Icon = tab.icon;
           return (
@@ -340,18 +380,21 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
 
               <div className="flex items-center gap-2 text-sm">
                 <span className="px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-slate-600 dark:text-slate-400">
-                  {triggerTypes.find((t) => t.id === rule.trigger.type)?.label || rule.trigger.type}
+                  {getTriggerLabel(rule.trigger.type)}
                 </span>
                 <ArrowRight size={14} className="text-slate-400 dark:text-slate-500" />
                 <span className="px-2 py-1 bg-slate-100 dark:bg-navy-800 rounded text-slate-600 dark:text-slate-400">
-                  {actionTypes.find((a) => a.id === rule.actions[0]?.type)?.label ||
-                    rule.actions[0]?.type}
+                  {getActionLabel(rule.actions[0]?.type)}
                 </span>
               </div>
 
               {rule.lastRun && (
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-3">
-                  Last run: {new Date(rule.lastRun).toLocaleString()} • {rule.runCount} total runs
+                  {t('settings.personalAutomation.lastRun', {
+                    defaultValue: 'Last run: {{date}} • {{count}} total runs',
+                    date: new Date(rule.lastRun).toLocaleString(),
+                    count: rule.runCount,
+                  })}
                 </p>
               )}
             </div>
@@ -360,12 +403,12 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
           {rules.length === 0 && (
             <div className="text-center py-12 text-slate-500 dark:text-slate-400">
               <Zap size={48} className="mx-auto mb-4 opacity-30" />
-              <p>No automations yet</p>
+              <p>{t('settings.personalAutomation.empty', 'No automations yet')}</p>
               <button
                 onClick={() => setShowCreateModal(true)}
                 className="mt-2 text-amber-600 hover:underline"
               >
-                Create your first automation
+                {t('settings.personalAutomation.createFirst', 'Create your first automation')}
               </button>
             </div>
           )}
@@ -383,13 +426,13 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <span className="text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">
-                    {template.category}
+                    {getTemplateCategory(template.category)}
                   </span>
                   <h4 className="font-semibold text-slate-900 dark:text-white mt-2">
-                    {template.name}
+                    {getTemplateName(template)}
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {template.description}
+                    {getTemplateDescription(template)}
                   </p>
                 </div>
               </div>
@@ -397,7 +440,7 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
                 onClick={() => createFromTemplate(template)}
                 className="w-full mt-3 py-2 px-4 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 text-sm font-medium transition-colors"
               >
-                Use Template
+                {t('settings.personalAutomation.useTemplate', 'Use Template')}
               </button>
             </div>
           ))}

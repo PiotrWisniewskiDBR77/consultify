@@ -56,8 +56,8 @@ const UpdateProjectSchema = z.object({
 
 router.get('/', verifyToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
-    const orgId = (req as any).user?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
     const scopeFilter = (req.query as any).scope; // 'personal' | 'team' | undefined (all)
 
     if (!userId) {
@@ -127,8 +127,8 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
 
 router.get('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
-    const orgId = (req as any).user?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
     const { id } = req.params;
 
     if (!userId) {
@@ -192,8 +192,8 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
 
 router.post('/', verifyToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
-    const orgId = (req as any).user?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
 
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -216,7 +216,11 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
       }
       const perm = await checkChatPermission(userId, orgId, 'create_project');
       if (!perm.allowed) {
-        return res.status(403).json({ error: 'No permission to create team projects', reason: perm.reason, role: perm.role });
+        return res.status(403).json({
+          error: 'No permission to create team projects',
+          reason: perm.reason,
+          role: perm.role,
+        });
       }
     }
 
@@ -270,8 +274,8 @@ router.post('/', verifyToken, async (req: Request, res: Response) => {
 
 router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
-    const orgId = (req as any).user?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
     const { id } = req.params;
 
     if (!userId) {
@@ -307,7 +311,11 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
         isCreator,
       });
       if (!perm.allowed) {
-        return res.status(403).json({ error: 'No permission to edit this team project', reason: perm.reason, role: perm.role });
+        return res.status(403).json({
+          error: 'No permission to edit this team project',
+          reason: perm.reason,
+          role: perm.role,
+        });
       }
     }
 
@@ -350,8 +358,8 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
 
 router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
-    const orgId = (req as any).user?.organizationId;
+    const userId = (req as any).userId || (req as any).user?.id;
+    const orgId = (req as any).organizationId || (req as any).user?.organizationId;
     const { id } = req.params;
 
     if (!userId) {
@@ -378,7 +386,11 @@ router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
         isCreator,
       });
       if (!perm.allowed) {
-        return res.status(403).json({ error: 'No permission to delete this team project', reason: perm.reason, role: perm.role });
+        return res.status(403).json({
+          error: 'No permission to delete this team project',
+          reason: perm.reason,
+          role: perm.role,
+        });
       }
     }
 
@@ -403,8 +415,8 @@ router.post(
   verifyToken,
   async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user?.id;
-      const orgId = (req as any).user?.organizationId;
+      const userId = (req as any).userId || (req as any).user?.id;
+      const orgId = (req as any).organizationId || (req as any).user?.organizationId;
       const { id, conversationId } = req.params;
 
       if (!userId) {
@@ -415,7 +427,7 @@ router.post(
 
       // Check project access (personal or team)
       const project = (await db.queryOne(
-        `SELECT id, scope, organization_id FROM chat_projects
+        `SELECT id, user_id, scope, organization_id FROM chat_projects
          WHERE id = ? AND (user_id = ? OR (scope = 'team' AND organization_id = ?))`,
         [id, userId, orgId]
       )) as any;
@@ -424,11 +436,29 @@ router.post(
         return res.status(404).json({ error: 'Project not found' });
       }
 
-      // Check conversation access (personal or team in same org)
+      if (project.scope === 'team' && project.organization_id) {
+        const perm = await checkChatPermission(userId, project.organization_id, 'manage_thread', {
+          isCreator: project.user_id === userId,
+        });
+        if (!perm.allowed) {
+          return res.status(403).json({
+            error: 'No permission to move conversations into this team project',
+            reason: perm.reason,
+            role: perm.role,
+          });
+        }
+      }
+
+      // Check conversation access (personal ownership/creator or same org).
+      // Some legacy rows use created_by as the owner field, so accept both.
       const conversation = await db.queryOne(
         `SELECT id FROM conversations
-         WHERE id = ? AND (user_id = ? OR organization_id = ?)`,
-        [conversationId, userId, orgId]
+         WHERE id = ? AND (
+           user_id = ?
+           OR created_by = ?
+           OR (organization_id IS NOT NULL AND organization_id = ?)
+         )`,
+        [conversationId, userId, userId, orgId]
       );
 
       if (!conversation) {
@@ -458,8 +488,8 @@ router.delete(
   verifyToken,
   async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user?.id;
-      const orgId = (req as any).user?.organizationId;
+      const userId = (req as any).userId || (req as any).user?.id;
+      const orgId = (req as any).organizationId || (req as any).user?.organizationId;
       const { id, conversationId } = req.params;
 
       if (!userId) {
@@ -473,8 +503,12 @@ router.delete(
         `UPDATE conversations 
          SET chat_project_id = NULL, updated_at = ? 
          WHERE id = ? AND chat_project_id = ?
-           AND (user_id = ? OR organization_id = ?)`,
-        [new Date().toISOString(), conversationId, id, userId, orgId]
+           AND (
+             user_id = ?
+             OR created_by = ?
+             OR (organization_id IS NOT NULL AND organization_id = ?)
+           )`,
+        [new Date().toISOString(), conversationId, id, userId, userId, orgId]
       );
 
       logger.info(`[ChatProjects] Removed conversation ${conversationId} from project ${id}`);

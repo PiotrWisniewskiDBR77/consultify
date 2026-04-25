@@ -555,7 +555,10 @@ export const AIContextBuilder = {
       const tag = `[${String(f.confidenceLevel).toUpperCase()}]`;
       const base = `${tag} ${f.findingStatement}`;
       const limitsNote = f.limits ? ` | Limits: ${f.limits}` : '';
-      const evidenceNote = f.evidenceCount > 0 ? ` (${f.evidenceCount} evidence pointer${f.evidenceCount === 1 ? '' : 's'})` : '';
+      const evidenceNote =
+        f.evidenceCount > 0
+          ? ` (${f.evidenceCount} evidence pointer${f.evidenceCount === 1 ? '' : 's'})`
+          : '';
       return `${base}${limitsNote}${evidenceNote}`;
     });
 
@@ -1447,7 +1450,11 @@ export const AIContextBuilder = {
                   step: activeRun.current_step,
                   kpiLinkage: activeRun.kpi_linkage_status,
                   degradedCount: (() => {
-                    try { return JSON.parse(activeRun.degraded_json || '[]').length; } catch { return 0; }
+                    try {
+                      return JSON.parse(activeRun.degraded_json || '[]').length;
+                    } catch {
+                      return 0;
+                    }
                   })(),
                 }
               : null,

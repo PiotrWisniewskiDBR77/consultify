@@ -183,7 +183,11 @@ const MODULE_CONTEXT_HINTS: Record<string, string> = {
 
 // ==================== HELPER FUNCTIONS ====================
 
-function buildHelpSystemPrompt(context?: string, isProductQuestion?: boolean, language?: string): string {
+function buildHelpSystemPrompt(
+  context?: string,
+  isProductQuestion?: boolean,
+  language?: string
+): string {
   const languageMap: Record<string, string> = {
     pl: 'Polish (Polski)',
     en: 'English',

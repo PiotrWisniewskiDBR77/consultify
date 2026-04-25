@@ -79,7 +79,9 @@ export class ErrorBoundary extends Component<Props, State> {
         },
         openSource: 'error-boundary',
       };
-      window.dispatchEvent(new CustomEvent('feedback:open', { detail: { source: 'error-boundary' } }));
+      window.dispatchEvent(
+        new CustomEvent('feedback:open', { detail: { source: 'error-boundary' } })
+      );
     } catch {
       // ignore
     }

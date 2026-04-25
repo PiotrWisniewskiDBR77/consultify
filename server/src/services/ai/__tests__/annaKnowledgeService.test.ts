@@ -146,7 +146,10 @@ describe('annaKnowledgeService locale-aware retrieval quality', () => {
     ]);
 
     const hitsByDocumentId = new Map<string, RagResult>([
-      ['vector-doc', { documentId: 'vector-doc', content: 'Vector Anna context', similarity: 0.81 }],
+      [
+        'vector-doc',
+        { documentId: 'vector-doc', content: 'Vector Anna context', similarity: 0.81 },
+      ],
       ['iris-doc', { documentId: 'iris-doc', content: 'IRIS Anna context', similarity: 0.97 }],
       [
         'consultify-doc',

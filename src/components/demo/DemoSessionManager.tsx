@@ -18,9 +18,9 @@ import { useTranslation } from 'react-i18next';
 
 import { useDemo } from '../../hooks/useDemo';
 import { useDemoSession } from '../../hooks/useDemoSession';
+import { Api } from '../../services/api';
 import { trackTourCompleted, trackUpgradeClick } from '../../services/demoAnalyticsService';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { DemoConversionCTA, type ValueMomentType } from './DemoConversionCTA';
 import { DemoLoadingOverlay } from './DemoLoadingOverlay';
@@ -544,7 +544,13 @@ const SessionWarningModal: React.FC<SessionWarningModalProps> = ({
 interface WorkspaceDemoNextStepsProps {
   isVisible: boolean;
   organizationName: string;
-  scenarios: Array<{ id: string; title: string; duration?: string; audience?: string; persona?: string }>;
+  scenarios: Array<{
+    id: string;
+    title: string;
+    duration?: string;
+    audience?: string;
+    persona?: string;
+  }>;
   onExit: () => void | Promise<void>;
 }
 
@@ -576,7 +582,9 @@ const WorkspaceDemoNextSteps: React.FC<WorkspaceDemoNextStepsProps> = ({
               className="rounded-xl border border-slate-200 px-3 py-2 text-xs dark:border-white/10"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="font-medium text-slate-800 dark:text-slate-100">{scenario.title}</span>
+                <span className="font-medium text-slate-800 dark:text-slate-100">
+                  {scenario.title}
+                </span>
                 {scenario.duration ? (
                   <span className="text-slate-400 dark:text-slate-500">{scenario.duration}</span>
                 ) : null}

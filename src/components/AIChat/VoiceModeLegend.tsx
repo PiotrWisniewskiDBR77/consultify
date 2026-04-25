@@ -42,11 +42,11 @@ import { trackFunnelEvent } from '@/services/funnelAnalytics';
 
 import { buildVoiceLegendCopyText } from '../../utils/buildVoiceLegendCopyText';
 import {
-  copyTextToClipboard,
   type ClipboardWriteResult,
+  copyTextToClipboard,
 } from '../../utils/chatV9FlagsSnapshotText';
-import { VOICE_LEGEND_OPEN_EVENT } from '../../utils/voiceLegendShortcutFlag';
 import { isVoiceLegendCopyTextEnabled } from '../../utils/voiceLegendCopyTextFlag';
+import { VOICE_LEGEND_OPEN_EVENT } from '../../utils/voiceLegendShortcutFlag';
 import { isVoiceModeLegendEnabled } from '../../utils/voiceModeLegendFlag';
 
 interface VoiceModeLegendProps {
@@ -153,10 +153,7 @@ export const VoiceModeLegend: React.FC<VoiceModeLegendProps> = ({
       ? {
           title: t('voice.legend.title', 'Voice modes'),
           unavailable: {
-            title: t(
-              'voice.legend.unavailable.title',
-              'Voice is unavailable in this browser'
-            ),
+            title: t('voice.legend.unavailable.title', 'Voice is unavailable in this browser'),
             body: t(
               'voice.legend.unavailable.body',
               'Try Chrome or Edge on desktop, or Safari on iOS 15+. Microphone access must be allowed for this site.'

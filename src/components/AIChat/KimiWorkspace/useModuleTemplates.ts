@@ -5,8 +5,8 @@
 
 import { useMemo } from 'react';
 
-import { useTemplates } from '@/components/ReportsAndPresentations/useRapData';
 import type { TemplateItem, TemplateType } from '@/components/ReportsAndPresentations/types';
+import { useTemplates } from '@/components/ReportsAndPresentations/useRapData';
 
 import type { KimiLane } from './KimiWorkspaceShell';
 
@@ -22,7 +22,7 @@ export function useModuleTemplates(lane: KimiLane) {
 
   const filtered = useMemo(
     () => templates.filter((t: TemplateItem) => t.type === targetType),
-    [templates, targetType],
+    [templates, targetType]
   );
 
   return { templates: filtered, loading, error, fetchTemplates };

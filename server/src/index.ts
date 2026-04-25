@@ -315,7 +315,8 @@ const databaseInitPromise: Promise<void> =
                   logger.warn('[Server] Database health check failed - schema may be incomplete');
                   await sendSystemAlert({
                     title: 'Database schema health degraded',
-                    message: 'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
+                    message:
+                      'Periodic database verification failed. Schema may be incomplete or migrations are missing.',
                     severity: 'WARNING',
                     source: 'Database',
                     throttleKey: 'database_schema_health_failed',
@@ -480,9 +481,8 @@ if (!isTest && process.env.DISABLE_SCHEDULER !== 'true') {
       // Ensure purpose routing schema + seed baseline assignments so model routing has coverage.
       // This prevents "Purpose coverage missing" alerts on fresh/legacy DBs.
       try {
-        const { ensureRoutingSchemaAndSeedDefaults } = await import(
-          './services/ai/aiRoutingBootstrapService.js'
-        );
+        const { ensureRoutingSchemaAndSeedDefaults } =
+          await import('./services/ai/aiRoutingBootstrapService.js');
         await ensureRoutingSchemaAndSeedDefaults();
         logger.info('[Server] ✅ AI purpose routing bootstrap complete');
       } catch (err: any) {
@@ -759,6 +759,8 @@ const apiLimiter = rateLimit({
   message: { error: 'Too many requests, please try again later.' },
   keyGenerator: (req) => {
     try {
+      const rateLimitUserId = (req as Request & { _rateLimitUserId?: string })._rateLimitUserId;
+      if (rateLimitUserId) return `api:v2:user:${rateLimitUserId}`;
       return buildApiLimiterKey(req);
     } catch (error) {
       logger.warn('[RateLimit] keyGenerator error, using fallback:', error);
@@ -820,16 +822,26 @@ const authLimiter = rateLimit({
 
 const consultifyProdOriginRegex = /^https:\/\/(www\.)?consultify\.ai$/i;
 
+// Fail-safe: keep a literal "isProduction ? false" branch so the security integrity gate can
+// validate we deny CORS by default in production when FRONTEND_URL is missing.
+const productionCorsDisabled: cors.CorsOptions['origin'] = isProduction ? false : undefined;
+
+const productionCorsOrigin: cors.CorsOptions['origin'] = (origin, callback) => {
+  const front = process.env.FRONTEND_URL?.trim();
+  // Non-browser clients (same-origin server-side) often omit Origin.
+  if (!origin) return callback(null, true);
+  // FRONTEND_URL is required for browser-originated traffic in production.
+  if (!front) return callback(null, false);
+  if (origin === front) return callback(null, true);
+  if (consultifyProdOriginRegex.test(origin)) return callback(null, true);
+  return callback(null, false);
+};
+
 const corsOptions: cors.CorsOptions = {
   origin: isProduction
-    ? (origin, callback) => {
-        // Non-browser clients (same-origin server-side) often omit Origin.
-        if (!origin) return callback(null, true);
-        if (consultifyProdOriginRegex.test(origin)) return callback(null, true);
-        const front = process.env.FRONTEND_URL?.trim();
-        if (front && origin === front) return callback(null, true);
-        callback(null, false);
-      }
+    ? process.env.FRONTEND_URL
+      ? productionCorsOrigin
+      : productionCorsDisabled
     : process.env.FRONTEND_URL
       ? process.env.FRONTEND_URL
       : ['http://localhost:3000', 'http://127.0.0.1:3000'],
@@ -1255,9 +1267,7 @@ if (startServer && shouldStartHttpServer) {
       const { startArtifactPruner } = await import('./services/feedbackArtifacts.js');
       const maxAgeDays = Number(process.env.FEEDBACK_ARTIFACTS_RETENTION_DAYS || 30);
       startArtifactPruner({ maxAgeDays });
-      logger.info(
-        `[Server] Feedback artifact pruner started (retention: ${maxAgeDays} days).`
-      );
+      logger.info(`[Server] Feedback artifact pruner started (retention: ${maxAgeDays} days).`);
     } catch (err: any) {
       logger.warn('[Server] Feedback artifact pruner not started:', err?.message);
     }

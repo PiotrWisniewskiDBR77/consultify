@@ -31,34 +31,89 @@ export function getToolSuggestionPrompt(
   inputData: unknown
 ): string {
   if (toolType === 'market-forces') {
-    if (
-      ['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(stepId)
-    ) {
-      return `Act as an AI strategy mentor. Analyze the ${stepId} force for this industry.
+    const porterData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI strategy mentor. Improve the market brief for this Porter Five Forces session.
 
-Provide:
-1. A score from 1-5 (1=very low, 5=very high)
-2. Key drivers of this force
-3. Current trend (increasing/stable/decreasing)
-4. Strategic implications
+Current market context:
+- Industry / market: ${porterData?.context?.industry || 'missing'}
+- Geographic scope: ${porterData?.context?.geographicScope || 'missing'}
+- Position: ${porterData?.context?.position || 'challenger'}
 
-Be specific to the organization's industry and market position. Explain the "why", not only the score.`;
+Return JSON:
+{"mission": {"industry": "...", "geographicScope": "...", "position": "leader|challenger|follower|niche", "goal": "...", "successSignal": "...", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI strategy mentor. Based on the market brief and organization context, propose 4-6 high-value market signals for a Porter Five Forces analysis.
+
+Market:
+- Industry / market: ${porterData?.context?.industry || 'missing'}
+- Geographic scope: ${porterData?.context?.geographicScope || 'missing'}
+- Position: ${porterData?.context?.position || 'challenger'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["rivalry|newEntrants|substitutes|buyerPower|supplierPower"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'forces') {
+      const signalsSummary = (porterData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI strategy mentor. Turn the following market signals into a Porter Five Forces scorecard.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- score each force 1-5, where 5 means stronger pressure on the company
+- separate drivers from evidence
+- make implications concrete for margin, growth, and positioning
+
+Return JSON:
+{"forces": {"rivalry": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "newEntrants": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "substitutes": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "buyerPower": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}, "supplierPower": {"score": 3, "trend": "increasing|stable|decreasing", "drivers": ["..."], "evidence": ["..."], "implication": "...", "confidence": 1-5}}}`;
     }
     return '';
   }
 
   if (toolType === 'growth-paths') {
-    if (
-      ['market-penetration', 'market-development', 'product-development', 'diversification'].includes(
-        stepId
-      )
-    ) {
-      return `Act as an AI growth mentor. Suggest 3-5 initiatives for the ${stepId} quadrant.
+    const growthData = inputData as any;
+    if (stepId === 'mission') {
+      return `Act as an AI growth strategy mentor. Improve the growth mission brief for this Ansoff session.
 
-Keep them realistic, mutually distinguishable, and easy to compare in later discussion.
+Current growth context:
+- Growth goal: ${growthData?.context?.goal || 'missing'}
+- Scope: ${growthData?.context?.scope || 'missing'}
+- Success signal: ${growthData?.context?.successSignal || 'missing'}
 
 Return JSON:
-{"initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+{"mission": {"goal": "...", "scope": "...", "successSignal": "...", "timeframe": "short|medium|long", "constraints": "...", "assumptions": "...", "kpiTarget": "..."}}`;
+    }
+    if (stepId === 'input') {
+      return `Act as an AI growth strategy mentor. Based on the growth mission and organization context, propose 4-6 high-value growth signals.
+
+Mission:
+- Growth goal: ${growthData?.context?.goal || 'missing'}
+- Scope: ${growthData?.context?.scope || 'missing'}
+- Success signal: ${growthData?.context?.successSignal || 'missing'}
+
+Return JSON:
+{"signals": [{"type": "interview|file|link|ai|benchmark", "content": "...", "sourceLabel": "...", "confidence": 1-5, "tags": ["marketPenetration|marketDevelopment|productDevelopment|diversification"], "evidenceType": "fact|observation|hypothesis", "state": "proposed", "provenance": "..."}]}`;
+    }
+    if (stepId === 'options') {
+      const signalsSummary = (growthData?.signals || [])
+        .slice(0, 20)
+        .map((signal: any) => `- [${signal.type}] ${signal.content}`)
+        .join('\n');
+      return `Act as an AI growth strategy mentor. Turn these signals into Ansoff growth options.
+
+${signalsSummary || '- no explicit signals provided yet'}
+
+Rules:
+- classify options into marketPenetration, marketDevelopment, productDevelopment, or diversification
+- make each option concrete and mutually distinguishable
+- include impact, effort, risk, rationale, evidence, confidence, and first step
+
+Return JSON:
+{"options": {"marketPenetration": [{"title":"...","description":"...","impact":"high|medium|low","effort":"high|medium|low","riskLevel":"high|medium|low","rationale":"...","evidence":["..."],"confidence":4,"firstStep":"..."}], "marketDevelopment": [], "productDevelopment": [], "diversification": []}}`;
     }
     return '';
   }
@@ -220,25 +275,52 @@ Return as JSON:
 ${forcesSummary}
 
 Provide:
-1. Overall Industry Attractiveness Score (1-5)
-2. Executive Summary (3-4 sentences)
-3. Top 3 Strategic Implications
-4. Applied Conclusions for the organization
-5. 3-5 Competitive Initiative Recommendations
+1. Executive Summary (3-4 sentences)
+2. Top 3 Strategic Implications
+3. Applied Conclusions: where to defend margin, where to reposition, what to validate next
+4. 3-5 Recommended Strategic Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
 
 Return as JSON:
-{"attractiveness": 3, "summary": "executive summary", "insights": ["insight 1", "insight 2"], "appliedConclusions": ["..."], "initiatives": [{"title": "...", "description": "...", "type": "...", "rationale": "..."}]}`;
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"positioning|pricing|partnership|capability-build|defensive-move","rationale":"...","linkedForceIds":["buyerPower"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "strategic|defensive|growth", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["buyerPower"]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedForceIds": ["buyerPower"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
   }
 
   if (toolType === 'growth-paths') {
-    return `Summarize the Ansoff Matrix analysis in a way that can feed report and presentation creation:
+    const growthData = inputData as any;
+    const optionsSummary = Object.entries(growthData?.quadrants || {})
+      .map(
+        ([quadrant, items]: [string, any]) =>
+          `- ${quadrant}: ${(items || []).map((item: any) => item.title).join('; ') || 'none'}`
+      )
+      .join('\n');
+
+    return `Based on this Ansoff Growth Paths analysis, create a consulting-grade final summary:
+
+${optionsSummary}
+
+Provide:
 1. Executive Summary (3-4 sentences)
-2. Top 3 insights
-3. Applied Conclusions
-4. 3-5 initiative recommendations (with impact/effort)
+2. Top 3 growth insights
+3. Applied Conclusions: what to scale, what to test, what to avoid, what to validate next
+4. 3-5 Recommended Growth Moves
+5. Output Candidates covering ${CONSULTING_TOOL_STANDARD_OUTPUTS.join(', ')}
 
 Return JSON:
-{"summary": "...", "insights": ["..."], "appliedConclusions": ["..."], "initiatives": [{"title": "...", "description": "...", "impact": "high|medium|low", "effort": "high|medium|low"}]}`;
+{
+  "summary": "executive summary",
+  "insights": ["insight 1", "insight 2"],
+  "appliedConclusions": ["..."],
+  "moves": [{"title":"...","category":"scale-core|enter-market|build-product|diversify|validate-first","rationale":"...","linkedOptionIds":[],"linkedQuadrants":["marketPenetration"],"expectedImpact":"high|medium|low","estimatedEffort":"high|medium|low","riskLevel":"high|medium|low","confidence":4,"firstStep":"..."}],
+  "initiatives": [{"title": "...", "description": "...", "type": "growth|strategic|operational", "estimatedImpact": "high|medium|low", "estimatedEffort": "high|medium|low", "rationale": "...", "linkedItems": ["marketPenetration"]}],
+  "outputCandidates": [{"outputType": "initiative|report|presentation|idea", "title": "...", "description": "...", "linkedQuadrants": ["marketPenetration"], "rationale": "...", "readiness": "ready-for-initiative|ready-for-presentation|ready-for-report|keep-as-idea|blocked"}]
+}`;
   }
 
   if (toolType === 'portfolio-priority') {

@@ -122,11 +122,17 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
     setSaving(true);
     try {
       await Api.saveNotificationPreferences(currentUser.id, preferences);
-      setOriginalPreferences(preferences);
+      const persisted = await Api.getNotificationPreferences(currentUser.id);
+      const next =
+        persisted && Object.keys(persisted).length > 0
+          ? ({ ...defaultPreferences, ...persisted } as NotificationPreferences)
+          : preferences;
+      setPreferences(next);
+      setOriginalPreferences(next);
       toast.success(t('settings.notifications.saved', 'Notification preferences saved'));
       onUpdateUser({
         ...currentUser,
-        notification_preferences: JSON.stringify(preferences),
+        notification_preferences: JSON.stringify(next),
       } as any);
     } catch (err) {
       toast.error(t('settings.notifications.error', 'Failed to save preferences'));
@@ -217,7 +223,10 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
                 <ChannelHeader
                   key={int.id}
                   icon={Icon}
-                  label={int.provider.charAt(0).toUpperCase() + int.provider.slice(1)}
+                  label={t(
+                    `settings.notifications.provider.${int.provider}`,
+                    int.provider.charAt(0).toUpperCase() + int.provider.slice(1)
+                  )}
                 />
               );
             })}

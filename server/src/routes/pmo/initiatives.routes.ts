@@ -18,8 +18,8 @@ import { apiAuthRateLimiter } from '../../middleware/rateLimiting.middleware.js'
 import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import blueprintService from '../../services/blueprintService.js';
-import initiativeGenerationService from '../../services/initiativeGenerationService.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
+import initiativeGenerationService from '../../services/initiativeGenerationService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
 import {
@@ -991,7 +991,8 @@ router.post('/:id/apply-template', async (req: any, res: any) => {
         const measurementFrequency =
           String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() === 'DAILY'
             ? 'DAILY'
-            : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() === 'WEEKLY'
+            : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() ===
+                'WEEKLY'
               ? 'WEEKLY'
               : String(kpi.measurementFrequency || kpi.frequency || 'MONTHLY').toUpperCase() ===
                   'QUARTERLY'
@@ -1023,8 +1024,7 @@ router.post('/:id/apply-template', async (req: any, res: any) => {
             observationPhase === 'realization' || observationPhase === 'both'
               ? (observationPhase as 'realization' | 'both')
               : 'post-implementation',
-          trackedInRealization:
-            observationPhase === 'realization' || observationPhase === 'both',
+          trackedInRealization: observationPhase === 'realization' || observationPhase === 'both',
           trackedPostImplementation:
             observationPhase === 'post-implementation' || observationPhase === 'both',
           realizationExpectation: {

@@ -789,7 +789,8 @@ class InterviewAssignmentService {
     const db = await this.getDb();
     const params: any[] = [organizationId];
     const scope =
-      options?.scope || (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: managerId });
+      options?.scope ||
+      (options?.elevated ? { kind: 'organization' } : { kind: 'creator', creatorId: managerId });
     const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'a' });
 
     let where = `WHERE a.organization_id = ?${scopeClause.clause}`;
@@ -846,7 +847,9 @@ class InterviewAssignmentService {
       params.push(organizationId);
     }
     if (options?.scope) {
-      const scopeClause = buildAssignmentManagerScopeClause(options.scope, { assignmentAlias: 'a' });
+      const scopeClause = buildAssignmentManagerScopeClause(options.scope, {
+        assignmentAlias: 'a',
+      });
       where += scopeClause.clause;
       params.push(...scopeClause.params);
     }
@@ -887,9 +890,10 @@ class InterviewAssignmentService {
   ): Promise<number> {
     const db = await this.getDb();
     const now = new Date().toISOString();
-    const scope =
-      options?.scope || { kind: 'creator', creatorId: managerId };
-    const scopeClause = buildAssignmentManagerScopeClause(scope, { assignmentAlias: 'interview_assignments' });
+    const scope = options?.scope || { kind: 'creator', creatorId: managerId };
+    const scopeClause = buildAssignmentManagerScopeClause(scope, {
+      assignmentAlias: 'interview_assignments',
+    });
 
     const result = await db.get<{ count: number }>(
       `SELECT COUNT(*) as count

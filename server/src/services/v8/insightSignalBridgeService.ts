@@ -20,9 +20,9 @@ import type { P10Finding } from './interviewInsightFindingsService.js';
 import { listFindings } from './interviewInsightFindingsService.js';
 import {
   createTriageSignal,
-  type RadarCategory,
-  type RadarBands,
   type PrimaryDriver,
+  type RadarBands,
+  type RadarCategory,
   type TimeWindow,
 } from './radarTriageService.js';
 
@@ -87,9 +87,10 @@ export async function emitRadarSignalsForInsight(
               .map((p) => ({ type: p.type, ref: p.sourceRef })),
           ],
           lastObservedAt: finding.updated_at || new Date().toISOString(),
-          sourceCoverage: finding.evidence_pointers.filter((p) => !p.isTombstone).length >= 3
-            ? 'complete' as const
-            : 'partial' as const,
+          sourceCoverage:
+            finding.evidence_pointers.filter((p) => !p.isTombstone).length >= 3
+              ? ('complete' as const)
+              : ('partial' as const),
         },
         uncertaintyBoundary: {
           missingInputs: finding.limits ? [finding.limits] : [],
@@ -284,7 +285,10 @@ export async function validateSurveyLinkage(
       return { valid: true };
     }
 
-    return { valid: false, reason: `Survey reference '${sourceRef}' not found in sessions or templates` };
+    return {
+      valid: false,
+      reason: `Survey reference '${sourceRef}' not found in sessions or templates`,
+    };
   } catch (err) {
     logger.warn(`${LOG_PREFIX} Survey linkage validation error: ${(err as Error).message}`);
     return { valid: true, reason: 'Validation skipped due to DB error (optimistic)' };

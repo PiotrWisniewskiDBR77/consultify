@@ -83,6 +83,11 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
     }
   }, [isRenaming]);
 
+  const handleStartRename = useCallback(() => {
+    setRenameValue(conversation.title || '');
+    setIsRenaming(true);
+  }, [conversation.title]);
+
   const handleFinishRename = useCallback(async () => {
     const trimmed = renameValue.trim();
     if (trimmed && trimmed !== conversation.title) {
@@ -177,7 +182,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       )}
 
       <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <ConversationActions conversation={conversation} />
+        <ConversationActions conversation={conversation} onRenameStart={handleStartRename} />
       </div>
     </div>
   );

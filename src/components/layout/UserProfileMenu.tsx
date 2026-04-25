@@ -44,7 +44,8 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
 }) => {
   const { currentUser, setCurrentView, logout, theme, toggleTheme, sessionMode, setSessionMode } =
     useAppStore();
-  const { isDemoMode, demoExperienceType, demoOrganization, isDemoLoading, toggleDemoMode } = useDemo();
+  const { isDemoMode, demoExperienceType, demoOrganization, isDemoLoading, toggleDemoMode } =
+    useDemo();
   const setCurrentOrganization = useAppStore((s) => s.setCurrentOrganization);
   const setCurrentProjectId = useAppStore((s) => s.setCurrentProjectId);
   const currentOrganization = useAppStore((s) => s.currentOrganization);
@@ -94,35 +95,40 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     }
   }, [orgsLoading, orgs.length]);
 
-  const handleSwitchOrg = useCallback(async (orgId: string, orgName: string) => {
-    setSwitchingOrgId(orgId);
-    try {
-      const token = tokenService.getToken();
-      const res = await fetch('/api/auth/switch-organization', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        credentials: 'include',
-        body: JSON.stringify({ organizationId: orgId }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || 'Failed to switch');
+  const handleSwitchOrg = useCallback(
+    async (orgId: string, orgName: string) => {
+      setSwitchingOrgId(orgId);
+      try {
+        const token = tokenService.getToken();
+        const res = await fetch('/api/auth/switch-organization', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          credentials: 'include',
+          body: JSON.stringify({ organizationId: orgId }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || 'Failed to switch');
+        }
+        const data = await res.json();
+        tokenService.saveTokens(data.token, data.refreshToken);
+        localStorage.setItem('consultify_current_org_id', orgId);
+        setCurrentProjectId(null);
+        setCurrentOrganization({ id: data.organization.id, name: data.organization.name });
+        toast.success(`Switched to ${data.organization.name}`);
+        setTimeout(() => {
+          window.location.href = window.location.pathname;
+        }, 300);
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to switch organization');
+        setSwitchingOrgId(null);
       }
-      const data = await res.json();
-      tokenService.saveTokens(data.token, data.refreshToken);
-      localStorage.setItem('consultify_current_org_id', orgId);
-      setCurrentProjectId(null);
-      setCurrentOrganization({ id: data.organization.id, name: data.organization.name });
-      toast.success(`Switched to ${data.organization.name}`);
-      setTimeout(() => { window.location.href = window.location.pathname; }, 300);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to switch organization');
-      setSwitchingOrgId(null);
-    }
-  }, [setCurrentOrganization, setCurrentProjectId]);
+    },
+    [setCurrentOrganization, setCurrentProjectId]
+  );
 
   const handleNavigate = (view: AppView) => {
     setCurrentView(view);
@@ -140,21 +146,26 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
     setCurrentView(AppView.WELCOME);
   };
 
-  if (!currentUser) return null;
-
-  const initials =
-    `${currentUser.firstName?.[0] || ''}${currentUser.lastName?.[0] || ''}`.toUpperCase();
-  const activeOrganizationName =
-    (isDemoMode ? demoOrganization?.name : currentOrganization?.name) || currentUser.companyName || 'Workspace';
-  const roleLabel = currentUser.role?.toLowerCase();
-  const activeOrganizationId =
-    (isDemoMode ? demoOrganization?.id : currentOrganization?.id) || currentUser.organizationId || null;
   const shouldShowOrgSwitcher = !isDemoMode;
 
   useEffect(() => {
     if (!isOpen || !shouldShowOrgSwitcher || orgsLoading || orgs.length > 0) return;
     void fetchOrgs();
   }, [fetchOrgs, isOpen, orgs.length, orgsLoading, shouldShowOrgSwitcher]);
+
+  if (!currentUser) return null;
+
+  const initials =
+    `${currentUser.firstName?.[0] || ''}${currentUser.lastName?.[0] || ''}`.toUpperCase();
+  const activeOrganizationName =
+    (isDemoMode ? demoOrganization?.name : currentOrganization?.name) ||
+    currentUser.companyName ||
+    'Workspace';
+  const roleLabel = currentUser.role?.toLowerCase();
+  const activeOrganizationId =
+    (isDemoMode ? demoOrganization?.id : currentOrganization?.id) ||
+    currentUser.organizationId ||
+    null;
 
   return (
     <div className={`relative ${className}`} ref={menuRef}>
@@ -290,9 +301,11 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                             }}
                             disabled={!!switchingOrgId}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors
-                              ${isCurrent
-                                ? 'bg-purple-100/60 dark:bg-purple-900/20'
-                                : 'hover:bg-white dark:hover:bg-white/5'}
+                              ${
+                                isCurrent
+                                  ? 'bg-purple-100/60 dark:bg-purple-900/20'
+                                  : 'hover:bg-white dark:hover:bg-white/5'
+                              }
                               disabled:opacity-50`}
                           >
                             <div className="w-4 shrink-0 flex items-center justify-center">
@@ -452,10 +465,7 @@ export const UserProfileMenu: React.FC<UserProfileMenuProps> = ({
                             'settings.menu.demoModeOn',
                             'Sample workspace is on - you are exploring Atelier Toys'
                           )
-                        : t(
-                            'settings.menu.demoModeOff',
-                            'Open the Atelier Toys sample workspace'
-                          )
+                        : t('settings.menu.demoModeOff', 'Open the Atelier Toys sample workspace')
                     }
                   >
                     {isDemoLoading ? (

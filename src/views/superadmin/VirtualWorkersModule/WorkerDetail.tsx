@@ -134,7 +134,11 @@ export const WorkerDetail: React.FC<WorkerDetailProps> = ({ workerId, activeTab,
       {activeTab === 'insights' && <InsightsPanel workerId={worker.id} />}
       {activeTab === 'evaluations' && <EvaluationsPanel workerId={worker.id} />}
       {activeTab === 'release' && (
-        <ReleasePanel workerId={worker.id} profileId={profile?.id} profileVersion={profile?.version} />
+        <ReleasePanel
+          workerId={worker.id}
+          profileId={profile?.id}
+          profileVersion={profile?.version}
+        />
       )}
     </div>
   );

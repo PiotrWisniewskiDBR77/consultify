@@ -324,7 +324,8 @@ export async function createSupportTrace(params: CreateSupportTraceParams): Prom
     retrievalRequestId: validated.retrievalRequestId ?? null,
     routingExplanationId: validated.routingExplanationId ?? null,
     trustClass: validated.trustClass,
-    routingExplanation: (validated.routingExplanation ?? null) as SupportTrace['routingExplanation'],
+    routingExplanation: (validated.routingExplanation ??
+      null) as SupportTrace['routingExplanation'],
     degradedConditions: validated.degradedConditions as SupportTrace['degradedConditions'],
     createdAt: now,
   };

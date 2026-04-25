@@ -6,6 +6,15 @@ import { AIPulseCore } from '../../../src/components/MyWork/Home/AIPulseCore';
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
+    t: (key: string, fallback?: string) =>
+      ({
+        'myWork.radar.topMove': 'Top move',
+        'myWork.radar.worthNoticing': 'Worth noticing',
+        'myWork.radar.talkToAI': 'Talk to AI',
+        'myWork.radar.openExecution': 'Open execution',
+      })[key] ||
+      fallback ||
+      key,
     i18n: { language: 'en' },
   }),
 }));

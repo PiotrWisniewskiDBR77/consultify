@@ -18,9 +18,7 @@ describe('isSafeCitationLink', () => {
   // Accept path.
   // -------------------------------------------------------------
   it('accepts a plain https URL', () => {
-    expect(isSafeCitationLink('https://example.com/deck')).toBe(
-      'https://example.com/deck'
-    );
+    expect(isSafeCitationLink('https://example.com/deck')).toBe('https://example.com/deck');
   });
 
   it('accepts a plain http URL', () => {
@@ -28,15 +26,13 @@ describe('isSafeCitationLink', () => {
   });
 
   it('canonicalises whitespace-padded input', () => {
-    expect(isSafeCitationLink('  https://example.com/deck  ')).toBe(
-      'https://example.com/deck'
-    );
+    expect(isSafeCitationLink('  https://example.com/deck  ')).toBe('https://example.com/deck');
   });
 
   it('accepts URLs with query strings and hashes', () => {
-    expect(
-      isSafeCitationLink('https://example.com/path?q=1&r=2#section')
-    ).toBe('https://example.com/path?q=1&r=2#section');
+    expect(isSafeCitationLink('https://example.com/path?q=1&r=2#section')).toBe(
+      'https://example.com/path?q=1&r=2#section'
+    );
   });
 
   it('accepts URLs with ports', () => {
@@ -86,9 +82,7 @@ describe('isSafeCitationLink', () => {
   });
 
   it('rejects data: URLs', () => {
-    expect(
-      isSafeCitationLink('data:text/html,<script>alert(1)</script>')
-    ).toBeNull();
+    expect(isSafeCitationLink('data:text/html,<script>alert(1)</script>')).toBeNull();
   });
 
   it('rejects vbscript:, file:, about:, blob: URLs', () => {

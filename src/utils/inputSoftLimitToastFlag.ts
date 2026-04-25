@@ -93,9 +93,9 @@ export function isInputSoftLimitToastEnabled(): boolean {
 export function isInputSoftLimitToastDismissedForSession(): boolean {
   if (typeof window === 'undefined' || !window.sessionStorage) return false;
   try {
-    return window.sessionStorage.getItem(
-      INPUT_SOFT_LIMIT_TOAST_SESSION_DISMISS_STORAGE_KEY
-    ) === '1';
+    return (
+      window.sessionStorage.getItem(INPUT_SOFT_LIMIT_TOAST_SESSION_DISMISS_STORAGE_KEY) === '1'
+    );
   } catch {
     return false;
   }
@@ -104,10 +104,7 @@ export function isInputSoftLimitToastDismissedForSession(): boolean {
 export function markInputSoftLimitToastDismissedForSession(): void {
   if (typeof window === 'undefined' || !window.sessionStorage) return;
   try {
-    window.sessionStorage.setItem(
-      INPUT_SOFT_LIMIT_TOAST_SESSION_DISMISS_STORAGE_KEY,
-      '1'
-    );
+    window.sessionStorage.setItem(INPUT_SOFT_LIMIT_TOAST_SESSION_DISMISS_STORAGE_KEY, '1');
   } catch {
     // SessionStorage write failed — dismissal is a courtesy, not
     // a contract. The in-memory rising-edge ref still suppresses
@@ -118,9 +115,7 @@ export function markInputSoftLimitToastDismissedForSession(): void {
 export function hasInputSoftLimitToastFiredForSession(): boolean {
   if (typeof window === 'undefined' || !window.sessionStorage) return false;
   try {
-    return window.sessionStorage.getItem(
-      INPUT_SOFT_LIMIT_TOAST_SESSION_FIRED_STORAGE_KEY
-    ) === '1';
+    return window.sessionStorage.getItem(INPUT_SOFT_LIMIT_TOAST_SESSION_FIRED_STORAGE_KEY) === '1';
   } catch {
     return false;
   }
@@ -129,10 +124,7 @@ export function hasInputSoftLimitToastFiredForSession(): boolean {
 export function markInputSoftLimitToastFiredForSession(): void {
   if (typeof window === 'undefined' || !window.sessionStorage) return;
   try {
-    window.sessionStorage.setItem(
-      INPUT_SOFT_LIMIT_TOAST_SESSION_FIRED_STORAGE_KEY,
-      '1'
-    );
+    window.sessionStorage.setItem(INPUT_SOFT_LIMIT_TOAST_SESSION_FIRED_STORAGE_KEY, '1');
   } catch {
     // See `markInputSoftLimitToastDismissedForSession`.
   }

@@ -151,6 +151,7 @@ import notificationRoutes from './routes/notifications/notifications.routes.js';
 import notificationSettingsRoutes from './routes/notifications/notificationSettings.routes.js';
 import oauthRoutes from './routes/oauthRoutes.routes.js';
 import onboardingRoutes from './routes/onboarding.routes.js';
+import approvedDomainsRoutes from './routes/organization/approved-domains.routes.js';
 import brandingRoutes from './routes/organization/branding.routes.js';
 import invitationRoutes from './routes/organization/invitations.routes.js';
 import organizationDataRoutes from './routes/organization/organization-data.routes.js';
@@ -254,6 +255,7 @@ import userOrgsRoutes from './routes/user/userOrgs.routes.js';
 import userRoutes from './routes/user/users.routes.js';
 import v8Router from './routes/v8/index.js';
 import { publicKnowledgeBaseRoutes as publicV8KnowledgeBaseRoutes } from './routes/v8/knowledge-base.routes.js';
+import v10TeresaRoutes from './routes/v10/teresa.routes.js';
 import verifyRoutes from './routes/verify.routes.js';
 import videoRoutes from './routes/videos.routes.js';
 import virtualWorkersRoutes from './routes/virtual-workers.routes.js';
@@ -457,8 +459,21 @@ export class ApiGateway {
       mountStub('/api/integrations', integrationsRoutes, 'integrationsRoutes');
       mountStub('/api/system-config', systemConfigRoutes, 'systemConfigRoutes');
       app.use('/api/system-health', systemHealthRoutes);
-      mountStub('/api/api-keys', apiKeysRoutes, 'apiKeysRoutes');
-      mountStub('/api/research', researchRoutes, 'researchRoutes');
+      app.use('/api/api-keys', apiKeysRoutes);
+      // Wave 4 ResearchSession is a production route, not a generated stub.
+      app.use('/api/research', researchRoutes);
+      setImmediate(() => {
+        import('./services/researchSessionService.js')
+          .then(({ recoverInterruptedResearchSessions }) => recoverInterruptedResearchSessions())
+          .then((result) => {
+            if (result.recovered > 0) {
+              logger.info(`[ApiGateway] Recovered ${result.recovered} interrupted research session(s)`);
+            }
+          })
+          .catch((err) =>
+            logger.warn('[ApiGateway] Research session recovery skipped', err?.message || String(err))
+          );
+      });
       app.use('/api/backups', backupRoutes);
 
       // Link preview (og:meta fetcher for whiteboard LinkNodes)
@@ -548,6 +563,7 @@ export class ApiGateway {
       app.use('/api/megatrends', megatrendRoutes);
       app.use('/api/organizations', organizationRoutes);
       app.use('/api/organizations', ownershipRoutes);
+      app.use('/api/organizations', approvedDomainsRoutes);
       mountStub('/api/invitations', invitationRoutes, 'invitationRoutes');
       app.use('/api/organization-context', organizationContextRoutes);
       app.use('/api/organization-profiles', organizationProfilesRoutes);
@@ -752,6 +768,10 @@ export class ApiGateway {
       // V8 API namespace — feature-gated
       logger.info('[ApiGateway] Mounting /api/v8');
       app.use('/api/v8', v8FeatureGate, v8Router);
+
+      // V10 AI OS namespace — Wave 2 Teresa voice/runtime contract.
+      logger.info('[ApiGateway] Mounting /api/v10/teresa');
+      app.use('/api/v10/teresa', v10TeresaRoutes);
 
       // Catch-all RBAC or 404 for /api
       app.use('/api', rbacRoutes);

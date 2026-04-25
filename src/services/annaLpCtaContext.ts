@@ -36,7 +36,8 @@ export function readAnnaLpCtaContext(): AnnaLpCtaContext | null {
   if (!data || typeof data !== 'object') return null;
 
   const ctx = data as Partial<AnnaLpCtaContext>;
-  if (!ctx.session_id || !ctx.cta_type || !ctx.language || !ctx.channel || !ctx.turn_id) return null;
+  if (!ctx.session_id || !ctx.cta_type || !ctx.language || !ctx.channel || !ctx.turn_id)
+    return null;
   return ctx as AnnaLpCtaContext;
 }
 
@@ -74,4 +75,3 @@ export function clearAnnaLpCtaContext(): void {
     // ignore
   }
 }
-

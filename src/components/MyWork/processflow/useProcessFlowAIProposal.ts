@@ -29,44 +29,50 @@ export function useProcessFlowAIProposal({ processId }: UseProcessFlowAIProposal
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const createProposal = useCallback(async (prompt: string) => {
-    if (!processId) return;
-    setIsGenerating(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/v8/process-flow/${processId}/ai-proposals`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setActiveProposal(data);
-      } else {
-        setError('Failed to create AI proposal');
+  const createProposal = useCallback(
+    async (prompt: string) => {
+      if (!processId) return;
+      setIsGenerating(true);
+      setError(null);
+      try {
+        const res = await fetch(`/api/v8/process-flow/${processId}/ai-proposals`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setActiveProposal(data);
+        } else {
+          setError('Failed to create AI proposal');
+        }
+      } catch {
+        setError('Network error');
+      } finally {
+        setIsGenerating(false);
       }
-    } catch {
-      setError('Network error');
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [processId]);
+    },
+    [processId]
+  );
 
-  const resolveProposal = useCallback(async (action: 'accept' | 'reject') => {
-    if (!activeProposal?.id || !processId) return;
-    try {
-      const res = await fetch(`/api/v8/process-flow/ai-proposals/${activeProposal.id}/resolve`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action }),
-      });
-      if (res.ok) {
-        setActiveProposal(null);
+  const resolveProposal = useCallback(
+    async (action: 'accept' | 'reject') => {
+      if (!activeProposal?.id || !processId) return;
+      try {
+        const res = await fetch(`/api/v8/process-flow/ai-proposals/${activeProposal.id}/resolve`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        });
+        if (res.ok) {
+          setActiveProposal(null);
+        }
+      } catch {
+        setError('Failed to resolve proposal');
       }
-    } catch {
-      setError('Failed to resolve proposal');
-    }
-  }, [activeProposal, processId]);
+    },
+    [activeProposal, processId]
+  );
 
   const dismiss = useCallback(() => setActiveProposal(null), []);
 

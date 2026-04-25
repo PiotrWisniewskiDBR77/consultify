@@ -49,7 +49,13 @@ interface SecurityOverviewSettingsProps {
   onUpdateUser: (updates: Partial<User>) => void;
 }
 
-type ActivePanel = null | 'password' | 'mfa-setup' | 'recovery-email' | 'recovery-phone' | 'backup-codes';
+type ActivePanel =
+  | null
+  | 'password'
+  | 'mfa-setup'
+  | 'recovery-email'
+  | 'recovery-phone'
+  | 'backup-codes';
 
 // ---------------------------------------------------------------------------
 // Security Score Ring
@@ -61,8 +67,7 @@ const SecurityScoreRing: React.FC<{ score: number; max: number }> = ({ score, ma
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (pct / 100) * circumference;
 
-  const color =
-    pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-rose-400';
+  const color = pct >= 80 ? 'text-emerald-400' : pct >= 50 ? 'text-amber-400' : 'text-rose-400';
   const bgRing = 'text-white/[0.06]';
   const label =
     pct >= 80
@@ -76,13 +81,20 @@ const SecurityScoreRing: React.FC<{ score: number; max: number }> = ({ score, ma
       <div className="relative w-24 h-24">
         <svg className="w-24 h-24 -rotate-90" viewBox="0 0 96 96">
           <circle
-            cx="48" cy="48" r={radius}
-            fill="none" strokeWidth="6"
+            cx="48"
+            cy="48"
+            r={radius}
+            fill="none"
+            strokeWidth="6"
             className={`stroke-current ${bgRing}`}
           />
           <circle
-            cx="48" cy="48" r={radius}
-            fill="none" strokeWidth="6" strokeLinecap="round"
+            cx="48"
+            cy="48"
+            r={radius}
+            fill="none"
+            strokeWidth="6"
+            strokeLinecap="round"
             className={`stroke-current ${color} transition-all duration-700`}
             strokeDasharray={circumference}
             strokeDashoffset={offset}
@@ -207,11 +219,8 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
     (async () => {
       setRecoveryLoading(true);
       try {
-        const response = await fetch('/api/settings/recovery', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        });
-        if (response.ok) {
-          const data = await response.json();
+        const data = await Api.get('/settings/recovery');
+        if (data) {
           setRecoveryEmail(data.recoveryEmail || '');
           setRecoveryPhone(data.recoveryPhone || '');
           setRecoveryBackupCount(data.backupCodesCount || 0);
@@ -231,10 +240,26 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
   // ---------------------------------------------------------------------------
   const securityChecks = useMemo(() => {
     const checks = [
-      { id: 'mfa', label: t('settings.security.check2fa', 'Two-factor authentication'), met: mfaEnabled },
-      { id: 'email', label: t('settings.security.checkEmail', 'Recovery email configured'), met: !!recoveryEmail },
-      { id: 'phone', label: t('settings.security.checkPhone', 'Recovery phone configured'), met: !!recoveryPhone },
-      { id: 'backup', label: t('settings.security.checkBackup', 'Backup codes generated'), met: recoveryBackupCount > 0 },
+      {
+        id: 'mfa',
+        label: t('settings.security.check2fa', 'Two-factor authentication'),
+        met: mfaEnabled,
+      },
+      {
+        id: 'email',
+        label: t('settings.security.checkEmail', 'Recovery email configured'),
+        met: !!recoveryEmail,
+      },
+      {
+        id: 'phone',
+        label: t('settings.security.checkPhone', 'Recovery phone configured'),
+        met: !!recoveryPhone,
+      },
+      {
+        id: 'backup',
+        label: t('settings.security.checkBackup', 'Backup codes generated'),
+        met: recoveryBackupCount > 0,
+      },
     ];
     return checks;
   }, [mfaEnabled, recoveryEmail, recoveryPhone, recoveryBackupCount, t]);
@@ -246,11 +271,23 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
   // ---------------------------------------------------------------------------
   const passwordRequirements = useMemo(
     () => [
-      { met: newPassword.length >= 8, text: t('settings.password.req.length', 'At least 8 characters') },
-      { met: /[A-Z]/.test(newPassword), text: t('settings.password.req.uppercase', 'One uppercase letter') },
-      { met: /[a-z]/.test(newPassword), text: t('settings.password.req.lowercase', 'One lowercase letter') },
+      {
+        met: newPassword.length >= 8,
+        text: t('settings.password.req.length', 'At least 8 characters'),
+      },
+      {
+        met: /[A-Z]/.test(newPassword),
+        text: t('settings.password.req.uppercase', 'One uppercase letter'),
+      },
+      {
+        met: /[a-z]/.test(newPassword),
+        text: t('settings.password.req.lowercase', 'One lowercase letter'),
+      },
       { met: /[0-9]/.test(newPassword), text: t('settings.password.req.number', 'One number') },
-      { met: /[^A-Za-z0-9]/.test(newPassword), text: t('settings.password.req.special', 'One special character') },
+      {
+        met: /[^A-Za-z0-9]/.test(newPassword),
+        text: t('settings.password.req.special', 'One special character'),
+      },
     ],
     [newPassword, t]
   );
@@ -292,7 +329,11 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
       setMfaStep('scan');
       setActivePanel('mfa-setup');
     } catch (err: any) {
-      setMfaError(err.response?.data?.error || err.message || t('security.mfa.setupError', 'Failed to start MFA setup'));
+      setMfaError(
+        err.response?.data?.error ||
+          err.message ||
+          t('security.mfa.setupError', 'Failed to start MFA setup')
+      );
     } finally {
       setMfaLoading(false);
     }
@@ -313,7 +354,11 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
         toast.success(t('security.mfa.enabled', '2FA enabled successfully!'));
       }
     } catch (err: any) {
-      setMfaError(err.response?.data?.error || err.message || t('security.mfa.invalidCode', 'Invalid verification code'));
+      setMfaError(
+        err.response?.data?.error ||
+          err.message ||
+          t('security.mfa.invalidCode', 'Invalid verification code')
+      );
     } finally {
       setMfaLoading(false);
     }
@@ -352,12 +397,15 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
     onUpdateUser({});
   }, [onUpdateUser]);
 
-  const copyCode = useCallback((code: string, index: number) => {
-    navigator.clipboard.writeText(code);
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
-    toast.success(t('common.copied', 'Copied to clipboard'));
-  }, [t]);
+  const copyCode = useCallback(
+    (code: string, index: number) => {
+      navigator.clipboard.writeText(code);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+      toast.success(t('common.copied', 'Copied to clipboard'));
+    },
+    [t]
+  );
 
   const copyAllCodes = useCallback(() => {
     navigator.clipboard.writeText(backupCodes.join('\n'));
@@ -425,12 +473,18 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
       <SettingsSection
         icon={Key}
         title={t('settings.password.title', 'Password')}
-        description={t('settings.password.description', 'Update your password to keep your account secure')}
+        description={t(
+          'settings.password.description',
+          'Update your password to keep your account secure'
+        )}
         cardId="security-password"
       >
         {activePanel === 'password' ? (
           <form onSubmit={handlePasswordSubmit} className="space-y-4 max-w-md">
-            <SettingsFormRow label={t('settings.password.current', 'Current Password')} htmlFor="sec-current-pw">
+            <SettingsFormRow
+              label={t('settings.password.current', 'Current Password')}
+              htmlFor="sec-current-pw"
+            >
               <div className="relative">
                 <SettingsInput
                   id="sec-current-pw"
@@ -441,7 +495,10 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               </div>
             </SettingsFormRow>
 
-            <SettingsFormRow label={t('settings.password.new', 'New Password')} htmlFor="sec-new-pw">
+            <SettingsFormRow
+              label={t('settings.password.new', 'New Password')}
+              htmlFor="sec-new-pw"
+            >
               <div className="relative">
                 <SettingsInput
                   id="sec-new-pw"
@@ -476,13 +533,20 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               </div>
             )}
 
-            <SettingsFormRow label={t('settings.password.confirm', 'Confirm New Password')} htmlFor="sec-confirm-pw">
+            <SettingsFormRow
+              label={t('settings.password.confirm', 'Confirm New Password')}
+              htmlFor="sec-confirm-pw"
+            >
               <SettingsInput
                 id="sec-confirm-pw"
                 type={showPasswords ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                error={confirmPassword && !passwordsMatch ? t('settings.password.mismatch', 'Passwords do not match') : undefined}
+                error={
+                  confirmPassword && !passwordsMatch
+                    ? t('settings.password.mismatch', 'Passwords do not match')
+                    : undefined
+                }
               />
             </SettingsFormRow>
 
@@ -527,7 +591,10 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
       <SettingsSection
         icon={Shield}
         title={t('security.mfa.title', 'Two-Factor Authentication')}
-        description={t('security.mfa.description', 'Add an extra layer of security to your account')}
+        description={t(
+          'security.mfa.description',
+          'Add an extra layer of security to your account'
+        )}
         cardId="security-mfa"
       >
         {/* MFA Enabled — management view */}
@@ -543,7 +610,8 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 </p>
                 <p className="text-xs text-emerald-400/70 mt-0.5">
                   {t('security.mfa.authenticatorApp', 'Authenticator App')}
-                  {backupCodesRemaining != null && ` · ${backupCodesRemaining} ${t('security.mfa.remaining', 'backup codes remaining')}`}
+                  {backupCodesRemaining != null &&
+                    ` · ${backupCodesRemaining} ${t('security.mfa.remaining', 'backup codes remaining')}`}
                 </p>
               </div>
             </div>
@@ -569,7 +637,10 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                     {t('security.mfa.disableTitle', 'Disable Two-Factor Authentication?')}
                   </p>
                   <p className="text-xs text-rose-400/70 mt-1">
-                    {t('security.mfa.disableConfirmText', 'This will remove the extra security layer from your account.')}
+                    {t(
+                      'security.mfa.disableConfirmText',
+                      'This will remove the extra security layer from your account.'
+                    )}
                   </p>
                 </div>
               </div>
@@ -592,7 +663,11 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                 {t('security.mfa.confirmDisable', 'Disable')}
               </button>
               <button
-                onClick={() => { setDisableConfirm(false); setVerificationCode(''); setMfaError(null); }}
+                onClick={() => {
+                  setDisableConfirm(false);
+                  setVerificationCode('');
+                  setMfaError(null);
+                }}
                 className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
               >
                 {t('common.cancel', 'Cancel')}
@@ -607,11 +682,29 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
           <div className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
-                { icon: Shield, title: t('security.mfa.benefit1Title', 'Prevent Unauthorized Access'), desc: t('security.mfa.benefit1Desc', 'Even if someone knows your password') },
-                { icon: Smartphone, title: t('security.mfa.benefit2Title', 'Works Offline'), desc: t('security.mfa.benefit2Desc', 'No internet needed for codes') },
-                { icon: Key, title: t('security.mfa.benefit3Title', 'Backup Codes'), desc: t('security.mfa.benefit3Desc', 'Access your account if you lose your phone') },
+                {
+                  icon: Shield,
+                  title: t('security.mfa.benefit1Title', 'Prevent Unauthorized Access'),
+                  desc: t('security.mfa.benefit1Desc', 'Even if someone knows your password'),
+                },
+                {
+                  icon: Smartphone,
+                  title: t('security.mfa.benefit2Title', 'Works Offline'),
+                  desc: t('security.mfa.benefit2Desc', 'No internet needed for codes'),
+                },
+                {
+                  icon: Key,
+                  title: t('security.mfa.benefit3Title', 'Backup Codes'),
+                  desc: t(
+                    'security.mfa.benefit3Desc',
+                    'Access your account if you lose your phone'
+                  ),
+                },
               ].map((b) => (
-                <div key={b.title} className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]">
+                <div
+                  key={b.title}
+                  className="p-3 rounded-xl bg-white/[0.03] border border-white/[0.06]"
+                >
                   <div className="p-1.5 rounded-lg bg-violet-500/10 w-fit mb-2">
                     <b.icon size={16} className="text-violet-400" />
                   </div>
@@ -625,7 +718,11 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               disabled={mfaLoading}
               className="w-full py-3 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {mfaLoading ? <Loader2 size={16} className="animate-spin" /> : <ShieldCheck size={16} />}
+              {mfaLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <ShieldCheck size={16} />
+              )}
               {t('security.mfa.enable', 'Enable Two-Factor Authentication')}
             </button>
             {mfaError && <p className="text-xs text-rose-400 text-center mt-2">{mfaError}</p>}
@@ -655,11 +752,17 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                     <code className="flex-1 bg-navy-800 px-3 py-2 rounded-lg text-xs font-mono text-slate-300 select-all overflow-x-auto border border-white/5">
                       {showSecret ? secret : '•'.repeat(32)}
                     </code>
-                    <button onClick={() => setShowSecret(!showSecret)} className="p-1.5 text-slate-500 hover:text-slate-300">
+                    <button
+                      onClick={() => setShowSecret(!showSecret)}
+                      className="p-1.5 text-slate-500 hover:text-slate-300"
+                    >
                       {showSecret ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                     <button
-                      onClick={() => { navigator.clipboard.writeText(secret); toast.success(t('common.copied', 'Copied!')); }}
+                      onClick={() => {
+                        navigator.clipboard.writeText(secret);
+                        toast.success(t('common.copied', 'Copied!'));
+                      }}
                       className="p-1.5 text-slate-500 hover:text-slate-300"
                     >
                       <Copy size={14} />
@@ -686,7 +789,11 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                       disabled={mfaLoading || verificationCode.length !== 6}
                       className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium rounded-lg disabled:opacity-50 transition-colors flex items-center gap-2"
                     >
-                      {mfaLoading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
+                      {mfaLoading ? (
+                        <Loader2 size={14} className="animate-spin" />
+                      ) : (
+                        <CheckCircle size={14} />
+                      )}
                       {t('security.mfa.verify', 'Verify')}
                     </button>
                   </div>
@@ -695,7 +802,12 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
               </div>
             </div>
             <button
-              onClick={() => { setMfaStep('idle'); setActivePanel(null); setVerificationCode(''); setMfaError(null); }}
+              onClick={() => {
+                setMfaStep('idle');
+                setActivePanel(null);
+                setVerificationCode('');
+                setMfaError(null);
+              }}
               className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
             >
               {t('common.cancel', 'Cancel Setup')}
@@ -721,7 +833,10 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                   {t('security.mfa.backupWarningTitle', 'Save your backup codes')}
                 </p>
                 <p className="text-xs text-amber-400/70 mt-0.5">
-                  {t('security.mfa.backupWarningDesc', 'If you lose access to your authenticator app, these codes are the ONLY way to access your account.')}
+                  {t(
+                    'security.mfa.backupWarningDesc',
+                    'If you lose access to your authenticator app, these codes are the ONLY way to access your account.'
+                  )}
                 </p>
               </div>
             </div>
@@ -737,17 +852,26 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
                   {copiedIndex === i ? (
                     <CheckCircle size={12} className="text-emerald-400" />
                   ) : (
-                    <Copy size={12} className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Copy
+                      size={12}
+                      className="text-slate-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
                   )}
                 </button>
               ))}
             </div>
 
             <div className="flex gap-2">
-              <button onClick={copyAllCodes} className="flex-1 py-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+              <button
+                onClick={copyAllCodes}
+                className="flex-1 py-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+              >
                 <Copy size={12} /> {t('security.mfa.copyAll', 'Copy All')}
               </button>
-              <button onClick={downloadCodes} className="flex-1 py-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+              <button
+                onClick={downloadCodes}
+                className="flex-1 py-2 text-xs font-medium text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center gap-1.5"
+              >
                 <Download size={12} /> {t('security.mfa.download', 'Download')}
               </button>
             </div>
@@ -766,7 +890,10 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
       <SettingsSection
         icon={LifeBuoy}
         title={t('settings.recovery.title', 'Recovery Options')}
-        description={t('settings.recovery.description', 'Set up account recovery methods in case you lose access')}
+        description={t(
+          'settings.recovery.description',
+          'Set up account recovery methods in case you lose access'
+        )}
         cardId="security-recovery"
       >
         <div className="space-y-3">
@@ -776,7 +903,11 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             iconColor="text-blue-400"
             iconBg="bg-blue-500/10"
             title={t('settings.recovery.email', 'Recovery Email')}
-            status={recoveryEmail ? maskEmail(recoveryEmail) : t('settings.recovery.notSet', 'Not configured')}
+            status={
+              recoveryEmail
+                ? maskEmail(recoveryEmail)
+                : t('settings.recovery.notSet', 'Not configured')
+            }
             statusColor={recoveryEmail ? 'text-slate-400' : 'text-amber-400'}
             action={recoveryEmail ? t('common.change', 'Change') : t('common.add', 'Add')}
             onAction={() => setActivePanel('recovery-email')}
@@ -802,11 +933,17 @@ export const SecurityOverviewSettings: React.FC<SecurityOverviewSettingsProps> =
             title={t('settings.recovery.backupCodes', 'Backup Codes')}
             status={
               recoveryBackupCount > 0
-                ? t('settings.recovery.codesRemaining', '{{count}} codes remaining', { count: recoveryBackupCount })
+                ? t('settings.recovery.codesRemaining', '{{count}} codes remaining', {
+                    count: recoveryBackupCount,
+                  })
                 : t('settings.recovery.noCodes', 'No backup codes generated')
             }
             statusColor={recoveryBackupCount > 0 ? 'text-slate-400' : 'text-amber-400'}
-            action={recoveryBackupCount > 0 ? t('settings.recovery.regenerate', 'Regenerate') : t('settings.recovery.generate', 'Generate')}
+            action={
+              recoveryBackupCount > 0
+                ? t('settings.recovery.regenerate', 'Regenerate')
+                : t('settings.recovery.generate', 'Generate')
+            }
             onAction={() => setActivePanel('backup-codes')}
           />
         </div>
@@ -835,18 +972,32 @@ const StepProgress: React.FC<{ current: 1 | 2 | 3 }> = ({ current }) => {
         return (
           <React.Fragment key={label}>
             {i > 0 && (
-              <div className={cn('w-8 h-0.5 rounded-full', isCompleted ? 'bg-emerald-500' : 'bg-white/[0.06]')} />
+              <div
+                className={cn(
+                  'w-8 h-0.5 rounded-full',
+                  isCompleted ? 'bg-emerald-500' : 'bg-white/[0.06]'
+                )}
+              />
             )}
             <div className="flex flex-col items-center">
               <div
                 className={cn(
                   'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold',
-                  isCompleted ? 'bg-emerald-500 text-white' : isActive ? 'bg-violet-600 text-white' : 'bg-white/[0.06] text-slate-500'
+                  isCompleted
+                    ? 'bg-emerald-500 text-white'
+                    : isActive
+                      ? 'bg-violet-600 text-white'
+                      : 'bg-white/[0.06] text-slate-500'
                 )}
               >
                 {isCompleted ? <Check size={10} /> : num}
               </div>
-              <span className={cn('text-[10px] mt-1', isActive || isCompleted ? 'text-slate-300' : 'text-slate-500')}>
+              <span
+                className={cn(
+                  'text-[10px] mt-1',
+                  isActive || isCompleted ? 'text-slate-300' : 'text-slate-500'
+                )}
+              >
                 {label}
               </span>
             </div>

@@ -16,6 +16,20 @@ export const IPWhitelistView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newIP, setNewIP] = useState({ ipAddress: '', ipRange: '', description: '' });
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const isValidIpOrCidr = (value: string) => {
+    const trimmed = value.trim();
+    const [ip, prefix] = trimmed.split('/');
+    const parts = ip.split('.').map(Number);
+    const validIp =
+      parts.length === 4 &&
+      parts.every((part) => Number.isInteger(part) && part >= 0 && part <= 255);
+    if (!validIp) return false;
+    if (prefix === undefined) return true;
+    const prefixNumber = Number(prefix);
+    return Number.isInteger(prefixNumber) && prefixNumber >= 0 && prefixNumber <= 32;
+  };
 
   useEffect(() => {
     fetchOrganizations();
@@ -34,19 +48,23 @@ export const IPWhitelistView: React.FC = () => {
       if (orgs.length > 0 && !selectedOrgId) {
         setSelectedOrgId(orgs[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch organizations:', err);
+      setLoadError(err?.message || 'Failed to fetch organizations');
+      toast.error(err?.message || 'Failed to fetch organizations');
     }
   };
 
   const fetchWhitelist = async () => {
     if (!selectedOrgId) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const list = await Api.getIPWhitelist(selectedOrgId);
       setWhitelist(list);
-    } catch (err) {
-      toast.error('Failed to fetch IP whitelist');
+    } catch (err: any) {
+      setLoadError(err?.message || 'Failed to fetch IP whitelist');
+      toast.error(err?.message || 'Failed to fetch IP whitelist');
     } finally {
       setLoading(false);
     }
@@ -55,6 +73,14 @@ export const IPWhitelistView: React.FC = () => {
   const handleAddIP = async () => {
     if (!selectedOrgId || !newIP.ipAddress) {
       toast.error('Please select organization and enter IP address');
+      return;
+    }
+    if (!isValidIpOrCidr(newIP.ipAddress)) {
+      toast.error('Enter a valid IPv4 address');
+      return;
+    }
+    if (newIP.ipRange && !isValidIpOrCidr(newIP.ipRange)) {
+      toast.error('Enter a valid IPv4 CIDR range');
       return;
     }
     try {
@@ -74,8 +100,8 @@ export const IPWhitelistView: React.FC = () => {
       await Api.removeIPWhitelist(selectedOrgId, ipId);
       toast.success('IP removed from whitelist');
       fetchWhitelist();
-    } catch (err) {
-      toast.error('Failed to remove IP');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to remove IP');
     }
   };
 
@@ -103,6 +129,7 @@ export const IPWhitelistView: React.FC = () => {
           </select>
           <button
             onClick={() => setShowAddModal(true)}
+            disabled={!selectedOrgId}
             className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center gap-2"
           >
             <Plus size={18} />
@@ -110,6 +137,12 @@ export const IPWhitelistView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>

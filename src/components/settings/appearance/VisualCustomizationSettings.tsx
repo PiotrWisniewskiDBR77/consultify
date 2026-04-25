@@ -122,7 +122,13 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
     try {
       setSaving(true);
       await Api.put('/api/user/appearance/visual', settings);
-      applySettings(settings);
+      const response = await Api.get('/api/user/appearance/visual').catch(() => null);
+      const next =
+        response?.success && response.data
+          ? ({ ...defaultSettings, ...response.data } as VisualSettings)
+          : settings;
+      setSettings(next);
+      applySettings(next);
       toast.success(t('settings.appearance.saved', 'Appearance settings saved'));
     } catch (error) {
       toast.error(t('settings.appearance.error', 'Failed to save appearance settings'));
@@ -149,7 +155,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
 
   const resetToDefaults = () => {
     setSettings(defaultSettings);
-    toast.success('Settings reset to defaults');
+    toast.success(t('settings.appearance.visual.resetToast', 'Settings reset to defaults'));
   };
 
   if (loading) {
@@ -172,7 +178,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             {t('settings.appearance.visual.title', 'Visual Customization')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Personalize how Consultify looks
+            {t('settings.appearance.visual.description', 'Personalize how Consultify looks')}
           </p>
         </div>
         <div className="flex gap-2">
@@ -181,7 +187,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             className="flex items-center gap-2 px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg transition-colors"
           >
             <RefreshCw size={16} />
-            Reset
+            {t('settings.appearance.visual.reset', 'Reset')}
           </button>
           <button
             onClick={handleSave}
@@ -189,20 +195,22 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg transition-colors disabled:opacity-50"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            Save Changes
+            {t('common.saveChanges', 'Save Changes')}
           </button>
         </div>
       </div>
 
       {/* Theme Selection */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Theme</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('settings.appearance.theme', 'Theme')}
+        </h3>
 
         <div className="grid grid-cols-3 gap-4">
           {[
-            { id: 'light', label: 'Light', icon: Sun },
-            { id: 'dark', label: 'Dark', icon: Moon },
-            { id: 'system', label: 'System', icon: Monitor },
+            { id: 'light', label: t('settings.appearance.light', 'Light'), icon: Sun },
+            { id: 'dark', label: t('settings.appearance.dark', 'Dark'), icon: Moon },
+            { id: 'system', label: t('settings.appearance.system', 'System'), icon: Monitor },
           ].map((theme) => {
             const Icon = theme.icon;
             return (
@@ -232,7 +240,9 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
 
       {/* Accent Color */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Accent Color</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('settings.appearance.accentColor', 'Accent Color')}
+        </h3>
 
         <div className="flex flex-wrap gap-3">
           {accentColors.map((color) => (
@@ -245,7 +255,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                   : 'hover:scale-110'
               }`}
               style={{ backgroundColor: color.color }}
-              title={color.name}
+              title={t(`settings.appearance.visual.accent.${color.id}`, color.name)}
             />
           ))}
           <div className="relative">
@@ -254,7 +264,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
               value={settings.accentColor}
               onChange={(e) => setSettings({ ...settings, accentColor: e.target.value })}
               className="w-10 h-10 rounded-full cursor-pointer"
-              title="Custom color"
+              title={t('settings.appearance.customColor', 'Custom color')}
             />
           </div>
         </div>
@@ -271,13 +281,13 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-6">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
           <Type size={20} className="text-blue-500" />
-          Typography
+          {t('settings.accessibility.typographyTitle', 'Typography')}
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Font Family
+              {t('settings.accessibility.fontFamilyTitle', 'Font Family')}
             </label>
             <select
               value={settings.fontFamily}
@@ -286,7 +296,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
             >
               {fontFamilies.map((font) => (
                 <option key={font.id} value={font.value}>
-                  {font.name}
+                  {t(`settings.appearance.visual.font.${font.id}`, font.name)}
                 </option>
               ))}
             </select>
@@ -294,7 +304,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
 
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Font Size
+              {t('settings.accessibility.fontSizeTitle', 'Font Size')}
             </label>
             <div className="flex gap-2">
               {(['small', 'medium', 'large'] as const).map((size) => (
@@ -307,7 +317,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                       : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >
-                  {size}
+                  {t(`settings.accessibility.fontSize.${size}`, size)}
                 </button>
               ))}
             </div>
@@ -319,10 +329,16 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           style={{ fontFamily: settings.fontFamily }}
         >
           <p className="text-slate-900 dark:text-white">
-            Preview: The quick brown fox jumps over the lazy dog.
+            {t(
+              'settings.appearance.previewSentence',
+              'The quick brown fox jumps over the lazy dog.'
+            )}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            ABCDEFGHIJKLMNOPQRSTUVWXYZ • 0123456789
+            {t(
+              'settings.appearance.visual.previewCharacters',
+              'ABCDEFGHIJKLMNOPQRSTUVWXYZ - 0123456789'
+            )}
           </p>
         </div>
       </div>
@@ -331,14 +347,29 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
           <Layout size={20} className="text-green-500" />
-          Display Density
+          {t('settings.appearance.visual.displayDensity', 'Display Density')}
         </h3>
 
         <div className="grid grid-cols-3 gap-4">
           {[
-            { id: 'compact', label: 'Compact', desc: 'More content visible', icon: Minimize2 },
-            { id: 'comfortable', label: 'Comfortable', desc: 'Balanced layout', icon: Layout },
-            { id: 'spacious', label: 'Spacious', desc: 'Relaxed spacing', icon: Maximize2 },
+            {
+              id: 'compact',
+              label: t('settings.appearance.density.compact', 'Compact'),
+              desc: t('settings.appearance.visual.densityCompactDesc', 'More content visible'),
+              icon: Minimize2,
+            },
+            {
+              id: 'comfortable',
+              label: t('settings.appearance.density.comfortable', 'Comfortable'),
+              desc: t('settings.appearance.density.comfortableDesc', 'Balanced layout'),
+              icon: Layout,
+            },
+            {
+              id: 'spacious',
+              label: t('settings.appearance.density.spacious', 'Spacious'),
+              desc: t('settings.appearance.visual.densitySpaciousDesc', 'Relaxed spacing'),
+              icon: Maximize2,
+            },
           ].map((density) => {
             const Icon = density.icon;
             return (
@@ -369,14 +400,16 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
 
       {/* Additional Options */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Additional Options</h3>
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t('settings.appearance.visual.additionalOptions', 'Additional Options')}
+        </h3>
 
         <div className="space-y-4">
           {/* Sidebar Width */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Sidebar Width
+                {t('settings.appearance.visual.sidebarWidth', 'Sidebar Width')}
               </label>
               <span className="text-sm text-violet-600">{settings.sidebarWidth}px</span>
             </div>
@@ -393,7 +426,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           {/* Border Radius */}
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-              Border Radius
+              {t('settings.appearance.visual.borderRadius', 'Border Radius')}
             </label>
             <div className="flex gap-2">
               {(['none', 'small', 'medium', 'large'] as const).map((radius) => (
@@ -406,7 +439,7 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
                       : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700'
                   }`}
                 >
-                  {radius}
+                  {t(`settings.appearance.visual.radius.${radius}`, radius)}
                 </button>
               ))}
             </div>
@@ -415,9 +448,14 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
           {/* Animations Toggle */}
           <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
             <div>
-              <p className="font-medium text-slate-900 dark:text-white">Enable Animations</p>
+              <p className="font-medium text-slate-900 dark:text-white">
+                {t('settings.appearance.visual.enableAnimations', 'Enable Animations')}
+              </p>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Smooth transitions and effects
+                {t(
+                  'settings.appearance.visual.enableAnimationsDesc',
+                  'Smooth transitions and effects'
+                )}
               </p>
             </div>
             <button
@@ -441,25 +479,33 @@ export const VisualCustomizationSettings: React.FC<VisualCustomizationSettingsPr
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <Code size={20} className="text-amber-500" />
-            Custom CSS
+            {t('settings.appearance.visual.customCss', 'Custom CSS')}
           </h3>
           <button
             onClick={() => setShowCustomCSS(!showCustomCSS)}
             className="text-sm text-violet-600 hover:underline"
           >
-            {showCustomCSS ? 'Hide' : 'Show'}
+            {showCustomCSS
+              ? t('settings.appearance.visual.hideCss', 'Hide')
+              : t('settings.appearance.visual.showCss', 'Show')}
           </button>
         </div>
 
         {showCustomCSS && (
           <>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Advanced: Add custom CSS rules (use with caution)
+              {t(
+                'settings.appearance.visual.customCssDesc',
+                'Advanced: Add custom CSS rules (use with caution)'
+              )}
             </p>
             <textarea
               value={settings.customCSS}
               onChange={(e) => setSettings({ ...settings, customCSS: e.target.value })}
-              placeholder="/* Your custom CSS here */&#10;.my-class {&#10;  color: red;&#10;}"
+              placeholder={t(
+                'settings.appearance.visual.customCssPlaceholder',
+                '/* Your custom CSS here */\n.my-class {\n  color: red;\n}'
+              )}
               className="w-full h-48 px-4 py-3 font-mono text-sm bg-slate-950 text-green-400 rounded-lg border-0 resize-none"
             />
           </>

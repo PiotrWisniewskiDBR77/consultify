@@ -18,7 +18,7 @@ type QueueType = {
 };
 
 // Import with type assertion (aiQueue.ts has @ts-nocheck)
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 let aiQueueModule: any;
 try {
   aiQueueModule = require('../queues/aiQueue.js');

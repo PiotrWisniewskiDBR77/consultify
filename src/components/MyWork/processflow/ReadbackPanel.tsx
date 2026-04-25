@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   AlertTriangle,
   ChevronRight,
@@ -9,6 +8,8 @@ import {
   Split,
   Square,
 } from 'lucide-react';
+import React from 'react';
+
 import { Button } from '@/components/ui/Button';
 
 export interface ReadbackStep {
@@ -67,7 +68,9 @@ const ReadbackStepRow: React.FC<{
       >
         <Icon size={14} className={`shrink-0 ${className}`} />
         <span className="min-w-0 flex-1 truncate font-medium">{step.label}</span>
-        <span className="shrink-0 font-mono text-[9px] text-slate-400 dark:text-slate-500">{step.object_id}</span>
+        <span className="shrink-0 font-mono text-[9px] text-slate-400 dark:text-slate-500">
+          {step.object_id}
+        </span>
       </button>
 
       {step.branches && step.branches.length > 0 ? (
@@ -139,7 +142,11 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
       {hasPaths ? (
         <div className="max-h-[min(420px,55vh)] overflow-y-auto rounded-lg border border-slate-200/60 bg-slate-50/50 p-2 dark:border-navy-700 dark:bg-navy-950/30">
           {result!.paths.map((step, i) => (
-            <ReadbackStepRow key={`${step.object_id}-root-${i}`} step={step} onClickStep={onClickStep} />
+            <ReadbackStepRow
+              key={`${step.object_id}-root-${i}`}
+              step={step}
+              onClickStep={onClickStep}
+            />
           ))}
         </div>
       ) : null}
@@ -152,7 +159,10 @@ export const ReadbackPanel: React.FC<ReadbackPanelProps> = ({
           </div>
           <ul className="flex flex-col gap-1">
             {result.warnings.map((w, i) => (
-              <li key={i} className="flex items-start gap-1.5 text-[11px] text-amber-900 dark:text-amber-100/90">
+              <li
+                key={i}
+                className="flex items-start gap-1.5 text-[11px] text-amber-900 dark:text-amber-100/90"
+              >
                 <AlertTriangle size={12} className="mt-0.5 shrink-0 opacity-70" />
                 <span>{w}</span>
               </li>

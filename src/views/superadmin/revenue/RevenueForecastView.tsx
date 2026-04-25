@@ -229,14 +229,13 @@ export const RevenueForecastView: React.FC = () => {
         </div>
       )}
 
-      {/* Forecast Chart Placeholder */}
+      {/* Forecast Trend */}
       <Card>
         <CardHeader>
           <CardTitle>Revenue Forecast Trend</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-64 flex items-center justify-center bg-slate-50 dark:bg-navy-950/20 rounded-lg border border-slate-200 dark:border-navy-700">
-            {/* Chart visualization would go here */}
             <div className="flex flex-col items-center gap-4">
               <div className="flex items-end gap-2 h-32">
                 {forecasts.slice(0, 8).map((forecast, index) => (

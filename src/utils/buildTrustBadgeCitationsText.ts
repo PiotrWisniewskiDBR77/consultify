@@ -65,9 +65,7 @@ export function buildTrustBadgeCitationsText(
 ): string {
   const modelLabel = sanitiseModelLabel(options.modelLabel);
   const headerBase = 'Sources for this reply';
-  const header = modelLabel
-    ? `${headerBase} (answered by ${modelLabel}):`
-    : `${headerBase}:`;
+  const header = modelLabel ? `${headerBase} (answered by ${modelLabel}):` : `${headerBase}:`;
 
   if (!Array.isArray(citations) || citations.length === 0) {
     return `${header}\n\nNo cited sources.`;

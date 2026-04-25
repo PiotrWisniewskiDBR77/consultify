@@ -35,8 +35,7 @@ vi.mock('../../../store/useAppStore', () => ({
 }));
 
 vi.mock('../../../store/useConversationStore', () => ({
-  useConversationStore: (selector: (state: ConvStoreState) => unknown) =>
-    selector(mockConvState),
+  useConversationStore: (selector: (state: ConvStoreState) => unknown) => selector(mockConvState),
 }));
 
 const trackFunnelEventMock = vi.fn();
@@ -136,10 +135,9 @@ describe('BackToChatButton', () => {
     fireEvent.click(screen.getByTestId('back-to-chat-button'));
 
     expect(trackFunnelEventMock).toHaveBeenCalledTimes(1);
-    expect(trackFunnelEventMock).toHaveBeenCalledWith(
-      'navigation_back_to_chat_clicked',
-      { fromView: AppView.FULL_STEP2_INITIATIVES }
-    );
+    expect(trackFunnelEventMock).toHaveBeenCalledWith('navigation_back_to_chat_clicked', {
+      fromView: AppView.FULL_STEP2_INITIATIVES,
+    });
     expect(returnMock).toHaveBeenCalledTimes(1);
   });
 

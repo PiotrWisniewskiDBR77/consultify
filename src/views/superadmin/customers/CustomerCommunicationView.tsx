@@ -3,12 +3,21 @@
  * Connected to Backend API
  */
 
-import { Clock, Loader2, Mail, MessageSquare, Plus, Send, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  Clock,
+  Loader2,
+  Mail,
+  MessageSquare,
+  Plus,
+  Send,
+  Users,
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { Card } from '../../../components/Admin/shared/Card';
-import { InfoButton } from '../../../components/shared/InfoButton';
 import { CommunicationSurfaceModelPanel } from '../../../components/shared/CommunicationSurfaceModelPanel';
+import { InfoButton } from '../../../components/shared/InfoButton';
 import Api from '../../../services/api';
 
 interface Communication {
@@ -46,6 +55,7 @@ const CustomerCommunicationView: React.FC = () => {
     avg_open_rate: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showComposeModal, setShowComposeModal] = useState(false);
   const [sending, setSending] = useState(false);
   const [newMessage, setNewMessage] = useState({
@@ -61,6 +71,7 @@ const CustomerCommunicationView: React.FC = () => {
 
   const fetchCommunications = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [communicationData, statsData] = await Promise.all([
         Api.getCommunications(),
@@ -74,6 +85,7 @@ const CustomerCommunicationView: React.FC = () => {
       });
     } catch (err) {
       console.error('Failed to fetch communications:', err);
+      setLoadError(err instanceof Error ? err.message : 'Failed to fetch communications');
     } finally {
       setLoading(false);
     }
@@ -136,6 +148,20 @@ const CustomerCommunicationView: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-red-700 dark:text-red-300">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} />
+            <span>{loadError}</span>
+          </div>
+          <button
+            onClick={fetchCommunications}
+            className="px-3 py-1.5 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-sm font-medium"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-3">
           <div>

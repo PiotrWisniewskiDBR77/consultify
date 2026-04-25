@@ -23,9 +23,7 @@ import { useTranslation } from 'react-i18next';
 
 import type { PortfolioInitiative } from '@/types';
 
-import {
-  getMenu3AiButtonClass,
-} from './menu3ActionButtonStyles';
+import { getMenu3AiButtonClass } from './menu3ActionButtonStyles';
 import type {
   AnalysisIssue,
   DependencyLink,
@@ -168,8 +166,12 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
   /* ---------- Gantt date range ---------- */
 
   const dates = bars.flatMap((b) => [b.startDate, b.endDate].filter(Boolean) as string[]);
-  const minDate = dates.length ? new Date(Math.min(...dates.map((d) => new Date(d).getTime()))) : new Date();
-  const maxDate = dates.length ? new Date(Math.max(...dates.map((d) => new Date(d).getTime()))) : new Date();
+  const minDate = dates.length
+    ? new Date(Math.min(...dates.map((d) => new Date(d).getTime())))
+    : new Date();
+  const maxDate = dates.length
+    ? new Date(Math.max(...dates.map((d) => new Date(d).getTime())))
+    : new Date();
   const totalMs = maxDate.getTime() - minDate.getTime() || 1;
 
   const getLeftPercent = (dateStr: string | null) => {
@@ -278,7 +280,8 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           suggestedStart = nextSlot;
         }
 
-        const durationDays = init.priority === 'CRITICAL' ? 60 : init.priority === 'HIGH' ? 90 : 120;
+        const durationDays =
+          init.priority === 'CRITICAL' ? 60 : init.priority === 'HIGH' ? 90 : 120;
         const suggestedEnd = addDays(suggestedStart, durationDays);
 
         if (reasons.length === 0) reasons.push('no blockers — can start immediately');
@@ -336,7 +339,9 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           plannedEndDate: p.suggestedEnd,
         });
         ok++;
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
     toast.success(`Applied dates to ${ok} initiative(s)`);
     setScheduleProposals(null);
@@ -401,7 +406,9 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
     for (const [, group] of ownerGroups) {
       if (group.length < 2) continue;
-      group.sort((a, b) => new Date(a.plannedStartDate!).getTime() - new Date(b.plannedStartDate!).getTime());
+      group.sort(
+        (a, b) => new Date(a.plannedStartDate!).getTime() - new Date(b.plannedStartDate!).getTime()
+      );
       for (let i = 0; i < group.length - 1; i++) {
         const gap = daysBetween(group[i].plannedEndDate!, group[i + 1].plannedStartDate!);
         if (gap > 14) {
@@ -426,7 +433,8 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           const jStart = new Date(j.plannedStartDate!).getTime();
           if (jStart > iEnd) {
             const hasDep = dependencies.some(
-              (d) => (d.fromId === j.id && d.toId === i.id) || (d.fromId === i.id && d.toId === j.id)
+              (d) =>
+                (d.fromId === j.id && d.toId === i.id) || (d.fromId === i.id && d.toId === j.id)
             );
             if (!hasDep) {
               differentOwnerPairs.push([i, j]);
@@ -457,121 +465,135 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     const delayed = bars.filter((b) => b.status === 'delayed');
     const idToInit = new Map(initiatives.map((i) => [i.id, i]));
 
-    return delayed.map((bar) => {
-      const init = idToInit.get(bar.initiativeId);
-      const affected: DelayImpact['affected'] = [];
+    return delayed
+      .map((bar) => {
+        const init = idToInit.get(bar.initiativeId);
+        const affected: DelayImpact['affected'] = [];
 
-      for (const dep of dependencies) {
-        if (dep.fromId === bar.initiativeId) {
-          const depInit = idToInit.get(dep.toId);
-          if (depInit && init?.plannedEndDate && depInit.plannedStartDate) {
-            const diff = daysBetween(depInit.plannedStartDate, init.plannedEndDate);
-            if (diff > 0) {
-              affected.push({ id: dep.toId, name: dep.toName, delayDays: diff });
-            }
-          }
-        }
-      }
-
-      for (const dep of dependencies) {
-        if (dep.fromId === bar.initiativeId) {
-          for (const dep2 of dependencies) {
-            if (dep2.fromId === dep.toId) {
-              const init2 = idToInit.get(dep2.toId);
-              if (init2 && !affected.find((a) => a.id === dep2.toId)) {
-                affected.push({ id: dep2.toId, name: dep2.toName, delayDays: 0 });
+        for (const dep of dependencies) {
+          if (dep.fromId === bar.initiativeId) {
+            const depInit = idToInit.get(dep.toId);
+            if (depInit && init?.plannedEndDate && depInit.plannedStartDate) {
+              const diff = daysBetween(depInit.plannedStartDate, init.plannedEndDate);
+              if (diff > 0) {
+                affected.push({ id: dep.toId, name: dep.toName, delayDays: diff });
               }
             }
           }
         }
-      }
 
-      return {
-        delayedId: bar.initiativeId,
-        delayedName: bar.initiativeName,
-        affected,
-      };
-    }).filter((d) => d.affected.length > 0);
+        for (const dep of dependencies) {
+          if (dep.fromId === bar.initiativeId) {
+            for (const dep2 of dependencies) {
+              if (dep2.fromId === dep.toId) {
+                const init2 = idToInit.get(dep2.toId);
+                if (init2 && !affected.find((a) => a.id === dep2.toId)) {
+                  affected.push({ id: dep2.toId, name: dep2.toName, delayDays: 0 });
+                }
+              }
+            }
+          }
+        }
+
+        return {
+          delayedId: bar.initiativeId,
+          delayedName: bar.initiativeName,
+          affected,
+        };
+      })
+      .filter((d) => d.affected.length > 0);
   }, [bars, dependencies, initiatives]);
 
   /* ---------- portfolio end date ---------- */
 
   const portfolioEndDate = useMemo(() => {
-    const endDates = initiatives
-      .map((i) => i.plannedEndDate)
-      .filter(Boolean) as string[];
+    const endDates = initiatives.map((i) => i.plannedEndDate).filter(Boolean) as string[];
     if (endDates.length === 0) return null;
     return endDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
   }, [initiatives]);
 
-  const schedulePanel = scheduleProposals !== null ? (
-    <div className="m-4 space-y-3">
-      {scheduleProposals.length === 0 ? (
-        <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10 px-4 py-6 text-center">
-          <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-          <p className="text-sm text-slate-600 dark:text-slate-400">All initiatives already have dates</p>
-        </div>
-      ) : (
-        <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
-          <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-              <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-                AI Auto-Schedule proposals
-              </h3>
-            </div>
-            <div className="flex items-center gap-2">
-              {scheduleProposals.length > 1 && onQuickUpdate && (
-                <button
-                  onClick={handleApplyAllSchedule}
-                  disabled={scheduleRunning}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
-                >
-                  {scheduleRunning ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                  Apply all
-                </button>
-              )}
-              <button
-                onClick={closeWorkspacePanels}
-                className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
-              >
-                <X size={14} />
-              </button>
-            </div>
+  const schedulePanel =
+    scheduleProposals !== null ? (
+      <div className="m-4 space-y-3">
+        {scheduleProposals.length === 0 ? (
+          <div className="rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10 px-4 py-6 text-center">
+            <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              All initiatives already have dates
+            </p>
           </div>
-          <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
-            {scheduleProposals.map((p, idx) => (
-              <div key={`${p.initiativeId}-${idx}`} className="flex items-center gap-3 px-4 py-3 text-sm">
-                <Clock size={14} className="text-purple-400 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-slate-900 dark:text-white truncate">
-                      {p.initiativeName}
-                    </span>
-                    <span className="text-xs text-purple-500 dark:text-purple-400">
-                      {new Date(p.suggestedStart).toLocaleDateString()} {'->'}{' '}
-                      {new Date(p.suggestedEnd).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{p.reason}</p>
-                </div>
-                {onQuickUpdate && (
+        ) : (
+          <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden">
+            <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+                <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+                  AI Auto-Schedule proposals
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                {scheduleProposals.length > 1 && onQuickUpdate && (
                   <button
-                    onClick={() => handleApplySchedule(p, idx)}
-                    disabled={applyingScheduleIdx === idx}
-                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                    onClick={handleApplyAllSchedule}
+                    disabled={scheduleRunning}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
                   >
-                    {applyingScheduleIdx === idx ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
-                    Apply
+                    {scheduleRunning ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Check size={12} />
+                    )}
+                    Apply all
                   </button>
                 )}
+                <button
+                  onClick={closeWorkspacePanels}
+                  className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+                >
+                  <X size={14} />
+                </button>
               </div>
-            ))}
+            </div>
+            <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+              {scheduleProposals.map((p, idx) => (
+                <div
+                  key={`${p.initiativeId}-${idx}`}
+                  className="flex items-center gap-3 px-4 py-3 text-sm"
+                >
+                  <Clock size={14} className="text-purple-400 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-slate-900 dark:text-white truncate">
+                        {p.initiativeName}
+                      </span>
+                      <span className="text-xs text-purple-500 dark:text-purple-400">
+                        {new Date(p.suggestedStart).toLocaleDateString()} {'->'}{' '}
+                        {new Date(p.suggestedEnd).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{p.reason}</p>
+                  </div>
+                  {onQuickUpdate && (
+                    <button
+                      onClick={() => handleApplySchedule(p, idx)}
+                      disabled={applyingScheduleIdx === idx}
+                      className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                    >
+                      {applyingScheduleIdx === idx ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Check size={12} />
+                      )}
+                      Apply
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-  ) : null;
+        )}
+      </div>
+    ) : null;
 
   const conflictsPanel = showConflicts ? (
     <div className="m-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10 overflow-hidden">
@@ -582,7 +604,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             Conflicts ({conflicts.length})
           </h3>
         </div>
-        <button onClick={closeWorkspacePanels} className="p-1 rounded text-red-500 hover:bg-red-200/30">
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-red-500 hover:bg-red-200/30"
+        >
           <X size={14} />
         </button>
       </div>
@@ -595,11 +620,17 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           conflicts.map((c, idx) => (
             <div key={idx} className="px-4 py-3 text-sm">
               <div className="flex items-center gap-2 mb-1">
-                <button onClick={() => onOpenInitiative(c.initiativeA)} className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]">
+                <button
+                  onClick={() => onOpenInitiative(c.initiativeA)}
+                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]"
+                >
                   {c.nameA}
                 </button>
                 <span className="text-xs text-red-500">↔</span>
-                <button onClick={() => onOpenInitiative(c.initiativeB)} className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]">
+                <button
+                  onClick={() => onOpenInitiative(c.initiativeB)}
+                  className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[160px]"
+                >
                   {c.nameB}
                 </button>
               </div>
@@ -622,7 +653,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             AI Timeline Optimization
           </h3>
         </div>
-        <button onClick={closeWorkspacePanels} className="p-1 rounded text-emerald-500 hover:bg-emerald-200/30">
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-emerald-500 hover:bg-emerald-200/30"
+        >
           <X size={14} />
         </button>
       </div>
@@ -652,11 +686,12 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
       <div className="px-4 py-3 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-900/50 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Zap size={16} className="text-amber-600 dark:text-amber-400" />
-          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-            Delay Impact
-          </h3>
+          <h3 className="text-sm font-semibold text-amber-700 dark:text-amber-300">Delay Impact</h3>
         </div>
-        <button onClick={closeWorkspacePanels} className="p-1 rounded text-amber-500 hover:bg-amber-200/30">
+        <button
+          onClick={closeWorkspacePanels}
+          className="p-1 rounded text-amber-500 hover:bg-amber-200/30"
+        >
           <X size={14} />
         </button>
       </div>
@@ -670,7 +705,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             <div key={d.delayedId} className="px-4 py-3">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle size={14} className="text-red-500" />
-                <button onClick={() => onOpenInitiative(d.delayedId)} className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors">
+                <button
+                  onClick={() => onOpenInitiative(d.delayedId)}
+                  className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors"
+                >
                   {d.delayedName}
                 </button>
               </div>
@@ -678,7 +716,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 {d.affected.map((a) => (
                   <div key={a.id} className="flex items-center gap-2 text-xs">
                     <ArrowRight size={10} className="text-amber-400" />
-                    <button onClick={() => onOpenInitiative(a.id)} className="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition-colors">
+                    <button
+                      onClick={() => onOpenInitiative(a.id)}
+                      className="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition-colors"
+                    >
                       {a.name}
                     </button>
                     {a.delayDays > 0 && (
@@ -718,7 +759,11 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             disabled={scheduleRunning}
             className={getMenu3AiButtonClass(scheduleProposals !== null)}
           >
-            {scheduleRunning ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+            {scheduleRunning ? (
+              <Loader2 size={12} className="animate-spin" />
+            ) : (
+              <Sparkles size={12} />
+            )}
             AI Auto-Schedule
           </button>
         )}
@@ -813,35 +858,62 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
     }
     onRegisterWorkspacePanel(null);
     return undefined;
-  }, [
-    schedulePanel,
-    conflictsPanel,
-    optimizerPanel,
-    delayImpactPanel,
-    onRegisterWorkspacePanel,
-  ]);
+  }, [schedulePanel, conflictsPanel, optimizerPanel, delayImpactPanel, onRegisterWorkspacePanel]);
 
   return (
     <div className="space-y-6">
       {/* Stat cards — clickable filters */}
       <div className="flex items-center gap-4">
         <div className="flex-1 grid grid-cols-4 gap-3">
-          {([
-            { key: 'on-schedule' as StatusFilter, label: 'On schedule', count: counts.onSchedule, color: 'blue', border: 'border-blue-200 dark:border-blue-900/50', bg: 'bg-blue-500/5 dark:bg-blue-500/10' },
-            { key: 'at-risk' as StatusFilter, label: 'At risk', count: counts.atRisk, color: 'amber', border: 'border-amber-200 dark:border-amber-900/50', bg: 'bg-amber-500/5 dark:bg-amber-500/10' },
-            { key: 'delayed' as StatusFilter, label: 'Delayed', count: counts.delayed, color: 'red', border: 'border-red-200 dark:border-red-900/50', bg: 'bg-red-500/5 dark:bg-red-500/10' },
-            { key: 'no-dates' as StatusFilter, label: 'No dates', count: counts.noDates, color: 'slate', border: 'border-slate-200 dark:border-navy-700', bg: 'bg-white dark:bg-navy-900' },
-          ] as const).map((card) => (
+          {(
+            [
+              {
+                key: 'on-schedule' as StatusFilter,
+                label: 'On schedule',
+                count: counts.onSchedule,
+                color: 'blue',
+                border: 'border-blue-200 dark:border-blue-900/50',
+                bg: 'bg-blue-500/5 dark:bg-blue-500/10',
+              },
+              {
+                key: 'at-risk' as StatusFilter,
+                label: 'At risk',
+                count: counts.atRisk,
+                color: 'amber',
+                border: 'border-amber-200 dark:border-amber-900/50',
+                bg: 'bg-amber-500/5 dark:bg-amber-500/10',
+              },
+              {
+                key: 'delayed' as StatusFilter,
+                label: 'Delayed',
+                count: counts.delayed,
+                color: 'red',
+                border: 'border-red-200 dark:border-red-900/50',
+                bg: 'bg-red-500/5 dark:bg-red-500/10',
+              },
+              {
+                key: 'no-dates' as StatusFilter,
+                label: 'No dates',
+                count: counts.noDates,
+                color: 'slate',
+                border: 'border-slate-200 dark:border-navy-700',
+                bg: 'bg-white dark:bg-navy-900',
+              },
+            ] as const
+          ).map((card) => (
             <button
               key={card.key}
               onClick={() => setStatusFilter((f) => (f === card.key ? 'all' : card.key))}
               className={`rounded-xl border p-3 text-left transition-all
-                ${statusFilter === card.key
-                  ? `${card.border} ${card.bg} ring-2 ring-${card.color}-400/40 ring-offset-1 ring-offset-white dark:ring-offset-navy-950`
-                  : `${card.border} ${card.bg} hover:shadow-sm`
+                ${
+                  statusFilter === card.key
+                    ? `${card.border} ${card.bg} ring-2 ring-${card.color}-400/40 ring-offset-1 ring-offset-white dark:ring-offset-navy-950`
+                    : `${card.border} ${card.bg} hover:shadow-sm`
                 }`}
             >
-              <div className={`text-xl font-semibold text-${card.color}-600 dark:text-${card.color}-400`}>
+              <div
+                className={`text-xl font-semibold text-${card.color}-600 dark:text-${card.color}-400`}
+              >
                 {card.count}
               </div>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{card.label}</div>
@@ -854,7 +926,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
       {portfolioEndDate && (
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <Timer size={12} />
-          Portfolio estimated completion: <span className="font-medium text-slate-700 dark:text-slate-300">{new Date(portfolioEndDate).toLocaleDateString()}</span>
+          Portfolio estimated completion:{' '}
+          <span className="font-medium text-slate-700 dark:text-slate-300">
+            {new Date(portfolioEndDate).toLocaleDateString()}
+          </span>
         </div>
       )}
 
@@ -892,12 +967,18 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium
                     bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
                 >
-                  {scheduleRunning ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                  {scheduleRunning ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <Check size={12} />
+                  )}
                   Apply all
                 </button>
               )}
-              <button onClick={() => setScheduleProposals(null)}
-                className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30">
+              <button
+                onClick={() => setScheduleProposals(null)}
+                className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30"
+              >
                 <X size={14} />
               </button>
             </div>
@@ -905,12 +986,17 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
           {scheduleProposals.length === 0 ? (
             <div className="px-4 py-6 text-center">
               <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-              <p className="text-sm text-slate-600 dark:text-slate-400">All initiatives already have dates</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                All initiatives already have dates
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
               {scheduleProposals.map((p, idx) => (
-                <div key={`${p.initiativeId}-${idx}`} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <div
+                  key={`${p.initiativeId}-${idx}`}
+                  className="flex items-center gap-3 px-4 py-3 text-sm"
+                >
                   <Clock size={14} className="text-purple-400 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -918,7 +1004,8 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                         {p.initiativeName}
                       </span>
                       <span className="text-xs text-purple-500 dark:text-purple-400">
-                        {new Date(p.suggestedStart).toLocaleDateString()} → {new Date(p.suggestedEnd).toLocaleDateString()}
+                        {new Date(p.suggestedStart).toLocaleDateString()} →{' '}
+                        {new Date(p.suggestedEnd).toLocaleDateString()}
                         <span className="ml-1 text-slate-400">({p.durationDays}d)</span>
                       </span>
                     </div>
@@ -932,7 +1019,11 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                         bg-emerald-500/10 text-emerald-600 dark:text-emerald-400
                         hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
                     >
-                      {applyingScheduleIdx === idx ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />}
+                      {applyingScheduleIdx === idx ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Check size={12} />
+                      )}
                       Apply
                     </button>
                   )}
@@ -945,25 +1036,41 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
       {/* Conflict detector panel */}
       {!onRegisterWorkspacePanel && showConflicts && (
-        <div className={`rounded-xl border overflow-hidden ${
-          conflicts.length > 0
-            ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
-            : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
-        }`}>
-          <div className={`px-4 py-3 border-b flex items-center justify-between ${
+        <div
+          className={`rounded-xl border overflow-hidden ${
             conflicts.length > 0
-              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50'
-              : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
-          }`}>
+              ? 'border-red-200 dark:border-red-900/50 bg-red-500/5 dark:bg-red-500/10'
+              : 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-500/5 dark:bg-emerald-500/10'
+          }`}
+        >
+          <div
+            className={`px-4 py-3 border-b flex items-center justify-between ${
+              conflicts.length > 0
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-900/50'
+                : 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-900/50'
+            }`}
+          >
             <div className="flex items-center gap-2">
-              <AlertTriangle size={16} className={conflicts.length > 0 ? 'text-red-600 dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400'} />
-              <h3 className={`text-sm font-semibold ${conflicts.length > 0 ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}>
+              <AlertTriangle
+                size={16}
+                className={
+                  conflicts.length > 0
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-emerald-600 dark:text-emerald-400'
+                }
+              />
+              <h3
+                className={`text-sm font-semibold ${conflicts.length > 0 ? 'text-red-700 dark:text-red-300' : 'text-emerald-700 dark:text-emerald-300'}`}
+              >
                 {conflicts.length > 0
                   ? `${conflicts.length} owner overlap conflict(s)`
                   : 'No owner overlaps detected'}
               </h3>
             </div>
-            <button onClick={() => setShowConflicts(false)} className="p-1 rounded text-slate-500 hover:bg-slate-200/30">
+            <button
+              onClick={() => setShowConflicts(false)}
+              className="p-1 rounded text-slate-500 hover:bg-slate-200/30"
+            >
               <X size={14} />
             </button>
           </div>
@@ -971,11 +1078,17 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
             {conflicts.map((c, idx) => (
               <div key={idx} className="px-4 py-3 text-sm">
                 <div className="flex items-center gap-2 mb-1">
-                  <button onClick={() => onOpenInitiative(c.initiativeA)} className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[180px]">
+                  <button
+                    onClick={() => onOpenInitiative(c.initiativeA)}
+                    className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[180px]"
+                  >
                     {c.nameA}
                   </button>
                   <span className="text-xs text-red-500">↔</span>
-                  <button onClick={() => onOpenInitiative(c.initiativeB)} className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[180px]">
+                  <button
+                    onClick={() => onOpenInitiative(c.initiativeB)}
+                    className="font-medium text-slate-900 dark:text-white hover:text-primary-600 transition-colors truncate max-w-[180px]"
+                  >
                     {c.nameB}
                   </button>
                   <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 font-medium">
@@ -1001,27 +1114,34 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 AI Timeline Optimization
               </h3>
             </div>
-            <button onClick={() => setShowOptimizer(false)} className="p-1 rounded text-emerald-500 hover:bg-emerald-200/30">
+            <button
+              onClick={() => setShowOptimizer(false)}
+              className="p-1 rounded text-emerald-500 hover:bg-emerald-200/30"
+            >
               <X size={14} />
             </button>
           </div>
           {optimizationTips.length === 0 ? (
             <div className="px-4 py-6 text-center">
               <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-              <p className="text-sm text-slate-600 dark:text-slate-400">Timeline is already well-optimized</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Timeline is already well-optimized
+              </p>
             </div>
           ) : (
             <div className="divide-y divide-emerald-200/40 dark:divide-emerald-900/20">
               {optimizationTips.map((tip, idx) => (
                 <div key={idx} className="px-4 py-3 text-sm">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider ${
-                      tip.type === 'compress'
-                        ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
-                        : tip.type === 'parallelize'
-                          ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
-                          : 'bg-purple-500/15 text-purple-600 dark:text-purple-400'
-                    }`}>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium uppercase tracking-wider ${
+                        tip.type === 'compress'
+                          ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+                          : tip.type === 'parallelize'
+                            ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400'
+                            : 'bg-purple-500/15 text-purple-600 dark:text-purple-400'
+                      }`}
+                    >
                       {tip.type}
                     </span>
                     <Sparkles size={10} className="text-emerald-500" />
@@ -1044,7 +1164,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                 Delay Impact Analysis
               </h3>
             </div>
-            <button onClick={() => setShowDelayImpact(false)} className="p-1 rounded text-amber-500 hover:bg-amber-200/30">
+            <button
+              onClick={() => setShowDelayImpact(false)}
+              className="p-1 rounded text-amber-500 hover:bg-amber-200/30"
+            >
               <X size={14} />
             </button>
           </div>
@@ -1053,8 +1176,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               <div key={d.delayedId} className="px-4 py-3">
                 <div className="flex items-center gap-2 mb-2">
                   <AlertTriangle size={14} className="text-red-500" />
-                  <button onClick={() => onOpenInitiative(d.delayedId)}
-                    className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors">
+                  <button
+                    onClick={() => onOpenInitiative(d.delayedId)}
+                    className="font-medium text-sm text-slate-900 dark:text-white hover:text-primary-600 transition-colors"
+                  >
                     {d.delayedName}
                   </button>
                   <span className="text-xs text-red-500 font-medium">DELAYED</span>
@@ -1063,8 +1188,10 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                   {d.affected.map((a) => (
                     <div key={a.id} className="flex items-center gap-2 text-xs">
                       <ArrowRight size={10} className="text-amber-400" />
-                      <button onClick={() => onOpenInitiative(a.id)}
-                        className="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition-colors">
+                      <button
+                        onClick={() => onOpenInitiative(a.id)}
+                        className="text-slate-700 dark:text-slate-300 hover:text-primary-600 transition-colors"
+                      >
                         {a.name}
                       </button>
                       {a.delayDays > 0 && (
@@ -1072,9 +1199,7 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                           ~{a.delayDays}d cascade delay
                         </span>
                       )}
-                      {a.delayDays === 0 && (
-                        <span className="text-slate-400">indirect impact</span>
-                      )}
+                      {a.delayDays === 0 && <span className="text-slate-400">indirect impact</span>}
                     </div>
                   ))}
                 </div>
@@ -1097,7 +1222,9 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
               )}
             </h3>
             {onQuickUpdate && (
-              <span className="text-xs text-slate-400 dark:text-slate-500">Click dates to edit</span>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                Click dates to edit
+              </span>
             )}
           </div>
           <div className="p-4 space-y-2">
@@ -1119,17 +1246,30 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
 
                     {isEditing ? (
                       <div className="flex-1 flex items-center gap-2">
-                        <input type="date" value={editStart} onChange={(e) => setEditStart(e.target.value)}
-                          className="px-2 py-1 text-xs bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white" />
+                        <input
+                          type="date"
+                          value={editStart}
+                          onChange={(e) => setEditStart(e.target.value)}
+                          className="px-2 py-1 text-xs bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                        />
                         <span className="text-xs text-slate-400">→</span>
-                        <input type="date" value={editEnd} onChange={(e) => setEditEnd(e.target.value)}
-                          className="px-2 py-1 text-xs bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white" />
-                        <button onClick={() => handleSaveDates(bar.initiativeId)} disabled={saving}
-                          className="p-1 rounded text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50">
+                        <input
+                          type="date"
+                          value={editEnd}
+                          onChange={(e) => setEditEnd(e.target.value)}
+                          className="px-2 py-1 text-xs bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+                        />
+                        <button
+                          onClick={() => handleSaveDates(bar.initiativeId)}
+                          disabled={saving}
+                          className="p-1 rounded text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 disabled:opacity-50"
+                        >
                           <Check size={14} />
                         </button>
-                        <button onClick={() => setEditingId(null)}
-                          className="p-1 rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700">
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="p-1 rounded text-slate-400 hover:bg-slate-200 dark:hover:bg-navy-700"
+                        >
                           <X size={14} />
                         </button>
                       </div>
@@ -1139,30 +1279,45 @@ export const TimelineAnalysis: React.FC<TimelineAnalysisProps> = ({
                           {bar.startDate && bar.endDate ? (
                             <div
                               className={`absolute top-1 bottom-1 rounded-lg ${BAR_COLORS[bar.status]} min-w-[4px]`}
-                              style={{ left: `${getLeftPercent(bar.startDate)}%`, width: `${getWidthPercent(bar.startDate, bar.endDate)}%` }}
+                              style={{
+                                left: `${getLeftPercent(bar.startDate)}%`,
+                                width: `${getWidthPercent(bar.startDate, bar.endDate)}%`,
+                              }}
                             />
                           ) : (
-                            <div className={`absolute top-1 bottom-1 left-1/2 -translate-x-1/2 w-2 rounded-lg ${BAR_COLORS['no-dates']}`} />
+                            <div
+                              className={`absolute top-1 bottom-1 left-1/2 -translate-x-1/2 w-2 rounded-lg ${BAR_COLORS['no-dates']}`}
+                            />
                           )}
                         </div>
                         <div className="shrink-0 flex items-center gap-2">
                           <span className="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                             {formatDate(bar.startDate)} – {formatDate(bar.endDate)}
                           </span>
-                          <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded ${
-                            bar.status === 'delayed' ? 'bg-red-500/20 text-red-700 dark:text-red-300'
-                              : bar.status === 'at-risk' ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                              : bar.status === 'no-dates' ? 'bg-slate-500/20 text-slate-600 dark:text-slate-400'
-                              : 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                          }`}>
-                            {bar.status === 'delayed' ? 'Delayed'
-                              : bar.status === 'at-risk' ? 'At risk'
-                              : bar.status === 'no-dates' ? 'No dates'
-                              : 'On schedule'}
+                          <span
+                            className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded ${
+                              bar.status === 'delayed'
+                                ? 'bg-red-500/20 text-red-700 dark:text-red-300'
+                                : bar.status === 'at-risk'
+                                  ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                                  : bar.status === 'no-dates'
+                                    ? 'bg-slate-500/20 text-slate-600 dark:text-slate-400'
+                                    : 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                            }`}
+                          >
+                            {bar.status === 'delayed'
+                              ? 'Delayed'
+                              : bar.status === 'at-risk'
+                                ? 'At risk'
+                                : bar.status === 'no-dates'
+                                  ? 'No dates'
+                                  : 'On schedule'}
                           </span>
                           {onQuickUpdate && (
-                            <button onClick={() => startEditing(bar)}
-                              className="p-1 rounded text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors">
+                            <button
+                              onClick={() => startEditing(bar)}
+                              className="p-1 rounded text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+                            >
                               <Calendar size={14} />
                             </button>
                           )}

@@ -19,10 +19,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatV9FlagsIndicator } from '../ChatV9FlagsIndicator';
 
 describe('ChatV9FlagsIndicator', () => {
-  let openListener: ReturnType<typeof vi.fn>;
+  let openListener: EventListener;
 
   beforeEach(() => {
-    openListener = vi.fn();
+    openListener = vi.fn() as EventListener;
     window.addEventListener('chat-v9-flags:open', openListener);
   });
 

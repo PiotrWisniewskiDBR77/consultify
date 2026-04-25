@@ -9,14 +9,14 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { InfoButton } from '../../components/shared/InfoButton';
 import { DataExportPanel } from '../../components/SuperAdmin/data/DataExportPanel';
 import { Tab, TabLayout } from '../../components/SuperAdmin/TabLayout';
-import { InfoButton } from '../../components/shared/InfoButton';
 import { useHelpSidePanel } from '../../contexts/HelpContext';
 import { Api } from '../../services/api';
 import { ComplianceCenterView } from './ComplianceCenterView';
-import ApprovalWorkflowsView from './iam/ApprovalWorkflowsView';
 import AdminAuditLogsView from './iam/AdminAuditLogsView';
+import ApprovalWorkflowsView from './iam/ApprovalWorkflowsView';
 import AuditEventsViewer from './iam/AuditEventsViewer';
 import { SuperAdminLegalView } from './SuperAdminLegalView';
 
@@ -89,7 +89,9 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
         });
       } catch {
         if (cancelled) return;
-        setOverviewNotice('Operator overview is temporarily unavailable. Showing an empty degraded state.');
+        setOverviewNotice(
+          'Operator overview is temporarily unavailable. Showing an empty degraded state.'
+        );
         setOverview({
           audit: null,
           approvals: null,
@@ -128,21 +130,27 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
             {overview.audit?.unresolved ?? 0}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Unresolved audit items across the operator plane.</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Unresolved audit items across the operator plane.
+          </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           <div className="text-xs uppercase tracking-wide text-slate-500">Approval queue</div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
             {overview.approvals?.pending ?? 0}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Requests waiting for privileged operator decision.</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Requests waiting for privileged operator decision.
+          </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           <div className="text-xs uppercase tracking-wide text-slate-500">Privileged sessions</div>
           <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
             {overview.sessions?.active ?? 0}
           </div>
-          <div className="mt-2 text-xs text-slate-500">Active privileged sessions with visible MFA/JIT posture.</div>
+          <div className="mt-2 text-xs text-slate-500">
+            Active privileged sessions with visible MFA/JIT posture.
+          </div>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
           <div className="text-xs uppercase tracking-wide text-slate-500">Compliance posture</div>
@@ -179,7 +187,9 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Latest operator timeline</h3>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Latest operator timeline
+          </h3>
           <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
             {overview.timeline.length === 0 ? (
               <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
@@ -193,10 +203,13 @@ export const GovernanceModule: React.FC<GovernanceModuleProps> = ({ initialTab }
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div className="font-medium text-slate-900 dark:text-white">{item.action}</div>
-                    <span className="text-xs uppercase tracking-wide text-slate-500">{item.state}</span>
+                    <span className="text-xs uppercase tracking-wide text-slate-500">
+                      {item.state}
+                    </span>
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
-                    {item.resourceType} {item.resourceId || ''} {item.timestamp ? `• ${new Date(item.timestamp).toLocaleString()}` : ''}
+                    {item.resourceType} {item.resourceId || ''}{' '}
+                    {item.timestamp ? `• ${new Date(item.timestamp).toLocaleString()}` : ''}
                   </div>
                   {item.summary && (
                     <div className="mt-2 flex items-start gap-2 text-xs text-slate-600 dark:text-slate-300">

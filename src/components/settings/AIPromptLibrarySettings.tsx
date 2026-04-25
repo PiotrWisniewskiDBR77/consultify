@@ -10,6 +10,7 @@
  *  - Quick-apply to system prompt
  */
 
+import { TFunction } from 'i18next';
 import { BookOpen, Copy, Edit3, Plus, Trash2, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -34,13 +35,6 @@ interface SavedPrompt {
   createdAt: string;
 }
 
-const CATEGORY_LABELS: Record<SavedPrompt['category'], string> = {
-  interview: 'Interview',
-  analysis: 'Analysis',
-  report: 'Report',
-  general: 'General',
-};
-
 const CATEGORY_COLORS: Record<SavedPrompt['category'], string> = {
   interview: 'bg-blue-500/20 text-blue-400',
   analysis: 'bg-emerald-500/20 text-emerald-400',
@@ -48,44 +42,63 @@ const CATEGORY_COLORS: Record<SavedPrompt['category'], string> = {
   general: 'bg-violet-500/20 text-violet-400',
 };
 
-const BUILT_IN_PROMPTS: SavedPrompt[] = [
+const getCategoryLabel = (t: TFunction, category: SavedPrompt['category']) =>
+  t(
+    `settings.ai.promptCategories.${category}`,
+    {
+      interview: 'Interview',
+      analysis: 'Analysis',
+      report: 'Report',
+      general: 'General',
+    }[category]
+  );
+
+const getBuiltInPrompts = (t: TFunction): SavedPrompt[] => [
   {
     id: 'builtin-professional',
-    name: 'Professional',
+    name: t('settings.ai.builtins.professional.name', 'Professional'),
     category: 'general',
-    prompt:
-      'I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology.',
+    prompt: t(
+      'settings.ai.builtins.professional.prompt',
+      'I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology.'
+    ),
     createdAt: '2024-01-01',
   },
   {
     id: 'builtin-interview-prep',
-    name: 'Interview Preparation',
+    name: t('settings.ai.builtins.interviewPrep.name', 'Interview Preparation'),
     category: 'interview',
-    prompt:
-      'Help me prepare structured interview questions. Focus on behavioral and competency-based questions. Suggest follow-ups for each main question.',
+    prompt: t(
+      'settings.ai.builtins.interviewPrep.prompt',
+      'Help me prepare structured interview questions. Focus on behavioral and competency-based questions. Suggest follow-ups for each main question.'
+    ),
     createdAt: '2024-01-01',
   },
   {
     id: 'builtin-analysis',
-    name: 'Data Analysis',
+    name: t('settings.ai.builtins.dataAnalysis.name', 'Data Analysis'),
     category: 'analysis',
-    prompt:
-      'Analyze data thoroughly. Present findings with clear structure: key metrics, trends, anomalies, and actionable recommendations. Use tables when helpful.',
+    prompt: t(
+      'settings.ai.builtins.dataAnalysis.prompt',
+      'Analyze data thoroughly. Present findings with clear structure: key metrics, trends, anomalies, and actionable recommendations. Use tables when helpful.'
+    ),
     createdAt: '2024-01-01',
   },
   {
     id: 'builtin-report',
-    name: 'Executive Report',
+    name: t('settings.ai.builtins.executiveReport.name', 'Executive Report'),
     category: 'report',
-    prompt:
-      'Write in executive summary style. Lead with conclusions, then supporting evidence. Keep paragraphs short. Use bullet points for key takeaways.',
+    prompt: t(
+      'settings.ai.builtins.executiveReport.prompt',
+      'Write in executive summary style. Lead with conclusions, then supporting evidence. Keep paragraphs short. Use bullet points for key takeaways.'
+    ),
     createdAt: '2024-01-01',
   },
 ];
 
 export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const [prompts, setPrompts] = useState<SavedPrompt[]>(BUILT_IN_PROMPTS);
+  const [prompts, setPrompts] = useState<SavedPrompt[]>(() => getBuiltInPrompts(t));
   const [showEditor, setShowEditor] = useState(false);
   const [editingPrompt, setEditingPrompt] = useState<SavedPrompt | null>(null);
   const [filterCategory, setFilterCategory] = useState<string>('all');
@@ -97,9 +110,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
   const [editorPrompt, setEditorPrompt] = useState('');
 
   const filteredPrompts =
-    filterCategory === 'all'
-      ? prompts
-      : prompts.filter((p) => p.category === filterCategory);
+    filterCategory === 'all' ? prompts : prompts.filter((p) => p.category === filterCategory);
 
   useEffect(() => {
     const loadPrompts = async () => {
@@ -109,18 +120,18 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
         if (Array.isArray(response?.prompts) && response.prompts.length > 0) {
           setPrompts(response.prompts);
         } else {
-          setPrompts(BUILT_IN_PROMPTS);
+          setPrompts(getBuiltInPrompts(t));
         }
       } catch (error) {
         console.error('Failed to load prompt library:', error);
-        setPrompts(BUILT_IN_PROMPTS);
+        setPrompts(getBuiltInPrompts(t));
       } finally {
         setLoading(false);
       }
     };
 
     void loadPrompts();
-  }, []);
+  }, [t]);
 
   const persistPrompts = useCallback(
     async (nextPrompts: SavedPrompt[], successMessage: string) => {
@@ -208,10 +219,10 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
   };
 
   const categoryOptions = [
-    { value: 'interview', label: 'Interview' },
-    { value: 'analysis', label: 'Analysis' },
-    { value: 'report', label: 'Report' },
-    { value: 'general', label: 'General' },
+    { value: 'interview', label: getCategoryLabel(t, 'interview') },
+    { value: 'analysis', label: getCategoryLabel(t, 'analysis') },
+    { value: 'report', label: getCategoryLabel(t, 'report') },
+    { value: 'general', label: getCategoryLabel(t, 'general') },
   ];
 
   return (
@@ -251,7 +262,9 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                 )}
               >
-                {cat === 'all' ? t('common.all', 'All') : CATEGORY_LABELS[cat as SavedPrompt['category']]}
+                {cat === 'all'
+                  ? t('common.all', 'All')
+                  : getCategoryLabel(t, cat as SavedPrompt['category'])}
               </button>
             ))}
           </div>
@@ -278,11 +291,11 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                             CATEGORY_COLORS[prompt.category]
                           )}
                         >
-                          {CATEGORY_LABELS[prompt.category]}
+                          {getCategoryLabel(t, prompt.category)}
                         </span>
                         {prompt.id.startsWith('builtin-') && (
                           <span className="px-1.5 py-0.5 text-[10px] font-medium bg-white/5 text-slate-500 rounded">
-                            Built-in
+                            {t('settings.ai.builtIn', 'Built-in')}
                           </span>
                         )}
                       </div>
@@ -292,14 +305,14 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                       <button
                         onClick={() => copyPrompt(prompt.prompt)}
                         className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
-                        title="Copy"
+                        title={t('common.copy', 'Copy')}
                       >
                         <Copy size={14} />
                       </button>
                       <button
                         onClick={() => openEditor(prompt)}
                         className="p-1.5 text-slate-500 hover:text-white rounded transition-colors"
-                        title="Edit"
+                        title={t('common.edit', 'Edit')}
                       >
                         <Edit3 size={14} />
                       </button>
@@ -307,7 +320,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                         <button
                           onClick={() => deletePrompt(prompt.id)}
                           className="p-1.5 text-slate-500 hover:text-red-400 rounded transition-colors"
-                          title="Delete"
+                          title={t('common.delete', 'Delete')}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -343,7 +356,10 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     <SettingsInput
                       value={editorName}
                       onChange={(e) => setEditorName(e.target.value)}
-                      placeholder="e.g., Interview Deep-Dive"
+                      placeholder={t(
+                        'settings.ai.promptNamePlaceholder',
+                        'e.g., Interview Deep-Dive'
+                      )}
                       maxLength={100}
                     />
                   </SettingsFormRow>
@@ -351,9 +367,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     <SettingsSelect
                       options={categoryOptions}
                       value={editorCategory}
-                      onChange={(e) =>
-                        setEditorCategory(e.target.value as SavedPrompt['category'])
-                      }
+                      onChange={(e) => setEditorCategory(e.target.value as SavedPrompt['category'])}
                     />
                   </SettingsFormRow>
                 </div>
@@ -362,7 +376,10 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                   <SettingsTextarea
                     value={editorPrompt}
                     onChange={(e) => setEditorPrompt(e.target.value)}
-                    placeholder="Write your reusable prompt here..."
+                    placeholder={t(
+                      'settings.ai.promptTextPlaceholder',
+                      'Write your reusable prompt here...'
+                    )}
                     rows={4}
                     maxLength={2000}
                   />
@@ -383,9 +400,7 @@ export const AIPromptLibrarySettings: React.FC<{ className?: string }> = ({ clas
                     disabled={saving}
                     className="px-4 py-1.5 text-sm font-medium bg-violet-600 text-white rounded-lg hover:bg-violet-500 transition-colors"
                   >
-                    {editingPrompt
-                      ? t('common.save', 'Save')
-                      : t('common.create', 'Create')}
+                    {editingPrompt ? t('common.save', 'Save') : t('common.create', 'Create')}
                   </button>
                 </div>
               </div>

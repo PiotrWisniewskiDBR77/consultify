@@ -1086,6 +1086,458 @@ async function ensureChatConversationTables(): Promise<void> {
 }
 
 // ==========================================
+// TARGETED SELF-HEAL (V8 SYNC INTEGRATIONS)
+// ==========================================
+
+async function ensureIntegrationRuntimeTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  if (dbType === 'postgres') {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS integrations (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        connector_id TEXT,
+        name TEXT,
+        category TEXT,
+        status TEXT DEFAULT 'pending',
+        config TEXT DEFAULT '{}',
+        capabilities TEXT DEFAULT '[]',
+        auth_type TEXT,
+        scopes TEXT DEFAULT '[]',
+        field_mappings TEXT DEFAULT '[]',
+        sync_settings TEXT DEFAULT '{}',
+        sync_schedule TEXT,
+        is_paused BOOLEAN DEFAULT FALSE,
+        paused_at TIMESTAMP,
+        workflow_policy TEXT DEFAULT 'active',
+        workflow_policy_reason TEXT,
+        workflow_policy_set_by TEXT,
+        workflow_policy_set_at TIMESTAMPTZ,
+        last_sync_at TIMESTAMP,
+        last_error TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
+    const rows = await db.query(
+      `SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'integrations'`
+    );
+    const cols = new Set(
+      (rows.rows || rows || []).map((r: any) => String(r.column_name || r.column || r.name))
+    );
+    const add = async (name: string, ddl: string) => {
+      if (!cols.has(name)) {
+        await db.query(`ALTER TABLE integrations ADD COLUMN IF NOT EXISTS ${name} ${ddl}`);
+        cols.add(name);
+      }
+    };
+
+    await add('connector_id', 'TEXT');
+    await add('name', 'TEXT');
+    await add('category', 'TEXT');
+    await add('status', `TEXT DEFAULT 'pending'`);
+    await add('config', `TEXT DEFAULT '{}'`);
+    await add('capabilities', `TEXT DEFAULT '[]'`);
+    await add('auth_type', 'TEXT');
+    await add('scopes', `TEXT DEFAULT '[]'`);
+    await add('field_mappings', `TEXT DEFAULT '[]'`);
+    await add('sync_settings', `TEXT DEFAULT '{}'`);
+    await add('sync_schedule', 'TEXT');
+    await add('is_paused', 'BOOLEAN DEFAULT FALSE');
+    await add('paused_at', 'TIMESTAMP');
+    await add('workflow_policy', `TEXT DEFAULT 'active'`);
+    await add('workflow_policy_reason', 'TEXT');
+    await add('workflow_policy_set_by', 'TEXT');
+    await add('workflow_policy_set_at', 'TIMESTAMPTZ');
+    await add('last_sync_at', 'TIMESTAMP');
+    await add('last_error', 'TEXT');
+    await add('created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    await add('updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+
+    // Legacy integration tables used provider_id as the required identity column.
+    // V8 sync owns connector_id, so old NOT NULL constraints must not block new connections.
+    for (const legacyRequiredColumn of ['provider_id', 'auth_type']) {
+      try {
+        await db.query(
+          `ALTER TABLE integrations ALTER COLUMN ${legacyRequiredColumn} DROP NOT NULL`
+        );
+      } catch (err: any) {
+        logger.debug?.(
+          `[DatabaseInitializer] integrations.${legacyRequiredColumn} DROP NOT NULL skipped: ${err?.message || err}`
+        );
+      }
+    }
+
+    // Backfill the V8 connector field from earlier integration schemas without referencing
+    // columns that may not exist on a given staging DB.
+    const coalesceExpr = (candidates: string[], fallback: string) =>
+      `COALESCE(${candidates.filter((c) => cols.has(c)).join(', ') || fallback}, ${fallback})`;
+    const connectorExpr = coalesceExpr(['connector_id', 'provider_id', 'provider', 'id'], 'id');
+    const nameExpr = coalesceExpr(['name', 'provider_id', 'provider', 'connector_id', 'id'], 'id');
+    const configExpr = cols.has('settings')
+      ? `COALESCE(config, settings, '{}')`
+      : `COALESCE(config, '{}')`;
+
+    await db.query(`
+      UPDATE integrations
+      SET connector_id = ${connectorExpr},
+          name = ${nameExpr},
+          category = COALESCE(category, 'productivity'),
+          status = COALESCE(status, 'pending'),
+          is_paused = COALESCE(is_paused, FALSE)
+      WHERE connector_id IS NULL OR name IS NULL OR category IS NULL OR config IS NULL
+    `);
+
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_integrations_org ON integrations(organization_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_integrations_connector ON integrations(connector_id)`
+    );
+    return;
+  }
+
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS integrations (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        connector_id TEXT,
+        name TEXT,
+        category TEXT,
+        status TEXT DEFAULT 'pending',
+        config TEXT DEFAULT '{}',
+        capabilities TEXT DEFAULT '[]',
+        auth_type TEXT,
+        scopes TEXT DEFAULT '[]',
+        field_mappings TEXT DEFAULT '[]',
+        sync_settings TEXT DEFAULT '{}',
+        sync_schedule TEXT,
+        is_paused INTEGER DEFAULT 0,
+        paused_at TEXT,
+        workflow_policy TEXT DEFAULT 'active',
+        workflow_policy_reason TEXT,
+        workflow_policy_set_by TEXT,
+        workflow_policy_set_at TEXT,
+        last_sync_at TEXT,
+        last_error TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      )`,
+      () => resolve()
+    );
+  });
+
+  const rows = await new Promise<any[]>((resolve) => {
+    db.all(`PRAGMA table_info(integrations)`, (_err: Error | null, out: any[]) =>
+      resolve(out || [])
+    );
+  });
+  const cols = new Set(rows.map((r) => r.name));
+  const add = async (name: string, ddl: string) => {
+    if (cols.has(name)) return;
+    await new Promise<void>((resolve) => {
+      db.run(`ALTER TABLE integrations ADD COLUMN ${name} ${ddl}`, (err: Error | null) => {
+        if (err && !String(err.message || '').includes('duplicate column')) {
+          logger.warn(`[DatabaseInitializer] Failed to add integrations.${name}:`, err.message);
+        }
+        resolve();
+      });
+    });
+    cols.add(name);
+  };
+
+  await add('connector_id', 'TEXT');
+  await add('name', 'TEXT');
+  await add('category', 'TEXT');
+  await add('status', `TEXT DEFAULT 'pending'`);
+  await add('config', `TEXT DEFAULT '{}'`);
+  await add('capabilities', `TEXT DEFAULT '[]'`);
+  await add('auth_type', 'TEXT');
+  await add('scopes', `TEXT DEFAULT '[]'`);
+  await add('field_mappings', `TEXT DEFAULT '[]'`);
+  await add('sync_settings', `TEXT DEFAULT '{}'`);
+  await add('sync_schedule', 'TEXT');
+  await add('is_paused', 'INTEGER DEFAULT 0');
+  await add('paused_at', 'TEXT');
+  await add('workflow_policy', `TEXT DEFAULT 'active'`);
+  await add('workflow_policy_reason', 'TEXT');
+  await add('workflow_policy_set_by', 'TEXT');
+  await add('workflow_policy_set_at', 'TEXT');
+  await add('last_sync_at', 'TEXT');
+  await add('last_error', 'TEXT');
+  await add('created_at', `TEXT DEFAULT (datetime('now'))`);
+  await add('updated_at', `TEXT DEFAULT (datetime('now'))`);
+
+  const sqliteCoalesceExpr = (candidates: string[], fallback: string) =>
+    `COALESCE(${candidates.filter((c) => cols.has(c)).join(', ') || fallback}, ${fallback})`;
+  const sqliteConnectorExpr = sqliteCoalesceExpr(['connector_id', 'provider', 'id'], 'id');
+  const sqliteNameExpr = sqliteCoalesceExpr(['name', 'provider', 'connector_id', 'id'], 'id');
+
+  await new Promise<void>((resolve) => {
+    db.run(
+      `UPDATE integrations
+       SET connector_id = ${sqliteConnectorExpr},
+           name = ${sqliteNameExpr},
+           category = COALESCE(category, 'productivity'),
+           config = COALESCE(config, '{}'),
+           capabilities = COALESCE(capabilities, scopes, '[]'),
+           field_mappings = COALESCE(field_mappings, '[]'),
+           sync_settings = COALESCE(sync_settings, '{}'),
+           status = COALESCE(status, 'pending'),
+           is_paused = COALESCE(is_paused, 0)`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `UPDATE integrations
+       SET connector_id = COALESCE(connector_id, id),
+           name = COALESCE(name, connector_id, id),
+           category = COALESCE(category, 'productivity'),
+           config = COALESCE(config, '{}'),
+           capabilities = COALESCE(capabilities, '[]'),
+           field_mappings = COALESCE(field_mappings, '[]'),
+           sync_settings = COALESCE(sync_settings, '{}'),
+           status = COALESCE(status, 'pending'),
+           is_paused = COALESCE(is_paused, 0)
+       WHERE connector_id IS NULL OR name IS NULL OR category IS NULL OR config IS NULL`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(`CREATE INDEX IF NOT EXISTS idx_integrations_org ON integrations(organization_id)`, () =>
+      resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_integrations_connector ON integrations(connector_id)`,
+      () => resolve()
+    );
+  });
+}
+
+// ==========================================
+// TARGETED SELF-HEAL (CUSTOMER SUCCESS PLAYBOOKS)
+// ==========================================
+
+async function ensureCustomerSuccessPlaybookTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  if (dbType === 'postgres') {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS customer_success_playbooks (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        description TEXT,
+        trigger_conditions_json TEXT DEFAULT '{}',
+        actions_json TEXT DEFAULT '[]',
+        is_active INTEGER DEFAULT 1,
+        created_by TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS customer_playbook_actions (
+        id TEXT PRIMARY KEY,
+        playbook_id TEXT,
+        organization_id TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        action_config_json TEXT DEFAULT '{}',
+        status TEXT DEFAULT 'pending',
+        executed_at TIMESTAMP,
+        result_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS customer_success_actions (
+        id TEXT PRIMARY KEY,
+        playbook_id TEXT,
+        organization_id TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        status TEXT DEFAULT 'pending',
+        executed_at TIMESTAMP,
+        result_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_playbook_actions_playbook ON customer_playbook_actions(playbook_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_playbook_actions_org ON customer_playbook_actions(organization_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_playbook_actions_status ON customer_playbook_actions(status)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_customer_success_actions_org ON customer_success_actions(organization_id)`
+    );
+    return;
+  }
+
+  const run = (sql: string) =>
+    new Promise<void>((resolve) => {
+      db.run(sql, () => resolve());
+    });
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS customer_success_playbooks (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT,
+      trigger_conditions_json TEXT DEFAULT '{}',
+      actions_json TEXT DEFAULT '[]',
+      is_active INTEGER DEFAULT 1,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  await run(`
+    CREATE TABLE IF NOT EXISTS customer_playbook_actions (
+      id TEXT PRIMARY KEY,
+      playbook_id TEXT,
+      organization_id TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      action_config_json TEXT DEFAULT '{}',
+      status TEXT DEFAULT 'pending',
+      executed_at TEXT,
+      result_json TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  await run(`
+    CREATE TABLE IF NOT EXISTS customer_success_actions (
+      id TEXT PRIMARY KEY,
+      playbook_id TEXT,
+      organization_id TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      status TEXT DEFAULT 'pending',
+      executed_at TEXT,
+      result_json TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  await run(
+    `CREATE INDEX IF NOT EXISTS idx_playbook_actions_playbook ON customer_playbook_actions(playbook_id)`
+  );
+  await run(
+    `CREATE INDEX IF NOT EXISTS idx_playbook_actions_org ON customer_playbook_actions(organization_id)`
+  );
+  await run(
+    `CREATE INDEX IF NOT EXISTS idx_playbook_actions_status ON customer_playbook_actions(status)`
+  );
+  await run(
+    `CREATE INDEX IF NOT EXISTS idx_customer_success_actions_org ON customer_success_actions(organization_id)`
+  );
+}
+
+// ==========================================
+// TARGETED SELF-HEAL (BUDGET RESOURCE TABLES)
+// ==========================================
+
+async function ensureBudgetResourceTables(): Promise<void> {
+  const db = await getDatabaseAsync();
+  const dbType = databaseConfig.type;
+
+  if (dbType === 'postgres') {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS budget_expenses (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        category TEXT NOT NULL CHECK (category IN ('TOKENS', 'STORAGE', 'COMPUTE', 'API', 'OTHER')),
+        description TEXT,
+        metadata TEXT DEFAULT '{}',
+        recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS user_quotas (
+        user_id TEXT PRIMARY KEY,
+        storage_quota_mb INTEGER,
+        api_rate_limit_per_hour INTEGER,
+        ai_requests_per_day INTEGER,
+        max_concurrent_jobs INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_budget_expenses_org ON budget_expenses(organization_id)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_budget_expenses_category ON budget_expenses(category)`
+    );
+    await db.query(
+      `CREATE INDEX IF NOT EXISTS idx_budget_expenses_recorded_at ON budget_expenses(recorded_at DESC)`
+    );
+    await db.query(`CREATE INDEX IF NOT EXISTS idx_user_quotas_user ON user_quotas(user_id)`);
+    return;
+  }
+
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS budget_expenses (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        category TEXT NOT NULL CHECK (category IN ('TOKENS', 'STORAGE', 'COMPUTE', 'API', 'OTHER')),
+        description TEXT,
+        metadata TEXT DEFAULT '{}',
+        recorded_at TEXT DEFAULT (datetime('now'))
+      )`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS user_quotas (
+        user_id TEXT PRIMARY KEY,
+        storage_quota_mb INTEGER,
+        api_rate_limit_per_hour INTEGER,
+        ai_requests_per_day INTEGER,
+        max_concurrent_jobs INTEGER,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now'))
+      )`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_budget_expenses_org ON budget_expenses(organization_id)`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_budget_expenses_category ON budget_expenses(category)`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(
+      `CREATE INDEX IF NOT EXISTS idx_budget_expenses_recorded_at ON budget_expenses(recorded_at DESC)`,
+      () => resolve()
+    );
+  });
+  await new Promise<void>((resolve) => {
+    db.run(`CREATE INDEX IF NOT EXISTS idx_user_quotas_user ON user_quotas(user_id)`, () =>
+      resolve()
+    );
+  });
+}
+
+// ==========================================
 // TARGETED SELF-HEAL (IMPORTED REPORTS)
 // ==========================================
 
@@ -2576,7 +3028,9 @@ async function runTablePlatformMigrations(db: any): Promise<void> {
             'INSERT INTO tp_migration_history (filename, duration_ms) VALUES ($1, $2)',
             [file, Date.now() - startMs]
           );
-        } catch { /* ignore if already recorded */ }
+        } catch {
+          /* ignore if already recorded */
+        }
       } else {
         logger.error(`${TAG} ✗ ${file} failed: ${msg}`);
         throw new Error(`Table Platform migration ${file} failed: ${msg}`);
@@ -2987,6 +3441,36 @@ export async function initializeDatabase(): Promise<{ success: boolean; message:
     } catch (e: any) {
       logger.warn(
         '[DatabaseInitializer] ensureImportedReportsTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Ensure V8 sync integrations can run against legacy integration schemas.
+    try {
+      await ensureIntegrationRuntimeTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureIntegrationRuntimeTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Ensure resource/budget endpoints do not 500 on older staging schemas.
+    try {
+      await ensureBudgetResourceTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureBudgetResourceTables failed (continuing):',
+        e?.message || e
+      );
+    }
+
+    // Ensure customer success playbook endpoints do not 500 on older staging schemas.
+    try {
+      await ensureCustomerSuccessPlaybookTables();
+    } catch (e: any) {
+      logger.warn(
+        '[DatabaseInitializer] ensureCustomerSuccessPlaybookTables failed (continuing):',
         e?.message || e
       );
     }

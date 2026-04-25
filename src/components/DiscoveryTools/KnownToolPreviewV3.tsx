@@ -191,6 +191,48 @@ export const KnownToolPreviewV3Body: React.FC<{
           };
     }
 
+    if (tool.toolType === 'market-forces') {
+      return isPolish
+        ? {
+            goal: 'Zamienia kontekst rynku i wywiadu w ocenę presji konkurencyjnej, defensibility i presji marży.',
+            outcome:
+              'Scorecard 5 sił, implikacje strategiczne, rekomendowane ruchy i kandydaci na inicjatywy.',
+            team: 'Zarząd, strategy lead, commercial lead lub właściciel rynku',
+            aiRole: 'Analityk rynku, moderator evidence i generator propozycji do akceptacji',
+            duration: '60-90 min',
+          }
+        : {
+            goal: 'Turns market and interview context into a read on competitive pressure, defensibility, and margin pressure.',
+            outcome:
+              'Five Forces scorecard, strategic implications, recommended moves, and initiative candidates.',
+            team: 'Leadership, strategy lead, commercial lead, or market owner',
+            aiRole: 'Market analyst, evidence moderator, and proposal generator for approval',
+            duration: '60-90 min',
+          };
+    }
+
+    if (tool.toolType === 'growth-paths') {
+      return isPolish
+        ? {
+            goal:
+              'Zamienia ambicję wzrostu i sygnały z wywiadu w opcje Ansoffa oraz sekwencję decyzji.',
+            outcome:
+              'Macierz opcji, porównanie trade-offów, rekomendowane ruchy i kandydaci na inicjatywy.',
+            team: 'Zarząd, strategy lead, commercial lead lub właściciel wzrostu',
+            aiRole: 'Moderator growth evidence, generator opcji i konsultant sekwencji ruchów',
+            duration: '60-90 min',
+          }
+        : {
+            goal:
+              'Turns growth ambition and interview signals into Ansoff options and a decision sequence.',
+            outcome:
+              'Option matrix, trade-off comparison, recommended moves, and initiative candidates.',
+            team: 'Leadership, strategy lead, commercial lead, or growth owner',
+            aiRole: 'Growth evidence moderator, option generator, and move-sequencing consultant',
+            duration: '60-90 min',
+          };
+    }
+
     const desc = String(full?.description || tool.description || '').trim();
     const fallbackGoal = desc || (isPolish ? 'Narzędzie w przygotowaniu.' : 'Tool in preparation.');
     const fallbackOutcome =

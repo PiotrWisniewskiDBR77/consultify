@@ -21,6 +21,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { api } from '../../services/api';
 
@@ -103,14 +104,21 @@ const AIBudgetsView: React.FC = () => {
   const [modelCosts, setModelCosts] = useState<Record<string, { input: number; output: number }>>(
     {}
   );
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // UI state
   const [showBudgetModal, setShowBudgetModal] = useState(false);
   const [showModelModal, setShowModelModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
-  const [newBudget, setNewBudget] = useState({
-    budgetType: 'cost' as const,
-    period: 'monthly' as const,
+  const [newBudget, setNewBudget] = useState<{
+    budgetType: Budget['budgetType'];
+    period: Exclude<Budget['period'], 'total'>;
+    budgetLimit: number;
+    warningThreshold: number;
+    hardLimit: boolean;
+  }>({
+    budgetType: 'cost',
+    period: 'monthly',
     budgetLimit: 100,
     warningThreshold: 0.8,
     hardLimit: true,
@@ -126,13 +134,14 @@ const AIBudgetsView: React.FC = () => {
   // Fetch data
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [budgetsRes, alertsRes, statsRes, costsRes, permissionsRes] = await Promise.all([
-        api.get('/ai-budgets/budgets').catch(() => ({ data: { data: [] } })),
-        api.get('/ai-budgets/alerts?status=active').catch(() => ({ data: { data: [] } })),
-        api.get('/ai-budgets/stats').catch(() => ({ data: { data: null } })),
-        api.get('/ai-budgets/model-costs').catch(() => ({ data: { data: {} } })),
-        api.get('/ai-budgets/model-permissions').catch(() => ({ data: { data: [] } })),
+        api.get('/ai-budgets/budgets'),
+        api.get('/ai-budgets/alerts?status=active'),
+        api.get('/ai-budgets/stats'),
+        api.get('/ai-budgets/model-costs'),
+        api.get('/ai-budgets/model-permissions'),
       ]);
 
       setBudgets(budgetsRes.data.data || []);
@@ -140,8 +149,10 @@ const AIBudgetsView: React.FC = () => {
       setUsageStats(statsRes.data.data);
       setModelCosts(costsRes.data.data || {});
       setModelPermissions(permissionsRes.data.data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('[AI Budgets] Fetch error:', error);
+      setLoadError(error?.message || 'Failed to load AI budgets');
+      toast.error(error?.message || 'Failed to load AI budgets');
     } finally {
       setLoading(false);
     }
@@ -153,9 +164,28 @@ const AIBudgetsView: React.FC = () => {
 
   // Budget CRUD
   const handleCreateBudget = async () => {
+    if (!Number.isFinite(newBudget.budgetLimit) || newBudget.budgetLimit <= 0) {
+      toast.error('Budget limit must be greater than zero');
+      return;
+    }
+    if (
+      !Number.isFinite(newBudget.warningThreshold) ||
+      newBudget.warningThreshold < 0 ||
+      newBudget.warningThreshold > 1
+    ) {
+      toast.error('Warning threshold must be between 0 and 100%');
+      return;
+    }
     try {
-      await api.post('/ai-budgets/budgets', newBudget);
+      if (editingBudget) {
+        await api.put(`/ai-budgets/budgets/${editingBudget.id}`, newBudget);
+        toast.success('Budget updated');
+      } else {
+        await api.post('/ai-budgets/budgets', newBudget);
+        toast.success('Budget created');
+      }
       setShowBudgetModal(false);
+      setEditingBudget(null);
       setNewBudget({
         budgetType: 'cost',
         period: 'monthly',
@@ -163,9 +193,10 @@ const AIBudgetsView: React.FC = () => {
         warningThreshold: 0.8,
         hardLimit: true,
       });
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('[AI Budgets] Create error:', error);
+      toast.error(error?.message || 'Failed to save budget');
     }
   };
 
@@ -173,10 +204,24 @@ const AIBudgetsView: React.FC = () => {
     if (!confirm('Delete this budget?')) return;
     try {
       await api.delete(`/ai-budgets/budgets/${budgetId}`);
-      fetchData();
-    } catch (error) {
+      toast.success('Budget deleted');
+      await fetchData();
+    } catch (error: any) {
       console.error('[AI Budgets] Delete error:', error);
+      toast.error(error?.message || 'Failed to delete budget');
     }
+  };
+
+  const openEditBudget = (budget: Budget) => {
+    setEditingBudget(budget);
+    setNewBudget({
+      budgetType: budget.budgetType,
+      period: budget.period === 'total' ? 'monthly' : budget.period,
+      budgetLimit: Number(budget.budgetLimit) || 1,
+      warningThreshold: Number(budget.warningThreshold) || 0.8,
+      hardLimit: Boolean(budget.hardLimit),
+    });
+    setShowBudgetModal(true);
   };
 
   // Alert actions
@@ -227,6 +272,12 @@ const AIBudgetsView: React.FC = () => {
   ];
 
   const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+  const safePercent = (current: number, limit: number) => {
+    const currentValue = Number(current);
+    const limitValue = Number(limit);
+    if (!Number.isFinite(currentValue) || !Number.isFinite(limitValue) || limitValue <= 0) return 0;
+    return (currentValue / limitValue) * 100;
+  };
   const formatTokens = (value: number) =>
     value >= 1000000
       ? `${(value / 1000000).toFixed(1)}M`
@@ -413,6 +464,12 @@ const AIBudgetsView: React.FC = () => {
         </button>
       </div>
 
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
+
       {budgets.length === 0 ? (
         <div className="text-center py-12 bg-white dark:bg-gray-800/50 rounded-xl border border-slate-200 dark:border-gray-700">
           <DollarSign className="mx-auto text-slate-300 dark:text-gray-400 mb-4" size={48} />
@@ -424,7 +481,7 @@ const AIBudgetsView: React.FC = () => {
       ) : (
         <div className="grid gap-4">
           {budgets.map((budget) => {
-            const percentUsed = (budget.currentUsage / budget.budgetLimit) * 100;
+            const percentUsed = safePercent(budget.currentUsage, budget.budgetLimit);
             return (
               <div
                 key={budget.id}
@@ -469,6 +526,12 @@ const AIBudgetsView: React.FC = () => {
                         Hard Limit
                       </span>
                     )}
+                    <button
+                      onClick={() => openEditBudget(budget)}
+                      className="p-2 text-slate-500 hover:text-violet-500 hover:bg-violet-500/10 rounded-lg transition-colors"
+                    >
+                      <Check size={18} />
+                    </button>
                     <button
                       onClick={() => handleDeleteBudget(budget.id)}
                       className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
@@ -520,7 +583,7 @@ const AIBudgetsView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 border border-slate-200 dark:border-gray-700 rounded-xl p-6 max-w-md w-full">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-              Create Budget
+              {editingBudget ? 'Edit Budget' : 'Create Budget'}
             </h3>
             <div className="space-y-4">
               <div>
@@ -599,7 +662,10 @@ const AIBudgetsView: React.FC = () => {
             </div>
             <div className="flex gap-3 mt-6">
               <button
-                onClick={() => setShowBudgetModal(false)}
+                onClick={() => {
+                  setShowBudgetModal(false);
+                  setEditingBudget(null);
+                }}
                 className="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-lg transition-colors"
               >
                 Cancel
@@ -608,7 +674,7 @@ const AIBudgetsView: React.FC = () => {
                 onClick={handleCreateBudget}
                 className="flex-1 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg transition-colors"
               >
-                Create
+                {editingBudget ? 'Save' : 'Create'}
               </button>
             </div>
           </div>

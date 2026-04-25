@@ -154,6 +154,93 @@ describe('useAIStream', () => {
     );
   });
 
+  it('should pass latest streamed citations through onStreamDone metadata', async () => {
+    const mockOnStreamDone = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onChunk('Answer with source [1]');
+        onThinking?.({
+          type: 'citations',
+          citations: [
+            {
+              id: 'cit-1',
+              title: 'DBR77 Marketplace',
+              type: 'external',
+              reference: 'dbr77.com',
+              link: 'https://dbr77.com',
+            },
+          ],
+        });
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    await act(async () => {
+      await result.current.startStream('Test message', []);
+    });
+
+    expect(mockOnStreamDone).toHaveBeenCalledWith(
+      'Answer with source [1]',
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        citations: [
+          expect.objectContaining({
+            id: 'cit-1',
+            title: 'DBR77 Marketplace',
+          }),
+        ],
+      })
+    );
+  });
+
+  it('should pass streamed TrustBundleV1 through onStreamDone metadata', async () => {
+    const mockOnStreamDone = vi.fn();
+
+    vi.mocked(Api.chatWithAIStream).mockImplementation(
+      async (message, history, onChunk, onDone, systemPrompt, context, roleName, language, onThinking) => {
+        onChunk('Trusted answer [1]');
+        onThinking?.({
+          type: 'trust_bundle',
+          bundle: {
+            version: 'TrustBundleV1',
+            model: 'gpt-4o-mini',
+            provider: 'openai',
+            citationsCount: 1,
+          },
+        });
+        onDone();
+      }
+    );
+
+    const { result } = renderHook(() => useAIStream({ onStreamDone: mockOnStreamDone }));
+
+    await act(async () => {
+      await result.current.startStream('Test trust bundle', []);
+    });
+
+    expect(result.current.trustBundle).toEqual(
+      expect.objectContaining({
+        version: 'TrustBundleV1',
+        citationsCount: 1,
+      })
+    );
+    expect(mockOnStreamDone).toHaveBeenCalledWith(
+      'Trusted answer [1]',
+      expect.any(Array),
+      expect.any(Array),
+      expect.objectContaining({
+        trustBundle: expect.objectContaining({
+          version: 'TrustBundleV1',
+          model: 'gpt-4o-mini',
+        }),
+      })
+    );
+  });
+
   it('should persist Teresa proposal metadata from streaming events', async () => {
     const mockOnStreamDone = vi.fn();
 

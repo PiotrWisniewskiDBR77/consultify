@@ -118,6 +118,146 @@ export function getToolPhaseAiActions(
     }
   }
 
+  if (toolType === 'market-forces') {
+    switch (stepDefinition.id) {
+      case 'mission':
+        return [
+          createAction(
+            'suggest-step',
+            'sparkles',
+            'AI Market Framing',
+            'AI framing rynku',
+            'Critique and sharpen the market brief',
+            'Skrytykuj i wyostrz brief rynkowy'
+          ),
+          createAction(
+            'generate-full-session',
+            'wand',
+            'Full Session Draft',
+            'Szkic całej sesji',
+            'Generate a controlled first draft of the full Porter session',
+            'Wygeneruj kontrolowany pierwszy szkic całej sesji Portera'
+          ),
+        ];
+      case 'input':
+        return [
+          createAction(
+            'suggest-step',
+            'search',
+            'AI Market Signals',
+            'AI sygnały rynkowe',
+            'Suggest evidence and competitive signals for exploration',
+            'Zaproponuj dowody i sygnały konkurencyjne do eksploracji'
+          ),
+        ];
+      case 'forces':
+        return [
+          createAction(
+            'suggest-step',
+            'sparkles',
+            'AI Force Scorecard',
+            'AI scorecard sił',
+            'Turn signals into scored Porter forces',
+            'Zamień sygnały w ocenione siły Portera'
+          ),
+        ];
+      case 'insights':
+        return [
+          createAction(
+            'generate-correlations',
+            'wand',
+            'AI Implications',
+            'AI implikacje',
+            'Synthesize market structure into implications and moves',
+            'Syntezuj strukturę rynku w implikacje i ruchy'
+          ),
+        ];
+      case 'outputs':
+        return [
+          createAction(
+            'generate-summary',
+            'wand',
+            'AI Final Summary',
+            'AI final summary',
+            'Generate final summary, output candidates, and initiatives',
+            'Wygeneruj final summary, output candidates i inicjatywy'
+          ),
+        ];
+      default:
+        return [];
+    }
+  }
+
+  if (toolType === 'growth-paths') {
+    switch (stepDefinition.id) {
+      case 'mission':
+        return [
+          createAction(
+            'suggest-step',
+            'sparkles',
+            'AI Growth Framing',
+            'AI framing wzrostu',
+            'Critique and sharpen the growth mission',
+            'Skrytykuj i wyostrz brief wzrostu'
+          ),
+          createAction(
+            'generate-full-session',
+            'wand',
+            'Full Session Draft',
+            'Szkic całej sesji',
+            'Generate a controlled first draft of the full Ansoff session',
+            'Wygeneruj kontrolowany pierwszy szkic całej sesji Ansoffa'
+          ),
+        ];
+      case 'input':
+        return [
+          createAction(
+            'suggest-step',
+            'search',
+            'AI Growth Signals',
+            'AI sygnały wzrostu',
+            'Suggest evidence and growth signals for exploration',
+            'Zaproponuj dowody i sygnały wzrostu do eksploracji'
+          ),
+        ];
+      case 'options':
+        return [
+          createAction(
+            'suggest-step',
+            'sparkles',
+            'AI Ansoff Options',
+            'AI opcje Ansoffa',
+            'Turn signals into proposed Ansoff growth options',
+            'Zamień sygnały w proponowane opcje wzrostu Ansoffa'
+          ),
+        ];
+      case 'insights':
+        return [
+          createAction(
+            'generate-correlations',
+            'wand',
+            'AI Growth Synthesis',
+            'AI synteza wzrostu',
+            'Compare options and synthesize recommended growth moves',
+            'Porównaj opcje i syntezuj rekomendowane ruchy wzrostu'
+          ),
+        ];
+      case 'outputs':
+        return [
+          createAction(
+            'generate-summary',
+            'wand',
+            'AI Final Summary',
+            'AI final summary',
+            'Generate final summary, output candidates, and initiatives',
+            'Wygeneruj final summary, output candidates i inicjatywy'
+          ),
+        ];
+      default:
+        return [];
+    }
+  }
+
   if (!stepDefinition.aiAssisted) return [];
 
   if (SUMMARY_STEP_IDS.has(stepDefinition.id)) {

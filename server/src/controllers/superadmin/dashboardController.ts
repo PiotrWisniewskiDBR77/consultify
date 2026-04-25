@@ -84,7 +84,11 @@ export const cloneDashboard = catchAsync(async (req, res, next) => {
   const { id } = req.params;
   const { name } = req.body;
 
-  const cloned = await deps.DashboardBuilderService.cloneDashboard(id, name, (req as AuthenticatedRequest).user!.id);
+  const cloned = await deps.DashboardBuilderService.cloneDashboard(
+    id,
+    name,
+    (req as AuthenticatedRequest).user!.id
+  );
 
   if (!cloned) {
     return next(new AppError('Dashboard not found', 404));

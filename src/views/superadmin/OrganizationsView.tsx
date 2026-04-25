@@ -211,14 +211,27 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   // Access Code Actions
   const handleGenerateCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    const maxUses = Number(newCodeData.maxUses);
+    if (!Number.isInteger(maxUses) || maxUses < 1) {
+      toast.error('Max uses must be a positive number');
+      return;
+    }
     try {
-      await Api.generateAccessCode(newCodeData);
+      setProcessingId('new-access-code');
+      await Api.generateAccessCode({
+        ...newCodeData,
+        code: newCodeData.code.trim() || undefined,
+        maxUses,
+        expiresAt: newCodeData.expiresAt || undefined,
+      });
       toast.success('Access code generated');
       setShowCodeModal(false);
       setNewCodeData({ code: '', role: 'USER', maxUses: 100, expiresAt: '' });
       fetchData();
     } catch (err: any) {
       toast.error(err.message || 'Failed to generate code');
+    } finally {
+      setProcessingId(null);
     }
   };
 
@@ -815,7 +828,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     min="1"
                     value={newCodeData.maxUses}
                     onChange={(e) =>
-                      setNewCodeData({ ...newCodeData, maxUses: parseInt(e.target.value) })
+                      setNewCodeData({ ...newCodeData, maxUses: Number(e.target.value) || 1 })
                     }
                     className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded text-slate-900 dark:text-white focus:border-purple-500 outline-none text-sm"
                   />
@@ -858,9 +871,10 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded text-white text-sm font-medium transition-colors"
+                  disabled={processingId === 'new-access-code'}
+                  className="flex-1 py-2 bg-purple-600 hover:bg-purple-500 rounded text-white text-sm font-medium transition-colors disabled:opacity-60"
                 >
-                  Generate Code
+                  {processingId === 'new-access-code' ? 'Generating...' : 'Generate Code'}
                 </button>
               </div>
             </form>

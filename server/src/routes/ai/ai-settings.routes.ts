@@ -235,10 +235,13 @@ router.put(
       const userOrgId = req.user?.organizationId || req.user?.organization_id;
 
       // Check if user is admin for this org
+      const normalizedRole = String(userRole || '')
+        .trim()
+        .toLowerCase();
       const isAdmin =
-        userRole === 'superadmin' ||
-        userRole === 'SUPERADMIN' ||
-        (userOrgId === orgId && (userRole === 'admin' || userRole === 'ADMIN'));
+        normalizedRole === 'superadmin' ||
+        (userOrgId === orgId &&
+          ['owner', 'admin', 'administrator', 'super_admin'].includes(normalizedRole));
 
       if (!isAdmin) {
         return res.status(403).json({ error: 'Admin access required' });

@@ -17,13 +17,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import type { UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import {
-  useAssessmentOutputsForOrigins,
+  type AssessmentOriginOutputRow,
   useArtifactOutputsForInitiatives,
   useArtifactOutputsForOrigins,
-  type AssessmentOriginOutputRow,
+  useAssessmentOutputsForOrigins,
 } from '@/components/ReportsAndPresentations/useRapData';
-import type { UnifiedOutputRow } from '@/components/ReportsAndPresentations/types';
 import { EmbeddedView } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
@@ -229,8 +229,10 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
       return true;
     });
   }, [directAssessmentRows, directOutputRows, linkedOutputRows]);
-  const linkedOutputsErrorMessage = directAssessmentsError || directOutputsError || linkedOutputsError;
-  const linkedOutputsBusy = directAssessmentsLoading || directOutputsLoading || linkedOutputsLoading;
+  const linkedOutputsErrorMessage =
+    directAssessmentsError || directOutputsError || linkedOutputsError;
+  const linkedOutputsBusy =
+    directAssessmentsLoading || directOutputsLoading || linkedOutputsLoading;
 
   useEffect(() => {
     if (!open) return;
@@ -718,10 +720,10 @@ export const NotebookContextPanel: React.FC<NotebookContextPanelProps> = ({
                                 row.kind === 'assessment'
                                   ? 'assessment'
                                   : row.kind === 'document'
-                                  ? 'report'
-                                  : row.kind === 'presentation'
-                                    ? 'presentation'
-                                    : 'sheet',
+                                    ? 'report'
+                                    : row.kind === 'presentation'
+                                      ? 'presentation'
+                                      : 'sheet',
                                 row.originRecordId,
                                 row.title
                               )

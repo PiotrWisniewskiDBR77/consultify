@@ -141,16 +141,21 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
     setSaving(true);
     try {
       await Api.put('/api/settings/preferences/appearance', { preferences });
+      const data = await Api.get('/api/settings/preferences/appearance').catch(() => null);
+      const persisted = data?.preferences
+        ? ({ ...DEFAULT_PREFERENCES, ...data.preferences } as AppearancePreferences)
+        : preferences;
 
       // Update user context
       onUpdateUser({
-        uiDensity: preferences.uiDensity,
-        startPage: preferences.startPage,
-        fontScale: preferences.fontScale,
+        uiDensity: persisted.uiDensity,
+        startPage: persisted.startPage,
+        fontScale: persisted.fontScale,
       });
 
       // Apply immediately
-      applyPreferences(preferences);
+      setPreferences(persisted);
+      applyPreferences(persisted);
 
       toast.success(t('settings.appearance.saved', 'Appearance settings saved'));
     } catch (error) {
@@ -226,7 +231,7 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? 'Saving...' : 'Save Changes'}
+          {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
         </button>
       </div>
 
@@ -244,14 +249,19 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
           {[
             {
               value: 'light',
-              label: 'Light',
+              label: t('settings.appearance.light', 'Light'),
               icon: Sun,
               colors: 'bg-white border-slate-200 dark:border-navy-700',
             },
-            { value: 'dark', label: 'Dark', icon: Moon, colors: 'bg-slate-900 border-slate-700' },
+            {
+              value: 'dark',
+              label: t('settings.appearance.dark', 'Dark'),
+              icon: Moon,
+              colors: 'bg-slate-900 border-slate-700',
+            },
             {
               value: 'system',
-              label: 'System',
+              label: t('settings.appearance.system', 'System'),
               icon: Monitor,
               colors:
                 'bg-gradient-to-r from-white to-slate-900 border-slate-300 dark:border-navy-700',
@@ -333,10 +343,13 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                     <span
                       className={`font-medium ${isSelected ? 'text-blue-700 dark:text-blue-400' : 'text-slate-700 dark:text-slate-300'}`}
                     >
-                      {option.label}
+                      {t(`settings.appearance.uiDensityOptions.${option.value}`, option.label)}
                     </span>
                     <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {option.description}
+                      {t(
+                        `settings.appearance.uiDensityOptions.${option.value}Desc`,
+                        option.description
+                      )}
                     </p>
                   </div>
                 </div>
@@ -407,9 +420,14 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
                   <span
                     className={`font-medium ${isSelected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-700 dark:text-slate-300'}`}
                   >
-                    {option.label}
+                    {t(`settings.appearance.startPageOptions.${option.value}`, option.label)}
                   </span>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{option.description}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    {t(
+                      `settings.appearance.startPageOptions.${option.value}Desc`,
+                      option.description
+                    )}
+                  </p>
                 </div>
               </button>
             );
@@ -494,18 +512,27 @@ export const AppearanceSettings: React.FC<AppearanceSettingsProps> = ({
 
           {/* Preview */}
           <div className="p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg border border-slate-200 dark:border-navy-700">
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">Preview:</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-2">
+              {t('settings.appearance.preview', 'Preview:')}
+            </p>
             <p
               className="text-slate-900 dark:text-white font-medium"
               style={{ fontSize: `${16 * (preferences.fontScale / 100)}px` }}
             >
-              The quick brown fox jumps over the lazy dog.
+              {t(
+                'settings.appearance.previewSentence',
+                'The quick brown fox jumps over the lazy dog.'
+              )}
             </p>
             <p
               className="text-slate-600 dark:text-slate-400 mt-1"
               style={{ fontSize: `${14 * (preferences.fontScale / 100)}px` }}
             >
-              This is how body text will appear at {preferences.fontScale}% scale.
+              {t(
+                'settings.appearance.previewScale',
+                'This is how body text will appear at {{scale}}% scale.',
+                { scale: preferences.fontScale }
+              )}
             </p>
           </div>
         </div>

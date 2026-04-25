@@ -92,9 +92,11 @@ describe('policy contexts bypass superadmin policy fetches', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     render(
-      <TrialProvider>
-        <TrialProbe />
-      </TrialProvider>
+      <AccessPolicyProvider>
+        <TrialProvider>
+          <TrialProbe />
+        </TrialProvider>
+      </AccessPolicyProvider>
     );
 
     await waitFor(() => {

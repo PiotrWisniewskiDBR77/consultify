@@ -1363,7 +1363,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (i) => (i.name || '').toLowerCase().includes(q) || (i.description || '').toLowerCase().includes(q)
+        (i) =>
+          (i.name || '').toLowerCase().includes(q) ||
+          (i.description || '').toLowerCase().includes(q)
       );
     }
     return result;

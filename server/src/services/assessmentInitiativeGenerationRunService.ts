@@ -13,8 +13,8 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import * as queryHelpers from '../utils/queryHelpers.js';
 import logger from '../utils/Logger.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 import AssessmentInitiativeService from './assessmentInitiativeService.js';
 
 export type InitiativeGenerationRunMode = 'ASSESSMENT_REPORT' | 'REPORT_ONLY';
@@ -304,7 +304,9 @@ export class AssessmentInitiativeGenerationRunService {
 
     // Start async (best-effort). Do not block request/response cycle.
     setTimeout(() => {
-      void this.processRun(runId).catch((err: unknown) => logger.warn('[InitiativeGenRun] processRun failed', err));
+      void this.processRun(runId).catch((err: unknown) =>
+        logger.warn('[InitiativeGenRun] processRun failed', err)
+      );
     }, 0);
 
     return { runId };

@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Palette, ArrowDownUp, X } from 'lucide-react';
+import { ArrowDownUp, Palette, X } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+
 import { LANE_HEIGHT } from './FlowNodeComponent';
 import type { Lane } from './useProcessFlowNodes';
 
@@ -215,19 +216,20 @@ export const LaneSystem: React.FC<LaneSystemProps> = ({
         laneCount={lanes.length}
       />
     ))}
-    {dragOverLaneId && (() => {
-      const dragIdx = lanes.findIndex((l) => l.id === dragOverLaneId);
-      if (dragIdx < 0) return null;
-      return (
-        <div
-          className="absolute left-0 right-0 pointer-events-none border-2 border-primary-400/40 rounded-lg"
-          style={{
-            top: dragIdx * LANE_HEIGHT,
-            height: LANE_HEIGHT,
-          }}
-        />
-      );
-    })()}
+    {dragOverLaneId &&
+      (() => {
+        const dragIdx = lanes.findIndex((l) => l.id === dragOverLaneId);
+        if (dragIdx < 0) return null;
+        return (
+          <div
+            className="absolute left-0 right-0 pointer-events-none border-2 border-primary-400/40 rounded-lg"
+            style={{
+              top: dragIdx * LANE_HEIGHT,
+              height: LANE_HEIGHT,
+            }}
+          />
+        );
+      })()}
   </>
 );
 

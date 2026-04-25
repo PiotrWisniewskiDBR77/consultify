@@ -7,7 +7,6 @@
 import {
   Archive,
   ArchiveRestore,
-  Copy,
   Download,
   Edit2,
   Folder,
@@ -26,11 +25,13 @@ import { MoveToProjectModal } from './MoveToProjectModal';
 interface ConversationActionsProps {
   conversation: Conversation;
   onOpenChange?: (open: boolean) => void;
+  onRenameStart?: () => void;
 }
 
 export const ConversationActions: React.FC<ConversationActionsProps> = ({
   conversation,
   onOpenChange,
+  onRenameStart,
 }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -164,9 +165,13 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setIsRenaming(true);
               setIsOpen(false);
               onOpenChange?.(false);
+              if (onRenameStart) {
+                onRenameStart();
+              } else {
+                setIsRenaming(true);
+              }
             }}
             className="
                             w-full flex items-center gap-2 px-3 py-2 text-sm
@@ -286,7 +291,12 @@ export const ConversationActions: React.FC<ConversationActionsProps> = ({
                 }
               } catch (err: any) {
                 if (err?.response?.data?.code === 'EXPORT_TOO_LARGE') {
-                  window.alert(t('aiChat.exportTooLarge', 'This conversation is too large for full export. Please use date filters.'));
+                  window.alert(
+                    t(
+                      'aiChat.exportTooLarge',
+                      'This conversation is too large for full export. Please use date filters.'
+                    )
+                  );
                 }
               }
             }}

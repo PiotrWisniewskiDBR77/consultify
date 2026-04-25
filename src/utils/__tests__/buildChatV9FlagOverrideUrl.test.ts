@@ -18,14 +18,10 @@
 
 import { describe, expect, it } from 'vitest';
 
-import type { ChatV9FlagDescriptor } from '../chatV9FeatureFlags';
 import { buildChatV9FlagOverrideUrl } from '../buildChatV9FlagOverrideUrl';
+import type { ChatV9FlagDescriptor } from '../chatV9FeatureFlags';
 
-const makeFlag = (
-  id: string,
-  query: string,
-  defaultOn = true
-): ChatV9FlagDescriptor => ({
+const makeFlag = (id: string, query: string, defaultOn = true): ChatV9FlagDescriptor => ({
   id,
   ticket: 'AG1.0',
   block: 'admin',
@@ -64,7 +60,8 @@ describe('buildChatV9FlagOverrideUrl', () => {
   it('encodes ON overrides as `=1` and OFF overrides as `=0`', () => {
     const url = buildChatV9FlagOverrideUrl({
       flags: FLAGS,
-      getOverride: (id) => (id === 'trust-badge' ? 'off' : id === 'pii-heuristic-toast' ? 'on' : null),
+      getOverride: (id) =>
+        id === 'trust-badge' ? 'off' : id === 'pii-heuristic-toast' ? 'on' : null,
       location: LOC,
     });
     expect(url).toBe('https://admin.test/app?ff_trustBadge=0&ff_piiHeuristicToast=1');
@@ -100,9 +97,7 @@ describe('buildChatV9FlagOverrideUrl', () => {
       getOverride: (id) => (id === 'trust-badge' ? 'off' : null),
       location: { ...LOC, search: '?tenant=acme&v9flags=1' },
     });
-    expect(url).toBe(
-      'https://admin.test/app?tenant=acme&v9flags=1&ff_trustBadge=0'
-    );
+    expect(url).toBe('https://admin.test/app?tenant=acme&v9flags=1&ff_trustBadge=0');
   });
 
   it('drops pre-existing `ff_*` params and replaces them with the current override set', () => {
@@ -115,9 +110,7 @@ describe('buildChatV9FlagOverrideUrl', () => {
         search: '?ff_trustBadge=0&tenant=acme',
       },
     });
-    expect(url).toBe(
-      'https://admin.test/app?tenant=acme&ff_piiHeuristicToast=1'
-    );
+    expect(url).toBe('https://admin.test/app?tenant=acme&ff_piiHeuristicToast=1');
   });
 
   it('is idempotent — round-trip through URL returns the same search set', () => {

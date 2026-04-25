@@ -32,6 +32,7 @@ import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { deriveDeckBadgeFromNativeStatus } from '@/utils/deckLifecycleBadge';
+
 import { UnifiedChatPanel } from '../UnifiedChatPanel';
 
 export type KimiLane = 'wordy' | 'excele' | 'prezentacje';
@@ -519,7 +520,8 @@ function ArtifactPreviewPane({
                 })() && (
                   <div className="px-3 py-2 text-xs text-slate-400 dark:text-slate-500 text-center border-t border-slate-200/60 dark:border-white/5">
                     {t('kimi.showingRows', 'Showing 25 of {{total}} rows', {
-                      total: (preview.perSheetData?.[activeSheet] ?? preview.tableData)!.rows.length,
+                      total: (preview.perSheetData?.[activeSheet] ?? preview.tableData)!.rows
+                        .length,
                     })}
                   </div>
                 )}
@@ -531,9 +533,7 @@ function ArtifactPreviewPane({
                   <p className="text-sm font-medium">
                     {t('kimi.xlsxPreview', 'Spreadsheet preview')}
                   </p>
-                  <p className="text-xs mt-1">
-                    {preview.fileName || 'spreadsheet.xlsx'}
-                  </p>
+                  <p className="text-xs mt-1">{preview.fileName || 'spreadsheet.xlsx'}</p>
                 </div>
               </div>
             )}
@@ -545,22 +545,23 @@ function ArtifactPreviewPane({
               <div className="p-4 bg-slate-50 dark:bg-navy-800 rounded-hig-md border border-slate-200 dark:border-navy-700">
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-slate-700 dark:text-slate-300">{preview.summary}</p>
-                  {preview.deckStatus && (() => {
-                    const badge = deriveDeckBadgeFromNativeStatus(preview.deckStatus);
-                    return (
-                      <span
-                        className={`ml-3 px-2.5 py-0.5 rounded-hig-full text-xs font-medium whitespace-nowrap ${
-                          badge === 'Exported'
-                            ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-                            : badge === 'Reviewed'
-                              ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
-                              : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
-                        }`}
-                      >
-                        {badge}
-                      </span>
-                    );
-                  })()}
+                  {preview.deckStatus &&
+                    (() => {
+                      const badge = deriveDeckBadgeFromNativeStatus(preview.deckStatus);
+                      return (
+                        <span
+                          className={`ml-3 px-2.5 py-0.5 rounded-hig-full text-xs font-medium whitespace-nowrap ${
+                            badge === 'Exported'
+                              ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+                              : badge === 'Reviewed'
+                                ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400'
+                                : 'bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400'
+                          }`}
+                        >
+                          {badge}
+                        </span>
+                      );
+                    })()}
                 </div>
               </div>
             )}
@@ -624,7 +625,9 @@ function ArtifactPreviewPane({
                   </p>
                   {preview.deckId && (
                     <button
-                      onClick={() => window.open(`/presentations/builder/${preview.deckId}`, '_blank')}
+                      onClick={() =>
+                        window.open(`/presentations/builder/${preview.deckId}`, '_blank')
+                      }
                       className="mt-3 inline-flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-fuchsia-50 dark:bg-fuchsia-900/20 text-fuchsia-600 dark:text-fuchsia-400 hover:bg-fuchsia-100 dark:hover:bg-fuchsia-900/30 transition-colors"
                     >
                       <LayoutGrid size={14} />
@@ -651,7 +654,10 @@ function ArtifactPreviewPane({
 
       {/* Sheet tabs (for xlsx) */}
       {preview.type === 'xlsx' && preview.sheetNames && preview.sheetNames.length > 0 && (
-        <div role="tablist" className="flex items-center gap-0.5 px-2 py-1.5 border-t border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-navy-900 overflow-x-auto shrink-0">
+        <div
+          role="tablist"
+          className="flex items-center gap-0.5 px-2 py-1.5 border-t border-slate-200/60 dark:border-white/5 bg-slate-50 dark:bg-navy-900 overflow-x-auto shrink-0"
+        >
           {preview.sheetNames.map((name, i) => (
             <button
               key={i}
@@ -679,8 +685,17 @@ function ArtifactPreviewPane({
               className="flex items-center gap-2 px-4 py-2 rounded-hig-sm text-sm font-medium bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-navy-700 transition-colors"
             >
               <Eye size={16} />
-              <span>{preview.fileName || (lane === 'wordy' ? 'document.pdf' : lane === 'excele' ? 'spreadsheet.xlsx' : 'presentation.pptx')}</span>
-              <span className="text-xs text-slate-400">{t('kimi.previewFile', 'Preview File')}</span>
+              <span>
+                {preview.fileName ||
+                  (lane === 'wordy'
+                    ? 'document.pdf'
+                    : lane === 'excele'
+                      ? 'spreadsheet.xlsx'
+                      : 'presentation.pptx')}
+              </span>
+              <span className="text-xs text-slate-400">
+                {t('kimi.previewFile', 'Preview File')}
+              </span>
             </button>
           )}
           {onAllFiles && (

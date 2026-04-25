@@ -144,7 +144,7 @@ export const RouterSync: React.FC = () => {
       setMyWorkIntent({
         tab: 'notebook' as any,
         open: { type: 'notebook', id },
-      });
+      } as any);
       navigate(`/my-work?${nextParams.toString()}`, { replace: true });
       return;
     }

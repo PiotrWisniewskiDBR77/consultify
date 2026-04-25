@@ -3,6 +3,17 @@
 -- Description: Bring legacy `partner_users` table up to Partner Portal schema.
 -- =============================================================================
 
+CREATE TABLE IF NOT EXISTS partner_users (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  partner_org_id TEXT NOT NULL,
+  status TEXT DEFAULT 'active',
+  role TEXT DEFAULT 'consultant',
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_partner_users_user ON partner_users(user_id);
+
 -- Columns required by Partner Portal routes/services
 ALTER TABLE partner_users ADD COLUMN IF NOT EXISTS joined_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE partner_users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();

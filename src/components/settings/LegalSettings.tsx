@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 
+import { Api } from '../../services/api';
 import { LegalDocType, LegalDocument, User } from '../../types';
 import { InfoButton } from '../shared/InfoButton';
 
@@ -43,17 +44,12 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
 
   const fetchLegalData = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const [docsRes, acceptRes] = await Promise.all([
-        fetch('/api/legal/active', { headers }),
-        fetch('/api/legal/my-acceptances', { headers }),
+      const [docsData, acceptsData] = await Promise.all([
+        Api.get('/legal/active').catch(() => null),
+        Api.get('/legal/my-acceptances').catch(() => null),
       ]);
 
-      if (docsRes.ok) {
-        const docsData = await docsRes.json();
+      if (docsData) {
         const docsList = docsData.data || docsData || [];
         setDocuments(
           docsList.map((d: any) => ({
@@ -67,8 +63,7 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
         );
       }
 
-      if (acceptRes.ok) {
-        const acceptsData = await acceptRes.json();
+      if (acceptsData) {
         const acceptsList = acceptsData.data || acceptsData || [];
         setAcceptances(
           acceptsList.map((a: any) => ({
@@ -89,13 +84,8 @@ export const LegalSettings: React.FC<LegalSettingsProps> = ({ currentUser }) => 
     setSelectedDoc(doc);
     setLoadingContent(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers: Record<string, string> = {};
-      if (token) headers.Authorization = `Bearer ${token}`;
-
-      const res = await fetch(`/api/legal/active/${doc.docType}`, { headers });
-      if (res.ok) {
-        const fullDoc = await res.json();
+      const fullDoc = await Api.get(`/legal/active/${doc.docType}`);
+      if (fullDoc) {
         setDocContent(fullDoc.contentMd || fullDoc.content_md || '');
       }
     } catch (err) {

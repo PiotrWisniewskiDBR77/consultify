@@ -33,9 +33,9 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { cn } from '../../../lib/utils';
+import { ROUTES } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
-import { ROUTES } from '../../../routes/routeConfig';
 import { SettingsDivider, SettingsSection } from '../shared';
 
 interface SecurityOverviewPageProps {
@@ -96,11 +96,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
       const [sessionsRes, historyRes, recoveryRes, mfaRes] = await Promise.all([
         Api.getActiveSessions().catch(() => ({ sessions: [] })),
         Api.getLoginHistory().catch(() => []),
-        fetch('/api/settings/recovery', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        })
-          .then((r) => (r.ok ? r.json() : null))
-          .catch(() => null),
+        Api.get('/settings/recovery').catch(() => null),
         Api.get('/api/mfa/status').catch(() => null),
       ]);
 
@@ -252,7 +248,11 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   ];
 
   const recommendations = useMemo(() => {
-    const recs: Array<{ icon: React.ElementType; text: string; priority: 'high' | 'medium' | 'low' }> = [];
+    const recs: Array<{
+      icon: React.ElementType;
+      text: string;
+      priority: 'high' | 'medium' | 'low';
+    }> = [];
 
     if (!status.mfaEnabled) {
       recs.push({
@@ -534,9 +534,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                     </div>
                   </div>
                   <span className="text-xs text-slate-500">
-                    {event.timestamp
-                      ? new Date(event.timestamp).toLocaleString()
-                      : ''}
+                    {event.timestamp ? new Date(event.timestamp).toLocaleString() : ''}
                   </span>
                 </div>
               ))}

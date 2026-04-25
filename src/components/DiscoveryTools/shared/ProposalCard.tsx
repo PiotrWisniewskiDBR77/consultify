@@ -2,7 +2,7 @@ import { Check, Loader2, MessageSquare, Sparkles, X } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { RowActionsMenu, type RowAction } from '@/components/shared/RowActionsMenu';
+import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import type { ProposalCardType, ProposalStatus } from '@/store/useToolStore';
 
 interface ProposalCardProps {
@@ -139,7 +139,9 @@ export const ProposalCard: React.FC<ProposalCardProps> = ({
             <span>{isPolish ? badge.labelPl : badge.label}</span>
           </div>
 
-          {menuActions.length > 0 ? <RowActionsMenu actions={menuActions} iconVariant="vertical" /> : null}
+          {menuActions.length > 0 ? (
+            <RowActionsMenu actions={menuActions} iconVariant="vertical" />
+          ) : null}
         </div>
       </div>
 

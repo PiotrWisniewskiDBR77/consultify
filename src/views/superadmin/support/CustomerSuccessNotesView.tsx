@@ -15,6 +15,7 @@ export const CustomerSuccessNotesView: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [newNote, setNewNote] = useState({
     title: '',
     content: '',
@@ -38,22 +39,26 @@ export const CustomerSuccessNotesView: React.FC = () => {
       if (orgs.length > 0) {
         setSelectedOrgId(orgs[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch organizations:', err);
+      setLoadError(err?.message || 'Failed to fetch organizations');
+      toast.error(err?.message || 'Failed to fetch organizations');
     }
   };
 
   const fetchNotes = async () => {
     if (!selectedOrgId) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await Api.getCustomerSuccessNotes(selectedOrgId);
       const normalized = Array.isArray(data)
         ? data
         : (data as any)?.notes || (data as any)?.items || [];
       setNotes(normalized);
-    } catch (err) {
-      toast.error('Failed to fetch notes');
+    } catch (err: any) {
+      setLoadError(err?.message || 'Failed to fetch notes');
+      toast.error(err?.message || 'Failed to fetch notes');
     } finally {
       setLoading(false);
     }
@@ -118,6 +123,12 @@ export const CustomerSuccessNotesView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>

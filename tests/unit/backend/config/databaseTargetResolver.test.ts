@@ -29,7 +29,9 @@ describe('databaseTargetResolver', () => {
       } as NodeJS.ProcessEnv,
     });
 
-    expect(result.databaseUrl).toBe('postgresql://user:pass@pgvector.railway.internal:5432/railway');
+    expect(result.databaseUrl).toBe(
+      'postgresql://user:pass@pgvector.railway.internal:5432/railway'
+    );
     expect(result.source).toBe('DATABASE_URL');
   });
 
@@ -63,8 +65,7 @@ describe('databaseTargetResolver', () => {
   it('uses finance import public fallback only when final host is reachable', () => {
     const result = resolveReachableDatabaseUrl({
       env: {
-        FINANCE_IMPORT_DATABASE_URL:
-          'postgresql://user:pass@caboose.proxy.rlwy.net:15646/railway',
+        FINANCE_IMPORT_DATABASE_URL: 'postgresql://user:pass@caboose.proxy.rlwy.net:15646/railway',
       } as NodeJS.ProcessEnv,
     });
 
@@ -93,6 +94,15 @@ describe('databaseTargetResolver', () => {
       assertNoLocalDatabaseOutsideTests({
         NODE_ENV: 'test',
         DATABASE_URL: 'postgresql://user:pass@localhost:5432/consultify_test',
+      } as NodeJS.ProcessEnv)
+    ).not.toThrow();
+  });
+
+  it('allows localhost DATABASE_URL in CI service-container jobs', () => {
+    expect(() =>
+      assertNoLocalDatabaseOutsideTests({
+        CI: 'true',
+        DATABASE_URL: 'postgresql://iris:iris_test@localhost:5432/iris_test',
       } as NodeJS.ProcessEnv)
     ).not.toThrow();
   });

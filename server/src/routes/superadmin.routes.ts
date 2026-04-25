@@ -30,8 +30,8 @@ import {
   upsertOrgPolicy,
 } from '../services/OrgPoliciesService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import logger from '../utils/Logger.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
   CreateAccessCodeSchema,
   CreateUserAdminSchema,
@@ -130,7 +130,8 @@ function isAuditWriteFailure(error: unknown): boolean {
 
 function sendAuditUnavailable(res: Response, actionType: string): void {
   res.status(503).json({
-    error: 'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
+    error:
+      'Audit system unavailable — gated action blocked. No sensitive action may proceed without audit.',
     code: 'AUDIT_UNAVAILABLE',
     actionType,
     guidance: 'Retry the action. If the problem persists, contact platform support.',
@@ -177,7 +178,9 @@ function parseAuditJsonField(raw: unknown): Record<string, unknown> | undefined 
 }
 
 function isDatabaseExplorerEnabled(): boolean {
-  return process.env.ENABLE_SUPERADMIN_DB_EXPLORER === 'true' && process.env.NODE_ENV !== 'production';
+  return (
+    process.env.ENABLE_SUPERADMIN_DB_EXPLORER === 'true' && process.env.NODE_ENV !== 'production'
+  );
 }
 
 async function querySettingAuditVersions(settingKey: string): Promise<any[]> {
@@ -339,8 +342,12 @@ router.get(
       ]);
 
     const [mfaOverride, ssoOverride] = await Promise.all([
-      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:mfa_override'], { value: null }),
-      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:sso_override'], { value: null }),
+      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:mfa_override'], {
+        value: null,
+      }),
+      safeDbGet(`SELECT value FROM settings WHERE key = ?`, ['platform:sso_override'], {
+        value: null,
+      }),
     ]);
 
     res.json({
@@ -491,7 +498,11 @@ router.get(
     >();
     connectors.forEach((row) => {
       const key = String(row.connector_type || 'unknown');
-      const current = connectorGroups.get(key) || { enabledCount: 0, disabledCount: 0, totalCount: 0 };
+      const current = connectorGroups.get(key) || {
+        enabledCount: 0,
+        disabledCount: 0,
+        totalCount: 0,
+      };
       const count = Number(row.count || 0);
       current.totalCount += count;
       if (String(row.status) === 'disabled') current.disabledCount += count;
@@ -506,7 +517,10 @@ router.get(
         desiredState: provider.is_active ? 'enabled' : 'disabled',
         appliedState: provider.health_status || 'unknown',
         drift:
-          provider.is_active && !['healthy', 'enabled', 'ok'].includes(String(provider.health_status || '').toLowerCase()),
+          provider.is_active &&
+          !['healthy', 'enabled', 'ok'].includes(
+            String(provider.health_status || '').toLowerCase()
+          ),
         note: 'Provider runtime health should match intended platform availability.',
         updatedAt: provider.updated_at || null,
       })),
@@ -535,7 +549,10 @@ router.get(
       })),
       ...overrides.map((override) => ({
         id: `override:${override.key}`,
-        domain: override.key === 'platform:mfa_override' ? 'Platform MFA override' : 'Platform SSO override',
+        domain:
+          override.key === 'platform:mfa_override'
+            ? 'Platform MFA override'
+            : 'Platform SSO override',
         desiredState: override.value || 'disabled',
         appliedState: override.value || 'disabled',
         drift: false,
@@ -689,7 +706,9 @@ router.post(
     const tenantId = req.params.id;
     const { reason } = req.body;
 
-    const tenant = await dbGet('SELECT id, name, status FROM organizations WHERE id = $1', [tenantId]);
+    const tenant = await dbGet('SELECT id, name, status FROM organizations WHERE id = $1', [
+      tenantId,
+    ]);
     if (!tenant) return res.status(404).json({ error: 'Tenant not found' });
     if (tenant.status === 'suspended') {
       return res.status(409).json({
@@ -699,7 +718,10 @@ router.post(
       });
     }
 
-    const userCount = await dbGet('SELECT COUNT(*) as count FROM users WHERE organization_id = $1', [tenantId]);
+    const userCount = await dbGet(
+      'SELECT COUNT(*) as count FROM users WHERE organization_id = $1',
+      [tenantId]
+    );
 
     await executeAtomicGatedAction(req, res, 'suspend_tenant', async () => {
       await dbRun(
@@ -948,7 +970,8 @@ router.post(
           connectorId,
           reversible: true,
           affectedTenants: affected?.length || 0,
-          recoveryPath: 'Re-enable connector after vendor/security review; tenants may need reauth via Admin.',
+          recoveryPath:
+            'Re-enable connector after vendor/security review; tenants may need reauth via Admin.',
         },
       };
     });
@@ -1022,7 +1045,8 @@ router.post(
           action: 'tenant.data_purge',
           tenantId,
           irreversible: true,
-          warning: 'ALL data for this tenant will be PERMANENTLY DELETED. This action CANNOT be undone.',
+          warning:
+            'ALL data for this tenant will be PERMANENTLY DELETED. This action CANNOT be undone.',
         },
       };
     });
@@ -1174,7 +1198,8 @@ router.get(
       return res.status(404).json({
         error: 'Database explorer is disabled',
         code: 'SUPERADMIN_DB_EXPLORER_DISABLED',
-        guidance: 'Use audited exports or enable the dev-only explorer explicitly outside production.',
+        guidance:
+          'Use audited exports or enable the dev-only explorer explicitly outside production.',
       });
     }
     await SuperAdminController.getDatabaseTables(req, res, next);
@@ -1187,7 +1212,8 @@ router.get(
       return res.status(404).json({
         error: 'Database explorer is disabled',
         code: 'SUPERADMIN_DB_EXPLORER_DISABLED',
-        guidance: 'Use audited exports or enable the dev-only explorer explicitly outside production.',
+        guidance:
+          'Use audited exports or enable the dev-only explorer explicitly outside production.',
       });
     }
     await SuperAdminController.getDatabaseRows(req, res, next);
@@ -1344,8 +1370,15 @@ router.post(
       const { createInvoice } = (await import('../services/InvoiceService.js')) as any;
       const items =
         Array.isArray(lineItems) && lineItems.length > 0
-          ? lineItems
+          ? lineItems.map((item: any) => ({
+              description: item.description || description || 'Invoice item',
+              quantity: Number(item.quantity || 1),
+              unitPrice: Number(item.unitPrice ?? item.amount ?? 0),
+            }))
           : [{ description: description || 'Invoice item', quantity: 1, unitPrice: 0 }];
+      if (items.some((item: any) => !Number.isFinite(item.unitPrice) || item.unitPrice <= 0)) {
+        return res.status(400).json({ error: 'Invoice line item price must be greater than zero' });
+      }
       const invoice = await createInvoice({
         organizationId,
         items,
@@ -2032,6 +2065,31 @@ router.post(
 // ==========================================
 // BACKUP SCHEDULING (backup_configurations table)
 // ==========================================
+
+router.post(
+  '/system/backup',
+  requireSuperAdminCapability('platform_ops'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const BackupService = await import('../services/backupService.js').then(
+        (m) => m.default || m
+      );
+      const backup = await BackupService.createBackup(
+        req.body?.type || 'full',
+        req.body?.reason || 'superadmin_manual'
+      );
+      return res.json({ success: true, backup });
+    } catch (error: any) {
+      logger.warn('[SuperAdmin] Manual backup unavailable:', error?.message || error);
+      return res.status(503).json({
+        success: false,
+        error: 'Manual backup is not available.',
+        code: 'BACKUP_SERVICE_UNAVAILABLE',
+        guidance: 'Check backup service configuration before retrying.',
+      });
+    }
+  })
+);
 
 router.get(
   '/backup/schedules',
@@ -3136,6 +3194,7 @@ router.put(
   SuperAdminController.toggleRolePermission
 );
 router.post('/admin/permissions/roles/copy', SuperAdminController.copyRolePermissions);
+router.get('/admin/permissions/roles/compare', SuperAdminController.compareRoles);
 
 // Security Permissions endpoints (aliased from /admin/)
 router.get('/security/permissions', SuperAdminController.getAdminPermissions);
@@ -3164,6 +3223,8 @@ router.get(
 
 router.get('/admin/approval-workflows', SuperAdminController.getApprovalWorkflows);
 router.post('/admin/approval-workflows', SuperAdminController.createApprovalWorkflow);
+router.put('/admin/approval-workflows/:id', SuperAdminController.updateApprovalWorkflow);
+router.delete('/admin/approval-workflows/:id', SuperAdminController.deleteApprovalWorkflow);
 router.get('/admin/approval-requests', SuperAdminController.getApprovalRequests);
 router.post('/admin/approval-requests/:id/approve', SuperAdminController.approveRequest);
 router.post('/admin/approval-requests/:id/reject', SuperAdminController.rejectRequest);
@@ -3210,10 +3271,7 @@ router.get(
           (row.type === 'USER_FEEDBACK' || row.type === 'CLIENT_TICKET' ? 'FEEDBACK' : null);
         const relatedObjectId: string | null = row.related_object_id || null;
         let actionUrl: string | null = row.action_url || null;
-        if (
-          relatedObjectId &&
-          (row.type === 'USER_FEEDBACK' || row.type === 'CLIENT_TICKET')
-        ) {
+        if (relatedObjectId && (row.type === 'USER_FEEDBACK' || row.type === 'CLIENT_TICKET')) {
           actionUrl = `/superadmin/customers/feedback?feedbackId=${encodeURIComponent(relatedObjectId)}`;
         }
         return {
@@ -3264,6 +3322,9 @@ router.post(
     try {
       const { run: dbRun } = await import('../utils/DbPromise.js');
       const { name, description, orderIndex, color } = req.body;
+      if (!String(name || '').trim()) {
+        return res.status(400).json({ error: 'Stage name is required' });
+      }
       const id = `stage-${Date.now()}`;
 
       await dbRun(
@@ -3359,10 +3420,21 @@ router.post(
   '/lifecycle/transitions',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
     try {
-      const { run: dbRun } = await import('../utils/DbPromise.js');
+      const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
       const { organizationId, fromStageId, toStageId, notes } = req.body;
       const userId = req.user?.id;
       const id = `trans-${Date.now()}`;
+      if (!organizationId || !toStageId) {
+        return res.status(400).json({ error: 'Organization and target stage are required' });
+      }
+      const organization = await dbGet(`SELECT id FROM organizations WHERE id = ?`, [
+        organizationId,
+      ]);
+      if (!organization) return res.status(404).json({ error: 'Organization not found' });
+      const targetStage = await dbGet(`SELECT id FROM customer_lifecycle_stages WHERE id = ?`, [
+        toStageId,
+      ]);
+      if (!targetStage) return res.status(404).json({ error: 'Target lifecycle stage not found' });
 
       // Insert transition record
       await dbRun(
@@ -3499,6 +3571,11 @@ router.post(
     try {
       const { run: dbRun } = await import('../utils/DbPromise.js');
       const { name, description, triggerConditions, actions } = req.body;
+      if (!String(name || '').trim())
+        return res.status(400).json({ error: 'Playbook name is required' });
+      if (!Array.isArray(actions) || actions.length === 0) {
+        return res.status(400).json({ error: 'At least one playbook action is required' });
+      }
       const id = `pb-${Date.now()}`;
 
       await dbRun(
@@ -3518,6 +3595,43 @@ router.post(
       return res.json({ success: true, id });
     } catch (err: any) {
       logger.error('[SuperAdmin] Error creating playbook:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// Update playbook
+router.put(
+  '/playbooks/:id',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    try {
+      const { run: dbRun } = await import('../utils/DbPromise.js');
+      const { id } = req.params;
+      const { name, description, triggerConditions, actions, isActive } = req.body;
+      if (!String(name || '').trim())
+        return res.status(400).json({ error: 'Playbook name is required' });
+      if (!Array.isArray(actions) || actions.length === 0) {
+        return res.status(400).json({ error: 'At least one playbook action is required' });
+      }
+      const result = await dbRun(
+        `
+                UPDATE customer_success_playbooks
+                SET name = ?, description = ?, trigger_conditions_json = ?, actions_json = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `,
+        [
+          name,
+          description || '',
+          JSON.stringify(triggerConditions || {}),
+          JSON.stringify(actions || []),
+          isActive === false ? 0 : 1,
+          id,
+        ]
+      );
+      if (result.changes === 0) return res.status(404).json({ error: 'Playbook not found' });
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[SuperAdmin] Error updating playbook:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -3673,7 +3787,7 @@ router.post(
   '/contracts',
   asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
     try {
-      const { run: dbRun } = await import('../utils/DbPromise.js');
+      const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
       const {
         organizationId,
         contractType,
@@ -3682,15 +3796,26 @@ router.post(
         renewalDate,
         value,
         currency,
+        status,
         terms,
         documentUrl,
       } = req.body;
       const id = `contract-${Date.now()}`;
+      const numericValue = Number(value);
+      if (!organizationId) return res.status(400).json({ error: 'Organization is required' });
+      if (!startDate) return res.status(400).json({ error: 'Start date is required' });
+      if (!Number.isFinite(numericValue) || numericValue < 0) {
+        return res.status(400).json({ error: 'Contract value must be a non-negative number' });
+      }
+      const organization = await dbGet(`SELECT id FROM organizations WHERE id = ?`, [
+        organizationId,
+      ]);
+      if (!organization) return res.status(404).json({ error: 'Organization not found' });
 
       await dbRun(
         `
-                INSERT INTO customer_contracts (id, organization_id, contract_type, start_date, end_date, renewal_date, value, currency, terms_json, document_url)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO customer_contracts (id, organization_id, contract_type, start_date, end_date, renewal_date, value, currency, status, terms_json, document_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `,
         [
           id,
@@ -3699,8 +3824,9 @@ router.post(
           startDate,
           endDate || null,
           renewalDate || null,
-          value || 0,
+          numericValue,
           currency || 'USD',
+          status || 'active',
           JSON.stringify(terms || {}),
           documentUrl || null,
         ]
@@ -3709,6 +3835,64 @@ router.post(
       return res.json({ success: true, id });
     } catch (err: any) {
       logger.error('[SuperAdmin] Error creating contract:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+// Update contract
+router.put(
+  '/contracts/:id',
+  asyncHandler(async (req: AuthRequest, res: Response, next: any) => {
+    try {
+      const { run: dbRun, get: dbGet } = await import('../utils/DbPromise.js');
+      const { id } = req.params;
+      const {
+        organizationId,
+        contractType,
+        startDate,
+        endDate,
+        renewalDate,
+        value,
+        currency,
+        status,
+        terms,
+        documentUrl,
+      } = req.body;
+      const numericValue = Number(value);
+      if (!organizationId) return res.status(400).json({ error: 'Organization is required' });
+      if (!startDate) return res.status(400).json({ error: 'Start date is required' });
+      if (!Number.isFinite(numericValue) || numericValue < 0) {
+        return res.status(400).json({ error: 'Contract value must be a non-negative number' });
+      }
+      const organization = await dbGet(`SELECT id FROM organizations WHERE id = ?`, [
+        organizationId,
+      ]);
+      if (!organization) return res.status(404).json({ error: 'Organization not found' });
+      const result = await dbRun(
+        `
+                UPDATE customer_contracts
+                SET organization_id = ?, contract_type = ?, start_date = ?, end_date = ?, renewal_date = ?, value = ?, currency = ?, status = ?, terms_json = ?, document_url = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            `,
+        [
+          organizationId,
+          contractType || 'subscription',
+          startDate,
+          endDate || null,
+          renewalDate || null,
+          numericValue,
+          currency || 'USD',
+          status || 'active',
+          JSON.stringify(terms || {}),
+          documentUrl || null,
+          id,
+        ]
+      );
+      if (result.changes === 0) return res.status(404).json({ error: 'Contract not found' });
+      return res.json({ success: true });
+    } catch (err: any) {
+      logger.error('[SuperAdmin] Error updating contract:', err);
       return res.status(500).json({ error: err.message });
     }
   })

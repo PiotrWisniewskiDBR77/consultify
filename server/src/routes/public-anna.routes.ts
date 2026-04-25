@@ -7,6 +7,8 @@ import {
   buildAnnaVoiceBootstrap,
 } from '../services/ai/annaKnowledgeService.js';
 import { resolveAnnaSiteConfig } from '../services/ai/annaSiteConfig.js';
+import llmConfigService from '../services/ai/llmConfigService.js';
+import { buildConversationIntelligence } from '../services/ai/virtualWorkerConversationIntelligence.js';
 import {
   findOrCreateConversation,
   getConversationBySession,
@@ -17,7 +19,6 @@ import {
   buildWorkerKnowledgeContext,
   buildWorkerVoiceBootstrap,
 } from '../services/ai/virtualWorkerKnowledgeService.js';
-import { buildConversationIntelligence } from '../services/ai/virtualWorkerConversationIntelligence.js';
 import { getWorkerWithProfile } from '../services/ai/virtualWorkerService.js';
 import { buildWorkerWebAccessResult } from '../services/ai/virtualWorkerWebAccessService.js';
 import {
@@ -26,7 +27,6 @@ import {
 } from '../services/annaAnalyticsService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import logger from '../utils/Logger.js';
-import llmConfigService from '../services/ai/llmConfigService.js';
 
 const router = Router();
 
@@ -100,8 +100,6 @@ function shouldFallbackToLegacyAnnaKnowledge(knowledge: AnnaKnowledgePayload): b
     knowledge.fallbackReason === 'worker_not_found'
   );
 }
-
-
 
 const ANNA_PUBLIC_BEHAVIOR = `
 IDENTITY
@@ -178,6 +176,51 @@ PUBLIC PRODUCT POSITIONING
 - Other DBR77 products should support the answer only when they improve clarity, qualification, or cross-sell logic.
 - Anna's role is to educate, qualify interest, and help visitors understand the offer using only public knowledge and retrieved product pills.
 `.trim();
+
+function detectAnnaTenantDataRequest(message: string): boolean {
+  const text = String(message || '').toLowerCase();
+  return [
+    /\b(my|our)\s+(workspace|tenant|organization|project|account)\b/i,
+    /\bworkspace\s+(data|files|documents|memory|context)\b/i,
+    /\btenant\s+(data|memory|context|files)\b/i,
+    /\borganization\s+(data|memory|documents|projects)\b/i,
+    /\bproject\s+(data|files|documents|tasks|initiatives)\b/i,
+    /\bshow\s+.*\b(private|internal|workspace|tenant)\b/i,
+    /\bpoka[zż]\s+.*\b(workspace|tenant|organizacj|projekt|prywatn)\b/i,
+    /\bdane\s+(workspace|tenanta|organizacji|projektu)\b/i,
+    /\bpami[eę][cć]\s+(organizacji|workspace|projektu)\b/i,
+  ].some((pattern) => pattern.test(text));
+}
+
+function buildAnnaTenantBoundaryResponse(locale?: string): string {
+  const resolvedLocale = resolveAnnaLocale(locale);
+  if (resolvedLocale === 'pl') {
+    return 'Jestem Anna, publiczna asystentka produktowa. Nie mam dostepu do danych workspace, organizacji, projektow, plikow ani pamieci tenantowej. Jesli chcesz pracowac na danych swojej organizacji, zaloguj sie do aplikacji i uzyj Teresy w workspace.';
+  }
+  return 'I am Anna, the public product assistant. I do not have access to workspace, organization, project, file, or tenant-memory data. To work with your organization context, sign in and use Teresa inside the workspace.';
+}
+
+function buildAnnaPublicTrustBundle(params: {
+  sources?: string[];
+  fallbackReason?: string | null;
+  responseMode?: string;
+}) {
+  const sources = Array.isArray(params.sources)
+    ? params.sources.filter((source) => Boolean(String(source || '').trim()))
+    : [];
+  return {
+    version: 'AnnaPublicTrustBundleV1',
+    assistant: 'anna',
+    surface: 'public_help',
+    tenantDataAccess: false,
+    memoryScope: 'public_session_only',
+    sourceClass: sources.length > 0 ? 'public_product_knowledge' : 'public_boundary_or_fallback',
+    sources,
+    citationsCount: sources.length,
+    responseMode: params.responseMode || 'fallback',
+    fallbackReason: params.fallbackReason || null,
+  };
+}
 
 function resolveAnnaLocale(locale?: string): 'pl' | 'en' | 'es' | 'de' | 'jp' | 'ar' {
   const normalized = String(locale || '').toLowerCase();
@@ -344,10 +387,16 @@ function buildAnnaServiceUnavailableMessage(locale?: string): string {
   return 'Our AI assistant is temporarily unavailable. Please explore the page or contact us directly.';
 }
 
-function enforceAnnaCitationsOrUncertainty(answer: string, sources: string[], locale?: string): string {
+function enforceAnnaCitationsOrUncertainty(
+  answer: string,
+  sources: string[],
+  locale?: string
+): string {
   const resolvedLocale = resolveAnnaLocale(locale);
   const trimmed = String(answer || '').trim();
-  const safeSources = Array.isArray(sources) ? sources.filter((s) => Boolean(String(s).trim())) : [];
+  const safeSources = Array.isArray(sources)
+    ? sources.filter((s) => Boolean(String(s).trim()))
+    : [];
 
   const alreadyHasSources =
     /\n\s*(Sources|Źródła)\s*:/i.test(trimmed) || /\b(Sources|Źródła):\s*\S+/i.test(trimmed);
@@ -378,6 +427,37 @@ function enforceAnnaCitationsOrUncertainty(answer: string, sources: string[], lo
               : 'I may be mistaken — if you need a confirmed answer, please contact us.';
 
   return `${trimmed}\n\n${marker}`;
+}
+
+function enforceAnnaSensitiveClaimCaution(
+  message: string,
+  answer: string,
+  locale?: string
+): string {
+  const resolvedLocale = resolveAnnaLocale(locale);
+  const prompt = String(message || '').toLowerCase();
+  const text = String(answer || '').trim();
+  const isSensitiveClaim =
+    /\b(pricing|price|cost|quote|plan|security|compliance|certification|soc\s*2|iso|sla|gdpr|marketplace|onboarding)\b/i.test(
+      prompt
+    ) ||
+    /\b(cena|koszt|wycena|bezpieczenstwo|bezpieczeństwo|certyfikat|wdrozenie|wdrożenie)\b/i.test(
+      prompt
+    );
+  if (!isSensitiveClaim) return text;
+
+  const alreadyCautious =
+    /\b(contact|confirmed|public|do not have access|cannot confirm|security team|sales)\b/i.test(
+      text
+    ) || /\b(kontakt|potwierdz|publiczn|nie mam dost[eę]pu|nie mog[eę] potwierdzi)\b/i.test(text);
+  if (alreadyCautious) return text;
+
+  const caution =
+    resolvedLocale === 'pl'
+      ? 'W sprawach cen, bezpieczenstwa, wdrozenia lub szczegolow marketplace traktuj to jako publiczna orientacje, nie potwierdzona oferte. Po dokladne warunki skontaktuj sie z zespolem przez formularz kontaktowy.'
+      : 'For pricing, security, onboarding, or marketplace details, treat this as public orientation, not a confirmed offer. For exact terms, contact the team through the contact form.';
+
+  return `${text}\n\n${caution}`;
 }
 
 function safeSlice(text: string, maxChars: number): string {
@@ -458,7 +538,11 @@ function consumeAnnaFunnelEventRateLimit(req: Request, sessionId?: string, nowMs
   return { allowed: true as const };
 }
 
-function buildSystemInstruction(locale?: string, knowledgeContext?: string, siteKey?: string): string {
+function buildSystemInstruction(
+  locale?: string,
+  knowledgeContext?: string,
+  siteKey?: string
+): string {
   const siteConfig = resolveAnnaSiteConfig(siteKey);
   return `${ANNA_PUBLIC_BEHAVIOR}
 
@@ -498,7 +582,9 @@ export function buildAnnaRuntimeInstruction(args: {
   const additiveContext = [surfaceContext, conversationContext]
     .filter((item) => Boolean(String(item || '').trim()))
     .join('\n\n');
-  const shapedInstruction = additiveContext ? `${baseInstruction}\n\n${additiveContext}` : baseInstruction;
+  const shapedInstruction = additiveContext
+    ? `${baseInstruction}\n\n${additiveContext}`
+    : baseInstruction;
 
   if (!workerSystemPrompt) {
     return shapedInstruction;
@@ -614,7 +700,9 @@ function buildAnnaRetrievalQuery(
     `Current knowledge base article: ${surfaceContext.articleTitle}`,
     surfaceContext.categoryName ? `Category: ${surfaceContext.categoryName}` : null,
     surfaceContext.currentSection ? `Current section: ${surfaceContext.currentSection}` : null,
-    surfaceContext.articleSummary ? `Article summary: ${safeSlice(surfaceContext.articleSummary, 240)}` : null,
+    surfaceContext.articleSummary
+      ? `Article summary: ${safeSlice(surfaceContext.articleSummary, 240)}`
+      : null,
   ]
     .filter(Boolean)
     .join('\n');
@@ -653,13 +741,15 @@ function buildAnnaConversationContext(
   return sections.join('\n');
 }
 
-function buildAnnaSessionMemoryContext(conversation?: {
-  summary?: string | null;
-  session_memory?: Record<string, unknown>;
-  primary_topic?: string | null;
-  intent?: string | null;
-  products_discussed?: string[];
-} | null): string | null {
+function buildAnnaSessionMemoryContext(
+  conversation?: {
+    summary?: string | null;
+    session_memory?: Record<string, unknown>;
+    primary_topic?: string | null;
+    intent?: string | null;
+    products_discussed?: string[];
+  } | null
+): string | null {
   if (!conversation) return null;
   const summary = String(conversation.summary || '').trim();
   const memory = conversation.session_memory || {};
@@ -858,6 +948,31 @@ router.post(
         message: buildAnnaUnsupportedLanguageMessage(),
         language: 'en',
         fallbackReason: 'unsupported_language',
+        assistantSurface: 'public_help',
+        assistant: 'anna',
+        trustBundle: buildAnnaPublicTrustBundle({
+          sources: [],
+          fallbackReason: 'unsupported_language',
+          responseMode: 'boundary',
+        }),
+      });
+    }
+
+    if (detectAnnaTenantDataRequest(body.message)) {
+      return res.status(200).json({
+        message: buildAnnaTenantBoundaryResponse(body.locale),
+        knowledgeSources: [],
+        matchedProducts: ['consultify'],
+        primaryProducts: ['consultify'],
+        webSources: [],
+        fallbackReason: 'tenant_boundary',
+        assistantSurface: 'public_help',
+        assistant: 'anna',
+        trustBundle: buildAnnaPublicTrustBundle({
+          sources: [],
+          fallbackReason: 'tenant_boundary',
+          responseMode: 'boundary',
+        }),
       });
     }
 
@@ -916,26 +1031,29 @@ router.post(
       const conversationContext = [sessionMemoryContext, followUpContext]
         .filter((value) => Boolean(String(value || '').trim()))
         .join('\n\n');
-      const workerWeb =
-        workerConfig?.profile
-          ? await buildWorkerWebAccessResult({
-              workerSlug: 'anna',
-              profile: workerConfig.profile,
-              message: body.message,
-              locale: body.locale,
-              historyLength: history.length,
-            })
-          : null;
+      const workerWeb = workerConfig?.profile
+        ? await buildWorkerWebAccessResult({
+            workerSlug: 'anna',
+            profile: workerConfig.profile,
+            message: body.message,
+            locale: body.locale,
+            historyLength: history.length,
+          })
+        : null;
       const combinedSources = [
         ...knowledge.sources,
-        ...((workerWeb?.citations || []).map((citation) => citation.link).filter(Boolean) as string[]),
+        ...((workerWeb?.citations || [])
+          .map((citation) => citation.link)
+          .filter(Boolean) as string[]),
       ];
 
       const systemPrompt = buildAnnaRuntimeInstruction({
         locale: body.locale,
         knowledgeContext: [
           knowledge.contextText,
-          workerWeb?.used && workerWeb.systemInstructionAddon ? workerWeb.systemInstructionAddon : '',
+          workerWeb?.used && workerWeb.systemInstructionAddon
+            ? workerWeb.systemInstructionAddon
+            : '',
         ]
           .filter(Boolean)
           .join('\n\n'),
@@ -947,7 +1065,11 @@ router.post(
 
       const answer = await callAnnaModel(systemPrompt, contents);
       const latencyMs = Date.now() - startMs;
-      const finalAnswer = enforceAnnaCitationsOrUncertainty(answer, combinedSources, body.locale);
+      const finalAnswer = enforceAnnaSensitiveClaimCaution(
+        body.message,
+        enforceAnnaCitationsOrUncertainty(answer, combinedSources, body.locale),
+        body.locale
+      );
       const intelligence = buildConversationIntelligence({
         message: body.message,
         answer: finalAnswer,
@@ -958,11 +1080,10 @@ router.post(
         surfaceContext: body.surfaceContext as any,
         priorSummary: persistedConversation?.summary || null,
       });
-      const responseMode =
-        workerWeb?.used
-          ? 'knowledge_pill_web'
-          : knowledge.usedPillIds && knowledge.usedPillIds.length > 0
-            ? 'knowledge_pill'
+      const responseMode = workerWeb?.used
+        ? 'knowledge_pill_web'
+        : knowledge.usedPillIds && knowledge.usedPillIds.length > 0
+          ? 'knowledge_pill'
           : knowledge.sources.length > 0
             ? 'rag'
             : 'fallback';
@@ -1037,6 +1158,13 @@ router.post(
         primaryProducts: knowledge.primaryProducts,
         webSources: workerWeb?.citations || [],
         fallbackReason: 'fallbackReason' in knowledge ? knowledge.fallbackReason || null : null,
+        assistantSurface: 'public_help',
+        assistant: 'anna',
+        trustBundle: buildAnnaPublicTrustBundle({
+          sources: combinedSources,
+          fallbackReason: 'fallbackReason' in knowledge ? knowledge.fallbackReason || null : null,
+          responseMode,
+        }),
       });
     } catch (error: any) {
       logger.error('[PublicAnna] Error generating response', {
@@ -1046,6 +1174,13 @@ router.post(
       return res.status(200).json({
         message: buildAnnaServiceUnavailableMessage(body.locale),
         fallbackReason: 'service_unavailable',
+        assistantSurface: 'public_help',
+        assistant: 'anna',
+        trustBundle: buildAnnaPublicTrustBundle({
+          sources: [],
+          fallbackReason: 'service_unavailable',
+          responseMode: 'fallback',
+        }),
       });
     }
   })
@@ -1054,8 +1189,11 @@ router.post(
 router.get(
   '/voice-config',
   asyncHandler(async (_req, res: Response) => {
-    const apiKey =
-      process.env.NEXT_PUBLIC_GEMINI_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim() || '';
+    const hasServerKey = Boolean(
+      (process.env.ANNA_GEMINI_LIVE_API_KEY?.trim() || process.env.GEMINI_API_KEY?.trim() || '')
+        .length
+    );
+    const clientToken = String(process.env.ANNA_GEMINI_LIVE_EPHEMERAL_TOKEN || '').trim();
     let voiceName: string | null = null;
     let workerVoiceEnabled = true;
 
@@ -1077,9 +1215,20 @@ router.get(
     }
 
     return res.json({
-      enabled: Boolean(apiKey) && workerVoiceEnabled,
-      apiKey: apiKey || null,
+      enabled: Boolean(clientToken) && workerVoiceEnabled,
       voiceName,
+      session: clientToken
+        ? {
+            clientToken,
+            tokenType: 'ephemeral',
+            expiresAt: new Date(Date.now() + 10 * 60 * 1000).toISOString(),
+          }
+        : null,
+      unavailableReason: clientToken
+        ? null
+        : hasServerKey
+          ? 'server_voice_proxy_required'
+          : 'server_missing_gemini_live_key',
     });
   })
 );

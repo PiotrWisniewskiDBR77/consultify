@@ -1,13 +1,23 @@
-import { AlertTriangle, Building2, ExternalLink, Loader2, Settings2, Shield, Sparkles } from 'lucide-react';
+import type { TFunction } from 'i18next';
+import {
+  AlertTriangle,
+  Building2,
+  ExternalLink,
+  Loader2,
+  Settings2,
+  Shield,
+  Sparkles,
+} from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { ROUTES } from '@/routes/routeConfig';
 
 import { Api } from '../../services/api';
 import { Button } from '../ui/primitives/Button';
-import { SettingsTaxonomyPanel } from './SettingsTaxonomyPanel';
 import type { SettingsSection } from './SettingsSidebar';
+import { SettingsTaxonomyPanel } from './SettingsTaxonomyPanel';
 
 type RegistryResolveResponse = {
   value: unknown;
@@ -31,7 +41,12 @@ type OrganizationContextSummary = {
 };
 
 type SettingsOwnershipPanelsProps = {
-  mode: 'overview' | 'tenant-defaults' | 'tenant-branding' | 'tenant-security' | 'module-preferences';
+  mode:
+    | 'overview'
+    | 'tenant-defaults'
+    | 'tenant-branding'
+    | 'tenant-security'
+    | 'module-preferences';
   onOpenSection?: (section: SettingsSection) => void;
 };
 
@@ -55,14 +70,20 @@ const RESOLVE_KEYS = [
   'citation_style',
 ] as const;
 
-function formatValue(value: unknown): string {
-  if (value === null || value === undefined || value === '') return 'Not configured';
-  if (typeof value === 'boolean') return value ? 'Enabled' : 'Disabled';
+function formatValue(value: unknown, t: TFunction): string {
+  if (value === null || value === undefined || value === '') {
+    return t('settings.ownership.value.notConfigured', 'Not configured');
+  }
+  if (typeof value === 'boolean') {
+    return value
+      ? t('settings.ownership.value.enabled', 'Enabled')
+      : t('settings.ownership.value.disabled', 'Disabled');
+  }
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }
 
-function useSettingsOwnershipData() {
+function useSettingsOwnershipData(t: TFunction) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [orgContext, setOrgContext] = useState<OrganizationContextSummary | null>(null);
@@ -82,16 +103,22 @@ function useSettingsOwnershipData() {
 
         if (cancelled) return;
 
-        const nextResolved = registryValues.reduce<Record<string, RegistryResolveResponse>>((acc, item, index) => {
-          acc[RESOLVE_KEYS[index]] = item as RegistryResolveResponse;
-          return acc;
-        }, {});
+        const nextResolved = registryValues.reduce<Record<string, RegistryResolveResponse>>(
+          (acc, item, index) => {
+            acc[RESOLVE_KEYS[index]] = item as RegistryResolveResponse;
+            return acc;
+          },
+          {}
+        );
 
         setOrgContext((context || {}) as OrganizationContextSummary);
         setResolved(nextResolved);
       } catch (err: any) {
         if (cancelled) return;
-        setError(err?.message || 'Failed to load settings ownership data.');
+        setError(
+          err?.message ||
+            t('settings.ownership.loadError', 'Failed to load settings ownership data.')
+        );
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -101,7 +128,7 @@ function useSettingsOwnershipData() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   return { loading, error, orgContext, resolved };
 }
@@ -140,30 +167,37 @@ const ValueRow: React.FC<{
   value: string;
   source?: string;
   readOnly?: boolean;
-}> = ({ label, value, source, readOnly = false }) => (
+  t: TFunction;
+}> = ({ label, value, source, readOnly = false, t }) => (
   <div className="flex flex-col gap-1 rounded-xl border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950/60 px-4 py-3">
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm font-medium text-slate-900 dark:text-white">{label}</span>
       {readOnly ? (
         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-          Read-only
+          {t('settings.ownership.readOnly', 'Read-only')}
         </span>
       ) : null}
     </div>
     <div className="text-sm text-slate-700 dark:text-slate-300">{value}</div>
     {source ? (
       <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-500">
-        Source: {source}
+        {t('settings.ownership.source', 'Source')}: {source}
       </div>
     ) : null}
   </div>
 );
 
-const EmptyState: React.FC<{ error?: string | null }> = ({ error }) => (
+const EmptyState: React.FC<{ error?: string | null; t: TFunction }> = ({ error, t }) => (
   <div className="rounded-2xl border border-dashed border-slate-300 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-950/60 p-6 text-sm text-slate-600 dark:text-slate-400">
     <div className="flex items-center gap-3">
       <AlertTriangle size={18} className="text-amber-500" />
-      <span>{error || 'Settings ownership data is temporarily unavailable.'}</span>
+      <span>
+        {error ||
+          t(
+            'settings.ownership.unavailable',
+            'Settings ownership data is temporarily unavailable.'
+          )}
+      </span>
     </div>
   </div>
 );
@@ -171,22 +205,49 @@ const EmptyState: React.FC<{ error?: string | null }> = ({ error }) => (
 function TenantDefaultsPanel({
   resolved,
   onOpenOrganization,
+  t,
 }: {
   resolved: Record<string, RegistryResolveResponse>;
   onOpenOrganization: () => void;
+  t: TFunction;
 }) {
   return (
     <SectionCard
-      title="Tenant defaults"
-      subtitle="Organization defaults are visible in Settings, but their source of truth stays in Organization or tenant-level policy."
+      title={t('settings.ownership.tenantDefaults.title', 'Tenant defaults')}
+      subtitle={t(
+        'settings.ownership.tenantDefaults.subtitle',
+        'Organization defaults are visible in Settings, but their source of truth stays in Organization or tenant-level policy.'
+      )}
       icon={Building2}
-      actionLabel="Open Organization"
+      actionLabel={t('settings.ownership.openOrganization', 'Open Organization')}
       onAction={onOpenOrganization}
     >
-      <ValueRow label="Default language" value={formatValue(resolved.default_language?.value)} source={resolved.default_language?.source} readOnly />
-      <ValueRow label="Default timezone" value={formatValue(resolved.default_timezone?.value)} source={resolved.default_timezone?.source} readOnly />
-      <ValueRow label="Default currency" value={formatValue(resolved.default_currency?.value)} source={resolved.default_currency?.source} />
-      <ValueRow label="Default sharing mode" value={formatValue(resolved.default_sharing_mode?.value)} source={resolved.default_sharing_mode?.source} />
+      <ValueRow
+        label={t('settings.ownership.defaultLanguage', 'Default language')}
+        value={formatValue(resolved.default_language?.value, t)}
+        source={resolved.default_language?.source}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.defaultTimezone', 'Default timezone')}
+        value={formatValue(resolved.default_timezone?.value, t)}
+        source={resolved.default_timezone?.source}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.defaultCurrency', 'Default currency')}
+        value={formatValue(resolved.default_currency?.value, t)}
+        source={resolved.default_currency?.source}
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.defaultSharingMode', 'Default sharing mode')}
+        value={formatValue(resolved.default_sharing_mode?.value, t)}
+        source={resolved.default_sharing_mode?.source}
+        t={t}
+      />
     </SectionCard>
   );
 }
@@ -194,21 +255,41 @@ function TenantDefaultsPanel({
 function TenantBrandingPanel({
   orgContext,
   onOpenBranding,
+  t,
 }: {
   orgContext: OrganizationContextSummary | null;
   onOpenBranding: () => void;
+  t: TFunction;
 }) {
   return (
     <SectionCard
-      title="Branding reuse from P30"
-      subtitle="Branding fields are consumed read-only from the organization context. Settings does not write organization branding."
+      title={t('settings.ownership.branding.title', 'Branding reuse from P30')}
+      subtitle={t(
+        'settings.ownership.branding.subtitle',
+        'Branding fields are consumed read-only from the organization context. Settings does not write organization branding.'
+      )}
       icon={Sparkles}
-      actionLabel="Open Branding"
+      actionLabel={t('settings.ownership.openBranding', 'Open Branding')}
       onAction={onOpenBranding}
     >
-      <ValueRow label="Brand color" value={formatValue(orgContext?.profile?.brandColor)} readOnly />
-      <ValueRow label="Accent color" value={formatValue(orgContext?.profile?.accentColor)} readOnly />
-      <ValueRow label="Custom domain" value={formatValue(orgContext?.profile?.customDomain)} readOnly />
+      <ValueRow
+        label={t('settings.ownership.brandColor', 'Brand color')}
+        value={formatValue(orgContext?.profile?.brandColor, t)}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.accentColor', 'Accent color')}
+        value={formatValue(orgContext?.profile?.accentColor, t)}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.customDomain', 'Custom domain')}
+        value={formatValue(orgContext?.profile?.customDomain, t)}
+        readOnly
+        t={t}
+      />
     </SectionCard>
   );
 }
@@ -217,27 +298,78 @@ function TenantSecurityPanel({
   resolved,
   orgContext,
   onOpenAdmin,
+  t,
 }: {
   resolved: Record<string, RegistryResolveResponse>;
   orgContext: OrganizationContextSummary | null;
   onOpenAdmin: () => void;
+  t: TFunction;
 }) {
   const ssoProvider = orgContext?.trust?.sso?.provider;
+  const sessionTimeout =
+    typeof resolved.session_timeout_minutes?.value === 'number'
+      ? resolved.session_timeout_minutes.value
+      : null;
 
   return (
     <SectionCard
-      title="Security handoff to Admin"
-      subtitle="Security policy remains visible here with clear impact, but all writes route to Admin."
+      title={t('settings.ownership.security.title', 'Security handoff to Admin')}
+      subtitle={t(
+        'settings.ownership.security.subtitle',
+        'Security policy remains visible here with clear impact, but all writes route to Admin.'
+      )}
       icon={Shield}
-      actionLabel="Open Admin Security"
+      actionLabel={t('settings.ownership.openAdminSecurity', 'Open Admin Security')}
       onAction={onOpenAdmin}
     >
-      <ValueRow label="MFA required" value={formatValue(resolved.mfa_required?.value)} source={resolved.mfa_required?.source} readOnly />
-      <ValueRow label="SSO enforced" value={`${formatValue(resolved.sso_enforced?.value)}${ssoProvider ? ` (${ssoProvider})` : ''}`} source={resolved.sso_enforced?.source} readOnly />
-      <ValueRow label="Session timeout" value={resolved.session_timeout_minutes?.value ? `${resolved.session_timeout_minutes.value} minutes` : 'Not configured'} source={resolved.session_timeout_minutes?.source} readOnly />
-      <ValueRow label="Guest access" value={formatValue(resolved.guest_access_enabled?.value)} source={resolved.guest_access_enabled?.source} readOnly />
-      <ValueRow label="External link sharing" value={formatValue(resolved.external_link_sharing?.value)} source={resolved.external_link_sharing?.source} readOnly />
-      <ValueRow label="Tool approval required" value={formatValue(resolved.tool_approval_required?.value)} source={resolved.tool_approval_required?.source} readOnly />
+      <ValueRow
+        label={t('settings.ownership.mfaRequired', 'MFA required')}
+        value={formatValue(resolved.mfa_required?.value, t)}
+        source={resolved.mfa_required?.source}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.ssoEnforced', 'SSO enforced')}
+        value={`${formatValue(resolved.sso_enforced?.value, t)}${ssoProvider ? ` (${ssoProvider})` : ''}`}
+        source={resolved.sso_enforced?.source}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.sessionTimeout', 'Session timeout')}
+        value={
+          sessionTimeout !== null
+            ? t('settings.ownership.minutes', '{{count}} minutes', {
+                count: sessionTimeout,
+              })
+            : t('settings.ownership.value.notConfigured', 'Not configured')
+        }
+        source={resolved.session_timeout_minutes?.source}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.guestAccess', 'Guest access')}
+        value={formatValue(resolved.guest_access_enabled?.value, t)}
+        source={resolved.guest_access_enabled?.source}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.externalLinkSharing', 'External link sharing')}
+        value={formatValue(resolved.external_link_sharing?.value, t)}
+        source={resolved.external_link_sharing?.source}
+        readOnly
+        t={t}
+      />
+      <ValueRow
+        label={t('settings.ownership.toolApprovalRequired', 'Tool approval required')}
+        value={formatValue(resolved.tool_approval_required?.value, t)}
+        source={resolved.tool_approval_required?.source}
+        readOnly
+        t={t}
+      />
     </SectionCard>
   );
 }
@@ -245,59 +377,92 @@ function TenantSecurityPanel({
 function ModulePreferencesPanel({
   resolved,
   onOpenSection,
+  t,
 }: {
   resolved: Record<string, RegistryResolveResponse>;
   onOpenSection?: (section: SettingsSection) => void;
+  t: TFunction;
 }) {
   const cards = useMemo(
     () => [
       {
         id: 'interview',
-        title: 'Interview',
+        title: t('settings.ownership.modules.interview', 'Interview'),
         target: 'work-preferences' as SettingsSection,
         values: [
-          ['Recording auto-start', formatValue(resolved.recording_auto_start?.value)],
-          ['AI transcription', formatValue(resolved.ai_transcription_enabled?.value)],
+          [
+            t('settings.ownership.recordingAutoStart', 'Recording auto-start'),
+            formatValue(resolved.recording_auto_start?.value, t),
+          ],
+          [
+            t('settings.ownership.aiTranscription', 'AI transcription'),
+            formatValue(resolved.ai_transcription_enabled?.value, t),
+          ],
         ],
       },
       {
         id: 'tools',
-        title: 'Tools',
+        title: t('settings.ownership.modules.tools', 'Tools'),
         target: 'connected-apps' as SettingsSection,
         values: [
-          ['Default tool visibility', formatValue(resolved.default_tool_visibility?.value)],
-          ['Tool approval', formatValue(resolved.tool_approval_required?.value)],
+          [
+            t('settings.ownership.defaultToolVisibility', 'Default tool visibility'),
+            formatValue(resolved.default_tool_visibility?.value, t),
+          ],
+          [
+            t('settings.ownership.toolApproval', 'Tool approval'),
+            formatValue(resolved.tool_approval_required?.value, t),
+          ],
         ],
       },
       {
         id: 'outputs',
-        title: 'Outputs',
+        title: t('settings.ownership.modules.outputs', 'Outputs'),
         target: 'import-export' as SettingsSection,
-        values: [['Default export format', formatValue(resolved.default_export_format?.value)]],
+        values: [
+          [
+            t('settings.ownership.defaultExportFormat', 'Default export format'),
+            formatValue(resolved.default_export_format?.value, t),
+          ],
+        ],
       },
       {
         id: 'assessment',
-        title: 'Assessment',
+        title: t('settings.ownership.modules.assessment', 'Assessment'),
         target: 'work-preferences' as SettingsSection,
-        values: [['Scoring scale', formatValue(resolved.scoring_scale?.value)]],
+        values: [
+          [
+            t('settings.ownership.scoringScale', 'Scoring scale'),
+            formatValue(resolved.scoring_scale?.value, t),
+          ],
+        ],
       },
       {
         id: 'copilot',
-        title: 'AI / Copilot',
+        title: t('settings.ownership.modules.copilot', 'AI / Copilot'),
         target: 'ai-model-params' as SettingsSection,
         values: [
-          ['Model preference', formatValue(resolved.model_preference?.value)],
-          ['Citation style', formatValue(resolved.citation_style?.value)],
+          [
+            t('settings.ownership.modelPreference', 'Model preference'),
+            formatValue(resolved.model_preference?.value, t),
+          ],
+          [
+            t('settings.ownership.citationStyle', 'Citation style'),
+            formatValue(resolved.citation_style?.value, t),
+          ],
         ],
       },
     ],
-    [resolved]
+    [resolved, t]
   );
 
   return (
     <SectionCard
-      title="Module preferences"
-      subtitle="Module settings stay discoverable under one Settings root while inheriting the same ownership model."
+      title={t('settings.ownership.modulePreferences.title', 'Module preferences')}
+      subtitle={t(
+        'settings.ownership.modulePreferences.subtitle',
+        'Module settings stay discoverable under one Settings root while inheriting the same ownership model.'
+      )}
       icon={Settings2}
     >
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -308,11 +473,16 @@ function ModulePreferencesPanel({
           >
             <div className="flex items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900 dark:text-white">{card.title}</div>
+                <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                  {card.title}
+                </div>
                 <div className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400">
                   {card.values.map(([label, value]) => (
                     <div key={label}>
-                      <span className="font-medium text-slate-800 dark:text-slate-200">{label}:</span> {value}
+                      <span className="font-medium text-slate-800 dark:text-slate-200">
+                        {label}:
+                      </span>{' '}
+                      {value}
                     </div>
                   ))}
                 </div>
@@ -335,7 +505,8 @@ export const SettingsOwnershipPanels: React.FC<SettingsOwnershipPanelsProps> = (
   onOpenSection,
 }) => {
   const navigate = useNavigate();
-  const { loading, error, orgContext, resolved } = useSettingsOwnershipData();
+  const { t } = useTranslation();
+  const { loading, error, orgContext, resolved } = useSettingsOwnershipData(t);
 
   const openOrganizationProfile = () => navigate(ROUTES.ORGANIZATION.PROFILE);
   const openOrganizationBranding = () => navigate(ROUTES.ORGANIZATION.BRANDING);
@@ -350,33 +521,57 @@ export const SettingsOwnershipPanels: React.FC<SettingsOwnershipPanelsProps> = (
   }
 
   if (error) {
-    return <EmptyState error={error} />;
+    return <EmptyState error={error} t={t} />;
   }
 
   if (mode === 'overview') {
     return (
       <div className="space-y-6">
         <SettingsTaxonomyPanel />
-        <TenantDefaultsPanel resolved={resolved} onOpenOrganization={openOrganizationProfile} />
-        <TenantSecurityPanel resolved={resolved} orgContext={orgContext} onOpenAdmin={openAdminSecurity} />
-        <ModulePreferencesPanel resolved={resolved} onOpenSection={onOpenSection} />
+        <TenantDefaultsPanel
+          resolved={resolved}
+          onOpenOrganization={openOrganizationProfile}
+          t={t}
+        />
+        <TenantSecurityPanel
+          resolved={resolved}
+          orgContext={orgContext}
+          onOpenAdmin={openAdminSecurity}
+          t={t}
+        />
+        <ModulePreferencesPanel resolved={resolved} onOpenSection={onOpenSection} t={t} />
       </div>
     );
   }
 
   if (mode === 'tenant-defaults') {
-    return <TenantDefaultsPanel resolved={resolved} onOpenOrganization={openOrganizationProfile} />;
+    return (
+      <TenantDefaultsPanel resolved={resolved} onOpenOrganization={openOrganizationProfile} t={t} />
+    );
   }
 
   if (mode === 'tenant-branding') {
-    return <TenantBrandingPanel orgContext={orgContext} onOpenBranding={openOrganizationBranding} />;
+    return (
+      <TenantBrandingPanel
+        orgContext={orgContext}
+        onOpenBranding={openOrganizationBranding}
+        t={t}
+      />
+    );
   }
 
   if (mode === 'tenant-security') {
-    return <TenantSecurityPanel resolved={resolved} orgContext={orgContext} onOpenAdmin={openAdminSecurity} />;
+    return (
+      <TenantSecurityPanel
+        resolved={resolved}
+        orgContext={orgContext}
+        onOpenAdmin={openAdminSecurity}
+        t={t}
+      />
+    );
   }
 
-  return <ModulePreferencesPanel resolved={resolved} onOpenSection={onOpenSection} />;
+  return <ModulePreferencesPanel resolved={resolved} onOpenSection={onOpenSection} t={t} />;
 };
 
 export default SettingsOwnershipPanels;

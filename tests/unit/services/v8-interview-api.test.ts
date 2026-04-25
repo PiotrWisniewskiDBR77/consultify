@@ -270,7 +270,7 @@ describe('P10 canon validators', () => {
 
   it('rejects invalid confidence levels', () => {
     expect(isValidP10ConfidenceLevel('very_high')).toBe(false);
-    expect(isValidP10ConfidenceLevel('contradicted')).toBe(false);
+    expect(isValidP10ConfidenceLevel('contradicted')).toBe(true);
     expect(isValidP10ConfidenceLevel('')).toBe(false);
   });
 

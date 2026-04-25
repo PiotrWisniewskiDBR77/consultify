@@ -202,9 +202,10 @@ export const UserFormModal: React.FC<{
     firstName: '',
     lastName: '',
     email: '',
-    role: UserRole.OTHER,
+    role: UserRole.USER,
     status: 'active',
     licensePlanId: '',
+    password: '',
   });
 
   useEffect(() => {
@@ -213,18 +214,20 @@ export const UserFormModal: React.FC<{
         firstName: editingUser.firstName || '',
         lastName: editingUser.lastName || '',
         email: editingUser.email || '',
-        role: (editingUser.role as UserRole) || UserRole.OTHER,
+        role: (editingUser.role as UserRole) || UserRole.USER,
         status: editingUser.status || 'active',
         licensePlanId: editingUser.licensePlanId || '',
+        password: '',
       });
     } else {
       setFormData({
         firstName: '',
         lastName: '',
         email: '',
-        role: UserRole.OTHER,
+        role: UserRole.USER,
         status: 'active',
         licensePlanId: '',
+        password: '',
       });
     }
   }, [editingUser]);
@@ -273,6 +276,17 @@ export const UserFormModal: React.FC<{
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
           />
+          {!editingUser && (
+            <input
+              required
+              type="password"
+              minLength={8}
+              placeholder="Initial Password"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              className="w-full bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded p-2 text-slate-900 dark:text-white"
+            />
+          )}
           <select
             value={formData.role}
             onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
@@ -549,7 +563,15 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
     mode === 'platform'
       ? Array.from(
           new Set(
-            [UserRole.OWNER, UserRole.ADMIN, UserRole.USER, UserRole.MANAGER, UserRole.SUPERADMIN]
+            (
+              [
+                UserRole.OWNER,
+                UserRole.ADMIN,
+                UserRole.USER,
+                UserRole.MANAGER,
+                UserRole.SUPERADMIN,
+              ] as string[]
+            )
               .concat(users.map((user) => String(user.role || '').trim()))
               .filter(Boolean)
           )
@@ -565,15 +587,19 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
   const handleSaveUser = async (formData: any) => {
     try {
       if (editingUser) {
+        const { password: _password, ...updates } = formData;
         if (mode === 'platform') {
-          await Api.updateSuperAdminUser(editingUser.id, formData);
+          await Api.updateSuperAdminUser(editingUser.id, updates);
         } else {
-          await Api.updateUser(editingUser.id, formData);
+          await Api.updateUser(editingUser.id, updates);
         }
         toast.success('User updated');
       } else {
         if (mode === 'platform') {
-          await Api.createSuperAdminUser(formData);
+          await Api.createSuperAdminUser({
+            ...formData,
+            organizationId: selectedOrganizationId || undefined,
+          });
           toast.success('User created');
         } else {
           // Org-admin user creation endpoint is not guaranteed in every deployment.
@@ -781,7 +807,10 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           {selectedOrganizationName ? (
             <>
               {' '}
-              for <span className="font-medium text-slate-900 dark:text-white">{selectedOrganizationName}</span>
+              for{' '}
+              <span className="font-medium text-slate-900 dark:text-white">
+                {selectedOrganizationName}
+              </span>
             </>
           ) : null}
           {selectedRole ? ` with role ${selectedRole}` : ''}

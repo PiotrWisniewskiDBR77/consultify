@@ -172,10 +172,7 @@ describe('chatV9FeatureFlags registry', () => {
         malformed.push(`${flag.id} → "${flag.testId}"`);
       }
     }
-    expect(
-      malformed,
-      `non-kebab-case testIds:\n${malformed.join('\n')}`,
-    ).toEqual([]);
+    expect(malformed, `non-kebab-case testIds:\n${malformed.join('\n')}`).toEqual([]);
   });
 
   // Completeness guard (pass 80, 2026-04-18) — telemetry contract drift.
@@ -191,7 +188,7 @@ describe('chatV9FeatureFlags registry', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const funnelSource = readFileSync(
       path.join(repoRoot, 'src', 'services', 'funnelAnalytics.ts'),
-      'utf8',
+      'utf8'
     );
     const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_]+)'/gm;
     const knownEvents = new Set<string>();
@@ -228,7 +225,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md'
     );
     const contractSource = readFileSync(contractPath, 'utf8');
 
@@ -244,7 +241,7 @@ describe('chatV9FeatureFlags registry', () => {
     }
     expect(
       headingSet.size,
-      'failed to parse any event headings from the telemetry contract doc',
+      'failed to parse any event headings from the telemetry contract doc'
     ).toBeGreaterThan(5);
 
     const undocumented: string[] = [];
@@ -257,7 +254,7 @@ describe('chatV9FeatureFlags registry', () => {
     }
     expect(
       undocumented,
-      `telemetry events declared by a flag but missing a heading in the contract doc:\n${undocumented.join('\n')}`,
+      `telemetry events declared by a flag but missing a heading in the contract doc:\n${undocumented.join('\n')}`
     ).toEqual([]);
   });
 
@@ -273,13 +270,10 @@ describe('chatV9FeatureFlags registry', () => {
   it('every resolver file in src/utils is imported by the registry', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const utilsDir = path.join(repoRoot, 'src', 'utils');
-    const registrySource = readFileSync(
-      path.join(utilsDir, 'chatV9FeatureFlags.ts'),
-      'utf8',
-    );
+    const registrySource = readFileSync(path.join(utilsDir, 'chatV9FeatureFlags.ts'), 'utf8');
 
     const resolverFiles = readdirSync(utilsDir).filter(
-      (f) => /Flag\.ts$/.test(f) && f !== 'chatV9FeatureFlags.ts',
+      (f) => /Flag\.ts$/.test(f) && f !== 'chatV9FeatureFlags.ts'
     );
 
     const IMPORT_EXPORT_RE = /export\s+function\s+(is[A-Z][A-Za-z0-9]*Enabled)\s*\(/;
@@ -321,13 +315,10 @@ describe('chatV9FeatureFlags registry', () => {
     // without a registry entry (or vice versa), the counts diverge.
     expect(
       resolversChecked,
-      `resolver file count (${resolversChecked}) does not match registry length (${CHAT_V9_FLAGS.length})`,
+      `resolver file count (${resolversChecked}) does not match registry length (${CHAT_V9_FLAGS.length})`
     ).toBe(CHAT_V9_FLAGS.length);
 
-    expect(
-      orphans,
-      `orphan resolver files:\n${orphans.join('\n')}`,
-    ).toEqual([]);
+    expect(orphans, `orphan resolver files:\n${orphans.join('\n')}`).toEqual([]);
   });
 
   // Completeness guard (pass 82, 2026-04-18) — runbook §4 flag-reference
@@ -348,7 +339,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md',
+      'CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md'
     );
     const runbookSource = readFileSync(runbookPath, 'utf8');
 
@@ -364,10 +355,7 @@ describe('chatV9FeatureFlags registry', () => {
     // Words that look kebab-ish but are not flag ids. Keep small; the
     // whole point is to catch typos, so each addition here must be
     // defensible.
-    const NON_FLAG_ALLOWLIST = new Set<string>([
-      'ff.<feature>',
-      'ff_<feature>',
-    ]);
+    const NON_FLAG_ALLOWLIST = new Set<string>(['ff.<feature>', 'ff_<feature>']);
 
     // Extract every \`…\` occurrence whose body matches two-or-more
     // kebab segments (so bare words like `input` / `textarea` are not
@@ -383,7 +371,7 @@ describe('chatV9FeatureFlags registry', () => {
 
     expect(
       [...unknown],
-      `runbook §4 references flag ids that are not in the registry:\n${[...unknown].join('\n')}`,
+      `runbook §4 references flag ids that are not in the registry:\n${[...unknown].join('\n')}`
     ).toEqual([]);
   });
 
@@ -434,7 +422,7 @@ describe('chatV9FeatureFlags registry', () => {
       const idCell = `\`${flag.id}\``;
       const rowRE = new RegExp(
         `^\\|[^\\n]*${idCell.replace(/[-/\\^$*+?.()|[\\]{}]/g, '\\$&')}[^\\n]*$`,
-        'm',
+        'm'
       );
       const rowMatch = rowRE.exec(section);
       if (!rowMatch) {
@@ -458,14 +446,11 @@ describe('chatV9FeatureFlags registry', () => {
       const b = normalise(flag.ticket);
       if (a !== b) {
         mismatches.push(
-          `${flag.id}: README "${readmeTicket}" (→ "${a}") ≠ registry "${flag.ticket}" (→ "${b}")`,
+          `${flag.id}: README "${readmeTicket}" (→ "${a}") ≠ registry "${flag.ticket}" (→ "${b}")`
         );
       }
     }
-    expect(
-      mismatches,
-      `README ticket column drift:\n${mismatches.join('\n')}`,
-    ).toEqual([]);
+    expect(mismatches, `README ticket column drift:\n${mismatches.join('\n')}`).toEqual([]);
   });
 
   // Completeness guard (pass 77, 2026-04-18) — coherent key shape. Every
@@ -485,13 +470,15 @@ describe('chatV9FeatureFlags registry', () => {
           break;
         }
       }
-      return body
-        // Split camelCase boundaries (`bargeInToast` → `barge In Toast`).
-        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
-        // Split snake_case / SCREAMING_SNAKE boundaries.
-        .split(/[_\s]+/)
-        .map((w) => w.toLowerCase())
-        .filter((w) => w.length > 0);
+      return (
+        body
+          // Split camelCase boundaries (`bargeInToast` → `barge In Toast`).
+          .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+          // Split snake_case / SCREAMING_SNAKE boundaries.
+          .split(/[_\s]+/)
+          .map((w) => w.toLowerCase())
+          .filter((w) => w.length > 0)
+      );
     };
 
     for (const flag of CHAT_V9_FLAGS) {
@@ -513,20 +500,12 @@ describe('chatV9FeatureFlags registry', () => {
   // closure test below (pass 83) additionally asserts every listed
   // block has ≥1 registered flag — so a future block added here
   // without a flag will break CI loudly.
-  const KNOWN_BLOCKS: readonly string[] = [
-    'navigation',
-    'trust',
-    'voice',
-    'input',
-    'admin',
-  ];
+  const KNOWN_BLOCKS: readonly string[] = ['navigation', 'trust', 'voice', 'input', 'admin'];
 
   it('every flag declares a block from the closed universe', () => {
     const known = new Set<string>(KNOWN_BLOCKS);
     for (const flag of CHAT_V9_FLAGS) {
-      expect(known.has(flag.block), `unknown block for ${flag.id}: ${flag.block}`).toBe(
-        true,
-      );
+      expect(known.has(flag.block), `unknown block for ${flag.id}: ${flag.block}`).toBe(true);
     }
   });
 
@@ -545,7 +524,7 @@ describe('chatV9FeatureFlags registry', () => {
     }
     expect(
       orphanBlocks,
-      `ChatV9Block union contains orphan values (no flag uses them):\n${orphanBlocks.join('\n')}`,
+      `ChatV9Block union contains orphan values (no flag uses them):\n${orphanBlocks.join('\n')}`
     ).toEqual([]);
   });
 
@@ -558,7 +537,7 @@ describe('chatV9FeatureFlags registry', () => {
   // plan's source (normalised for `-lite` / `AG1 v1.N` conventions,
   // same as the README ticket-column test in pass 82). Missing →
   // either add the design section, or reclassify the flag.
-  it('every flag ticket appears in its block\'s development plan', () => {
+  it("every flag ticket appears in its block's development plan", () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const docsDir = path.join(repoRoot, 'docs', 'Chat V9');
 
@@ -597,7 +576,7 @@ describe('chatV9FeatureFlags registry', () => {
       const planFile = PLAN_BY_BLOCK[flag.block];
       expect(
         planFile,
-        `no plan file mapped for block "${flag.block}" (flag: ${flag.id})`,
+        `no plan file mapped for block "${flag.block}" (flag: ${flag.id})`
       ).toBeDefined();
       const plan = loadPlan(planFile);
 
@@ -615,7 +594,7 @@ describe('chatV9FeatureFlags registry', () => {
       // word-boundary-delimited) and normalise each.
       const candidates = new Set<string>();
       for (const m of plan.matchAll(
-        /`([A-Z][A-Za-z0-9.\- ]+?)`|\b([A-Z]+(?:-[A-Z]+)?\d+(?:\.\d+)?(?:[ -]v?\d+(?:\.\d+)?)?(?:-lite(?:-plus)*(?:-v\d+)?)?)\b/g,
+        /`([A-Z][A-Za-z0-9.\- ]+?)`|\b([A-Z]+(?:-[A-Z]+)?\d+(?:\.\d+)?(?:[ -]v?\d+(?:\.\d+)?)?(?:-lite(?:-plus)*(?:-v\d+)?)?)\b/g
       )) {
         const raw = m[1] ?? m[2];
         if (raw) candidates.add(normalise(raw));
@@ -626,7 +605,7 @@ describe('chatV9FeatureFlags registry', () => {
     }
     expect(
       missing,
-      `flag tickets with no mention in the block plan:\n${missing.join('\n')}`,
+      `flag tickets with no mention in the block plan:\n${missing.join('\n')}`
     ).toEqual([]);
   });
 
@@ -673,10 +652,7 @@ describe('chatV9FeatureFlags registry', () => {
       }
     };
     walk(srcRoot);
-    expect(
-      sourceByPath.size,
-      'failed to walk src/ — got zero source files',
-    ).toBeGreaterThan(10);
+    expect(sourceByPath.size, 'failed to walk src/ — got zero source files').toBeGreaterThan(10);
 
     const missing: string[] = [];
     for (const flag of CHAT_V9_FLAGS) {
@@ -705,7 +681,7 @@ describe('chatV9FeatureFlags registry', () => {
     }
     expect(
       missing,
-      `flag.testId values with no DOM / source reference:\n${missing.join('\n')}`,
+      `flag.testId values with no DOM / source reference:\n${missing.join('\n')}`
     ).toEqual([]);
   });
 
@@ -726,9 +702,7 @@ describe('chatV9FeatureFlags registry', () => {
   it('every dev-plan has the canonical Cross-refs block at the top', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const docsDir = path.join(repoRoot, 'docs', 'Chat V9');
-    const devPlans = readdirSync(docsDir).filter((f) =>
-      /_DEVELOPMENT_PLAN_.*\.md$/.test(f),
-    );
+    const devPlans = readdirSync(docsDir).filter((f) => /_DEVELOPMENT_PLAN_.*\.md$/.test(f));
     expect(devPlans.length, 'expected ≥1 development plan files').toBeGreaterThan(0);
 
     const REQUIRED_LINKS = [
@@ -751,10 +725,7 @@ describe('chatV9FeatureFlags registry', () => {
         }
       }
     }
-    expect(
-      broken,
-      `dev-plan Cross-refs drift:\n${broken.join('\n')}`,
-    ).toEqual([]);
+    expect(broken, `dev-plan Cross-refs drift:\n${broken.join('\n')}`).toEqual([]);
   });
 
   // Completeness guard (pass 85, 2026-04-18) — orphan V9 telemetry.
@@ -774,7 +745,7 @@ describe('chatV9FeatureFlags registry', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const funnelSource = readFileSync(
       path.join(repoRoot, 'src', 'services', 'funnelAnalytics.ts'),
-      'utf8',
+      'utf8'
     );
     const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_]+)'/gm;
     const unionEvents = new Set<string>();
@@ -796,7 +767,7 @@ describe('chatV9FeatureFlags registry', () => {
     }
     expect(
       orphans,
-      `V9-prefixed events in FunnelEventName not claimed by any flag:\n${orphans.join('\n')}`,
+      `V9-prefixed events in FunnelEventName not claimed by any flag:\n${orphans.join('\n')}`
     ).toEqual([]);
   });
 
@@ -812,7 +783,7 @@ describe('chatV9FeatureFlags registry', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const funnelSource = readFileSync(
       path.join(repoRoot, 'src', 'services', 'funnelAnalytics.ts'),
-      'utf8',
+      'utf8'
     );
     const FUNNEL_EVENT_RE = /^\s*\|\s*'([a-z0-9_]+)'/gm;
     const unionEvents = new Set<string>();
@@ -822,7 +793,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md'
     );
     const contractSource = readFileSync(contractPath, 'utf8');
 
@@ -840,7 +811,7 @@ describe('chatV9FeatureFlags registry', () => {
     }
     expect(
       undocumented,
-      `telemetry contract has headings for events not in FunnelEventName:\n${undocumented.join('\n')}`,
+      `telemetry contract has headings for events not in FunnelEventName:\n${undocumented.join('\n')}`
     ).toEqual([]);
   });
 
@@ -855,15 +826,13 @@ describe('chatV9FeatureFlags registry', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const docsDir = path.join(repoRoot, 'docs', 'Chat V9');
     const readme = readFileSync(path.join(docsDir, 'README.md'), 'utf8');
-    const devPlans = readdirSync(docsDir).filter((f) =>
-      /_DEVELOPMENT_PLAN_.*\.md$/.test(f),
-    );
+    const devPlans = readdirSync(docsDir).filter((f) => /_DEVELOPMENT_PLAN_.*\.md$/.test(f));
     expect(devPlans.length, 'expected ≥1 dev-plan files').toBeGreaterThan(0);
 
     const orphans = devPlans.filter((plan) => !readme.includes(plan));
     expect(
       orphans,
-      `dev-plan files on disk but never linked from README:\n${orphans.join('\n')}`,
+      `dev-plan files on disk but never linked from README:\n${orphans.join('\n')}`
     ).toEqual([]);
   });
 
@@ -886,7 +855,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md'
     );
     const source = readFileSync(contractPath, 'utf8');
     const SECTION_RE = /## Index\s*\n([\s\S]*?)(?=\n## )/;
@@ -929,7 +898,7 @@ describe('chatV9FeatureFlags registry', () => {
       // id of the flag that actually claims the event.
       if (flagByEvent.id !== flagId) {
         drift.push(
-          `${event}: index says flag "${flagId}" but registry assigns "${flagByEvent.id}"`,
+          `${event}: index says flag "${flagId}" but registry assigns "${flagByEvent.id}"`
         );
       }
       // Event → ticket: the row's ticket cell must normalise to
@@ -938,18 +907,15 @@ describe('chatV9FeatureFlags registry', () => {
       const b = normalise(flagByEvent.ticket);
       if (a !== b) {
         drift.push(
-          `${event}: index ticket "${ticketCell.trim()}" (→ "${a}") ≠ registry "${flagByEvent.ticket}" (→ "${b}")`,
+          `${event}: index ticket "${ticketCell.trim()}" (→ "${a}") ≠ registry "${flagByEvent.ticket}" (→ "${b}")`
         );
       }
     }
     expect(
       rowsChecked,
-      'failed to parse any rows from telemetry contract Index table',
+      'failed to parse any rows from telemetry contract Index table'
     ).toBeGreaterThan(5);
-    expect(
-      drift,
-      `telemetry contract Index drift:\n${drift.join('\n')}`,
-    ).toEqual([]);
+    expect(drift, `telemetry contract Index drift:\n${drift.join('\n')}`).toEqual([]);
   });
 
   // Completeness guard (pass 87, 2026-04-18) — every detailed event
@@ -973,7 +939,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md'
     );
     const source = readFileSync(contractPath, 'utf8');
 
@@ -1012,23 +978,17 @@ describe('chatV9FeatureFlags registry', () => {
       const b = normalise(flag.ticket);
       if (a !== b) {
         drift.push(
-          `${event}: section ticket "${ticketCell.trim()}" (→ "${a}") ≠ registry "${flag.ticket}" (→ "${b}")`,
+          `${event}: section ticket "${ticketCell.trim()}" (→ "${a}") ≠ registry "${flag.ticket}" (→ "${b}")`
         );
       }
       if (flagKeyCell !== flag.keys.localStorage) {
         drift.push(
-          `${event}: section flag key \`${flagKeyCell}\` ≠ registry \`${flag.keys.localStorage}\``,
+          `${event}: section flag key \`${flagKeyCell}\` ≠ registry \`${flag.keys.localStorage}\``
         );
       }
     }
-    expect(
-      sectionsChecked,
-      'failed to parse any detailed event sections',
-    ).toBeGreaterThan(5);
-    expect(
-      drift,
-      `telemetry contract detailed-section drift:\n${drift.join('\n')}`,
-    ).toEqual([]);
+    expect(sectionsChecked, 'failed to parse any detailed event sections').toBeGreaterThan(5);
+    expect(drift, `telemetry contract detailed-section drift:\n${drift.join('\n')}`).toEqual([]);
   });
 
   // Completeness guard (pass 87, 2026-04-18) — the Index table and
@@ -1044,7 +1004,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md',
+      'CHAT_V9_TELEMETRY_CONTRACT_2026-04-18.md'
     );
     const source = readFileSync(contractPath, 'utf8');
 
@@ -1074,12 +1034,12 @@ describe('chatV9FeatureFlags registry', () => {
     const msgParts: string[] = [];
     if (onlyInIndex.length) {
       msgParts.push(
-        `events listed in Index but missing a detailed section:\n  ${onlyInIndex.join('\n  ')}`,
+        `events listed in Index but missing a detailed section:\n  ${onlyInIndex.join('\n  ')}`
       );
     }
     if (onlyInDetailed.length) {
       msgParts.push(
-        `events with a detailed section but missing from the Index:\n  ${onlyInDetailed.join('\n  ')}`,
+        `events with a detailed section but missing from the Index:\n  ${onlyInDetailed.join('\n  ')}`
       );
     }
     expect(msgParts, msgParts.join('\n\n')).toEqual([]);
@@ -1102,7 +1062,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md',
+      'CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md'
     );
     const source = readFileSync(runbookPath, 'utf8');
 
@@ -1127,9 +1087,7 @@ describe('chatV9FeatureFlags registry', () => {
         .replace(/-lite(?:-plus)*(?:-v\d+)?$/i, '')
         .trim();
 
-    const registryTickets = new Set(
-      CHAT_V9_FLAGS.map((f) => normalise(f.ticket)),
-    );
+    const registryTickets = new Set(CHAT_V9_FLAGS.map((f) => normalise(f.ticket)));
 
     // Some tickets are shipped without a flag (e.g. AG1 v1.1 is
     // role-gated, not flag-gated). Fall back to any `### AG1 v1.1 ·`
@@ -1137,9 +1095,7 @@ describe('chatV9FeatureFlags registry', () => {
     // runbook cites a ticket that has a design section, that still
     // counts as resolved.
     const docsDir = path.join(repoRoot, 'docs', 'Chat V9');
-    const planFiles = readdirSync(docsDir).filter((f) =>
-      /_DEVELOPMENT_PLAN_.*\.md$/.test(f),
-    );
+    const planFiles = readdirSync(docsDir).filter((f) => /_DEVELOPMENT_PLAN_.*\.md$/.test(f));
     const planTickets = new Set<string>();
     for (const plan of planFiles) {
       const body = readFileSync(path.join(docsDir, plan), 'utf8');
@@ -1161,15 +1117,12 @@ describe('chatV9FeatureFlags registry', () => {
       const n = normalise(raw);
       if (!resolvable.has(n)) unresolved.set(raw, n);
     }
-    expect(
-      refsChecked,
-      'expected ≥5 ticket references in the runbook',
-    ).toBeGreaterThan(5);
+    expect(refsChecked, 'expected ≥5 ticket references in the runbook').toBeGreaterThan(5);
     expect(
       [...unresolved.entries()].map(([raw, n]) => `${raw} (→ ${n})`),
       `runbook ticket references not in registry:\n${[...unresolved.entries()]
         .map(([raw, n]) => `${raw} (→ ${n})`)
-        .join('\n')}`,
+        .join('\n')}`
     ).toEqual([]);
   });
 
@@ -1183,12 +1136,10 @@ describe('chatV9FeatureFlags registry', () => {
   it('every dev-plan Cross-refs block uses relative links to real files', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const docsDir = path.join(repoRoot, 'docs', 'Chat V9');
-    const devPlans = readdirSync(docsDir).filter((f) =>
-      /_DEVELOPMENT_PLAN_.*\.md$/.test(f),
-    );
+    const devPlans = readdirSync(docsDir).filter((f) => /_DEVELOPMENT_PLAN_.*\.md$/.test(f));
     expect(devPlans.length, 'expected ≥1 dev-plan files').toBeGreaterThan(0);
 
-    const REL_LINK_RE = /\]\((\.\/[A-Z0-9_\-]+\.md)\)/g;
+    const REL_LINK_RE = /\]\((\.\/[A-Z0-9_-]+\.md)\)/g;
     const REQUIRED = new Set([
       './CHAT_V9_OPERATIONS_RUNBOOK_2026-04-18.md',
       './CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md',
@@ -1204,23 +1155,16 @@ describe('chatV9FeatureFlags registry', () => {
       for (const m of head.matchAll(REL_LINK_RE)) links.add(m[1]);
       for (const required of REQUIRED) {
         if (!links.has(required)) {
-          drift.push(
-            `${plan}: Cross-refs missing relative link ${required}`,
-          );
+          drift.push(`${plan}: Cross-refs missing relative link ${required}`);
           continue;
         }
         const target = path.join(docsDir, required.replace(/^\.\//, ''));
         if (!existsSync(target)) {
-          drift.push(
-            `${plan}: Cross-refs link ${required} does not exist on disk`,
-          );
+          drift.push(`${plan}: Cross-refs link ${required} does not exist on disk`);
         }
       }
     }
-    expect(
-      drift,
-      `dev-plan Cross-refs drift:\n${drift.join('\n')}`,
-    ).toEqual([]);
+    expect(drift, `dev-plan Cross-refs drift:\n${drift.join('\n')}`).toEqual([]);
   });
 
   // Completeness guard (pass 89, 2026-04-18) — every file path or
@@ -1241,7 +1185,7 @@ describe('chatV9FeatureFlags registry', () => {
       repoRoot,
       'docs',
       'Chat V9',
-      'CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md',
+      'CHAT_V9_CONTRIBUTOR_GUIDE_2026-04-18.md'
     );
     const source = readFileSync(guidePath, 'utf8');
 
@@ -1302,17 +1246,16 @@ describe('chatV9FeatureFlags registry', () => {
       // or docs/ depending on extension.
       const pool = token.endsWith('.md') ? docsBaseNames : srcBaseNames;
       if (!pool.has(token)) {
-        broken.push(`${token}: filename not found under ${token.endsWith('.md') ? 'docs/' : 'src/'}`);
+        broken.push(
+          `${token}: filename not found under ${token.endsWith('.md') ? 'docs/' : 'src/'}`
+        );
       }
     }
 
-    expect(
-      checked,
-      'expected ≥5 file-path references in contributor guide',
-    ).toBeGreaterThan(5);
+    expect(checked, 'expected ≥5 file-path references in contributor guide').toBeGreaterThan(5);
     expect(
       broken,
-      `contributor guide path references that do not resolve:\n${broken.join('\n')}`,
+      `contributor guide path references that do not resolve:\n${broken.join('\n')}`
     ).toEqual([]);
   });
 
@@ -1345,7 +1288,7 @@ describe('chatV9FeatureFlags registry', () => {
     const orphans = entries.filter((f) => !KNOWN.some((rx) => rx.test(f)));
     expect(
       orphans,
-      `docs/Chat V9/ files that do not match any known taxonomy:\n${orphans.join('\n')}\n\nExpected taxonomies: README.md, *_DEVELOPMENT_PLAN_YYYY-MM-DD.md, CHAT_V9_OPERATIONS_RUNBOOK_YYYY-MM-DD.md, CHAT_V9_CONTRIBUTOR_GUIDE_YYYY-MM-DD.md, CHAT_V9_TELEMETRY_CONTRACT_YYYY-MM-DD.md`,
+      `docs/Chat V9/ files that do not match any known taxonomy:\n${orphans.join('\n')}\n\nExpected taxonomies: README.md, *_DEVELOPMENT_PLAN_YYYY-MM-DD.md, CHAT_V9_OPERATIONS_RUNBOOK_YYYY-MM-DD.md, CHAT_V9_CONTRIBUTOR_GUIDE_YYYY-MM-DD.md, CHAT_V9_TELEMETRY_CONTRACT_YYYY-MM-DD.md`
     ).toEqual([]);
   });
 
@@ -1436,7 +1379,7 @@ describe('chatV9FeatureFlags registry', () => {
     }
     expect(
       broken,
-      `broken specDoc anchors (file exists, anchor does not):\n${broken.join('\n')}`,
+      `broken specDoc anchors (file exists, anchor does not):\n${broken.join('\n')}`
     ).toEqual([]);
   });
 
@@ -1476,7 +1419,7 @@ describe('chatV9FeatureFlags registry', () => {
     // (`<a id="foo"></a>` / `<a name="foo"></a>`). Explicit anchors
     // let a doc expose a stable short-form anchor — e.g. `ag1-v13`
     // — without having to keep the section heading itself short.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+
     const { readdirSync } = require('node:fs') as typeof import('node:fs');
     const docFiles = readdirSync(docsDir).filter((f: string) => f.endsWith('.md'));
     const slugsByFile = new Map<string, Set<string>>();

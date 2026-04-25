@@ -49,7 +49,7 @@ describe('ContactView CTA authority', () => {
     expect(screen.getByRole('button', { name: 'Ask Anna first' })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Start trial' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Watch demo' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Try demo' }));
 
     expect(navigateMock).toHaveBeenNthCalledWith(1, '/trial/start');
     expect(navigateMock).toHaveBeenNthCalledWith(2, '/demo');

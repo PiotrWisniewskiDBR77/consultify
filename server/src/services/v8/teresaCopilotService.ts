@@ -253,7 +253,9 @@ async function ensureTeresaTables(): Promise<void> {
     tablesEnsured = true;
     logger.info(`${LOG_PREFIX} Teresa DB tables ensured`);
   } catch (err) {
-    logger.warn(`${LOG_PREFIX} Table creation failed (may already exist): ${(err as Error).message}`);
+    logger.warn(
+      `${LOG_PREFIX} Table creation failed (may already exist): ${(err as Error).message}`
+    );
     tablesEnsured = true;
   }
 }
@@ -548,7 +550,11 @@ function inferTargetModuleFromChatRegex(
     return { targetModule: 'radar', handoffIntent: 'triage' };
   if (moduleHint.includes('interview') || moduleHint.includes('insight'))
     return { targetModule: 'interview', handoffIntent: 'open' };
-  if (moduleHint.includes('excele') || moduleHint.includes('spreadsheet') || moduleHint.includes('workbook'))
+  if (
+    moduleHint.includes('excele') ||
+    moduleHint.includes('spreadsheet') ||
+    moduleHint.includes('workbook')
+  )
     return { targetModule: 'excele', handoffIntent: 'generate' };
 
   return null;
@@ -567,7 +573,7 @@ Respond ONLY with valid JSON: {"module":"radar"|"initiatives"|"calendar"|"notebo
 If the message is conversational or has no actionable intent, respond: {"module":null,"intent":"none"}`;
 
 async function inferTargetModuleWithLLM(
-  message: string,
+  message: string
 ): Promise<{ targetModule: HandoffTargetModule; handoffIntent: string } | null> {
   try {
     const { llmService } = await import(/* @vite-ignore */ '../ai/llmService.js');
@@ -594,7 +600,9 @@ async function inferTargetModuleWithLLM(
       handoffIntent: String(parsed.intent || 'open'),
     };
   } catch (err) {
-    logger.warn(`${LOG_PREFIX} LLM intent detection failed, falling back to regex: ${(err as Error).message}`);
+    logger.warn(
+      `${LOG_PREFIX} LLM intent detection failed, falling back to regex: ${(err as Error).message}`
+    );
     return null;
   }
 }
@@ -1414,7 +1422,8 @@ async function handleInitiativesHandoff(
   const initMod = await tryImport('../initiativeGenerationService.js');
   if (initMod) {
     try {
-      const create = initMod.createInitiative ?? initMod.default?.createInitiative ?? initMod.default?.create;
+      const create =
+        initMod.createInitiative ?? initMod.default?.createInitiative ?? initMod.default?.create;
       const seed = (payload.initiative_seed || {}) as Record<string, unknown>;
       const result = await create?.({
         organizationId,
@@ -1675,7 +1684,7 @@ export interface ProactiveSuggestion {
 }
 
 export async function getProactiveSuggestions(
-  organizationId: string,
+  organizationId: string
 ): Promise<ProactiveSuggestion[]> {
   const suggestions: ProactiveSuggestion[] = [];
 
@@ -1687,7 +1696,8 @@ export async function getProactiveSuggestions(
         interviewMod.default?.getCompletedSessionsWithoutInsights;
       if (fn) {
         const result = await fn({ organizationId });
-        const count = typeof result === 'number' ? result : Array.isArray(result) ? result.length : 0;
+        const count =
+          typeof result === 'number' ? result : Array.isArray(result) ? result.length : 0;
         if (count > 0) {
           suggestions.push({
             id: `proactive-interview-insights-${organizationId}`,
@@ -1701,7 +1711,9 @@ export async function getProactiveSuggestions(
       }
     }
   } catch (err) {
-    logger.warn(`${LOG_PREFIX} Proactive interview suggestion check failed: ${(err as Error).message}`);
+    logger.warn(
+      `${LOG_PREFIX} Proactive interview suggestion check failed: ${(err as Error).message}`
+    );
   }
 
   return suggestions;

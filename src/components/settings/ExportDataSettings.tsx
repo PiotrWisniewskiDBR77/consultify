@@ -30,6 +30,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
+import { Api } from '../../services/api';
 import { User } from '../../types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -117,52 +118,26 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
   const handleRequestExport = async () => {
     setRequesting(true);
     try {
-      const response = await fetch('/api/settings/export-data', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          format: exportFormat,
-          include: includeOptions,
-        }),
+      const response = await Api.post('/settings/export-data', {
+        format: exportFormat,
+        include: includeOptions,
       });
 
-      if (response.ok) {
-        const newRequest: ExportRequest = {
-          id: Date.now().toString(),
-          status: 'pending',
-          requestedAt: new Date().toISOString(),
-          format: exportFormat.toUpperCase(),
-        };
-        setExportRequests((prev) => [newRequest, ...prev]);
+      const newRequest: ExportRequest = {
+        id: response?.requestId || Date.now().toString(),
+        status: response?.status || 'pending',
+        requestedAt: response?.requestedAt || new Date().toISOString(),
+        format: exportFormat.toUpperCase(),
+      };
+      setExportRequests((prev) => [newRequest, ...prev]);
 
-        toast({
-          title: t('settings.export.requested', 'Export Requested'),
-          description: t(
-            'settings.export.requestedDesc',
-            'You will receive an email when your data is ready for download'
-          ),
-        });
-      } else {
-        // Demo mode - add pending request anyway
-        const newRequest: ExportRequest = {
-          id: Date.now().toString(),
-          status: 'pending',
-          requestedAt: new Date().toISOString(),
-          format: exportFormat.toUpperCase(),
-        };
-        setExportRequests((prev) => [newRequest, ...prev]);
-
-        toast({
-          title: t('settings.export.requested', 'Export Requested'),
-          description: t(
-            'settings.export.requestedDesc',
-            'You will receive an email when your data is ready for download'
-          ),
-        });
-      }
+      toast({
+        title: t('settings.export.requested', 'Export Requested'),
+        description: t(
+          'settings.export.requestedDesc',
+          'You will receive an email when your data is ready for download'
+        ),
+      });
 
       setShowExportDialog(false);
     } catch (error) {

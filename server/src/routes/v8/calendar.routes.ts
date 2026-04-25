@@ -12,14 +12,17 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import {
   P02_ACCEPTANCE_CHECKLIST,
-  P02_ERROR_POSTURE,
   P02_DECLARED_PROVIDERS,
-  P02_PERMISSION_GRADIENTS,
+  P02_ERROR_POSTURE,
   P02_LIFECYCLE_STATES,
   P02_LIFECYCLE_TRANSITIONS,
+  P02_PERMISSION_GRADIENTS,
 } from '../../services/v8/calendarInteropCanon.js';
+import type {
+  ConflictInfo,
+  SourceLifecycleState,
+} from '../../services/v8/calendarInteropService.js';
 import * as calendarInteropService from '../../services/v8/calendarInteropService.js';
-import type { ConflictInfo, SourceLifecycleState } from '../../services/v8/calendarInteropService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 
 const router = Router();
@@ -65,7 +68,12 @@ function isAllowedLifecycleTransition(current: string, next: string): boolean {
 }
 
 function mapErrorToHttp(err: unknown, res: Response): boolean {
-  if (err && typeof err === 'object' && 'code' in err && typeof (err as { code: unknown }).code === 'string') {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'code' in err &&
+    typeof (err as { code: unknown }).code === 'string'
+  ) {
     const { code, message } = err as { code: string; message?: string };
     const payload = { error: String(message || code), code };
     switch (code) {
@@ -114,13 +122,7 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
     const body = req.body ?? {};
-    const {
-      provider,
-      accountRef,
-      selectedCalendars,
-      declaredMode,
-      permissionGradient,
-    } = body;
+    const { provider, accountRef, selectedCalendars, declaredMode, permissionGradient } = body;
 
     if (!provider || !accountRef || !declaredMode) {
       return res.status(400).json({
@@ -133,7 +135,9 @@ router.post(
       return res.status(400).json({ error: 'Invalid provider', code: 'P02_INVALID_PROVIDER' });
     }
     if (!calendarInteropService.DeclaredModeValues.includes(declaredMode)) {
-      return res.status(400).json({ error: 'Invalid declaredMode', code: 'P02_INVALID_DECLARED_MODE' });
+      return res
+        .status(400)
+        .json({ error: 'Invalid declaredMode', code: 'P02_INVALID_DECLARED_MODE' });
     }
     if (
       permissionGradient != null &&
@@ -160,7 +164,7 @@ router.post(
       if (mapErrorToHttp(e, res)) return;
       throw e;
     }
-  }),
+  })
 );
 
 router.get(
@@ -173,7 +177,7 @@ router.get(
         : undefined;
     const sources = await calendarInteropService.getCalendarSources(organizationId, userId);
     return res.json({ data: sources, meta: calendarMeta() });
-  }),
+  })
 );
 
 router.get(
@@ -189,7 +193,7 @@ router.get(
       return res.status(404).json({ error: 'Source not found', code: 'P02_SOURCE_NOT_FOUND' });
     }
     return res.json({ data: source, meta: calendarMeta() });
-  }),
+  })
 );
 
 router.put(
@@ -203,11 +207,15 @@ router.put(
 
     const { state, reason } = req.body ?? {};
     if (!state || typeof state !== 'string') {
-      return res.status(400).json({ error: 'state is required', code: 'P02_LIFECYCLE_STATE_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'state is required', code: 'P02_LIFECYCLE_STATE_REQUIRED' });
     }
 
     if (!P02_LIFECYCLE_SET.has(state)) {
-      return res.status(400).json({ error: 'Invalid lifecycle state', code: 'P02_INVALID_LIFECYCLE_STATE' });
+      return res
+        .status(400)
+        .json({ error: 'Invalid lifecycle state', code: 'P02_INVALID_LIFECYCLE_STATE' });
     }
 
     const existing = await calendarInteropService.getCalendarSource(sourceId, organizationId);
@@ -226,13 +234,13 @@ router.put(
       sourceId,
       organizationId,
       state as SourceLifecycleState,
-      reason != null ? String(reason) : undefined,
+      reason != null ? String(reason) : undefined
     );
     if (!updated) {
       return res.status(404).json({ error: 'Source not found', code: 'P02_SOURCE_NOT_FOUND' });
     }
     return res.json({ data: updated, meta: calendarMeta() });
-  }),
+  })
 );
 
 router.delete(
@@ -248,7 +256,7 @@ router.delete(
       return res.status(404).json({ error: 'Source not found', code: 'P02_SOURCE_NOT_FOUND' });
     }
     return res.status(204).send();
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -280,7 +288,7 @@ router.get(
 
     const items = await calendarInteropService.getCalendarItems(organizationId, filters);
     return res.json({ data: items, meta: calendarMeta() });
-  }),
+  })
 );
 
 router.get(
@@ -296,7 +304,7 @@ router.get(
       return res.status(404).json({ error: 'Item not found', code: 'P02_ITEM_NOT_FOUND' });
     }
     return res.json({ data: item, meta: calendarMeta() });
-  }),
+  })
 );
 
 router.post(
@@ -339,7 +347,9 @@ router.post(
       return res.status(400).json({ error: 'Invalid itemType', code: 'P02_INVALID_ITEM_TYPE' });
     }
     if (!calendarInteropService.SourceSystemValues.includes(sourceSystem)) {
-      return res.status(400).json({ error: 'Invalid sourceSystem', code: 'P02_INVALID_SOURCE_SYSTEM' });
+      return res
+        .status(400)
+        .json({ error: 'Invalid sourceSystem', code: 'P02_INVALID_SOURCE_SYSTEM' });
     }
     if (!calendarInteropService.VisibilityClassValues.includes(visibilityClass)) {
       return res.status(400).json({
@@ -375,7 +385,7 @@ router.post(
       if (mapErrorToHttp(e, res)) return;
       throw e;
     }
-  }),
+  })
 );
 
 router.put(
@@ -398,13 +408,13 @@ router.put(
     const item = await calendarInteropService.resolveConflict(
       itemId,
       organizationId,
-      resolution as 'accept_local' | 'accept_remote' | 'merge',
+      resolution as 'accept_local' | 'accept_remote' | 'merge'
     );
     if (!item) {
       return res.status(404).json({ error: 'Item not found', code: 'P02_ITEM_NOT_FOUND' });
     }
     return res.json({ data: item, meta: calendarMeta() });
-  }),
+  })
 );
 
 router.put(
@@ -426,7 +436,9 @@ router.put(
 
     const updates = (req.body?.updates ?? req.body) as calendarInteropService.CalendarItemUpdates;
     if (!updates || typeof updates !== 'object') {
-      return res.status(400).json({ error: 'updates object is required', code: 'P02_UPDATES_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'updates object is required', code: 'P02_UPDATES_REQUIRED' });
     }
 
     try {
@@ -434,7 +446,7 @@ router.put(
         itemId,
         organizationId,
         updates,
-        etag,
+        etag
       );
       if (isConflictInfo(result)) {
         return res.status(409).json({
@@ -449,7 +461,7 @@ router.put(
       if (mapErrorToHttp(e, res)) return;
       throw e;
     }
-  }),
+  })
 );
 
 router.put(
@@ -463,7 +475,9 @@ router.put(
 
     const updates = req.body?.updates ?? req.body;
     if (!updates || typeof updates !== 'object') {
-      return res.status(400).json({ error: 'updates object is required', code: 'P02_UPDATES_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'updates object is required', code: 'P02_UPDATES_REQUIRED' });
     }
 
     const ifMatch = readIfMatch(req);
@@ -471,7 +485,7 @@ router.put(
       itemId,
       organizationId,
       updates as calendarInteropService.CalendarItemUpdates,
-      ifMatch,
+      ifMatch
     );
 
     if (!item) {
@@ -489,7 +503,7 @@ router.put(
     }
 
     return res.json({ data: item, meta: calendarMeta() });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -511,7 +525,7 @@ router.post(
       if (mapErrorToHttp(e, res)) return;
       throw e;
     }
-  }),
+  })
 );
 
 router.post(
@@ -529,7 +543,7 @@ router.post(
       if (mapErrorToHttp(e, res)) return;
       throw e;
     }
-  }),
+  })
 );
 
 router.post(
@@ -543,7 +557,9 @@ router.post(
 
     const errorType = req.body?.errorType;
     if (errorType == null || String(errorType).trim() === '') {
-      return res.status(400).json({ error: 'errorType is required', code: 'P02_ERROR_TYPE_REQUIRED' });
+      return res
+        .status(400)
+        .json({ error: 'errorType is required', code: 'P02_ERROR_TYPE_REQUIRED' });
     }
 
     const existingSource = await calendarInteropService.getCalendarSource(sourceId, organizationId);
@@ -554,14 +570,14 @@ router.post(
     const updated = await calendarInteropService.handleSyncError(
       sourceId,
       organizationId,
-      String(errorType),
+      String(errorType)
     );
     if (!updated) {
       return res.status(404).json({ error: 'Source not found', code: 'P02_SOURCE_NOT_FOUND' });
     }
 
     return res.json({ data: updated, meta: calendarMeta() });
-  }),
+  })
 );
 
 // ---------------------------------------------------------------------------
@@ -574,7 +590,7 @@ router.get(
     const { organizationId } = getV8Context(req);
     const summary = await calendarInteropService.getSourceHealth(organizationId);
     return res.json({ data: summary, meta: calendarMeta() });
-  }),
+  })
 );
 
 router.get(
@@ -590,7 +606,7 @@ router.get(
       },
       meta: calendarMeta(),
     });
-  }),
+  })
 );
 
 export default router;

@@ -67,7 +67,9 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
   const { t } = useTranslation();
   const [workspacePanel, setWorkspacePanel] = useState<AnalysisWorkspacePanelConfig | null>(null);
   const [previewInitiativeId, setPreviewInitiativeId] = useState<string | null>(null);
-  const [portfolioDependencies, setPortfolioDependencies] = useState<PortfolioDependency[] | null>(null);
+  const [portfolioDependencies, setPortfolioDependencies] = useState<PortfolioDependency[] | null>(
+    null
+  );
 
   const refreshPortfolioDependencies = useCallback(async () => {
     try {
@@ -151,7 +153,9 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
 
   useEffect(() => {
     if (!previewInitiativeId) return;
-    const previewStillExists = initiatives.some((initiative) => initiative.id === previewInitiativeId);
+    const previewStillExists = initiatives.some(
+      (initiative) => initiative.id === previewInitiativeId
+    );
     if (!previewStillExists) {
       setPreviewInitiativeId(null);
     }
@@ -163,11 +167,17 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
   );
 
   const previewItem = useMemo<PreviewItem | null>(
-    () => (previewInitiative ? ({ ...previewInitiative, title: previewInitiative.name } as PreviewItem) : null),
+    () =>
+      previewInitiative
+        ? ({ ...previewInitiative, title: previewInitiative.name } as PreviewItem)
+        : null,
     [previewInitiative]
   );
 
-  const previewItemIds = useMemo(() => initiatives.map((initiative) => initiative.id), [initiatives]);
+  const previewItemIds = useMemo(
+    () => initiatives.map((initiative) => initiative.id),
+    [initiatives]
+  );
 
   const getPreviewItemById = useCallback(
     (id: string): PreviewItem | null => {
@@ -204,7 +214,9 @@ export const PortfolioAnalysisView: React.FC<PortfolioAnalysisViewProps> = ({
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex-1 min-h-0 overflow-hidden">
         <div className="flex h-full overflow-hidden">
-          <div className={`min-w-0 flex-1 ${workspacePanel ? 'border-r border-slate-200 dark:border-navy-700' : ''}`}>
+          <div
+            className={`min-w-0 flex-1 ${workspacePanel ? 'border-r border-slate-200 dark:border-navy-700' : ''}`}
+          >
             <TableWithPreviewLayout<PreviewItem>
               selectedId={previewInitiativeId}
               selectedItem={previewItem}

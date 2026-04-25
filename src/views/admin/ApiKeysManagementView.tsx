@@ -37,14 +37,32 @@ import { ApiKey } from '../../types';
 
 // Available API permissions (scopes) - matches backend
 const API_PERMISSIONS = [
-  { id: 'read', label: 'Read', description: 'Read access to data' },
-  { id: 'write', label: 'Write', description: 'Create and update data' },
-  { id: 'delete', label: 'Delete', description: 'Delete data' },
-  { id: 'admin', label: 'Admin', description: 'Administrative operations' },
-  { id: 'ai', label: 'AI', description: 'AI and LLM operations' },
-  { id: 'export', label: 'Export', description: 'Export data' },
-  { id: 'projects', label: 'Projects', description: 'Project management' },
-  { id: 'assessments', label: 'Assessments', description: 'Assessment operations' },
+  { id: 'read:projects', label: 'Read projects', description: 'Read project data' },
+  { id: 'write:projects', label: 'Write projects', description: 'Create and modify projects' },
+  { id: 'read:tasks', label: 'Read tasks', description: 'Read task data' },
+  { id: 'write:tasks', label: 'Write tasks', description: 'Create and modify tasks' },
+  { id: 'read:calendar', label: 'Read calendar', description: 'Read calendar sources and items' },
+  {
+    id: 'write:calendar',
+    label: 'Write calendar',
+    description: 'Create and modify calendar sources and items',
+  },
+  {
+    id: 'read:integrations',
+    label: 'Read integrations',
+    description: 'Read integration connections and health',
+  },
+  {
+    id: 'write:integrations',
+    label: 'Write integrations',
+    description: 'Create and modify integration connections',
+  },
+  { id: 'read:reports', label: 'Read reports', description: 'Read reports and analytics' },
+  { id: 'write:reports', label: 'Write reports', description: 'Generate and export reports' },
+  { id: 'ai:execute', label: 'AI execute', description: 'Execute AI actions' },
+  { id: 'ai:read', label: 'AI read', description: 'Read AI insights and recommendations' },
+  { id: 'webhooks:manage', label: 'Webhooks', description: 'Manage webhook configurations' },
+  { id: 'full:access', label: 'Full access', description: 'Full API access' },
 ];
 
 interface ApiKeysManagementViewProps {
@@ -84,12 +102,12 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
           description: k.description,
           keyPrefix: k.keyPrefix,
           keyHash: '***',
-          permissions: k.scopes || [],
+          permissions: k.permissions || k.scopes || [],
           expiresAt: k.expiresAt,
           lastUsedAt: k.lastUsedAt,
           createdBy: k.createdBy,
           createdAt: k.createdAt,
-          revokedAt: k.isRevoked ? k.revokedAt : undefined,
+          revokedAt: k.revokedAt || (k.status === 'revoked' ? k.updatedAt : undefined),
         }))
       );
     } catch (error: any) {
@@ -134,12 +152,14 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
       const data = await Api.post('/api/api-keys', {
         name: newKeyForm.name,
         description: newKeyForm.description,
-        scopes: newKeyForm.permissions,
+        permissions: newKeyForm.permissions,
+        expiresInDays: newKeyForm.expiresIn ? parseInt(newKeyForm.expiresIn, 10) : undefined,
         expiresAt,
       });
 
-      if (data.success && data.key) {
-        setNewKeyValue(data.key.apiKey); // The full key is only returned once!
+      const plainTextKey = data.plainTextKey || data.key?.apiKey;
+      if (plainTextKey && data.key) {
+        setNewKeyValue(plainTextKey); // The full key is only returned once!
         setShowCreateModal(false);
         setShowNewKeyModal(true);
         loadApiKeys();
@@ -162,7 +182,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
     try {
       const data = await Api.delete(`/api/api-keys/${keyId}`);
 
-      if (data.success) {
+      if (data.success !== false) {
         toast.success('API key revoked');
         loadApiKeys();
       } else {

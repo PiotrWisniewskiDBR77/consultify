@@ -1403,9 +1403,9 @@ const CertificationSection: React.FC<{
     null
   );
   const [expandedCertificationId, setExpandedCertificationId] = useState<string | null>(null);
-  const [certificationModules, setCertificationModules] = useState<Record<string, CertificationModule[]>>(
-    {}
-  );
+  const [certificationModules, setCertificationModules] = useState<
+    Record<string, CertificationModule[]>
+  >({});
 
   const fetchCertifications = useCallback(async () => {
     try {
@@ -1660,7 +1660,8 @@ const CertificationSection: React.FC<{
                         </span>
                       </div>
                       <p className="text-sm text-slate-400 mt-1">
-                        {course.track} / {course.level} {course.targetTier ? `• ${course.targetTier}` : ''}
+                        {course.track} / {course.level}{' '}
+                        {course.targetTier ? `• ${course.targetTier}` : ''}
                       </p>
                       <div className="flex items-center gap-4 mt-3 text-sm text-slate-400">
                         <span className="flex items-center gap-1">
@@ -1728,7 +1729,8 @@ const CertificationSection: React.FC<{
                         <div className="mt-4 space-y-3 border-t border-slate-200 dark:border-navy-700 pt-4">
                           {modules.map((module) => {
                             const moduleDocHref =
-                              (module.articleSlug && PARTNER_DOC_HREF_BY_SLUG[module.articleSlug]) ||
+                              (module.articleSlug &&
+                                PARTNER_DOC_HREF_BY_SLUG[module.articleSlug]) ||
                               docHref;
                             return (
                               <div
@@ -1741,7 +1743,9 @@ const CertificationSection: React.FC<{
                                       {module.order}. {module.name}
                                     </div>
                                     {module.description && (
-                                      <p className="mt-1 text-sm text-slate-500">{module.description}</p>
+                                      <p className="mt-1 text-sm text-slate-500">
+                                        {module.description}
+                                      </p>
                                     )}
                                   </div>
                                   <span className="text-xs text-slate-400">
@@ -2164,7 +2168,8 @@ const ResourcesSection: React.FC<{
   const dataKey = subsection === 'case-studies' ? 'caseStudies' : subsection;
   const items = resources?.[dataKey as keyof ResourcesData] || [];
   const docsBridge = subsection === 'documentation' ? resources?.docsBridge || [] : [];
-  const academyHighlights = subsection === 'documentation' ? resources?.academyHighlights || [] : [];
+  const academyHighlights =
+    subsection === 'documentation' ? resources?.academyHighlights || [] : [];
 
   return (
     <div className="space-y-6">
@@ -2185,68 +2190,69 @@ const ResourcesSection: React.FC<{
         </button>
       </div>
 
-      {subsection === 'documentation' && (docsBridge.length > 0 || academyHighlights.length > 0) && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Canonical partner docs
-            </h3>
-            <div className="mt-3 space-y-3">
-              {docsBridge.map((doc) => (
-                <button
-                  key={doc.id}
-                  onClick={() => navigate(doc.href)}
-                  className="w-full flex items-center justify-between rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left hover:border-violet-500 transition-colors"
-                >
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">
-                    {doc.title}
-                  </span>
-                  <ExternalLink className="w-4 h-4 text-slate-400" />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-            <h3 className="text-base font-semibold text-slate-900 dark:text-white">
-              Academy status bridge
-            </h3>
-            <div className="mt-3 space-y-3">
-              {academyHighlights.slice(0, 4).map((item) => {
-                const href =
-                  (item.articleSlug && PARTNER_DOC_HREF_BY_SLUG[item.articleSlug]) ||
-                  PARTNER_CERTIFICATION_DOC_BY_TYPE[item.type];
-                return (
-                  <div
-                    key={item.id}
-                    className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3"
+      {subsection === 'documentation' &&
+        (docsBridge.length > 0 || academyHighlights.length > 0) && (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Canonical partner docs
+              </h3>
+              <div className="mt-3 space-y-3">
+                {docsBridge.map((doc) => (
+                  <button
+                    key={doc.id}
+                    onClick={() => navigate(doc.href)}
+                    className="w-full flex items-center justify-between rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3 text-left hover:border-violet-500 transition-colors"
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-medium text-slate-900 dark:text-white">
-                        {item.track} / {item.level}
+                    <span className="text-sm font-medium text-slate-900 dark:text-white">
+                      {doc.title}
+                    </span>
+                    <ExternalLink className="w-4 h-4 text-slate-400" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                Academy status bridge
+              </h3>
+              <div className="mt-3 space-y-3">
+                {academyHighlights.slice(0, 4).map((item) => {
+                  const href =
+                    (item.articleSlug && PARTNER_DOC_HREF_BY_SLUG[item.articleSlug]) ||
+                    PARTNER_CERTIFICATION_DOC_BY_TYPE[item.type];
+                  return (
+                    <div
+                      key={item.id}
+                      className="rounded-lg border border-slate-200 dark:border-navy-700 px-3 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-medium text-slate-900 dark:text-white">
+                          {item.track} / {item.level}
+                        </div>
+                        <div className="text-xs text-slate-400">{item.progress}%</div>
                       </div>
-                      <div className="text-xs text-slate-400">{item.progress}%</div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {item.status}
+                        {item.reviewState ? ` • ${item.reviewState}` : ''}
+                      </div>
+                      {href && (
+                        <button
+                          onClick={() => navigate(href)}
+                          className="mt-3 inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                          Open supporting guide
+                        </button>
+                      )}
                     </div>
-                    <div className="mt-1 text-xs text-slate-500">
-                      {item.status}
-                      {item.reviewState ? ` • ${item.reviewState}` : ''}
-                    </div>
-                    {href && (
-                      <button
-                        onClick={() => navigate(href)}
-                        className="mt-3 inline-flex items-center gap-1 text-xs text-violet-600 dark:text-violet-400"
-                      >
-                        <ExternalLink className="w-3 h-3" />
-                        Open supporting guide
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {items.length === 0 ? (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-8 text-center">

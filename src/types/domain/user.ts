@@ -98,6 +98,16 @@ export interface User {
   hasWorkspace?: boolean;
   impersonatorId?: string;
   isDemo?: boolean;
+  seniorityLevel?: string;
+  siteLocation?: string;
+  tenureYears?: string;
+  managesTeam?: boolean;
+  teamSize?: string;
+  expertiseTags?: string[];
+  engagementLevel?: string;
+  profileSurveyCompletedAt?: string;
+  profileSurveyDismissedCount?: number;
+  profileSurveyLastDismissedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

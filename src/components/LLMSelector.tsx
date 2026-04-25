@@ -233,7 +233,9 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
           className="inline-flex items-center gap-2 h-9 px-2 rounded-full border border-violet-400/30 bg-violet-500/10 text-xs font-medium text-violet-700 dark:text-violet-200 cursor-default"
         >
           <div className="w-2 h-2 rounded-full bg-violet-500" />
-          <span className={compact ? 'max-w-[72px] truncate' : ''}>{t('llm.demoLabel', 'Demo AI')}</span>
+          <span className={compact ? 'max-w-[72px] truncate' : ''}>
+            {t('llm.demoLabel', 'Demo AI')}
+          </span>
           <ChevronDown size={compact ? 10 : 12} className="text-violet-300/80" />
         </button>
       </div>

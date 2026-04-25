@@ -278,7 +278,9 @@ export const AdminIamPolicyPanel: React.FC = () => {
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Delegated admin roles</h3>
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+            Delegated admin roles
+          </h3>
           <button
             onClick={addRole}
             className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm text-slate-700 dark:border-white/10 dark:text-slate-200"

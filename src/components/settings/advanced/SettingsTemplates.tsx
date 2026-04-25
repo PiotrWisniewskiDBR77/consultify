@@ -39,6 +39,12 @@ interface Template {
   createdAt?: string;
 }
 
+const normalizeTemplateKey = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_|_$/g, '');
+
 export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUser }) => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
@@ -59,12 +65,12 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
       const response = await Api.getSettingsTemplates();
 
       if (response?.templates) {
-        const normalizedTemplates = response.templates.map((template: Template) => ({
+        const normalizedTemplates = (response.templates as Template[]).map((template) => ({
           ...template,
           categories: Array.isArray(template.categories) ? template.categories : ['All'],
         }));
-        const systemTemplates = normalizedTemplates.filter((t: Template) => t.type === 'system');
-        const customTpls = normalizedTemplates.filter((t: Template) => t.type === 'custom');
+        const systemTemplates = normalizedTemplates.filter((t) => t.type === 'system');
+        const customTpls = normalizedTemplates.filter((t) => t.type === 'custom');
         setTemplates(systemTemplates);
         setCustomTemplates(customTpls);
       }
@@ -78,7 +84,10 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
   const handleApplyTemplate = async (template: Template) => {
     if (
       !window.confirm(
-        `Apply "${template.name}" template? This will overwrite your current settings.`
+        t('settings.templates.applyConfirm', {
+          defaultValue: 'Apply "{{name}}" template? This will overwrite your current settings.',
+          name: getTemplateLabel(template, 'name'),
+        })
       )
     )
       return;
@@ -86,9 +95,14 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
     try {
       setApplying(template.id);
       await Api.applySettingsTemplate(template.id);
-      toast.success(`Applied "${template.name}" template`);
+      toast.success(
+        t('settings.templates.applied', {
+          defaultValue: 'Applied "{{name}}" template',
+          name: getTemplateLabel(template, 'name'),
+        })
+      );
     } catch (error) {
-      toast.error('Failed to apply template');
+      toast.error(t('settings.templates.applyError', 'Failed to apply template'));
     } finally {
       setApplying(null);
     }
@@ -104,38 +118,50 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
 
       const response = await Api.createSettingsTemplate({
         name: newTemplateName,
-        description: newTemplateDesc || 'Custom settings template',
+        description:
+          newTemplateDesc ||
+          t('settings.templates.customDescriptionFallback', 'Custom settings template'),
         icon: '📋',
         settingsData,
       });
 
       if (response?.template) {
+        const template = response.template as unknown as Template;
         setCustomTemplates([
           ...customTemplates,
-          { ...response.template, type: 'custom', categories: ['All'] },
+          { ...template, type: 'custom', categories: [t('common.all', 'All')] },
         ]);
       }
 
       setShowCreateModal(false);
       setNewTemplateName('');
       setNewTemplateDesc('');
-      toast.success('Template created from current settings');
+      toast.success(t('settings.templates.created', 'Template created from current settings'));
     } catch (error) {
-      toast.error('Failed to create template');
+      toast.error(t('settings.templates.createError', 'Failed to create template'));
     }
   };
 
   const handleDeleteTemplate = async (id: string) => {
-    if (!window.confirm('Delete this template?')) return;
+    if (!window.confirm(t('settings.templates.deleteConfirm', 'Delete this template?'))) return;
 
     try {
       await Api.deleteSettingsTemplate(id);
       setCustomTemplates(customTemplates.filter((t) => t.id !== id));
-      toast.success('Template deleted');
+      toast.success(t('settings.templates.deleted', 'Template deleted'));
     } catch (error) {
-      toast.error('Failed to delete template');
+      toast.error(t('settings.templates.deleteError', 'Failed to delete template'));
     }
   };
+
+  const getTemplateLabel = (template: Template, field: 'name' | 'description') => {
+    if (template.type !== 'system') return template[field];
+    const key = normalizeTemplateKey(template.id || template.name);
+    return t(`settings.templates.system.${key}.${field}`, template[field]);
+  };
+
+  const getCategoryLabel = (category: string) =>
+    t(`settings.templates.categories.${normalizeTemplateKey(category)}`, category);
 
   if (loading) {
     return (
@@ -153,10 +179,10 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <Layout size={28} className="text-indigo-500" />
-            Settings Templates
+            {t('settings.templates.title', 'Settings Templates')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Apply predefined configurations or save your own
+            {t('settings.templates.subtitle', 'Apply predefined configurations or save your own')}
           </p>
         </div>
         <button
@@ -164,7 +190,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg"
         >
           <Plus size={16} />
-          Save Current as Template
+          {t('settings.templates.saveCurrent', 'Save Current as Template')}
         </button>
       </div>
 
@@ -172,7 +198,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Zap size={18} className="text-amber-500" />
-          System Templates
+          {t('settings.templates.systemTemplates', 'System Templates')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {templates.map((template) => (
@@ -186,16 +212,16 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                   <div>
                     <div className="flex items-center gap-2">
                       <h4 className="font-semibold text-slate-900 dark:text-white">
-                        {template.name}
+                        {getTemplateLabel(template, 'name')}
                       </h4>
                       {template.isRecommended && (
                         <span className="px-2 py-0.5 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-full text-xs font-medium">
-                          Recommended
+                          {t('settings.templates.recommended', 'Recommended')}
                         </span>
                       )}
                     </div>
                     <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                      {template.description}
+                      {getTemplateLabel(template, 'description')}
                     </p>
                   </div>
                 </div>
@@ -207,7 +233,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                     key={cat}
                     className="px-2 py-0.5 bg-slate-100 dark:bg-navy-800 rounded text-xs text-slate-600 dark:text-slate-400"
                   >
-                    {cat}
+                    {getCategoryLabel(cat)}
                   </span>
                 ))}
               </div>
@@ -219,11 +245,12 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
               >
                 {applying === template.id ? (
                   <>
-                    <Loader2 size={16} className="animate-spin" /> Applying...
+                    <Loader2 size={16} className="animate-spin" />{' '}
+                    {t('settings.templates.applying', 'Applying...')}
                   </>
                 ) : (
                   <>
-                    <Check size={16} /> Apply Template
+                    <Check size={16} /> {t('settings.templates.applyTemplate', 'Apply Template')}
                   </>
                 )}
               </button>
@@ -236,14 +263,19 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
       <div>
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
           <Star size={18} className="text-amber-500" />
-          My Templates
+          {t('settings.templates.myTemplates', 'My Templates')}
         </h3>
         {customTemplates.length === 0 ? (
           <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-8 text-center">
             <Layout size={48} className="mx-auto mb-3 text-slate-300 dark:text-slate-600" />
-            <p className="text-slate-500 dark:text-slate-400">No custom templates yet</p>
+            <p className="text-slate-500 dark:text-slate-400">
+              {t('settings.templates.noCustomTemplates', 'No custom templates yet')}
+            </p>
             <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
-              Save your current settings as a template to use later
+              {t(
+                'settings.templates.noCustomTemplatesHint',
+                'Save your current settings as a template to use later'
+              )}
             </p>
           </div>
         ) : (
@@ -270,7 +302,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                     disabled={applying === template.id}
                     className="px-3 py-1.5 text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 rounded-lg text-sm"
                   >
-                    Apply
+                    {t('settings.templates.apply', 'Apply')}
                   </button>
                   <button
                     onClick={() => handleDeleteTemplate(template.id)}
@@ -290,31 +322,34 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-900 rounded-xl p-6 w-full max-w-md mx-4 animate-in zoom-in-95">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
-              Save as Template
+              {t('settings.templates.saveAsTemplate', 'Save as Template')}
             </h3>
 
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Template Name
+                  {t('settings.templates.templateName', 'Template Name')}
                 </label>
                 <input
                   type="text"
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
-                  placeholder="My Settings Template"
+                  placeholder={t('settings.templates.namePlaceholder', 'My Settings Template')}
                   className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Description (optional)
+                  {t('settings.templates.descriptionOptional', 'Description (optional)')}
                 </label>
                 <textarea
                   value={newTemplateDesc}
                   onChange={(e) => setNewTemplateDesc(e.target.value)}
-                  placeholder="Describe this template..."
+                  placeholder={t(
+                    'settings.templates.descriptionPlaceholder',
+                    'Describe this template...'
+                  )}
                   rows={3}
                   className="w-full px-3 py-2 bg-white dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
@@ -326,14 +361,14 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
                 onClick={() => setShowCreateModal(false)}
                 className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800 rounded-lg"
               >
-                Cancel
+                {t('common.cancel', 'Cancel')}
               </button>
               <button
                 onClick={handleCreateTemplate}
                 disabled={!newTemplateName.trim()}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg disabled:opacity-50"
               >
-                Save Template
+                {t('settings.templates.saveTemplate', 'Save Template')}
               </button>
             </div>
           </div>

@@ -312,9 +312,12 @@ export const PartnerProgramConfig: React.FC = () => {
   ) => {
     try {
       setSaving(true);
-      const response = await Api.post(`/api/superadmin/partner-config/review-queue/${certificationId}`, {
-        reviewState,
-      });
+      const response = await Api.post(
+        `/api/superadmin/partner-config/review-queue/${certificationId}`,
+        {
+          reviewState,
+        }
+      );
       if (response?.success) {
         toast.success(
           reviewState === 'approved' ? 'Certification approved' : 'Changes requested sent'
@@ -742,7 +745,10 @@ export const PartnerProgramConfig: React.FC = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(reporting?.blockedReasons || []).map((item) => (
-              <div key={item.reason} className="rounded-xl border border-white/5 bg-navy-900/40 p-4">
+              <div
+                key={item.reason}
+                className="rounded-xl border border-white/5 bg-navy-900/40 p-4"
+              >
                 <div className="text-xs uppercase tracking-wide text-slate-500">{item.reason}</div>
                 <div className="mt-1 text-2xl font-semibold text-white">{item.count}</div>
               </div>

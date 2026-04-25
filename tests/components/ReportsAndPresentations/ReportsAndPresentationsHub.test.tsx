@@ -13,6 +13,10 @@ vi.mock('react-i18next', () => ({
     t: (_key: string, fallback?: string) => fallback || _key,
     i18n: { language: 'en' },
   }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
 }));
 
 vi.mock('../../../src/components/shared/ModuleHub', () => ({
@@ -37,6 +41,12 @@ vi.mock('../../../src/components/shared/ModuleHub/useModuleOpenDocuments', () =>
     setOpenDocuments: vi.fn(),
     activeDocumentId: null,
     setActiveDocumentId: vi.fn(),
+  }),
+}));
+
+vi.mock('../../../src/contexts/HelpContext', () => ({
+  useHelpSidePanel: () => ({
+    openHelp: vi.fn(),
   }),
 }));
 
@@ -106,7 +116,7 @@ describe('ReportsAndPresentationsHub', () => {
     render(
       <MemoryRouter initialEntries={['/presentations']}>
         <ReportsAndPresentationsHub />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(screen.getAllByText('All').length).toBeGreaterThan(0);
@@ -123,7 +133,7 @@ describe('ReportsAndPresentationsHub', () => {
     render(
       <MemoryRouter initialEntries={['/reports?tab=reports']}>
         <ReportsAndPresentationsHub />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(screen.getByTestId('active-tab')).toHaveTextContent('outputs_documents');
@@ -133,7 +143,7 @@ describe('ReportsAndPresentationsHub', () => {
     render(
       <MemoryRouter initialEntries={['/presentations?tab=documents']}>
         <ReportsAndPresentationsHub />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     expect(screen.getByTestId('active-tab')).toHaveTextContent('outputs_documents');

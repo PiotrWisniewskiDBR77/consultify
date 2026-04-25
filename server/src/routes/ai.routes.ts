@@ -17,8 +17,16 @@ import {
   validateQuery,
 } from '../middleware/validation.middleware.js';
 import { inferChatTaskPurpose } from '../services/ai/aiTaskCatalog.js';
-import { buildHelpDocsContext } from '../services/ai/helpDocsContext.js';
-import type { WorkerWebAccessPolicy } from '../services/ai/virtualWorkerWebAccessService.js';
+import {
+  buildNoWebSourcesText,
+  buildProductAssistantFallback,
+  isExplicitResearchAsk,
+} from '../services/ai/chatStabilizationPolicy.js';
+import { buildHelpDocsContext, isProductOrHowToQuery } from '../services/ai/helpDocsContext.js';
+import {
+  isDbr77ProductTruthQuery,
+  type WorkerWebAccessPolicy,
+} from '../services/ai/virtualWorkerWebAccessService.js';
 import {
   triggerAIDependencyConflict,
   triggerAIOverloadDetected,
@@ -103,6 +111,7 @@ const attachmentsUpload = multer({
       'text/markdown',
       'text/csv',
       'application/json',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ];
     if (allowed.includes(file.mimetype) || file.mimetype.startsWith('text/')) return cb(null, true);
     return cb(new Error(`Unsupported file type: ${file.mimetype}`));
@@ -130,6 +139,14 @@ router.post(
         const pdf = pdfParseMod.default || pdfParseMod;
         const out = await pdf(req.file.buffer);
         text = String(out?.text || '');
+      } else if (
+        mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+        filename.toLowerCase().endsWith('.docx')
+      ) {
+        const mammothMod = (await import('mammoth')) as any;
+        const mammoth = mammothMod.default || mammothMod;
+        const out = await mammoth.extractRawText({ buffer: req.file.buffer });
+        text = String(out?.value || '');
       } else {
         text = req.file.buffer.toString('utf8');
       }
@@ -139,7 +156,19 @@ router.post(
     }
 
     if (!text || text.trim().length === 0) {
-      return res.status(400).json({ error: 'Could not extract any text from file' });
+      const isPdf = mimeType === 'application/pdf';
+      return res.status(400).json({
+        error: isPdf
+          ? 'Could not extract text from PDF. The file may be scanned, empty, encrypted, or corrupted.'
+          : 'Could not extract any text from file',
+        code: isPdf ? 'PDF_TEXT_EXTRACTION_FAILED' : 'TEXT_EXTRACTION_FAILED',
+        extractionStatus: isPdf ? 'ocr_required_or_unreadable' : 'failed',
+        attachmentState: isPdf ? 'ocr_required' : 'unreadable',
+        sourceClass: 'attachment',
+        recoverable: isPdf,
+        filename,
+        mimeType,
+      });
     }
 
     // Create a knowledge_docs row (schema is minimal across DBs; extra columns are optional)
@@ -263,6 +292,7 @@ router.post(
       docId,
       filename,
       mimeType,
+      extractionStatus: 'extracted',
       totalChunks: chunks.length,
       embeddedChunks,
     });
@@ -1111,6 +1141,8 @@ router.post(
       'You are running Deep Thinking Mode – Confirm Understanding.',
       'Your ONLY job is to paraphrase the task into a decision-ready framing and list minimal gaps/questions.',
       'Do NOT provide solutions yet. Do NOT start analysis. Be concise.',
+      'Ask clarification questions only when missing information would block any useful analysis. For strategic prompts like "analyze", "compare", or "evaluate", proceed with explicit assumptions instead of asking more questions.',
+      'If the recent history already contains a Deep Thinking confirm/clarification step, do not ask the same clarification again.',
       'Return ONLY valid JSON matching the provided schema.',
     ].join('\n');
 
@@ -1163,9 +1195,19 @@ router.post(
     }
 
     logger.info('[AI Confirm] LLM call succeeded, returning result');
+    const confirmObject = result.object || {};
+    const promptLooksActionable =
+      String(message || '').trim().length >= 20 &&
+      /\b(anali[sz]|analyse|analyze|compare|porówn|porown|oceń|ocen|evaluate|strateg|pozycjon|kierunk)\b/i.test(
+        String(message || '')
+      );
+    if (promptLooksActionable || confirmObject.isClearEnoughToProceed === true) {
+      confirmObject.isClearEnoughToProceed = true;
+      confirmObject.missingInfoQuestions = [];
+    }
 
     return res.json({
-      confirm: result.object,
+      confirm: confirmObject,
       metadata: {
         provider: modelCfg.provider,
         model: modelCfg.id,
@@ -1326,6 +1368,7 @@ router.post(
     let policyDecision: any = null;
     const policyNotices: any[] = [];
     let collectedCitations: any[] = [];
+    let sourceLedgerSnapshot: any = null;
 
     const mergeCitations = (prev: any[], next: any[]) => {
       const out: any[] = [];
@@ -1356,6 +1399,122 @@ router.post(
       return out;
     };
 
+    const normalizeTrustSourceClass = (value: unknown): string | null => {
+      const raw = String(value || '')
+        .trim()
+        .toLowerCase();
+      if (!raw) return null;
+      if (raw.includes('product') || raw.includes('knowledge') || raw.includes('kb')) {
+        return 'product_knowledge';
+      }
+      if (raw.includes('web') || raw.includes('research') || raw.includes('url')) {
+        return 'web_research';
+      }
+      if (raw.includes('attach') || raw.includes('document') || raw.startsWith('a')) {
+        return 'attachment';
+      }
+      if (raw.includes('workspace') || raw.includes('project') || raw.includes('pmo')) {
+        return 'workspace';
+      }
+      if (raw.includes('memory') || raw.includes('org')) {
+        return 'org_memory';
+      }
+      if (raw.includes('connector') || raw.includes('integration')) {
+        return 'connector';
+      }
+      return 'general';
+    };
+
+    const buildTrustSourceClasses = (citations: any[], sourceLedger: any): string[] => {
+      const classes = new Set<string>();
+      for (const citation of citations || []) {
+        const sourceClass =
+          normalizeTrustSourceClass(citation?.sourceClass) ||
+          normalizeTrustSourceClass(citation?.source_class) ||
+          normalizeTrustSourceClass(citation?.type) ||
+          normalizeTrustSourceClass(citation?.sourceType) ||
+          normalizeTrustSourceClass(citation?.source);
+        if (sourceClass) classes.add(sourceClass);
+      }
+      const usedSources = Array.isArray(sourceLedger?.used_sources)
+        ? sourceLedger.used_sources
+        : [];
+      for (const source of usedSources) {
+        const sourceClass =
+          normalizeTrustSourceClass(source?.category) ||
+          normalizeTrustSourceClass(source?.type) ||
+          normalizeTrustSourceClass(source?.sourceClass);
+        if (sourceClass) classes.add(sourceClass);
+      }
+      if (classes.size > 1) classes.add('mixed');
+      if (classes.size === 0) classes.add('general');
+      return Array.from(classes);
+    };
+
+    const buildSourceLedgerSummary = (sourceLedger: any) => {
+      if (!sourceLedger || typeof sourceLedger !== 'object') return null;
+      const usedSources = Array.isArray(sourceLedger.used_sources) ? sourceLedger.used_sources : [];
+      const blockedSources = Array.isArray(sourceLedger.blocked_sources)
+        ? sourceLedger.blocked_sources
+        : [];
+      return {
+        usedCount: usedSources.length,
+        blockedCount: blockedSources.length,
+        degraded: sourceLedger.degraded || null,
+        scope: {
+          privateMode: Boolean(sourceLedger.scope_resolution?.privateMode),
+          knowledgeSources: sourceLedger.scope_resolution?.knowledgeSources || {},
+        },
+      };
+    };
+
+    const estimateTokenCounts = (outputText: string) => {
+      const inputTokens =
+        typeof pipelineMeta?.inputTokens === 'number'
+          ? pipelineMeta.inputTokens
+          : Math.max(1, Math.ceil(String(message || '').length / 4));
+      const outputTokens =
+        typeof pipelineMeta?.outputTokens === 'number'
+          ? pipelineMeta.outputTokens
+          : Math.max(0, Math.ceil(String(outputText || '').length / 4));
+      return {
+        input: inputTokens,
+        output: outputTokens,
+        total: inputTokens + outputTokens,
+      };
+    };
+
+    const buildGovernedKnowledgeCitations = (sources: unknown, label: string): any[] => {
+      const rawSources = Array.isArray(sources) ? sources : [];
+      return rawSources
+        .map((source, index) => {
+          const sourceId = String(source || '').trim();
+          if (!sourceId) return null;
+          const product = sourceId
+            .replace(/-fallback$/i, '')
+            .replace(/^pill:/i, '')
+            .replace(/^doc:/i, '')
+            .replace(/[_-]+/g, ' ')
+            .trim();
+          const titleProduct = product
+            ? product
+                .split(/\s+/)
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ')
+            : 'Product Knowledge';
+          return {
+            id: `governed_${index + 1}_${sourceId.replace(/[^a-z0-9_-]+/gi, '_').slice(0, 48)}`,
+            type: 'document',
+            title: `${label}: ${titleProduct}`,
+            reference: sourceId.endsWith('-fallback')
+              ? 'Governed product knowledge'
+              : 'Assigned worker knowledge',
+            excerpt: `Grounded in ${sourceId.endsWith('-fallback') ? 'curated product context' : 'assigned knowledge'} for ${titleProduct}.`,
+          };
+        })
+        .filter(Boolean);
+    };
+
     const languageMap: Record<string, string> = {
       pl: 'Polish (Polski)',
       en: 'English',
@@ -1367,9 +1526,22 @@ router.post(
     };
     const langCode = (language || 'en').split('-')[0];
     const langName = languageMap[langCode] || 'English';
+    const isPolish = langCode === 'pl';
+    const startTime = Date.now();
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
 
-    let enhancedSystemInstruction = (systemInstruction || '') + languageInstruction;
+    const teresaWorkspaceInstruction = [
+      '## ASSISTANT SURFACE: workspace_copilot',
+      'You are Teresa, the authenticated workspace copilot for Consultify.',
+      'You may use only the organization, project, conversation, attachment, and tool context allowed by the authenticated user scope in this request.',
+      'You are not Anna and you must not behave as a public landing-page assistant.',
+      'Never claim access to data outside the current tenant/user permissions.',
+      'For any state-changing work, propose and wait for explicit approval. Do not silently execute mutations.',
+      'When asked to act without approval, explain that governed_execution requires approval first.',
+    ].join('\n');
+
+    let enhancedSystemInstruction =
+      `${teresaWorkspaceInstruction}\n\n${systemInstruction || ''}` + languageInstruction;
 
     // Co-Thinker mode: inject persona-specific system prompt
     if (aiModes?.coThinkerMode && typeof aiModes.coThinkerMode === 'string') {
@@ -1430,6 +1602,45 @@ router.post(
       }
     }, 15_000); // Every 15 seconds
 
+    const emitMinimalTrustBundle = (
+      outputText: string,
+      degraded: { mode: string; reason?: string } | null = null
+    ) => {
+      const tokens = estimateTokenCounts(outputText);
+      res.write(
+        `data: ${JSON.stringify({
+          type: 'trust_bundle',
+          bundle: {
+            version: 'TrustBundleV1',
+            answerId: `answer-${streamSessionId}`,
+            conversationId: conversationId || null,
+            messageId: chatRunId || null,
+            decisionId: policyDecision?.id || null,
+            model: pipelineMeta?.model || null,
+            provider: pipelineMeta?.provider || null,
+            tier: selectedTier || null,
+            sourceClasses: ['general'],
+            citationsCount: 0,
+            citations: [],
+            sourceLedgerSummary: null,
+            policyDecision: null,
+            policyNotices: [],
+            generatedAt: new Date().toISOString(),
+            degraded,
+            outputLength: String(outputText || '').length,
+            confidence: degraded ? 0 : 0.5,
+            cost: pipelineMeta?.cost || pipelineMeta?.estimatedCost || null,
+            tokens,
+            routingTrace: pipelineMeta?.routingTrace || pipelineMeta?.routing_trace || null,
+            warnings: degraded ? [degraded.reason || degraded.mode] : [],
+            assistant: 'teresa',
+            assistantSurface: 'workspace_copilot',
+            actionSurface: 'governed_execution',
+          },
+        })}\n\n`
+      );
+    };
+
     // --------------------------------------------------------------------
     // E2E_MODE: deterministic streaming for runtime tests (CI + Playwright)
     // --------------------------------------------------------------------
@@ -1446,6 +1657,7 @@ router.post(
           accumulatedContent += chunk;
         }
 
+        emitMinimalTrustBundle(assistantFull, { mode: 'e2e_mode', reason: 'deterministic_stream' });
         res.write('data: [DONE]\n\n');
 
         return res.end();
@@ -1562,6 +1774,7 @@ router.post(
             code: 'NO_LLM_PROVIDER',
           })}\n\n`
         );
+        emitMinimalTrustBundle('', { mode: 'blocked', reason: 'no_llm_provider' });
         res.write('data: [DONE]\n\n');
         return res.end();
       }
@@ -1580,9 +1793,9 @@ router.post(
           `data: ${JSON.stringify({
             error: aiAccessCheck.reason || 'Access blocked',
             code: aiAccessCheck.errorCode || 'ACCESS_BLOCKED',
-            accessContext: aiAccessContext,
           })}\n\n`
         );
+        emitMinimalTrustBundle('', { mode: 'blocked', reason: 'access_policy' });
         res.write('data: [DONE]\n\n');
         return res.end();
       }
@@ -1664,6 +1877,13 @@ router.post(
               .trim()
               .toLowerCase()
           : null;
+      const isGovernedProductTruthQuery = isDbr77ProductTruthQuery(String(message || ''));
+      const isProductAssistantHowToQuery =
+        Boolean(virtualWorkerSlug) &&
+        isProductOrHowToQuery(String(message || ''), language?.startsWith('pl') ? 'pl' : 'en');
+      const shouldPreferGovernedProductKnowledge =
+        isGovernedProductTruthQuery || isProductAssistantHowToQuery;
+      let hasGovernedGrounding = false;
 
       const screenContext = aiModes?.deepResearch
         ? null
@@ -1804,14 +2024,94 @@ router.post(
         }
         res.write(`data: ${JSON.stringify(payload)}\n\n`);
       };
+      const sanitizePolicyDecisionForClient = (decision: any) => {
+        if (!decision || typeof decision !== 'object') return null;
+        const refusal =
+          decision.refusal && typeof decision.refusal === 'object' ? decision.refusal : null;
+        const evidence =
+          decision.evidence && typeof decision.evidence === 'object'
+            ? {
+                required: Boolean(decision.evidence.required),
+                uncertaintyMarkerRequiredIfInsufficientEvidence: Boolean(
+                  decision.evidence.uncertaintyMarkerRequiredIfInsufficientEvidence
+                ),
+              }
+            : undefined;
+        return {
+          id: decision.id || null,
+          allowed: decision.allowed === true,
+          category: decision.category || null,
+          rationale: typeof decision.rationale === 'string' ? decision.rationale : null,
+          ...(evidence ? { evidence } : {}),
+          ...(refusal
+            ? {
+                refusal: {
+                  userMessage:
+                    typeof refusal.userMessage === 'string' ? refusal.userMessage : undefined,
+                  nextSteps: Array.isArray(refusal.nextSteps)
+                    ? refusal.nextSteps.slice(0, 6).map((s: any) => String(s || '').trim())
+                    : [],
+                },
+              }
+            : {}),
+        };
+      };
+      const emitTrustBundle = (outputText: string) => {
+        const citations = Array.isArray(collectedCitations) ? collectedCitations : [];
+        const sourceLedger = sourceLedgerSnapshot;
+        const sourceClasses = buildTrustSourceClasses(citations, sourceLedger);
+        const degraded =
+          sourceLedger?.degraded || (citations.length === 0 ? { mode: 'no_sources' } : null);
+        const tokens = estimateTokenCounts(outputText);
+        emitSSE({
+          type: 'trust_bundle',
+          bundle: {
+            version: 'TrustBundleV1',
+            answerId: `answer-${streamSessionId}`,
+            conversationId: conversationId || null,
+            messageId: chatRunId || null,
+            decisionId: policyDecision?.id || null,
+            model: pipelineMeta?.model || null,
+            provider: pipelineMeta?.provider || null,
+            tier: selectedTier || null,
+            sourceClasses,
+            citationsCount: citations.length,
+            citations: citations.slice(0, 24),
+            sourceLedgerSummary: buildSourceLedgerSummary(sourceLedger),
+            policyDecision: sanitizePolicyDecisionForClient(policyDecision),
+            policyNotices: policyNotices.slice(0, 12),
+            generatedAt: new Date().toISOString(),
+            degraded,
+            outputLength: String(outputText || '').length,
+            confidence:
+              citations.length > 0 || sourceClasses.some((sourceClass) => sourceClass !== 'general')
+                ? 0.86
+                : 0.52,
+            cost: pipelineMeta?.cost || pipelineMeta?.estimatedCost || null,
+            tokens,
+            routingTrace: pipelineMeta?.routingTrace || pipelineMeta?.routing_trace || null,
+            warnings: degraded ? [degraded.reason || degraded.mode] : [],
+            assistant: 'teresa',
+            assistantSurface: 'workspace_copilot',
+            actionSurface: 'governed_execution',
+          },
+        });
+      };
 
       const maybeEmitTeresaProposal = async (assistantText: string) => {
+        const contextFailedAttachments = Array.isArray((context as any)?.failedAttachments)
+          ? (context as any).failedAttachments
+          : [];
+        const contextUsableAttachments = Array.isArray((context as any)?.attachments)
+          ? (context as any).attachments.filter((a: any) => a?.docId)
+          : [];
         if (
           virtualWorkerSlug !== 'teresa' ||
           !req.organizationId ||
           !req.userId ||
           !assistantText ||
-          assistantText.trim().length === 0
+          assistantText.trim().length === 0 ||
+          (contextFailedAttachments.length > 0 && contextUsableAttachments.length === 0)
         ) {
           return null;
         }
@@ -1883,9 +2183,13 @@ router.post(
           }
         }
       } catch (polErr: any) {
-        logger.error('[AI Stream] Policy gateway unavailable (fail-closed):', polErr?.message || String(polErr));
+        logger.error(
+          '[AI Stream] Policy gateway unavailable (fail-closed):',
+          polErr?.message || String(polErr)
+        );
 
-        const degradedMsg = 'Policy gateway unavailable — request blocked for safety. Please try again.';
+        const degradedMsg =
+          'Policy gateway unavailable — request blocked for safety. Please try again.';
 
         emitSSE({
           type: 'policy_refusal',
@@ -1899,6 +2203,7 @@ router.post(
         if (isClientConnected && !res.destroyed) {
           try {
             res.write(`data: ${JSON.stringify({ text: degradedMsg })}\n\n`);
+            emitTrustBundle(degradedMsg);
             res.write('data: [DONE]\n\n');
           } catch {
             /* ignore */
@@ -1929,7 +2234,10 @@ router.post(
       }
 
       if (policyDecision) {
-        emitSSE({ type: 'policy_decision', decision: policyDecision });
+        emitSSE({
+          type: 'policy_decision',
+          decision: sanitizePolicyDecisionForClient(policyDecision),
+        });
         if (chatRunId) {
           import('../services/ai/chatTraceService.js')
             .then((m: any) =>
@@ -1976,6 +2284,7 @@ router.post(
         if (isClientConnected && !res.destroyed) {
           try {
             res.write(`data: ${JSON.stringify({ text: refusalText })}\n\n`);
+            emitTrustBundle(refusalText);
             res.write('data: [DONE]\n\n');
           } catch {
             /* ignore */
@@ -2173,6 +2482,7 @@ router.post(
               });
 
               if (workerKnowledge?.contextText?.trim()) {
+                hasGovernedGrounding = true;
                 pipelineRequest = {
                   ...pipelineRequest,
                   options: {
@@ -2199,6 +2509,14 @@ router.post(
                 } as any;
               }
 
+              const governedCitations = buildGovernedKnowledgeCitations(
+                workerKnowledge?.sources || [],
+                `${workerConfig.worker.name} knowledge`
+              );
+              if (governedCitations.length > 0) {
+                emitSSE({ type: 'citations', citations: governedCitations });
+              }
+
               const extractedWorkerWebPolicy = workerWebAccessService.extractWorkerWebAccessPolicy(
                 workerConfig.profile
               );
@@ -2212,6 +2530,26 @@ router.post(
             '[AI Stream] Virtual worker overlay failed:',
             workerErr?.message || String(workerErr)
           );
+        }
+      }
+
+      if (isProductAssistantHowToQuery) {
+        const fallback = buildProductAssistantFallback(
+          String(message || ''),
+          Boolean(language?.startsWith('pl'))
+        );
+        if (fallback) {
+          hasGovernedGrounding = true;
+          emitSSE({ type: 'citations', citations: fallback.citations });
+          pipelineRequest = {
+            ...pipelineRequest,
+            options: {
+              ...(pipelineRequest.options || {}),
+              systemInstruction:
+                String((pipelineRequest.options as any)?.systemInstruction || '') +
+                fallback.instruction,
+            },
+          } as any;
         }
       }
 
@@ -2255,6 +2593,7 @@ router.post(
         });
 
         if (kb?.citations?.length) {
+          hasGovernedGrounding = true;
           emitSSE({ type: 'citations', citations: kb.citations });
           if (chatRunId) {
             import('../services/ai/chatTraceService.js')
@@ -2271,6 +2610,7 @@ router.post(
         }
 
         if (kb?.systemInstructionAddon?.trim()) {
+          if (kb.isProductQuestion) hasGovernedGrounding = true;
           pipelineRequest = {
             ...pipelineRequest,
             options: {
@@ -2337,6 +2677,11 @@ router.post(
       }
       if (!aiModes?.deepResearch) {
         const userEnabledWebSearch = aiModes?.webSearch === true;
+        const explicitExternalWebRequest =
+          /\b(sprawdź w internecie|wyszukaj|znajdź w sieci|web research|search the web|look up|google)\b/i.test(
+            String(message || '')
+          );
+        const explicitResearchRequest = isExplicitResearchAsk(message);
         const orgIdForWeb = req.organizationId || null;
 
         // T118: unified governance for all web search (policy + SSRF + allow/deny + sanitize + cache)
@@ -2393,7 +2738,10 @@ router.post(
         }
 
         const workerAutoSearchRequested = Boolean((workerWebPolicyOverride as any)?.autoSearch);
+        const governedKnowledgeSuppressesWeb =
+          shouldPreferGovernedProductKnowledge && !explicitExternalWebRequest;
         if (
+          !governedKnowledgeSuppressesWeb &&
           (searchIntent?.shouldSearch || workerAutoSearchRequested) &&
           webPolicy?.internetEnabled
         ) {
@@ -2481,6 +2829,67 @@ router.post(
                 link: String(r.url || ''),
                 excerpt: String(r.snippet || ''),
               }));
+
+            if (citations.length === 0 && (userEnabledWebSearch || explicitResearchRequest)) {
+              const noSourcesText = buildNoWebSourcesText(searchQueries, isPolish);
+              accumulatedContent += noSourcesText;
+              hasGovernedGrounding = true;
+              res.write(`data: ${JSON.stringify({ text: noSourcesText })}\n\n`);
+              emitSSE({
+                type: 'research_progress',
+                topic: message,
+                stage: 'complete',
+                queries: searchQueries,
+                sources: [],
+                error: isPolish
+                  ? 'Nie znaleziono wiarygodnych źródeł web'
+                  : 'No reliable web sources found',
+              });
+              emitSSE({
+                type: 'policy_notice',
+                notice: {
+                  type: 'no_sources',
+                  severity: 'info',
+                  title: isPolish ? 'Brak źródeł web' : 'No web sources',
+                  message: isPolish
+                    ? 'Research został zatrzymany, bo nie znaleziono bezpiecznych źródeł do zacytowania.'
+                    : 'Research was stopped because no safe sources were available to cite.',
+                  displayToUser: false,
+                },
+              });
+              if (chatRunId) {
+                import('../services/ai/chatTraceService.js')
+                  .then((m: any) =>
+                    (m.default || m).addEvent(chatRunId, 'web_search_no_sources', {
+                      queries: searchQueries,
+                      intent: searchIntent.reason,
+                      confidence: searchIntent.confidence,
+                    })
+                  )
+                  .catch(() => {
+                    /* non-critical */
+                  });
+              }
+              emitSSE({
+                type: 'done',
+                responseId: `ai-${Date.now()}`,
+                metadata: {
+                  confidence: 0.45,
+                  processingTime: Date.now() - startTime,
+                  webSearch: {
+                    attempted: true,
+                    queries: searchQueries,
+                    citationsCount: 0,
+                  },
+                },
+              });
+              streamCompleted = true;
+              clearInterval(heartbeatInterval);
+              emitTrustBundle(noSourcesText);
+              res.write('data: [DONE]\n\n');
+              res.end();
+              return;
+            }
 
             if (citations.length > 0) {
               emitSSE({ type: 'citations', citations });
@@ -2583,6 +2992,36 @@ router.post(
       const attachmentDocIds = Array.isArray(attachmentDocIdsRaw)
         ? Array.from(new Set(attachmentDocIdsRaw.map((x: any) => String(x)).filter(Boolean)))
         : [];
+      const failedAttachments = Array.isArray((context as any)?.failedAttachments)
+        ? (context as any).failedAttachments
+            .map((a: any) => ({
+              filename: String(a?.filename || 'attachment'),
+              error: String(a?.error || 'Extraction failed'),
+              code: a?.code ? String(a.code) : null,
+              extractionStatus: a?.extractionStatus ? String(a.extractionStatus) : 'failed',
+            }))
+            .filter((a: any) => a.filename || a.error)
+        : [];
+
+      if (failedAttachments.length > 0) {
+        const failedText = failedAttachments
+          .map(
+            (a: any, index: number) =>
+              `${index + 1}. ${a.filename}: ${a.error}${
+                a.extractionStatus ? ` (status: ${a.extractionStatus})` : ''
+              }`
+          )
+          .join('\n');
+        pipelineRequest = {
+          ...pipelineRequest,
+          options: {
+            ...(pipelineRequest.options || {}),
+            systemInstruction:
+              String((pipelineRequest.options as any)?.systemInstruction || '') +
+              `\n\n## ATTACHMENTS WITH EXTRACTION FAILURES\n${failedText}\n\nRules:\n- If the user asks about these failed attachments, do not invent their contents.\n- Explain the concrete extraction problem and suggest re-uploading a text PDF/TXT/MD/CSV/JSON, or using OCR for scanned PDFs.\n`,
+          },
+        } as any;
+      }
 
       if (attachmentDocIds.length > 0 && message && message.trim().length > 0) {
         emitSSE({
@@ -2617,6 +3056,20 @@ router.post(
                 return `[A${i + 1}] ${source}\n${content}`;
               })
               .join('\n\n');
+            const attachmentCitations = chunks.slice(0, 5).map((c: any, i: number) => {
+              const source = String(c?.source || 'Attachment');
+              return {
+                id: `attachment_${i + 1}`,
+                type: 'document',
+                title: source,
+                reference: source,
+                excerpt: String(c?.content || '')
+                  .trim()
+                  .slice(0, 500),
+              };
+            });
+            emitSSE({ type: 'citations', citations: attachmentCitations });
+            hasGovernedGrounding = true;
 
             pipelineRequest = {
               ...pipelineRequest,
@@ -2689,6 +3142,20 @@ router.post(
                   return `[A${i + 1}] ${source}\n${content}`;
                 })
                 .join('\n\n');
+              const attachmentCitations = rows.map((r: any, i: number) => {
+                const source = String(r?.filename || 'Attachment');
+                return {
+                  id: `attachment_direct_${i + 1}`,
+                  type: 'document',
+                  title: source,
+                  reference: source,
+                  excerpt: String(r?.content || '')
+                    .trim()
+                    .slice(0, 500),
+                };
+              });
+              emitSSE({ type: 'citations', citations: attachmentCitations });
+              hasGovernedGrounding = true;
 
               pipelineRequest = {
                 ...pipelineRequest,
@@ -2697,6 +3164,24 @@ router.post(
                   systemInstruction:
                     String((pipelineRequest.options as any)?.systemInstruction || '') +
                     `\n\n## ATTACHMENTS (conversation-scoped sources — direct load)\n${attachmentsText}\n\nRules:\n- The user has attached documents to this conversation. The above content comes from those attachments.\n- Refer to this content when the user asks about their attachments.\n- If you use an attachment chunk, cite it inline like [A1], [A2].\n`,
+                },
+                context: {
+                  ...((pipelineRequest as any).context || {}),
+                  external: {
+                    ...((pipelineRequest as any).context?.external || {}),
+                    attachmentsRag: {
+                      documentIds: attachmentDocIds,
+                      chunks: rows.map((r: any) => ({
+                        text: String(r?.content || ''),
+                        content: String(r?.content || ''),
+                        source: String(r?.filename || 'Attachment'),
+                        metadata: {
+                          title: String(r?.filename || 'Attachment'),
+                          sourceType: 'document',
+                        },
+                      })),
+                    },
+                  },
                 },
               } as any;
 
@@ -2763,11 +3248,10 @@ router.post(
           const nbSearch = ((nbSearchMod as any).default || nbSearchMod) as any;
           const searchFn = nbSearch.searchNotebook || nbSearch.default?.searchNotebook;
           if (searchFn) {
-            const results = await searchFn(
-              req.organizationId,
-              (req as any).userId || '',
-              { q: message.slice(0, 300), limit: 5 } as any
-            );
+            const results = await searchFn(req.organizationId, (req as any).userId || '', {
+              q: message.slice(0, 300),
+              limit: 5,
+            } as any);
             const notes = Array.isArray(results?.results) ? results.results : [];
             if (notes.length > 0) {
               const notesText = notes
@@ -2814,6 +3298,42 @@ router.post(
           clarificationAnswers: (context as any)?.clarificationAnswers || null,
           emit: emitSSE,
         });
+
+        const deepResearchSources = Array.isArray(prelude?.researchOutput?.sources)
+          ? prelude.researchOutput.sources
+          : [];
+        if (deepResearchSources.length > 0) {
+          const deepResearchCitations = deepResearchSources
+            .slice(0, 12)
+            .map((source: any, idx: number) => ({
+              id: `deep_research_${idx + 1}`,
+              type: 'external',
+              title: String(source?.title || source?.domain || `Research source ${idx + 1}`),
+              reference: String(source?.url || source?.domain || ''),
+              link: String(source?.url || ''),
+              excerpt: Array.isArray(source?.snippets)
+                ? String(source.snippets[0] || '')
+                : String(source?.fullContent || '').slice(0, 500),
+            }));
+          collectedCitations = mergeCitations(collectedCitations, deepResearchCitations);
+          hasGovernedGrounding = true;
+          emitSSE({ type: 'citations', citations: deepResearchCitations });
+
+          pipelineRequest = {
+            ...pipelineRequest,
+            context: {
+              ...((pipelineRequest as any).context || {}),
+              external: {
+                ...(((pipelineRequest as any).context || {}).external || {}),
+                citations: deepResearchCitations,
+                deepResearch: {
+                  sources: deepResearchSources,
+                  researchType: prelude?.researchType || null,
+                },
+              },
+            },
+          } as any;
+        }
 
         if (prelude?.systemInstructionAddon) {
           pipelineRequest = {
@@ -3475,7 +3995,9 @@ router.post(
                   // Fire and forget — don't block the stream
                   kgService
                     .processConversation(req.organizationId, message, accumulatedContent)
-                    .catch((err: unknown) => logger.warn('[AI] knowledge graph processing failed', err));
+                    .catch((err: unknown) =>
+                      logger.warn('[AI] knowledge graph processing failed', err)
+                    );
                 }
               }
             } catch {
@@ -3575,7 +4097,7 @@ router.post(
                   ? { mode: 'no_sources', reason: 'no_citations_collected' }
                   : null;
 
-              emitSSE({
+              sourceLedgerSnapshot = {
                 type: 'source_ledger',
                 decisionId: policyDecision?.id || null,
                 used_sources,
@@ -3585,7 +4107,8 @@ router.post(
                   privateMode: Boolean(privateMode),
                   knowledgeSources: knowledgeSources || {},
                 },
-              });
+              };
+              emitSSE(sourceLedgerSnapshot);
 
               if (chatRunId) {
                 import('../services/ai/chatTraceService.js')
@@ -3609,22 +4132,20 @@ router.post(
               if (
                 degraded &&
                 policyDecision?.allowed === true &&
-                policyDecision?.evidence?.required === true
+                policyDecision?.evidence?.required === true &&
+                !hasGovernedGrounding &&
+                !shouldPreferGovernedProductKnowledge
               ) {
                 const isPl = Boolean(language?.startsWith('pl'));
-                const marker = isPl
-                  ? `\n\n---\n**Bez źródeł:** Nie znalazłem w dostępnych źródłach wystarczających materiałów, żeby to zweryfikować. Jeśli dołączysz dokument/link lub wypromujesz wiedzę do organizacji, doprecyzuję.\n`
-                  : `\n\n---\n**No sources:** I couldn't find sufficient evidence in the available sources to verify this. If you attach/paste a document/link or promote knowledge to the organization scope, I can refine.\n`;
                 emitSSE({
                   type: 'policy_notice',
                   kind: 'no_sources',
                   decisionId: policyDecision?.id || null,
+                  displayToUser: false,
                   message: isPl
-                    ? 'Brak źródeł w dozwolonym zakresie — dodano jawny marker.'
-                    : 'No sources in allowed scope — explicit marker added.',
+                    ? 'Brak źródeł w dozwolonym zakresie — zapisano diagnostykę do audytu.'
+                    : 'No sources in allowed scope — audit diagnostic recorded.',
                 });
-                // Emit as a final text chunk for visibility (same semantics as uncertainty marker).
-                res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
               }
             } catch {
               // Non-critical — never break the stream on ledger generation.
@@ -3683,22 +4204,25 @@ router.post(
                     },
                   });
 
-                  if (validation && validation.passesPolicy === false) {
+                  if (
+                    validation &&
+                    validation.passesPolicy === false &&
+                    !hasGovernedGrounding &&
+                    !shouldPreferGovernedProductKnowledge
+                  ) {
                     const isPl = Boolean(language?.startsWith('pl'));
                     const violations = Array.isArray(validation.policyViolations)
                       ? validation.policyViolations
                       : [];
-                    const marker = isPl
-                      ? `\n\n---\n**Niepewność / weryfikacja:** Ta odpowiedź zawiera twierdzenia faktograficzne bez wystarczających cytowań z dostępnych źródeł. Zweryfikuj proszę kluczowe liczby/datę w podanych źródłach lub dołącz materiał, a doprecyzuję.\n`
-                      : `\n\n---\n**Uncertainty / verification:** This answer contains factual claims without sufficient citations from available sources. Please verify key numbers/dates in the provided sources (or attach/paste evidence) and I will refine.\n`;
 
                     emitSSE({
                       type: 'policy_notice',
                       kind: 'uncertainty',
                       decisionId: policyDecision?.id || null,
+                      displayToUser: false,
                       message: isPl
-                        ? 'Brak wystarczających cytowań — dodano jawny marker niepewności.'
-                        : 'Insufficient citations — explicit uncertainty marker added.',
+                        ? 'Brak wystarczających cytowań — zapisano diagnostykę do audytu.'
+                        : 'Insufficient citations — audit diagnostic recorded.',
                       violations: violations.slice(0, 6),
                     });
 
@@ -3717,14 +4241,6 @@ router.post(
                         .catch(() => {
                           /* ignore */
                         });
-                    }
-
-                    // Append marker as a final visible chunk (bounded, additive)
-                    accumulatedContent += marker;
-                    try {
-                      res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
-                    } catch {
-                      /* ignore */
                     }
                   } else if (chatRunId) {
                     import('../services/ai/chatTraceService.js')
@@ -3781,6 +4297,7 @@ router.post(
           }
 
           await maybeEmitTeresaProposal(accumulatedContent);
+          emitTrustBundle(accumulatedContent);
 
           streamCompleted = true;
           res.write('data: [DONE]\n\n');
@@ -3920,24 +4437,24 @@ router.post(
                     },
                   });
 
-                  if (validation && validation.passesPolicy === false) {
+                  if (
+                    validation &&
+                    validation.passesPolicy === false &&
+                    !hasGovernedGrounding &&
+                    !shouldPreferGovernedProductKnowledge
+                  ) {
                     const isPl = Boolean(language?.startsWith('pl'));
-                    const marker = isPl
-                      ? `\n\n---\n**Niepewność / weryfikacja:** Ta odpowiedź zawiera twierdzenia faktograficzne bez wystarczających cytowań z dostępnych źródeł. Zweryfikuj proszę kluczowe liczby/datę w podanych źródłach lub dołącz materiał, a doprecyzuję.\n`
-                      : `\n\n---\n**Uncertainty / verification:** This answer contains factual claims without sufficient citations from available sources. Please verify key numbers/dates in the provided sources (or attach/paste evidence) and I will refine.\n`;
 
                     emitSSE({
                       type: 'policy_notice',
                       kind: 'uncertainty',
                       decisionId: policyDecision?.id || null,
+                      displayToUser: false,
                       message: isPl
-                        ? 'Brak wystarczających cytowań — dodano jawny marker niepewności.'
-                        : 'Insufficient citations — explicit uncertainty marker added.',
+                        ? 'Brak wystarczających cytowań — zapisano diagnostykę do audytu.'
+                        : 'Insufficient citations — audit diagnostic recorded.',
                       violations: (validation?.policyViolations || []).slice(0, 6),
                     });
-
-                    // Also emit the marker as a final text chunk for visibility.
-                    res.write(`data: ${JSON.stringify({ text: marker })}\n\n`);
                   }
                 }
               } catch {
@@ -3967,6 +4484,7 @@ router.post(
             }
 
             await maybeEmitTeresaProposal(nonStreamContent);
+            emitTrustBundle(nonStreamContent);
           }
 
           streamCompleted = true;
@@ -4611,6 +5129,106 @@ router.post(
   })
 );
 
+router.get(
+  '/actions/center',
+  verifyToken,
+  validateQuery(
+    z.object({
+      projectId: z.string().uuid().optional(),
+      status: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(250).optional(),
+      scope: z.enum(['mine', 'org']).optional(),
+    })
+  ),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { listActionCenter } = await import('../services/aiRunLedgerService.js');
+      const adminView =
+        (req.query as any).scope === 'org' &&
+        (req.userRole === 'ADMIN' || req.userRole === 'SUPERADMIN');
+      const actions = await listActionCenter({
+        organizationId: req.organizationId as string,
+        userId: req.userId as string,
+        projectId: ((req.query as any).projectId as string | undefined) || null,
+        status: ((req.query as any).status as string | undefined) || null,
+        limit: ((req.query as any).limit as number | undefined) || 100,
+        adminView,
+      });
+      return res.json({
+        success: true,
+        actions,
+        summary: {
+          pending: actions.filter((action: any) => action.status === 'pending_review').length,
+          approved: actions.filter((action: any) => action.status === 'approved').length,
+          executed: actions.filter(
+            (action: any) => action.status === 'executed' || action.status === 'audited'
+          ).length,
+          failed: actions.filter((action: any) => action.status === 'failed').length,
+          rejected: actions.filter((action: any) => action.status === 'rejected').length,
+        },
+      });
+    } catch (err: any) {
+      logger.error('[AI] Action Center error:', err);
+      return res.status(500).json({ success: false, error: (err as Error).message, actions: [] });
+    }
+  })
+);
+
+router.get(
+  '/actions/runs',
+  verifyToken,
+  validateQuery(
+    z.object({
+      projectId: z.string().uuid().optional(),
+      status: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(250).optional(),
+    })
+  ),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
+      return res.status(403).json({ success: false, error: 'Admin role required' });
+    }
+    try {
+      const { listAIRuns } = await import('../services/aiRunLedgerService.js');
+      const runs = await listAIRuns({
+        organizationId: req.organizationId as string,
+        projectId: ((req.query as any).projectId as string | undefined) || null,
+        status: ((req.query as any).status as string | undefined) || null,
+        limit: ((req.query as any).limit as number | undefined) || 100,
+      });
+      return res.json({ success: true, runs });
+    } catch (err: any) {
+      logger.error('[AI] Run Ledger error:', err);
+      return res.status(500).json({ success: false, error: (err as Error).message, runs: [] });
+    }
+  })
+);
+
+router.get(
+  '/actions/:id/audit',
+  verifyToken,
+  validateParams(ActionIdParamSchema),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      const { getAIRunByAction } = await import('../services/aiRunLedgerService.js');
+      const audit = await getAIRunByAction(req.params.id);
+      if (!audit) return res.status(404).json({ success: false, error: 'Action not found' });
+      const canView =
+        req.userRole === 'ADMIN' ||
+        req.userRole === 'SUPERADMIN' ||
+        audit.userId === req.userId ||
+        audit.user_id === req.userId;
+      if (!canView) {
+        return res.status(403).json({ success: false, error: 'Permission denied' });
+      }
+      return res.json({ success: true, audit });
+    } catch (err: any) {
+      logger.error('[AI] Action audit error:', err);
+      return res.status(500).json({ success: false, error: (err as Error).message });
+    }
+  })
+);
+
 /**
  * V8 / Wave A6 — Unified read over proposals referenced by a conversation.
  *
@@ -4625,9 +5243,8 @@ router.get(
   validateParams(z.object({ id: z.string().uuid() })),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
-      const { getConversationProposals } = await import(
-        '../services/v8/proposalUnificationService.js'
-      );
+      const { getConversationProposals } =
+        await import('../services/v8/proposalUnificationService.js');
       const proposals = await getConversationProposals({
         conversationId: req.params.id,
         organizationId: req.organizationId || undefined,

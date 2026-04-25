@@ -96,6 +96,11 @@ const LABELS: Record<string, ToolLabels> = {
       en: 'e.g., Existing products for SMB customers',
       pl: 'np. Obecne produkty dla klientów SMB',
     },
+    successLabel: { en: 'Success Signal', pl: 'Sygnał sukcesu' },
+    successPlaceholder: {
+      en: 'e.g., +20% revenue with stable margin and repeatable acquisition',
+      pl: 'np. +20% przychodu przy stabilnej marży i powtarzalnym pozyskaniu',
+    },
     timeframeLabel: { en: 'Time Horizon', pl: 'Horyzont Czasowy' },
   },
   'portfolio-priority': {

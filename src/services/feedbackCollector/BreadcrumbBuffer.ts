@@ -29,9 +29,10 @@ function describeTarget(el: EventTarget | null): { label: string; target: string
   if (!(el instanceof Element)) return { label: '[document]', target: '' };
   const tag = el.tagName.toLowerCase();
   const id = el.id ? `#${el.id}` : '';
-  const cls = el.className && typeof el.className === 'string'
-    ? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}`
-    : '';
+  const cls =
+    el.className && typeof el.className === 'string'
+      ? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}`
+      : '';
   const role = el.getAttribute('role') ? `[role=${el.getAttribute('role')}]` : '';
   const aria = el.getAttribute('aria-label');
   const text = (el as HTMLElement).innerText || el.getAttribute('title') || el.getAttribute('alt');

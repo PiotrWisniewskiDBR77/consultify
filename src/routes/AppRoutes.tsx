@@ -166,8 +166,18 @@ const SuperAdminView = React.lazy(() =>
   import('@/views/superadmin/SuperAdminView').then((m) => ({ default: m.SuperAdminView }))
 );
 
-// AI Chat (Full Screen Chat View)
-const AIChatWelcomeView = React.lazy(() => import('@/views/AIChatWelcomeView'));
+// AI Chat (Full Screen Chat View) — Wave 1 canonical shell.
+const UnifiedChatPanel = React.lazy(() =>
+  import('@/components/AIChat/UnifiedChatPanel').then((m) => ({ default: m.UnifiedChatPanel }))
+);
+const ActionCenter = React.lazy(() =>
+  import('@/components/AIChat/ActionCenter').then((m) => ({ default: m.ActionCenter }))
+);
+const ResearchSessionsDock = React.lazy(() =>
+  import('@/components/AIChat/ResearchSessionsDock').then((m) => ({
+    default: m.ResearchSessionsDock,
+  }))
+);
 
 // KIMI-style workspaces (P22 Wordy / P23 Excele / P20 Prezentacje)
 const WordyView = React.lazy(() =>
@@ -1072,7 +1082,35 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <UnifiedChatPanel mode="full" />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Wave 3 - AI Action Center / AIRun ledger */}
+        <Route
+          path="/ai/action-center"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Action Center']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <ActionCenter />
+                </AnimationWrapper>
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+
+        {/* Wave 4 - Research Sessions Dock / Evidence reports */}
+        <Route
+          path="/ai/research-sessions"
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Research Sessions']}>
+              <RouteErrorBoundary>
+                <AnimationWrapper variant="fade">
+                  <ResearchSessionsDock />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>
@@ -1087,7 +1125,7 @@ export const AppRoutes: React.FC = () => {
               <RouteErrorBoundary>
                 <AnimationWrapper variant="fade">
                   <ConversationRouteSync />
-                  <AIChatWelcomeView />
+                  <UnifiedChatPanel mode="full" />
                 </AnimationWrapper>
               </RouteErrorBoundary>
             </MainLayout>

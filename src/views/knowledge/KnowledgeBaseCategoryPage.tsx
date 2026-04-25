@@ -14,7 +14,11 @@ import { Link, useParams } from 'react-router-dom';
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { isKbCategoryForCurrentSite } from '@/config/knowledgeBaseSite';
 import { KbArticleListItem } from '@/hooks/useDocs';
-import { KbCollection, useKnowledgeCollections, useKnowledgeCollectionArticles } from '@/hooks/useKnowledge';
+import {
+  KbCollection,
+  useKnowledgeCollectionArticles,
+  useKnowledgeCollections,
+} from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
 
@@ -29,16 +33,24 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
   const docsLanguage = resolveKnowledgeLanguage(i18n.language);
 
   const { data: collections = [] } = useKnowledgeCollections(undefined, docsLanguage);
-  const collection = useMemo(() =>
-    collections.find((c: KbCollection) => c.slug === categorySlug),
+  const collection = useMemo(
+    () => collections.find((c: KbCollection) => c.slug === categorySlug),
     [collections, categorySlug]
   );
-  const otherCollections = useMemo(() =>
-    collections.filter((c: KbCollection) => c.slug !== categorySlug && isKbCategoryForCurrentSite(c.slug)),
+  const otherCollections = useMemo(
+    () =>
+      collections.filter(
+        (c: KbCollection) => c.slug !== categorySlug && isKbCategoryForCurrentSite(c.slug)
+      ),
     [collections, categorySlug]
   );
 
-  const { data: collectionData, isLoading } = useKnowledgeCollectionArticles(categorySlug, 50, 0, docsLanguage);
+  const { data: collectionData, isLoading } = useKnowledgeCollectionArticles(
+    categorySlug,
+    50,
+    0,
+    docsLanguage
+  );
   const articles = collectionData?.articles || [];
 
   const featuredArticles = articles.filter((a: KbArticleListItem) => a.is_featured);
@@ -53,7 +65,8 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
           <div
             className="absolute inset-0 opacity-[0.03] dark:opacity-[0.04]"
             style={{
-              backgroundImage: 'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
+              backgroundImage:
+                'linear-gradient(rgba(15,23,42,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(15,23,42,0.06) 1px, transparent 1px)',
               backgroundSize: '64px 64px',
               mask: 'radial-gradient(ellipse at 50% 20%, black 0%, transparent 72%)',
               WebkitMask: 'radial-gradient(ellipse at 50% 20%, black 0%, transparent 72%)',
@@ -66,9 +79,14 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
         <div className="relative z-10 border-b border-slate-200/80 dark:border-white/[0.06]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
             <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 dark:text-white/40 overflow-hidden">
-              <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors flex-shrink-0">
+              <Link
+                to="/knowledge-base"
+                className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors flex-shrink-0"
+              >
                 <Home size={14} />
-                <span className="hidden sm:inline">{t('kb.breadcrumb.home', 'Knowledge Base')}</span>
+                <span className="hidden sm:inline">
+                  {t('kb.breadcrumb.home', 'Knowledge Base')}
+                </span>
               </Link>
               <ChevronRight size={12} className="flex-shrink-0 sm:hidden" />
               <ChevronRight size={14} className="flex-shrink-0 hidden sm:block" />
@@ -106,7 +124,10 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
           {isLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 dark:border-white/[0.06] dark:bg-white/[0.02]">
+                <div
+                  key={i}
+                  className="animate-pulse rounded-xl sm:rounded-2xl border border-slate-200 bg-white p-4 sm:p-6 dark:border-white/[0.06] dark:bg-white/[0.02]"
+                >
                   <div className="aspect-[16/9] rounded-lg bg-slate-100 mb-4 dark:bg-white/[0.04]" />
                   <div className="h-4 bg-slate-200 rounded w-2/3 mb-3 dark:bg-white/[0.06]" />
                   <div className="h-3 bg-slate-100 rounded w-full mb-2 dark:bg-white/[0.04]" />
@@ -124,7 +145,11 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {featuredArticles.map((article: KbArticleListItem) => (
-                      <CategoryArticleCard key={article.id} article={article} categorySlug={categorySlug!} />
+                      <CategoryArticleCard
+                        key={article.id}
+                        article={article}
+                        categorySlug={categorySlug!}
+                      />
                     ))}
                   </div>
                 </div>
@@ -139,7 +164,11 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {otherArticles.map((article: KbArticleListItem) => (
-                      <CategoryArticleCard key={article.id} article={article} categorySlug={categorySlug!} />
+                      <CategoryArticleCard
+                        key={article.id}
+                        article={article}
+                        categorySlug={categorySlug!}
+                      />
                     ))}
                   </div>
                 </div>
@@ -169,9 +198,14 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
                       <h4 className="font-bold text-slate-900 group-hover:text-primary-500 dark:text-white dark:group-hover:text-primary-300 transition-colors">
                         {coll.title}
                       </h4>
-                      <p className="text-xs text-slate-500 mt-1 dark:text-white/40">{coll.article_count} {t('kb.articles', 'articles')}</p>
+                      <p className="text-xs text-slate-500 mt-1 dark:text-white/40">
+                        {coll.article_count} {t('kb.articles', 'articles')}
+                      </p>
                     </div>
-                    <ChevronRight size={16} className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all dark:text-white/20 dark:group-hover:text-primary-400" />
+                    <ChevronRight
+                      size={16}
+                      className="text-slate-400 group-hover:text-primary-500 group-hover:translate-x-0.5 transition-all dark:text-white/20 dark:group-hover:text-primary-400"
+                    />
                   </Link>
                 ))}
               </div>
@@ -183,7 +217,10 @@ export const KnowledgeBaseCategoryPage: React.FC = () => {
   );
 };
 
-const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: string }> = ({ article, categorySlug }) => {
+const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: string }> = ({
+  article,
+  categorySlug,
+}) => {
   const { t } = useTranslation();
 
   return (
@@ -247,7 +284,10 @@ const CategoryArticleCard: React.FC<{ article: KbArticleListItem; categorySlug: 
         <span className="text-xs font-bold text-primary-500 dark:text-primary-400">
           {t('kb.card.read', 'Read article')}
         </span>
-        <ArrowRight size={13} className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform" />
+        <ArrowRight
+          size={13}
+          className="text-primary-500 dark:text-primary-400 group-hover:translate-x-1 transition-transform"
+        />
       </div>
     </Link>
   );

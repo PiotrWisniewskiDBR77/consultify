@@ -131,6 +131,7 @@ export const WhitelabelStudioView: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [brandingLoadError, setBrandingLoadError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -162,6 +163,7 @@ export const WhitelabelStudioView: React.FC = () => {
   }, [fetchData]);
 
   const fetchBranding = async (orgId: string) => {
+    setBrandingLoadError(null);
     try {
       const result = await Api.get(`/branding/${orgId}`);
       const payload = result?.data ?? result;
@@ -170,8 +172,9 @@ export const WhitelabelStudioView: React.FC = () => {
       } else {
         setBranding({ ...DEFAULT_BRANDING, organizationId: orgId });
       }
-    } catch (error) {
+    } catch (error: any) {
       setBranding({ ...DEFAULT_BRANDING, organizationId: orgId });
+      setBrandingLoadError(error?.message || 'Failed to load branding configuration');
     }
   };
 
@@ -962,6 +965,22 @@ export const WhitelabelStudioView: React.FC = () => {
           <div className="flex items-center gap-2">
             {message.type === 'success' ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
             {message.text}
+          </div>
+        </div>
+      )}
+
+      {brandingLoadError && (
+        <div className="p-4 rounded-lg border bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/20 text-amber-800 dark:text-amber-300">
+          <div className="flex items-center justify-between gap-3">
+            <span>
+              {brandingLoadError}. Showing unsaved defaults until the organization branding loads.
+            </span>
+            <button
+              onClick={() => selectedOrg && fetchBranding(selectedOrg)}
+              className="px-3 py-1.5 rounded-md bg-amber-100 hover:bg-amber-200 dark:bg-amber-500/20 dark:hover:bg-amber-500/30 text-sm font-medium"
+            >
+              Retry
+            </button>
           </div>
         </div>
       )}

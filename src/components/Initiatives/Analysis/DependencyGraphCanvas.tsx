@@ -6,11 +6,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ReactFlow, {
   Background,
+  type Connection,
   Controls,
+  type Edge,
   MarkerType,
   MiniMap,
-  type Connection,
-  type Edge,
   type Node,
   useEdgesState,
   useNodesState,
@@ -87,7 +87,10 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
     [dependencies]
   );
 
-  const positionedNodes = useMemo(() => layoutGraph(initiatives, dependencies), [dependencies, initiatives]);
+  const positionedNodes = useMemo(
+    () => layoutGraph(initiatives, dependencies),
+    [dependencies, initiatives]
+  );
 
   const baseNodes = useMemo<Node[]>(
     () =>
@@ -186,7 +189,11 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
   }, [baseEdges, setEdges]);
 
   const selectedEdge = useMemo(
-    () => dependencies.find((dependency) => (dependency.id || `${dependency.fromId}::${dependency.toId}`) === selectedEdgeId) || null,
+    () =>
+      dependencies.find(
+        (dependency) =>
+          (dependency.id || `${dependency.fromId}::${dependency.toId}`) === selectedEdgeId
+      ) || null,
     [dependencies, selectedEdgeId]
   );
 
@@ -224,12 +231,9 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
     [onOpenInitiative]
   );
 
-  const handleEdgeClick = useCallback(
-    (_event: React.MouseEvent, edge: Edge) => {
-      setSelectedEdgeId(edge.id);
-    },
-    []
-  );
+  const handleEdgeClick = useCallback((_event: React.MouseEvent, edge: Edge) => {
+    setSelectedEdgeId(edge.id);
+  }, []);
 
   return (
     <div className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden">
@@ -241,7 +245,9 @@ export const DependencyGraphCanvas: React.FC<DependencyGraphCanvasProps> = ({
           </h3>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-          <span>{t('initiatives.analysis.logic.graph.hint', 'Drag from predecessor to successor')}</span>
+          <span>
+            {t('initiatives.analysis.logic.graph.hint', 'Drag from predecessor to successor')}
+          </span>
           {selectedEdge?.hasTimingConflict && (
             <span className="inline-flex items-center gap-1 text-red-500">
               <AlertTriangle size={12} />

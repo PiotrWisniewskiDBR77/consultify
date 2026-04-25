@@ -27,7 +27,7 @@ vi.mock('@/services/funnelAnalytics', () => ({
   trackFunnelEvent: (...args: unknown[]) => trackFunnelEventMock(...args),
 }));
 
-const isFlagEnabledMock = vi.fn<[], boolean>(() => true);
+const isFlagEnabledMock = vi.fn((): boolean => true);
 vi.mock('../voiceFunnelTelemetryFlag', () => ({
   isVoiceFunnelTelemetryEnabled: () => isFlagEnabledMock(),
   VOICE_FUNNEL_TELEMETRY_FLAG_KEYS: {

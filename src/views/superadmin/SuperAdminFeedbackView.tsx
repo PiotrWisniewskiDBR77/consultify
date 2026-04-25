@@ -26,6 +26,7 @@ import {
   User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
@@ -233,6 +234,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const { t, i18n } = useTranslation();
   const [feedback, setFeedback] = useState<FeedbackItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<FeedbackViewMode>('board');
   const [statusFilter, setStatusFilter] = useState<FeedbackStatus | 'ALL'>('ALL');
   const [typeFilter, setTypeFilter] = useState<string>('ALL');
@@ -241,6 +243,8 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const [ownershipFilter, setOwnershipFilter] = useState<'ALL' | 'ASSIGNED' | 'UNASSIGNED'>('ALL');
   const [search, setSearch] = useState('');
   const [selectedItem, setSelectedItem] = useState<FeedbackItem | null>(null);
+  const [screenshotObjectUrl, setScreenshotObjectUrl] = useState<string | null>(null);
+  const [screenshotError, setScreenshotError] = useState<string | null>(null);
   const [responseText, setResponseText] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [workflowDraft, setWorkflowDraft] = useState<WorkflowDraft>({
@@ -288,22 +292,26 @@ export const SuperAdminFeedbackView: React.FC = () => {
   const navigate = useNavigate();
   const requestedFeedbackId = useMemo(() => {
     try {
-      return new URLSearchParams(location.search).get('feedbackId');
+      const params = new URLSearchParams(location.search);
+      return params.get('feedbackId') || params.get('ticket');
     } catch {
       return null;
     }
-  }, [location.search]);
+  }, [location.pathname, location.search, navigate]);
   const [deepLinkConsumed, setDeepLinkConsumed] = useState(false);
 
   const fetchFeedback = useCallback(
     async (limit?: number) => {
       try {
+        setLoadError(null);
         const page = await Api.getFeedbackPage({ limit: limit ?? pageLimit });
         setFeedback((page.items || []).map((item: any) => normalizeItem(item)));
         setTotalCount(page.total);
         if (limit) setPageLimit(limit);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching feedback:', error);
+        setLoadError(error?.message || 'Failed to fetch feedback');
+        toast.error(error?.message || 'Failed to fetch feedback');
       } finally {
         setIsLoading(false);
         setIsLoadingMore(false);
@@ -330,8 +338,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
       );
       if (selectedItem?.id === id)
         setSelectedItem((prev) => (prev ? { ...prev, status: newStatus } : null));
-    } catch (error) {
+      toast.success('Feedback status updated');
+    } catch (error: any) {
       console.error('Error updating status:', error);
+      toast.error(error?.message || 'Failed to update feedback status');
     }
   };
 
@@ -339,13 +349,14 @@ export const SuperAdminFeedbackView: React.FC = () => {
     if (!responseText.trim()) return;
     setIsSending(true);
     try {
-      await Api.post(`/feedback/${id}/respond`, { response: responseText.trim() });
+      const response = responseText.trim();
+      await Api.post(`/feedback/${id}/respond`, { response });
       setFeedback((prev) =>
         prev.map((item) =>
           item.id === id
             ? {
                 ...item,
-                admin_response: responseText.trim(),
+                admin_response: response,
                 responded_at: new Date().toISOString(),
                 status: 'REVIEWED' as FeedbackStatus,
               }
@@ -357,7 +368,7 @@ export const SuperAdminFeedbackView: React.FC = () => {
           prev
             ? {
                 ...prev,
-                admin_response: responseText.trim(),
+                admin_response: response,
                 responded_at: new Date().toISOString(),
                 status: 'REVIEWED' as FeedbackStatus,
               }
@@ -365,8 +376,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
         );
       }
       setResponseText('');
-    } catch (error) {
+      toast.success('Response sent');
+    } catch (error: any) {
       console.error('Error sending response:', error);
+      toast.error(error?.message || 'Failed to send response');
     } finally {
       setIsSending(false);
     }
@@ -446,6 +459,36 @@ export const SuperAdminFeedbackView: React.FC = () => {
     setResponseText('');
   }, [selectedItem]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const hasFilter =
+      params.has('status') || params.has('type') || params.has('severity') || params.has('env');
+    const status = params.get('status')?.toUpperCase();
+    const type = params.get('type')?.toUpperCase();
+    const severity = params.get('severity')?.toUpperCase();
+    const env = params.get('env');
+
+    if (status && STATUS_ORDER.includes(status as FeedbackStatus)) {
+      setStatusFilter(status as FeedbackStatus);
+      setViewMode('list');
+    }
+    if (type) {
+      setTypeFilter(type);
+      setViewMode('list');
+    }
+    if (severity) {
+      setSeverityFilter(severity);
+      setViewMode('list');
+    }
+    if (env) {
+      setEnvFilter(env);
+      setViewMode('list');
+    }
+    if (hasFilter) {
+      navigate({ pathname: location.pathname, search: '' }, { replace: true });
+    }
+  }, [location.search]);
+
   const saveWorkflow = async () => {
     if (!selectedItem) return;
     setIsSavingWorkflow(true);
@@ -498,8 +541,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
       setFeedback((prev) => prev.map((item) => (item.id === nextItem.id ? nextItem : item)));
       setSelectedItem(nextItem);
       setWorkflowDraft((prev) => ({ ...prev, note: '' }));
-    } catch (error) {
+      toast.success('Feedback workflow updated');
+    } catch (error: any) {
       console.error('Error updating workflow:', error);
+      toast.error(error?.message || 'Failed to update feedback workflow');
     } finally {
       setIsSavingWorkflow(false);
     }
@@ -552,6 +597,44 @@ export const SuperAdminFeedbackView: React.FC = () => {
       return {};
     }
   };
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+    let cancelled = false;
+    setScreenshotObjectUrl(null);
+    setScreenshotError(null);
+
+    if (!selectedItem?.id) return;
+    const meta = parseMetadata(selectedItem.metadata);
+    const artifacts = Array.isArray((meta as any).artifacts)
+      ? ((meta as any).artifacts as any[])
+      : [];
+    const dossier = meta.dossier && typeof meta.dossier === 'object' ? (meta.dossier as any) : {};
+    const hasScreenshotArtifact =
+      artifacts.some((a) => a && a.kind === 'screenshot') ||
+      (typeof dossier.screenshot === 'object' && dossier.screenshot !== null);
+    if (!hasScreenshotArtifact) return;
+
+    Api.getFeedbackScreenshotBlob(selectedItem.id)
+      .then((blob) => {
+        objectUrl = URL.createObjectURL(blob);
+        if (cancelled) {
+          URL.revokeObjectURL(objectUrl);
+          return;
+        }
+        setScreenshotObjectUrl(objectUrl);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setScreenshotError(error instanceof Error ? error.message : 'Failed to load screenshot');
+      });
+
+    return () => {
+      cancelled = true;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedItem?.id, selectedItem?.metadata]);
+
   const parseAlertDispatch = (meta: Record<string, unknown>): AlertDispatchSummary | null => {
     const raw = meta.alertDispatch;
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -747,7 +830,9 @@ export const SuperAdminFeedbackView: React.FC = () => {
       | { message?: string; stack?: string; at?: string; source?: string }
       | undefined;
     const artifacts = Array.isArray(meta.artifacts) ? (meta.artifacts as any[]) : [];
-    const hasScreenshot = artifacts.some((a) => a && a.kind === 'screenshot');
+    const hasScreenshot =
+      artifacts.some((a) => a && a.kind === 'screenshot') ||
+      (typeof dossier.screenshot === 'object' && dossier.screenshot !== null);
     const signatureHash =
       typeof meta.signatureHash === 'string' ? (meta.signatureHash as string) : null;
     const duplicateCandidates = Array.isArray(meta.duplicateCandidates)
@@ -1335,14 +1420,38 @@ export const SuperAdminFeedbackView: React.FC = () => {
 
             {hasScreenshot && (
               <div className="space-y-1">
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                  <ImageIcon size={12} /> {t('feedback.screenshot', 'Screenshot')}
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center justify-between gap-2">
+                  <span className="flex items-center gap-1">
+                    <ImageIcon size={12} /> {t('feedback.screenshot', 'Screenshot')}
+                  </span>
+                  {screenshotObjectUrl && (
+                    <a
+                      href={screenshotObjectUrl}
+                      download={`feedback-${selectedItem.id.slice(0, 8)}-screenshot.png`}
+                      className="inline-flex items-center gap-1 text-indigo-600 dark:text-indigo-300 hover:underline"
+                    >
+                      <ExternalLink size={11} />
+                      {t('feedback.downloadScreenshot', 'Download')}
+                    </a>
+                  )}
                 </div>
-                <img
-                  src={Api.getFeedbackScreenshotUrl(selectedItem.id)}
-                  alt="feedback screenshot"
-                  className="rounded-lg border border-slate-200 dark:border-slate-700 max-h-[420px] w-auto"
-                />
+                {screenshotObjectUrl ? (
+                  <a href={screenshotObjectUrl} target="_blank" rel="noreferrer">
+                    <img
+                      src={screenshotObjectUrl}
+                      alt="feedback screenshot"
+                      className="rounded-lg border border-slate-200 dark:border-slate-700 max-h-[420px] w-auto"
+                    />
+                  </a>
+                ) : screenshotError ? (
+                  <div className="rounded-lg border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-900/10 p-3 text-xs text-red-700 dark:text-red-300">
+                    {screenshotError}
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-slate-200 dark:border-slate-700 p-3 text-xs text-slate-500">
+                    {t('feedback.loadingScreenshot', 'Loading screenshot...')}
+                  </div>
+                )}
               </div>
             )}
 
@@ -1604,6 +1713,12 @@ export const SuperAdminFeedbackView: React.FC = () => {
         </div>
       </div>
 
+      {loadError && (
+        <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300">
+          {loadError}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[
           {
@@ -1702,7 +1817,10 @@ export const SuperAdminFeedbackView: React.FC = () => {
               >
                 {isLoadingMore
                   ? t('feedback.loadingMore', 'Loading…')
-                  : t('feedback.loadMore', `Load ${Math.min(1000, totalCount - feedback.length)} more`)}
+                  : t(
+                      'feedback.loadMore',
+                      `Load ${Math.min(1000, totalCount - feedback.length)} more`
+                    )}
               </button>
             )}
           </div>

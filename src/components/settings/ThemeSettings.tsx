@@ -7,15 +7,7 @@
  * @version 3.0
  */
 
-import {
-  Check,
-  Columns3,
-  Monitor,
-  Moon,
-  Palette,
-  Sparkles,
-  Sun,
-} from 'lucide-react';
+import { Check, Columns3, Monitor, Moon, Palette, Sparkles, Sun } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -33,12 +25,12 @@ type Theme = 'light' | 'dark' | 'system';
 type Density = 'compact' | 'comfortable' | 'spacious';
 
 const ACCENT_COLORS = [
-  { name: 'Violet', value: '#8b5cf6', class: 'bg-violet-500' },
-  { name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
-  { name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
-  { name: 'Rose', value: '#f43f5e', class: 'bg-rose-500' },
-  { name: 'Amber', value: '#f59e0b', class: 'bg-amber-500' },
-  { name: 'Cyan', value: '#06b6d4', class: 'bg-cyan-500' },
+  { key: 'violet', name: 'Violet', value: '#8b5cf6', class: 'bg-violet-500' },
+  { key: 'blue', name: 'Blue', value: '#3b82f6', class: 'bg-blue-500' },
+  { key: 'emerald', name: 'Emerald', value: '#10b981', class: 'bg-emerald-500' },
+  { key: 'rose', name: 'Rose', value: '#f43f5e', class: 'bg-rose-500' },
+  { key: 'amber', name: 'Amber', value: '#f59e0b', class: 'bg-amber-500' },
+  { key: 'cyan', name: 'Cyan', value: '#06b6d4', class: 'bg-cyan-500' },
 ];
 
 export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) => {
@@ -103,9 +95,17 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
     setSaving(true);
     try {
       await Api.saveAppearancePreferences({ theme, accentColor, density });
-      setOriginalTheme(theme);
-      setOriginalAccent(accentColor);
-      setOriginalDensity(density);
+      const response = await Api.getAppearancePreferences();
+      const nextTheme = (response?.preferences?.theme as Theme) || theme;
+      const nextAccent = response?.preferences?.accentColor || accentColor;
+      const nextDensity = (response?.preferences?.density as Density) || density;
+      toggleTheme(nextTheme);
+      setAccentColor(nextAccent);
+      setDensity(nextDensity);
+      applyDensity(nextDensity);
+      setOriginalTheme(nextTheme);
+      setOriginalAccent(nextAccent);
+      setOriginalDensity(nextDensity);
       toast.success(t('settings.appearance.saved', 'Appearance settings saved'));
     } catch (err: any) {
       toast.error(t('settings.appearance.error', 'Failed to save settings'));
@@ -219,6 +219,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
             <div className="flex flex-wrap gap-3 mt-3">
               {ACCENT_COLORS.map((color) => {
                 const isSelected = accentColor === color.value;
+                const colorName = t(`settings.appearance.accent.${color.key}`, color.name);
                 return (
                   <button
                     key={color.value}
@@ -227,15 +228,14 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       'group relative w-12 h-12 rounded-xl transition-all duration-200',
                       'hover:scale-110 active:scale-95',
                       color.class,
-                      isSelected &&
-                        'ring-2 ring-white/80 ring-offset-2 ring-offset-navy-900'
+                      isSelected && 'ring-2 ring-white/80 ring-offset-2 ring-offset-navy-900'
                     )}
-                    title={color.name}
+                    title={colorName}
                   >
                     {isSelected && (
                       <Check size={18} className="text-white absolute inset-0 m-auto" />
                     )}
-                    <span className="sr-only">{color.name}</span>
+                    <span className="sr-only">{colorName}</span>
                   </button>
                 );
               })}
@@ -259,9 +259,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
             <div className="flex items-center gap-3 mt-4 p-3 bg-navy-700/50 rounded-lg">
               <div className="w-8 h-8 rounded-lg" style={{ backgroundColor: accentColor }} />
               <div>
-                <span className="text-sm text-white font-mono">
-                  {accentColor.toUpperCase()}
-                </span>
+                <span className="text-sm text-white font-mono">{accentColor.toUpperCase()}</span>
                 <p className="text-xs text-slate-500">
                   {t('settings.appearance.currentAccent', 'Current accent color')}
                 </p>
@@ -280,7 +278,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
             )}
           >
             <div className="grid grid-cols-3 gap-4 mt-3">
-              {([
+              {[
                 {
                   id: 'compact' as Density,
                   icon: Columns3,
@@ -302,7 +300,7 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                   desc: t('settings.appearance.density.spaciousDesc', 'More breathing room'),
                   lines: 3,
                 },
-              ]).map((opt) => {
+              ].map((opt) => {
                 const isSelected = density === opt.id;
                 return (
                   <button
@@ -325,7 +323,11 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                             key={i}
                             className={cn(
                               'rounded-sm bg-white/10',
-                              opt.id === 'compact' ? 'h-1.5' : opt.id === 'comfortable' ? 'h-2' : 'h-2.5'
+                              opt.id === 'compact'
+                                ? 'h-1.5'
+                                : opt.id === 'comfortable'
+                                  ? 'h-2'
+                                  : 'h-2.5'
                             )}
                             style={{ width: `${widths[i % widths.length]}%` }}
                           />
@@ -333,10 +335,12 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
                       })}
                     </div>
                     <div className="text-center">
-                      <span className={cn(
-                        'text-sm font-medium',
-                        isSelected ? 'text-violet-300' : 'text-slate-300'
-                      )}>
+                      <span
+                        className={cn(
+                          'text-sm font-medium',
+                          isSelected ? 'text-violet-300' : 'text-slate-300'
+                        )}
+                      >
                         {opt.label}
                       </span>
                       <p className="text-xs text-slate-500 mt-0.5">{opt.desc}</p>

@@ -27,6 +27,8 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { Api } from '../../services/api';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -126,13 +128,8 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const response = await fetch('/api/voice/settings', {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setSettings((prev) => ({ ...prev, ...data }));
-        }
+        const data = await Api.get('/voice/settings');
+        setSettings((prev) => ({ ...prev, ...data }));
       } catch (error) {
         console.error('[VoiceSettings] Failed to load settings:', error);
       }
@@ -157,22 +154,19 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
   const saveSettings = useCallback(async () => {
     setIsSaving(true);
     try {
-      const response = await fetch('/api/voice/settings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(settings),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save settings');
+      await Api.post('/voice/settings', settings);
+      const persisted = await Api.get('/voice/settings').catch(() => null);
+      if (persisted) {
+        const next = { ...settings, ...persisted };
+        setSettings(next);
+        onSettingsChange?.(next);
       }
     } catch (error) {
       console.error('[VoiceSettings] Failed to save:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [settings]);
+  }, [onSettingsChange, settings]);
 
   // Test voice system
   const testVoiceSystem = useCallback(async () => {
@@ -181,23 +175,11 @@ export const VoiceSettingsPanel: React.FC<VoiceSettingsPanelProps> = ({
 
     try {
       // Test STT
-      const sttResponse = await fetch('/api/voice/test/stt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ provider: settings.sttProvider }),
-      });
-      const sttResult = await sttResponse.json();
+      const sttResult = await Api.post('/voice/test/stt', { provider: settings.sttProvider });
       setTestResults((prev) => ({ ...prev, stt: sttResult.success }));
 
       // Test TTS
-      const ttsResponse = await fetch('/api/voice/test/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ provider: settings.ttsProvider }),
-      });
-      const ttsResult = await ttsResponse.json();
+      const ttsResult = await Api.post('/voice/test/tts', { provider: settings.ttsProvider });
       setTestResults((prev) => ({ ...prev, tts: ttsResult.success }));
     } catch (error) {
       console.error('[VoiceSettings] Test failed:', error);

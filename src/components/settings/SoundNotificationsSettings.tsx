@@ -97,6 +97,19 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
         desktopPosition,
         desktopDuration,
       } as SoundPreferences);
+      const persisted = (await Api.get('/settings/notifications/sounds').catch(
+        () => null
+      )) as Partial<SoundPreferences> | null;
+      if (persisted && typeof persisted === 'object') {
+        setSoundEnabled(persisted.soundEnabled !== false);
+        setSoundPerType(persisted.soundPerType || soundPerType);
+        setDesktopPosition((persisted.desktopPosition as DesktopPosition) || desktopPosition);
+        setDesktopDuration(
+          typeof persisted.desktopDuration === 'number'
+            ? persisted.desktopDuration
+            : desktopDuration
+        );
+      }
 
       setSaveStatus('success');
       toast.success(t('settings.notifications.sounds.saved', 'Sound preferences saved'));
@@ -169,7 +182,9 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
           </label>
           {NOTIFICATION_TYPES.map((type) => (
             <div key={type.id} className="flex items-center justify-between">
-              <span className="text-sm text-slate-600 dark:text-slate-400">{type.label}</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">
+                {t(`settings.notifications.sounds.type_${type.id}`, type.label)}
+              </span>
               <select
                 value={soundPerType[type.id] || 'default'}
                 onChange={(e) => setSoundPerType({ ...soundPerType, [type.id]: e.target.value })}
@@ -177,7 +192,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
               >
                 {SOUND_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(`settings.notifications.sounds.sound_${option.value}`, option.label)}
                   </option>
                 ))}
               </select>
@@ -203,7 +218,7 @@ export const SoundNotificationsSettings: React.FC<SoundNotificationsSettingsProp
                   : 'border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-400 hover:border-purple-300'
               }`}
             >
-              {option.label}
+              {t(`settings.notifications.sounds.pos_${option.value}`, option.label)}
             </button>
           ))}
         </div>

@@ -41,6 +41,8 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { buildChatV9FlagDocSummary } from '../../utils/buildChatV9FlagDocSummary';
+import { buildChatV9FlagOverrideUrl } from '../../utils/buildChatV9FlagOverrideUrl';
 import type { ChatV9Block, ChatV9FlagDescriptor } from '../../utils/chatV9FeatureFlags';
 import {
   CHAT_V9_FLAGS,
@@ -50,21 +52,19 @@ import {
   resetAllChatV9FlagOverrides,
   setChatV9FlagOverride,
 } from '../../utils/chatV9FeatureFlags';
-import { buildChatV9FlagDocSummary } from '../../utils/buildChatV9FlagDocSummary';
 import {
   buildChatV9FlagSnapshotText,
   copyTextToClipboard,
 } from '../../utils/chatV9FlagsSnapshotText';
-import { buildChatV9FlagOverrideUrl } from '../../utils/buildChatV9FlagOverrideUrl';
 import { isFlagsPanelDescriptionExpandEnabled } from '../../utils/flagsPanelDescriptionExpandFlag';
+import { isFlagsPanelDocLinksEnabled } from '../../utils/flagsPanelDocLinksFlag';
 import { isFlagsPanelFilterEscapeClearEnabled } from '../../utils/flagsPanelFilterEscapeClearFlag';
+import { isFlagsPanelFilterEnabled } from '../../utils/flagsPanelFilterFlag';
+import { isFlagsPanelGroupingEnabled } from '../../utils/flagsPanelGroupingFlag';
 import { isFlagsPanelOverrideUrlCopyEnabled } from '../../utils/flagsPanelOverrideUrlCopyFlag';
 import { isFlagsPanelRowShortcutsEnabled } from '../../utils/flagsPanelRowShortcutsFlag';
 import { isFlagsPanelShortcutCheatSheetEnabled } from '../../utils/flagsPanelShortcutCheatSheetFlag';
 import { isFlagsPanelStickyGroupHeadersEnabled } from '../../utils/flagsPanelStickyGroupHeadersFlag';
-import { isFlagsPanelDocLinksEnabled } from '../../utils/flagsPanelDocLinksFlag';
-import { isFlagsPanelFilterEnabled } from '../../utils/flagsPanelFilterFlag';
-import { isFlagsPanelGroupingEnabled } from '../../utils/flagsPanelGroupingFlag';
 import { isFlagsSnapshotCopyEnabled } from '../../utils/flagsSnapshotCopyFlag';
 import { groupChatV9Flags } from '../../utils/groupChatV9Flags';
 import { matchChatV9Flag } from '../../utils/matchChatV9Flag';
@@ -294,9 +294,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
   // headers to stick). Reading the kill-switch once per render
   // keeps the panel pixel-stable when either flag flips.
   const stickyGroupHeadersEnabled = groupingEnabled && isStickyGroupHeadersEnabled();
-  const [collapsedBlocks, setCollapsedBlocks] = useState<ReadonlySet<ChatV9Block>>(
-    () => new Set()
-  );
+  const [collapsedBlocks, setCollapsedBlocks] = useState<ReadonlySet<ChatV9Block>>(() => new Set());
 
   // AG1 v1.7 — per-row spec-doc breadcrumb. Resolved once per render
   // so the flag read is cheap and deterministic; `renderFlagRow`
@@ -397,10 +395,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
     });
   }, []);
 
-  const groups = useMemo(
-    () => groupChatV9Flags(visibleFlags, CHAT_V9_FLAGS),
-    [visibleFlags]
-  );
+  const groups = useMemo(() => groupChatV9Flags(visibleFlags, CHAT_V9_FLAGS), [visibleFlags]);
 
   const filterActive = filterEnabled && filterQuery.trim().length > 0;
 
@@ -710,9 +705,15 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
                   }`}
                 >
                   {isCollapsed ? (
-                    <ChevronRight size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                    <ChevronRight
+                      size={13}
+                      className="text-slate-400 dark:text-slate-500 shrink-0"
+                    />
                   ) : (
-                    <ChevronDown size={13} className="text-slate-400 dark:text-slate-500 shrink-0" />
+                    <ChevronDown
+                      size={13}
+                      className="text-slate-400 dark:text-slate-500 shrink-0"
+                    />
                   )}
                   <span className="text-[11px] uppercase tracking-wide font-semibold text-slate-600 dark:text-slate-300">
                     {group.block}
@@ -768,9 +769,7 @@ export const ChatV9FlagsPanel: React.FC<ChatV9FlagsPanelProps> = ({
         key={flag.id}
         data-testid={`chat-v9-flag-row-${flag.id}`}
         data-row-shortcuts={rowShortcutsEnabled ? 'true' : 'false'}
-        onKeyDown={
-          rowShortcutsEnabled ? (e) => handleRowKeyDown(flag.id, e) : undefined
-        }
+        onKeyDown={rowShortcutsEnabled ? (e) => handleRowKeyDown(flag.id, e) : undefined}
         className="p-4 flex flex-col gap-2 md:flex-row md:items-start md:justify-between md:gap-4"
       >
         <div className="min-w-0 flex-1">

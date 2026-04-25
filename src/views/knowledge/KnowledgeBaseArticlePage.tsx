@@ -48,7 +48,12 @@ import remarkGfm from 'remark-gfm';
 
 import { MarketingLayout } from '@/components/Landing/MarketingLayout';
 import { KNOWLEDGE_BASE_SITE } from '@/config/knowledgeBaseSite';
-import { KbArticleListItem, useDocsArticle, useDocsArticles, useDocsTrackView } from '@/hooks/useDocs';
+import {
+  KbArticleListItem,
+  useDocsArticle,
+  useDocsArticles,
+  useDocsTrackView,
+} from '@/hooks/useDocs';
 import { useKnowledgeRedirect, useKnowledgeRelated } from '@/hooks/useKnowledge';
 import { cn } from '@/lib/utils';
 import { resolveKnowledgeLanguage } from '@/utils/knowledgeLanguage';
@@ -73,7 +78,8 @@ interface AnnaArticleContext {
   articleUrl?: string;
 }
 
-const METADATA_LINE_PATTERN = /^(Target persona|Funnel stage|Funnel-Phase|Funnel-Stufe|Trichterphase|Core problem|Main promise|Docelowa persona|Etap lejka|Główny problem|Główna obietnica|Zielpersona|Zielperson|Kernproblem|Hauptversprechen|Hlavní problém|Direct answer):\s/i;
+const METADATA_LINE_PATTERN =
+  /^(Target persona|Funnel stage|Funnel-Phase|Funnel-Stufe|Trichterphase|Core problem|Main promise|Docelowa persona|Etap lejka|Główny problem|Główna obietnica|Zielpersona|Zielperson|Kernproblem|Hauptversprechen|Hlavní problém|Direct answer):\s/i;
 
 function stripMetadataFromContent(content: string): string {
   const lines = content.split('\n');
@@ -124,8 +130,15 @@ function useArticleSeo(article: any, categorySlug?: string) {
 
     const setMeta = (attr: string, key: string, val: string) => {
       let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
-      if (!val) { el?.remove(); return; }
-      if (!el) { el = document.createElement('meta'); el.setAttribute(attr, key); document.head.appendChild(el); }
+      if (!val) {
+        el?.remove();
+        return;
+      }
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
       el.content = val;
     };
 
@@ -134,17 +147,27 @@ function useArticleSeo(article: any, categorySlug?: string) {
     setMeta('property', 'og:description', description);
     setMeta('property', 'og:type', 'article');
     setMeta('property', 'og:url', url);
-    if (article.thumbnail_url) setMeta('property', 'og:image', kbImg(article.thumbnail_url) || article.thumbnail_url);
+    if (article.thumbnail_url)
+      setMeta('property', 'og:image', kbImg(article.thumbnail_url) || article.thumbnail_url);
     setMeta('name', 'twitter:card', 'summary_large_image');
     setMeta('name', 'twitter:title', title);
     setMeta('name', 'twitter:description', description);
 
     let canonical = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
-    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical); }
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
     canonical.href = url;
 
     let jsonLd = document.querySelector('script[data-kb-jsonld]') as HTMLScriptElement | null;
-    if (!jsonLd) { jsonLd = document.createElement('script'); jsonLd.type = 'application/ld+json'; jsonLd.setAttribute('data-kb-jsonld', ''); document.head.appendChild(jsonLd); }
+    if (!jsonLd) {
+      jsonLd = document.createElement('script');
+      jsonLd.type = 'application/ld+json';
+      jsonLd.setAttribute('data-kb-jsonld', '');
+      document.head.appendChild(jsonLd);
+    }
     jsonLd.textContent = JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Article',
@@ -162,8 +185,18 @@ function useArticleSeo(article: any, categorySlug?: string) {
       breadcrumb: {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Knowledge Base', item: `${window.location.origin}/knowledge-base` },
-          { '@type': 'ListItem', position: 2, name: article.category_name || categorySlug, item: `${window.location.origin}/knowledge-base/${categorySlug}` },
+          {
+            '@type': 'ListItem',
+            position: 1,
+            name: 'Knowledge Base',
+            item: `${window.location.origin}/knowledge-base`,
+          },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: article.category_name || categorySlug,
+            item: `${window.location.origin}/knowledge-base/${categorySlug}`,
+          },
           { '@type': 'ListItem', position: 3, name: article.title },
         ],
       },
@@ -206,10 +239,16 @@ function useTTS(content: string | undefined) {
   }, [content, isPlaying]);
 
   useEffect(() => {
-    return () => { window.speechSynthesis?.cancel(); };
+    return () => {
+      window.speechSynthesis?.cancel();
+    };
   }, []);
 
-  return { isPlaying, toggle, supported: typeof window !== 'undefined' && 'speechSynthesis' in window };
+  return {
+    isPlaying,
+    toggle,
+    supported: typeof window !== 'undefined' && 'speechSynthesis' in window,
+  };
 }
 
 export const KnowledgeBaseArticlePage: React.FC = () => {
@@ -223,10 +262,11 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
   const { data: redirectInfo } = useKnowledgeRedirect(articleSlug || '');
 
   const isPolish = i18n.language?.startsWith('pl');
-  const isFallback = Boolean((article as any)?.is_fallback) ||
+  const isFallback =
+    Boolean((article as any)?.is_fallback) ||
     (article as any)?.translation_status === 'missing' ||
     (String((article as any)?.requested_language || '') === 'pl' &&
-     String((article as any)?.resolved_language || '') === 'en');
+      String((article as any)?.resolved_language || '') === 'en');
 
   const isStale = (article as any)?.translation_status === 'stale';
 
@@ -284,7 +324,10 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
       const match = line.match(/^(#{2,3})\s+(.+)/);
       if (match) {
         const text = match[2].replace(/\*\*/g, '').trim();
-        const id = text.toLowerCase().replace(/[^a-z0-9\u0100-\u024f]+/g, '-').replace(/(^-|-$)/g, '');
+        const id = text
+          .toLowerCase()
+          .replace(/[^a-z0-9\u0100-\u024f]+/g, '-')
+          .replace(/(^-|-$)/g, '');
         headings.push({ id, text, level: match[1].length });
       }
     }
@@ -318,17 +361,26 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
   useEffect(() => {
     if (!toc.length) return;
     const observer = new IntersectionObserver(
-      (entries) => { for (const e of entries) { if (e.isIntersecting) setActiveHeading(e.target.id); } },
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) setActiveHeading(e.target.id);
+        }
+      },
       { rootMargin: '-80px 0px -70% 0px' }
     );
-    for (const item of toc) { const el = document.getElementById(item.id); if (el) observer.observe(el); }
+    for (const item of toc) {
+      const el = document.getElementById(item.id);
+      if (el) observer.observe(el);
+    }
     return () => observer.disconnect();
   }, [toc]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    window.dispatchEvent(new CustomEvent('anna:context', { detail: { context: annaArticleContext } }));
+    window.dispatchEvent(
+      new CustomEvent('anna:context', { detail: { context: annaArticleContext } })
+    );
 
     return () => {
       window.dispatchEvent(new CustomEvent('anna:context', { detail: { context: null } }));
@@ -343,29 +395,37 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
   const handleShare = useCallback(async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: article?.title, url: window.location.href }); return; } catch {}
+      try {
+        await navigator.share({ title: article?.title, url: window.location.href });
+        return;
+      } catch {}
     }
     handleCopyLink();
   }, [article?.title, handleCopyLink]);
 
-  const handleFeedback = useCallback((type: 'up' | 'down') => {
-    setFeedback(type);
-    fetch(`/api/public/kb-v8/articles/${articleSlug}/feedback`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type, source: 'knowledge_base' }),
-    }).catch(() => {});
-  }, [articleSlug]);
+  const handleFeedback = useCallback(
+    (type: 'up' | 'down') => {
+      setFeedback(type);
+      fetch(`/api/public/kb-v8/articles/${articleSlug}/feedback`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, source: 'knowledge_base' }),
+      }).catch(() => {});
+    },
+    [articleSlug]
+  );
 
   const handleAskAnna = useCallback(() => {
     const prompt = article?.title
-      ? (docsLanguage === 'pl'
-          ? `Przeczytałem artykuł "${article.title}"${currentSectionTitle ? `, sekcja "${currentSectionTitle}"` : ''}. Chcę dowiedzieć się więcej.`
-          : docsLanguage === 'de'
+      ? docsLanguage === 'pl'
+        ? `Przeczytałem artykuł "${article.title}"${currentSectionTitle ? `, sekcja "${currentSectionTitle}"` : ''}. Chcę dowiedzieć się więcej.`
+        : docsLanguage === 'de'
           ? `Ich habe den Artikel "${article.title}"${currentSectionTitle ? `, Abschnitt "${currentSectionTitle}"` : ''}, gelesen. Ich möchte mehr erfahren.`
-          : `I just read "${article.title}"${currentSectionTitle ? `, especially the section "${currentSectionTitle}"` : ''}. I want to learn more.`)
+          : `I just read "${article.title}"${currentSectionTitle ? `, especially the section "${currentSectionTitle}"` : ''}. I want to learn more.`
       : undefined;
-    window.dispatchEvent(new CustomEvent('anna:open', { detail: { prompt, context: annaArticleContext } }));
+    window.dispatchEvent(
+      new CustomEvent('anna:open', { detail: { prompt, context: annaArticleContext } })
+    );
   }, [annaArticleContext, article?.title, currentSectionTitle, docsLanguage]);
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -421,7 +481,10 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                   <h2 className="text-xl font-bold text-slate-900 mb-2 dark:text-white">
                     {t('kb.article.movedOrRemoved', 'This content has been moved or removed')}
                   </h2>
-                  <Link to="/knowledge-base" className="text-primary-400 hover:text-primary-300 font-semibold">
+                  <Link
+                    to="/knowledge-base"
+                    className="text-primary-400 hover:text-primary-300 font-semibold"
+                  >
                     {t('kb.article.browseKb', 'Browse Knowledge Base')} →
                   </Link>
                 </>
@@ -439,7 +502,10 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
       <div className="fixed top-0 left-0 right-0 z-50 h-[3px]">
         <div
           className="h-full transition-[width] duration-100 ease-out"
-          style={{ width: `${scrollProgress * 100}%`, background: 'linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)' }}
+          style={{
+            width: `${scrollProgress * 100}%`,
+            background: 'linear-gradient(90deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%)',
+          }}
         />
       </div>
 
@@ -454,13 +520,21 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
         <div className="relative z-10 border-b border-slate-200/80 dark:border-white/[0.06]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
             <nav className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 dark:text-white/40 overflow-hidden">
-              <Link to="/knowledge-base" className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors flex-shrink-0">
+              <Link
+                to="/knowledge-base"
+                className="flex items-center gap-1 hover:text-primary-500 dark:hover:text-primary-400 transition-colors flex-shrink-0"
+              >
                 <Home size={14} />
-                <span className="hidden sm:inline">{t('kb.breadcrumb.home', 'Knowledge Base')}</span>
+                <span className="hidden sm:inline">
+                  {t('kb.breadcrumb.home', 'Knowledge Base')}
+                </span>
               </Link>
               <ChevronRight size={12} className="flex-shrink-0 sm:hidden" />
               <ChevronRight size={14} className="flex-shrink-0 hidden sm:block" />
-              <Link to={`/knowledge-base/${categorySlug}`} className="hover:text-primary-500 dark:hover:text-primary-400 transition-colors truncate max-w-[140px] sm:max-w-[200px]">
+              <Link
+                to={`/knowledge-base/${categorySlug}`}
+                className="hover:text-primary-500 dark:hover:text-primary-400 transition-colors truncate max-w-[140px] sm:max-w-[200px]"
+              >
                 {article.category_name || categorySlug}
               </Link>
               <ChevronRight size={14} className="hidden sm:block flex-shrink-0" />
@@ -475,9 +549,14 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           {/* Deprecation banner */}
           {redirectInfo?.deprecationReason && (
             <div className="max-w-3xl mx-auto mb-6 rounded-xl border border-red-200 bg-red-50 dark:border-red-500/30 dark:bg-red-500/10 px-4 py-3 text-sm text-red-900 dark:text-red-200 flex items-start gap-3">
-              <AlertTriangle size={18} className="flex-shrink-0 mt-0.5 text-red-500 dark:text-red-400" />
+              <AlertTriangle
+                size={18}
+                className="flex-shrink-0 mt-0.5 text-red-500 dark:text-red-400"
+              />
               <div>
-                <p className="font-bold">{t('kb.article.deprecated', 'This article has been deprecated')}</p>
+                <p className="font-bold">
+                  {t('kb.article.deprecated', 'This article has been deprecated')}
+                </p>
                 <p className="mt-1">{redirectInfo.deprecationReason}</p>
                 {redirectInfo.redirectSlug ? (
                   <Link
@@ -501,14 +580,20 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
           {/* PL/EN fallback banner */}
           {isPolish && isFallback && (
             <div className="max-w-3xl mx-auto mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-              {t('kb.article.missingTranslation', 'This article is not yet available in Polish. Showing the English version.')}
+              {t(
+                'kb.article.missingTranslation',
+                'This article is not yet available in Polish. Showing the English version.'
+              )}
             </div>
           )}
 
           {/* Stale translation banner */}
           {isStale && (
             <div className="max-w-3xl mx-auto mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-200">
-              {t('help.knowledge.staleTranslation', 'This translation may be outdated — the original article has been updated since.')}
+              {t(
+                'help.knowledge.staleTranslation',
+                'This translation may be outdated — the original article has been updated since.'
+              )}
             </div>
           )}
 
@@ -587,22 +672,42 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
                   {/* Listen */}
                   {tts.supported && (
-                    <button onClick={tts.toggle} className="flex items-center gap-1.5 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
+                    <button
+                      onClick={tts.toggle}
+                      className="flex items-center gap-1.5 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                    >
                       {tts.isPlaying ? <Pause size={14} /> : <Headphones size={14} />}
-                      {tts.isPlaying ? t('kb.article.stopListening', 'Stop') : t('kb.article.listen', 'Listen')}
+                      {tts.isPlaying
+                        ? t('kb.article.stopListening', 'Stop')
+                        : t('kb.article.listen', 'Listen')}
                     </button>
                   )}
 
                   {/* Share */}
                   <div className="flex items-center gap-3">
-                    <button onClick={handleShare} className="flex items-center gap-1.5 hover:text-primary-500 dark:hover:text-primary-400 transition-colors">
+                    <button
+                      onClick={handleShare}
+                      className="flex items-center gap-1.5 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                    >
                       {copied ? <Copy size={14} /> : <Share2 size={14} />}
                       {copied ? t('kb.article.copied', 'Copied!') : t('kb.article.share', 'Share')}
                     </button>
-                    <a href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`} target="_blank" rel="noopener noreferrer" className="hover:text-[#0A66C2] transition-colors" title="LinkedIn">
+                    <a
+                      href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-[#0A66C2] transition-colors"
+                      title="LinkedIn"
+                    >
                       <Linkedin size={14} />
                     </a>
-                    <a href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(article.title || '')}`} target="_blank" rel="noopener noreferrer" className="hover:text-slate-900 dark:hover:text-white transition-colors" title="X">
+                    <a
+                      href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(article.title || '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-slate-900 dark:hover:text-white transition-colors"
+                      title="X"
+                    >
                       <Twitter size={14} />
                     </a>
                   </div>
@@ -654,19 +759,40 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
 
                       paragraphIndex++;
                       if (paragraphIndex <= 3) {
-                        return <p className="!text-slate-800 dark:!text-white/75 !text-[1.15rem] !leading-[1.85]" {...props}>{children}</p>;
+                        return (
+                          <p
+                            className="!text-slate-800 dark:!text-white/75 !text-[1.15rem] !leading-[1.85]"
+                            {...props}
+                          >
+                            {children}
+                          </p>
+                        );
                       }
                       return <p {...props}>{children}</p>;
                     },
                     h2: ({ children, ...props }) => {
                       const text = String(children).replace(/\*\*/g, '');
-                      const id = text.toLowerCase().replace(/[^a-z0-9\u0100-\u024f]+/g, '-').replace(/(^-|-$)/g, '');
-                      return <h2 id={id} {...props}>{children}</h2>;
+                      const id = text
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\u0100-\u024f]+/g, '-')
+                        .replace(/(^-|-$)/g, '');
+                      return (
+                        <h2 id={id} {...props}>
+                          {children}
+                        </h2>
+                      );
                     },
                     h3: ({ children, ...props }) => {
                       const text = String(children).replace(/\*\*/g, '');
-                      const id = text.toLowerCase().replace(/[^a-z0-9\u0100-\u024f]+/g, '-').replace(/(^-|-$)/g, '');
-                      return <h3 id={id} {...props}>{children}</h3>;
+                      const id = text
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\u0100-\u024f]+/g, '-')
+                        .replace(/(^-|-$)/g, '');
+                      return (
+                        <h3 id={id} {...props}>
+                          {children}
+                        </h3>
+                      );
                     },
                     img: ({ src, alt, ...props }) => {
                       const caption = truncateAltText(alt);
@@ -705,21 +831,29 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                   </div>
                   <div className="flex-1">
                     <h4 className="text-slate-900 font-bold text-base mb-1 dark:text-white">
-                      {docsLanguage === 'pl' ? 'Masz pytania?' : docsLanguage === 'de' ? 'Fragen?' : 'Have questions?'}
+                      {docsLanguage === 'pl'
+                        ? 'Masz pytania?'
+                        : docsLanguage === 'de'
+                          ? 'Fragen?'
+                          : 'Have questions?'}
                     </h4>
                     <p className="text-slate-600 text-sm leading-relaxed mb-3 dark:text-white/50">
                       {docsLanguage === 'pl'
                         ? 'Porozmawiaj z Anną o tym, jak to dotyczy Twojej firmy — głosowo lub tekstem.'
                         : docsLanguage === 'de'
-                        ? 'Sprechen Sie mit Anna darüber, wie das für Ihr Unternehmen relevant ist — per Sprache oder Text.'
-                        : 'Talk to Anna about how this applies to your company — voice or text.'}
+                          ? 'Sprechen Sie mit Anna darüber, wie das für Ihr Unternehmen relevant ist — per Sprache oder Text.'
+                          : 'Talk to Anna about how this applies to your company — voice or text.'}
                     </p>
                     <button
                       onClick={handleAskAnna}
                       className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-primary-600 text-white text-sm font-semibold shadow-sm hover:bg-primary-700 transition-colors dark:bg-primary-600/20 dark:border dark:border-primary-500/30 dark:text-primary-300 dark:hover:bg-primary-600/30"
                     >
                       <MessageCircle size={14} />
-                      {docsLanguage === 'pl' ? 'Zapytaj Annę' : docsLanguage === 'de' ? 'Anna fragen' : 'Ask Anna'}
+                      {docsLanguage === 'pl'
+                        ? 'Zapytaj Annę'
+                        : docsLanguage === 'de'
+                          ? 'Anna fragen'
+                          : 'Ask Anna'}
                     </button>
                   </div>
                 </div>
@@ -756,7 +890,9 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                     {t('kb.article.no', 'No')}
                   </button>
                   {feedback && (
-                    <span className="text-xs text-slate-400 ml-2 dark:text-white/25">{t('kb.article.thanksFeedback', 'Thank you')}</span>
+                    <span className="text-xs text-slate-400 ml-2 dark:text-white/25">
+                      {t('kb.article.thanksFeedback', 'Thank you')}
+                    </span>
                   )}
                 </div>
               </div>
@@ -766,7 +902,9 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                 <div
                   className={cn(
                     'mt-8 sm:mt-12 gap-3 sm:gap-4',
-                    articleNavigationCount === 1 ? 'grid grid-cols-1 max-w-xl' : 'grid grid-cols-1 sm:grid-cols-2'
+                    articleNavigationCount === 1
+                      ? 'grid grid-cols-1 max-w-xl'
+                      : 'grid grid-cols-1 sm:grid-cols-2'
                   )}
                 >
                   {prevArticle ? (
@@ -791,10 +929,12 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                         articleNavigationCount > 1 && 'text-right'
                       )}
                     >
-                      <div className={cn(
-                        'flex items-center gap-1 text-xs text-slate-500 mb-2 dark:text-white/30',
-                        articleNavigationCount > 1 && 'justify-end'
-                      )}>
+                      <div
+                        className={cn(
+                          'flex items-center gap-1 text-xs text-slate-500 mb-2 dark:text-white/30',
+                          articleNavigationCount > 1 && 'justify-end'
+                        )}
+                      >
                         {t('kb.article.next', 'Next article')}
                         <ChevronRight size={12} />
                       </div>
@@ -823,11 +963,16 @@ export const KnowledgeBaseArticlePage: React.FC = () => {
                           {related.title}
                         </h4>
                         {related.summary && (
-                          <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed dark:text-white/35">{related.summary}</p>
+                          <p className="mt-2 text-xs text-slate-500 line-clamp-2 leading-relaxed dark:text-white/35">
+                            {related.summary}
+                          </p>
                         )}
                         <div className="mt-3 flex items-center gap-1 text-xs text-primary-500 dark:text-primary-400 font-bold">
                           <span>{t('kb.card.read', 'Read article')}</span>
-                          <ArrowRight size={10} className="group-hover:translate-x-0.5 transition-transform" />
+                          <ArrowRight
+                            size={10}
+                            className="group-hover:translate-x-0.5 transition-transform"
+                          />
                         </div>
                       </Link>
                     ))}

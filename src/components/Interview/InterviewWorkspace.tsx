@@ -58,6 +58,7 @@ import {
   NModeSectionWrapper,
   NModeShell,
 } from '@/components/shared/NModeLayout';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import {
   V8InterviewApi,
@@ -66,7 +67,6 @@ import {
 } from '@/services/api/v8/interview';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
-import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { buildArtifactCode } from '@/utils/artifactLinks';
 
 import { type LinkedItem, LinkedItemsSection } from '../MyWork/shared';
@@ -423,9 +423,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         setAiEvaluation(result);
         setAiEvaluationUpdatedAt(new Date().toISOString());
         if (!opts?.silent) {
-          toast.success(
-            isPolish ? 'Ocena jakości AI jest gotowa.' : 'AI quality review is ready.'
-          );
+          toast.success(isPolish ? 'Ocena jakości AI jest gotowa.' : 'AI quality review is ready.');
         }
         return result;
       } catch (error) {
@@ -589,9 +587,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             Api.get(`/interview/sessions/${currentSession.id}/summary`).catch(() => null),
             currentSession.assignmentId
               ? V8InterviewApi.getManagedAssignments()
-                  .then((res) =>
-                    (res.assignments || []).find((item) => item.id === currentSession?.assignmentId) ||
-                    null
+                  .then(
+                    (res) =>
+                      (res.assignments || []).find(
+                        (item) => item.id === currentSession?.assignmentId
+                      ) || null
                   )
                   .catch(() => Api.get(`/interview/assignments/${currentSession.assignmentId}`))
                   .catch(() => Api.get(`/interview/assignments/my?includeCompleted=true`))
@@ -624,11 +624,10 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           );
 
           if (currentSession.assignmentId) {
-            const found = (
-              Array.isArray(assignmentRes)
+            const found =
+              (Array.isArray(assignmentRes)
                 ? assignmentRes.find((a: any) => a?.id === currentSession?.assignmentId)
-                : assignmentRes
-            ) || interviewDemoData.assignmentsBySessionId[currentSession.id];
+                : assignmentRes) || interviewDemoData.assignmentsBySessionId[currentSession.id];
             setAssignmentStatus(found?.status || null);
             setAssignmentInfo(found || null);
             setAiEvaluation((found as any)?.aiReview || null);
@@ -679,7 +678,14 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
     };
 
     loadSession();
-  }, [initialSessionId, interviewDemoData, isPolish, onSessionChange, projectId, runAiQualityReview]);
+  }, [
+    initialSessionId,
+    interviewDemoData,
+    isPolish,
+    onSessionChange,
+    projectId,
+    runAiQualityReview,
+  ]);
 
   // ==========================================
   // HANDLERS
@@ -705,7 +711,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
       try {
         const updated = await Api.patch(`/interview/questions/${questionId}`, updates);
-        const nextQuestions = questions.map((q) => (q.id === questionId ? { ...q, ...updated } : q));
+        const nextQuestions = questions.map((q) =>
+          q.id === questionId ? { ...q, ...updated } : q
+        );
         setQuestions(nextQuestions);
         const answeredQuestions = nextQuestions.filter((q) => q.status === 'answered').length;
         setSession((prev) => {
@@ -1042,8 +1050,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             sentBackReason: null,
             missingItems: [],
           }));
-        }
-        else setAssignmentStatus('submitted');
+        } else setAssignmentStatus('submitted');
         toast.success(
           isPolish
             ? `Wywiad wysłany do review (${completeness ?? 0}%).`
@@ -1138,8 +1145,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       if (updatedAssignment?.status) {
         setAssignmentStatus(String(updatedAssignment.status));
         setAssignmentInfo((prev: any) => ({ ...(prev || {}), ...updatedAssignment }));
-      }
-      else setAssignmentStatus('approved');
+      } else setAssignmentStatus('approved');
       if (updatedSession) {
         setSession(updatedSession);
         onSessionChange?.(updatedSession);
@@ -1603,7 +1609,11 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             }}
           >
             {isAiEvaluating ? (
-              <p>{isPolish ? 'AI analizuje jakość odpowiedzi...' : 'AI is reviewing answer quality...'}</p>
+              <p>
+                {isPolish
+                  ? 'AI analizuje jakość odpowiedzi...'
+                  : 'AI is reviewing answer quality...'}
+              </p>
             ) : aiEvaluation ? (
               <div className="space-y-2">
                 <p>

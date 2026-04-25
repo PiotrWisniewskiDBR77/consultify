@@ -50,21 +50,24 @@ const GRID_COLS: Record<number, string> = {
 };
 
 export const PreviewActionBar: React.FC<PreviewActionBarProps> = ({ rows, actions }) => {
-  const resolvedRows: Array<{ buttons: ActionButton[]; columns?: number }> = (rows ?? actions ?? []).map(
-    (row) =>
-      row.buttons
-        ? { buttons: row.buttons, columns: row.columns }
-        : {
-            buttons: [
-              {
-                label: row.label || '',
-                onClick: row.onClick || (() => undefined),
-                colorScheme: row.variant === 'primary' ? 'primary' : 'neutral',
-                disabled: false,
-              },
-            ],
-            columns: row.columns,
-          }
+  const resolvedRows: Array<{ buttons: ActionButton[]; columns?: number }> = (
+    rows ??
+    actions ??
+    []
+  ).map((row) =>
+    row.buttons
+      ? { buttons: row.buttons, columns: row.columns }
+      : {
+          buttons: [
+            {
+              label: row.label || '',
+              onClick: row.onClick || (() => undefined),
+              colorScheme: row.variant === 'primary' ? 'primary' : 'neutral',
+              disabled: false,
+            },
+          ],
+          columns: row.columns,
+        }
   );
 
   return (

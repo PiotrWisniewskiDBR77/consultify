@@ -31,26 +31,16 @@ const TRUST_BADGE_BASE =
   'inline-flex items-center gap-1 h-6 rounded-full px-2 text-[10px] font-semibold border transition-colors';
 
 const TRUST_BADGE_VARIANTS: Record<string, string> = {
-  validated:
-    'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
-  pending:
-    'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
-  attention_required:
-    'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
-  passed:
-    'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
-  failed:
-    'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
-  private_draft:
-    'bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/30',
-  in_review:
-    'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30',
-  published:
-    'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
-  completed:
-    'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
-  running:
-    'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
+  validated: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  pending: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/30',
+  attention_required: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
+  passed: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  failed: 'bg-rose-500/10 text-rose-700 dark:text-rose-300 border-rose-500/30',
+  private_draft: 'bg-slate-500/10 text-slate-600 dark:text-slate-300 border-slate-500/30',
+  in_review: 'bg-purple-500/10 text-purple-700 dark:text-purple-300 border-purple-500/30',
+  published: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border-cyan-500/30',
+  completed: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30',
+  running: 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/30',
   default:
     'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60',
 };
@@ -70,12 +60,16 @@ const DOT_COLORS: Record<string, string> = {
 };
 
 function badgeVariant(state: string | null | undefined): string {
-  const key = String(state || '').toLowerCase().trim();
+  const key = String(state || '')
+    .toLowerCase()
+    .trim();
   return TRUST_BADGE_VARIANTS[key] || TRUST_BADGE_VARIANTS.default;
 }
 
 function dotColor(state: string | null | undefined): string {
-  const key = String(state || '').toLowerCase().trim();
+  const key = String(state || '')
+    .toLowerCase()
+    .trim();
   return DOT_COLORS[key] || DOT_COLORS.default;
 }
 
@@ -129,16 +123,13 @@ export const TrustStatePreviewSection: React.FC<TrustStatePreviewSectionProps> =
 
   const originCount = governance.originLinks?.length ?? 0;
   const sourceCount = governance.sourceRefs?.length ?? 0;
-  const lineageSummary = [
-    originCount > 0
-      ? `${originCount} ${t('rap.outputs.preview.originsShort', 'origins')}`
-      : null,
-    sourceCount > 0
-      ? `${sourceCount} ${t('rap.outputs.preview.sourcesShort', 'sources')}`
-      : null,
-  ]
-    .filter(Boolean)
-    .join(' · ') || '—';
+  const lineageSummary =
+    [
+      originCount > 0 ? `${originCount} ${t('rap.outputs.preview.originsShort', 'origins')}` : null,
+      sourceCount > 0 ? `${sourceCount} ${t('rap.outputs.preview.sourcesShort', 'sources')}` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ') || '—';
 
   const exportTraceText = governance.exportHistory?.length
     ? `${governance.exportHistory.length} · ${displayLabel(governance.exportHistory[0]?.status)}`

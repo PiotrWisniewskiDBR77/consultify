@@ -109,6 +109,7 @@ const SCIMProvisioningView: React.FC = () => {
   );
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [newMapping, setNewMapping] = useState({
     externalGroupId: '',
     externalGroupName: '',
@@ -118,14 +119,15 @@ const SCIMProvisioningView: React.FC = () => {
   // Fetch data
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [spResponse, tokensResponse, mappingsResponse, logsResponse, conflictsResponse] =
         await Promise.all([
-          api.get('/scim/admin/service-provider').catch(() => ({ data: { data: null } })),
-          api.get('/scim/admin/tokens').catch(() => ({ data: { data: [] } })),
-          api.get('/scim/admin/group-mappings').catch(() => ({ data: { data: [] } })),
-          api.get('/scim/admin/sync-logs?limit=50').catch(() => ({ data: { data: [] } })),
-          api.get('/scim/admin/conflicts').catch(() => ({ data: { data: [] } })),
+          api.get('/scim/admin/service-provider'),
+          api.get('/scim/admin/tokens'),
+          api.get('/scim/admin/group-mappings'),
+          api.get('/scim/admin/sync-logs?limit=50'),
+          api.get('/scim/admin/conflicts'),
         ]);
 
       setServiceProvider(spResponse.data.data);
@@ -135,6 +137,7 @@ const SCIMProvisioningView: React.FC = () => {
       setConflicts(conflictsResponse.data.data || []);
     } catch (error) {
       console.error('[SCIM] Fetch data error:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load SCIM data');
     } finally {
       setLoading(false);
     }
@@ -1043,6 +1046,20 @@ const SCIMProvisioningView: React.FC = () => {
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="animate-spin text-violet-500" size={32} />
+        </div>
+      ) : loadError ? (
+        <div className="rounded-xl border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-6 text-red-700 dark:text-red-300">
+          <div className="flex items-center gap-2 font-medium">
+            <AlertTriangle size={18} />
+            Failed to load SCIM data
+          </div>
+          <p className="mt-2 text-sm">{loadError}</p>
+          <button
+            onClick={fetchData}
+            className="mt-4 px-4 py-2 rounded-lg bg-red-100 hover:bg-red-200 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-sm font-medium"
+          >
+            Retry
+          </button>
         </div>
       ) : (
         <>

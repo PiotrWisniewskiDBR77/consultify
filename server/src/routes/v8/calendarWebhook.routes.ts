@@ -23,14 +23,16 @@ router.post('/google', async (req: Request, res: Response) => {
   const resourceId = req.get('X-Goog-Resource-ID');
   const resourceState = req.get('X-Goog-Resource-State');
 
-  logger.info(`${LOG_PREFIX} Google webhook: channel=${channelId}, resource=${resourceId}, state=${resourceState}`);
+  logger.info(
+    `${LOG_PREFIX} Google webhook: channel=${channelId}, resource=${resourceId}, state=${resourceState}`
+  );
 
   if (resourceState === 'sync') {
     return res.status(200).send();
   }
 
   if (resourceId) {
-    handleWebhookNotification('google', resourceId).catch(err => {
+    handleWebhookNotification('google', resourceId).catch((err) => {
       logger.error(`${LOG_PREFIX} Google webhook handler error: ${(err as Error).message}`);
     });
   }
@@ -44,16 +46,21 @@ router.post('/google', async (req: Request, res: Response) => {
  */
 router.post('/microsoft', async (req: Request, res: Response) => {
   if (req.query.validationToken) {
-    return res.status(200).contentType('text/plain').send(req.query.validationToken as string);
+    return res
+      .status(200)
+      .contentType('text/plain')
+      .send(req.query.validationToken as string);
   }
 
   const notifications = req.body?.value;
   if (Array.isArray(notifications)) {
     for (const notification of notifications) {
-      const resourceId = notification.resource as string || '';
-      logger.info(`${LOG_PREFIX} Microsoft webhook: resource=${resourceId}, changeType=${notification.changeType}`);
+      const resourceId = (notification.resource as string) || '';
+      logger.info(
+        `${LOG_PREFIX} Microsoft webhook: resource=${resourceId}, changeType=${notification.changeType}`
+      );
 
-      handleWebhookNotification('microsoft', resourceId).catch(err => {
+      handleWebhookNotification('microsoft', resourceId).catch((err) => {
         logger.error(`${LOG_PREFIX} Microsoft webhook handler error: ${(err as Error).message}`);
       });
     }

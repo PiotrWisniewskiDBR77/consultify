@@ -38,7 +38,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
   const [editingId, setEditingId] = useState<string | null>(null);
   const [recordingKeys, setRecordingKeys] = useState<string[]>([]);
 
-  const categories = ['Navigation', 'Editing', 'Views', 'Actions', 'AI', 'System'];
+  const categories = ['navigation', 'editing', 'views', 'actions', 'ai', 'system'];
 
   useEffect(() => {
     loadData();
@@ -52,7 +52,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '1',
           action: 'go_home',
-          category: 'Navigation',
+          category: 'navigation',
           description: 'Go to Dashboard',
           keys: ['Cmd', 'H'],
           isCustom: false,
@@ -61,7 +61,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '2',
           action: 'go_inbox',
-          category: 'Navigation',
+          category: 'navigation',
           description: 'Go to Inbox',
           keys: ['G', 'I'],
           isCustom: false,
@@ -70,7 +70,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '3',
           action: 'go_projects',
-          category: 'Navigation',
+          category: 'navigation',
           description: 'Go to Projects',
           keys: ['G', 'P'],
           isCustom: false,
@@ -79,7 +79,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '4',
           action: 'new_task',
-          category: 'Actions',
+          category: 'actions',
           description: 'Create New Task',
           keys: ['N', 'T'],
           isCustom: false,
@@ -88,7 +88,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '5',
           action: 'new_project',
-          category: 'Actions',
+          category: 'actions',
           description: 'Create New Project',
           keys: ['N', 'P'],
           isCustom: false,
@@ -97,7 +97,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '6',
           action: 'search',
-          category: 'System',
+          category: 'system',
           description: 'Open Search',
           keys: ['Cmd', 'K'],
           isCustom: false,
@@ -106,7 +106,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '7',
           action: 'command_palette',
-          category: 'System',
+          category: 'system',
           description: 'Command Palette',
           keys: ['Cmd', 'Shift', 'P'],
           isCustom: false,
@@ -115,7 +115,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '8',
           action: 'ai_assist',
-          category: 'AI',
+          category: 'ai',
           description: 'Open AI Assistant',
           keys: ['Cmd', 'J'],
           isCustom: false,
@@ -124,7 +124,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '9',
           action: 'save',
-          category: 'Editing',
+          category: 'editing',
           description: 'Save Current',
           keys: ['Cmd', 'S'],
           isCustom: false,
@@ -133,7 +133,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         {
           id: '10',
           action: 'toggle_sidebar',
-          category: 'Views',
+          category: 'views',
           description: 'Toggle Sidebar',
           keys: ['Cmd', 'B'],
           isCustom: false,
@@ -191,7 +191,11 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
     );
 
     if (conflict) {
-      toast.error(`Conflict with: ${conflict.description}`);
+      toast.error(
+        t('settings.shortcuts.editor.conflictWith', 'Conflict with: {{shortcut}}', {
+          shortcut: getShortcutDescription(conflict),
+        })
+      );
     }
 
     setEditingId(null);
@@ -200,13 +204,17 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
 
   const resetShortcut = (id: string) => {
     // Reset to default would require default data
-    toast.success('Reset to default');
+    toast.success(t('settings.shortcuts.editor.resetToDefault', 'Reset to default'));
   };
 
   const resetAllShortcuts = () => {
-    if (window.confirm('Reset all shortcuts to defaults?')) {
+    if (
+      window.confirm(
+        t('settings.shortcuts.editor.resetAllConfirm', 'Reset all shortcuts to defaults?')
+      )
+    ) {
       loadData();
-      toast.success('All shortcuts reset');
+      toast.success(t('settings.shortcuts.editor.allReset', 'All shortcuts reset'));
     }
   };
 
@@ -214,17 +222,23 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
     try {
       setSaving(true);
       await Api.put('/api/user/keyboard-shortcuts', { shortcuts });
-      toast.success('Shortcuts saved');
+      toast.success(t('settings.shortcuts.saved', 'Shortcuts saved'));
     } catch (error) {
-      toast.error('Failed to save');
+      toast.error(t('settings.shortcuts.error', 'Failed to save'));
     } finally {
       setSaving(false);
     }
   };
 
+  const getShortcutDescription = (shortcut: ShortcutBinding) =>
+    t(`settings.shortcuts.editor.actions.${shortcut.action}`, shortcut.description);
+
+  const getCategoryLabel = (category: string) =>
+    t(`settings.shortcuts.editor.categories.${category}`, category);
+
   const filteredShortcuts = shortcuts.filter((s) => {
     const matchesSearch =
-      s.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getShortcutDescription(s).toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.keys.join('+').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || s.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -246,10 +260,13 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         <div>
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <Keyboard size={28} className="text-purple-500" />
-            Keyboard Shortcuts
+            {t('settings.shortcuts.title', 'Keyboard Shortcuts')}
           </h2>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Customize keyboard shortcuts for quick navigation
+            {t(
+              'settings.shortcuts.editor.subtitle',
+              'Customize keyboard shortcuts for quick navigation'
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -258,7 +275,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
             className="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-800 rounded-lg"
           >
             <RotateCcw size={16} />
-            Reset All
+            {t('settings.shortcuts.editor.resetAll', 'Reset All')}
           </button>
           <button
             onClick={handleSave}
@@ -266,7 +283,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg disabled:opacity-50"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            Save Changes
+            {t('common.saveChanges', 'Save Changes')}
           </button>
         </div>
       </div>
@@ -282,7 +299,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search shortcuts..."
+            placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500"
           />
         </div>
@@ -293,10 +310,12 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
             onChange={(e) => setSelectedCategory(e.target.value)}
             className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
           >
-            <option value="all">All Categories</option>
+            <option value="all">
+              {t('settings.shortcuts.editor.allCategories', 'All Categories')}
+            </option>
             {categories.map((cat) => (
               <option key={cat} value={cat}>
-                {cat}
+                {getCategoryLabel(cat)}
               </option>
             ))}
           </select>
@@ -306,9 +325,11 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
       {/* Shortcuts List */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
         <div className="grid grid-cols-[2fr,1fr,auto] gap-4 p-3 bg-slate-50 dark:bg-navy-950 border-b border-slate-200 dark:border-navy-700 text-sm font-medium text-slate-500 dark:text-slate-400">
-          <span>Action</span>
-          <span>Shortcut</span>
-          <span className="w-24 text-center">Actions</span>
+          <span>{t('settings.shortcuts.editor.actionHeader', 'Action')}</span>
+          <span>{t('settings.shortcuts.editor.shortcutHeader', 'Shortcut')}</span>
+          <span className="w-24 text-center">
+            {t('settings.shortcuts.editor.actionsHeader', 'Actions')}
+          </span>
         </div>
 
         <div className="divide-y divide-slate-200 dark:divide-white/10">
@@ -318,19 +339,21 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
               className={`grid grid-cols-[2fr,1fr,auto] gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-navy-950 ${shortcut.isConflicting ? 'bg-red-50 dark:bg-red-500/10' : ''}`}
             >
               <div>
-                <p className="font-medium text-slate-900 dark:text-white">{shortcut.description}</p>
+                <p className="font-medium text-slate-900 dark:text-white">
+                  {getShortcutDescription(shortcut)}
+                </p>
                 <div className="flex items-center gap-2 mt-1">
                   <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
-                    {shortcut.category}
+                    {getCategoryLabel(shortcut.category)}
                   </span>
                   {shortcut.isCustom && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
-                      Custom
+                      {t('settings.shortcuts.editor.custom', 'Custom')}
                     </span>
                   )}
                   {shortcut.isConflicting && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
-                      Conflict
+                      {t('settings.shortcuts.editor.conflict', 'Conflict')}
                     </span>
                   )}
                 </div>
@@ -351,7 +374,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
                         ))
                       ) : (
                         <span className="text-slate-400 dark:text-slate-500 text-sm animate-pulse">
-                          Press keys...
+                          {t('settings.shortcuts.pressKeysPlaceholder', 'Press keys...')}
                         </span>
                       )}
                     </div>
@@ -392,7 +415,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
                       onClick={() => setEditingId(shortcut.id)}
                       className="p-2 text-slate-400 dark:text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg text-sm"
                     >
-                      Edit
+                      {t('common.edit', 'Edit')}
                     </button>
                     {shortcut.isCustom && (
                       <button
@@ -413,13 +436,33 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
       {/* Help */}
       <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-xl p-4">
         <h4 className="font-medium text-purple-700 dark:text-purple-400 mb-2">
-          Keyboard Shortcut Tips
+          {t('settings.shortcuts.editor.tipsTitle', 'Keyboard Shortcut Tips')}
         </h4>
         <ul className="text-sm text-purple-600 dark:text-purple-300 space-y-1">
-          <li>• Click "Edit" and press your desired key combination</li>
-          <li>• Use Cmd/Ctrl + other keys for system shortcuts</li>
-          <li>• Two-key sequences (like G I) work for navigation</li>
-          <li>• Conflicts are highlighted in red - resolve before saving</li>
+          <li>
+            {t(
+              'settings.shortcuts.editor.tipEdit',
+              '• Click "Edit" and press your desired key combination'
+            )}
+          </li>
+          <li>
+            {t(
+              'settings.shortcuts.editor.tipSystem',
+              '• Use Cmd/Ctrl + other keys for system shortcuts'
+            )}
+          </li>
+          <li>
+            {t(
+              'settings.shortcuts.editor.tipSequences',
+              '• Two-key sequences (like G I) work for navigation'
+            )}
+          </li>
+          <li>
+            {t(
+              'settings.shortcuts.editor.tipConflicts',
+              '• Conflicts are highlighted in red - resolve before saving'
+            )}
+          </li>
         </ul>
       </div>
     </div>

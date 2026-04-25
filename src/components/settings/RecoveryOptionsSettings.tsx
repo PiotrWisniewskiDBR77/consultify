@@ -27,6 +27,7 @@ import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
+import { Api } from '../../services/api';
 import { User } from '../../types';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -78,14 +79,8 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
     const fetchRecoveryOptions = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/settings/recovery', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
+        const data = await Api.get('/settings/recovery');
+        if (data) {
           setRecoveryOptions(data);
         } else {
           // Use defaults if API not available
@@ -119,22 +114,13 @@ export const RecoveryOptionsSettings: React.FC<RecoveryOptionsSettingsProps> = (
       const updates =
         editMode === 'email' ? { recoveryEmail: editValue } : { recoveryPhone: editValue };
 
-      const response = await fetch('/api/settings/recovery', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify(updates),
+      await Api.put('/settings/recovery', updates);
+      const persisted = await Api.get('/settings/recovery').catch(() => null);
+      setRecoveryOptions((prev) => ({ ...prev, ...updates, ...(persisted || {}) }));
+      toast({
+        title: t('settings.recovery.saved', 'Recovery Option Updated'),
+        description: t('settings.recovery.savedDesc', 'Your recovery option has been saved'),
       });
-
-      if (response.ok) {
-        setRecoveryOptions((prev) => ({ ...prev, ...updates }));
-        toast({
-          title: t('settings.recovery.saved', 'Recovery Option Updated'),
-          description: t('settings.recovery.savedDesc', 'Your recovery option has been saved'),
-        });
-      }
 
       setEditMode(null);
       setEditValue('');

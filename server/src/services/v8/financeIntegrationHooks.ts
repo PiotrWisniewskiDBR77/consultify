@@ -11,7 +11,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 
-import { run as dbRun, get as dbGet } from '../../utils/DbPromise.js';
+import { get as dbGet, run as dbRun } from '../../utils/DbPromise.js';
 import logger from '../../utils/Logger.js';
 
 const LOG_PREFIX = '[V8:FinanceHooks]';
@@ -189,7 +189,9 @@ export async function recordSwitchoverDecision(params: {
         now,
       ]
     );
-    logger.info(`${LOG_PREFIX} Recorded switchover decision ${id} for snapshot ${params.snapshotId}`);
+    logger.info(
+      `${LOG_PREFIX} Recorded switchover decision ${id} for snapshot ${params.snapshotId}`
+    );
   } catch (err) {
     logger.warn(`${LOG_PREFIX} recordSwitchoverDecision failed (non-blocking)`, err);
   }

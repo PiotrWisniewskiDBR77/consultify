@@ -130,8 +130,16 @@ How can I help you today?`,
         role: 'assistant',
         content: data.data?.message || 'No response received.',
         timestamp: new Date(),
-        suggestions: data.data?.suggestions,
-        codeBlocks: data.data?.codeBlocks,
+        suggestions: Array.isArray(data.data?.suggestions)
+          ? data.data.suggestions.map((suggestion) =>
+              typeof suggestion === 'string' ? { title: suggestion, description: '' } : suggestion
+            )
+          : undefined,
+        codeBlocks: Array.isArray(data.data?.codeBlocks)
+          ? data.data.codeBlocks.map((block) =>
+              typeof block === 'string' ? { language: 'text', content: block } : block
+            )
+          : undefined,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);

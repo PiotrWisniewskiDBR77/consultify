@@ -494,7 +494,11 @@ export class KnowledgeIndexer {
     // (see Dockerfile.api). Relative path from CWD `/app/server` is
     // `../knowledge-runtime/product-pills/Vector-info-pills/file.md` — no `knowledge/` segment.
     const runtimeIdx = parts.indexOf('knowledge-runtime');
-    if (runtimeIdx >= 0 && parts[runtimeIdx + 1] === 'product-pills' && parts.length >= runtimeIdx + 4) {
+    if (
+      runtimeIdx >= 0 &&
+      parts[runtimeIdx + 1] === 'product-pills' &&
+      parts.length >= runtimeIdx + 4
+    ) {
       const productFolder = parts[runtimeIdx + 2] || null;
       const productSlug = productFolder ? this.resolveProductSlug(productFolder) : null;
       return { productSlug, pillId, language };

@@ -46,9 +46,7 @@ export interface AnalysisWorkspacePanelConfig {
   content: ReactNode;
 }
 
-export type RegisterAnalysisWorkspacePanel = (
-  panel: AnalysisWorkspacePanelConfig | null
-) => void;
+export type RegisterAnalysisWorkspacePanel = (panel: AnalysisWorkspacePanelConfig | null) => void;
 
 export interface ResourceAllocation {
   resourceId: string;

@@ -4,6 +4,104 @@
 // The @ts-nocheck remains only for the legacy handlers still in this file;
 // extracted domain controllers have full TypeScript checking.
 
+import auditEventsService from '../services/AuditEventsService.js';
+import { hasColumn } from '../utils/dbSchema.js';
+import logger from '../utils/Logger.js';
+import * as customerCtrl from './superadmin/customerController.js';
+import {
+  createContractAmendment,
+  createCustomerContract,
+  createLifecycleStage,
+  createSuccessPlaybook,
+  deleteCustomerContract,
+  deleteLifecycleStage,
+  deleteSuccessPlaybook,
+  executeSuccessPlaybook,
+  getContractAmendments,
+  getContractStats,
+  getCustomerContracts,
+  getLifecycleStages,
+  getLifecycleStats,
+  getLifecycleTransitions,
+  getPlaybookStats,
+  getSuccessActions,
+  getSuccessPlaybooks,
+  getUpcomingRenewals,
+  transitionOrganization,
+  updateCustomerContract,
+  updateLifecycleStage,
+  updateSuccessPlaybook,
+} from './superadmin/customerController.js';
+import * as dashboardCtrl from './superadmin/dashboardController.js';
+import {
+  addDashboardWidget,
+  cloneDashboard,
+  createDashboard,
+  deleteDashboard,
+  getDashboardBuilderStats,
+  getDashboardById,
+  getDashboards,
+  getDashboardWidgetData,
+  removeDashboardWidget,
+  reorderDashboardWidgets,
+  toggleDashboardShare,
+  updateDashboard,
+  updateDashboardWidget,
+} from './superadmin/dashboardController.js';
+import * as integrationsCtrl from './superadmin/integrationsController.js';
+import * as revenueCtrl from './superadmin/revenueController.js';
+import {
+  addPaymentMethod,
+  addPlanFeature,
+  approveSubscriptionChange,
+  calculateProration,
+  comparePricingPlans,
+  createPricingPlan,
+  createRevenueForecast,
+  createRevenueRecognition,
+  createSubscriptionChange,
+  deletePaymentMethod,
+  deletePricingPlan,
+  deleteRevenueForecast,
+  generateRevenueForecast,
+  getPaymentFailures,
+  getPaymentFailureStats,
+  getPaymentMethods,
+  getPlanFeatures,
+  getPricingPlans,
+  getRecognitionSchedule,
+  getRevenueForecasts,
+  getRevenueForecastStats,
+  getRevenueRecognitions,
+  getRevenueRecognitionStats,
+  getSubscriptionChanges,
+  getSubscriptionChangeStats,
+  recognizeRevenue,
+  rejectSubscriptionChange,
+  removePlanFeature,
+  retryPayment,
+  updatePaymentMethod,
+  updatePricingPlan,
+  updateRevenueForecast,
+  updateRevenueRecognition,
+} from './superadmin/revenueController.js';
+// Domain controllers extracted from this monolith. Namespace imports provide
+// local bindings that the default export object can reference via spread.
+import * as securityCtrl from './superadmin/securityController.js';
+import {
+  createSecurityIncident,
+  deleteSecurityIncident,
+  getIPAccessRules,
+  getSecurityEventStats,
+  getSecurityIncidentById,
+  getSecurityIncidents,
+  getSecurityIncidentStats,
+  getSecurityPolicies,
+  resolveSecurityIncident,
+  updateIPRule,
+  updateSecurityIncident,
+  updateSecurityPolicy,
+} from './superadmin/securityController.js';
 import {
   AppError,
   catchAsync,
@@ -14,84 +112,50 @@ import {
   setDependencies,
   tableExists,
 } from './superadmin/shared.js';
-import auditEventsService from '../services/AuditEventsService.js';
-import { hasColumn } from '../utils/dbSchema.js';
-import logger from '../utils/Logger.js';
-
-// Domain controllers extracted from this monolith. Namespace imports provide
-// local bindings that the default export object can reference via spread.
-import * as securityCtrl from './superadmin/securityController.js';
-import {
-  getSecurityIncidents, getSecurityIncidentStats, getSecurityIncidentById,
-  createSecurityIncident, updateSecurityIncident, resolveSecurityIncident,
-  deleteSecurityIncident, getSecurityEventStats, getIPAccessRules,
-  updateIPRule, getSecurityPolicies, updateSecurityPolicy,
-} from './superadmin/securityController.js';
 import * as threatDlpCtrl from './superadmin/threatDlpController.js';
 import {
-  getThreats, getThreatStats, getThreatById, addThreat, updateThreat,
-  blockThreat, unblockThreat, deleteThreat, checkIPReputation,
-  checkDomainReputation, getBlockedIPs, getBlockedDomains, bulkImportThreats,
-  getDLPPolicies, getDLPPolicyById, createDLPPolicy, updateDLPPolicy,
-  toggleDLPPolicy, deleteDLPPolicy, getDLPViolations, getDLPViolationById,
-  resolveDLPViolation, getDLPStats, scanResourceDLP,
+  addThreat,
+  blockThreat,
+  bulkImportThreats,
+  checkDomainReputation,
+  checkIPReputation,
+  createDLPPolicy,
+  deleteDLPPolicy,
+  deleteThreat,
+  getBlockedDomains,
+  getBlockedIPs,
+  getDLPPolicies,
+  getDLPPolicyById,
+  getDLPStats,
+  getDLPViolationById,
+  getDLPViolations,
+  getThreatById,
+  getThreats,
+  getThreatStats,
+  resolveDLPViolation,
+  scanResourceDLP,
+  toggleDLPPolicy,
+  unblockThreat,
+  updateDLPPolicy,
+  updateThreat,
 } from './superadmin/threatDlpController.js';
-import * as integrationsCtrl from './superadmin/integrationsController.js';
-import * as dashboardCtrl from './superadmin/dashboardController.js';
-import {
-  getDashboards,
-  getDashboardBuilderStats,
-  getDashboardById,
-  createDashboard,
-  updateDashboard,
-  cloneDashboard,
-  toggleDashboardShare,
-  deleteDashboard,
-  addDashboardWidget,
-  updateDashboardWidget,
-  removeDashboardWidget,
-  reorderDashboardWidgets,
-  getDashboardWidgetData,
-} from './superadmin/dashboardController.js';
-import * as revenueCtrl from './superadmin/revenueController.js';
-import {
-  getPricingPlans, createPricingPlan, updatePricingPlan, deletePricingPlan,
-  getPlanFeatures, addPlanFeature, removePlanFeature, comparePricingPlans,
-  getSubscriptionChanges, createSubscriptionChange, approveSubscriptionChange,
-  rejectSubscriptionChange, calculateProration, getSubscriptionChangeStats,
-  getRevenueRecognitions, createRevenueRecognition, updateRevenueRecognition,
-  recognizeRevenue, getRecognitionSchedule, getRevenueRecognitionStats,
-  getRevenueForecasts, createRevenueForecast, updateRevenueForecast,
-  deleteRevenueForecast, generateRevenueForecast, getRevenueForecastStats,
-  getPaymentMethods, addPaymentMethod, updatePaymentMethod, deletePaymentMethod,
-  getPaymentFailures, retryPayment, getPaymentFailureStats,
-} from './superadmin/revenueController.js';
-import * as customerCtrl from './superadmin/customerController.js';
-import {
-  getLifecycleStages, createLifecycleStage, updateLifecycleStage,
-  deleteLifecycleStage, transitionOrganization, getLifecycleTransitions,
-  getLifecycleStats, getSuccessPlaybooks, createSuccessPlaybook,
-  updateSuccessPlaybook, deleteSuccessPlaybook, executeSuccessPlaybook,
-  getSuccessActions, getPlaybookStats, getCustomerContracts,
-  createCustomerContract, updateCustomerContract, deleteCustomerContract,
-  createContractAmendment, getContractAmendments, getUpcomingRenewals,
-  getContractStats,
-} from './superadmin/customerController.js';
-
 
 /**
  * GET All Organizations
  */
 const getOrganizations = catchAsync(async (req, res, next) => {
+  const hasDiscountPercent = await hasColumn('organizations', 'discount_percent').catch(
+    () => false
+  );
   const sql = `
         SELECT 
             o.id, o.name, o.plan, o.status, 
             COALESCE(o.trial_started_at, o.created_at) as created_at, 
-            0 as discount_percent,
+            ${hasDiscountPercent ? 'COALESCE(o.discount_percent, 0)' : '0'} as discount_percent,
             COUNT(CASE WHEN COALESCE(LOWER(u.status), 'active') != 'deleted' THEN 1 END) as user_count
         FROM organizations o
         LEFT JOIN users u ON o.id = u.organization_id
-        GROUP BY o.id, o.name, o.plan, o.status, o.trial_started_at, o.created_at
+        GROUP BY o.id, o.name, o.plan, o.status, o.trial_started_at, o.created_at${hasDiscountPercent ? ', o.discount_percent' : ''}
         ORDER BY o.name ASC
     `;
 
@@ -210,10 +274,10 @@ const getDashboardStats = catchAsync(async (req, res, next) => {
  */
 const updateOrganization = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const { plan, status, discount_percent } = req.body;
+  const { name, plan, status, discount_percent } = req.body;
 
-  const validPlans = ['free', 'pro', 'enterprise'];
-  const validStatuses = ['active', 'blocked', 'trial'];
+  const validPlans = ['free', 'trial', 'starter', 'pro', 'professional', 'enterprise'];
+  const validStatuses = ['active', 'pending', 'blocked', 'suspended', 'cancelled', 'trial'];
 
   if (plan && !validPlans.includes(plan)) return next(new AppError('Invalid plan', 400));
   if (status && !validStatuses.includes(status)) return next(new AppError('Invalid status', 400));
@@ -221,9 +285,30 @@ const updateOrganization = catchAsync(async (req, res, next) => {
     return next(new AppError('Invalid discount percent', 400));
   }
 
-  const sql = `UPDATE organizations SET plan = COALESCE(?, plan), status = COALESCE(?, status), discount_percent = COALESCE(?, discount_percent) WHERE id = ?`;
+  const updates: string[] = [];
+  const params: any[] = [];
+  if (name !== undefined) {
+    updates.push('name = ?');
+    params.push(name);
+  }
+  if (plan !== undefined) {
+    updates.push('plan = ?');
+    params.push(plan);
+  }
+  if (status !== undefined) {
+    updates.push('status = ?');
+    params.push(status);
+  }
+  if (discount_percent !== undefined && (await hasColumn('organizations', 'discount_percent'))) {
+    updates.push('discount_percent = ?');
+    params.push(discount_percent);
+  }
 
-  deps.db.run(sql, [plan, status, discount_percent, id], function (err) {
+  if (updates.length === 0) return res.json({ message: 'No changes submitted' });
+
+  const sql = `UPDATE organizations SET ${updates.join(', ')} WHERE id = ?`;
+
+  deps.db.run(sql, [...params, id], function (err) {
     if (err) return next(new AppError(err.message, 500));
     if (this.changes === 0) return next(new AppError('Organization not found', 404));
 
@@ -233,7 +318,7 @@ const updateOrganization = catchAsync(async (req, res, next) => {
       action: 'updated',
       entityType: 'organization',
       entityId: id,
-      newValue: { plan, status, discount_percent },
+      newValue: { name, plan, status, discount_percent },
     });
 
     res.json({ message: 'Organization updated' });
@@ -299,8 +384,7 @@ const getUsers = catchAsync(async (req, res, next) => {
   const organizationId =
     typeof req.query.organizationId === 'string' ? req.query.organizationId.trim() : '';
   const role = typeof req.query.role === 'string' ? req.query.role.trim() : '';
-  const status =
-    typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
+  const status = typeof req.query.status === 'string' ? req.query.status.trim().toLowerCase() : '';
   const queryParams: string[] = [];
   const whereClauses: string[] = [];
 
@@ -362,20 +446,19 @@ const getUsers = catchAsync(async (req, res, next) => {
 const updateUser = catchAsync(async (req, res, next) => {
   const hasLicensePlanId = await hasColumn('users', 'license_plan_id').catch(() => false);
   const { id } = req.params;
-  const {
-    organizationId,
-    role,
-    status,
-    email,
-    firstName,
-    lastName,
-    licensePlanId,
-  } = req.body;
+  const { organizationId, role, status, email, firstName, lastName, licensePlanId } = req.body;
 
   const updates: string[] = [];
   const params: any[] = [];
 
   if (organizationId !== undefined) {
+    const targetOrganization = await new Promise((resolve, reject) => {
+      deps.db.get('SELECT id FROM organizations WHERE id = ?', [organizationId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+    if (!targetOrganization) return next(new AppError('Target organization not found', 404));
     updates.push('organization_id = ?');
     params.push(organizationId);
   }
@@ -430,38 +513,81 @@ const updateUser = catchAsync(async (req, res, next) => {
  * CREATE Super Admin User
  */
 const createUser = catchAsync(async (req, res, next) => {
-  const { firstName, lastName, email, password } = req.body;
+  const { firstName, lastName, email, password, role, organizationId, licensePlanId } = req.body;
 
-  if (!email || !password) return next(new AppError('Email and password are required', 400));
+  if (!email) return next(new AppError('Email is required', 400));
 
-  const hashedPassword = deps.bcrypt.hashSync(password, 8);
+  const generatedPassword = password || deps.uuid.v4().slice(0, 12);
+  const hashedPassword = deps.bcrypt.hashSync(generatedPassword, 8);
   const id = deps.uuid.v4();
-  const systemOrgId = 'org-dbr77-system';
+  const targetOrgId = organizationId || 'org-dbr77-system';
+  const targetRole = role || 'USER';
+  const hasLicensePlanId = await hasColumn('users', 'license_plan_id').catch(() => false);
+  const targetOrganization = await new Promise((resolve, reject) => {
+    deps.db.get('SELECT id FROM organizations WHERE id = ?', [targetOrgId], (err, row) => {
+      if (err) reject(err);
+      else resolve(row);
+    });
+  });
+  if (!targetOrganization) return next(new AppError('Target organization not found', 404));
 
-  const sql = `INSERT INTO users(id, organization_id, email, password, first_name, last_name, role, status, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`;
+  const columns = [
+    'id',
+    'organization_id',
+    'email',
+    'password',
+    'first_name',
+    'last_name',
+    'role',
+    'status',
+    'created_at',
+  ];
+  const values: any[] = [
+    id,
+    targetOrgId,
+    email,
+    hashedPassword,
+    firstName || '',
+    lastName || '',
+    targetRole,
+    'active',
+  ];
+  const placeholders = ['?', '?', '?', '?', '?', '?', '?', '?', "datetime('now')"];
+  if (hasLicensePlanId && licensePlanId !== undefined) {
+    columns.push('license_plan_id');
+    values.push(licensePlanId || null);
+    placeholders.push('?');
+  }
 
-  deps.db.run(
-    sql,
-    [id, systemOrgId, email, hashedPassword, firstName, lastName, 'SUPERADMIN', 'active'],
-    function (err) {
-      if (err) {
-        if (err.message.includes('UNIQUE constraint failed')) {
-          return next(new AppError('Email already exists', 400));
-        }
-        return next(new AppError(err.message, 500));
+  const sql = `INSERT INTO users(${columns.join(', ')}) VALUES(${placeholders.join(', ')})`;
+
+  deps.db.run(sql, values, function (err) {
+    if (err) {
+      if (err.message.includes('UNIQUE constraint failed')) {
+        return next(new AppError('Email already exists', 400));
       }
-
-      deps.ActivityService.log({
-        userId: req.user?.id,
-        action: 'created',
-        entityType: 'user',
-        entityId: id,
-        newValue: { email, role: 'SUPERADMIN' },
-      });
-
-      res.json({ id, email, firstName, lastName, role: 'SUPERADMIN', status: 'active' });
+      return next(new AppError(err.message, 500));
     }
-  );
+
+    deps.ActivityService.log({
+      userId: req.user?.id,
+      action: 'created',
+      entityType: 'user',
+      entityId: id,
+      newValue: { email, role: targetRole, organizationId: targetOrgId },
+    });
+
+    res.json({
+      id,
+      email,
+      firstName,
+      lastName,
+      role: targetRole,
+      status: 'active',
+      organizationId: targetOrgId,
+      temporaryPassword: password ? undefined : generatedPassword,
+    });
+  });
 });
 
 /**
@@ -638,9 +764,9 @@ const getAccessCodes = catchAsync(async (req, res, next) => {
  * CREATE Access Code
  */
 const createAccessCode = catchAsync(async (req, res, next) => {
-  const { code, role, maxUses, expiresAt } = req.body;
+  const { code, role, maxUses, expiresAt, organizationId } = req.body;
   const newCode = code || deps.uuid.v4().substring(0, 8).toUpperCase();
-  const orgId = req.user.organizationId;
+  const orgId = organizationId || req.user.organizationId || 'org-dbr77-system';
 
   deps.db.run(
     `INSERT INTO access_codes(id, organization_id, code, created_by, role, max_uses, expires_at) VALUES(?, ?, ?, ?, ?, ?, ?)`,
@@ -705,91 +831,95 @@ const impersonateUser = catchAsync(async (req, res, next) => {
     if (err) return next(new AppError(err.message, 500));
     if (!user) return next(new AppError('User not found', 404));
 
-    deps.db.get('SELECT * FROM organizations WHERE id = ?', [user.organization_id], async (err, org) => {
-      if (err) return next(new AppError('Server error', 500));
+    deps.db.get(
+      'SELECT * FROM organizations WHERE id = ?',
+      [user.organization_id],
+      async (err, org) => {
+        if (err) return next(new AppError('Server error', 500));
 
-      const sessionId = deps.uuid.v4();
-      const jti = deps.uuid.v4();
-      const sessionReason = String(reason || 'Superadmin support session').trim();
+        const sessionId = deps.uuid.v4();
+        const jti = deps.uuid.v4();
+        const sessionReason = String(reason || 'Superadmin support session').trim();
 
-      deps.db.run(
-        `INSERT INTO superadmin_impersonation_sessions
+        deps.db.run(
+          `INSERT INTO superadmin_impersonation_sessions
            (id, admin_id, target_user_id, reason, started_at, ip_address, is_active)
          VALUES (?, ?, ?, ?, datetime('now'), ?, 1)`,
-        [sessionId, req.user.id, user.id, sessionReason, req.ip || null],
-        async (sessionErr) => {
-          if (sessionErr) return next(new AppError(sessionErr.message, 500));
+          [sessionId, req.user.id, user.id, sessionReason, req.ip || null],
+          async (sessionErr) => {
+            if (sessionErr) return next(new AppError(sessionErr.message, 500));
 
-          try {
-            await auditEventsService.log({
-              actorId: req.user.id,
-              actorType: 'USER',
-              organizationId: user.organization_id,
-              action: 'user.impersonation_start',
-              resourceType: 'user',
-              resourceId: user.id,
-              metadata: {
-                targetUserId: user.id,
-                targetUserEmail: user.email,
-                tenantId: user.organization_id,
-                durationMinutes: 30,
-                readOnly: true,
-                sessionId,
-                reason: sessionReason,
+            try {
+              await auditEventsService.log({
+                actorId: req.user.id,
+                actorType: 'USER',
+                organizationId: user.organization_id,
+                action: 'user.impersonation_start',
+                resourceType: 'user',
+                resourceId: user.id,
+                metadata: {
+                  targetUserId: user.id,
+                  targetUserEmail: user.email,
+                  tenantId: user.organization_id,
+                  durationMinutes: 30,
+                  readOnly: true,
+                  sessionId,
+                  reason: sessionReason,
+                },
+                ip: req.ip,
+                userAgent: req.headers['user-agent'],
+              });
+            } catch (auditErr) {
+              return next(new AppError('Audit system unavailable for impersonation start', 503));
+            }
+
+            const token = deps.jwt.sign(
+              {
+                id: user.id,
+                email: user.email,
+                role: user.role,
+                organizationId: user.organization_id,
+                impersonatorId: req.user.id,
+                impersonationSessionId: sessionId,
+                jti: jti,
               },
-              ip: req.ip,
-              userAgent: req.headers['user-agent'],
-            });
-          } catch (auditErr) {
-            return next(new AppError('Audit system unavailable for impersonation start', 503));
-          }
+              deps.config.JWT_SECRET,
+              { expiresIn: '30m' }
+            );
 
-          const token = deps.jwt.sign(
-            {
+            const safeUser = {
               id: user.id,
               email: user.email,
+              firstName: user.first_name,
+              lastName: user.last_name,
               role: user.role,
+              status: user.status,
               organizationId: user.organization_id,
+              companyName: org ? org.name : 'Unknown',
               impersonatorId: req.user.id,
               impersonationSessionId: sessionId,
-              jti: jti,
-            },
-            deps.config.JWT_SECRET,
-            { expiresIn: '30m' }
-          );
+              accessLevel: 'read_only',
+            };
 
-          const safeUser = {
-            id: user.id,
-            email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            role: user.role,
-            status: user.status,
-            organizationId: user.organization_id,
-            companyName: org ? org.name : 'Unknown',
-            impersonatorId: req.user.id,
-            impersonationSessionId: sessionId,
-            accessLevel: 'read_only',
-          };
+            deps.ActivityService.log({
+              userId: req.user.id,
+              action: 'impersonate_start',
+              entityType: 'user',
+              entityId: user.id,
+              entityName: user.email,
+              details: {
+                target_organization: user.organization_id,
+                read_only: true,
+                duration_minutes: 30,
+                session_id: sessionId,
+              },
+            });
 
-          deps.ActivityService.log({
-            userId: req.user.id,
-            action: 'impersonate_start',
-            entityType: 'user',
-            entityId: user.id,
-            entityName: user.email,
-            details: {
-              target_organization: user.organization_id,
-              read_only: true,
-              duration_minutes: 30,
-              session_id: sessionId,
-            },
-          });
-
-          res.json({ user: safeUser, token });
-        }
-      );
-    });
+            res.json({ user: safeUser, token });
+          }
+        );
+      }
+    );
   });
 });
 
@@ -3518,7 +3648,24 @@ const getPasswordPolicy = catchAsync(async (req, res, next) => {
 
 const updatePasswordPolicy = catchAsync(async (req, res, next) => {
   const { id } = req.params;
-  const policy = await deps.PasswordPolicyService.setPolicy(id, req.body);
+  const body = req.body || {};
+  const normalizedPolicy = {
+    ...body,
+    min_length: body.min_length ?? body.minLength,
+    require_uppercase: body.require_uppercase ?? body.requireUppercase,
+    require_lowercase: body.require_lowercase ?? body.requireLowercase,
+    require_numbers: body.require_numbers ?? body.requireNumbers,
+    require_special_chars: body.require_special_chars ?? body.requireSpecialChars,
+    max_age_days: body.max_age_days ?? body.maxAgeDays,
+    prevent_reuse_count: body.prevent_reuse_count ?? body.preventReuseCount,
+    lockout_attempts: body.lockout_attempts ?? body.lockoutAttempts,
+    lockout_duration_minutes: body.lockout_duration_minutes ?? body.lockoutDurationMinutes,
+    require_mfa: body.require_mfa ?? body.requireMfa,
+  };
+  if (Number(normalizedPolicy.min_length) < 6 || Number(normalizedPolicy.min_length) > 128) {
+    return next(new AppError('Minimum password length must be between 6 and 128', 400));
+  }
+  const policy = await deps.PasswordPolicyService.setPolicy(id, normalizedPolicy);
   res.json(policy);
 });
 
@@ -3540,7 +3687,16 @@ const getSupportTickets = catchAsync(async (req, res, next) => {
 });
 
 const createSupportTicket = catchAsync(async (req, res, next) => {
-  const ticket = await deps.SupportTicketService.createTicket(req.body);
+  const { subject, description } = req.body || {};
+  if (!String(subject || '').trim() || !String(description || '').trim()) {
+    return next(new AppError('Subject and description are required', 400));
+  }
+  const ticket = await deps.SupportTicketService.createTicket({
+    ...req.body,
+    userId: req.body?.userId || req.user?.id,
+    subject: String(subject).trim(),
+    description: String(description).trim(),
+  });
   res.json(ticket);
 });
 
@@ -3581,6 +3737,10 @@ const getCustomerSuccessNotes = catchAsync(async (req, res, next) => {
 
 const createCustomerSuccessNote = catchAsync(async (req, res, next) => {
   const { id } = req.params;
+  const { title, content } = req.body || {};
+  if (!String(title || '').trim() || !String(content || '').trim()) {
+    return next(new AppError('Title and content are required', 400));
+  }
   const note = await deps.CustomerSuccessService.createNote({
     ...req.body,
     organizationId: id,

@@ -41,6 +41,7 @@ describe('Settings API (root) - REAL integration', () => {
       beforeMount: (a) =>
         a.use((req, _res, next) => {
           (req as any).user = { id: 'u1' };
+          (req as any).userRole = 'superadmin';
           next();
         }),
     });
@@ -57,6 +58,7 @@ describe('Settings API (root) - REAL integration', () => {
       beforeMount: (a) =>
         a.use((req, _res, next) => {
           (req as any).user = { id: 'u1' };
+          (req as any).userRole = 'superadmin';
           next();
         }),
     });

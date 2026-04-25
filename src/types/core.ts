@@ -3769,6 +3769,16 @@ export interface User {
   profileVisibility?: 'public' | 'team' | 'private';
   profileCompletionScore?: number; // 0-100
   activityStatus?: UserActivityStatus;
+  seniorityLevel?: string;
+  siteLocation?: string;
+  tenureYears?: string;
+  managesTeam?: boolean;
+  teamSize?: string;
+  expertiseTags?: string[];
+  engagementLevel?: string;
+  profileSurveyCompletedAt?: string;
+  profileSurveyDismissedCount?: number;
+  profileSurveyLastDismissedAt?: string;
   // UI Preferences
   uiDensity?: 'comfortable' | 'compact' | 'spacious';
   startPage?: 'dashboard' | 'myTasks' | 'inbox' | 'lastVisited';

@@ -25,7 +25,13 @@ export type ConversationIntelligence = {
   summary: string;
   qualityFlags: string[];
   sessionMemory: Record<string, unknown>;
-  outcome: 'demo_requested' | 'trial_started' | 'question_answered' | 'escalated' | 'abandoned' | 'unknown';
+  outcome:
+    | 'demo_requested'
+    | 'trial_started'
+    | 'question_answered'
+    | 'escalated'
+    | 'abandoned'
+    | 'unknown';
 };
 
 const TOPIC_RULES: Array<{ family: string; topic: string; patterns: RegExp[] }> = [
@@ -138,10 +144,10 @@ export function buildConversationIntelligence(args: {
   )
     .map((rule) => rule.topic)
     .slice(0, 3);
-  const productsDiscussed = detectProducts(
-    corpus,
-    [...(args.matchedProducts || []), ...(args.primaryProducts || [])]
-  );
+  const productsDiscussed = detectProducts(corpus, [
+    ...(args.matchedProducts || []),
+    ...(args.primaryProducts || []),
+  ]);
   const intent = inferIntent(message);
   const qualityFlags: string[] = [];
 
@@ -154,7 +160,9 @@ export function buildConversationIntelligence(args: {
     `User is discussing ${detectedTopic.topic.replace(/_/g, ' ')}.`,
     productsDiscussed.length > 0 ? `Products: ${productsDiscussed.join(', ')}.` : null,
     args.surfaceContext?.articleTitle ? `Page context: ${args.surfaceContext.articleTitle}.` : null,
-    historyUserTurns > 0 ? `The conversation already had ${historyUserTurns} prior user turns.` : null,
+    historyUserTurns > 0
+      ? `The conversation already had ${historyUserTurns} prior user turns.`
+      : null,
     `Latest user ask: ${safeSlice(message, 180)}.`,
   ].filter(Boolean);
 

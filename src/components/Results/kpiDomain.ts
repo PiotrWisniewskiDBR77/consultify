@@ -1,5 +1,5 @@
-import type { InitiativeKPI } from '@/types/core';
 import type { V8ResultsTrackedInitiativeEntry } from '@/services/api/v8/results';
+import type { InitiativeKPI } from '@/types/core';
 
 export type KPIStatus = 'on-target' | 'below' | 'no-data';
 export type KPITrend = 'up' | 'down' | 'stable';
@@ -147,13 +147,19 @@ export function mapResultsKpis(kpisList: any[], mappingsList: any[]): ResultsKPI
       linkedInitiatives,
       linkedInitiativesCount: linkedInitiatives.length,
       definitionSource:
-        String(kpi?.definitionSource ?? kpi?.definition_source ?? '').trim().toLowerCase() === 'library'
+        String(kpi?.definitionSource ?? kpi?.definition_source ?? '')
+          .trim()
+          .toLowerCase() === 'library'
           ? 'library'
           : 'initiative-custom',
       observationPhase:
-        String(kpi?.observationPhase ?? kpi?.observation_phase ?? '').trim().toLowerCase() === 'realization'
+        String(kpi?.observationPhase ?? kpi?.observation_phase ?? '')
+          .trim()
+          .toLowerCase() === 'realization'
           ? 'realization'
-          : String(kpi?.observationPhase ?? kpi?.observation_phase ?? '').trim().toLowerCase() === 'both'
+          : String(kpi?.observationPhase ?? kpi?.observation_phase ?? '')
+                .trim()
+                .toLowerCase() === 'both'
             ? 'both'
             : 'post-implementation',
       trackedInRealization: Boolean(
@@ -162,10 +168,13 @@ export function mapResultsKpis(kpisList: any[], mappingsList: any[]): ResultsKPI
       trackedPostImplementation:
         kpi?.trackedPostImplementation ?? kpi?.tracked_post_implementation ?? true,
       observationStatus:
-        String(kpi?.observationStatus ?? kpi?.observation_status ?? '').trim().toLowerCase() === 'paused'
+        String(kpi?.observationStatus ?? kpi?.observation_status ?? '')
+          .trim()
+          .toLowerCase() === 'paused'
           ? 'paused'
-          : String(kpi?.observationStatus ?? kpi?.observation_status ?? '').trim().toLowerCase() ===
-              'completed'
+          : String(kpi?.observationStatus ?? kpi?.observation_status ?? '')
+                .trim()
+                .toLowerCase() === 'completed'
             ? 'completed'
             : 'active',
       realizationExpectation: kpi?.realizationExpectation ?? kpi?.realization_expectation,
@@ -192,7 +201,9 @@ export function filterKpisByLifecycle(
 ): ResultsKPI[] {
   if (lifecycleFilter === 'all') return kpis;
   return kpis.filter((kpi) => {
-    const status = String(kpi.initiativeStatus || '').trim().toUpperCase();
+    const status = String(kpi.initiativeStatus || '')
+      .trim()
+      .toUpperCase();
     if (lifecycleFilter === 'in-realization') {
       return ['APPROVED', 'SCHEDULED', 'EXECUTING'].includes(status);
     }

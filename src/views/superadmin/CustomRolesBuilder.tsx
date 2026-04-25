@@ -117,6 +117,7 @@ const CustomRolesBuilder: React.FC = () => {
   const [editingRole, setEditingRole] = useState<Role | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [newRole, setNewRole] = useState({
     name: '',
     displayName: '',
@@ -129,11 +130,12 @@ const CustomRolesBuilder: React.FC = () => {
   // Fetch data
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [rolesRes, permsRes, templatesRes] = await Promise.all([
-        api.get('/rbac/roles').catch(() => ({ data: { data: [] } })),
-        api.get('/rbac/permissions').catch(() => ({ data: { data: [] } })),
-        api.get('/rbac/templates').catch(() => ({ data: { data: [] } })),
+        api.get('/rbac/roles'),
+        api.get('/rbac/permissions'),
+        api.get('/rbac/templates'),
       ]);
 
       setRoles(rolesRes.data.data || []);
@@ -141,6 +143,7 @@ const CustomRolesBuilder: React.FC = () => {
       setTemplates(templatesRes.data.data || []);
     } catch (error) {
       console.error('[RBAC] Fetch error:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load RBAC data');
     } finally {
       setLoading(false);
     }
@@ -156,7 +159,10 @@ const CustomRolesBuilder: React.FC = () => {
       api
         .get(`/rbac/roles/${selectedRole.id}/permissions`)
         .then((res) => setRolePermissions(res.data.data || []))
-        .catch(() => setRolePermissions([]));
+        .catch((error) => {
+          console.error('[RBAC] Role permissions fetch error:', error);
+          setLoadError(error instanceof Error ? error.message : 'Failed to load role permissions');
+        });
     } else {
       setRolePermissions([]);
     }
@@ -668,6 +674,20 @@ const CustomRolesBuilder: React.FC = () => {
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="animate-spin text-violet-500" size={32} />
         </div>
+      ) : loadError ? (
+        <Card className="p-6 border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10">
+          <div className="flex items-center gap-2 text-red-700 dark:text-red-300 font-medium">
+            <AlertTriangle size={18} />
+            Failed to load custom roles
+          </div>
+          <p className="mt-2 text-sm text-red-700 dark:text-red-300">{loadError}</p>
+          <button
+            onClick={fetchData}
+            className="mt-4 px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-500/20 dark:hover:bg-red-500/30 text-red-800 dark:text-red-200 rounded-lg text-sm font-medium"
+          >
+            Retry
+          </button>
+        </Card>
       ) : (
         <>
           {activeTab === 'roles' && renderRoles()}

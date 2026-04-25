@@ -23,6 +23,8 @@ export const SupportTicketsView: React.FC = () => {
     organizationId: '',
   });
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const [newTicket, setNewTicket] = useState({
     organizationId: '',
     userId: '',
@@ -61,11 +63,13 @@ export const SupportTicketsView: React.FC = () => {
 
   const fetchTickets = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await Api.getSupportTickets(filters);
       setTickets(data);
-    } catch (err) {
-      toast.error('Failed to fetch tickets');
+    } catch (err: any) {
+      setLoadError(err?.message || 'Failed to fetch tickets');
+      toast.error(err?.message || 'Failed to fetch tickets');
     } finally {
       setLoading(false);
     }
@@ -77,6 +81,7 @@ export const SupportTicketsView: React.FC = () => {
       return;
     }
     try {
+      setCreating(true);
       await Api.createSupportTicket(newTicket);
       toast.success('Ticket created');
       setShowCreateModal(false);
@@ -88,9 +93,11 @@ export const SupportTicketsView: React.FC = () => {
         priority: 'medium',
         category: '',
       });
-      fetchTickets();
+      await fetchTickets();
     } catch (err: any) {
       toast.error(err.message || 'Failed to create ticket');
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -158,6 +165,12 @@ export const SupportTicketsView: React.FC = () => {
           Create Ticket
         </button>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
 
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 flex gap-4">
         <select
@@ -333,9 +346,10 @@ export const SupportTicketsView: React.FC = () => {
               </button>
               <button
                 onClick={handleCreateTicket}
-                className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg"
+                disabled={creating}
+                className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg"
               >
-                Create Ticket
+                {creating ? 'Creating...' : 'Create Ticket'}
               </button>
             </div>
           </div>
@@ -396,9 +410,7 @@ export const SupportTicketsView: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-              Conversation
-            </div>
+            <div className="mt-4 text-xs text-slate-500 dark:text-slate-400">Conversation</div>
             <div className="mt-3 rounded-lg border border-slate-200 dark:border-slate-700 p-4 bg-slate-50 dark:bg-navy-900 space-y-3">
               {commentsLoading ? (
                 <div className="text-sm text-slate-500 dark:text-slate-400">Loading replies...</div>
@@ -411,7 +423,9 @@ export const SupportTicketsView: React.FC = () => {
                     <div className="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
                       <span>{comment.isInternal ? 'Internal note' : 'Reply'}</span>
                       <span>
-                        {comment.created_at ? new Date(comment.created_at).toLocaleString() : 'Just now'}
+                        {comment.created_at
+                          ? new Date(comment.created_at).toLocaleString()
+                          : 'Just now'}
                       </span>
                     </div>
                     <div className="mt-2 text-sm text-slate-900 dark:text-white whitespace-pre-wrap">
@@ -426,7 +440,9 @@ export const SupportTicketsView: React.FC = () => {
               )}
 
               <div className="space-y-2">
-                <label className="block text-xs text-slate-500 dark:text-slate-400">Add reply</label>
+                <label className="block text-xs text-slate-500 dark:text-slate-400">
+                  Add reply
+                </label>
                 <textarea
                   value={commentDraft}
                   onChange={(e) => setCommentDraft(e.target.value)}

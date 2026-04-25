@@ -61,11 +61,13 @@ describe('AI settings service - REAL_CODE', () => {
     expect(eff.default_provider).toBeDefined();
   });
 
-  it('generateComplianceReport returns a pdf marker payload when format=pdf', async () => {
+  it('generateComplianceReport rejects unavailable PDF export explicitly', async () => {
     const AISettingsService = (await import('../../server/src/services/aiSettingsService.ts'))
       .default;
-    const report = await AISettingsService.generateComplianceReport('org-1', 'SOC2', 'pdf');
-    expect(report).toEqual(expect.objectContaining({ format: 'pdf', status: 'READY' }));
+    await expect(AISettingsService.generateComplianceReport('org-1', 'SOC2', 'pdf')).rejects.toMatchObject({
+      statusCode: 503,
+      code: 'FEATURE_UNAVAILABLE',
+    });
   });
 
   it('getAuditLog queries audit table with paging', async () => {

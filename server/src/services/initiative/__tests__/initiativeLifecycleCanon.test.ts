@@ -6,12 +6,12 @@ import { describe, expect, it } from 'vitest';
 
 import { InitiativeStatus } from '../../../constants/initiativeStatuses.js';
 import {
-  P11_CANONICAL_LIFECYCLE_STATES,
   buildInitiativeOutboundHandoffPayload,
   coerceInitiativeStatusForWrite,
   hasInitiativeStatusSchemaDrift,
   mapDbStatusToP11Lifecycle,
   normalizeInitiativeDbStatusForRead,
+  P11_CANONICAL_LIFECYCLE_STATES,
 } from '../initiativeLifecycleCanon.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));

@@ -139,11 +139,13 @@ export const useInterviewPermissions = (): InterviewPermissions => {
     [hasExplicitInterviewPermission, canAssign]
   );
   const canReviewInsights = useMemo(
-    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_REVIEW') || hasOrgLevelAssignPermission,
+    () =>
+      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_REVIEW') || hasOrgLevelAssignPermission,
     [hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
   );
   const canPublishInsights = useMemo(
-    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_PUBLISH') || hasOrgLevelAssignPermission,
+    () =>
+      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_PUBLISH') || hasOrgLevelAssignPermission,
     [hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
   );
   const canHandoffInsights = useMemo(

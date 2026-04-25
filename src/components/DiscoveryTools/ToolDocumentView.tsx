@@ -256,6 +256,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     calculateProgress,
     getStepDefinitions,
     hydrateSessionFromApi,
+    acceptCard,
+    rejectCard,
   } = useToolStore();
 
   const {
@@ -268,6 +270,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     missionSuggestion,
     applyMissionSuggestion,
     dismissMissionSuggestion,
+    rethinkCard,
     abortStream,
   } = useToolAI({ toolType });
 
@@ -561,7 +564,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     }, 2000);
 
     return () => clearTimeout(timeout);
-  }, [completionReady, currentSession, missingItemsPayload, progress, toolSessionId, wizardStatePayload]);
+  }, [
+    completionReady,
+    currentSession,
+    missingItemsPayload,
+    progress,
+    toolSessionId,
+    wizardStatePayload,
+  ]);
 
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;
@@ -1102,6 +1112,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               missionSuggestion={missionSuggestion}
               onApplyMissionSuggestion={applyMissionSuggestion}
               onDismissMissionSuggestion={dismissMissionSuggestion}
+              onAcceptCard={acceptCard}
+              onRejectCard={rejectCard}
+              onRethinkCard={(cardType, cardId, comment) => {
+                const phaseId = stepDefs[currentStep - 1]?.id || 'mission';
+                rethinkCard(phaseId, cardType, cardId, comment);
+              }}
             />
           ) : (
             <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">

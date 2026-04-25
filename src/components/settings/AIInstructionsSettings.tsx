@@ -43,21 +43,25 @@ const defaultPreferences: AIInstructionsPreferences = {
 // Template suggestions for quick start
 const PROMPT_TEMPLATES = [
   {
+    id: 'professional',
     name: 'Professional',
     prompt:
       'I prefer formal, professional responses. Focus on accuracy and clarity. Use industry-standard terminology.',
   },
   {
+    id: 'creative',
     name: 'Creative',
     prompt:
       'Be creative and think outside the box. Suggest innovative solutions. Use analogies and examples.',
   },
   {
+    id: 'technical',
     name: 'Technical',
     prompt:
       'Provide detailed technical explanations. Include code examples when relevant. Be precise with specifications.',
   },
   {
+    id: 'concise',
     name: 'Concise',
     prompt:
       'Keep responses brief and to the point. Use bullet points. Avoid unnecessary explanations.',
@@ -100,7 +104,10 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
     setSaving(true);
     try {
       await Api.saveAIInstructions(preferences);
-      setOriginalPreferences(preferences);
+      const persisted = await Api.getAIInstructions().catch(() => null);
+      const next = { ...defaultPreferences, ...(persisted?.preferences || preferences) };
+      setPreferences(next);
+      setOriginalPreferences(next);
       toast.success(t('settings.ai.instructionsSaved', 'AI instructions saved'));
     } catch (_error) {
       toast.error(t('settings.ai.instructionsError', 'Failed to save instructions'));
@@ -110,11 +117,18 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
   }, [preferences, t]);
 
   const applyTemplate = (template: (typeof PROMPT_TEMPLATES)[0]) => {
+    const templateName = t(`settings.ai.behaviorTemplates.${template.id}.name`, template.name);
+    const templatePrompt = t(
+      `settings.ai.behaviorTemplates.${template.id}.prompt`,
+      template.prompt
+    );
     setPreferences((prev) => ({
       ...prev,
-      systemPrompt: template.prompt,
+      systemPrompt: templatePrompt,
     }));
-    toast.success(t('settings.ai.templateApplied', `${template.name} template applied`));
+    toast.success(
+      t('settings.ai.templateApplied', '{{name}} template applied', { name: templateName })
+    );
   };
 
   const responseStyleOptions = [
@@ -154,14 +168,14 @@ export const AIInstructionsSettings: React.FC<AIInstructionsSettingsProps> = ({
             <div className="flex flex-wrap gap-2">
               {PROMPT_TEMPLATES.map((template) => (
                 <button
-                  key={template.name}
+                  key={template.id}
                   onClick={() => applyTemplate(template)}
                   className="flex items-center gap-2 px-3 py-1.5 bg-slate-200/50 dark:bg-navy-700/50 hover:bg-slate-200 dark:hover:bg-navy-700 
                                              border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-700 dark:text-slate-300 
                                              hover:text-slate-900 dark:hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />
-                  {template.name}
+                  {t(`settings.ai.behaviorTemplates.${template.id}.name`, template.name)}
                 </button>
               ))}
             </div>

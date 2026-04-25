@@ -93,9 +93,7 @@ function renderUnavailable(unavailable: VoiceLegendCopyUnavailable): string {
   return '';
 }
 
-export function buildVoiceLegendCopyText(
-  payload: VoiceLegendCopyPayload
-): string {
+export function buildVoiceLegendCopyText(payload: VoiceLegendCopyPayload): string {
   const rawTitle = trimOrEmpty(payload?.title);
   const header = rawTitle.length > 0 ? `${rawTitle}:` : 'Voice modes:';
 

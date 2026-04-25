@@ -92,7 +92,11 @@ export const NavItem: React.FC<NavItemProps> = ({
       <motion.button
         type="button"
         data-chat-toggle={item.id === 'AI_CHAT' ? 'true' : undefined}
-        onClick={() => onClick(item)}
+        aria-disabled={isLocked ? 'true' : undefined}
+        onClick={() => {
+          if (isLocked) return;
+          onClick(item);
+        }}
         whileTap={{ scale: 0.98 }}
         className={[
           'w-full flex items-center text-sm transition-all duration-150 ease-out relative group rounded-lg',

@@ -126,11 +126,19 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
         timezone,
         schedule,
       });
+      const persisted = (await Api.get('/api/settings/working-hours').catch(
+        () => null
+      )) as Partial<WorkingHoursResponse> | null;
+      const nextSchedule =
+        (persisted?.schedule as Record<DayKey, DaySchedule> | undefined) || schedule;
+      const nextTimezone = persisted?.timezone || timezone;
+      setSchedule(nextSchedule);
+      setTimezone(nextTimezone);
 
       // Update user's workingHours
       const workingHours: WorkingHours = {
-        timezone,
-        days: schedule,
+        timezone: nextTimezone,
+        days: nextSchedule,
       };
       onUpdateUser({ workingHours });
       toast.success(t('settings.workingHours.saved', 'Working hours saved'));
@@ -228,7 +236,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          {saving ? 'Saving...' : 'Save'}
+          {saving ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
         </button>
       </div>
 
@@ -240,7 +248,9 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
               <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Working Days</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t('settings.workingHours.workingDays', 'Working Days')}
+              </p>
               <p className="text-xl font-bold text-slate-900 dark:text-white">
                 {DAYS_OF_WEEK.filter((d) => schedule[d.key].enabled).length}
               </p>
@@ -253,7 +263,9 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
               <Clock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Weekly Hours</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t('settings.workingHours.weeklyHours', 'Weekly Hours')}
+              </p>
               <p className="text-xl font-bold text-slate-900 dark:text-white">
                 {totalHours.toFixed(1)}h
               </p>
@@ -266,7 +278,9 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
               <Globe className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Timezone</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t('settings.workingHours.timezone', 'Timezone')}
+              </p>
               <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[150px]">
                 {timezone.replace('_', ' ')}
               </p>
@@ -283,7 +297,10 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
               {t('settings.workingHours.scheduleType', 'Schedule Type')}
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Choose how you want to set your working hours
+              {t(
+                'settings.workingHours.scheduleTypeDescription',
+                'Choose how you want to set your working hours'
+              )}
             </p>
           </div>
         </div>
@@ -307,10 +324,15 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
               >
                 {sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
               </div>
-              <span className="font-medium text-slate-900 dark:text-white">Same every day</span>
+              <span className="font-medium text-slate-900 dark:text-white">
+                {t('settings.workingHours.sameEveryDay', 'Same every day')}
+              </span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
-              Use the same hours for all weekdays
+              {t(
+                'settings.workingHours.sameEveryDayDescription',
+                'Use the same hours for all weekdays'
+              )}
             </p>
           </button>
           <button
@@ -331,10 +353,15 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
               >
                 {!sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
               </div>
-              <span className="font-medium text-slate-900 dark:text-white">Custom per day</span>
+              <span className="font-medium text-slate-900 dark:text-white">
+                {t('settings.workingHours.customPerDay', 'Custom per day')}
+              </span>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
-              Set different hours for each day
+              {t(
+                'settings.workingHours.customPerDayDescription',
+                'Set different hours for each day'
+              )}
             </p>
           </button>
         </div>
@@ -382,7 +409,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                       daySchedule.enabled ? 'text-slate-900 dark:text-white' : 'text-slate-400'
                     }`}
                   >
-                    {day.label}
+                    {t(`settings.workingHours.days.${day.key}.full`, day.label)}
                   </span>
                 </div>
 
@@ -401,7 +428,9 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                         </option>
                       ))}
                     </select>
-                    <span className="text-slate-500 dark:text-slate-400">to</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {t('settings.workingHours.to', 'to')}
+                    </span>
                     <select
                       value={daySchedule.endTime}
                       onChange={(e) => handleTimeChange(day.key, 'endTime', e.target.value)}
@@ -430,7 +459,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
                   </div>
                 ) : (
                   <div className="flex-1 text-slate-400 dark:text-slate-500 text-sm">
-                    Not working
+                    {t('settings.workingHours.notWorking', 'Not working')}
                   </div>
                 )}
               </div>
@@ -445,8 +474,11 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
           <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Note:</strong> Your working hours are used for scheduling features like
-              meeting availability, out-of-office notifications, and focus time suggestions.
+              <strong>{t('settings.workingHours.note', 'Note')}:</strong>{' '}
+              {t(
+                'settings.workingHours.noteText',
+                'Your working hours are used for scheduling features like meeting availability, out-of-office notifications, and focus time suggestions.'
+              )}
             </p>
           </div>
         </div>

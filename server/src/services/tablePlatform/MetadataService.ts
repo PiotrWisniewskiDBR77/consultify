@@ -124,8 +124,10 @@ const metadataService = {
       const row = (await db.query('SELECT * FROM tp_bases WHERE id = $1', [id])).rows[0];
       await auditService.logEvent('create', 'base', id, createdBy, undefined, row, undefined);
 
-      await OrgMemberSyncService.syncOrgMembersToBase(id, orgId).catch(err =>
-        logger.warn('[MetadataService] Org member sync failed after createBase', { error: (err as Error).message })
+      await OrgMemberSyncService.syncOrgMembersToBase(id, orgId).catch((err) =>
+        logger.warn('[MetadataService] Org member sync failed after createBase', {
+          error: (err as Error).message,
+        })
       );
 
       return (row ?? null) as Record<string, unknown> | null;
@@ -333,11 +335,16 @@ const metadataService = {
       // Cascade: remove field references from form configs
       if (tableId) {
         try {
-          const formsResult = await db.query('SELECT id, config FROM tp_forms WHERE table_id = $1', [tableId]);
+          const formsResult = await db.query(
+            'SELECT id, config FROM tp_forms WHERE table_id = $1',
+            [tableId]
+          );
           for (const form of formsResult.rows as Array<{ id: string; config: any }>) {
             const config = form.config;
             if (config && Array.isArray(config.fields)) {
-              const filtered = config.fields.filter((f: any) => f.fieldId !== fieldId && f.id !== fieldId);
+              const filtered = config.fields.filter(
+                (f: any) => f.fieldId !== fieldId && f.id !== fieldId
+              );
               if (filtered.length !== config.fields.length) {
                 await db.query(
                   `UPDATE tp_forms SET config = jsonb_set(config, '{fields}', $2::jsonb), updated_at = NOW() WHERE id = $1`,
@@ -361,15 +368,9 @@ const metadataService = {
       }
 
       await db.query('DELETE FROM tp_fields WHERE id = $1', [fieldId]);
-      await auditService.logEvent(
-        'delete',
-        'field',
-        fieldId,
-        deletedBy,
-        before,
-        undefined,
-        { fieldName: (before as { name?: string }).name }
-      );
+      await auditService.logEvent('delete', 'field', fieldId, deletedBy, before, undefined, {
+        fieldName: (before as { name?: string }).name,
+      });
       if (tableId) {
         const tableRow = (await db.query('SELECT base_id FROM tp_tables WHERE id = $1', [tableId]))
           .rows[0] as { base_id?: string } | undefined;
@@ -703,10 +704,14 @@ const metadataService = {
   ): Promise<any> {
     const db = getDatabase();
     try {
-      const viewLockRow = await db.query('SELECT locked, locked_by FROM tp_views WHERE id = $1', [viewId]);
+      const viewLockRow = await db.query('SELECT locked, locked_by FROM tp_views WHERE id = $1', [
+        viewId,
+      ]);
       if ((viewLockRow.rows[0] as any)?.locked) {
         const lockedBy = (viewLockRow.rows[0] as { locked_by?: string }).locked_by;
-        throw new PermissionError(`View is locked${lockedBy ? ` by user ${lockedBy}` : ''}. Unlock it before editing.`);
+        throw new PermissionError(
+          `View is locked${lockedBy ? ` by user ${lockedBy}` : ''}. Unlock it before editing.`
+        );
       }
       const before = (await db.query('SELECT * FROM tp_views WHERE id = $1', [viewId])).rows[0];
       if (!before) return null;
@@ -807,7 +812,16 @@ const metadataService = {
     options?: Record<string, unknown>,
     preview?: boolean
   ): Promise<
-    | { compatible: number; incompatible: number; samples: Array<{ recordId: string; currentValue: unknown; convertedValue: unknown; error?: string }> }
+    | {
+        compatible: number;
+        incompatible: number;
+        samples: Array<{
+          recordId: string;
+          currentValue: unknown;
+          convertedValue: unknown;
+          error?: string;
+        }>;
+      }
     | { success: boolean }
   > {
     const db = getDatabase();
@@ -824,13 +838,20 @@ const metadataService = {
       [tableId]
     );
 
-    const results = (records.rows as Array<{ id: string; data: Record<string, unknown> | null }>).map((r) => {
+    const results = (
+      records.rows as Array<{ id: string; data: Record<string, unknown> | null }>
+    ).map((r) => {
       const val = r.data?.[fieldId];
       try {
         const converted = convertValue(val, currentType, newType);
         return { recordId: r.id, currentValue: val, convertedValue: converted };
       } catch (e) {
-        return { recordId: r.id, currentValue: val, convertedValue: null, error: (e as Error).message };
+        return {
+          recordId: r.id,
+          currentValue: val,
+          convertedValue: null,
+          error: (e as Error).message,
+        };
       }
     });
 
@@ -854,17 +875,17 @@ const metadataService = {
           const converted = convertValue(val, currentType, newType);
           if (converted !== val) {
             const newData = { ...r.data, [fieldId]: converted };
-            await db.query(
-              'UPDATE tp_records SET data = $1, updated_at = NOW() WHERE id = $2',
-              [JSON.stringify(newData), r.id]
-            );
+            await db.query('UPDATE tp_records SET data = $1, updated_at = NOW() WHERE id = $2', [
+              JSON.stringify(newData),
+              r.id,
+            ]);
           }
         } catch {
           const newData = { ...r.data, [fieldId]: null };
-          await db.query(
-            'UPDATE tp_records SET data = $1, updated_at = NOW() WHERE id = $2',
-            [JSON.stringify(newData), r.id]
-          );
+          await db.query('UPDATE tp_records SET data = $1, updated_at = NOW() WHERE id = $2', [
+            JSON.stringify(newData),
+            r.id,
+          ]);
         }
       }
 

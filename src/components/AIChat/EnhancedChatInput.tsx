@@ -27,12 +27,12 @@ import { CHAT_V9_PII_CHECK_EVENT } from '../../utils/piiHeuristicToastFlag';
 import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
 import { CoThinkerMenu } from './CoThinkerMenu';
-import { MoveToProjectModal } from './MoveToProjectModal';
-import { ToolsMenu } from './ToolsMenu';
 import { InputCharCounter } from './InputCharCounter';
-import { InputSoftLimitToast } from './InputSoftLimitToast';
 import { InputHintStrip } from './InputHintStrip';
+import { InputSoftLimitToast } from './InputSoftLimitToast';
+import { MoveToProjectModal } from './MoveToProjectModal';
 import { NextModelChip } from './NextModelChip';
+import { ToolsMenu } from './ToolsMenu';
 import { VoiceModeLegend } from './VoiceModeLegend';
 
 // ============================================================================
@@ -75,6 +75,10 @@ interface EnhancedChatInputProps {
 
   /** Teresa real-time voice status: 'idle' | 'connecting' | 'live' | 'error' */
   teresaVoiceStatus?: string;
+  /** Whether Teresa live voice can start from the current server/browser posture */
+  teresaVoiceAvailable?: boolean;
+  /** Human-readable reason when Teresa live voice cannot start */
+  teresaVoiceUnavailableReason?: string | null;
   /** Toggle Teresa real-time voice on/off */
   onTeresaVoiceToggle?: () => void;
   /** Whether Teresa mic is currently muted */
@@ -105,6 +109,8 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
   stopVoiceListening,
   onToolSelect,
   teresaVoiceStatus,
+  teresaVoiceAvailable = true,
+  teresaVoiceUnavailableReason,
   onTeresaVoiceToggle,
   teresaVoiceMuted,
   onTeresaVoiceMuteToggle,
@@ -868,7 +874,7 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
               }
             />
             {/* Mic button: mute/unmute when Teresa voice is live, dictation otherwise */}
-            {(teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting') ? (
+            {teresaVoiceStatus === 'live' || teresaVoiceStatus === 'connecting' ? (
               <button
                 onClick={() => onTeresaVoiceMuteToggle?.()}
                 disabled={teresaVoiceStatus !== 'live'}
@@ -956,9 +962,21 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
             ) : (
               <button
                 onClick={() => onTeresaVoiceToggle?.()}
-                disabled={isDisabled}
-                className="p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center bg-primary-600 hover:bg-primary-500 text-white shadow-lg shadow-primary-500/25 group"
-                title={t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')}
+                disabled={isDisabled || !teresaVoiceAvailable}
+                className={`p-2 rounded-xl transition-all duration-200 min-w-[44px] flex items-center justify-center text-white shadow-lg group ${
+                  teresaVoiceAvailable
+                    ? 'bg-primary-600 hover:bg-primary-500 shadow-primary-500/25'
+                    : 'bg-amber-600/80 cursor-not-allowed shadow-amber-500/20'
+                }`}
+                title={
+                  teresaVoiceAvailable
+                    ? t('aiChat.startVoiceConversation', 'Start voice conversation with Teresa')
+                    : teresaVoiceUnavailableReason ||
+                      t(
+                        'aiChat.voiceUnavailable',
+                        'Voice is unavailable. You can continue by text or dictation.'
+                      )
+                }
               >
                 <AudioLines size={18} className="group-hover:scale-110 transition-transform" />
               </button>

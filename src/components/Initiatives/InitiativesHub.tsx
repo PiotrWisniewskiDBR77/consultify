@@ -488,6 +488,8 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
         const chips: FilterChip[] = next.map((p) => ({
           id: `priority:${p}`,
           label: t(`initiatives.priority.${p.toLowerCase()}`, p),
+          column: 'priority',
+          value: p,
         }));
         return [...withoutPriority, ...chips];
       });

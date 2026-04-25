@@ -80,8 +80,14 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
 
   // Normalize all entry points to the mounted root branches.
   useEffect(() => {
-    if (!currentView.startsWith('SUPERADMIN_')) {
+    if (!currentView.startsWith('SUPERADMIN_') || !appViewToSection[currentView]) {
       const rootView = AppView.SUPERADMIN_CUSTOMERS;
+      if (import.meta.env.DEV && currentView.startsWith('SUPERADMIN_')) {
+        console.warn(
+          '[SuperAdminView] Unsupported SuperAdmin view, redirecting to root:',
+          currentView
+        );
+      }
       setCurrentView(rootView);
       navigate(getRouteFromAppView(rootView), { replace: true });
     }
@@ -208,7 +214,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
             case AppView.SUPERADMIN_SSO:
             case AppView.SUPERADMIN_SECURITY_POLICIES:
               return (
-                <SecurityModule initialTab={currentView === AppView.SUPERADMIN_SSO ? 'sso' : 'policies'} />
+                <SecurityModule
+                  initialTab={currentView === AppView.SUPERADMIN_SSO ? 'sso' : 'policies'}
+                />
               );
 
             case AppView.SUPERADMIN_COMPLIANCE:
@@ -229,6 +237,9 @@ export const SuperAdminView: React.FC<SuperAdminViewProps> = ({ currentUser, onN
               return <CustomersModule initialTab="playbooks" />;
 
             default:
+              if (import.meta.env.DEV) {
+                console.warn('[SuperAdminView] Falling back to command center for:', currentView);
+              }
               return <CustomersModule initialTab="command-center" />;
           }
         })()}

@@ -451,7 +451,8 @@ class SlackServiceClass {
     }
 
     try {
-      const fullName = [data.firstName, data.lastName].filter(Boolean).join(' ').trim() || data.email;
+      const fullName =
+        [data.firstName, data.lastName].filter(Boolean).join(' ').trim() || data.email;
       const assignedInterviews =
         data.assignedInterviewNames && data.assignedInterviewNames.length > 0
           ? data.assignedInterviewNames.map((name) => `• ${name}`).join('\n')

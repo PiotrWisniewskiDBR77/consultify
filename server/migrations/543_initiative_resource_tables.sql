@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS initiative_budget_items (
     amount REAL NOT NULL DEFAULT 0,
     currency TEXT NOT NULL DEFAULT 'PLN',
     description TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
     FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
@@ -36,8 +36,8 @@ CREATE TABLE IF NOT EXISTS initiative_tools (
     license_type TEXT DEFAULT 'subscription',       -- 'subscription', 'perpetual', 'open_source', 'internal'
     status TEXT DEFAULT 'planned',                  -- 'planned', 'active', 'deprecated'
     notes TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY(initiative_id) REFERENCES initiatives(id) ON DELETE CASCADE,
     FOREIGN KEY(organization_id) REFERENCES organizations(id) ON DELETE CASCADE
 );
@@ -50,11 +50,24 @@ CREATE INDEX IF NOT EXISTS idx_tools_initiative ON initiative_tools(initiative_i
 -- Ensure 'name' column exists for generic (non-user) resources
 -- and 'updated_at' for consistency
 
--- SQLite doesn't support ADD COLUMN IF NOT EXISTS natively,
--- so we use a safe approach that ignores errors if column exists.
+CREATE TABLE IF NOT EXISTS initiative_resources (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    initiative_id TEXT NOT NULL REFERENCES initiatives(id) ON DELETE CASCADE,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+    role TEXT NOT NULL DEFAULT 'member',
+    allocation_percentage INTEGER DEFAULT 100,
+    start_date DATE,
+    end_date DATE,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_resources_initiative ON initiative_resources(initiative_id);
+CREATE INDEX IF NOT EXISTS idx_resources_user ON initiative_resources(user_id);
 
 -- Add 'name' column
-ALTER TABLE initiative_resources ADD COLUMN name TEXT DEFAULT '';
+ALTER TABLE initiative_resources ADD COLUMN IF NOT EXISTS name TEXT DEFAULT '';
 
 -- Add 'updated_at' column
-ALTER TABLE initiative_resources ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE initiative_resources ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP;

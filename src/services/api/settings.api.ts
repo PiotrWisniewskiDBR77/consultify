@@ -4,11 +4,11 @@
  */
 
 import {
+  API_URL,
   apiDelete,
   apiGet,
   apiPost,
   apiPut,
-  API_URL,
   fetchWithRetry,
   getHeaders,
   handleResponse,
@@ -103,6 +103,13 @@ export interface PromptLibraryItem {
   createdAt: string;
 }
 
+export interface SettingsExportPayload {
+  version: string;
+  exportedAt: string;
+  userId: string;
+  settings: Record<string, unknown>;
+}
+
 const normalizeAccessibilityPreferences = (
   preferences: Record<string, unknown> = {}
 ): AccessibilityPreferences => ({
@@ -184,6 +191,40 @@ const normalizePromptLibrary = (items: unknown): PromptLibraryItem[] => {
     prompt: String((item as any).prompt || ''),
     createdAt: String((item as any).createdAt || new Date().toISOString().split('T')[0]),
   }));
+};
+
+const EXPORT_CATEGORY_MAP: Record<string, string[]> = {
+  profile: ['profile', 'regional', 'working-hours'],
+  security: ['shortcuts'],
+  privacy: ['privacy', 'ai-privacy', 'gdpr-consents', 'gdpr-retention'],
+  aiPreferences: [
+    'ai-instructions',
+    'ai-model',
+    'ai-parameters',
+    'ai-personality',
+    'ai-autocomplete',
+    'ai-memory',
+    'ai-voice',
+    'ai-privacy',
+    'prompt-library',
+  ],
+  notifications: [
+    'notifications',
+    'quietHours',
+    'dnd',
+    'notification-sounds',
+    'notification-digest',
+  ],
+  integrations: ['calendar-connections', 'calendar-settings'],
+  appearance: ['appearance', 'accessibility'],
+  keyboard: ['shortcuts'],
+};
+
+const expandExportCategories = (categories?: string[]): string[] | undefined => {
+  if (!categories?.length) return undefined;
+  return Array.from(
+    new Set(categories.flatMap((category) => EXPORT_CATEGORY_MAP[category] || [category]))
+  );
 };
 
 export const SettingsApi = {
@@ -361,10 +402,12 @@ export const SettingsApi = {
     );
   },
 
-  exportSettings: async (categories?: string[]): Promise<{ data: unknown; filename?: string }> => {
-    return apiPost<{ data: unknown; filename?: string }>(
+  exportSettings: async (
+    categories?: string[]
+  ): Promise<{ data: SettingsExportPayload; filename?: string }> => {
+    return apiPost<{ data: SettingsExportPayload; filename?: string }>(
       '/settings/export',
-      { categories: categories || [] },
+      { categories: expandExportCategories(categories) || [] },
       'Failed to export settings'
     );
   },
@@ -372,8 +415,8 @@ export const SettingsApi = {
   importSettings: async (
     data: Record<string, unknown>,
     overwrite = true
-  ): Promise<{ success: boolean; imported: unknown }> => {
-    return apiPost<{ success: boolean; imported: unknown }>(
+  ): Promise<{ success: boolean; imported: string[]; skipped: string[] }> => {
+    return apiPost<{ success: boolean; imported: string[]; skipped: string[] }>(
       '/settings/import',
       { data, overwrite },
       'Failed to import settings'
@@ -402,7 +445,10 @@ export const SettingsApi = {
   },
 
   getSettingsTemplates: async (): Promise<{ templates: unknown[] }> => {
-    return apiGet<{ templates: unknown[] }>('/settings/templates', 'Failed to fetch settings templates');
+    return apiGet<{ templates: unknown[] }>(
+      '/settings/templates',
+      'Failed to fetch settings templates'
+    );
   },
 
   createSettingsTemplate: async (
@@ -516,22 +562,22 @@ export const SettingsApi = {
   // ==========================================
 
   getUserApiKeys: async (): Promise<unknown[]> => {
-    const res = await fetchWithRetry(`${API_URL}/user/api-keys`, { headers: getHeaders() });
+    const res = await fetchWithRetry(`${API_URL}/settings/api-keys`, { headers: getHeaders() });
     const data = await handleResponse<{ keys: unknown[] }>(res, 'Failed to fetch API keys');
     return data.keys || [];
   },
 
   createUserApiKey: async (name: string, scopes: string[] = []): Promise<unknown> => {
-    const res = await fetchWithRetry(`${API_URL}/user/api-keys`, {
+    const res = await fetchWithRetry(`${API_URL}/settings/api-keys`, {
       method: 'POST',
       headers: getHeaders(),
-      body: JSON.stringify({ name, scopes }),
+      body: JSON.stringify({ name, permissions: scopes }),
     });
     return handleResponse(res, 'Failed to create API key');
   },
 
   deleteUserApiKey: async (id: string): Promise<void> => {
-    const res = await fetchWithRetry(`${API_URL}/user/api-keys/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/settings/api-keys/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
@@ -539,7 +585,7 @@ export const SettingsApi = {
   },
 
   getApiKeyUsage: async (keyId: string): Promise<unknown> => {
-    const res = await fetchWithRetry(`${API_URL}/user/api-keys/${keyId}/usage`, {
+    const res = await fetchWithRetry(`${API_URL}/settings/api-keys/${keyId}/usage`, {
       headers: getHeaders(),
     });
     const data = await handleResponse(res, 'Failed to fetch API key usage');
@@ -547,15 +593,15 @@ export const SettingsApi = {
   },
 
   rotateApiKey: async (keyId: string): Promise<unknown> => {
-    const res = await fetchWithRetry(`${API_URL}/user/api-keys/${keyId}/rotate`, {
-      method: 'PUT',
+    const res = await fetchWithRetry(`${API_URL}/settings/api-keys/${keyId}/rotate`, {
+      method: 'POST',
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to rotate API key');
   },
 
   updateApiKey: async (keyId: string, updates: unknown): Promise<void> => {
-    const res = await fetchWithRetry(`${API_URL}/user/api-keys/${keyId}`, {
+    const res = await fetchWithRetry(`${API_URL}/settings/api-keys/${keyId}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),

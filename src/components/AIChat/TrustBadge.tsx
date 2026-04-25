@@ -53,8 +53,8 @@ import { buildTrustBadgeCitationsText } from '../../utils/buildTrustBadgeCitatio
 import { buildTrustBadgeReasoning } from '../../utils/buildTrustBadgeReasoning';
 import { buildTrustBadgeReasoningText } from '../../utils/buildTrustBadgeReasoningText';
 import {
-  copyTextToClipboard as defaultCopyToClipboard,
   type ClipboardWriteResult,
+  copyTextToClipboard as defaultCopyToClipboard,
 } from '../../utils/chatV9FlagsSnapshotText';
 import { extractCitationDomain } from '../../utils/extractCitationDomain';
 import { formatTrustBadgeModelLabel } from '../../utils/formatTrustBadgeModelLabel';
@@ -145,22 +145,53 @@ function bucketSourceCount(n: number): SourceCountBucket {
 function normalizeCitations(raw: unknown): ChatCitation[] {
   if (!Array.isArray(raw)) return [];
   const out: ChatCitation[] = [];
-  for (const entry of raw) {
-    if (!entry || typeof entry !== 'object') continue;
+  raw.forEach((entry, index) => {
+    if (!entry || typeof entry !== 'object') return;
     const e = entry as Record<string, unknown>;
-    const id = typeof e.id === 'string' ? e.id : undefined;
-    const title = typeof e.title === 'string' ? e.title : undefined;
-    if (!id || !title) continue;
+    const id = typeof e.id === 'string' && e.id.trim() ? e.id.trim() : `citation-${index + 1}`;
+    const rawTitle =
+      typeof e.title === 'string'
+        ? e.title
+        : typeof e.sourceTitle === 'string'
+          ? e.sourceTitle
+          : '';
+    const rawType =
+      typeof e.type === 'string'
+        ? e.type
+        : typeof e.sourceType === 'string'
+          ? e.sourceType
+          : 'external';
+    const type = ['assessment', 'initiative', 'report', 'roadmap', 'external'].includes(rawType)
+      ? (rawType as ChatCitation['type'])
+      : 'external';
+    const genericTitle =
+      /^source\s+\d+$/i.test(rawTitle.trim()) || /^rag_\d+$/i.test(rawTitle.trim());
+    const title =
+      rawTitle.trim() && !genericTitle
+        ? rawTitle.trim()
+        : type === 'external'
+          ? 'External source'
+          : 'Knowledge base source';
     out.push({
       id,
       title,
-      type: (typeof e.type === 'string' ? e.type : 'external') as ChatCitation['type'],
-      reference: typeof e.reference === 'string' ? e.reference : '',
-      link: typeof e.link === 'string' ? e.link : undefined,
+      type,
+      reference:
+        typeof e.reference === 'string'
+          ? e.reference
+          : typeof e.sourceId === 'string'
+            ? e.sourceId
+            : '',
+      link:
+        typeof e.link === 'string'
+          ? e.link
+          : typeof e.sourceUrl === 'string'
+            ? e.sourceUrl
+            : undefined,
       excerpt: typeof e.excerpt === 'string' ? e.excerpt : undefined,
       entityId: typeof e.entityId === 'string' ? e.entityId : undefined,
     });
-  }
+  });
   return out;
 }
 
@@ -194,11 +225,8 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
   // copy button so the two affordances never clobber each other.
   // They share the same tone scheme but the user may trigger both
   // in rapid succession and expect each to reflect its own result.
-  const [reasoningCopyFeedback, setReasoningCopyFeedback] =
-    useState<CopyFeedback>('idle');
-  const reasoningCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null
-  );
+  const [reasoningCopyFeedback, setReasoningCopyFeedback] = useState<CopyFeedback>('idle');
+  const reasoningCopyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const safeCitations = useMemo(() => normalizeCitations(citations), [citations]);
@@ -412,9 +440,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
               <span className="uppercase tracking-wide text-[10px] font-semibold text-slate-400 dark:text-slate-500">
                 {t('trust.badge.answeredBy', 'Answered by')}
               </span>
-              <span className="font-medium text-slate-700 dark:text-slate-200">
-                {modelLabel}
-              </span>
+              <span className="font-medium text-slate-700 dark:text-slate-200">{modelLabel}</span>
             </div>
           )}
 
@@ -431,9 +457,7 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                   // text so the popover never renders a broken <a> and
                   // never becomes an XSS vector through a stray
                   // `javascript:` URL.
-                  const safeLink = citationLinksEnabled
-                    ? isSafeCitationLink(c.link)
-                    : null;
+                  const safeLink = citationLinksEnabled ? isSafeCitationLink(c.link) : null;
                   // T-TR3.4 — extract the hostname from the raw link
                   // *independently* of `citationLinksEnabled`. The domain
                   // pill is a provenance signal, not a navigation control,
@@ -472,20 +496,16 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                           {c.title}
                         </a>
                       ) : (
-                        <span data-testid={`trust-badge-citation-plain-${idx}`}>
-                          {c.title}
-                        </span>
+                        <span data-testid={`trust-badge-citation-plain-${idx}`}>{c.title}</span>
                       )}
                       {citationDomain && (
                         <span
                           data-testid={`trust-badge-citation-domain-${idx}`}
                           data-citation-domain={citationDomain}
                           className="ml-1.5 inline-flex items-center text-[10px] uppercase tracking-wide text-slate-500 dark:text-slate-400"
-                          aria-label={t(
-                            'trust.badge.citationDomain',
-                            'Source domain: {{domain}}',
-                            { domain: citationDomain }
-                          )}
+                          aria-label={t('trust.badge.citationDomain', 'Source domain: {{domain}}', {
+                            domain: citationDomain,
+                          })}
                         >
                           <span aria-hidden="true" className="text-slate-300 dark:text-navy-600">
                             ·
@@ -546,15 +566,10 @@ export const TrustBadge: React.FC<TrustBadgeProps> = ({
                 ) : (
                   <ChevronRight size={12} strokeWidth={2} aria-hidden />
                 )}
-                <span>
-                  {t('trust.badge.reasoningToggle', 'Why this answer?')}
-                </span>
+                <span>{t('trust.badge.reasoningToggle', 'Why this answer?')}</span>
               </button>
               {reasoningExpanded && (
-                <div
-                  id="trust-badge-reasoning-body"
-                  data-testid="trust-badge-reasoning-body"
-                >
+                <div id="trust-badge-reasoning-body" data-testid="trust-badge-reasoning-body">
                   <ul className="mt-2 space-y-1.5">
                     {reasoningObservations.map((obs) => (
                       <li

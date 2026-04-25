@@ -167,20 +167,14 @@ describe('RapidLeanReportService', () => {
     });
 
     describe('generatePDF', () => {
-        it.skip('should generate PDF report - requires real service implementation', async () => {
-            // Skip: requires real file generation
-        });
+        it.todo('should generate PDF report (requires real file generation)');
     });
 
     describe('generateExcel', () => {
-        it.skip('should generate Excel report - requires real service implementation', async () => {
-            // Skip: requires real file generation
-        });
+        it.todo('should generate Excel report (requires real file generation)');
     });
 
     describe('generatePowerPoint', () => {
-        it.skip('should generate PowerPoint report - requires real service implementation', async () => {
-            // Skip: requires real file generation
-        });
+        it.todo('should generate PowerPoint report (requires real file generation)');
     });
 });

@@ -26,6 +26,8 @@ const MODULE_ICONS: Record<TargetModule, React.ElementType> = {
   interview: ExternalLink,
   mywork: ExternalLink,
   economics: ExternalLink,
+  excele: ExternalLink,
+  process_flow: ExternalLink,
 };
 
 export interface ChatActionButtonProps {

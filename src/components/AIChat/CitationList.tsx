@@ -48,6 +48,27 @@ const CITATION_COLORS: Record<string, string> = {
     'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
 };
 
+function sanitizeCitationText(value: unknown): string {
+  return String(value || '')
+    .replace(/\s*\[(?:MEM|DT|BM|KB|WEB|ASS|FIN)\](?=[\s.,;:!?)]|$)/gi, '')
+    .replace(/\b(?:MEM|DT|BM|KB|WEB|ASS|FIN):\s*/gi, '')
+    .replace(/\b(?:rag|chunk)_\d+\b/gi, '')
+    .replace(/^source\s+\d+$/i, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+}
+
+function getUserFacingCitationTitle(citation: ChatCitation): string {
+  const rawTitle = sanitizeCitationText((citation as any)?.title);
+  const rawReference = sanitizeCitationText((citation as any)?.reference);
+  if (rawTitle && !/^source\s+\d+$/i.test(rawTitle) && !/^rag_\d+$/i.test(rawTitle)) {
+    return rawTitle;
+  }
+  if (citation.type === 'external') return 'External source';
+  if (rawReference && !/^rag_\d+$/i.test(rawReference)) return rawReference;
+  return 'Knowledge base source';
+}
+
 export const CitationList: React.FC<CitationListProps> = ({
   citations,
   collapsed = false,
@@ -101,6 +122,7 @@ export const CitationList: React.FC<CitationListProps> = ({
           {citations.map((citation, index) => {
             const Icon = CITATION_ICONS[citation.type] || FileText;
             const colorClass = CITATION_COLORS[citation.type] || CITATION_COLORS.external;
+            const title = getUserFacingCitationTitle(citation);
 
             return (
               <button
@@ -124,7 +146,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
                     <div className="text-xs font-medium text-navy-900 dark:text-white truncate">
-                      {citation.title}
+                      {title}
                     </div>
                     {/* Feedback #1cbe2baa — explicit "External" tag so
                         users can see at a glance which sources are web-
@@ -138,11 +160,11 @@ export const CitationList: React.FC<CitationListProps> = ({
                     )}
                   </div>
                   <div className="text-[10px] text-slate-500 dark:text-slate-400 truncate">
-                    {citation.reference}
+                    {sanitizeCitationText(citation.reference)}
                   </div>
                   {citation.excerpt && (
                     <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 line-clamp-2">
-                      "{citation.excerpt}"
+                      "{sanitizeCitationText(citation.excerpt)}"
                     </div>
                   )}
                 </div>
@@ -171,6 +193,7 @@ interface CitationMarkerProps {
 export const CitationMarker: React.FC<CitationMarkerProps> = ({ number, citation, onClick }) => {
   const [showTooltip, setShowTooltip] = React.useState(false);
   const Icon = CITATION_ICONS[citation.type] || FileText;
+  const title = getUserFacingCitationTitle(citation);
 
   return (
     <span
@@ -208,11 +231,9 @@ export const CitationMarker: React.FC<CitationMarkerProps> = ({ number, citation
           <div className="flex items-start gap-2">
             <Icon size={14} className="text-primary-500 shrink-0 mt-0.5" />
             <div>
-              <div className="text-xs font-medium text-navy-900 dark:text-white">
-                {citation.title}
-              </div>
+              <div className="text-xs font-medium text-navy-900 dark:text-white">{title}</div>
               <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                {citation.reference}
+                {sanitizeCitationText(citation.reference)}
               </div>
             </div>
           </div>

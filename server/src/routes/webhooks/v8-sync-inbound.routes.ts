@@ -8,7 +8,7 @@
  * without a JWT. Authentication relies on HMAC-SHA256 signature
  * verification using the per-registration secret_key.
  */
-import { createHmac, createHash } from 'crypto';
+import { createHash, createHmac } from 'crypto';
 import type { Request, Response } from 'express';
 import { Router } from 'express';
 
@@ -20,7 +20,8 @@ const router = Router();
 router.post(
   '/inbound/:registrationId',
   asyncHandler(async (req: Request, res: Response) => {
-    const registrationId = typeof req.params.registrationId === 'string' ? req.params.registrationId.trim() : '';
+    const registrationId =
+      typeof req.params.registrationId === 'string' ? req.params.registrationId.trim() : '';
 
     const reg = await dbGet(
       `SELECT registration_id, integration_id, organization_id, secret_key, event_types, is_active, direction
@@ -44,7 +45,9 @@ router.post(
 
     // HMAC verification — required for public inbound webhooks
     if (!r.secret_key) {
-      return res.status(500).json({ error: 'Webhook registration has no signing secret configured' });
+      return res
+        .status(500)
+        .json({ error: 'Webhook registration has no signing secret configured' });
     }
 
     const signature = req.headers['x-webhook-signature'] as string | undefined;
@@ -62,13 +65,19 @@ router.post(
     const resolvedEventType = eventType || 'generic';
 
     let allowedTypes: string[] = [];
-    try { allowedTypes = JSON.parse(String(r.event_types || '[]')); } catch { /* */ }
+    try {
+      allowedTypes = JSON.parse(String(r.event_types || '[]'));
+    } catch {
+      /* */
+    }
     if (allowedTypes.length > 0 && !allowedTypes.includes(resolvedEventType)) {
       return res.status(422).json({ error: `Event type '${resolvedEventType}' is not registered` });
     }
 
     // Idempotency — payload hash dedup
-    const payloadHash = createHash('sha256').update(JSON.stringify(payload || {})).digest('hex');
+    const payloadHash = createHash('sha256')
+      .update(JSON.stringify(payload || {}))
+      .digest('hex');
 
     const existingDelivery = await dbGet(
       `SELECT delivery_id FROM v8_webhook_deliveries
@@ -94,7 +103,11 @@ router.post(
     await dbRun(
       `INSERT INTO integration_audit_log (id, organization_id, integration_id, action, actor_id, actor_name, details)
        VALUES (gen_random_uuid()::TEXT, ?, ?, 'webhook_received', 'system', 'webhook-public', ?::JSONB)`,
-      [r.organization_id, r.integration_id, JSON.stringify({ registrationId, eventType: resolvedEventType, source: 'public_inbound' })]
+      [
+        r.organization_id,
+        r.integration_id,
+        JSON.stringify({ registrationId, eventType: resolvedEventType, source: 'public_inbound' }),
+      ]
     );
 
     return res.json({

@@ -103,7 +103,7 @@ export const PromptBlockBuilder: React.FC<PromptBlockBuilderProps> = ({
     try {
       const data = await PromptAssistantApi.getBlocks();
       setAvailableBlocks(data.data || []);
-      setCategories(data.categories || {});
+      setCategories((data.categories || {}) as Record<string, BlockCategory>);
     } catch (error) {
       console.error('Failed to load blocks:', error);
     } finally {

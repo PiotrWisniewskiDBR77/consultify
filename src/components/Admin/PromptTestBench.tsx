@@ -101,11 +101,12 @@ export const PromptTestBench: React.FC<PromptTestBenchProps> = ({
 
     try {
       const data = await PromptAssistantApi.runTest(templateCode, sampleInput, selectedLanguages);
-      setResults(data.data?.results || []);
-      setSummary(data.data?.summary || null);
+      const nextResults = (data.data?.results || []) as TestResult[];
+      setResults(nextResults);
+      setSummary((data.data?.summary || null) as TestSummary | null);
 
       if (onTestComplete) {
-        onTestComplete(data.data?.results || []);
+        onTestComplete(nextResults);
       }
     } catch (error) {
       console.error('Test error:', error);

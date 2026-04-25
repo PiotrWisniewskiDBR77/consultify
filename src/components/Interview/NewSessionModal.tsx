@@ -198,8 +198,8 @@ export const NewSessionModal: React.FC<NewSessionModalProps> = ({
         toast.success(
           (assignment as any)?.splitAssignments
             ? isPolish
-              ? `Utworzono ${((assignment as any)?.createdCount || assigneeIds.length)} osobne przydziały`
-              : `Created ${((assignment as any)?.createdCount || assigneeIds.length)} separate assignments`
+              ? `Utworzono ${(assignment as any)?.createdCount || assigneeIds.length} osobne przydziały`
+              : `Created ${(assignment as any)?.createdCount || assigneeIds.length} separate assignments`
             : isPolish
               ? 'Przydzielono wywiad'
               : 'Interview assigned'

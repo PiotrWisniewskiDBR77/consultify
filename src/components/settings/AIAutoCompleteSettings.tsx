@@ -16,12 +16,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
-import {
-  SettingsDivider,
-  SettingsFormRow,
-  SettingsSection,
-  SettingsToggle,
-} from './shared';
+import { SettingsDivider, SettingsFormRow, SettingsSection, SettingsToggle } from './shared';
 
 interface AutoCompletePreferences {
   enabled: boolean;

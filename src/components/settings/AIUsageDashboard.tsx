@@ -76,6 +76,19 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
   const [usageByFeature, setUsageByFeature] = useState<UsageStat[]>([]);
   const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
 
+  const normalizeFeatureKey = (feature: unknown) =>
+    String(feature || 'general')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'general';
+
+  const formatFeatureFallback = (feature: string) =>
+    feature
+      .split('_')
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(' ');
+
   // Fetch usage data from backend API
   useEffect(() => {
     const fetchUsage = async () => {
@@ -107,28 +120,31 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
           };
 
           setUsageByFeature(
-            response.usageByFeature.map((item: any) => ({
-              feature: item.feature || 'General',
-              icon: iconMap[item.feature?.toLowerCase()] || Sparkles,
-              count: item.count || 0,
-              tokens: item.tokens || 0,
-              cost: item.cost || 0,
-              trend: 0, // Could be calculated from historical data
-            }))
+            response.usageByFeature.map((item: any) => {
+              const feature = normalizeFeatureKey(item.feature);
+              return {
+                feature,
+                icon: iconMap[feature] || Sparkles,
+                count: item.count || 0,
+                tokens: item.tokens || 0,
+                cost: item.cost || 0,
+                trend: 0, // Could be calculated from historical data
+              };
+            })
           );
         } else {
           // Default empty state
           setUsageByFeature([
-            { feature: 'AI Chat', icon: MessageSquare, count: 0, tokens: 0, cost: 0, trend: 0 },
+            { feature: 'chat', icon: MessageSquare, count: 0, tokens: 0, cost: 0, trend: 0 },
             {
-              feature: 'Document Analysis',
+              feature: 'document',
               icon: FileText,
               count: 0,
               tokens: 0,
               cost: 0,
               trend: 0,
             },
-            { feature: 'Smart Search', icon: Search, count: 0, tokens: 0, cost: 0, trend: 0 },
+            { feature: 'search', icon: Search, count: 0, tokens: 0, cost: 0, trend: 0 },
           ]);
         }
 
@@ -380,7 +396,10 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {stat.feature}
+                        {t(
+                          `settings.aiUsage.features.${stat.feature}`,
+                          formatFeatureFallback(stat.feature)
+                        )}
                       </span>
                       <div className="flex items-center gap-3 text-sm">
                         <span className="text-slate-500 dark:text-slate-400">

@@ -115,7 +115,12 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
 
     try {
       const result = await Api.uploadAvatar(currentUser.id, selectedFile);
-      onUpdateUser({ avatarUrl: result.avatarUrl });
+      const persistedUser = await Api.getMe();
+      onUpdateUser((persistedUser || { avatarUrl: result.avatarUrl }) as Partial<User>);
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl(null);
       setSelectedFile(null);
       toast.success(t('settings.avatar.uploadSuccess', 'Profile photo updated successfully!'));
     } catch (err: any) {
@@ -134,7 +139,8 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
 
     try {
       await Api.removeAvatar(currentUser.id);
-      onUpdateUser({ avatarUrl: undefined });
+      const persistedUser = await Api.getMe();
+      onUpdateUser((persistedUser || { avatarUrl: undefined }) as Partial<User>);
       setPreviewUrl(null);
       setSelectedFile(null);
       toast.success(t('settings.avatar.removeSuccess', 'Profile photo removed'));

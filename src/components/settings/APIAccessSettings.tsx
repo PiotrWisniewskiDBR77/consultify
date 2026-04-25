@@ -62,6 +62,7 @@ interface APIKey {
 
 interface APIAccessSettingsProps {
   className?: string;
+  currentUser?: unknown;
 }
 
 const AVAILABLE_SCOPES = [
@@ -71,9 +72,7 @@ const AVAILABLE_SCOPES = [
   { id: 'admin', name: 'Admin', description: 'Full administrative access' },
 ];
 
-export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
-  className = '',
-}) => {
+export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [keys, setKeys] = useState<APIKey[]>([]);
   const [loadingKeys, setLoadingKeys] = useState(true);
@@ -562,11 +561,23 @@ export const APIAccessSettings: React.FC<APIAccessSettingsProps> = ({
                   {usage.requests && usage.requests.length > 0 && (
                     <ResponsiveContainer width="100%" height={200}>
                       <LineChart data={usage.requests}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-navy-700, #334155)" />
-                        <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="var(--color-navy-400, #94a3b8)" />
+                        <CartesianGrid
+                          strokeDasharray="3 3"
+                          stroke="var(--color-navy-700, #334155)"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tick={{ fontSize: 10 }}
+                          stroke="var(--color-navy-400, #94a3b8)"
+                        />
                         <YAxis tick={{ fontSize: 10 }} stroke="var(--color-navy-400, #94a3b8)" />
                         <Tooltip />
-                        <Line type="monotone" dataKey="count" stroke="var(--color-brand, #7C3AED)" strokeWidth={2} />
+                        <Line
+                          type="monotone"
+                          dataKey="count"
+                          stroke="var(--color-brand, #7C3AED)"
+                          strokeWidth={2}
+                        />
                       </LineChart>
                     </ResponsiveContainer>
                   )}

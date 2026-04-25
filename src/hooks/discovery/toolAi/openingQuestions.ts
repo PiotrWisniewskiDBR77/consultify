@@ -10,21 +10,28 @@ const OPENING_QUESTIONS: Record<string, Record<string, string>> = {
     outputs: 'Let me prepare the final source summary and downstream outputs.',
   },
   'market-forces': {
-    context: 'What industry and market are you analyzing? Define your competitive position.',
-    rivalry: 'How intense is competition among existing players in your industry?',
-    newEntrants: 'How easy is it for new competitors to enter your market?',
-    substitutes: 'What substitute products or services threaten your offerings?',
-    buyerPower: 'How much bargaining power do your customers have?',
-    supplierPower: 'How much bargaining power do your suppliers have?',
-    summary: 'Let me summarize the competitive landscape and propose initiatives.',
+    mission:
+      'What industry, geographic scope, competitive position, and decision question should this Porter session support?',
+    input:
+      'What interview notes, benchmarks, market observations, or organization context should become evidence for the force assessment?',
+    forces:
+      'Let me turn the accepted market signals into a Five Forces scorecard with drivers, evidence, and confidence.',
+    insights:
+      'I will synthesize the scored forces into margin pressure, defensibility implications, and strategic moves.',
+    outputs:
+      'Let me prepare the final source summary, output candidates, and initiative drafts from the approved diagnosis.',
   },
   'growth-paths': {
-    context: 'What growth goal and scope are you analyzing?',
-    'market-penetration': 'What initiatives grow in current markets with current products?',
-    'market-development': 'What initiatives expand into new markets?',
-    'product-development': 'What new products could accelerate growth?',
-    diversification: 'What initiatives combine new products and new markets?',
-    summary: 'Let me summarize growth paths and propose initiatives.',
+    mission:
+      'What growth ambition, scope, success signal, and constraints should this Ansoff session support?',
+    input:
+      'What interview notes, market observations, customer signals, or organization context should shape the growth options?',
+    options:
+      'Let me turn the accepted growth signals into Ansoff options across market penetration, market development, product development, and diversification.',
+    insights:
+      'I will compare the growth options, expose trade-offs, and recommend a sequenced set of growth moves.',
+    outputs:
+      'Let me prepare the final source summary, output candidates, and initiative drafts from the approved growth direction.',
   },
   'portfolio-priority': {
     context: 'What portfolio scope and constraints are you analyzing?',

@@ -205,40 +205,193 @@ interface TemplatesGridProps {
   lane: KimiLane;
 }
 
-const BUILTIN_TEMPLATES: Record<KimiLane, Array<{ id: string; title: string; titlePl: string; desc: string; descPl: string }>> = {
+const BUILTIN_TEMPLATES: Record<
+  KimiLane,
+  Array<{ id: string; title: string; titlePl: string; desc: string; descPl: string }>
+> = {
   wordy: [
-    { id: 'bt-doc-weekly', title: 'Weekly Execution Report', titlePl: 'Tygodniowy raport wykonania', desc: 'Sprint progress, KPIs, blockers', descPl: 'Postęp sprintu, KPI, blokery' },
-    { id: 'bt-doc-steering', title: 'Steering Committee Brief', titlePl: 'Brief dla Komitetu Sterującego', desc: 'Executive summary for decision-makers', descPl: 'Podsumowanie dla decydentów' },
-    { id: 'bt-doc-benefits', title: 'Benefits Tracking Report', titlePl: 'Raport śledzenia korzyści', desc: 'KPI realization and ROI tracking', descPl: 'Realizacja KPI i śledzenie ROI' },
-    { id: 'bt-doc-portfolio', title: 'Portfolio Overview', titlePl: 'Przegląd portfela', desc: 'Cross-initiative health dashboard', descPl: 'Dashboard zdrowia inicjatyw' },
-    { id: 'bt-doc-kickoff', title: 'Project Kickoff Document', titlePl: 'Dokument startu projektu', desc: 'Goals, scope, team, timeline', descPl: 'Cele, zakres, zespół, harmonogram' },
-    { id: 'bt-doc-risk', title: 'Risk Assessment Report', titlePl: 'Raport oceny ryzyk', desc: 'Risk identification and mitigation', descPl: 'Identyfikacja i mitygacja ryzyk' },
-    { id: 'bt-doc-dd', title: 'Due Diligence Report', titlePl: 'Raport due diligence', desc: 'Investment analysis and findings', descPl: 'Analiza inwestycyjna i wnioski' },
-    { id: 'bt-doc-market', title: 'Market Analysis Report', titlePl: 'Raport analizy rynku', desc: 'Market sizing, competitors, trends', descPl: 'Wielkość rynku, konkurencja, trendy' },
+    {
+      id: 'bt-doc-weekly',
+      title: 'Weekly Execution Report',
+      titlePl: 'Tygodniowy raport wykonania',
+      desc: 'Sprint progress, KPIs, blockers',
+      descPl: 'Postęp sprintu, KPI, blokery',
+    },
+    {
+      id: 'bt-doc-steering',
+      title: 'Steering Committee Brief',
+      titlePl: 'Brief dla Komitetu Sterującego',
+      desc: 'Executive summary for decision-makers',
+      descPl: 'Podsumowanie dla decydentów',
+    },
+    {
+      id: 'bt-doc-benefits',
+      title: 'Benefits Tracking Report',
+      titlePl: 'Raport śledzenia korzyści',
+      desc: 'KPI realization and ROI tracking',
+      descPl: 'Realizacja KPI i śledzenie ROI',
+    },
+    {
+      id: 'bt-doc-portfolio',
+      title: 'Portfolio Overview',
+      titlePl: 'Przegląd portfela',
+      desc: 'Cross-initiative health dashboard',
+      descPl: 'Dashboard zdrowia inicjatyw',
+    },
+    {
+      id: 'bt-doc-kickoff',
+      title: 'Project Kickoff Document',
+      titlePl: 'Dokument startu projektu',
+      desc: 'Goals, scope, team, timeline',
+      descPl: 'Cele, zakres, zespół, harmonogram',
+    },
+    {
+      id: 'bt-doc-risk',
+      title: 'Risk Assessment Report',
+      titlePl: 'Raport oceny ryzyk',
+      desc: 'Risk identification and mitigation',
+      descPl: 'Identyfikacja i mitygacja ryzyk',
+    },
+    {
+      id: 'bt-doc-dd',
+      title: 'Due Diligence Report',
+      titlePl: 'Raport due diligence',
+      desc: 'Investment analysis and findings',
+      descPl: 'Analiza inwestycyjna i wnioski',
+    },
+    {
+      id: 'bt-doc-market',
+      title: 'Market Analysis Report',
+      titlePl: 'Raport analizy rynku',
+      desc: 'Market sizing, competitors, trends',
+      descPl: 'Wielkość rynku, konkurencja, trendy',
+    },
   ],
   excele: [
-    { id: 'bt-sheet-finmodel', title: 'Financial Model', titlePl: 'Model finansowy', desc: 'P&L + Balance Sheet + Cash Flow', descPl: 'RZiS + Bilans + Cash Flow' },
-    { id: 'bt-sheet-budget', title: 'Budget Planning', titlePl: 'Planowanie budżetu', desc: 'Annual/quarterly budget template', descPl: 'Szablon budżetu rocznego/kwartalnego' },
-    { id: 'bt-sheet-resource', title: 'Resource Allocation Matrix', titlePl: 'Macierz alokacji zasobów', desc: 'Team capacity and assignment', descPl: 'Pojemność zespołu i przypisania' },
-    { id: 'bt-sheet-risk', title: 'Risk Register', titlePl: 'Rejestr ryzyk', desc: 'Risk log with scoring and owners', descPl: 'Log ryzyk z oceną i właścicielami' },
-    { id: 'bt-sheet-timeline', title: 'Project Timeline', titlePl: 'Harmonogram projektu', desc: 'Gantt-style milestone tracker', descPl: 'Tracker kamieni milowych' },
-    { id: 'bt-sheet-competitive', title: 'Competitive Analysis Matrix', titlePl: 'Macierz analizy konkurencji', desc: 'Feature comparison grid', descPl: 'Siatka porównania funkcji' },
-    { id: 'bt-sheet-recruit', title: 'Recruitment Pipeline', titlePl: 'Pipeline rekrutacji', desc: 'Candidate tracking and stages', descPl: 'Śledzenie kandydatów i etapów' },
-    { id: 'bt-sheet-okr', title: 'OKR Tracking Sheet', titlePl: 'Arkusz śledzenia OKR', desc: 'Objectives, key results, progress', descPl: 'Cele, kluczowe rezultaty, postęp' },
+    {
+      id: 'bt-sheet-finmodel',
+      title: 'Financial Model',
+      titlePl: 'Model finansowy',
+      desc: 'P&L + Balance Sheet + Cash Flow',
+      descPl: 'RZiS + Bilans + Cash Flow',
+    },
+    {
+      id: 'bt-sheet-budget',
+      title: 'Budget Planning',
+      titlePl: 'Planowanie budżetu',
+      desc: 'Annual/quarterly budget template',
+      descPl: 'Szablon budżetu rocznego/kwartalnego',
+    },
+    {
+      id: 'bt-sheet-resource',
+      title: 'Resource Allocation Matrix',
+      titlePl: 'Macierz alokacji zasobów',
+      desc: 'Team capacity and assignment',
+      descPl: 'Pojemność zespołu i przypisania',
+    },
+    {
+      id: 'bt-sheet-risk',
+      title: 'Risk Register',
+      titlePl: 'Rejestr ryzyk',
+      desc: 'Risk log with scoring and owners',
+      descPl: 'Log ryzyk z oceną i właścicielami',
+    },
+    {
+      id: 'bt-sheet-timeline',
+      title: 'Project Timeline',
+      titlePl: 'Harmonogram projektu',
+      desc: 'Gantt-style milestone tracker',
+      descPl: 'Tracker kamieni milowych',
+    },
+    {
+      id: 'bt-sheet-competitive',
+      title: 'Competitive Analysis Matrix',
+      titlePl: 'Macierz analizy konkurencji',
+      desc: 'Feature comparison grid',
+      descPl: 'Siatka porównania funkcji',
+    },
+    {
+      id: 'bt-sheet-recruit',
+      title: 'Recruitment Pipeline',
+      titlePl: 'Pipeline rekrutacji',
+      desc: 'Candidate tracking and stages',
+      descPl: 'Śledzenie kandydatów i etapów',
+    },
+    {
+      id: 'bt-sheet-okr',
+      title: 'OKR Tracking Sheet',
+      titlePl: 'Arkusz śledzenia OKR',
+      desc: 'Objectives, key results, progress',
+      descPl: 'Cele, kluczowe rezultaty, postęp',
+    },
   ],
   prezentacje: [
-    { id: 'bt-deck-steering', title: 'Steering Committee Deck', titlePl: 'Deck dla Komitetu Sterującego', desc: 'Board-level status presentation', descPl: 'Prezentacja statusu dla zarządu' },
-    { id: 'bt-deck-status', title: 'Project Status Update', titlePl: 'Status update projektu', desc: 'Weekly/monthly progress slides', descPl: 'Slajdy postępu tygodniowego/miesięcznego' },
-    { id: 'bt-deck-pitch', title: 'Pitch Deck', titlePl: 'Pitch Deck', desc: 'Investor / stakeholder pitch', descPl: 'Pitch dla inwestorów / interesariuszy' },
-    { id: 'bt-deck-workshop', title: 'Workshop Facilitation Deck', titlePl: 'Deck warsztatowy', desc: 'Interactive exercises and agenda', descPl: 'Interaktywne ćwiczenia i agenda' },
-    { id: 'bt-deck-qbr', title: 'Quarterly Business Review', titlePl: 'Kwartalny przegląd biznesowy', desc: 'QBR metrics and roadmap', descPl: 'Metryki QBR i roadmapa' },
-    { id: 'bt-deck-strategy', title: 'Strategy Roadmap', titlePl: 'Roadmapa strategiczna', desc: 'Vision, goals, milestones', descPl: 'Wizja, cele, kamienie milowe' },
-    { id: 'bt-deck-invest', title: 'Investment Case Deck', titlePl: 'Deck case inwestycyjnego', desc: 'NPV/IRR/ROI decision support', descPl: 'Wsparcie decyzji NPV/IRR/ROI' },
-    { id: 'bt-deck-digital', title: 'Digital Transformation Assessment', titlePl: 'Ocena transformacji cyfrowej', desc: 'Maturity, gaps, recommendations', descPl: 'Dojrzałość, luki, rekomendacje' },
+    {
+      id: 'bt-deck-steering',
+      title: 'Steering Committee Deck',
+      titlePl: 'Deck dla Komitetu Sterującego',
+      desc: 'Board-level status presentation',
+      descPl: 'Prezentacja statusu dla zarządu',
+    },
+    {
+      id: 'bt-deck-status',
+      title: 'Project Status Update',
+      titlePl: 'Status update projektu',
+      desc: 'Weekly/monthly progress slides',
+      descPl: 'Slajdy postępu tygodniowego/miesięcznego',
+    },
+    {
+      id: 'bt-deck-pitch',
+      title: 'Pitch Deck',
+      titlePl: 'Pitch Deck',
+      desc: 'Investor / stakeholder pitch',
+      descPl: 'Pitch dla inwestorów / interesariuszy',
+    },
+    {
+      id: 'bt-deck-workshop',
+      title: 'Workshop Facilitation Deck',
+      titlePl: 'Deck warsztatowy',
+      desc: 'Interactive exercises and agenda',
+      descPl: 'Interaktywne ćwiczenia i agenda',
+    },
+    {
+      id: 'bt-deck-qbr',
+      title: 'Quarterly Business Review',
+      titlePl: 'Kwartalny przegląd biznesowy',
+      desc: 'QBR metrics and roadmap',
+      descPl: 'Metryki QBR i roadmapa',
+    },
+    {
+      id: 'bt-deck-strategy',
+      title: 'Strategy Roadmap',
+      titlePl: 'Roadmapa strategiczna',
+      desc: 'Vision, goals, milestones',
+      descPl: 'Wizja, cele, kamienie milowe',
+    },
+    {
+      id: 'bt-deck-invest',
+      title: 'Investment Case Deck',
+      titlePl: 'Deck case inwestycyjnego',
+      desc: 'NPV/IRR/ROI decision support',
+      descPl: 'Wsparcie decyzji NPV/IRR/ROI',
+    },
+    {
+      id: 'bt-deck-digital',
+      title: 'Digital Transformation Assessment',
+      titlePl: 'Ocena transformacji cyfrowej',
+      desc: 'Maturity, gaps, recommendations',
+      descPl: 'Dojrzałość, luki, rekomendacje',
+    },
   ],
 };
 
-function TemplatesGrid({ templates, loading, onTemplateClick, isPolish, lane }: TemplatesGridProps) {
+function TemplatesGrid({
+  templates,
+  loading,
+  onTemplateClick,
+  isPolish,
+  lane,
+}: TemplatesGridProps) {
   const builtinCards = BUILTIN_TEMPLATES[lane];
 
   const allCards = useMemo(() => {
@@ -291,14 +444,26 @@ function TemplatesGrid({ templates, loading, onTemplateClick, isPolish, lane }: 
 }
 
 interface ArtifactsListProps {
-  artifacts: Array<{ originRecordId: string; artifactId?: string; title: string; updatedAt: string; statusKey: string }>;
+  artifacts: Array<{
+    originRecordId: string;
+    artifactId?: string;
+    title: string;
+    updatedAt: string;
+    statusKey: string;
+  }>;
   loading: boolean;
   onArtifactClick: (id: string) => void;
   isPolish: boolean;
   emptyLabel: string;
 }
 
-function ArtifactsList({ artifacts, loading, onArtifactClick, isPolish, emptyLabel }: ArtifactsListProps) {
+function ArtifactsList({
+  artifacts,
+  loading,
+  onArtifactClick,
+  isPolish,
+  emptyLabel,
+}: ArtifactsListProps) {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-16">

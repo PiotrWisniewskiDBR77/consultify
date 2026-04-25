@@ -40,13 +40,7 @@ function normalise(s: string | null | undefined): string {
  * round-tripping through `matchChatV9Flag`.
  */
 export function buildChatV9FlagHaystack(flag: ChatV9FlagDescriptor): string {
-  return [
-    flag.title,
-    flag.ticket,
-    flag.block,
-    flag.id,
-    flag.keys.localStorage,
-  ]
+  return [flag.title, flag.ticket, flag.block, flag.id, flag.keys.localStorage]
     .map(normalise)
     .join(' | ');
 }

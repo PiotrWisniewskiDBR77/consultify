@@ -20,6 +20,7 @@ const h = vi.hoisted(() => ({
     chatConfirm: vi.fn(),
     createMyIdea: vi.fn(),
     deepThinkingEvent: vi.fn(),
+    getConversationProposals: vi.fn(),
     saveDeepThinkingDecision: vi.fn(),
     uploadChatAttachment: vi.fn(),
   },
@@ -31,6 +32,7 @@ vi.mock('../../../src/services/funnelAnalytics', () => ({
 
 vi.mock('../../../src/services/api', () => ({
   Api: h.apiMock,
+  default: h.apiMock,
 }));
 
 function renderWithRouter(ui: React.ReactElement) {
@@ -42,6 +44,8 @@ const deleteChatMessageMock = vi.fn();
 const setIsBotTypingMock = vi.fn();
 const setAIConfigMock = vi.fn();
 const setCurrentViewMock = vi.fn();
+const setChatKickoffMessageMock = vi.fn();
+const setChatOutputToolMock = vi.fn();
 
 let appStoreState: any = {
   currentStreamContent: '',
@@ -60,6 +64,9 @@ let appStoreState: any = {
   },
   setAIConfig: setAIConfigMock,
   setCurrentView: setCurrentViewMock,
+  chatOutputTool: 'auto',
+  setChatKickoffMessage: setChatKickoffMessageMock,
+  setChatOutputTool: setChatOutputToolMock,
 };
 
 const useAppStoreMock: any = () => appStoreState;
@@ -138,6 +145,15 @@ vi.doMock('../../../src/hooks/useUniversalVoice', () => ({
     settings: {},
     updateSettings: updateVoiceSettingsMock,
     isSupported: ttsSupportedState,
+  }),
+}));
+
+vi.doMock('../../../src/contexts/TeresaVoiceContext', () => ({
+  useTeresaVoiceContext: () => ({
+    isVoiceActive: false,
+    isMuted: false,
+    handleVoiceToggle: vi.fn(),
+    toggleMute: vi.fn(),
   }),
 }));
 
@@ -385,6 +401,7 @@ describe('UnifiedChatPanel (L2)', () => {
         textToSpeech: false,
         responseStyle: 'normal',
       },
+      chatOutputTool: 'auto',
     };
 
     conversationStoreState = {
@@ -432,6 +449,7 @@ describe('UnifiedChatPanel (L2)', () => {
     });
     h.apiMock.agentAuditAcceptRun.mockResolvedValue({ ok: true });
     h.apiMock.deepThinkingEvent.mockResolvedValue({ ok: true });
+    h.apiMock.getConversationProposals.mockResolvedValue({ proposals: [] });
     h.apiMock.saveDeepThinkingDecision.mockResolvedValue({ ok: true });
     h.apiMock.createMyIdea.mockResolvedValue({ id: 'idea-1' });
     h.apiMock.aiFeedback.mockResolvedValue({ ok: true });
@@ -479,7 +497,7 @@ describe('UnifiedChatPanel (L2)', () => {
     await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
   });
 
-  it('uses the canonical trial route when demo access is blocked', async () => {
+  it('dispatches a localized access block code when demo time expires', async () => {
     const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
     demoState = {
       ...demoState,
@@ -492,20 +510,10 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel />);
     fireEvent.click(screen.getByTestId('send-button'));
 
-    await waitFor(() =>
-      expect(dispatchSpy).toHaveBeenCalledWith(
-        expect.objectContaining({
-          type: 'access:blocked',
-          detail: expect.objectContaining({
-            code: 'DEMO_TIME_EXPIRED',
-            cta: expect.objectContaining({
-              label: 'Start free trial',
-              href: '/trial',
-            }),
-          }),
-        })
-      )
-    );
+    await waitFor(() => expect(dispatchSpy).toHaveBeenCalled());
+    const event = dispatchSpy.mock.calls.at(-1)?.[0] as CustomEvent;
+    expect(event.type).toBe('access:blocked');
+    expect(event.detail).toEqual({ code: 'DEMO_TIME_EXPIRED' });
   });
 
   it('uploads supported attachments and shows analysis status; skips unsupported types', async () => {
@@ -577,6 +585,21 @@ describe('UnifiedChatPanel (L2)', () => {
 
     await aiStreamOptionsCaptured.onStreamDone('', [], [{ id: 'ar1', type: 'md', title: 'T', content: 'C' }], {
       citations: [{ url: 'x' }],
+      proposal: {
+        proposalId: 'proposal-1',
+        title: 'Create initiative',
+        summary: 'Proposal summary',
+        state: 'proposal',
+        approvalState: 'awaiting_review',
+        allowedActions: ['approve'],
+        targetModule: 'initiatives',
+        targetLabel: 'Initiatives',
+        handoffIntent: 'create',
+        previewLines: ['Approval required'],
+        auditCount: 1,
+        resultRef: null,
+        degraded: null,
+      },
     });
 
     expect(addMessageToConversationMock).toHaveBeenCalledWith(
@@ -585,6 +608,7 @@ describe('UnifiedChatPanel (L2)', () => {
         metadata: expect.objectContaining({
           artifacts: [expect.objectContaining({ id: 'ar1', title: 'T' })],
           citations: [{ url: 'x' }],
+          proposal: expect.objectContaining({ proposalId: 'proposal-1' }),
         }),
       })
     );

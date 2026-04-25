@@ -52,9 +52,8 @@ const {
   _resetTableCache,
 } = await import('../../../services/v8/teresaCopilotService.js');
 
-const { P08_HANDOFF_TARGET_MODULES, P08_ACTION_ENVELOPE_STATES } = await import(
-  '../../../services/v8/teresaCopilotCanon.js'
-);
+const { P08_HANDOFF_TARGET_MODULES, P08_ACTION_ENVELOPE_STATES } =
+  await import('../../../services/v8/teresaCopilotCanon.js');
 
 // ---------------------------------------------------------------------------
 // Fixtures
@@ -75,7 +74,11 @@ function defaultHandoffContext(): Record<string, unknown> {
     assumptions: [],
     uncertainty_boundary: { missing_inputs: [], conflicts: [], what_would_change_next_action: [] },
     evidence_pointers: [],
-    proposed_next_action: { target_module: 'initiatives', handoff_intent: 'create', requires_approval: true },
+    proposed_next_action: {
+      target_module: 'initiatives',
+      handoff_intent: 'create',
+      requires_approval: true,
+    },
     audit_stub: { actor: 'teresa:copilot', timestamp: new Date().toISOString() },
   };
 }
@@ -89,7 +92,9 @@ function mockProposalRow(overrides: Record<string, unknown> = {}) {
     state: 'proposal',
     handoff_context_json: overrides.handoff_context_json || JSON.stringify(defaultHandoffContext()),
     target_module: overrides.target_module || 'initiatives',
-    target_payload_json: overrides.target_payload_json || JSON.stringify({ initiative_seed: { problem_statement: 'test' }, proposal_only: true }),
+    target_payload_json:
+      overrides.target_payload_json ||
+      JSON.stringify({ initiative_seed: { problem_statement: 'test' }, proposal_only: true }),
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     ...overrides,

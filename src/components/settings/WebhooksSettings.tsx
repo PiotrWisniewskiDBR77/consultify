@@ -67,6 +67,7 @@ interface DeliveryLog {
 
 interface WebhooksSettingsProps {
   className?: string;
+  currentUser?: unknown;
 }
 
 const AVAILABLE_EVENTS = [
@@ -86,9 +87,7 @@ const AVAILABLE_EVENTS = [
   'user.left',
 ];
 
-export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({
-  className = '',
-}) => {
+export const WebhooksSettings: React.FC<WebhooksSettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [webhooks, setWebhooks] = useState<WebhookConfig[]>([]);
   const [showNew, setShowNew] = useState(false);

@@ -16,11 +16,7 @@ export const normalizeAccessRole = (role?: string): RequestAccessRole => {
 
   if (normalized === 'owner') return 'owner';
   if (normalized === 'admin' || normalized === 'administrator') return 'admin';
-  if (
-    normalized === 'guest' ||
-    normalized === 'viewer' ||
-    normalized === 'client'
-  ) {
+  if (normalized === 'guest' || normalized === 'viewer' || normalized === 'client') {
     return 'guest';
   }
 
@@ -41,7 +37,9 @@ export const getRequestAccessRole = (req: AuthRequest): RequestAccessRole => {
   return normalizeAccessRole(req.user?.role);
 };
 
-export const getSettingsActorRole = (req: AuthRequest): Exclude<RequestAccessRole, 'superadmin' | ''> => {
+export const getSettingsActorRole = (
+  req: AuthRequest
+): Exclude<RequestAccessRole, 'superadmin' | ''> => {
   if (isRequestSuperAdmin(req)) return 'owner';
 
   const resolvedRole = getRequestAccessRole(req);

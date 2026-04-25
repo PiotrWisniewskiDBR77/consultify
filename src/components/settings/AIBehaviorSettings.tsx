@@ -131,7 +131,19 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
           customInstructions: preferences.systemPrompt,
         }),
       ]);
-      setOriginalPreferences(preferences);
+      const [instrRes, persRes] = await Promise.all([
+        Api.getAIInstructions().catch(() => null),
+        Api.getAIPersonality().catch(() => null),
+      ]);
+      const persisted: AIBehaviorPreferences = {
+        ...defaultPreferences,
+        ...(instrRes?.preferences || {}),
+        tone: persRes?.preferences?.tone || preferences.tone,
+        formality: persRes?.preferences?.formality || preferences.formality,
+        verbosity: persRes?.preferences?.verbosity || preferences.verbosity,
+      };
+      setPreferences(persisted);
+      setOriginalPreferences(persisted);
       toast.success(t('settings.ai.behaviorSaved', 'AI behavior settings saved'));
     } catch {
       toast.error(t('settings.ai.behaviorError', 'Failed to save AI behavior settings'));
@@ -141,8 +153,17 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
   }, [preferences, t]);
 
   const applyTemplate = (template: (typeof PROMPT_TEMPLATES)[0]) => {
-    setPreferences((prev) => ({ ...prev, systemPrompt: template.prompt }));
-    toast.success(t('settings.ai.templateApplied', `${template.name} template applied`));
+    const templateName = t(`settings.ai.behaviorTemplates.${template.id}.name`, template.name);
+    const templatePrompt = t(
+      `settings.ai.behaviorTemplates.${template.id}.prompt`,
+      template.prompt
+    );
+    setPreferences((prev) => ({ ...prev, systemPrompt: templatePrompt }));
+    toast.success(
+      t('settings.ai.templateApplied', '{{name}} template applied', {
+        name: templateName,
+      })
+    );
   };
 
   const update = <K extends keyof AIBehaviorPreferences>(
@@ -216,7 +237,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                     hover:text-white transition-all duration-200"
                 >
                   <Wand2 size={14} />
-                  {tpl.name}
+                  {t(`settings.ai.behaviorTemplates.${tpl.id}.name`, tpl.name)}
                 </button>
               ))}
             </div>
@@ -282,9 +303,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 <SettingsSelect
                   options={toneOptions}
                   value={preferences.tone}
-                  onChange={(e) =>
-                    update('tone', e.target.value as AIBehaviorPreferences['tone'])
-                  }
+                  onChange={(e) => update('tone', e.target.value as AIBehaviorPreferences['tone'])}
                 />
               </SettingsFormRow>
 
@@ -292,9 +311,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
                 <SettingsButtonGroup
                   options={formalityOptions}
                   value={preferences.formality}
-                  onChange={(v) =>
-                    update('formality', v as AIBehaviorPreferences['formality'])
-                  }
+                  onChange={(v) => update('formality', v as AIBehaviorPreferences['formality'])}
                   size="sm"
                 />
               </SettingsFormRow>

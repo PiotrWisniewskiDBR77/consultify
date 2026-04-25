@@ -89,15 +89,40 @@ const DEFAULT_PREFERENCES: AdvancedPreferences = {
 
 // Common keyboard shortcuts
 const KEYBOARD_SHORTCUTS = [
-  { action: 'New Task', shortcut: 'Ctrl/Cmd + N', category: 'Tasks' },
-  { action: 'Search', shortcut: 'Ctrl/Cmd + K', category: 'Navigation' },
-  { action: 'Quick Switch Project', shortcut: 'Ctrl/Cmd + P', category: 'Navigation' },
-  { action: 'Toggle Sidebar', shortcut: 'Ctrl/Cmd + B', category: 'Navigation' },
-  { action: 'Open Settings', shortcut: 'Ctrl/Cmd + ,', category: 'General' },
-  { action: 'Toggle Dark Mode', shortcut: 'Ctrl/Cmd + D', category: 'General' },
-  { action: 'Mark Task Complete', shortcut: 'Ctrl/Cmd + Enter', category: 'Tasks' },
-  { action: 'Open AI Assistant', shortcut: 'Ctrl/Cmd + J', category: 'AI' },
-  { action: 'Focus Mode', shortcut: 'Ctrl/Cmd + Shift + F', category: 'Focus' },
+  { id: 'newTask', action: 'New Task', shortcut: 'Ctrl/Cmd + N', category: 'tasks' },
+  { id: 'search', action: 'Search', shortcut: 'Ctrl/Cmd + K', category: 'navigation' },
+  {
+    id: 'quickSwitchProject',
+    action: 'Quick Switch Project',
+    shortcut: 'Ctrl/Cmd + P',
+    category: 'navigation',
+  },
+  {
+    id: 'toggleSidebar',
+    action: 'Toggle Sidebar',
+    shortcut: 'Ctrl/Cmd + B',
+    category: 'navigation',
+  },
+  { id: 'openSettings', action: 'Open Settings', shortcut: 'Ctrl/Cmd + ,', category: 'general' },
+  {
+    id: 'toggleDarkMode',
+    action: 'Toggle Dark Mode',
+    shortcut: 'Ctrl/Cmd + D',
+    category: 'general',
+  },
+  {
+    id: 'markTaskComplete',
+    action: 'Mark Task Complete',
+    shortcut: 'Ctrl/Cmd + Enter',
+    category: 'tasks',
+  },
+  { id: 'openAiAssistant', action: 'Open AI Assistant', shortcut: 'Ctrl/Cmd + J', category: 'ai' },
+  {
+    id: 'focusMode',
+    action: 'Focus Mode',
+    shortcut: 'Ctrl/Cmd + Shift + F',
+    category: 'focus',
+  },
 ];
 
 export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
@@ -153,6 +178,10 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
     setSaving(true);
     try {
       await Api.put('/settings/preferences/advanced', { preferences });
+      const persisted = await Api.get('/settings/preferences/advanced').catch(() => null);
+      if (persisted?.preferences) {
+        setPreferences({ ...DEFAULT_PREFERENCES, ...persisted.preferences });
+      }
       toast.success(t('settings.advanced.saved', 'Advanced settings saved'));
     } catch (error) {
       toast.error(t('settings.advanced.error', 'Failed to save settings'));
@@ -533,10 +562,13 @@ export const AdvancedSettings: React.FC<AdvancedSettingsProps> = ({
               >
                 <div>
                   <span className="font-medium text-slate-700 dark:text-slate-300">
-                    {shortcut.action}
+                    {t(`settings.advanced.shortcuts.${shortcut.id}`, shortcut.action)}
                   </span>
                   <span className="text-xs text-slate-400 dark:text-slate-500 ml-2">
-                    {shortcut.category}
+                    {t(
+                      `settings.advanced.shortcutCategories.${shortcut.category}`,
+                      shortcut.category
+                    )}
                   </span>
                 </div>
                 <kbd className="px-2 py-1 bg-slate-200 dark:bg-slate-700 rounded text-sm font-mono text-slate-600 dark:text-slate-400">

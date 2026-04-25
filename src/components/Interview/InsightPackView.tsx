@@ -168,10 +168,7 @@ const EVIDENCE_TYPE_ICONS: Record<P10EvidencePointerType, React.ReactNode> = {
 
 // ── P10 Confidence Badge ──────────────────────────────────────────────────────
 
-const P10_CONFIDENCE_STYLES: Record<
-  P10ConfidenceLevel,
-  { bg: string; label: string }
-> = {
+const P10_CONFIDENCE_STYLES: Record<P10ConfidenceLevel, { bg: string; label: string }> = {
   high: {
     bg: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
     label: 'High confidence',
@@ -190,9 +187,10 @@ const P10_CONFIDENCE_STYLES: Record<
   },
 };
 
-export function resolveConfidenceLevel(
-  row: { confidenceLevel?: string; confidenceScore?: number }
-): P10ExtendedConfidenceLevel {
+export function resolveConfidenceLevel(row: {
+  confidenceLevel?: string;
+  confidenceScore?: number;
+}): P10ExtendedConfidenceLevel {
   if (row.confidenceLevel === 'contradicted') return 'contradicted';
   if (row.confidenceLevel && row.confidenceLevel !== 'unknown') {
     return row.confidenceLevel as P10ExtendedConfidenceLevel;
@@ -358,7 +356,11 @@ function isEvidenceBroken(e: EvidencePointer): boolean {
 
 function isEvidenceRedacted(e: EvidencePointer): boolean {
   const exc = getEvidenceExcerpt(e);
-  return exc === '[REDACTED]' || exc === '[redacted]' || (e.removalReason?.toLowerCase().includes('redact') ?? false);
+  return (
+    exc === '[REDACTED]' ||
+    exc === '[redacted]' ||
+    (e.removalReason?.toLowerCase().includes('redact') ?? false)
+  );
 }
 
 function isEvidenceDrifted(e: EvidencePointer & { currentFingerprint?: string }): boolean {
@@ -710,9 +712,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
 
   const handleRemoveEvidence = useCallback((idx: number, reason: string) => {
     setLocalEvidence((prev) =>
-      prev.map((e, i) =>
-        i === idx ? { ...e, isTombstone: true, removalReason: reason } : e
-      )
+      prev.map((e, i) => (i === idx ? { ...e, isTombstone: true, removalReason: reason } : e))
     );
     setRemovingIdx(null);
     toast.success('Evidence removed (tombstone created)');
@@ -775,7 +775,8 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
       <div>
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-            {t('interview.inference.evidence')} ({localEvidence.filter((e) => !e.isTombstone).length}
+            {t('interview.inference.evidence')} (
+            {localEvidence.filter((e) => !e.isTombstone).length}
             {localEvidence.some((e) => e.isTombstone) &&
               ` + ${localEvidence.filter((e) => e.isTombstone).length} removed`}
             )
@@ -800,8 +801,7 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
             const exc = getEvidenceExcerpt(e);
             const broken = isEvidenceBroken(e);
             const isDuplicate =
-              e.sourceRef &&
-              duplicateKeys.has(`${e.sourceRef}:${e.sourceFingerprint || ''}`);
+              e.sourceRef && duplicateKeys.has(`${e.sourceRef}:${e.sourceFingerprint || ''}`);
 
             if (e.isTombstone) {
               return (
@@ -827,18 +827,27 @@ const InsightExpandedDetail: React.FC<InsightExpandedDetailProps> = ({
               >
                 <div className="flex items-start gap-2">
                   {e.type && EVIDENCE_TYPE_ICONS[e.type] && (
-                    <span className="mt-0.5 text-gray-400 dark:text-gray-500 flex-shrink-0" title={e.type.replace(/_/g, ' ')}>
+                    <span
+                      className="mt-0.5 text-gray-400 dark:text-gray-500 flex-shrink-0"
+                      title={e.type.replace(/_/g, ' ')}
+                    >
                       {EVIDENCE_TYPE_ICONS[e.type]}
                     </span>
                   )}
                   <div className="flex-1 min-w-0">
                     {isEvidenceRedacted(e) ? (
-                      <span data-testid="redacted-pointer" className="text-orange-500 dark:text-orange-400 flex items-center gap-1">
+                      <span
+                        data-testid="redacted-pointer"
+                        className="text-orange-500 dark:text-orange-400 flex items-center gap-1"
+                      >
                         <Shield className="w-3 h-3" />
                         Redacted — pointer preserved for audit
                       </span>
                     ) : broken ? (
-                      <span data-testid="broken-pointer" className="text-red-500 dark:text-red-400 flex items-center gap-1">
+                      <span
+                        data-testid="broken-pointer"
+                        className="text-red-500 dark:text-red-400 flex items-center gap-1"
+                      >
                         <AlertTriangle className="w-3 h-3" />
                         Source unavailable
                       </span>

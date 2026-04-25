@@ -120,7 +120,9 @@ export const TenantCommandCenterView: React.FC = () => {
         console.error('[TenantCommandCenterView] Failed to fetch tenant details', error);
         setBilling(null);
         setResources(null);
-        setDetailsError('Detailed tenant billing and resource telemetry is temporarily unavailable.');
+        setDetailsError(
+          'Detailed tenant billing and resource telemetry is temporarily unavailable.'
+        );
       } finally {
         if (!cancelled) setDetailsLoading(false);
       }
@@ -212,7 +214,8 @@ export const TenantCommandCenterView: React.FC = () => {
             </div>
           </div>
           <div className="mt-3 text-xs text-slate-500">
-            Total users: <span className="font-medium">{formatCount(dashboard?.counts?.total_users)}</span>
+            Total users:{' '}
+            <span className="font-medium">{formatCount(dashboard?.counts?.total_users)}</span>
           </div>
         </div>
 
@@ -254,7 +257,9 @@ export const TenantCommandCenterView: React.FC = () => {
               <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
                 Tenant focus queue
               </h3>
-              <p className="text-xs text-slate-500">Select a tenant to inspect commercial and quota posture.</p>
+              <p className="text-xs text-slate-500">
+                Select a tenant to inspect commercial and quota posture.
+              </p>
             </div>
             <select
               value={selectedOrgId}
@@ -326,7 +331,9 @@ export const TenantCommandCenterView: React.FC = () => {
                 Command summary across lifecycle, billing, quotas, AI usage, and governance.
               </p>
             </div>
-            {detailsLoading && <div className="text-xs text-slate-500">Loading tenant posture...</div>}
+            {detailsLoading && (
+              <div className="text-xs text-slate-500">Loading tenant posture...</div>
+            )}
           </div>
 
           <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -338,19 +345,24 @@ export const TenantCommandCenterView: React.FC = () => {
               <div className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Plan</span>
-                  <span className="font-medium">{billing?.subscription?.planName || selectedOrg?.plan || 'n/a'}</span>
+                  <span className="font-medium">
+                    {billing?.subscription?.planName || selectedOrg?.plan || 'n/a'}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">MRR / budget</span>
                   <span className="font-medium">
-                    {formatCurrency(resources?.budget?.monthlyBudgetUsd ?? selectedOrg?.monthly_budget_usd)}
+                    {formatCurrency(
+                      resources?.budget?.monthlyBudgetUsd ?? selectedOrg?.monthly_budget_usd
+                    )}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Spent this period</span>
                   <span className="font-medium">
                     {formatCurrency(
-                      resources?.budget?.spentCurrentPeriod ?? selectedOrg?.budget_spent_current_period
+                      resources?.budget?.spentCurrentPeriod ??
+                        selectedOrg?.budget_spent_current_period
                     )}
                   </span>
                 </div>
@@ -365,7 +377,9 @@ export const TenantCommandCenterView: React.FC = () => {
               <div className="mt-3 space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-slate-500">Budget utilization</span>
-                  <span className={`font-medium ${metricTone(Number(budgetUtilization || 0), 75, 90)}`}>
+                  <span
+                    className={`font-medium ${metricTone(Number(budgetUtilization || 0), 75, 90)}`}
+                  >
                     {budgetUtilization != null ? `${Math.round(budgetUtilization)}%` : 'n/a'}
                   </span>
                 </div>
@@ -401,12 +415,16 @@ export const TenantCommandCenterView: React.FC = () => {
                 <div className="flex justify-between">
                   <span className="text-slate-500">Retention</span>
                   <span className="font-medium">
-                    {selectedPolicy?.retention_days ? `${selectedPolicy.retention_days} days` : 'default'}
+                    {selectedPolicy?.retention_days
+                      ? `${selectedPolicy.retention_days} days`
+                      : 'default'}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-slate-500">Residency</span>
-                  <span className="font-medium">{selectedPolicy?.residency_region || 'review'}</span>
+                  <span className="font-medium">
+                    {selectedPolicy?.residency_region || 'review'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -414,7 +432,9 @@ export const TenantCommandCenterView: React.FC = () => {
 
           <div className="mt-5 grid gap-4 md:grid-cols-2">
             <div className="rounded-xl border border-slate-200 p-4 dark:border-navy-700">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">Operator risk notes</div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                Operator risk notes
+              </div>
               <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
                 <li>
                   {selectedPolicy?.legal_hold_enabled
@@ -435,7 +455,9 @@ export const TenantCommandCenterView: React.FC = () => {
             </div>
 
             <div className="rounded-xl border border-slate-200 p-4 dark:border-navy-700">
-              <div className="text-sm font-medium text-slate-900 dark:text-white">Enterprise operator checklist</div>
+              <div className="text-sm font-medium text-slate-900 dark:text-white">
+                Enterprise operator checklist
+              </div>
               <div className="mt-3 grid gap-2 text-sm">
                 {[
                   {
@@ -460,7 +482,13 @@ export const TenantCommandCenterView: React.FC = () => {
                     className="flex items-center justify-between rounded-lg bg-slate-50 px-3 py-2 dark:bg-navy-950/50"
                   >
                     <span>{item.label}</span>
-                    <span className={item.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>
+                    <span
+                      className={
+                        item.ok
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-amber-600 dark:text-amber-400'
+                      }
+                    >
                       {item.ok ? 'Ready' : 'Partial'}
                     </span>
                   </div>
@@ -471,8 +499,9 @@ export const TenantCommandCenterView: React.FC = () => {
 
           {selectedOrg && (
             <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-navy-700 dark:bg-navy-950/40 dark:text-slate-300">
-              <span className="font-medium text-slate-900 dark:text-white">{selectedOrg.name}</span> currently has{' '}
-              <span className="font-medium">{formatCount(userCount)}</span> users, budget remaining of{' '}
+              <span className="font-medium text-slate-900 dark:text-white">{selectedOrg.name}</span>{' '}
+              currently has <span className="font-medium">{formatCount(userCount)}</span> users,
+              budget remaining of{' '}
               <span className="font-medium">
                 {formatCurrency(resources?.budget?.remainingBudget)}
               </span>

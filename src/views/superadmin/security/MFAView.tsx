@@ -14,6 +14,7 @@ export const MFAView: React.FC = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [mfaMethods, setMfaMethods] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -32,22 +33,26 @@ export const MFAView: React.FC = () => {
       if (userList.length > 0 && !selectedUserId) {
         setSelectedUserId(userList[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch users:', err);
+      setLoadError(err?.message || 'Failed to fetch users');
+      toast.error(err?.message || 'Failed to fetch users');
     }
   };
 
   const fetchMFAMethods = async () => {
     if (!selectedUserId) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const methods = await Api.getMFAMethods(selectedUserId);
       const normalized = Array.isArray(methods)
         ? methods
         : (methods as any)?.methods || (methods as any)?.items || [];
       setMfaMethods(normalized);
-    } catch (err) {
-      toast.error('Failed to fetch MFA methods');
+    } catch (err: any) {
+      setLoadError(err?.message || 'Failed to fetch MFA methods');
+      toast.error(err?.message || 'Failed to fetch MFA methods');
     } finally {
       setLoading(false);
     }
@@ -78,7 +83,17 @@ export const MFAView: React.FC = () => {
         </select>
       </div>
 
-      {loading ? (
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
+
+      {!selectedUserId ? (
+        <div className="text-center py-12 text-slate-500 dark:text-slate-400">
+          Select a user to inspect MFA methods
+        </div>
+      ) : loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
       ) : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">

@@ -49,7 +49,14 @@ describe('OrganizationController', () => {
       await OrganizationController.getCurrentOrganizations(mockReq, mockRes, vi.fn());
 
       expect(organizationService.getUserOrganizations).toHaveBeenCalledWith('user-1');
-      expect(jsonFn).toHaveBeenCalledWith(mockOrgs);
+      expect(jsonFn).toHaveBeenCalledWith({
+        organizations: [
+          expect.objectContaining({
+            id: 'org-1',
+            name: 'Test Org',
+          }),
+        ],
+      });
     });
 
     it('should return 401 if user is not authenticated', async () => {

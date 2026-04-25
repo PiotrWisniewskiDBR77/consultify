@@ -367,7 +367,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         const url = new URL(window.location.href);
         url.searchParams.set('tool', tool);
         window.history.replaceState(null, '', url.toString());
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     },
     [onActiveToolChange]
   );
@@ -398,11 +400,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   const selectionRef = useRef<IdeaWorkspaceSelection>(EMPTY_SELECTION);
   const [mindMapInteractionMode, setMindMapInteractionMode] =
     useState<MindMapInteractionMode>('select');
-  const handleMindMapInteractionModeChange = useCallback((requestedMode: MindMapInteractionMode) => {
-    setMindMapInteractionMode((previousMode) =>
-      stabilizeMindmapInteractionMode(previousMode, requestedMode)
-    );
-  }, []);
+  const handleMindMapInteractionModeChange = useCallback(
+    (requestedMode: MindMapInteractionMode) => {
+      setMindMapInteractionMode((previousMode) =>
+        stabilizeMindmapInteractionMode(previousMode, requestedMode)
+      );
+    },
+    []
+  );
 
   useEffect(() => {
     selectionRef.current = selection;
@@ -525,19 +530,21 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
     const nodeMap = new Map(graphNodes.map((n: any) => [n.id, n]));
     const rootNodes = graphNodes.filter((n: any) => !parentMap.has(n.id));
     const rootLabel = rootNodes[0]?.data?.label || rootNodes[0]?.data?.text || title || 'Root';
-    const topBranches = (childrenMap.get(rootNodes[0]?.id) || [])
-      .slice(0, 8)
-      .map((id) => {
-        const n = nodeMap.get(id);
-        return n?.data?.label || n?.data?.text || id;
-      });
+    const topBranches = (childrenMap.get(rootNodes[0]?.id) || []).slice(0, 8).map((id) => {
+      const n = nodeMap.get(id);
+      return n?.data?.label || n?.data?.text || id;
+    });
 
     const selectedNode = graphNodes.find((n: any) => n.selected);
     const parts = [
       `Total nodes: ${graphNodes.length}`,
       `Root: "${rootLabel}"`,
-      topBranches.length > 0 ? `Top branches: ${topBranches.map((b: string) => `"${b}"`).join(', ')}` : null,
-      selectedNode ? `Selected: "${selectedNode.data?.label || selectedNode.data?.text || selectedNode.id}"` : null,
+      topBranches.length > 0
+        ? `Top branches: ${topBranches.map((b: string) => `"${b}"`).join(', ')}`
+        : null,
+      selectedNode
+        ? `Selected: "${selectedNode.data?.label || selectedNode.data?.text || selectedNode.id}"`
+        : null,
     ].filter(Boolean);
     onGraphSummaryChange(parts.join('; '));
   }, [graphNodes, graphEdges, title, onGraphSummaryChange]);
@@ -787,13 +794,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 position: n.position,
                 data: n.data,
               }));
-              const insertEdges = (result.data as any).edges?.map((e: any) => ({
-                id: e.id,
-                source: e.source,
-                target: e.target,
-                label: e.data?.label || e.label,
-                data: e.data,
-              })) ?? [];
+              const insertEdges =
+                (result.data as any).edges?.map((e: any) => ({
+                  id: e.id,
+                  source: e.source,
+                  target: e.target,
+                  label: e.data?.label || e.label,
+                  data: e.data,
+                })) ?? [];
               window.dispatchEvent(
                 new CustomEvent('idea-workspace-insert', {
                   detail: { items, edges: insertEdges, ideaId: realId },
@@ -929,7 +937,14 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         new CustomEvent('idea-workspace-quick-action', { detail: { action, ideaId: realId } })
       );
     },
-    [activeTool, externalOnQuickAction, handleMindMapInteractionModeChange, isPolish, realId, setActiveTool]
+    [
+      activeTool,
+      externalOnQuickAction,
+      handleMindMapInteractionModeChange,
+      isPolish,
+      realId,
+      setActiveTool,
+    ]
   );
 
   useEffect(() => {
@@ -1067,7 +1082,12 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           const parts: string[] = [];
           if (orgData?.summary) parts.push(orgData.summary);
           if (orgData?.claims?.length) {
-            parts.push(`Key claims: ${orgData.claims.slice(0, 5).map((c: any) => c.text || c.claim || c).join('; ')}`);
+            parts.push(
+              `Key claims: ${orgData.claims
+                .slice(0, 5)
+                .map((c: any) => c.text || c.claim || c)
+                .join('; ')}`
+            );
           }
           if (orgData?.strategy) parts.push(`Strategy: ${orgData.strategy}`);
           orgContextRef.current = parts.join('\n') || null;
@@ -1094,7 +1114,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               ids: selection.ids,
               primaryId: selection.primaryId,
             },
-          },
+          } as any,
         });
         if (batch?.proposals?.length) {
           setProposalBatch(batch);
@@ -1454,28 +1474,31 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
   }, [setActiveTool]);
 
   // ── V4-IDEA-07: Keyboard shortcuts ─────────────────────────────────────────
-  const { showHelp: shortcutsHelpOpen, setShowHelp: setShortcutsHelpOpen, shortcuts } =
-    useKeyboardShortcuts({
-      enabled: !loading && activeTool === 'mindmap',
-      onCancel: () => {
-        if (nodeDetailOpen) setNodeDetailOpen(false);
-        else if (templateGalleryOpen) setTemplateGalleryOpen(false);
-        else if (searchOpen) setSearchOpen(false);
-        else if (votingActive) setVotingActive(false);
-        else if (focusMode !== 'full') handleExitFocus();
-      },
-      onSlashCommand: () => setSearchOpen(true),
-      onAddChild: () => handleQuickAction('mm_add_child'),
-      onAddSibling: () => handleQuickAction('mm_add_sibling'),
-      onGroup: () => handleQuickAction('group'),
-      onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
-      onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
-      onFocusSelection: () => handleQuickAction('mm_focus_selected'),
-      onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
-      onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
-      onSelectAll: () => handleQuickAction('selectAll'),
-      onClearSelection: () => handleQuickAction('clearSelection'),
-    });
+  const {
+    showHelp: shortcutsHelpOpen,
+    setShowHelp: setShortcutsHelpOpen,
+    shortcuts,
+  } = useKeyboardShortcuts({
+    enabled: !loading && activeTool === 'mindmap',
+    onCancel: () => {
+      if (nodeDetailOpen) setNodeDetailOpen(false);
+      else if (templateGalleryOpen) setTemplateGalleryOpen(false);
+      else if (searchOpen) setSearchOpen(false);
+      else if (votingActive) setVotingActive(false);
+      else if (focusMode !== 'full') handleExitFocus();
+    },
+    onSlashCommand: () => setSearchOpen(true),
+    onAddChild: () => handleQuickAction('mm_add_child'),
+    onAddSibling: () => handleQuickAction('mm_add_sibling'),
+    onGroup: () => handleQuickAction('group'),
+    onAIExpand: () => handleQuickAction('mm_ai_expand_branch'),
+    onToggleCollapse: () => handleQuickAction('mm_toggle_collapse'),
+    onFocusSelection: () => handleQuickAction('mm_focus_selected'),
+    onReparentPromote: () => handleQuickAction('mm_reparent_promote'),
+    onReparentDemote: () => handleQuickAction('mm_reparent_demote'),
+    onSelectAll: () => handleQuickAction('selectAll'),
+    onClearSelection: () => handleQuickAction('clearSelection'),
+  });
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -1753,7 +1776,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 sourceTool: 'whiteboard' as const,
                 facilitationPhase: whiteboardSession?.phase,
                 outcomeCount: whiteboardOutcomes?.length || 0,
-                outcomeSummary: (whiteboardOutcomes || []).slice(0, 10).map((o) => `[${o.type}] ${o.label}`).join('; '),
+                outcomeSummary: (whiteboardOutcomes || [])
+                  .slice(0, 10)
+                  .map((o) => `[${o.type}] ${o.label}`)
+                  .join('; '),
               }
             : undefined;
         const result = await Api.convertMyIdea(realId, {
@@ -1839,7 +1865,16 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         setSaving(false);
       }
     },
-    [activeTool, i18n.language, isDraft, isPolish, realId, selection.ids, whiteboardOutcomes, whiteboardSession]
+    [
+      activeTool,
+      i18n.language,
+      isDraft,
+      isPolish,
+      realId,
+      selection.ids,
+      whiteboardOutcomes,
+      whiteboardSession,
+    ]
   );
 
   handleConvertRef.current = handleConvert;
@@ -2165,10 +2200,17 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           for (const n of parsed.addNodes) {
             proposals.push({
               id: `chat-add-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              type: 'add_node',
-              description: `Add "${n.label}"`,
-              payload: {
-                addNodes: [{ id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, label: n.label, parentId: n.parentId }],
+              type: 'graph_patch',
+              rationale: `Add "${n.label}"`,
+              confidence: 0.7,
+              patch: {
+                addNodes: [
+                  {
+                    id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+                    label: n.label,
+                    data: n.parentId ? { parentId: n.parentId } : undefined,
+                  },
+                ],
               },
               status: 'pending',
             });
@@ -2178,9 +2220,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
           for (const r of parsed.renameNodes) {
             proposals.push({
               id: `chat-rename-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-              type: 'update_node',
-              description: `Rename "${r.id}" to "${r.label}"`,
-              payload: { updateNodes: [{ id: r.id, data: { label: r.label } }] },
+              type: 'graph_patch',
+              rationale: `Rename "${r.id}" to "${r.label}"`,
+              confidence: 0.7,
+              patch: { updateNodes: [{ id: r.id, data: { label: r.label } }] },
               status: 'pending',
             });
           }
@@ -2194,7 +2237,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
             createdAt: Date.now(),
           };
           setProposalBatch(batch);
-          toast(isPolish ? 'AI zaproponowało zmiany w mapie' : 'AI proposed changes to the map', { icon: '🤖' });
+          toast(isPolish ? 'AI zaproponowało zmiany w mapie' : 'AI proposed changes to the map', {
+            icon: '🤖',
+          });
         }
       } catch {
         // Invalid JSON — ignore
@@ -2242,7 +2287,7 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               id: result.id,
               code: buildArtifactCode('task', result.id),
               ref: buildArtifactRef('task', result.id),
-              label: getArtifactLabel('task', isPolish),
+              label: getArtifactLabel('task', isPolish ? 'pl' : 'en'),
               name: detail.taskTitle,
               role: 'output' as ArtifactLinkRole,
               createdAt: new Date().toISOString(),
@@ -2476,7 +2521,10 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
               {activeToolLabel}
             </span>
             {(() => {
-              const rootNode = graphNodes.find((n: any) => n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id));
+              const rootNode = graphNodes.find(
+                (n: any) =>
+                  n.id === 'root' || !graphEdges.some((e: any) => (e.target || e.targetId) === n.id)
+              );
               const ps = rootNode?.data?.pipelineStage;
               if (!ps || ps === 'draft') return null;
               return (
@@ -2485,7 +2533,9 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
                 </span>
               );
             })()}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">{draftSavedLabel}</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">
+              {draftSavedLabel}
+            </span>
           </div>
           <div className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">
             {title || safeTitleFromSeed(seedText, isPolish)}
@@ -2498,29 +2548,32 @@ export const IdeaMapWorkspace: React.FC<IdeaMapWorkspaceProps> = ({
         {/* V5-IDEA-13: Pinned card info now merged into IdeaRecommendationMap top-left header */}
 
         {/* Ghost cards — AI gap suggestions */}
-        {isAccepted && (activeTool === 'whiteboard' || activeTool === 'mindmap' || activeTool === 'process_flow') && (
-          <IdeaGhostCards
-            ideaId={realId}
-            activeTool={activeTool}
-            title={title || safeTitleFromSeed(seedText, isPolish)}
-            seedText={seedText}
-            isAccepted={isAccepted}
-            graphNodes={graphNodes}
-            graphEdges={graphEdges}
-            onMaterialize={(card) => {
-              window.dispatchEvent(
-                new CustomEvent('idea-workspace-insert', {
-                  detail: {
-                    items: [
-                      { text: card.text, position: card.position, branchKey: card.branchKey },
-                    ],
-                    ideaId: realId,
-                  },
-                })
-              );
-            }}
-          />
-        )}
+        {isAccepted &&
+          (activeTool === 'whiteboard' ||
+            activeTool === 'mindmap' ||
+            activeTool === 'process_flow') && (
+            <IdeaGhostCards
+              ideaId={realId}
+              activeTool={activeTool}
+              title={title || safeTitleFromSeed(seedText, isPolish)}
+              seedText={seedText}
+              isAccepted={isAccepted}
+              graphNodes={graphNodes}
+              graphEdges={graphEdges}
+              onMaterialize={(card) => {
+                window.dispatchEvent(
+                  new CustomEvent('idea-workspace-insert', {
+                    detail: {
+                      items: [
+                        { text: card.text, position: card.position, branchKey: card.branchKey },
+                      ],
+                      ideaId: realId,
+                    },
+                  })
+                );
+              }}
+            />
+          )}
 
         {/* Voting mode overlay */}
         <IdeaVotingMode

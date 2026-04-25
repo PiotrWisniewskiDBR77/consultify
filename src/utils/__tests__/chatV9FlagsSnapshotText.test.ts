@@ -13,10 +13,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CHAT_V9_FLAGS } from '../chatV9FeatureFlags';
-import {
-  buildChatV9FlagSnapshotText,
-  copyTextToClipboard,
-} from '../chatV9FlagsSnapshotText';
+import { buildChatV9FlagSnapshotText, copyTextToClipboard } from '../chatV9FlagsSnapshotText';
 
 describe('buildChatV9FlagSnapshotText', () => {
   it('starts with a header line containing the timestamp and default label', () => {
@@ -100,9 +97,9 @@ describe('copyTextToClipboard', () => {
   });
 
   it('falls back to execCommand when the async API rejects with NotAllowedError', async () => {
-    const writeText = vi.fn().mockRejectedValue(
-      Object.assign(new Error('blocked'), { name: 'NotAllowedError' })
-    );
+    const writeText = vi
+      .fn()
+      .mockRejectedValue(Object.assign(new Error('blocked'), { name: 'NotAllowedError' }));
     Object.defineProperty(navigator, 'clipboard', {
       value: { writeText },
       configurable: true,
@@ -117,9 +114,9 @@ describe('copyTextToClipboard', () => {
   });
 
   it('returns denied when both async and execCommand paths fail', async () => {
-    const writeText = vi.fn().mockRejectedValue(
-      Object.assign(new Error('blocked'), { name: 'NotAllowedError' })
-    );
+    const writeText = vi
+      .fn()
+      .mockRejectedValue(Object.assign(new Error('blocked'), { name: 'NotAllowedError' }));
     Object.defineProperty(navigator, 'clipboard', {
       value: { writeText },
       configurable: true,

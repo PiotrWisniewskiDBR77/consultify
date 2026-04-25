@@ -489,7 +489,7 @@ export function parseXlsx(buffer: Buffer): {
   totalRows: number;
 } {
   // Dynamic import is not possible in a sync function, so we use require-style
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+
   const XLSX = require('xlsx');
   const workbook = XLSX.read(buffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];

@@ -107,7 +107,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
 }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<RegionalPreferences>(DEFAULT_PREFERENCES);
-  const [organizationDefaults, setOrganizationDefaults] = useState<OrganizationRegionalDefaults | null>(null);
+  const [organizationDefaults, setOrganizationDefaults] =
+    useState<OrganizationRegionalDefaults | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -159,10 +160,17 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
       await Api.put('/settings/preferences/regional', {
         preferences,
       } as RegionalPreferencesResponse);
+      const data = (await Api.get('/settings/preferences/regional').catch(
+        () => null
+      )) as RegionalPreferencesResponse | null;
+      const persisted = data?.preferences
+        ? ({ ...DEFAULT_PREFERENCES, ...data.preferences } as RegionalPreferences)
+        : preferences;
+      setPreferences(persisted);
       // Also update user object for backwards compatibility
       await onUpdateUser({
-        timezone: preferences.timezone,
-        units: preferences.units,
+        timezone: persisted.timezone,
+        units: persisted.units,
       });
       toast.success(t('settings.regional.saved', 'Regional preferences saved'));
     } catch (error) {
@@ -211,7 +219,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
         minute: '2-digit',
         hour12: preferences.timeFormat === '12h',
       };
-      return new Date().toLocaleTimeString('en-US', options);
+      return new Date().toLocaleTimeString(undefined, options);
     } catch {
       return '--:--';
     }
@@ -242,7 +250,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
               'Configure your locale, timezone, and format preferences'
             )}
           </p>
-          {organizationDefaults?.profile?.defaultTimezone || organizationDefaults?.profile?.currency ? (
+          {organizationDefaults?.profile?.defaultTimezone ||
+          organizationDefaults?.profile?.currency ? (
             <div className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100">
               {t(
                 'settings.regional.tenantDefaultsHint',
@@ -250,14 +259,18 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
               )}
               <div className="mt-1 text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">
                 {organizationDefaults?.profile?.defaultTimezone
-                  ? `Tenant timezone: ${organizationDefaults.profile.defaultTimezone}`
+                  ? t('settings.regional.tenantTimezone', 'Tenant timezone: {{timezone}}', {
+                      timezone: organizationDefaults.profile.defaultTimezone,
+                    })
                   : null}
                 {organizationDefaults?.profile?.defaultTimezone &&
                 organizationDefaults?.profile?.currency
                   ? ' | '
                   : null}
                 {organizationDefaults?.profile?.currency
-                  ? `Tenant currency: ${organizationDefaults.profile.currency}`
+                  ? t('settings.regional.tenantCurrency', 'Tenant currency: {{currency}}', {
+                      currency: organizationDefaults.profile.currency,
+                    })
                   : null}
               </div>
             </div>
@@ -358,7 +371,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                       <span
                         className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
                       >
-                        {format.label}
+                        {t(`settings.regional.dateFormats.${format.code}`, format.label)}
                       </span>
                     </div>
                     <span
@@ -422,7 +435,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
                         <span
                           className={`text-sm font-medium ${isSelected ? 'text-purple-700 dark:text-purple-300' : 'text-slate-700 dark:text-slate-300'}`}
                         >
-                          {format.label}
+                          {t(`settings.regional.timeFormats.${format.code}`, format.label)}
                         </span>
                       </div>
                     </div>
@@ -488,7 +501,9 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
             >
               {CURRENCIES.map((currency) => (
                 <option key={currency.code} value={currency.code}>
-                  {currency.symbol} - {currency.name} ({currency.code})
+                  {currency.symbol} -{' '}
+                  {t(`settings.regional.currencies.${currency.code}`, currency.name)} (
+                  {currency.code})
                 </option>
               ))}
             </select>
@@ -514,7 +529,8 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
             >
               {NUMBER_FORMATS.map((format) => (
                 <option key={format.code} value={format.code}>
-                  {format.label} ({format.example})
+                  {t(`settings.regional.numberFormats.${format.code}`, format.label)} (
+                  {format.example})
                 </option>
               ))}
             </select>
@@ -544,12 +560,12 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
             {
               value: 'metric' as const,
               label: t('settings.regional.metric', 'Metric'),
-              details: 'meters, kilograms, °C',
+              details: t('settings.regional.metricDetails', 'meters, kilograms, °C'),
             },
             {
               value: 'imperial' as const,
               label: t('settings.regional.imperial', 'Imperial'),
-              details: 'feet, pounds, °F',
+              details: t('settings.regional.imperialDetails', 'feet, pounds, °F'),
             },
           ].map((option) => {
             const isSelected = preferences.units === option.value;

@@ -44,31 +44,19 @@ describe('shouldOfferChatV9FlagExpand', () => {
     const padded = `   ${core}   `;
     expect(shouldOfferChatV9FlagExpand({ description: padded })).toBe(false);
     const coreAtThreshold = 'A'.repeat(DEFAULT_DESCRIPTION_EXPAND_THRESHOLD);
-    expect(
-      shouldOfferChatV9FlagExpand({ description: `\n\n${coreAtThreshold}\n\n` })
-    ).toBe(true);
+    expect(shouldOfferChatV9FlagExpand({ description: `\n\n${coreAtThreshold}\n\n` })).toBe(true);
   });
 
   it('honours a custom threshold', () => {
-    expect(shouldOfferChatV9FlagExpand({ description: 'short', threshold: 5 })).toBe(
-      true
-    );
-    expect(shouldOfferChatV9FlagExpand({ description: 'short', threshold: 6 })).toBe(
-      false
-    );
+    expect(shouldOfferChatV9FlagExpand({ description: 'short', threshold: 5 })).toBe(true);
+    expect(shouldOfferChatV9FlagExpand({ description: 'short', threshold: 6 })).toBe(false);
   });
 
   it('returns false when threshold is non-finite / zero / negative', () => {
     const text = 'A'.repeat(500);
     expect(shouldOfferChatV9FlagExpand({ description: text, threshold: 0 })).toBe(false);
-    expect(shouldOfferChatV9FlagExpand({ description: text, threshold: -10 })).toBe(
-      false
-    );
-    expect(shouldOfferChatV9FlagExpand({ description: text, threshold: NaN })).toBe(
-      false
-    );
-    expect(
-      shouldOfferChatV9FlagExpand({ description: text, threshold: Infinity })
-    ).toBe(false);
+    expect(shouldOfferChatV9FlagExpand({ description: text, threshold: -10 })).toBe(false);
+    expect(shouldOfferChatV9FlagExpand({ description: text, threshold: NaN })).toBe(false);
+    expect(shouldOfferChatV9FlagExpand({ description: text, threshold: Infinity })).toBe(false);
   });
 });

@@ -1,5 +1,6 @@
 import { Building2, CheckCircle, Clock, Mail, Shield, UserPlus, XCircle } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { Api } from '../../services/api';
 
@@ -28,6 +29,8 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
   const [approvalRole, setApprovalRole] = useState('ADMIN');
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     loadRequests();
@@ -36,30 +39,33 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
   const loadRequests = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getAccessRequests();
       setRequests(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load access requests:', err);
+      setLoadError(err?.message || 'Failed to load access requests');
+      toast.error(err?.message || 'Failed to load access requests');
     } finally {
       setLoading(false);
     }
   };
 
   const handleApprove = async () => {
-    if (!selectedRequest || !approvalPassword) {
-      alert('Please provide a password for the new account');
-      return;
-    }
+    if (!selectedRequest) return;
 
     try {
+      setProcessing(true);
       await Api.approveAccessRequest(selectedRequest.id, approvalPassword, approvalRole);
       setShowApprovalDialog(false);
       setSelectedRequest(null);
       setApprovalPassword('');
       await loadRequests();
-      alert('Access request approved successfully!');
+      toast.success('Access request approved');
     } catch (err: any) {
-      alert(err.message || 'Failed to approve request');
+      toast.error(err.message || 'Failed to approve request');
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -67,16 +73,24 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
     if (!selectedRequest) return;
 
     try {
+      setProcessing(true);
       await Api.rejectAccessRequest(selectedRequest.id, rejectionReason);
       setShowRejectDialog(false);
       setSelectedRequest(null);
       setRejectionReason('');
       await loadRequests();
-      alert('Access request rejected');
+      toast.success('Access request rejected');
     } catch (err: any) {
-      alert(err.message || 'Failed to reject request');
+      toast.error(err.message || 'Failed to reject request');
+    } finally {
+      setProcessing(false);
     }
   };
+
+  const visibleRequests =
+    statusFilter === 'all'
+      ? requests
+      : requests.filter((request) => request.status === statusFilter);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -126,15 +140,21 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
         ))}
       </div>
 
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
+
       {/* Requests List */}
       <div className="space-y-3">
-        {requests.length === 0 ? (
+        {visibleRequests.length === 0 ? (
           <div className="text-center py-12 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg">
             <UserPlus className="mx-auto text-slate-300 dark:text-slate-600 mb-3" size={48} />
             <p className="text-slate-500 dark:text-slate-400">No {statusFilter} requests</p>
           </div>
         ) : (
-          requests.map((request) => (
+          visibleRequests.map((request) => (
             <div
               key={request.id}
               className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg p-5"
@@ -254,7 +274,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
-                  Initial Password
+                  Initial Password (optional)
                 </label>
                 <input
                   type="password"
@@ -264,7 +284,7 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
                   className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg text-navy-900 dark:text-white"
                 />
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  User can change this later in their settings
+                  Leave empty when approving an organization-only access request.
                 </p>
               </div>
             </div>
@@ -272,9 +292,10 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleApprove}
-                className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors font-medium"
+                disabled={processing}
+                className="flex-1 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg transition-colors font-medium disabled:opacity-60"
               >
-                Approve
+                {processing ? 'Approving...' : 'Approve'}
               </button>
               <button
                 onClick={() => {
@@ -320,9 +341,10 @@ export const SuperAdminAccessRequestsView: React.FC = () => {
             <div className="flex gap-3 mt-6">
               <button
                 onClick={handleReject}
-                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors font-medium"
+                disabled={processing}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors font-medium disabled:opacity-60"
               >
-                Reject
+                {processing ? 'Rejecting...' : 'Reject'}
               </button>
               <button
                 onClick={() => {

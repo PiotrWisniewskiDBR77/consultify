@@ -42,14 +42,18 @@ export interface ExtractionResult {
   };
 }
 
-const TABLE_PATTERNS = [
-  /\|[^|]+\|[^|]+\|/gm,
-  /(?:^|\n)\s*[\w\s]+\t[\w\s]+(?:\t[\w\s]+)+/gm,
-];
+const TABLE_PATTERNS = [/\|[^|]+\|[^|]+\|/gm, /(?:^|\n)\s*[\w\s]+\t[\w\s]+(?:\t[\w\s]+)+/gm];
 
 const DIAGRAM_KEYWORDS = [
-  'process flow', 'workflow', 'architecture', 'diagram', 'flowchart',
-  'schemat', 'proces', 'architektura', 'przepływ',
+  'process flow',
+  'workflow',
+  'architecture',
+  'diagram',
+  'flowchart',
+  'schemat',
+  'proces',
+  'architektura',
+  'przepływ',
 ];
 
 class MultimodalChunkerService {
@@ -79,7 +83,9 @@ class MultimodalChunkerService {
           const imageChunks = await this.processImage(input.documentId, image);
           chunks.push(...imageChunks);
         } catch (err: any) {
-          logger.warn(`[MultimodalChunker] Image processing failed for page ${image.pageNumber}: ${err?.message}`);
+          logger.warn(
+            `[MultimodalChunker] Image processing failed for page ${image.pageNumber}: ${err?.message}`
+          );
         }
       }
     }
@@ -94,11 +100,14 @@ class MultimodalChunkerService {
       totalChunks: chunks.length,
       textChunks: chunks.filter((c) => c.chunkType === 'text').length,
       tableChunks: chunks.filter((c) => c.chunkType === 'table').length,
-      imageChunks: chunks.filter((c) => c.chunkType === 'image' || c.chunkType === 'diagram').length,
+      imageChunks: chunks.filter((c) => c.chunkType === 'image' || c.chunkType === 'diagram')
+        .length,
       chartChunks: chunks.filter((c) => c.chunkType === 'chart').length,
     };
 
-    logger.info(`[MultimodalChunker] Processed document ${input.documentId}: ${JSON.stringify(stats)}`);
+    logger.info(
+      `[MultimodalChunker] Processed document ${input.documentId}: ${JSON.stringify(stats)}`
+    );
 
     return { documentId: input.documentId, chunks, stats };
   }
@@ -108,7 +117,7 @@ class MultimodalChunkerService {
     const paragraphs = text.split(/\n{2,}/).filter((p) => p.trim().length > 50);
 
     let currentChunk = '';
-    let chunkStart = 0;
+    const chunkStart = 0;
     const MAX_CHUNK_SIZE = 1500;
     const OVERLAP = 200;
 
@@ -153,7 +162,10 @@ class MultimodalChunkerService {
 
       for (const match of matches) {
         if (!tableContent) {
-          const cells = match.split(/[|\t]/).map((c) => c.trim()).filter(Boolean);
+          const cells = match
+            .split(/[|\t]/)
+            .map((c) => c.trim())
+            .filter(Boolean);
           if (cells.length >= 2) {
             headers = cells;
           }

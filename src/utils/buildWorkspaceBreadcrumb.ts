@@ -208,12 +208,7 @@ function truncateTitle(title: string): string {
 export function buildWorkspaceBreadcrumb(
   input: BuildWorkspaceBreadcrumbInput
 ): WorkspaceBreadcrumb | null {
-  const {
-    view,
-    hasActiveConversation,
-    conversationTitle,
-    conversationSegmentEnabled,
-  } = input;
+  const { view, hasActiveConversation, conversationTitle, conversationSegmentEnabled } = input;
   if (!view) return null;
   if (HIDDEN_VIEWS.has(view)) return null;
   if (!hasActiveConversation) return null;

@@ -8,30 +8,31 @@
  * and runs deterministic heuristics per lane.
  */
 
+import { all as dbAll } from '../../utils/DbPromise.js';
 import { detectDelaySignals } from '../delayDetectionService.js';
 import { detectRiskSignals } from '../riskDetectionService.js';
-import {
-  getExecutionControlTowerQueues,
-} from '../v8ExecutionControlTowerService.js';
+import { getExecutionControlTowerQueues } from '../v8ExecutionControlTowerService.js';
 import { getLevelingAlerts } from '../workloadCapacityService.js';
-import { all as dbAll } from '../../utils/DbPromise.js';
 import { analyzeActionQueue } from './laneHeuristics/actionQueueHeuristics.js';
 import { analyzeBlockers } from './laneHeuristics/blockersHeuristics.js';
 import { analyzeDecisions } from './laneHeuristics/decisionsHeuristics.js';
+import { getDemoAnalysis, isEmptyAnalysis } from './laneHeuristics/demoData.js';
 import { analyzePeopleChange } from './laneHeuristics/peopleChangeHeuristics.js';
 import { analyzeRisk } from './laneHeuristics/riskHeuristics.js';
-import { analyzeWorkload } from './laneHeuristics/workloadHeuristics.js';
 import type { HeuristicInput, LaneAnalysis } from './laneHeuristics/types.js';
-import { getDemoAnalysis, isEmptyAnalysis } from './laneHeuristics/demoData.js';
+import { analyzeWorkload } from './laneHeuristics/workloadHeuristics.js';
 
 type LaneId = 'action-queue' | 'decisions' | 'blockers' | 'workload' | 'risk' | 'people-change';
 
-const HEURISTIC_MAP: Record<LaneId, (input: HeuristicInput) => ReturnType<typeof analyzeActionQueue>> = {
+const HEURISTIC_MAP: Record<
+  LaneId,
+  (input: HeuristicInput) => ReturnType<typeof analyzeActionQueue>
+> = {
   'action-queue': analyzeActionQueue,
-  'decisions': analyzeDecisions,
-  'blockers': analyzeBlockers,
-  'workload': analyzeWorkload,
-  'risk': analyzeRisk,
+  decisions: analyzeDecisions,
+  blockers: analyzeBlockers,
+  workload: analyzeWorkload,
+  risk: analyzeRisk,
   'people-change': analyzePeopleChange,
 };
 
@@ -102,14 +103,15 @@ async function loadTasks(organizationId: string, projectId?: string): Promise<an
 
 async function loadLaneDecisions(organizationId: string, laneId: string): Promise<any[]> {
   try {
-    const rows = (await dbAll(
-      `SELECT id, suggestion_id as "suggestionId", state, decided_by as "decidedBy",
+    const rows =
+      (await dbAll(
+        `SELECT id, suggestion_id as "suggestionId", state, decided_by as "decidedBy",
               decided_at as "decidedAt", notes
        FROM lane_decisions
        WHERE organization_id = ? AND lane_id = ?
        ORDER BY created_at DESC`,
-      [organizationId, laneId]
-    )) || [];
+        [organizationId, laneId]
+      )) || [];
     return rows as any[];
   } catch {
     return [];
@@ -118,15 +120,16 @@ async function loadLaneDecisions(organizationId: string, laneId: string): Promis
 
 async function loadLaneExecutionPlans(organizationId: string, laneId: string): Promise<any[]> {
   try {
-    const rows = (await dbAll(
-      `SELECT id, decision_id as "decisionId", tasks_json as "tasksJson",
+    const rows =
+      (await dbAll(
+        `SELECT id, decision_id as "decisionId", tasks_json as "tasksJson",
               before_state as "beforeState", after_state as "afterState",
               verification_status as "verificationStatus"
        FROM lane_execution_plans
        WHERE organization_id = ? AND lane_id = ?
        ORDER BY created_at DESC`,
-      [organizationId, laneId]
-    )) || [];
+        [organizationId, laneId]
+      )) || [];
     return (rows as any[]).map((r) => ({
       ...r,
       tasks: r.tasksJson ? JSON.parse(r.tasksJson) : [],
@@ -157,7 +160,10 @@ export async function analyzeLane(
     laneDecisions,
     laneExecPlans,
   ] = await Promise.all([
-    getExecutionControlTowerQueues(organizationId, { projectId, queue: 'all' }).catch(() => ({ queues: {}, counts: {} })),
+    getExecutionControlTowerQueues(organizationId, { projectId, queue: 'all' }).catch(() => ({
+      queues: {},
+      counts: {},
+    })),
     detectRiskSignals(organizationId, projectId).catch(() => []),
     detectDelaySignals(organizationId, projectId).catch(() => []),
     getLevelingAlerts(organizationId).catch(() => []),
@@ -185,7 +191,16 @@ export async function analyzeLane(
 
   // If heuristics produced no results (empty DB), return demo data for testing
   const heuristicResult = { observations, insights, effects, suggestions };
-  if (isEmptyAnalysis({ ...heuristicResult, decisions: [], executionPlan: [], severity: 'ok', confidence: 'degraded', lastRefreshed: '' })) {
+  if (
+    isEmptyAnalysis({
+      ...heuristicResult,
+      decisions: [],
+      executionPlan: [],
+      severity: 'ok',
+      confidence: 'degraded',
+      lastRefreshed: '',
+    })
+  ) {
     const demo = getDemoAnalysis(laneId);
     if (demo) {
       return { ...demo, lastRefreshed: new Date().toISOString() };

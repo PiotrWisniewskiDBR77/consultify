@@ -73,7 +73,8 @@ const SortIcon: React.FC<{ column: SortColumn; currentCol: SortColumn; currentDi
   currentCol,
   currentDir,
 }) => {
-  if (column !== currentCol) return <ArrowUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
+  if (column !== currentCol)
+    return <ArrowUpDown size={12} className="text-slate-300 dark:text-slate-600" />;
   return currentDir === 'asc' ? (
     <ArrowUp size={12} className="text-primary-500" />
   ) : (
@@ -225,9 +226,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
         setReassigningInitId(null);
         setSelectedNewOwner('');
       } catch {
-        toast.error(
-          t('initiatives.analysis.resources.reassignFailed', 'Failed to reassign owner')
-        );
+        toast.error(t('initiatives.analysis.resources.reassignFailed', 'Failed to reassign owner'));
       }
     },
     [onQuickUpdate, t]
@@ -263,10 +262,14 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
           // Or an unassigned user
           const unassigned = unassignedUsers.shift();
 
-          const target = sameRoleFree || (unassigned ? {
-            resourceId: unassigned.id,
-            resourceName: getUserLabel(unassigned),
-          } : null);
+          const target =
+            sameRoleFree ||
+            (unassigned
+              ? {
+                  resourceId: unassigned.id,
+                  resourceName: getUserLabel(unassigned),
+                }
+              : null);
 
           if (target) {
             proposals.push({
@@ -325,9 +328,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
             ? { ownerBusinessId: proposal.toUserId }
             : { ownerExecutionId: proposal.toUserId };
         await onQuickUpdate(proposal.initiativeId, updates);
-        toast.success(
-          t('initiatives.analysis.resources.proposalApplied', 'Reassignment applied')
-        );
+        toast.success(t('initiatives.analysis.resources.proposalApplied', 'Reassignment applied'));
         // Remove applied proposal
         setAiProposals((prev) => prev?.filter((_, i) => i !== idx) ?? null);
       } catch {
@@ -391,136 +392,137 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
     setAiRunning(false);
   }, [aiProposals, proposalOverrides, onQuickUpdate, t]);
 
-  const aiProposalsPanel = aiProposals !== null ? (
-    <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden m-4">
-      <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
-          <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
-            {t('initiatives.analysis.resources.aiProposals', 'AI rebalancing proposals')}
-          </h3>
-          <span className="text-xs text-purple-500 dark:text-purple-400">
-            ({aiProposals.length})
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          {aiProposals.some((p, i) => p.toUserId || proposalOverrides[i]) && (
-            <button
-              onClick={handleApplyAllProposals}
-              disabled={aiRunning}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
-            >
-              <Check size={12} />
-              {t('initiatives.analysis.resources.applyAll', 'Apply all')}
-            </button>
-          )}
-          <button
-            onClick={closeAiWorkspace}
-            className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30 transition-colors"
-          >
-            <X size={14} />
-          </button>
-        </div>
-      </div>
-
-      {aiProposals.length === 0 ? (
-        <div className="px-4 py-6 text-center">
-          <Check size={24} className="mx-auto mb-2 text-emerald-500" />
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {t(
-              'initiatives.analysis.resources.aiBalanced',
-              'Workload is balanced — no changes needed'
-            )}
-          </p>
-        </div>
-      ) : (
-        <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
-          {aiProposals.map((proposal, idx) => {
-            const overrideUserId = proposalOverrides[idx];
-            const effectiveUserId = overrideUserId ?? proposal.toUserId;
-            const effectiveUserName = overrideUserId
-              ? users.find((u) => u.id === overrideUserId)
-                ? getUserLabel(users.find((u) => u.id === overrideUserId)!)
-                : overrideUserId
-              : proposal.toUserName;
-            const isOverridden = !!overrideUserId && overrideUserId !== proposal.toUserId;
-
-            return (
-              <div
-                key={`${proposal.initiativeId}-${idx}`}
-                className="flex items-center gap-3 px-4 py-3 text-sm"
+  const aiProposalsPanel =
+    aiProposals !== null ? (
+      <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-500/5 dark:bg-purple-500/10 overflow-hidden m-4">
+        <div className="px-4 py-3 bg-purple-50 dark:bg-purple-900/20 border-b border-purple-200 dark:border-purple-900/50 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles size={16} className="text-purple-600 dark:text-purple-400" />
+            <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-300">
+              {t('initiatives.analysis.resources.aiProposals', 'AI rebalancing proposals')}
+            </h3>
+            <span className="text-xs text-purple-500 dark:text-purple-400">
+              ({aiProposals.length})
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {aiProposals.some((p, i) => p.toUserId || proposalOverrides[i]) && (
+              <button
+                onClick={handleApplyAllProposals}
+                disabled={aiRunning}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 disabled:opacity-50 transition-colors"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-slate-900 dark:text-white truncate">
-                      {proposal.initiativeName}
-                    </span>
-                    <span className="text-slate-400 dark:text-slate-500">:</span>
-                    <span className="text-red-600 dark:text-red-400 line-through text-xs">
-                      {proposal.fromUserName}
-                    </span>
-                    <span className="text-slate-400">→</span>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                    {proposal.reason}
-                  </p>
-                </div>
-
-                <select
-                  value={effectiveUserId}
-                  onChange={(e) => {
-                    setProposalOverrides((prev) => ({ ...prev, [idx]: e.target.value }));
-                  }}
-                  className={`shrink-0 px-2 py-1.5 text-xs rounded-lg border transition-colors bg-white dark:bg-navy-950 text-slate-900 dark:text-white ${
-                    isOverridden
-                      ? 'border-primary-400 dark:border-primary-500 ring-1 ring-primary-400/30'
-                      : 'border-slate-200 dark:border-navy-700'
-                  }`}
-                >
-                  {proposal.toUserId && (
-                    <option value={proposal.toUserId}>{proposal.toUserName} (AI)</option>
-                  )}
-                  {!proposal.toUserId && (
-                    <option value="">
-                      {t('initiatives.analysis.resources.selectPerson', '— Select person —')}
-                    </option>
-                  )}
-                  {users
-                    .filter((u) => u.id !== proposal.fromUserId && u.id !== proposal.toUserId)
-                    .map((u) => (
-                      <option key={u.id} value={u.id}>
-                        {getUserLabel(u)}
-                      </option>
-                    ))}
-                </select>
-
-                <button
-                  onClick={() => {
-                    if (!effectiveUserId) return;
-                    const effectiveProposal: AiReassignment = {
-                      ...proposal,
-                      toUserId: effectiveUserId,
-                      toUserName: effectiveUserName,
-                    };
-                    handleApplyProposal(effectiveProposal, idx);
-                  }}
-                  disabled={applyingProposalIdx === idx || !effectiveUserId}
-                  className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
-                >
-                  {applyingProposalIdx === idx ? (
-                    <Loader2 size={12} className="animate-spin" />
-                  ) : (
-                    <Check size={12} />
-                  )}
-                  {t('initiatives.analysis.resources.accept', 'Accept')}
-                </button>
-              </div>
-            );
-          })}
+                <Check size={12} />
+                {t('initiatives.analysis.resources.applyAll', 'Apply all')}
+              </button>
+            )}
+            <button
+              onClick={closeAiWorkspace}
+              className="p-1 rounded text-purple-500 hover:bg-purple-200/30 dark:hover:bg-purple-800/30 transition-colors"
+            >
+              <X size={14} />
+            </button>
+          </div>
         </div>
-      )}
-    </div>
-  ) : null;
+
+        {aiProposals.length === 0 ? (
+          <div className="px-4 py-6 text-center">
+            <Check size={24} className="mx-auto mb-2 text-emerald-500" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {t(
+                'initiatives.analysis.resources.aiBalanced',
+                'Workload is balanced — no changes needed'
+              )}
+            </p>
+          </div>
+        ) : (
+          <div className="divide-y divide-purple-200/50 dark:divide-purple-900/30">
+            {aiProposals.map((proposal, idx) => {
+              const overrideUserId = proposalOverrides[idx];
+              const effectiveUserId = overrideUserId ?? proposal.toUserId;
+              const effectiveUserName = overrideUserId
+                ? users.find((u) => u.id === overrideUserId)
+                  ? getUserLabel(users.find((u) => u.id === overrideUserId)!)
+                  : overrideUserId
+                : proposal.toUserName;
+              const isOverridden = !!overrideUserId && overrideUserId !== proposal.toUserId;
+
+              return (
+                <div
+                  key={`${proposal.initiativeId}-${idx}`}
+                  className="flex items-center gap-3 px-4 py-3 text-sm"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-slate-900 dark:text-white truncate">
+                        {proposal.initiativeName}
+                      </span>
+                      <span className="text-slate-400 dark:text-slate-500">:</span>
+                      <span className="text-red-600 dark:text-red-400 line-through text-xs">
+                        {proposal.fromUserName}
+                      </span>
+                      <span className="text-slate-400">→</span>
+                    </div>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {proposal.reason}
+                    </p>
+                  </div>
+
+                  <select
+                    value={effectiveUserId}
+                    onChange={(e) => {
+                      setProposalOverrides((prev) => ({ ...prev, [idx]: e.target.value }));
+                    }}
+                    className={`shrink-0 px-2 py-1.5 text-xs rounded-lg border transition-colors bg-white dark:bg-navy-950 text-slate-900 dark:text-white ${
+                      isOverridden
+                        ? 'border-primary-400 dark:border-primary-500 ring-1 ring-primary-400/30'
+                        : 'border-slate-200 dark:border-navy-700'
+                    }`}
+                  >
+                    {proposal.toUserId && (
+                      <option value={proposal.toUserId}>{proposal.toUserName} (AI)</option>
+                    )}
+                    {!proposal.toUserId && (
+                      <option value="">
+                        {t('initiatives.analysis.resources.selectPerson', '— Select person —')}
+                      </option>
+                    )}
+                    {users
+                      .filter((u) => u.id !== proposal.fromUserId && u.id !== proposal.toUserId)
+                      .map((u) => (
+                        <option key={u.id} value={u.id}>
+                          {getUserLabel(u)}
+                        </option>
+                      ))}
+                  </select>
+
+                  <button
+                    onClick={() => {
+                      if (!effectiveUserId) return;
+                      const effectiveProposal: AiReassignment = {
+                        ...proposal,
+                        toUserId: effectiveUserId,
+                        toUserName: effectiveUserName,
+                      };
+                      handleApplyProposal(effectiveProposal, idx);
+                    }}
+                    disabled={applyingProposalIdx === idx || !effectiveUserId}
+                    className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-colors"
+                  >
+                    {applyingProposalIdx === idx ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <Check size={12} />
+                    )}
+                    {t('initiatives.analysis.resources.accept', 'Accept')}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    ) : null;
 
   useEffect(() => {
     if (!onRegisterActions) return;
@@ -545,7 +547,14 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
         {aiRunning ? 'Analyzing...' : 'AI Balance workload'}
       </button>
     );
-  }, [onRegisterActions, onQuickUpdate, computeAiProposals, aiProposals, aiRunning, closeAiWorkspace]);
+  }, [
+    onRegisterActions,
+    onQuickUpdate,
+    computeAiProposals,
+    aiProposals,
+    aiRunning,
+    closeAiWorkspace,
+  ]);
 
   useEffect(() => {
     if (!onRegisterWorkspacePanel) return;
@@ -664,12 +673,19 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                       className="fixed inset-0 z-10"
                       onClick={() => setShowRoleDropdown(false)}
                     />
-                    <div className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-navy-900
-                      border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg py-1 min-w-[180px]">
+                    <div
+                      className="absolute top-full left-0 mt-1 z-20 bg-white dark:bg-navy-900
+                      border border-slate-200 dark:border-navy-700 rounded-lg shadow-lg py-1 min-w-[180px]"
+                    >
                       <button
-                        onClick={() => { setRoleFilter('all'); setShowRoleDropdown(false); }}
+                        onClick={() => {
+                          setRoleFilter('all');
+                          setShowRoleDropdown(false);
+                        }}
                         className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
-                          roleFilter === 'all' ? 'font-semibold text-primary-600 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'
+                          roleFilter === 'all'
+                            ? 'font-semibold text-primary-600 dark:text-primary-400'
+                            : 'text-slate-700 dark:text-slate-300'
                         }`}
                       >
                         {t('initiatives.analysis.resources.allRoles', 'All roles')}
@@ -677,9 +693,14 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                       {uniqueRoles.map((role) => (
                         <button
                           key={role}
-                          onClick={() => { setRoleFilter(role); setShowRoleDropdown(false); }}
+                          onClick={() => {
+                            setRoleFilter(role);
+                            setShowRoleDropdown(false);
+                          }}
                           className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors ${
-                            roleFilter === role ? 'font-semibold text-primary-600 dark:text-primary-400' : 'text-slate-700 dark:text-slate-300'
+                            roleFilter === role
+                              ? 'font-semibold text-primary-600 dark:text-primary-400'
+                              : 'text-slate-700 dark:text-slate-300'
                           }`}
                         >
                           {role}
@@ -727,9 +748,7 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                     className={`border-b border-slate-100 dark:border-navy-800/50 cursor-pointer
                       hover:bg-slate-50 dark:hover:bg-navy-800/30 transition-colors
                       ${a.status === 'overallocated' ? 'bg-red-500/5 dark:bg-red-500/10' : ''}`}
-                    onClick={() =>
-                      setExpandedResourceId(isExpanded ? null : a.resourceId)
-                    }
+                    onClick={() => setExpandedResourceId(isExpanded ? null : a.resourceId)}
                   >
                     <td className="px-4 py-3 text-slate-400">
                       {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -745,7 +764,12 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                                 : 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                           }`}
                         >
-                          {a.resourceName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase()}
+                          {a.resourceName
+                            .split(' ')
+                            .map((w) => w[0])
+                            .join('')
+                            .slice(0, 2)
+                            .toUpperCase()}
                         </div>
                         <span className="font-medium text-slate-900 dark:text-white">
                           {a.resourceName}
@@ -823,7 +847,10 @@ export const ResourcesAnalysis: React.FC<ResourcesAnalysisProps> = ({
                                     {initName}
                                   </span>
                                   {isReassigning ? (
-                                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                    <div
+                                      className="flex items-center gap-2"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
                                       <select
                                         value={selectedNewOwner}
                                         onChange={(e) => setSelectedNewOwner(e.target.value)}

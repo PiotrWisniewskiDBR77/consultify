@@ -102,7 +102,13 @@ const getMissingItemBlockers = (items: ToolMissingItem[]): string[] =>
 const getRuntimeGateBlockers = (
   session: Pick<
     ToolSessionRow,
-    'id' | 'organization_id' | 'runtime_contract_json' | 'answers_json' | 'dod_status' | 'completion_percent' | 'confidence_avg'
+    | 'id'
+    | 'organization_id'
+    | 'runtime_contract_json'
+    | 'answers_json'
+    | 'dod_status'
+    | 'completion_percent'
+    | 'confidence_avg'
   >
 ): string[] => {
   if (session.runtime_contract_json) {
@@ -119,10 +125,10 @@ const getRuntimeGateBlockers = (
 
   const blockers: string[] = [];
   if ((session.completion_percent || 0) < 100) {
-    blockers.push(`completion ${(session.completion_percent || 0)}% < 100%`);
+    blockers.push(`completion ${session.completion_percent || 0}% < 100%`);
   }
   if ((session.confidence_avg || 0) < 3) {
-    blockers.push(`confidence ${(session.confidence_avg || 0)} < 3`);
+    blockers.push(`confidence ${session.confidence_avg || 0} < 3`);
   }
   return blockers;
 };
@@ -130,7 +136,13 @@ const getRuntimeGateBlockers = (
 const getPromotionBlockers = (
   session: Pick<
     ToolSessionRow,
-    'id' | 'organization_id' | 'runtime_contract_json' | 'answers_json' | 'dod_status' | 'completion_percent' | 'confidence_avg'
+    | 'id'
+    | 'organization_id'
+    | 'runtime_contract_json'
+    | 'answers_json'
+    | 'dod_status'
+    | 'completion_percent'
+    | 'confidence_avg'
   >,
   missingItemsValue: unknown
 ): { missingItems: string[]; runtime: string[]; all: string[] } => {
@@ -378,9 +390,7 @@ const ensureToolsSchema = async (): Promise<void> => {
       { name: 'last_generation_batch_id', def: 'TEXT' },
     ]) {
       try {
-        await queryHelpers.queryRun(
-          `ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`
-        );
+        await queryHelpers.queryRun(`ALTER TABLE tool_sessions ADD COLUMN ${col.name} ${col.def}`);
       } catch {
         // column already exists
       }
@@ -945,8 +955,14 @@ export class ToolController {
       }
 
       const {
-        answers, completionPercent, confidenceAvg, contextSnapshot,
-        status: requestedStatus, wizardState, missingItems, failureReason,
+        answers,
+        completionPercent,
+        confidenceAvg,
+        contextSnapshot,
+        status: requestedStatus,
+        wizardState,
+        missingItems,
+        failureReason,
       } = req.body;
 
       const existing = (await queryHelpers.queryOne(
@@ -1037,8 +1053,13 @@ export class ToolController {
 
       const now = new Date().toISOString();
       const setClauses = [
-        'answers_json = ?', 'context_snapshot = ?', 'completion_percent = ?',
-        'confidence_avg = ?', 'status = ?', 'updated_by = ?', 'updated_at = ?',
+        'answers_json = ?',
+        'context_snapshot = ?',
+        'completion_percent = ?',
+        'confidence_avg = ?',
+        'status = ?',
+        'updated_by = ?',
+        'updated_at = ?',
       ];
       const params: unknown[] = [
         JSON.stringify(answers || {}),
@@ -1696,7 +1717,9 @@ export class ToolController {
 
       const validOutputTypes = ['initiative', 'report', 'presentation', 'idea'];
       if (!validOutputTypes.includes(outputType)) {
-        res.status(400).json({ error: `Invalid outputType. Must be one of: ${validOutputTypes.join(', ')}` });
+        res
+          .status(400)
+          .json({ error: `Invalid outputType. Must be one of: ${validOutputTypes.join(', ')}` });
         return;
       }
 
@@ -1795,11 +1818,18 @@ export class ToolController {
               uploaded_by, uploaded_at, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              outputId, session.organization_id, session.project_id || null,
-              title, 'tool_session_report',
+              outputId,
+              session.organization_id,
+              session.project_id || null,
+              title,
+              'tool_session_report',
               JSON.stringify(toolTrace),
-              'completed', 'completed',
-              user.id, now, now, now,
+              'completed',
+              'completed',
+              user.id,
+              now,
+              now,
+              now,
             ]
           );
         } catch {
@@ -1815,7 +1845,11 @@ export class ToolController {
               config_json, result_json, created_by, created_at, updated_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
-              outputId, session.organization_id, 'tool_promotion', 'presentation', 'completed',
+              outputId,
+              session.organization_id,
+              'tool_promotion',
+              'presentation',
+              'completed',
               JSON.stringify({ ...toolTrace, title }),
               JSON.stringify({
                 title,
@@ -1823,7 +1857,9 @@ export class ToolController {
                 promoted_from_session: toolId,
                 tool_trace: toolTrace,
               }),
-              user.id, now, now,
+              user.id,
+              now,
+              now,
             ]
           );
         } catch {

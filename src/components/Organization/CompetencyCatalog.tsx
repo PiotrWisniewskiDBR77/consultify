@@ -3,25 +3,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { API_URL, fetchWithRetry, getHeaders, handleResponse } from '../../services/api/baseClient';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 
-const API_URL = '/api';
-
 async function apiFetch<T>(url: string, opts?: RequestInit): Promise<T> {
-  const token = localStorage.getItem('token') || '';
-  const res = await fetch(`${API_URL}${url}`, {
+  const res = await fetchWithRetry(`${API_URL}${url}`, {
     ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-      ...(opts?.headers || {}),
-    },
+    headers: { ...getHeaders(), ...(opts?.headers || {}) },
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Request failed (${res.status})`);
-  }
-  return res.json();
+  return handleResponse<T>(res, `Request failed (${res.status})`);
 }
 
 interface Category {
@@ -87,8 +77,10 @@ export const CompetencyCatalog: React.FC = () => {
       setCategories(catRes.categories);
       setCompetencies(compRes.competencies);
       setLevels(lvlRes.levels);
-    } catch {
-      toast.error(t('competency.error.loadFailed', 'Failed to load competency data'));
+    } catch (error: any) {
+      toast.error(
+        error?.message || t('competency.error.loadFailed', 'Failed to load competency data')
+      );
     } finally {
       setLoading(false);
     }
@@ -106,8 +98,8 @@ export const CompetencyCatalog: React.FC = () => {
       ]);
       toast.success(t('competency.defaults.seeded', 'Default taxonomy created'));
       loadData();
-    } catch {
-      toast.error('Failed to seed defaults');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to seed defaults');
     }
   }, [loadData, t]);
 
@@ -123,8 +115,8 @@ export const CompetencyCatalog: React.FC = () => {
       setNewCatNamePl('');
       setShowAddCategory(false);
       loadData();
-    } catch {
-      toast.error('Failed to create category');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to create category');
     }
   }, [newCatName, newCatNamePl, loadData]);
 
@@ -135,8 +127,8 @@ export const CompetencyCatalog: React.FC = () => {
         trackFunnelEvent('competency_deleted', { type: 'category', id });
         if (selectedCategory === id) setSelectedCategory(null);
         loadData();
-      } catch {
-        toast.error('Failed to delete category');
+      } catch (error: any) {
+        toast.error(error?.message || 'Failed to delete category');
       }
     },
     [loadData, selectedCategory]
@@ -169,8 +161,8 @@ export const CompetencyCatalog: React.FC = () => {
       setNewCompCategoryId('');
       setShowAddCompetency(false);
       loadData();
-    } catch {
-      toast.error('Failed to create competency');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to create competency');
     }
   }, [newCompName, newCompDesc, newCompCategoryId, loadData]);
 

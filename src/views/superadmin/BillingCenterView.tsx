@@ -35,7 +35,13 @@ import { AdminLLMMultipliers } from '../admin/AdminLLMMultipliers';
 import { AdminMarginConfig } from '../admin/AdminMarginConfig';
 import { AdminTokenPackages } from '../admin/AdminTokenPackages';
 
-type BillingTab = 'overview' | 'plans' | 'contracts' | 'token-economy' | 'transactions' | 'analytics';
+type BillingTab =
+  | 'overview'
+  | 'plans'
+  | 'contracts'
+  | 'token-economy'
+  | 'transactions'
+  | 'analytics';
 
 // ==================== OVERVIEW TAB ====================
 interface RevenueStats {
@@ -425,7 +431,9 @@ const PlansTab: React.FC = () => {
       setOrgPlans(Array.isArray(orgPayload?.plans) ? orgPayload.plans : []);
       setUserPlans(Array.isArray(userPayload?.plans) ? userPayload.plans : []);
       if (orgPayload?.type === 'not_configured' || userPayload?.type === 'not_configured') {
-        setNotice('Some billing plan surfaces are not configured yet and are shown in degraded mode.');
+        setNotice(
+          'Some billing plan surfaces are not configured yet and are shown in degraded mode.'
+        );
       }
     } catch (error) {
       console.error('Failed to fetch plans:', error);
@@ -1219,9 +1227,7 @@ const ContractsTab: React.FC = () => {
           />
           <input
             value={form.externalInvoiceRef}
-            onChange={(e) =>
-              setForm((prev) => ({ ...prev, externalInvoiceRef: e.target.value }))
-            }
+            onChange={(e) => setForm((prev) => ({ ...prev, externalInvoiceRef: e.target.value }))}
             placeholder="External invoice reference"
             className="px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-transparent"
           />
@@ -1241,7 +1247,9 @@ const ContractsTab: React.FC = () => {
 
         <div className="mt-5 rounded-xl border border-slate-200 dark:border-white/10 p-4">
           <div className="mb-3">
-            <p className="text-sm font-medium text-slate-900 dark:text-white">Manual limit overrides</p>
+            <p className="text-sm font-medium text-slate-900 dark:text-white">
+              Manual limit overrides
+            </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
               Leave empty to inherit the selected plan package. Fill any field to pin a custom limit
               for this invoice-managed customer.
@@ -1292,10 +1300,14 @@ const ContractsTab: React.FC = () => {
       <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex items-center justify-between">
           <h3 className="font-semibold text-slate-900 dark:text-white">Managed accounts</h3>
-          <span className="text-sm text-slate-500 dark:text-slate-400">{contracts.length} orgs</span>
+          <span className="text-sm text-slate-500 dark:text-slate-400">
+            {contracts.length} orgs
+          </span>
         </div>
         {loading ? (
-          <div className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">Loading contracts...</div>
+          <div className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
+            Loading contracts...
+          </div>
         ) : contracts.length === 0 ? (
           <div className="px-6 py-10 text-sm text-slate-500 dark:text-slate-400">
             No manual contracts configured yet.
@@ -1303,23 +1315,28 @@ const ContractsTab: React.FC = () => {
         ) : (
           <div className="divide-y divide-slate-100 dark:divide-white/5">
             {contracts.map((contract) => (
-              <div key={`${contract.organization_id}-${contract.subscription_plan_id}`} className="px-6 py-4 flex items-start justify-between gap-4">
+              <div
+                key={`${contract.organization_id}-${contract.subscription_plan_id}`}
+                className="px-6 py-4 flex items-start justify-between gap-4"
+              >
                 <div>
                   <p className="font-medium text-slate-900 dark:text-white">
                     {contract.organization_name || contract.organization_id}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {contract.plan_name || contract.subscription_plan_id} • {contract.billing_rail} • {contract.contract_status}
+                    {contract.plan_name || contract.subscription_plan_id} • {contract.billing_rail}{' '}
+                    • {contract.contract_status}
                   </p>
                   {(contract.renewal_at || contract.access_expires_at) && (
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Renewal: {contract.renewal_at || '-'} | Access until: {contract.access_expires_at || '-'}
+                      Renewal: {contract.renewal_at || '-'} | Access until:{' '}
+                      {contract.access_expires_at || '-'}
                     </p>
                   )}
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Limits: {contract.max_projects ?? '-'} projects, {contract.max_users ?? '-'} users,{' '}
-                    {contract.max_ai_calls_per_day ?? '-'} AI/day, {contract.max_total_tokens ?? '-'} tokens,{' '}
-                    {contract.max_storage_mb ?? '-'} MB
+                    Limits: {contract.max_projects ?? '-'} projects, {contract.max_users ?? '-'}{' '}
+                    users, {contract.max_ai_calls_per_day ?? '-'} AI/day,{' '}
+                    {contract.max_total_tokens ?? '-'} tokens, {contract.max_storage_mb ?? '-'} MB
                   </p>
                 </div>
                 <div className="text-right text-xs text-slate-500 dark:text-slate-400">

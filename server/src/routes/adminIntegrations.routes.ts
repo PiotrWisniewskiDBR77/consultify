@@ -125,7 +125,8 @@ router.get(
       typeof req.query.connectorId === 'string' ? req.query.connectorId.trim() : undefined;
     const integrationId =
       typeof req.query.integrationId === 'string' ? req.query.integrationId.trim() : undefined;
-    const eventType = typeof req.query.eventType === 'string' ? req.query.eventType.trim() : undefined;
+    const eventType =
+      typeof req.query.eventType === 'string' ? req.query.eventType.trim() : undefined;
 
     const data = await listIntegrationConnectionEvents({
       organizationId: orgId,
@@ -142,4 +143,3 @@ router.get(
 );
 
 export default router;
-

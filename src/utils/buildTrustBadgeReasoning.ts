@@ -59,8 +59,7 @@ export const TRUST_REASONING_OBSERVATION_IDS = [
   'verify',
 ] as const;
 
-export type TrustReasoningObservationId =
-  (typeof TRUST_REASONING_OBSERVATION_IDS)[number];
+export type TrustReasoningObservationId = (typeof TRUST_REASONING_OBSERVATION_IDS)[number];
 
 export interface TrustReasoningObservation {
   id: TrustReasoningObservationId;
@@ -99,9 +98,7 @@ function retrievalObservation(count: number): TrustReasoningObservation {
   };
 }
 
-function modelObservation(
-  label: string | null | undefined
-): TrustReasoningObservation {
+function modelObservation(label: string | null | undefined): TrustReasoningObservation {
   if (isCleanModel(label)) {
     return {
       id: 'model-known',
@@ -132,9 +129,5 @@ export function buildTrustBadgeReasoning(
   input: BuildTrustBadgeReasoningInput
 ): readonly TrustReasoningObservation[] {
   const { citationCount, modelLabel } = input;
-  return [
-    retrievalObservation(citationCount),
-    modelObservation(modelLabel),
-    verifyObservation(),
-  ];
+  return [retrievalObservation(citationCount), modelObservation(modelLabel), verifyObservation()];
 }

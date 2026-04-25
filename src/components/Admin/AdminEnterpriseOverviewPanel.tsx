@@ -66,20 +66,25 @@ const MetricCard: React.FC<{
 export const AdminEnterpriseOverviewPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<OverviewResponse | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      setErrorMessage(null);
+      const result = await Api.getAdminOverview();
+      setData(result);
+    } catch (error: any) {
+      const message = error?.message || 'Failed to load admin overview';
+      setData(null);
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const result = await Api.getAdminOverview();
-        setData(result);
-      } catch (error: any) {
-        toast.error(error?.message || 'Failed to load admin overview');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     void load();
   }, []);
 
@@ -91,7 +96,24 @@ export const AdminEnterpriseOverviewPanel: React.FC = () => {
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-6 dark:border-amber-500/20 dark:bg-amber-500/10">
+        <h3 className="text-lg font-semibold text-amber-900 dark:text-amber-100">
+          Admin overview is unavailable
+        </h3>
+        <p className="mt-2 text-sm text-amber-800 dark:text-amber-200">
+          {errorMessage || 'No overview data was returned for this organization.'}
+        </p>
+        <button
+          onClick={() => void load()}
+          className="mt-4 rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-500"
+        >
+          Retry overview
+        </button>
+      </div>
+    );
+  }
 
   const membersByRole = Object.entries(data.overview.membersByRole || {})
     .map(([role, count]) => `${role}: ${count}`)

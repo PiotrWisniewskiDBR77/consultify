@@ -161,6 +161,12 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
     setSaving(true);
     try {
       await Api.put('/settings/preferences/work', { preferences });
+      const data = (await Api.get('/settings/preferences/work').catch(
+        () => null
+      )) as WorkPreferencesResponse | null;
+      if (data?.preferences) {
+        setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+      }
       toast.success(t('settings.work.saved', 'Work preferences saved successfully'));
     } catch (error) {
       toast.error(t('settings.work.error', 'Failed to save preferences'));
@@ -186,25 +192,25 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
       value: 'kanban',
       label: t('settings.work.views.kanban', 'Kanban Board'),
       icon: LayoutGrid,
-      description: 'Drag and drop cards',
+      description: t('settings.work.views.kanbanDesc', 'Drag and drop cards'),
     },
     {
       value: 'list',
       label: t('settings.work.views.list', 'List View'),
       icon: List,
-      description: 'Traditional table format',
+      description: t('settings.work.views.listDesc', 'Traditional table format'),
     },
     {
       value: 'timeline',
       label: t('settings.work.views.timeline', 'Timeline'),
       icon: GanttChart,
-      description: 'Gantt-style view',
+      description: t('settings.work.views.timelineDesc', 'Gantt-style view'),
     },
     {
       value: 'calendar',
       label: t('settings.work.views.calendar', 'Calendar'),
       icon: Calendar,
-      description: 'Calendar layout',
+      description: t('settings.work.views.calendarDesc', 'Calendar layout'),
     },
   ];
 

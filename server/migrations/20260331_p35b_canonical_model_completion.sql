@@ -2,9 +2,49 @@
 -- Adds: sessions, message attachments, governance metadata, audit purge log
 
 -- 1) Conversation Sessions (§2.3.1 — runtime snapshot per conversation segment)
+CREATE TABLE IF NOT EXISTS conversations (
+    id TEXT PRIMARY KEY DEFAULT (gen_random_uuid()::text),
+    user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    organization_id TEXT REFERENCES organizations(id) ON DELETE SET NULL,
+    project_id TEXT REFERENCES projects(id) ON DELETE SET NULL,
+    chat_project_id TEXT,
+    title VARCHAR(255) NOT NULL DEFAULT 'New conversation',
+    title_source VARCHAR(20) DEFAULT 'auto' CHECK (title_source IN ('auto', 'user')),
+    starred BOOLEAN DEFAULT FALSE,
+    archived BOOLEAN DEFAULT FALSE,
+    tags JSONB DEFAULT '[]'::jsonb,
+    pmo_context JSONB DEFAULT '{}'::jsonb,
+    message_count INTEGER DEFAULT 0,
+    last_message_preview VARCHAR(200),
+    last_message_at TIMESTAMPTZ,
+    deleted_at TIMESTAMPTZ DEFAULT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS conversation_messages (
+    id TEXT PRIMARY KEY DEFAULT (gen_random_uuid()::text),
+    conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    role VARCHAR(10) NOT NULL CHECK (role IN ('user', 'ai', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    message_type VARCHAR(20) DEFAULT 'text' CHECK (message_type IN ('text', 'action_request', 'summary', 'file', 'tool_call')),
+    metadata JSONB DEFAULT '{}'::jsonb,
+    token_count INTEGER,
+    model_used VARCHAR(100),
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversations_user_list
+  ON conversations(user_id, archived, updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_conversations_project
+  ON conversations(project_id)
+  WHERE project_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_conversation_messages_conversation
+  ON conversation_messages(conversation_id, created_at);
+
 CREATE TABLE IF NOT EXISTS conversation_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  conversation_id TEXT NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
   model_id VARCHAR(100),
   preset_id VARCHAR(100),
   locale VARCHAR(10),
@@ -19,7 +59,7 @@ CREATE INDEX IF NOT EXISTS idx_conversation_sessions_conv
   ON conversation_sessions (conversation_id, started_at DESC);
 
 -- 2) Link messages to sessions (optional)
-ALTER TABLE conversation_messages ADD COLUMN IF NOT EXISTS session_id UUID REFERENCES conversation_sessions(id) ON DELETE SET NULL;
+ALTER TABLE conversation_messages ADD COLUMN IF NOT EXISTS session_id TEXT REFERENCES conversation_sessions(id) ON DELETE SET NULL;
 
 -- 3) Message-level fields from §2.3.1
 ALTER TABLE conversation_messages ADD COLUMN IF NOT EXISTS edited_at TIMESTAMPTZ;
@@ -30,9 +70,9 @@ ALTER TABLE conversation_messages ADD COLUMN IF NOT EXISTS delivery_state VARCHA
 
 -- 4) Attachment pointers (§2.3.1 — links/pointers, not storage)
 CREATE TABLE IF NOT EXISTS conversation_message_attachments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  message_id UUID NOT NULL REFERENCES conversation_messages(id) ON DELETE CASCADE,
-  conversation_id UUID NOT NULL,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  message_id TEXT NOT NULL REFERENCES conversation_messages(id) ON DELETE CASCADE,
+  conversation_id TEXT NOT NULL,
   kind VARCHAR(20) NOT NULL CHECK (kind IN ('file', 'link', 'artifact', 'snapshot', 'reference')),
   target_id VARCHAR(500),
   target_url VARCHAR(2000),
@@ -57,10 +97,10 @@ ALTER TABLE conversations ADD COLUMN IF NOT EXISTS retention_policy VARCHAR(50) 
 
 -- 6) Audit purge log (§2.3.3 — minimal trace after destructive delete)
 CREATE TABLE IF NOT EXISTS conversation_purge_audit (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id UUID NOT NULL,
-  purged_by_user_id UUID NOT NULL,
-  organization_id UUID,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  conversation_id TEXT NOT NULL,
+  purged_by_user_id TEXT NOT NULL,
+  organization_id TEXT,
   message_count INT DEFAULT 0,
   title_hash VARCHAR(64),
   purged_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

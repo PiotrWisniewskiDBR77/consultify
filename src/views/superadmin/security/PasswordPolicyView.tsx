@@ -25,6 +25,8 @@ export const PasswordPolicyView: React.FC = () => {
     requireMfa: false,
   });
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchOrganizations();
@@ -43,14 +45,17 @@ export const PasswordPolicyView: React.FC = () => {
       if (orgs.length > 0 && !selectedOrgId) {
         setSelectedOrgId(orgs[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch organizations:', err);
+      setLoadError(err?.message || 'Failed to fetch organizations');
+      toast.error(err?.message || 'Failed to fetch organizations');
     }
   };
 
   const fetchPolicy = async () => {
     if (!selectedOrgId) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const pol = await Api.getPasswordPolicy(selectedOrgId);
       if (pol) {
@@ -67,8 +72,9 @@ export const PasswordPolicyView: React.FC = () => {
           requireMfa: pol.require_mfa === 1,
         });
       }
-    } catch (err) {
-      // Policy might not exist yet
+    } catch (err: any) {
+      setLoadError(err?.message || 'Failed to fetch password policy');
+      toast.error(err?.message || 'Failed to fetch password policy');
     } finally {
       setLoading(false);
     }
@@ -79,11 +85,22 @@ export const PasswordPolicyView: React.FC = () => {
       toast.error('Please select an organization');
       return;
     }
+    if (
+      !Number.isInteger(Number(policy.minLength)) ||
+      policy.minLength < 6 ||
+      policy.minLength > 128
+    ) {
+      toast.error('Minimum length must be between 6 and 128');
+      return;
+    }
     try {
+      setSaving(true);
       await Api.updatePasswordPolicy(selectedOrgId, policy);
       toast.success('Password policy updated');
-    } catch (err) {
-      toast.error('Failed to update password policy');
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update password policy');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -111,13 +128,20 @@ export const PasswordPolicyView: React.FC = () => {
           </select>
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center gap-2"
+            disabled={!selectedOrgId || saving}
+            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
           >
             <Save size={18} />
-            Save Policy
+            {saving ? 'Saving...' : 'Save Policy'}
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
 
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
@@ -131,7 +155,7 @@ export const PasswordPolicyView: React.FC = () => {
               <input
                 type="number"
                 value={policy.minLength}
-                onChange={(e) => setPolicy({ ...policy, minLength: parseInt(e.target.value) })}
+                onChange={(e) => setPolicy({ ...policy, minLength: Number(e.target.value) || 6 })}
                 className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 min="6"
                 max="128"
@@ -216,7 +240,7 @@ export const PasswordPolicyView: React.FC = () => {
                 type="number"
                 value={policy.preventReuseCount}
                 onChange={(e) =>
-                  setPolicy({ ...policy, preventReuseCount: parseInt(e.target.value) })
+                  setPolicy({ ...policy, preventReuseCount: Number(e.target.value) || 0 })
                 }
                 className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 min="0"
@@ -231,7 +255,7 @@ export const PasswordPolicyView: React.FC = () => {
                 type="number"
                 value={policy.lockoutAttempts}
                 onChange={(e) =>
-                  setPolicy({ ...policy, lockoutAttempts: parseInt(e.target.value) })
+                  setPolicy({ ...policy, lockoutAttempts: Number(e.target.value) || 3 })
                 }
                 className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 min="3"
@@ -246,7 +270,7 @@ export const PasswordPolicyView: React.FC = () => {
                 type="number"
                 value={policy.lockoutDurationMinutes}
                 onChange={(e) =>
-                  setPolicy({ ...policy, lockoutDurationMinutes: parseInt(e.target.value) })
+                  setPolicy({ ...policy, lockoutDurationMinutes: Number(e.target.value) || 5 })
                 }
                 className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white px-4 py-2 rounded-lg"
                 min="5"

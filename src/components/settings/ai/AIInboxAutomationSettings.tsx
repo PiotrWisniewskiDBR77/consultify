@@ -1,12 +1,10 @@
 import { Brain, DollarSign, Inbox, Loader2, Sparkles } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { useAppStore } from '../../../store/useAppStore';
-
-const INBOX_AI_SETTINGS_STORAGE_KEY = 'consultify-inbox-ai-settings';
 
 interface InboxAIEvalRun {
   id: string;
@@ -23,35 +21,13 @@ interface InboxAICostSummary {
   days: number;
 }
 
-function loadInboxAITriageThreshold(): number {
-  try {
-    const raw = localStorage.getItem(INBOX_AI_SETTINGS_STORAGE_KEY);
-    if (!raw) return 0.85;
-    const parsed = JSON.parse(raw) as { threshold?: unknown };
-    const threshold = typeof parsed?.threshold === 'number' ? parsed.threshold : 0.85;
-    return Math.max(0.5, Math.min(0.99, threshold));
-  } catch {
-    return 0.85;
-  }
-}
-
-function saveInboxAITriageThreshold(threshold: number) {
-  try {
-    localStorage.setItem(
-      INBOX_AI_SETTINGS_STORAGE_KEY,
-      JSON.stringify({ threshold: Math.max(0.5, Math.min(0.99, threshold)) })
-    );
-  } catch {
-    // ignore local storage write failures
-  }
-}
-
 export const AIInboxAutomationSettings: React.FC = () => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
   const { emitMyWorkEvent } = useAppStore();
 
-  const [threshold, setThreshold] = useState(loadInboxAITriageThreshold);
+  const didLoadThreshold = useRef(false);
+  const [threshold, setThreshold] = useState(0.85);
   const [manualReviewCount, setManualReviewCount] = useState(0);
   const [running, setRunning] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,8 +39,32 @@ export const AIInboxAutomationSettings: React.FC = () => {
   const [aiCostSummary, setAiCostSummary] = useState<InboxAICostSummary | null>(null);
 
   useEffect(() => {
-    saveInboxAITriageThreshold(threshold);
-  }, [threshold]);
+    const loadInboxAISettings = async () => {
+      const data = await Api.get('/settings/preferences/inbox-ai').catch(() => null);
+      const persistedThreshold = data?.preferences?.threshold;
+      if (typeof persistedThreshold === 'number') {
+        setThreshold(Math.max(0.5, Math.min(0.99, persistedThreshold)));
+      }
+      didLoadThreshold.current = true;
+    };
+
+    loadInboxAISettings();
+  }, []);
+
+  useEffect(() => {
+    if (!didLoadThreshold.current) return;
+    const timeout = window.setTimeout(() => {
+      Api.put('/settings/preferences/inbox-ai', { threshold }).catch(() => {
+        toast.error(
+          isPolish
+            ? 'Nie udało się zapisać progu auto-triage'
+            : 'Failed to save auto-triage threshold'
+        );
+      });
+    }, 400);
+
+    return () => window.clearTimeout(timeout);
+  }, [isPolish, threshold]);
 
   const fetchDiagnostics = useCallback(async () => {
     try {

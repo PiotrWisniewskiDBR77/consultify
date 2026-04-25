@@ -17,6 +17,7 @@
  * Important: This is one-way / composable. It does not know or care about downstream consumers.
  */
 import logger from '../../utils/Logger.js';
+import { buildNoWebSourcesText } from './chatStabilizationPolicy.js';
 import type { DeepResearchOutput, ResearchType } from './deepResearchService.js';
 
 export type DeepThinkingDepth = 'light' | 'standard' | 'hard';
@@ -158,8 +159,12 @@ async function extractOrgContext(
       maturityLevel: resolved.systems?.cloudAdoption || undefined,
       terminology: undefined,
       strategicPriorities: resolved.strategic?.priorities || [],
-      openGaps: (resolved.operations?.gaps || []).map((g: any) => g.description || g.title || JSON.stringify(g)),
-      keyMetrics: (resolved.operations?.keyMetrics || []).map((m: any) => m.name ? `${m.name}: ${m.value ?? ''}` : JSON.stringify(m)),
+      openGaps: (resolved.operations?.gaps || []).map(
+        (g: any) => g.description || g.title || JSON.stringify(g)
+      ),
+      keyMetrics: (resolved.operations?.keyMetrics || []).map((m: any) =>
+        m.name ? `${m.name}: ${m.value ?? ''}` : JSON.stringify(m)
+      ),
     };
   } catch (err: any) {
     logger.debug(`[DeepThinking] Org context extraction failed: ${err?.message}`);
@@ -470,11 +475,28 @@ export class DeepThinkingOrchestrator {
     emit({ type: 'dt_state', state: 'closure' satisfies DtState, label: 'Closure' });
 
     const researchType = forcedResearchType || researchOutput?.researchType;
+    const researchNoSourcesAddon =
+      webSearchEnabled && (!researchOutput || !(researchOutput.sources || []).length)
+        ? [
+            '\n\n## WEB RESEARCH RESULT',
+            buildNoWebSourcesText(
+              researchOutput?.queries
+                ?.map((q: any) => String(q?.query || q || ''))
+                .filter(Boolean) || [message],
+              (language || 'en').split('-')[0] === 'pl'
+            ),
+            '\nRules:',
+            '- Do not present market/current claims as internet-verified research.',
+            '- Do not list competitors, trends, or current facts unless they are grounded in provided sources.',
+            '- You may provide a brief non-current framing only if you clearly label it as not web-verified.',
+          ].join('\n')
+        : '';
     const addon = [
       buildDeepThinkingFormatAddon(showHighlights, researchType),
       historicalContextAddon,
       researchOutput ? buildResearchAddon(researchOutput) : '',
       researchOutput ? '\n\nRules (research):\n- If sources are provided, cite them as [n].' : '',
+      researchNoSourcesAddon,
     ]
       .filter(Boolean)
       .join('\n');

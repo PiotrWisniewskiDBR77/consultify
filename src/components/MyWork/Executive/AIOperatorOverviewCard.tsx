@@ -254,8 +254,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 {t('executive.aiOperator.sequence', 'Operator sequence')}
               </h4>
               <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                {plan?.objective ||
-                  t('executive.aiOperator.noPlan', 'No operator plan yet.')}
+                {plan?.objective || t('executive.aiOperator.noPlan', 'No operator plan yet.')}
               </div>
             </div>
             <span
@@ -402,10 +401,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 ))
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t(
-                    'executive.aiOperator.noInterventions',
-                    'No new interventions to propose.'
-                  )}
+                  {t('executive.aiOperator.noInterventions', 'No new interventions to propose.')}
                 </div>
               )}
             </div>
@@ -491,10 +487,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                 })
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  {t(
-                    'executive.aiOperator.noQueue',
-                    'No interventions in the approval queue.'
-                  )}
+                  {t('executive.aiOperator.noQueue', 'No interventions in the approval queue.')}
                 </div>
               )}
             </div>

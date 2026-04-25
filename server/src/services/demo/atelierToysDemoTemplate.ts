@@ -1,5 +1,3 @@
-import type { RelativeDateSpec } from './demoRelativeDate.js';
-import { type DemoLocale } from './demoLocale.js';
 import {
   atelierToysInitiativePL,
   atelierToysKnowledgeDocPL,
@@ -10,6 +8,8 @@ import {
   atelierToysScenarioPL,
   atelierToysToolCoveragePL,
 } from './atelierToysDemoLocalization.js';
+import { type DemoLocale } from './demoLocale.js';
+import type { RelativeDateSpec } from './demoRelativeDate.js';
 
 export interface DemoLeaderTemplate {
   slug: string;
@@ -327,7 +327,8 @@ export const atelierToysProjects: DemoProjectTemplate[] = [
   {
     slug: 'quality-excellence',
     name: 'Quality Excellence Program',
-    description: 'Reduce defects, shorten root-cause cycles, and harden launch quality across both plants.',
+    description:
+      'Reduce defects, shorten root-cause cycles, and harden launch quality across both plants.',
     status: 'active',
     goal: 'Cut customer-facing defects and create one quality evidence flow from plant to board.',
     health: 'amber',
@@ -337,7 +338,8 @@ export const atelierToysProjects: DemoProjectTemplate[] = [
   {
     slug: 'partner-expansion',
     name: 'Partner Expansion',
-    description: 'Build a repeatable partner-led growth engine for Atelier Core and Atelier Digital.',
+    description:
+      'Build a repeatable partner-led growth engine for Atelier Core and Atelier Digital.',
     status: 'active',
     goal: 'Improve partner activation, bundle sell-through, and expansion playbooks.',
     health: 'green',
@@ -538,7 +540,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 110000,
     budgetOpex: 180000,
     deliverables: ['Partner launch kit', 'Renewal health dashboard', 'Education usage insights'],
-    successCriteria: ['Attach rate +11pts', 'Renewal risk reduced 25%', 'Pipeline visibility weekly'],
+    successCriteria: [
+      'Attach rate +11pts',
+      'Renewal risk reduced 25%',
+      'Pipeline visibility weekly',
+    ],
     keyRisks: ['Partner enablement lag', 'Usage data gaps', 'Messaging inconsistency'],
     tasks: [
       {
@@ -594,7 +600,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'partner-expansion',
     name: 'Supplier Risk War Room',
     area: 'Supply Chain',
-    summary: 'Create weekly risk visibility for high-variance components affecting delivery promises and margin.',
+    summary:
+      'Create weekly risk visibility for high-variance components affecting delivery promises and margin.',
     status: 'in_progress',
     priority: 'high',
     plannedStart: '-75d',
@@ -605,7 +612,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     expectedRoi: 131,
     budgetCapex: 45000,
     budgetOpex: 38000,
-    deliverables: ['Supplier heatmap', 'Scenario-based mitigation playbooks', 'Lead-time alert board'],
+    deliverables: [
+      'Supplier heatmap',
+      'Scenario-based mitigation playbooks',
+      'Lead-time alert board',
+    ],
     successCriteria: ['Critical supplier exposure -20%', 'Expedite costs -18%', 'OTIF +4pts'],
     keyRisks: ['Forecast noise', 'Supplier cooperation gaps', 'Late engineering changes'],
     tasks: [
@@ -647,7 +658,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'pending',
         decisionMaker: 'claire-laurent',
         deadline: '+9d',
-        rationale: 'The team needs finance approval to protect delivery reliability without overstocking.',
+        rationale:
+          'The team needs finance approval to protect delivery reliability without overstocking.',
       },
     ],
     milestones: [
@@ -672,7 +684,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'quality-excellence',
     name: 'QA Defect Closing Loop',
     area: 'Quality',
-    summary: 'Shorten the time from detected defect to validated countermeasure across plants and product teams.',
+    summary:
+      'Shorten the time from detected defect to validated countermeasure across plants and product teams.',
     status: 'in_progress',
     priority: 'high',
     plannedStart: '-110d',
@@ -684,7 +697,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 85000,
     budgetOpex: 62000,
     deliverables: ['Quality cockpit', 'Root-cause workflow', 'Launch readiness checklist'],
-    successCriteria: ['Defect recurrence -35%', 'Root-cause cycle time -40%', 'Warranty claims -12%'],
+    successCriteria: [
+      'Defect recurrence -35%',
+      'Root-cause cycle time -40%',
+      'Warranty claims -12%',
+    ],
     keyRisks: ['Manual data capture', 'Weak engineering feedback loop', 'Overloaded QA leads'],
     tasks: [
       {
@@ -733,7 +750,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'pending',
         decisionMaker: 'julien-moreau',
         deadline: '+8d',
-        rationale: 'A shared owner is needed for issues that cut across plant and software release logic.',
+        rationale:
+          'A shared owner is needed for issues that cut across plant and software release logic.',
       },
     ],
     milestones: [
@@ -758,7 +776,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'digital-growth',
     name: 'Product Roadmap Sync',
     area: 'Product',
-    summary: 'Align product roadmap, customer requests, and partner demand signals into one quarterly plan.',
+    summary:
+      'Align product roadmap, customer requests, and partner demand signals into one quarterly plan.',
     status: 'planned',
     priority: 'medium',
     plannedStart: '-40d',
@@ -769,8 +788,16 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     expectedRoi: 119,
     budgetCapex: 40000,
     budgetOpex: 52000,
-    deliverables: ['Quarterly roadmap view', 'Customer insight synthesis', 'Decision log for trade-offs'],
-    successCriteria: ['Roadmap confidence +20%', 'Partner objections reduced', 'Product-sales alignment weekly'],
+    deliverables: [
+      'Quarterly roadmap view',
+      'Customer insight synthesis',
+      'Decision log for trade-offs',
+    ],
+    successCriteria: [
+      'Roadmap confidence +20%',
+      'Partner objections reduced',
+      'Product-sales alignment weekly',
+    ],
     keyRisks: ['Too many inputs', 'Weak prioritization discipline', 'Late engineering estimates'],
     tasks: [
       {
@@ -837,7 +864,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'partner-expansion',
     name: 'Partner Onboarding Excellence',
     area: 'Commercial',
-    summary: 'Reduce time-to-first-value for new partners and improve bundle sell-through in the first 90 days.',
+    summary:
+      'Reduce time-to-first-value for new partners and improve bundle sell-through in the first 90 days.',
     status: 'in_progress',
     priority: 'high',
     plannedStart: '-95d',
@@ -850,7 +878,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetOpex: 76000,
     deliverables: ['Partner onboarding journey', 'Enablement scorecards', 'Reference case package'],
     successCriteria: ['Time-to-first-order -30%', 'Bundle sell-through +9pts', 'Partner NPS +12'],
-    keyRisks: ['Low enablement attendance', 'Weak objection handling', 'Incomplete case references'],
+    keyRisks: [
+      'Low enablement attendance',
+      'Weak objection handling',
+      'Incomplete case references',
+    ],
     tasks: [
       {
         slug: 'partner-onboarding-journey',
@@ -915,7 +947,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'people-capability',
     name: 'Supervisor Capability Academy',
     area: 'People',
-    summary: 'Train plant and project supervisors on the new management rhythms behind Atelier Forward.',
+    summary:
+      'Train plant and project supervisors on the new management rhythms behind Atelier Forward.',
     status: 'in_progress',
     priority: 'medium',
     plannedStart: '-60d',
@@ -927,8 +960,16 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 25000,
     budgetOpex: 58000,
     deliverables: ['Supervisor academy curriculum', 'Coaching checkpoints', 'Adoption dashboard'],
-    successCriteria: ['Routine adherence +25%', 'Escalation quality improved', 'Manager confidence up'],
-    keyRisks: ['Low time availability', 'Inconsistent manager sponsorship', 'Too much generic training'],
+    successCriteria: [
+      'Routine adherence +25%',
+      'Escalation quality improved',
+      'Manager confidence up',
+    ],
+    keyRisks: [
+      'Low time availability',
+      'Inconsistent manager sponsorship',
+      'Too much generic training',
+    ],
     tasks: [
       {
         slug: 'academy-curriculum',
@@ -1005,13 +1046,22 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 20000,
     budgetOpex: 44000,
     deliverables: ['Board scorecard', 'Decision follow-up log', 'Transformation score'],
-    successCriteria: ['Decision follow-up completeness 100%', 'ROI confidence improved', 'Board prep time -35%'],
-    keyRisks: ['Manual reporting burden', 'Inconsistent assumptions', 'Weak follow-through after decisions'],
+    successCriteria: [
+      'Decision follow-up completeness 100%',
+      'ROI confidence improved',
+      'Board prep time -35%',
+    ],
+    keyRisks: [
+      'Manual reporting burden',
+      'Inconsistent assumptions',
+      'Weak follow-through after decisions',
+    ],
     tasks: [
       {
         slug: 'board-scorecard-v2',
         title: 'Publish board scorecard v2',
-        description: 'Unify financial, operational, digital, and capability signals into one scorecard.',
+        description:
+          'Unify financial, operational, digital, and capability signals into one scorecard.',
         status: 'in_progress',
         priority: 'high',
         dueDate: '+4d',
@@ -1071,7 +1121,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'digital-growth',
     name: 'Atelier Motion Concept Lab',
     area: 'Innovation',
-    summary: 'Shape the next generation of motion-based STEM kits and validate the first concept hypotheses.',
+    summary:
+      'Shape the next generation of motion-based STEM kits and validate the first concept hypotheses.',
     status: 'DRAFT',
     currentStage: 'Discovery',
     priority: 'medium',
@@ -1084,13 +1135,22 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 18000,
     budgetOpex: 36000,
     deliverables: ['Concept brief', 'Teacher insight pack', 'First desirability test'],
-    successCriteria: ['Top 3 concept risks identified', '10 customer interviews synthesized', 'One pilot concept selected'],
-    keyRisks: ['Shiny-object bias', 'Weak customer signal quality', 'No clear monetization path yet'],
+    successCriteria: [
+      'Top 3 concept risks identified',
+      '10 customer interviews synthesized',
+      'One pilot concept selected',
+    ],
+    keyRisks: [
+      'Shiny-object bias',
+      'Weak customer signal quality',
+      'No clear monetization path yet',
+    ],
     tasks: [
       {
         slug: 'motion-concept-interviews',
         title: 'Interview pilot teachers on motion-learning use cases',
-        description: 'Collect needs, frustrations, and willingness-to-pay signals before concept lock.',
+        description:
+          'Collect needs, frustrations, and willingness-to-pay signals before concept lock.',
         status: 'todo',
         priority: 'medium',
         dueDate: '+10d',
@@ -1115,7 +1175,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'pending',
         decisionMaker: 'julien-moreau',
         deadline: '+28d',
-        rationale: 'The team needs an explicit gate before committing design and partner bandwidth.',
+        rationale:
+          'The team needs an explicit gate before committing design and partner bandwidth.',
       },
     ],
     milestones: [
@@ -1133,7 +1194,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'factory-excellence',
     name: 'OT Cyber Hardening',
     area: 'Cybersecurity',
-    summary: 'Approve the cross-plant OT security baseline and prepare the first implementation wave.',
+    summary:
+      'Approve the cross-plant OT security baseline and prepare the first implementation wave.',
     status: 'APPROVED',
     currentStage: 'Business Case',
     priority: 'high',
@@ -1146,13 +1208,22 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 95000,
     budgetOpex: 54000,
     deliverables: ['OT baseline controls', 'Segmentation plan', 'Audit-ready risk register'],
-    successCriteria: ['Baseline approved', 'Plant scope defined', 'Critical control gaps prioritized'],
-    keyRisks: ['Security work seen as pure cost', 'Weak OT/IT ownership split', 'Plant downtime fears'],
+    successCriteria: [
+      'Baseline approved',
+      'Plant scope defined',
+      'Critical control gaps prioritized',
+    ],
+    keyRisks: [
+      'Security work seen as pure cost',
+      'Weak OT/IT ownership split',
+      'Plant downtime fears',
+    ],
     tasks: [
       {
         slug: 'ot-cyber-baseline',
         title: 'Finalize OT baseline control set',
-        description: 'Lock segmentation, privileged access, and monitoring rules for the first wave.',
+        description:
+          'Lock segmentation, privileged access, and monitoring rules for the first wave.',
         status: 'in_progress',
         priority: 'high',
         dueDate: '+6d',
@@ -1167,7 +1238,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'approved',
         decisionMaker: 'antoine-laurent',
         deadline: '-2d',
-        rationale: 'The first wave is approved to reduce exposure before broader Digital Twin rollout.',
+        rationale:
+          'The first wave is approved to reduce exposure before broader Digital Twin rollout.',
       },
     ],
     milestones: [
@@ -1205,7 +1277,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 30000,
     budgetOpex: 42000,
     deliverables: ['Pilot schedule logic', 'Exception rules', 'Shift simulation review'],
-    successCriteria: ['Pilot starts on time', 'Schedule adherence improves', 'Planner confidence rises'],
+    successCriteria: [
+      'Pilot starts on time',
+      'Schedule adherence improves',
+      'Planner confidence rises',
+    ],
     keyRisks: ['Planner skepticism', 'Bad master data', 'Overfit to one plant scenario'],
     tasks: [
       {
@@ -1257,8 +1333,16 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 22000,
     budgetOpex: 49000,
     deliverables: ['Onboarding journey', 'First-30-day scorecard', 'Coach assets'],
-    successCriteria: ['Time-to-first-value -25%', 'Activation rate +12pts', 'Support burden reduced'],
-    keyRisks: ['Mixed messaging across teams', 'No usage trigger definition', 'Support overload during rollout'],
+    successCriteria: [
+      'Time-to-first-value -25%',
+      'Activation rate +12pts',
+      'Support burden reduced',
+    ],
+    keyRisks: [
+      'Mixed messaging across teams',
+      'No usage trigger definition',
+      'Support overload during rollout',
+    ],
     tasks: [
       {
         slug: 'core-onboarding-playbook',
@@ -1306,7 +1390,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'factory-excellence',
     name: 'Warehouse Automation Wave 1',
     area: 'Logistics',
-    summary: 'Unblock the first warehouse automation wave after layout and safety issues delayed execution.',
+    summary:
+      'Unblock the first warehouse automation wave after layout and safety issues delayed execution.',
     status: 'BLOCKED',
     currentStage: 'Execution Risk',
     priority: 'high',
@@ -1371,13 +1456,18 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 125000,
     budgetOpex: 47000,
     deliverables: ['Alert tuning log', 'Maintenance adoption dashboard', 'Savings evidence pack'],
-    successCriteria: ['Unplanned downtime -12%', 'Alert precision up', 'Savings evidence board-ready'],
+    successCriteria: [
+      'Unplanned downtime -12%',
+      'Alert precision up',
+      'Savings evidence board-ready',
+    ],
     keyRisks: ['Weak evidence discipline', 'Alert fatigue returns', 'Savings overstated'],
     tasks: [
       {
         slug: 'predictive-maintenance-value-pack',
         title: 'Prepare realized-value evidence pack for steering review',
-        description: 'Show what downtime savings were actually realized and how confident the evidence is.',
+        description:
+          'Show what downtime savings were actually realized and how confident the evidence is.',
         status: 'in_progress',
         priority: 'medium',
         dueDate: '+11d',
@@ -1392,7 +1482,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
         status: 'pending',
         decisionMaker: 'antoine-laurent',
         deadline: '+18d',
-        rationale: 'Scale should follow only after value proof is trusted by finance and operations.',
+        rationale:
+          'Scale should follow only after value proof is trusted by finance and operations.',
       },
     ],
     milestones: [
@@ -1423,7 +1514,11 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 14000,
     budgetOpex: 28000,
     deliverables: ['Decommission checklist', 'Data migration log', 'New CRM adoption playbook'],
-    successCriteria: ['Old licenses retired', 'Data quality stabilized', 'Commercial teams fully migrated'],
+    successCriteria: [
+      'Old licenses retired',
+      'Data quality stabilized',
+      'Commercial teams fully migrated',
+    ],
     keyRisks: ['Historical data loss', 'Shadow spreadsheets survive', 'Support ownership unclear'],
     tasks: [
       {
@@ -1462,7 +1557,8 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     projectSlug: 'digital-growth',
     name: 'Classroom Community App',
     area: 'Product',
-    summary: 'Explore a community companion app, then stop it after weak pull and misfit with the core roadmap.',
+    summary:
+      'Explore a community companion app, then stop it after weak pull and misfit with the core roadmap.',
     status: 'CANCELLED',
     currentStage: 'Stopped',
     priority: 'low',
@@ -1475,8 +1571,16 @@ export const atelierToysInitiatives: DemoInitiativeTemplate[] = [
     budgetCapex: 12000,
     budgetOpex: 21000,
     deliverables: ['Concept spec', 'Adoption hypothesis', 'Pilot scope note'],
-    successCriteria: ['Validate strong educator pull', 'Fit core roadmap', 'No extra support burden'],
-    keyRisks: ['Weak strategic fit', 'Distraction from monetizable roadmap items', 'Unclear owner after pilot'],
+    successCriteria: [
+      'Validate strong educator pull',
+      'Fit core roadmap',
+      'No extra support burden',
+    ],
+    keyRisks: [
+      'Weak strategic fit',
+      'Distraction from monetizable roadmap items',
+      'Unclear owner after pilot',
+    ],
     tasks: [
       {
         slug: 'community-app-closeout',
@@ -1596,71 +1700,61 @@ export const atelierToysKnowledgeDocs: DemoKnowledgeDocTemplate[] = [
     slug: 'forward-charter',
     title: 'Atelier Forward charter',
     category: 'strategy',
-    body:
-      'Atelier Forward connects factory excellence, SaaS growth, and leadership governance into one transformation portfolio with explicit ROI and risk ownership.',
+    body: 'Atelier Forward connects factory excellence, SaaS growth, and leadership governance into one transformation portfolio with explicit ROI and risk ownership.',
   },
   {
     slug: 'line3-root-causes',
     title: 'Line 3 downtime root-cause analysis',
     category: 'operations',
-    body:
-      'Top downtime drivers are heat-treatment micro-stops, delayed maintenance dispatch, and inconsistent changeover handoffs between shifts.',
+    body: 'Top downtime drivers are heat-treatment micro-stops, delayed maintenance dispatch, and inconsistent changeover handoffs between shifts.',
   },
   {
     slug: 'partner-growth-story',
     title: 'Partner growth story for Atelier Digital',
     category: 'growth',
-    body:
-      'Partners convert best when the story moves from hardware sale to recurring educator outcomes, usage data, and Digital Twin-backed service value.',
+    body: 'Partners convert best when the story moves from hardware sale to recurring educator outcomes, usage data, and Digital Twin-backed service value.',
   },
   {
     slug: 'board-scorecard-logic',
     title: 'Board scorecard logic',
     category: 'governance',
-    body:
-      'The board scorecard combines realized ROI, confidence-weighted future value, operational signal stability, and follow-up discipline after decisions.',
+    body: 'The board scorecard combines realized ROI, confidence-weighted future value, operational signal stability, and follow-up discipline after decisions.',
   },
   {
     slug: 'qa-defect-patterns',
     title: 'QA defect pattern log',
     category: 'quality',
-    body:
-      'Top repeat patterns involve packaging tolerance drift, onboarding instruction mismatch, and release timing between digital bundle assets and hardware availability.',
+    body: 'Top repeat patterns involve packaging tolerance drift, onboarding instruction mismatch, and release timing between digital bundle assets and hardware availability.',
   },
   {
     slug: 'partner-objection-handling',
     title: 'Partner objection handling notes',
     category: 'commercial',
-    body:
-      'The most common objections are around renewal certainty, educator activation, and whether Digital Twin is a premium add-on or a core value narrative.',
+    body: 'The most common objections are around renewal certainty, educator activation, and whether Digital Twin is a premium add-on or a core value narrative.',
   },
   {
     slug: 'academy-retro-notes',
     title: 'Supervisor academy retrospective',
     category: 'people',
-    body:
-      'Supervisors respond best to routines tied to live initiatives, real escalations, and visible scorecards instead of generic training content.',
+    body: 'Supervisors respond best to routines tied to live initiatives, real escalations, and visible scorecards instead of generic training content.',
   },
   {
     slug: 'supplier-risk-scenarios',
     title: 'Supplier risk scenarios',
     category: 'supply-chain',
-    body:
-      'The highest-risk scenarios involve motion sensor shortages, freight disruption, and design-change lag creating false confidence in delivery commitments.',
+    body: 'The highest-risk scenarios involve motion sensor shortages, freight disruption, and design-change lag creating false confidence in delivery commitments.',
   },
   {
     slug: 'product-roadmap-options',
     title: 'Product roadmap option memo',
     category: 'product',
-    body:
-      'Roadmap options compare adoption-first improvements, analytics depth, and bundle packaging upgrades with explicit effort and revenue trade-offs.',
+    body: 'Roadmap options compare adoption-first improvements, analytics depth, and bundle packaging upgrades with explicit effort and revenue trade-offs.',
   },
   {
     slug: 'line3-pilot-retro',
     title: 'Line 3 pilot retrospective',
     category: 'operations',
-    body:
-      'The pilot confirmed supervisor appetite for faster alerts, but trust depends on reducing noisy recommendations during shift handovers.',
+    body: 'The pilot confirmed supervisor appetite for faster alerts, but trust depends on reducing noisy recommendations during shift handovers.',
   },
 ];
 
@@ -1749,16 +1843,25 @@ export const atelierToysToolCoverage: DemoToolCoverage[] = [
   },
   {
     tool: 'Portfolio & PMO',
-    seededRecords: ['7 projects', '15 cross-functional initiatives', 'Milestones, dependencies, and decision gates'],
+    seededRecords: [
+      '7 projects',
+      '15 cross-functional initiatives',
+      'Milestones, dependencies, and decision gates',
+    ],
     userGoal: 'Trace why a strategic priority is late and who owns the unblock.',
     ahaMoment: 'Dependencies, decisions, and execution work are resolved in one workflow.',
     cta: 'Book a workshop to map your live portfolio into the same control tower.',
   },
   {
     tool: 'DRD assessment',
-    seededRecords: ['Approved DRD baseline', 'Executive assessment report', 'Priority recommendation sections'],
+    seededRecords: [
+      'Approved DRD baseline',
+      'Executive assessment report',
+      'Priority recommendation sections',
+    ],
     userGoal: 'Understand current maturity, the biggest gaps, and what should be funded next.',
-    ahaMoment: 'Assessment is not a static survey because it flows directly into initiatives, governance, and value tracking.',
+    ahaMoment:
+      'Assessment is not a static survey because it flows directly into initiatives, governance, and value tracking.',
     cta: 'Run the same DRD baseline for your team and turn findings into a live portfolio.',
   },
   {
@@ -1770,7 +1873,11 @@ export const atelierToysToolCoverage: DemoToolCoverage[] = [
   },
   {
     tool: 'AI workspace',
-    seededRecords: ['9 role-based prompts', '10+ knowledge docs', 'Leadership and specialist personas'],
+    seededRecords: [
+      '9 role-based prompts',
+      '10+ knowledge docs',
+      'Leadership and specialist personas',
+    ],
     userGoal: 'Ask the system for a role-specific answer with business context.',
     ahaMoment: 'AI answers are grounded in the company story and execution data.',
     cta: 'Start trial and upload your own context to create a private workspace.',
@@ -1778,20 +1885,29 @@ export const atelierToysToolCoverage: DemoToolCoverage[] = [
   {
     tool: 'Quality cockpit',
     seededRecords: ['QA defect initiative', 'Quality monthly report', 'Defect pattern documents'],
-    userGoal: 'See where quality risk is repeating and which corrective actions are actually closing.',
+    userGoal:
+      'See where quality risk is repeating and which corrective actions are actually closing.',
     ahaMoment: 'Quality becomes part of the main operating system, not a separate side process.',
     cta: 'Use trial to connect your own incidents, initiatives, and leadership reviews.',
   },
   {
     tool: 'Partner growth',
-    seededRecords: ['Partner onboarding initiative', 'Partner cohort report', 'Commercial playbooks'],
+    seededRecords: [
+      'Partner onboarding initiative',
+      'Partner cohort report',
+      'Commercial playbooks',
+    ],
     userGoal: 'Understand how onboarding and enablement translate into real channel growth.',
     ahaMoment: 'The system connects onboarding behavior to expansion outcomes and references.',
     cta: 'Request a custom demo focused on your channel or partner-led motion.',
   },
   {
     tool: 'Board governance',
-    seededRecords: ['Board value tracking initiative', 'Pre-read report', 'Decision follow-up artifacts'],
+    seededRecords: [
+      'Board value tracking initiative',
+      'Pre-read report',
+      'Decision follow-up artifacts',
+    ],
     userGoal: 'Prepare leadership and board conversations using current operating evidence.',
     ahaMoment: 'Board prep becomes an always-on workflow instead of a monthly scramble.',
     cta: 'Start trial to create your own board-ready control tower.',

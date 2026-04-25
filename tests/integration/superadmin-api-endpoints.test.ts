@@ -22,10 +22,12 @@ vi.mock('../../server/src/controllers/SuperAdminController.js', () => ({
 
 vi.mock('../../server/src/middleware/rateLimiting.middleware.js', () => ({
   authRateLimiter: (_req: any, _res: any, next: any) => next(),
+  apiAuthRateLimiter: (_req: any, _res: any, next: any) => next(),
 }));
 
 vi.mock('../../server/src/middleware/superAdmin.middleware.js', () => ({
   verifySuperAdmin: (_req: any, _res: any, next: any) => next(),
+  requireSuperAdminCapability: () => (_req: any, _res: any, next: any) => next(),
 }));
 
 vi.mock('../../server/src/middleware/auth.middleware.js', () => ({

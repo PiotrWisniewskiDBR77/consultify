@@ -330,7 +330,9 @@ export class LLMConfigService {
   private cacheTTL: number;
   private healthStatus: Map<string, string>;
   private initialized: boolean;
-  private llmProvidersFlagTypeCache: Partial<Record<'is_active' | 'is_default', 'boolean' | 'integer' | 'unknown'>>;
+  private llmProvidersFlagTypeCache: Partial<
+    Record<'is_active' | 'is_default', 'boolean' | 'integer' | 'unknown'>
+  >;
   constructor() {
     this.providerCache = new Map();
     this.cacheExpiry = 0;
@@ -661,7 +663,7 @@ export class LLMConfigService {
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS priority INTEGER DEFAULT 0',
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_health_check TEXT',
       "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS health_status TEXT DEFAULT 'unknown'",
-      "ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_category TEXT",
+      'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_category TEXT',
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_http_status INTEGER',
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_message TEXT',
       'ALTER TABLE llm_providers ADD COLUMN IF NOT EXISTS last_error_at TEXT',
@@ -765,7 +767,9 @@ export class LLMConfigService {
           .toLowerCase();
         const isProdEnv = runtimeEnv === 'production' || runtimeEnv === 'prod';
         const explicitEnvOverride = ['true', '1', 'yes', 'on'].includes(
-          String(process.env.LLM_SECRETS_FROM_ENV || '').trim().toLowerCase()
+          String(process.env.LLM_SECRETS_FROM_ENV || '')
+            .trim()
+            .toLowerCase()
         );
         const allowEnvSecretOverride = !isProdEnv || explicitEnvOverride;
 
@@ -812,7 +816,10 @@ export class LLMConfigService {
           id: `${providerId}-01`,
           provider: providerId,
           api_key: allowlist.has(providerId) ? apiKey || null : null,
-          is_active: await this.coerceLlmProvidersFlagValue('is_active', allowlist.has(providerId) && !!apiKey),
+          is_active: await this.coerceLlmProvidersFlagValue(
+            'is_active',
+            allowlist.has(providerId) && !!apiKey
+          ),
           is_default: await this.coerceLlmProvidersFlagValue(
             'is_default',
             allowlist.has(providerId) && providerId === 'openrouter'

@@ -16,6 +16,8 @@ import {
   NModeShell,
 } from '../shared/NModeLayout';
 import { DynamicSwotLibraryGraphic } from './DynamicSwotLibraryGraphic';
+import { GrowthPathsLibraryGraphic } from './GrowthPathsLibraryGraphic';
+import { MarketForcesLibraryGraphic } from './MarketForcesLibraryGraphic';
 
 type KnownTool = Awaited<ReturnType<typeof Api.getKnownTool>>['tool'];
 
@@ -1091,6 +1093,346 @@ export function KnownToolDetailView(props: {
       </div>
     );
 
+    const marketGoalSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Pozycjonowanie narzędzia' : 'Tool positioning'}
+          </div>
+          <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
+            {isPolish
+              ? 'Market Forces nie służy do mechanicznego ocenienia pięciu sił. Służy do zamiany struktury rynku w decyzję: gdzie naciska marża, gdzie jest defensibility i jaki ruch ma sens.'
+              : 'Market Forces is not a mechanical Five Forces scorecard. It turns market structure into a decision: where margin is pressured, where defensibility exists, and what move makes sense.'}
+          </div>
+          <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {isPolish
+              ? 'To narzędzie jest evidence-first i AI-assisted. Najpierw ustawia branżę, zakres, pozycję firmy oraz pytanie decyzyjne. Potem AI pomaga zebrać sygnały z rozmów i kontekstu organizacji, proponuje scorecard sił, pyta użytkownika o akceptację i dopiero z zatwierdzonej diagnozy buduje implikacje, ruchy oraz inicjatywy.'
+              : 'This is an evidence-first, AI-assisted tool. It frames the industry, scope, company position, and decision question first. AI then helps capture signals from interviews and organization context, proposes the force scorecard, asks for user approval, and only then builds implications, moves, and initiatives from the approved diagnosis.'}
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-blue-200/70 bg-blue-500/5 p-4 dark:border-blue-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-blue-700 dark:text-blue-300">
+              {isPolish ? 'Co to narzędzie naprawdę robi' : 'What the tool actually does'}
+            </div>
+            {bullets(
+              isPolish
+                ? [
+                    'łączy kontekst organizacji i wywiadu z sygnałami rynku',
+                    'zamienia sygnały w ocenę pięciu sił z driverami, evidence i confidence',
+                    'pokazuje presję marży, siłę nabywców, bariery wejścia i defensibility',
+                    'prowadzi od diagnozy rynku do rekomendowanych ruchów i inicjatyw',
+                  ]
+                : [
+                    'connects organization and interview context with market signals',
+                    'turns signals into a Five Forces scorecard with drivers, evidence, and confidence',
+                    'shows margin pressure, buyer power, entry barriers, and defensibility',
+                    'moves from market diagnosis into recommended moves and initiatives',
+                  ]
+            )}
+          </div>
+          <div className="rounded-2xl border border-rose-200/70 bg-rose-500/5 p-4 dark:border-rose-900/40">
+            <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-rose-700 dark:text-rose-300">
+              {isPolish ? 'Czym to narzędzie nie jest' : 'What this tool is not'}
+            </div>
+            {bullets(
+              isPolish
+                ? [
+                    'nie jest suchą checklistą Portera bez kontekstu decyzji',
+                    'nie jest miejscem na ocenę rynku bez źródeł i sygnałów',
+                    'nie służy do automatycznego wygenerowania strategii bez akceptacji użytkownika',
+                    'nie kończy się na radarze lub scorecardzie, tylko przechodzi do outputów',
+                  ]
+                : [
+                    'it is not a dry Porter checklist without decision context',
+                    'it is not a place to score a market without sources and signals',
+                    'it does not auto-generate strategy without user approval',
+                    'it does not stop at a radar or scorecard, but bridges into outputs',
+                  ]
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-violet-200/70 bg-violet-500/5 p-4 dark:border-violet-900/40">
+          <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-300">
+            {isPolish ? 'Filozofia AI' : 'AI philosophy'}
+          </div>
+          {chipRow(
+            isPolish
+              ? ['Market brief', 'Evidence', 'AI proposals', 'User approval', 'Initiatives']
+              : ['Market brief', 'Evidence', 'AI proposals', 'User approval', 'Initiatives']
+          )}
+          <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {isPolish
+              ? 'AI jest konsultantem wspierającym, nie źródłem prawdy. Proponuje sygnały, oceny sił, implikacje, ruchy i outputy, ale użytkownik akceptuje, odrzuca albo prosi o przemyślenie kart przed przejściem do inicjatyw.'
+              : 'AI acts as an assisting consultant, not the source of truth. It proposes signals, force scores, implications, moves, and outputs, while the user accepts, rejects, or asks to rethink cards before they become initiative material.'}
+          </div>
+        </div>
+
+        <MarketForcesLibraryGraphic isPolish={isPolish} variant="process" />
+      </div>
+    );
+
+    const marketProcessSection = (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Logika pracy' : 'Work logic'}
+          </h2>
+          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {isPolish
+              ? 'Market Forces działa w pięciu fazach analogicznych do Dynamic SWOT: mission, input, forces, insights i outputs. Każda faza ma inny poziom decyzji i inne zadanie dla AI.'
+              : 'Market Forces runs through five phases analogous to Dynamic SWOT: mission, input, forces, insights, and outputs. Each phase has a different decision level and a different AI job.'}
+          </div>
+        </div>
+        <div className="grid gap-3">
+          {(isPolish
+            ? [
+                [
+                  'Mission & Market Context',
+                  'Branża, geografia, pozycja, pytanie i success signal',
+                ],
+                ['Input & Exploration', 'Sygnały z wywiadu, benchmarków, plików i obserwacji'],
+                [
+                  'Five Forces Build',
+                  'Ocena każdej siły: score, trend, drivery, evidence i confidence',
+                ],
+                [
+                  'Strategic Implications',
+                  'Presja marży, defensibility, napięcia rynkowe i rekomendacje',
+                ],
+                ['Outputs & Actions', 'Source summary, output candidates i drafty inicjatyw'],
+              ]
+            : [
+                [
+                  'Mission & Market Context',
+                  'Industry, geography, position, question, and success signal',
+                ],
+                [
+                  'Input & Exploration',
+                  'Signals from interviews, benchmarks, files, and observations',
+                ],
+                [
+                  'Five Forces Build',
+                  'Each force scored with trend, drivers, evidence, and confidence',
+                ],
+                [
+                  'Strategic Implications',
+                  'Margin pressure, defensibility, market tensions, and recommendations',
+                ],
+                ['Outputs & Actions', 'Source summary, output candidates, and initiative drafts'],
+              ]
+          ).map(([title, text], index) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-[11px] font-bold text-white">
+                  {index + 1}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {title}
+                  </div>
+                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{text}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const marketOutcomesSection = (
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Co wychodzi z sesji' : 'What the session produces'}
+          </h2>
+          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {isPolish
+              ? 'Dobry wynik jest gotowy do decyzji: pokazuje nie tylko ocenę sił, ale też konsekwencje dla pozycji, marży i kolejności ruchów.'
+              : 'A strong outcome is decision-ready: it shows not only force scores, but also consequences for position, margin, and move sequence.'}
+          </div>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {(isPolish
+            ? [
+                ['Scorecard 5 sił', 'Oceny, trendy, drivery, dowody i confidence dla każdej siły.'],
+                [
+                  'Implikacje strategiczne',
+                  'Co struktura rynku oznacza dla marży, defensibility i pozycji firmy.',
+                ],
+                [
+                  'Rekomendowane ruchy',
+                  '2-4 ruchy z uzasadnieniem, wysiłkiem, ryzykiem i pierwszym krokiem.',
+                ],
+                [
+                  'Output candidates',
+                  'Materiał do inicjatywy, raportu, prezentacji lub dalszej eksploracji.',
+                ],
+              ]
+            : [
+                [
+                  'Five Forces scorecard',
+                  'Scores, trends, drivers, evidence, and confidence for each force.',
+                ],
+                [
+                  'Strategic implications',
+                  'What market structure means for margin, defensibility, and company position.',
+                ],
+                ['Recommended moves', '2-4 moves with rationale, effort, risk, and first step.'],
+                [
+                  'Output candidates',
+                  'Material for an initiative, report, presentation, or follow-on exploration.',
+                ],
+              ]
+          ).map(([title, text]) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-blue-200/70 bg-blue-500/5 p-4 dark:border-blue-900/40"
+            >
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-blue-700 dark:text-blue-300">
+                {title}
+              </div>
+              <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                {text}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const marketExampleSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Przykład' : 'Example'}
+          </h2>
+          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {isPolish
+              ? 'Firma premium rozważa wejście w nowy kanał marketplace. Market Forces pomaga sprawdzić, czy atrakcyjność wzrostu nie zostanie zjedzona przez siłę kupujących, presję platform i łatwość kopiowania oferty.'
+              : 'A premium company is considering entering a new marketplace channel. Market Forces checks whether growth attractiveness will be consumed by buyer power, platform pressure, and easy offer imitation.'}
+          </div>
+        </div>
+        <MarketForcesLibraryGraphic isPolish={isPolish} variant="example" />
+      </div>
+    );
+
+    const growthGoalSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-5 dark:border-navy-700/70 dark:bg-navy-950/30">
+          <div className="text-[11px] uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">
+            {isPolish ? 'Pozycjonowanie narzędzia' : 'Tool positioning'}
+          </div>
+          <div className="mt-3 text-lg font-semibold leading-tight text-slate-900 dark:text-slate-100">
+            {isPolish
+              ? 'Growth Paths nie jest listą pomysłów wzrostowych. To narzędzie do wyboru ścieżki: co skalować, co testować, gdzie wejść i czego nie robić teraz.'
+              : 'Growth Paths is not a list of growth ideas. It is a path-selection tool: what to scale, what to test, where to enter, and what not to do now.'}
+          </div>
+          <div className="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {isPolish
+              ? 'AI bierze kontekst organizacji, wywiad i sygnały rynku, proponuje opcje w czterech polach Ansoffa, a użytkownik zatwierdza albo odrzuca karty. Dopiero zaakceptowane opcje przechodzą do porównania, ruchów, outputów i inicjatyw.'
+              : 'AI uses organization context, interview notes, and market signals to propose options across the four Ansoff fields. The user accepts or rejects cards, and only approved options feed comparison, moves, outputs, and initiatives.'}
+          </div>
+        </div>
+        <GrowthPathsLibraryGraphic isPolish={isPolish} variant="process" />
+      </div>
+    );
+
+    const growthProcessSection = (
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          {isPolish ? 'Logika pracy' : 'Work logic'}
+        </h2>
+        <div className="grid gap-3">
+          {(isPolish
+            ? [
+                ['Mission', 'Ambicja wzrostu, zakres, success signal i ograniczenia'],
+                ['Input', 'Sygnały z wywiadu, rynku, klientów i organizacji'],
+                ['Options', 'Opcje w macierzy Ansoffa: core, rynek, produkt, dywersyfikacja'],
+                ['Insights', 'Porównanie trade-offów i rekomendowana sekwencja ruchów'],
+                ['Outputs', 'Final source summary, output candidates i drafty inicjatyw'],
+              ]
+            : [
+                ['Mission', 'Growth ambition, scope, success signal, and constraints'],
+                ['Input', 'Signals from interviews, market, customers, and organization context'],
+                ['Options', 'Ansoff options: core, market, product, and diversification'],
+                ['Insights', 'Trade-off comparison and recommended move sequence'],
+                ['Outputs', 'Final source summary, output candidates, and initiative drafts'],
+              ]
+          ).map(([title, text], index) => (
+            <div
+              key={title}
+              className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
+            >
+              <div className="flex items-start gap-3">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-purple-600 text-[11px] font-bold text-white">
+                  {index + 1}
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+                  <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{text}</div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const growthOutcomesSection = (
+      <div className="space-y-6">
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          {isPolish ? 'Co wychodzi z sesji' : 'What the session produces'}
+        </h2>
+        <div className="grid gap-4 md:grid-cols-2">
+          {(isPolish
+            ? [
+                ['Macierz opcji', 'Opcje wzrostu z impact, effort, risk, evidence i confidence.'],
+                ['Porównanie strategiczne', 'Trade-offy między skalowaniem core, wejściem w rynek, produktem i dywersyfikacją.'],
+                ['Rekomendowane ruchy', 'Sekwencja: co robić teraz, co testować, co odłożyć.'],
+                ['Output candidates', 'Materiał do inicjatywy, raportu, decka lub dalszej eksploracji.'],
+              ]
+            : [
+                ['Option matrix', 'Growth options with impact, effort, risk, evidence, and confidence.'],
+                ['Strategic comparison', 'Trade-offs between scaling core, entering markets, product development, and diversification.'],
+                ['Recommended moves', 'A sequence: what to do now, what to test, what to defer.'],
+                ['Output candidates', 'Material for an initiative, report, deck, or follow-on exploration.'],
+              ]
+          ).map(([title, text]) => (
+            <div key={title} className="rounded-2xl border border-purple-200/70 bg-purple-500/5 p-4 dark:border-purple-900/40">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-purple-700 dark:text-purple-300">
+                {title}
+              </div>
+              <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-200">
+                {text}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    const growthExampleSection = (
+      <div className="space-y-6">
+        <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
+          <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+            {isPolish ? 'Przykład' : 'Example'}
+          </h2>
+          <div className="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+            {isPolish
+              ? 'Firma premium chce rosnąć bez erozji marży. Growth Paths porównuje skalowanie obecnego segmentu, wejście do nowej geografii, nowy produkt i dywersyfikację, a potem układa sekwencję działań.'
+              : 'A premium company wants to grow without margin erosion. Growth Paths compares scaling the current segment, entering a new geography, building a new product, and diversification, then sequences the moves.'}
+          </div>
+        </div>
+        <GrowthPathsLibraryGraphic isPolish={isPolish} variant="example" />
+      </div>
+    );
+
     if (tool?.toolType === 'dynamic-swot') {
       return [
         {
@@ -1116,6 +1458,64 @@ export function KnownToolDetailView(props: {
           icon: FileText,
           label: { en: 'Example', pl: 'Przykład' },
           component: exampleSection,
+        },
+      ];
+    }
+
+    if (tool?.toolType === 'market-forces' || toolType === 'market-forces') {
+      return [
+        {
+          id: 'goal',
+          icon: Target,
+          label: { en: 'Goal', pl: 'Cel' },
+          component: marketGoalSection,
+        },
+        {
+          id: 'process',
+          icon: CheckCircle2,
+          label: { en: 'Process', pl: 'Proces' },
+          component: marketProcessSection,
+        },
+        {
+          id: 'outcomes',
+          icon: Lightbulb,
+          label: { en: 'Outcomes', pl: 'Rezultat' },
+          component: marketOutcomesSection,
+        },
+        {
+          id: 'example',
+          icon: FileText,
+          label: { en: 'Example', pl: 'Przykład' },
+          component: marketExampleSection,
+        },
+      ];
+    }
+
+    if (tool?.toolType === 'growth-paths' || toolType === 'growth-paths') {
+      return [
+        {
+          id: 'goal',
+          icon: Target,
+          label: { en: 'Goal', pl: 'Cel' },
+          component: growthGoalSection,
+        },
+        {
+          id: 'process',
+          icon: CheckCircle2,
+          label: { en: 'Process', pl: 'Proces' },
+          component: growthProcessSection,
+        },
+        {
+          id: 'outcomes',
+          icon: Lightbulb,
+          label: { en: 'Outcomes', pl: 'Rezultat' },
+          component: growthOutcomesSection,
+        },
+        {
+          id: 'example',
+          icon: FileText,
+          label: { en: 'Example', pl: 'Przykład' },
+          component: growthExampleSection,
         },
       ];
     }
@@ -1146,7 +1546,7 @@ export function KnownToolDetailView(props: {
         component: exampleSection,
       },
     ];
-  }, [tool, isPolish]);
+  }, [tool, isPolish, toolType]);
 
   return (
     <NModeShell

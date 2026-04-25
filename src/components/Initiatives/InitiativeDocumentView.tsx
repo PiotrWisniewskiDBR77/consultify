@@ -86,11 +86,6 @@ import {
 
 import { INITIATIVE_STATUS_METADATA, InitiativeStatus } from '../../types';
 import {
-  extractInitiativeKpiRows,
-  type InitiativeKpiEditorRow,
-  toInitiativeKpiEditorRow,
-} from './initiativeKpiContract';
-import {
   type Attachment,
   type Comment,
   type LinkedItem,
@@ -129,6 +124,11 @@ import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { SourceMetadataBlock } from '../shared/SourceMetadataBlock';
 import { normalizeGateReadinessPayload } from './gateReadinessPayload';
 import { InitiativeCompactPanel } from './InitiativeCompactPanel';
+import {
+  extractInitiativeKpiRows,
+  type InitiativeKpiEditorRow,
+  toInitiativeKpiEditorRow,
+} from './initiativeKpiContract';
 import { InitiativeScrollView } from './InitiativeScrollView';
 import {
   createInitiativesDemoDataset,
@@ -1314,7 +1314,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         trackedInRealization:
           createKpiObservationPhase === 'realization' || createKpiObservationPhase === 'both',
         trackedPostImplementation:
-          createKpiObservationPhase === 'post-implementation' || createKpiObservationPhase === 'both',
+          createKpiObservationPhase === 'post-implementation' ||
+          createKpiObservationPhase === 'both',
         realizationExpectation: {
           baselineValue,
           targetValue: realizationTarget,
@@ -1338,8 +1339,8 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               definitionSource: payload.definitionSource as 'library' | 'initiative-custom',
               name:
                 createKpiMode === 'linked'
-                  ? createKpiLibraryOptions.find((option) => option.id === createKpiLibraryId)?.name ||
-                    createKpiName.trim()
+                  ? createKpiLibraryOptions.find((option) => option.id === createKpiLibraryId)
+                      ?.name || createKpiName.trim()
                   : createKpiName.trim(),
               category: payload.category,
               unit: createKpiUnit.trim(),
@@ -4919,34 +4920,39 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
           />
         ),
       },
-      ...((() => {
+      ...(() => {
         const srcType = initiative?.source_type || initiative?.sourceType;
         const srcId = initiative?.source_id || initiative?.sourceId;
         if (srcType !== 'interview' || !srcId) return [];
         const insightTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
         const insightPath = getArtifactPath('insight', srcId);
-        return [{
-          id: 'sourceInsight',
-          label: { en: 'Source', pl: 'Źródło' },
-          type: 'custom' as const,
-          value: srcId,
-          onChange: () => {},
-          readOnly: true,
-          render: () => (
-            <a
-              href={insightPath}
-              title={isPolish ? `Otwórz insight: ${insightTitle}` : `Open insight: ${insightTitle}`}
-              className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 transition-colors truncate"
-            >
-              <Sparkles size={12} className="shrink-0" />
-              <span className="truncate">
-                {isPolish ? 'Z Insightu: ' : 'From Insight: '}{insightTitle}
-              </span>
-              <ExternalLink size={10} className="shrink-0 ml-auto opacity-60" />
-            </a>
-          ),
-        }] as NModePropertyField[];
-      })()),
+        return [
+          {
+            id: 'sourceInsight',
+            label: { en: 'Source', pl: 'Źródło' },
+            type: 'custom' as const,
+            value: srcId,
+            onChange: () => {},
+            readOnly: true,
+            render: () => (
+              <a
+                href={insightPath}
+                title={
+                  isPolish ? `Otwórz insight: ${insightTitle}` : `Open insight: ${insightTitle}`
+                }
+                className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 transition-colors truncate"
+              >
+                <Sparkles size={12} className="shrink-0" />
+                <span className="truncate">
+                  {isPolish ? 'Z Insightu: ' : 'From Insight: '}
+                  {insightTitle}
+                </span>
+                <ExternalLink size={10} className="shrink-0 ml-auto opacity-60" />
+              </a>
+            ),
+          },
+        ] as NModePropertyField[];
+      })(),
     ];
   }, [
     initiative,
@@ -7330,7 +7336,9 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                       <th className="text-left py-2 pr-2">{isPolish ? 'Jednostka' : 'Unit'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Baza' : 'Baseline'}</th>
                       <th className="text-left py-2 pr-2">{isPolish ? 'Obecnie' : 'Current'}</th>
-                      <th className="text-left py-2 pr-2">{isPolish ? 'Cel realizacja' : 'Realization target'}</th>
+                      <th className="text-left py-2 pr-2">
+                        {isPolish ? 'Cel realizacja' : 'Realization target'}
+                      </th>
                       <th className="text-left py-2 pr-2">
                         {isPolish ? 'Cel po wdrożeniu' : 'Post-implementation target'}
                       </th>
@@ -8155,7 +8163,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
                 <NModePropertiesStrip fields={nModePropertyFields} maxColumns={6} />
 
                 {statusDriftUi ? (
-                  <Callout variant="warning" compact title={isPolish ? 'Drift statusu' : 'Status drift'}>
+                  <Callout
+                    variant="warning"
+                    compact
+                    title={isPolish ? 'Drift statusu' : 'Status drift'}
+                  >
                     {isPolish
                       ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
                       : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}
@@ -8825,7 +8837,11 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
               >
                 {statusDriftUi ? (
                   <div className="mb-3">
-                    <Callout variant="warning" compact title={isPolish ? 'Drift statusu' : 'Status drift'}>
+                    <Callout
+                      variant="warning"
+                      compact
+                      title={isPolish ? 'Drift statusu' : 'Status drift'}
+                    >
                       {isPolish
                         ? 'Widok używa znormalizowanego statusu (zgodnego z portfolio). Raw wartość w bazie odbiega — zgłoś administratorowi.'
                         : 'This view uses normalized status (aligned with the portfolio). The raw database value differs — notify an administrator.'}

@@ -39,16 +39,31 @@ const FACTUAL_INDICATORS = [
 ];
 
 const HEDGING_PHRASES = [
-  'I think', 'it seems', 'possibly', 'might be', 'could be',
-  'myślę', 'wydaje się', 'prawdopodobnie', 'może być',
-  'in my opinion', 'moim zdaniem',
+  'I think',
+  'it seems',
+  'possibly',
+  'might be',
+  'could be',
+  'myślę',
+  'wydaje się',
+  'prawdopodobnie',
+  'może być',
+  'in my opinion',
+  'moim zdaniem',
 ];
 
 const HALLUC_PHRASES = [
-  'as everyone knows', 'it is well known', 'studies show that',
-  'research proves', 'scientists agree', 'experts confirm',
-  'jak powszechnie wiadomo', 'badania dowodzą', 'eksperci potwierdzają',
-  'jak wynika z licznych badań', 'powszechnie uznaje się',
+  'as everyone knows',
+  'it is well known',
+  'studies show that',
+  'research proves',
+  'scientists agree',
+  'experts confirm',
+  'jak powszechnie wiadomo',
+  'badania dowodzą',
+  'eksperci potwierdzają',
+  'jak wynika z licznych badań',
+  'powszechnie uznaje się',
 ];
 
 const CITATION_PATTERNS = /\[(DT|KB|BM|WEB|FIN|ASS)\]|\[\d+\]/g;
@@ -102,9 +117,13 @@ class OutputGroundingService {
       totalFactual > 0 ? Math.round((citedCount / totalFactual) * 10000) / 10000 : 1;
 
     const hedgingRatio = this.computeHedgingRatio(response);
-    const confidenceScore = Math.round(
-      Math.min(1, Math.max(0, groundingScore * 0.6 + (1 - hedgingRatio) * 0.2 + citationAccuracy * 0.2)) * 10000
-    ) / 10000;
+    const confidenceScore =
+      Math.round(
+        Math.min(
+          1,
+          Math.max(0, groundingScore * 0.6 + (1 - hedgingRatio) * 0.2 + citationAccuracy * 0.2)
+        ) * 10000
+      ) / 10000;
 
     const disclaimer =
       groundingScore < GROUNDING_THRESHOLD

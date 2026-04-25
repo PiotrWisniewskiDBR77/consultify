@@ -10,6 +10,7 @@ import type { Response } from 'express';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
 import type { UpdateUserRequest, UpdateUserRoleRequest } from '../validators/user.validators.js';
 
@@ -130,12 +131,55 @@ export class UserController {
         return;
       }
 
-      const { firstName, lastName, email, status, role, title, phone, avatarUrl, licensePlanId } =
-        req.body;
+      const {
+        firstName,
+        lastName,
+        email,
+        status,
+        role,
+        title,
+        jobTitle,
+        phone,
+        avatarUrl,
+        licensePlanId,
+        linkedinId,
+        displayName,
+        pronouns,
+        department,
+        statusMessage,
+        isOutOfOffice,
+        outOfOfficeUntil,
+        outOfOfficeMessage,
+        companyName,
+        timezone,
+        dateFormat,
+        timeFormat,
+        seniorityLevel,
+        siteLocation,
+        tenureYears,
+        managesTeam,
+        teamSize,
+        expertiseTags,
+        engagementLevel,
+        profileSurveyCompletedAt,
+        profileSurveyDismissedCount,
+        profileSurveyLastDismissedAt,
+      } = req.body;
+      const userColumns = await getTableColumns('users');
 
       // Build dynamic update query
       const updates: string[] = [];
       const params: (string | null)[] = [];
+      const addColumnUpdate = (column: string, value: unknown) => {
+        if (!userColumns.has(column) || value === undefined) return;
+        updates.push(`${column} = ?`);
+        params.push(value === null ? null : String(value));
+      };
+      const addBooleanColumnUpdate = (column: string, value: unknown) => {
+        if (!userColumns.has(column) || value === undefined) return;
+        updates.push(`${column} = ?`);
+        params.push(value ? '1' : '0');
+      };
 
       if (firstName !== undefined) {
         updates.push('first_name = ?');
@@ -168,8 +212,10 @@ export class UserController {
         params.push(role);
       }
       if (title !== undefined) {
-        updates.push('title = ?');
-        params.push(title);
+        addColumnUpdate(userColumns.has('job_title') ? 'job_title' : 'title', title);
+      }
+      if (jobTitle !== undefined) {
+        addColumnUpdate(userColumns.has('job_title') ? 'job_title' : 'title', jobTitle);
       }
       if (phone !== undefined) {
         updates.push('phone = ?');
@@ -183,6 +229,37 @@ export class UserController {
         updates.push('license_plan_id = ?');
         params.push(licensePlanId);
       }
+      addColumnUpdate('linkedin_id', linkedinId);
+      addColumnUpdate('display_name', displayName);
+      addColumnUpdate('pronouns', pronouns);
+      addColumnUpdate('department', department);
+      addColumnUpdate('status_message', statusMessage);
+      addBooleanColumnUpdate('out_of_office', isOutOfOffice);
+      addColumnUpdate('vacation_end', outOfOfficeUntil);
+      addColumnUpdate('out_of_office_message', outOfOfficeMessage);
+      addColumnUpdate('company_name', companyName);
+      addColumnUpdate('timezone', timezone);
+      addColumnUpdate('date_format', dateFormat);
+      addColumnUpdate('time_format', timeFormat);
+      addColumnUpdate('seniority_level', seniorityLevel);
+      addColumnUpdate('site_location', siteLocation);
+      addColumnUpdate('tenure_years', tenureYears);
+      addBooleanColumnUpdate('manages_team', managesTeam);
+      addColumnUpdate('team_size', teamSize);
+      addColumnUpdate(
+        'expertise_tags',
+        expertiseTags === undefined ? undefined : JSON.stringify(expertiseTags)
+      );
+      addColumnUpdate('engagement_level', engagementLevel);
+      addColumnUpdate('profile_survey_completed_at', profileSurveyCompletedAt);
+      if (
+        userColumns.has('profile_survey_dismissed_count') &&
+        profileSurveyDismissedCount !== undefined
+      ) {
+        updates.push('profile_survey_dismissed_count = ?');
+        params.push(String(profileSurveyDismissedCount));
+      }
+      addColumnUpdate('profile_survey_last_dismissed_at', profileSurveyLastDismissedAt);
 
       if (updates.length === 0) {
         res.status(400).json({ error: 'No fields to update' });

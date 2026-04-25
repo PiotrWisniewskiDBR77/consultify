@@ -195,7 +195,11 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
               disabled={privacyActionLoading}
               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-navy-600 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
             >
-              {privacyActionLoading ? <RefreshCw size={13} className="animate-spin" /> : <EyeOff size={13} />}
+              {privacyActionLoading ? (
+                <RefreshCw size={13} className="animate-spin" />
+              ) : (
+                <EyeOff size={13} />
+              )}
               Redact transcript
             </button>
             <button
@@ -342,8 +346,8 @@ export const ConversationBrowser: React.FC<ConversationBrowserProps> = ({ worker
       </div>
 
       <div className="text-xs text-slate-500 dark:text-slate-400">
-        Privacy controls are available inside a conversation: redact transcript content or delete the
-        conversation entirely.
+        Privacy controls are available inside a conversation: redact transcript content or delete
+        the conversation entirely.
       </div>
 
       {error && (

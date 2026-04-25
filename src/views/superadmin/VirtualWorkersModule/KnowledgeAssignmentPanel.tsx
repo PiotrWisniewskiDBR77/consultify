@@ -138,7 +138,12 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
   );
   const coverage = useMemo(() => {
     const allProducts = Array.from(
-      new Set(pills.map((pill) => pill.product_slug).filter(Boolean).map((value) => String(value)))
+      new Set(
+        pills
+          .map((pill) => pill.product_slug)
+          .filter(Boolean)
+          .map((value) => String(value))
+      )
     ).sort();
     return allProducts.map((product) => ({
       product,
@@ -249,11 +254,7 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
     });
   };
 
-  const handleSectionChange = (
-    index: number,
-    field: keyof KnowledgePillSection,
-    value: string
-  ) => {
+  const handleSectionChange = (index: number, field: keyof KnowledgePillSection, value: string) => {
     setDraft((current) => ({
       ...current,
       sections: current.sections.map((section, idx) =>
@@ -338,7 +339,8 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
             Knowledge Governance
           </h3>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Assign pills to the worker, edit pill content and sections, and monitor product coverage.
+            Assign pills to the worker, edit pill content and sections, and monitor product
+            coverage.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -378,7 +380,8 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
           <div>
             <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Coverage Map</h4>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Shows whether the worker has at least one assigned pill for each available product family.
+              Shows whether the worker has at least one assigned pill for each available product
+              family.
             </p>
           </div>
           <span className="text-xs text-slate-500 dark:text-slate-400">
@@ -410,7 +413,9 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
             </div>
           ))}
           {coverage.length === 0 && (
-            <p className="text-sm text-slate-500 dark:text-slate-400">No product coverage data yet.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              No product coverage data yet.
+            </p>
           )}
         </div>
       </section>
@@ -465,7 +470,9 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
           </div>
 
           {selectedPill?.summary && (
-            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">{selectedPill.summary}</p>
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+              {selectedPill.summary}
+            </p>
           )}
 
           {selectedPill && usageMode === 'selected_sections' && (
@@ -504,7 +511,10 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
 
           <button
             onClick={handleAddSingle}
-            disabled={!selectedPillId || (usageMode === 'selected_sections' && selectedSections.length === 0)}
+            disabled={
+              !selectedPillId ||
+              (usageMode === 'selected_sections' && selectedSections.length === 0)
+            }
             className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium"
           >
             <Plus size={14} />
@@ -591,7 +601,8 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
             <div className="text-center py-12">
               <Brain className="w-10 h-10 mx-auto text-slate-300 dark:text-slate-600 mb-3" />
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                No knowledge assigned yet. Bootstrap the default pills or add a specific pill manually.
+                No knowledge assigned yet. Bootstrap the default pills or add a specific pill
+                manually.
               </p>
             </div>
           )}
@@ -606,7 +617,8 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                 Knowledge Pill Editor
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                Create or update the worker’s governed product pills, including section-level content.
+                Create or update the worker’s governed product pills, including section-level
+                content.
               </p>
             </div>
             {editingPillId && (
@@ -764,7 +776,9 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{pill.title}</p>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                        {pill.title}
+                      </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                         {pill.slug}
                         {pill.product_slug ? ` · ${pill.product_slug}` : ''}
@@ -781,7 +795,9 @@ export const KnowledgeAssignmentPanel: React.FC<KnowledgeAssignmentPanelProps> =
                   </div>
 
                   {pill.summary && (
-                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-3">{pill.summary}</p>
+                    <p className="text-sm text-slate-600 dark:text-slate-300 mt-3">
+                      {pill.summary}
+                    </p>
                   )}
 
                   <div className="flex items-center gap-2 flex-wrap mt-3">

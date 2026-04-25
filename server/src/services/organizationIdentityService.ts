@@ -97,7 +97,8 @@ export async function findOrganizationByCanonicalName(
       if (!row?.id || row.id === options.excludeOrganizationId) return false;
 
       const status = String(row.status || '').toLowerCase();
-      const isActive = row.is_active === undefined || row.is_active === null || Number(row.is_active) !== 0;
+      const isActive =
+        row.is_active === undefined || row.is_active === null || Number(row.is_active) !== 0;
       if (!isActive || status === 'deleted' || status === 'merged') return false;
 
       return buildOrganizationCanonicalKey(String(row.name || '')) === canonicalKey;

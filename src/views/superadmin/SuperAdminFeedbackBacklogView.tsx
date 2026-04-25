@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight, Filter, Loader2, Tag } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
 
 import { Api } from '../../services/api';
 
@@ -16,40 +16,48 @@ interface FeedbackBacklogTask {
   priority?: TaskPriority;
   tags?: string[];
   feedbackId?: string | null;
+  assigneeId?: string | null;
+  owner_id?: string | null;
+  assignee_id?: string | null;
+  assigned_to?: string | null;
   created_at?: string;
+}
+
+interface BacklogTaskDraft {
+  status: string;
+  assigneeId: string;
+  comment: string;
 }
 
 export const SuperAdminFeedbackBacklogView: React.FC = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [tasks, setTasks] = useState<FeedbackBacklogTask[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState('');
   const [priority, setPriority] = useState<string>('ALL');
+  const [drafts, setDrafts] = useState<Record<string, BacklogTaskDraft>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  const loadTasks = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await Api.getFeedbackBacklogTasks(300);
+      setTasks((data || []) as FeedbackBacklogTask[]);
+    } catch (e: any) {
+      console.error('[SuperAdminFeedbackBacklogView] Failed to load backlog tasks', e);
+      setTasks([]);
+      setError(e?.message || 'Feedback backlog is temporarily unavailable.');
+      toast.error(e?.message || 'Failed to load feedback backlog');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await Api.getFeedbackBacklogTasks(300);
-        if (!mounted) return;
-        setTasks((data || []) as FeedbackBacklogTask[]);
-      } catch (e) {
-        if (!mounted) return;
-        console.error('[SuperAdminFeedbackBacklogView] Failed to load backlog tasks', e);
-        setTasks([]);
-        setError('Feedback backlog is temporarily unavailable.');
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
+    void loadTasks();
+  }, [loadTasks]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -85,6 +93,71 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
 
   const toggleExpanded = (taskId: string) => {
     setExpandedId((curr) => (curr === taskId ? null : taskId));
+  };
+
+  const getDraft = (item: FeedbackBacklogTask): BacklogTaskDraft =>
+    drafts[item.id] || {
+      status: String(item.status || 'todo'),
+      assigneeId: String(
+        item.assigneeId || item.owner_id || item.assignee_id || item.assigned_to || ''
+      ),
+      comment: '',
+    };
+
+  const updateDraft = (taskId: string, patch: Partial<BacklogTaskDraft>) => {
+    setDrafts((prev) => ({
+      ...prev,
+      [taskId]: {
+        status: prev[taskId]?.status || 'todo',
+        assigneeId: prev[taskId]?.assigneeId || '',
+        comment: prev[taskId]?.comment || '',
+        ...patch,
+      },
+    }));
+  };
+
+  const saveTask = async (item: FeedbackBacklogTask) => {
+    const draft = getDraft(item);
+    const nextStatus = draft.status.trim();
+    if (!nextStatus) {
+      toast.error(t('feedback.backlog.validation.statusRequired', 'Status is required'));
+      return;
+    }
+    setSavingId(item.id);
+    try {
+      const updated = await Api.updateFeedbackBacklogTask(item.id, {
+        status: nextStatus,
+        assigneeId: draft.assigneeId.trim() || null,
+        comment: draft.comment.trim() || undefined,
+      });
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === item.id ? ({ ...task, ...updated } as FeedbackBacklogTask) : task
+        )
+      );
+      setDrafts((prev) => ({
+        ...prev,
+        [item.id]: {
+          status: String(updated?.status || nextStatus),
+          assigneeId: String(updated?.assigneeId || draft.assigneeId || ''),
+          comment: '',
+        },
+      }));
+      toast.success(t('feedback.backlog.toast.updated', 'Backlog task updated'));
+      if (draft.comment.trim() && !updated?.commentSaved) {
+        toast.error(
+          t(
+            'feedback.backlog.toast.commentNotSaved',
+            'Task was updated, but the comment could not be saved.'
+          )
+        );
+      }
+    } catch (e: any) {
+      console.error('[SuperAdminFeedbackBacklogView] Failed to update backlog task', e);
+      toast.error(e?.message || 'Failed to update backlog task');
+    } finally {
+      setSavingId(null);
+    }
   };
 
   const envFromTags = (tags?: string[]) =>
@@ -156,6 +229,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
               {filtered.map((item) => {
                 const env = envFromTags(item.tags);
                 const isExpanded = expandedId === item.id;
+                const draft = getDraft(item);
                 const otherTags = (item.tags || []).filter(
                   (tg) => typeof tg === 'string' && !tg.startsWith('env:')
                 );
@@ -194,11 +268,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                           </div>
                         </div>
                         <div className="shrink-0 text-slate-400 dark:text-slate-500">
-                          {isExpanded ? (
-                            <ChevronDown size={16} />
-                          ) : (
-                            <ChevronRight size={16} />
-                          )}
+                          {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         </div>
                       </div>
                     </button>
@@ -225,10 +295,71 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                             ))}
                           </div>
                         )}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-3">
+                          <label className="space-y-1">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              {t('common.status', 'Status')}
+                            </span>
+                            <select
+                              value={draft.status}
+                              onChange={(e) => updateDraft(item.id, { status: e.target.value })}
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500"
+                            >
+                              <option value="todo">todo</option>
+                              <option value="in_progress">in_progress</option>
+                              <option value="review">review</option>
+                              <option value="blocked">blocked</option>
+                              <option value="done">done</option>
+                              <option value="cancelled">cancelled</option>
+                            </select>
+                          </label>
+                          <label className="space-y-1 md:col-span-2">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              {t('feedback.backlog.assignee', 'Assignee / user ID')}
+                            </span>
+                            <input
+                              value={draft.assigneeId}
+                              onChange={(e) => updateDraft(item.id, { assigneeId: e.target.value })}
+                              placeholder={t(
+                                'feedback.backlog.assigneePlaceholder',
+                                'Leave empty to unassign'
+                              )}
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </label>
+                          <label className="space-y-1 md:col-span-3">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                              {t('feedback.backlog.comment', 'Comment')}
+                            </span>
+                            <textarea
+                              value={draft.comment}
+                              onChange={(e) => updateDraft(item.id, { comment: e.target.value })}
+                              placeholder={t(
+                                'feedback.backlog.commentPlaceholder',
+                                'Optional note saved on the task'
+                              )}
+                              rows={2}
+                              className="w-full px-2 py-1.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-xs text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-purple-500"
+                            />
+                          </label>
+                          <div className="md:col-span-3 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => void saveTask(item)}
+                              disabled={savingId === item.id}
+                              className="inline-flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-purple-700 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {savingId === item.id && (
+                                <Loader2 size={12} className="animate-spin" />
+                              )}
+                              {t('common.save', 'Save')}
+                            </button>
+                          </div>
+                        </div>
                         {item.feedbackId && (
                           <div className="pt-1">
                             <a
-                              href={`#/superadmin/feedback?ticket=${encodeURIComponent(
+                              href={`#/superadmin/feedback?feedbackId=${encodeURIComponent(
                                 item.feedbackId
                               )}`}
                               className="inline-flex items-center gap-1 text-[11px] font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300"
@@ -236,7 +367,7 @@ export const SuperAdminFeedbackBacklogView: React.FC = () => {
                                 // Keep it within the SPA — navigate to the
                                 // feedback registry and deep-link to this ticket.
                                 e.preventDefault();
-                                const targetHash = `#/superadmin/feedback?ticket=${encodeURIComponent(
+                                const targetHash = `#/superadmin/feedback?feedbackId=${encodeURIComponent(
                                   String(item.feedbackId)
                                 )}`;
                                 if (window.location.hash !== targetHash) {

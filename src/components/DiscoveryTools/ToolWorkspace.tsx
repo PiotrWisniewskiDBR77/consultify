@@ -275,6 +275,23 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
         if (!force?.drivers?.length) gaps.push(`Missing drivers for ${force?.name}`);
       });
     }
+    if (toolType === 'growth-paths') {
+      if (!data.context?.goal || !data.context?.scope || !data.context?.successSignal) {
+        gaps.push('Missing growth mission');
+      }
+      if (!data.signals?.length) gaps.push('Missing growth signals');
+      const options = Object.values(data.quadrants || {}).flat();
+      if (!accepted(options).length) gaps.push('Missing accepted growth options');
+      if (!accepted(data.comparisons).length) gaps.push('Missing strategic comparison');
+      if (!accepted(data.recommendedMoves).length) gaps.push('Missing recommended moves');
+      if (
+        !data.summary?.executiveSummary ||
+        ['ai-proposed', 'rethinking', 'rejected'].includes(data.summary?.proposalStatus)
+      ) {
+        gaps.push('Missing final source summary');
+      }
+      if (!accepted(data.outputCandidates).length) gaps.push('Missing output candidates');
+    }
     return gaps;
   }, [currentSession, toolType]);
 

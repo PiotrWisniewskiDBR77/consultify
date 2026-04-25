@@ -92,11 +92,13 @@ describe('ProviderHomeView CTA authority', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open onboarding' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open onboarding' })[0]);
     expect(screen.getByTestId('location-probe')).toHaveTextContent(ROUTES.PARTNER.ONBOARDING);
 
     fireEvent.click(screen.getByRole('button', { name: 'Open partner docs' }));
-    expect(screen.getByTestId('location-probe')).toHaveTextContent('/partner?tab=documentation');
+    expect(screen.getByTestId('location-probe')).toHaveTextContent(
+      '/docs/consultify-partner-program/partner-program-overview'
+    );
   });
 
   it('shows the shared partner lifecycle canon inside onboarding surfaces', async () => {
@@ -107,11 +109,11 @@ describe('ProviderHomeView CTA authority', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText('One path from application to active partner')).toBeInTheDocument();
+      expect(screen.getByText('Get Started in 10 Minutes')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Canonical partner journey')).toBeInTheDocument();
-    expect(screen.getByText('Apply and qualify')).toBeInTheDocument();
-    expect(screen.getByText('Lifecycle progress')).toBeInTheDocument();
+    expect(screen.getByText('Open application guide')).toBeInTheDocument();
+    expect(screen.getByText('Review proof case')).toBeInTheDocument();
+    expect(screen.getByText('Your Path to Partnership Success')).toBeInTheDocument();
   });
 });

@@ -12,8 +12,8 @@
  */
 import i18n from '@/i18n';
 
-import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import type { DemoExperienceType } from '../store/slices/demoSlice';
+import { FullSession, LLMProvider, SessionMode, User } from '../types';
 import { SettingsApi } from './api/settings.api';
 import { V8AssessmentApi } from './api/v8/assessment';
 import { V8MyWorkApi } from './api/v8/my-work';
@@ -39,6 +39,15 @@ const _normalizedEnvApiUrl =
       })()
     : null;
 export const API_URL = (_normalizedEnvApiUrl || '/api') as string;
+
+const buildApiUrl = (url: string): string => {
+  if (/^https?:\/\//i.test(url)) return url;
+  if (url.startsWith('/api')) {
+    const withoutApiPrefix = url.slice('/api'.length) || '';
+    return `${API_URL}${withoutApiPrefix}`;
+  }
+  return `${API_URL}${url.startsWith('/') ? url : `/${url}`}`;
+};
 
 let correlationId = sessionStorage.getItem('correlationId');
 if (!correlationId) {
@@ -1978,12 +1987,13 @@ export const Api = {
     id: string,
     updates: { plan?: string; status?: string; discount_percent?: number }
   ): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/organizations/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/organizations/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(updates),
     });
-    if (!res.ok) throw new Error('Failed to update organization');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to update organization');
   },
 
   deleteOrganization: async (id: string): Promise<void> => {
@@ -5989,6 +5999,7 @@ export const Api = {
     docId: string;
     filename: string;
     mimeType?: string;
+    extractionStatus?: 'extracted' | string;
     totalChunks?: number;
     embeddedChunks?: number;
   }> => {
@@ -6154,10 +6165,7 @@ export const Api = {
     return handleResponse(res, 'Failed to fetch feedback AI insights');
   },
 
-  getFeedback: async (opts?: {
-    limit?: number;
-    offset?: number;
-  }): Promise<any[]> => {
+  getFeedback: async (opts?: { limit?: number; offset?: number }): Promise<any[]> => {
     // Thin wrapper kept for backward compat — returns just the array so
     // existing call sites (pending-badge count, dashboards) keep working.
     const page = await Api.getFeedbackPage(opts);
@@ -6187,12 +6195,13 @@ export const Api = {
   },
 
   updateFeedbackStatus: async (id: string, status: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/feedback/${id}/status`, {
+    const res = await fetchWithRetry(`${API_URL}/feedback/${id}/status`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify({ status }),
     });
-    if (!res.ok) throw new Error('Failed to update feedback status');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to update feedback status');
   },
 
   updateFeedbackWorkflow: async (
@@ -6221,7 +6230,7 @@ export const Api = {
       note?: string | null;
     }
   ): Promise<any> => {
-    const res = await fetch(`${API_URL}/feedback/${id}/workflow`, {
+    const res = await fetchWithRetry(`${API_URL}/feedback/${id}/workflow`, {
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(payload),
@@ -6235,10 +6244,21 @@ export const Api = {
 
   getFeedbackBacklogTasks: async (limit = 200): Promise<any[]> => {
     const url = `${API_URL}/feedback/backlog/tasks?limit=${encodeURIComponent(String(limit))}`;
-    const res = await fetch(url, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch feedback backlog tasks');
-    const data = await res.json();
+    const res = await fetchWithRetry(url, { headers: getHeaders() });
+    const data = await handleResponse(res, 'Failed to fetch feedback backlog tasks');
     return data || [];
+  },
+
+  updateFeedbackBacklogTask: async (
+    id: string,
+    payload: { status?: string; assigneeId?: string | null; comment?: string }
+  ): Promise<any> => {
+    const res = await fetchWithRetry(`${API_URL}/feedback/backlog/tasks/${id}`, {
+      method: 'PATCH',
+      headers: getHeaders(),
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to update feedback backlog task');
   },
 
   getFeedbackAnalyticsOverview: async (): Promise<{
@@ -6255,9 +6275,10 @@ export const Api = {
     last30d: { created: number; reopened: number; reopenRatePct: number };
     generatedAt: string;
   }> => {
-    const res = await fetch(`${API_URL}/feedback/analytics/overview`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch feedback analytics overview');
-    return res.json();
+    const res = await fetchWithRetry(`${API_URL}/feedback/analytics/overview`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch feedback analytics overview');
   },
 
   getFeedbackCursorBrief: async (id: string): Promise<string> => {
@@ -6273,6 +6294,17 @@ export const Api = {
 
   getFeedbackScreenshotUrl: (id: string): string =>
     `${API_URL}/feedback/${encodeURIComponent(id)}/artifacts/screenshot`,
+
+  getFeedbackScreenshotBlob: async (id: string): Promise<Blob> => {
+    const res = await fetch(`${API_URL}/feedback/${encodeURIComponent(id)}/artifacts/screenshot`, {
+      headers: getHeaders(),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error((data as any)?.error || 'Failed to fetch feedback screenshot');
+    }
+    return res.blob();
+  },
 
   // ==========================================
   // ACCESS CONTROL
@@ -6333,33 +6365,37 @@ export const Api = {
 
   // --- ACCESS CONTROL (Super Admin) ---
   getAccessRequests: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/superadmin/access-requests`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch access requests');
-    return res.json();
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-requests`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch access requests');
   },
 
   approveAccessRequest: async (id: string, password?: string, role?: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/approve`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-requests/${id}/approve`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ password, role }),
     });
-    if (!res.ok) throw new Error('Failed to approve access request');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to approve access request');
   },
 
   rejectAccessRequest: async (id: string, reason: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/access-requests/${id}/reject`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-requests/${id}/reject`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ reason }),
     });
-    if (!res.ok) throw new Error('Failed to reject access request');
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((data as any)?.error || 'Failed to reject access request');
   },
 
   getAccessCodes: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/superadmin/access-codes`, { headers: getHeaders() });
-    if (!res.ok) throw new Error('Failed to fetch access codes');
-    return res.json();
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-codes`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch access codes');
   },
 
   acceptAccessCode: async (code: string): Promise<any> => {
@@ -6379,12 +6415,13 @@ export const Api = {
     maxUses?: number;
     expiresAt?: string;
   }): Promise<void> => {
-    const res = await fetch(`${API_URL}/superadmin/access-codes`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/access-codes`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to generate access code');
+    const json = await res.json().catch(() => null);
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to generate access code');
   },
 
   deactivateAccessCode: async (codeId: string): Promise<void> => {
@@ -7231,7 +7268,15 @@ export const Api = {
     const res = await fetch(`${API_URL}/admin/audit-logs/export`, { headers: getHeaders() });
     if (!res.ok) {
       const out = await res.json().catch(() => ({}));
-      throw new Error((out as any)?.error || 'Failed to export admin audit logs');
+      const message =
+        typeof (out as any)?.message === 'string'
+          ? (out as any).message
+          : typeof (out as any)?.error === 'string'
+            ? (out as any).error
+            : typeof (out as any)?.code === 'string'
+              ? (out as any).code
+              : 'Failed to export admin audit logs';
+      throw new Error(message);
     }
     return res.blob();
   },
@@ -8389,6 +8434,7 @@ export const Api = {
   createConversation: async (data?: {
     title?: string;
     projectId?: string;
+    chatProjectId?: string;
     pmoContext?: Record<string, any>;
     language?: string;
   }): Promise<any> => {
@@ -8877,14 +8923,14 @@ export const Api = {
 
   // Generic helper methods for Studio hooks
   get: async (url: string) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, { headers: getHeaders() });
     const payload = await handleResponse(res, 'Request failed');
     return toAxiosLikeResponse(payload);
   },
 
   post: async (url: string, data: any) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'POST',
       headers: getHeaders(),
@@ -8895,7 +8941,7 @@ export const Api = {
   },
 
   postMultipart: async (url: string, formData: FormData) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const headers = getHeaders();
     // Browser must set multipart boundary; do not send Content-Type.
     delete headers['Content-Type'];
@@ -8911,7 +8957,7 @@ export const Api = {
   },
 
   put: async (url: string, data: any) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'PUT',
       headers: getHeaders(),
@@ -8922,7 +8968,7 @@ export const Api = {
   },
 
   delete: async (url: string) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'DELETE',
       headers: getHeaders(),
@@ -8932,7 +8978,7 @@ export const Api = {
   },
 
   patch: async (url: string, data: any) => {
-    const fullUrl = url.startsWith('/api') ? url : `${API_URL}${url}`;
+    const fullUrl = buildApiUrl(url);
     const res = await fetchWithRetry(fullUrl, {
       method: 'PATCH',
       headers: getHeaders(),
@@ -8965,12 +9011,12 @@ export const Api = {
     return res.json();
   },
   triggerBackup: async (): Promise<{ success: boolean }> => {
-    const res = await fetch(`${API_URL}/superadmin/system/backup`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/system/backup`, {
       method: 'POST',
       headers: getHeaders(),
+      body: JSON.stringify({ type: 'full', reason: 'manual' }),
     });
-    if (!res.ok) throw new Error('Failed to trigger backup');
-    return res.json();
+    return handleResponse(res, 'Failed to trigger backup');
   },
   getBackups: async (): Promise<any[]> => {
     const res = await fetchWithRetry(`${API_URL}/admin/backups`, { headers: getHeaders() });
@@ -9165,28 +9211,40 @@ export const Api = {
     return;
   },
   // API Access
-  createUserApiKey: async (name: string): Promise<any> => {
-    return { id: '', name, key: '', createdAt: new Date().toISOString() };
+  createUserApiKey: async (name: string, scopes: string[] = []): Promise<any> => {
+    return SettingsApi.createUserApiKey(name, scopes);
   },
   rotateApiKey: async (keyId: string): Promise<any> => {
-    return { id: keyId, key: '', rotatedAt: new Date().toISOString() };
+    return SettingsApi.rotateApiKey(keyId);
   },
   updateApiKey: async (keyId: string, data: any): Promise<any> => {
-    return { id: keyId, ...data };
+    return SettingsApi.updateApiKey(keyId, data);
   },
   // Calendar Sync — wired to settings integration OAuth engine
   getCalendars: async (): Promise<any[]> => {
     try {
-      const res = await fetch(`${API_URL}/settings/integrations`, {
-        headers: getHeaders(),
-      });
-      if (!res.ok) return [];
-      const data = await res.json();
+      const [integrationsRes, providersRes] = await Promise.all([
+        fetch(`${API_URL}/settings/integrations`, { headers: getHeaders() }),
+        fetch(`${API_URL}/settings/calendar/providers`, { headers: getHeaders() }),
+      ]);
+      const data = integrationsRes.ok ? await integrationsRes.json() : {};
+      const providerData = providersRes.ok ? await providersRes.json() : {};
       const integrations = data?.data?.integrations || data?.integrations || [];
       const calendarIds = ['google_calendar', 'outlook_calendar', 'apple_calendar'];
       const calendarProviders = (data?.data?.providers || data?.providers || []).filter((p: any) =>
         calendarIds.includes(p.id)
       );
+      const persistedProviders = (providerData?.providers || []).map((provider: any) => ({
+        ...provider,
+        id:
+          provider.id === 'google'
+            ? 'google_calendar'
+            : provider.id === 'outlook'
+              ? 'outlook_calendar'
+              : provider.id === 'apple'
+                ? 'apple_calendar'
+                : provider.id,
+      }));
 
       const ICONS: Record<string, string> = {
         google_calendar: '📅',
@@ -9202,20 +9260,30 @@ export const Api = {
       const result = calendarIds.map((cid) => {
         const provider = calendarProviders.find((p: any) => p.id === cid);
         const integration = integrations.find((i: any) => i.provider === cid);
+        const persisted = persistedProviders.find((p: any) => p.id === cid);
         return {
           id: cid,
           name: NAMES[cid] || cid,
           icon: ICONS[cid] || '📅',
-          connected: provider?.isConnected || integration?.status === 'active',
-          connection: integration
+          connected:
+            !!persisted?.connected || !!provider?.isConnected || integration?.status === 'active',
+          connection: persisted?.connection
             ? {
-                externalEmail: integration.externalEmail || integration.externalAccountName || '',
-                calendarName: integration.providerName || NAMES[cid] || cid,
-                lastSyncAt: integration.lastSyncAt || null,
-                syncTasks: true,
-                syncMeetings: true,
+                externalEmail: persisted.connection.externalEmail || '',
+                calendarName: persisted.connection.calendarName || NAMES[cid] || cid,
+                lastSyncAt: persisted.connection.lastSyncAt || null,
+                syncTasks: persisted.connection.syncTasks ?? true,
+                syncMeetings: persisted.connection.syncMeetings ?? true,
               }
-            : null,
+            : integration
+              ? {
+                  externalEmail: integration.externalEmail || integration.externalAccountName || '',
+                  calendarName: integration.providerName || NAMES[cid] || cid,
+                  lastSyncAt: integration.lastSyncAt || null,
+                  syncTasks: true,
+                  syncMeetings: true,
+                }
+              : null,
         };
       });
       return result;
@@ -9225,33 +9293,55 @@ export const Api = {
   },
   getCalendarSettings: async (): Promise<any> => {
     try {
-      const res = await fetch(`${API_URL}/settings/calendar-preferences`, {
+      const res = await fetch(`${API_URL}/settings/calendar/settings`, {
         headers: getHeaders(),
       });
       if (!res.ok) return { syncTasks: true, syncMeetings: true };
       const data = await res.json();
-      return data?.data || { syncTasks: true, syncMeetings: true };
+      return data?.data || data || { syncTasks: true, syncMeetings: true };
     } catch {
       return { syncTasks: true, syncMeetings: true };
     }
   },
   connectCalendar: async (provider: string, _credentials?: any): Promise<any> => {
+    if (provider === 'apple_calendar') {
+      const res = await fetch(`${API_URL}/settings/calendar/connect`, {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({ provider }),
+      });
+      return handleResponse(res, 'Failed to connect Apple Calendar');
+    }
+
     try {
       const res = await fetch(`${API_URL}/settings/integrations/oauth/start/${provider}`, {
         headers: getHeaders(),
       });
-      if (!res.ok) throw new Error('Failed to start OAuth');
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || 'Failed to start OAuth');
+      }
       return { authUrl: data.authUrl };
-    } catch {
-      return {};
+    } catch (error) {
+      if (provider === 'outlook_calendar') {
+        throw error;
+      }
+      throw error;
     }
   },
   disconnectCalendar: async (calendarId: string): Promise<void> => {
-    await fetch(`${API_URL}/settings/integrations/${calendarId}/oauth-disconnect`, {
+    const res = await fetch(`${API_URL}/settings/integrations/${calendarId}/oauth-disconnect`, {
       method: 'POST',
       headers: getHeaders(),
     });
+    if (res.ok) return;
+
+    const fallback = await fetch(`${API_URL}/settings/calendar/disconnect`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ provider: calendarId }),
+    });
+    await handleResponse(fallback, 'Failed to disconnect calendar');
   },
   shouldFallbackToLegacyMyWorkCalendar: (error: any) => {
     const status = Number(error?.status);
@@ -9646,21 +9736,16 @@ export const Api = {
     return data;
   },
   // User API Keys
-  getUserApiKeys: async () => [],
-  deleteUserApiKey: async (keyId: string) => ({ success: true }),
+  getUserApiKeys: async () => SettingsApi.getUserApiKeys(),
+  deleteUserApiKey: async (keyId: string) => SettingsApi.deleteUserApiKey(keyId),
   // Calendar
   updateCalendarSettings: async (settings: any) => {
-    try {
-      const res = await fetch(`${API_URL}/settings/calendar-preferences`, {
-        method: 'PUT',
-        headers: getHeaders(),
-        body: JSON.stringify(settings),
-      });
-      if (!res.ok) throw new Error('Failed to save');
-      return { success: true };
-    } catch {
-      return { success: true };
-    }
+    const res = await fetch(`${API_URL}/settings/calendar/settings`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(settings),
+    });
+    return handleResponse(res, 'Failed to save calendar settings');
   },
   // Permission requests
   getPermissionRequests: async () => [],
@@ -9818,6 +9903,19 @@ export const Api = {
     if (!res.ok) throw new Error(out?.error || 'Failed to create approval workflow');
     return out;
   },
+  updateApprovalWorkflow: async (id: string, data: any) => {
+    const res = await fetch(
+      `${API_URL}/superadmin/admin/approval-workflows/${encodeURIComponent(id)}`,
+      {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data || {}),
+      }
+    );
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to update approval workflow');
+    return out;
+  },
   deleteApprovalWorkflow: async (id: string) => {
     const res = await fetch(
       `${API_URL}/superadmin/admin/approval-workflows/${encodeURIComponent(id)}`,
@@ -9828,6 +9926,15 @@ export const Api = {
     );
     const out = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((out as any)?.error || 'Failed to delete approval workflow');
+    return out;
+  },
+  compareAdminRoles: async (role1: string, role2: string) => {
+    const params = new URLSearchParams({ role1, role2 });
+    const res = await fetch(`${API_URL}/superadmin/admin/permissions/roles/compare?${params}`, {
+      headers: getHeaders(),
+    });
+    const out = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((out as any)?.error || 'Failed to compare roles');
     return out;
   },
   approveRequest: async (id: string, notes?: string) => {
@@ -10171,35 +10278,35 @@ export const Api = {
     }
   },
   createLifecycleStage: async (data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/lifecycle/stages`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/lifecycle/stages`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to create lifecycle stage');
   },
   updateLifecycleStage: async (id: string, data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/lifecycle/stages/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/lifecycle/stages/${id}`, {
       method: 'PUT',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to update lifecycle stage');
   },
   deleteLifecycleStage: async (id: string) => {
-    const res = await fetch(`${API_URL}/superadmin/lifecycle/stages/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/lifecycle/stages/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to delete lifecycle stage');
   },
   transitionOrganizationLifecycle: async (data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/lifecycle/transitions`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/lifecycle/transitions`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to transition organization');
   },
   // Customer Success Playbooks - Connected to Backend
   getSuccessPlaybooks: async () => {
@@ -10239,27 +10346,35 @@ export const Api = {
     }
   },
   createSuccessPlaybook: async (data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/playbooks`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/playbooks`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to create playbook');
+  },
+  updateSuccessPlaybook: async (id: string, data: any) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/playbooks/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update playbook');
   },
   deleteSuccessPlaybook: async (id: string) => {
-    const res = await fetch(`${API_URL}/superadmin/playbooks/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/playbooks/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to delete playbook');
   },
   executeSuccessPlaybook: async (id: string, orgId?: string) => {
-    const res = await fetch(`${API_URL}/superadmin/playbooks/${id}/execute`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/playbooks/${id}/execute`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ organizationId: orgId }),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to execute playbook');
   },
   // Admin Audit Logs
   getAdminAuditLogs: async (filters?: any) => {
@@ -10878,19 +10993,27 @@ export const Api = {
     }
   },
   createCustomerContract: async (data: any) => {
-    const res = await fetch(`${API_URL}/superadmin/contracts`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/contracts`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to create contract');
+  },
+  updateCustomerContract: async (id: string, data: any) => {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/contracts/${id}`, {
+      method: 'PUT',
+      headers: getHeaders(),
+      body: JSON.stringify(data),
+    });
+    return handleResponse(res, 'Failed to update contract');
   },
   deleteCustomerContract: async (id: string) => {
-    const res = await fetch(`${API_URL}/superadmin/contracts/${id}`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/contracts/${id}`, {
       method: 'DELETE',
       headers: getHeaders(),
     });
-    return res.json();
+    return handleResponse(res, 'Failed to delete contract');
   },
   // Security Incidents
   getSecurityIncidents: async (filters?: any) => {
@@ -11228,12 +11351,14 @@ export const Api = {
   },
   createSupportTicket: async (data: any) => {
     try {
-      const res = await fetch(`${API_URL}/superadmin/support/tickets`, {
+      const res = await fetchWithRetry(`${API_URL}/superadmin/support/tickets`, {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(data),
       });
-      return res.json();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error((json as any)?.error || 'Failed to create support ticket');
+      return json;
     } catch (err: any) {
       console.error('[Api] createSupportTicket error:', err);
       throw err;
@@ -11255,8 +11380,9 @@ export const Api = {
       headers: getHeaders(),
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to add support ticket comment');
-    return res.json();
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error((json as any)?.error || 'Failed to add support ticket comment');
+    return json;
   },
   // LLM Routing Rules (persisted)
   getLLMRoutingRules: async (params?: { organizationId?: string; includeInactive?: boolean }) => {
@@ -11888,7 +12014,7 @@ export const Api = {
       return res.json();
     } catch (err: any) {
       console.error('[Api] getCommunicationStats error:', err);
-      return { total: 0, sent: 0, avg_open_rate: 0 };
+      throw err;
     }
   },
   getStakeholderSegments: async (initiativeId?: string): Promise<any[]> => {
@@ -12274,6 +12400,139 @@ export const Api = {
     }
   },
 
+  getAIActionCenter: async (params?: {
+    projectId?: string;
+    status?: string;
+    scope?: 'mine' | 'org';
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.projectId) qs.set('projectId', params.projectId);
+      if (params?.status) qs.set('status', params.status);
+      if (params?.scope) qs.set('scope', params.scope);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const suffix = qs.toString() ? `?${qs.toString()}` : '';
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/center${suffix}`);
+      return handleResponse(res, 'Failed to fetch Action Center');
+    } catch (err: any) {
+      console.error('[Api] getAIActionCenter error:', err);
+      return { success: false, actions: [], summary: null, error: err.message };
+    }
+  },
+
+  getAIRunLedger: async (params?: { projectId?: string; status?: string; limit?: number }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.projectId) qs.set('projectId', params.projectId);
+      if (params?.status) qs.set('status', params.status);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const suffix = qs.toString() ? `?${qs.toString()}` : '';
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/runs${suffix}`);
+      return handleResponse(res, 'Failed to fetch AI run ledger');
+    } catch (err: any) {
+      console.error('[Api] getAIRunLedger error:', err);
+      return { success: false, runs: [], error: err.message };
+    }
+  },
+
+  getAIActionAuditTrail: async (actionId: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/audit`);
+      return handleResponse(res, 'Failed to fetch AI action audit');
+    } catch (err: any) {
+      console.error('[Api] getAIActionAuditTrail error:', err);
+      return { success: false, audit: null, error: err.message };
+    }
+  },
+
+  listResearchSessions: async (params?: {
+    status?: string;
+    scope?: 'mine' | 'org';
+    limit?: number;
+  }) => {
+    try {
+      const qs = new URLSearchParams();
+      if (params?.status) qs.set('status', params.status);
+      if (params?.scope) qs.set('scope', params.scope);
+      if (params?.limit) qs.set('limit', String(params.limit));
+      const suffix = qs.toString() ? `?${qs.toString()}` : '';
+      const res = await fetchWithRetry(`${API_URL}/research/sessions${suffix}`);
+      return handleResponse(res, 'Failed to fetch research sessions');
+    } catch (err: any) {
+      console.error('[Api] listResearchSessions error:', err);
+      return { success: false, sessions: [], error: err.message };
+    }
+  },
+
+  createResearchSession: async (payload: {
+    mission: string;
+    scope?: string;
+    questions?: string[];
+    allowedSources?: Array<'web' | 'attachment' | 'product' | 'org'>;
+    budget?: Record<string, unknown>;
+    expectedOutput?: string;
+    attachmentDocIds?: string[];
+    projectId?: string;
+    conversationId?: string;
+  }) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/research/sessions`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      return handleResponse(res, 'Failed to create research session');
+    } catch (err: any) {
+      console.error('[Api] createResearchSession error:', err);
+      return { success: false, session: null, error: err.message };
+    }
+  },
+
+  getResearchSession: async (sessionId: string) => {
+    try {
+      const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}`);
+      return handleResponse(res, 'Failed to fetch research session');
+    } catch (err: any) {
+      console.error('[Api] getResearchSession error:', err);
+      return { success: false, session: null, error: err.message };
+    }
+  },
+
+  approveResearchSession: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/approve`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to approve research session');
+  },
+
+  startResearchSession: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/start`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to start research session');
+  },
+
+  cancelResearchSessionV1: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/cancel`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to cancel research session');
+  },
+
+  resumeResearchSession: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/resume`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to resume research session');
+  },
+
+  retryResearchSession: async (sessionId: string) => {
+    const res = await fetchWithRetry(`${API_URL}/research/sessions/${sessionId}/retry`, {
+      method: 'POST',
+    });
+    return handleResponse(res, 'Failed to retry research session');
+  },
+
   getAIActionHistory: async (conversationId: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/history/${conversationId}`);
@@ -12284,11 +12543,11 @@ export const Api = {
     }
   },
 
-  executeAIAction: async (actionId: string, payload: any) => {
+  executeAIAction: async (actionId: string, payload: any, conversationId?: string) => {
     try {
       const res = await fetchWithRetry(`${API_URL}/ai/actions/${actionId}/execute`, {
         method: 'POST',
-        body: JSON.stringify({ payload }),
+        body: JSON.stringify({ payload, conversationId }),
       });
       return handleResponse(res, 'Failed to execute action');
     } catch (err: any) {
@@ -12341,10 +12600,9 @@ export const Api = {
    */
   getConversationProposals: async (conversationId: string) => {
     try {
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/conversations/${conversationId}/proposals`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/conversations/${conversationId}/proposals`, {
+        method: 'GET',
+      });
       return handleResponse(res, 'Failed to load conversation proposals');
     } catch (err: any) {
       console.error('[Api] getConversationProposals error:', err);
@@ -12395,14 +12653,12 @@ export const Api = {
     try {
       const qs = new URLSearchParams();
       if (params?.windowDays) qs.set('windowDays', String(params.windowDays));
-      if (params?.topNegativeLimit)
-        qs.set('topNegativeLimit', String(params.topNegativeLimit));
+      if (params?.topNegativeLimit) qs.set('topNegativeLimit', String(params.topNegativeLimit));
       if (params?.scope) qs.set('scope', params.scope);
       const s = qs.toString();
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/feedback/summary${s ? `?${s}` : ''}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/summary${s ? `?${s}` : ''}`, {
+        method: 'GET',
+      });
       if (!res.ok) return null;
       return (await res.json()) as { summary: any };
     } catch (err: any) {
@@ -12428,10 +12684,9 @@ export const Api = {
       }
       if (params?.limit) qs.set('limit', String(params.limit));
       const s = qs.toString();
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/feedback/tuning-tickets${s ? `?${s}` : ''}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/feedback/tuning-tickets${s ? `?${s}` : ''}`, {
+        method: 'GET',
+      });
       if (!res.ok) return null;
       return (await res.json()) as { tickets: any[] };
     } catch (err: any) {
@@ -12486,21 +12741,14 @@ export const Api = {
    * Read-only list/detail for the Runs view. `status` is a
    * comma-separated list; leaving it blank returns everything.
    */
-  listAiRuns: async (params?: {
-    status?: string[];
-    kind?: string;
-    limit?: number;
-  }) => {
+  listAiRuns: async (params?: { status?: string[]; kind?: string; limit?: number }) => {
     try {
       const qs = new URLSearchParams();
       if (params?.status?.length) qs.set('status', params.status.join(','));
       if (params?.kind) qs.set('kind', params.kind);
       if (params?.limit) qs.set('limit', String(params.limit));
       const s = qs.toString();
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/runs${s ? `?${s}` : ''}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/runs${s ? `?${s}` : ''}`, { method: 'GET' });
       if (!res.ok) return { runs: [] as any[] };
       return (await res.json()) as { runs: any[] };
     } catch (err: any) {
@@ -12511,10 +12759,9 @@ export const Api = {
 
   getAiRun: async (id: string) => {
     try {
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/runs/${encodeURIComponent(id)}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/runs/${encodeURIComponent(id)}`, {
+        method: 'GET',
+      });
       if (!res.ok) return null;
       return (await res.json()) as { run: any };
     } catch (err: any) {
@@ -12551,20 +12798,15 @@ export const Api = {
    * tagged with `source_class: 'org_memory'` on the server so the
    * trust bundle citation roll-up treats them as a first-class source.
    */
-  searchOrgMemory: async (params: {
-    q: string;
-    limit?: number;
-    sourceType?: string;
-  }) => {
+  searchOrgMemory: async (params: { q: string; limit?: number; sourceType?: string }) => {
     try {
       const qs = new URLSearchParams();
       qs.set('q', params.q);
       if (params.limit) qs.set('limit', String(params.limit));
       if (params.sourceType) qs.set('sourceType', params.sourceType);
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/org-memory/search?${qs.toString()}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/org-memory/search?${qs.toString()}`, {
+        method: 'GET',
+      });
       if (!res.ok) return { hits: [] as any[], count: 0 };
       return (await res.json()) as { hits: any[]; count: number };
     } catch (err: any) {
@@ -12591,10 +12833,9 @@ export const Api = {
       if (params?.userScope) q.set('userScope', params.userScope);
       if (params?.limit) q.set('limit', String(params.limit));
       const qs = q.toString();
-      const res = await fetchWithRetry(
-        `${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`,
-        { method: 'GET' }
-      );
+      const res = await fetchWithRetry(`${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`, {
+        method: 'GET',
+      });
       if (!res.ok) return { sessions: [] as any[] };
       return (await res.json()) as { sessions: any[] };
     } catch (err: any) {
@@ -12872,7 +13113,32 @@ export const Api = {
         `${API_URL}/ai-settings/user/costs?period=${period || '30d'}`,
         { headers: getHeaders() }
       );
-      return handleResponse(res, 'Failed to fetch AI usage stats');
+      const payload = await handleResponse(res, 'Failed to fetch AI usage stats');
+      const dailyRows = Array.isArray(payload)
+        ? payload
+        : payload?.costs || payload?.dailyUsage || [];
+      const dailyUsage = dailyRows.map((row: any) => ({
+        date: row.date,
+        tokens: Number(row.tokens || 0),
+        requests: Number(row.requests || row.count || 0),
+        cost: Number(row.cost || 0),
+      }));
+      const totalTokens = dailyUsage.reduce((sum: number, row: any) => sum + row.tokens, 0);
+      const totalCost = dailyUsage.reduce((sum: number, row: any) => sum + row.cost, 0);
+      const totalRequests = dailyUsage.reduce((sum: number, row: any) => sum + row.requests, 0);
+      return {
+        stats: {
+          totalTokens,
+          totalCost,
+          totalRequests,
+          avgResponseTime: 0,
+          successRate: 100,
+          limit: 1000000,
+          used: totalTokens,
+        },
+        usageByFeature: payload?.usageByFeature || [],
+        dailyUsage,
+      };
     } catch {
       return {
         stats: {
@@ -13200,7 +13466,7 @@ export const Api = {
   },
 
   createBackup: async (_type?: string, _reason?: string) => {
-    const res = await fetchWithRetry(`${API_URL}/admin/backups/manual`, {
+    const res = await fetchWithRetry(`${API_URL}/superadmin/system/backup`, {
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify({ type: _type || 'full', reason: _reason || 'manual' }),

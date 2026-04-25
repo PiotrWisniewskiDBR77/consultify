@@ -37,7 +37,7 @@ export interface UseTableRowsReturn {
   toggleRowSelection: (id: string) => void;
   handleFieldChange: (id: string, field: string, value: any) => void;
   handleAddRow: () => void;
-  handleAddRowWithTemplate: (e: React.MouseEvent) => void;
+  handleAddRowWithTemplate: (e?: React.MouseEvent) => void;
   handleTemplateSelect: (template: RowTemplate) => void;
   handleBulkDelete: () => void;
   handleReorderNode: (nodeId: string, targetIdx: number) => void;
@@ -210,9 +210,11 @@ export function useTableRows(opts: UseTableRowsOpts): UseTableRowsReturn {
   }, [ideaId, locked, nodes, nodesUndo]);
 
   const handleAddRowWithTemplate = useCallback(
-    (e: React.MouseEvent) => {
+    (e?: React.MouseEvent) => {
       if (locked) return;
-      setAddRowBtnRect((e.currentTarget as HTMLElement).getBoundingClientRect());
+      if (e) {
+        setAddRowBtnRect((e.currentTarget as HTMLElement).getBoundingClientRect());
+      }
       setShowRowTemplatePicker(true);
     },
     [locked]

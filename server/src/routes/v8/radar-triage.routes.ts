@@ -39,12 +39,24 @@ router.post(
   '/signals',
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
-    const { category, bands, whyNow, evidence, uncertaintyBoundary, handoffPayload } = req.body || {};
+    const { category, bands, whyNow, evidence, uncertaintyBoundary, handoffPayload } =
+      req.body || {};
     if (!category || !bands || !whyNow || !evidence) {
-      return res.status(400).json({ error: 'category, bands, whyNow, evidence required', code: 'P06_SIGNAL_PARAMS_REQUIRED' });
+      return res.status(400).json({
+        error: 'category, bands, whyNow, evidence required',
+        code: 'P06_SIGNAL_PARAMS_REQUIRED',
+      });
     }
     const { createTriageSignal } = await import('../../services/v8/radarTriageService.js');
-    const signal = await createTriageSignal({ organizationId, category, bands, whyNow, evidence, uncertaintyBoundary, handoffPayload });
+    const signal = await createTriageSignal({
+      organizationId,
+      category,
+      bands,
+      whyNow,
+      evidence,
+      uncertaintyBoundary,
+      handoffPayload,
+    });
     return res.json({ data: signal, meta: triageMeta() });
   })
 );
@@ -54,10 +66,12 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const signalId = req.params.signalId?.trim();
-    if (!signalId) return res.status(400).json({ error: 'signalId required', code: 'P06_SIGNAL_ID_REQUIRED' });
+    if (!signalId)
+      return res.status(400).json({ error: 'signalId required', code: 'P06_SIGNAL_ID_REQUIRED' });
     const { getTriageSignal } = await import('../../services/v8/radarTriageService.js');
     const signal = await getTriageSignal(signalId, organizationId);
-    if (!signal) return res.status(404).json({ error: 'Signal not found', code: 'P06_SIGNAL_NOT_FOUND' });
+    if (!signal)
+      return res.status(404).json({ error: 'Signal not found', code: 'P06_SIGNAL_NOT_FOUND' });
     return res.json({ data: signal, meta: triageMeta() });
   })
 );
@@ -67,7 +81,8 @@ router.post(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId } = getV8Context(req);
     const signalId = req.params.signalId?.trim();
-    if (!signalId) return res.status(400).json({ error: 'signalId required', code: 'P06_SIGNAL_ID_REQUIRED' });
+    if (!signalId)
+      return res.status(400).json({ error: 'signalId required', code: 'P06_SIGNAL_ID_REQUIRED' });
     const { executeHandoff } = await import('../../services/v8/radarTriageService.js');
     const result = await executeHandoff(signalId, organizationId);
     return res.json({ data: result, meta: triageMeta() });

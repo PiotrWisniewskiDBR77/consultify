@@ -2,6 +2,7 @@ import {
   Activity,
   Building2,
   CheckCircle2,
+  Edit,
   Loader2,
   Play,
   Plus,
@@ -10,6 +11,7 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Card } from '../../../components/Admin/shared/Card';
@@ -102,6 +104,8 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showExecuteModal, setShowExecuteModal] = useState(false);
+  const [editingPlaybook, setEditingPlaybook] = useState<Playbook | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [newPlaybook, setNewPlaybook] = useState({
     name: '',
@@ -112,6 +116,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
 
   const [executeOrgId, setExecuteOrgId] = useState('');
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -119,6 +124,7 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
 
   const fetchData = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const [playbooksData, actionsData, statsData] = await Promise.all([
         Api.getSuccessPlaybooks(),
@@ -128,8 +134,10 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
       setPlaybooks(playbooksData || []);
       setActions(actionsData || []);
       setStats(statsData as any);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch playbook data:', error);
+      setLoadError(error?.message || 'Failed to fetch playbook data');
+      toast.error(error?.message || 'Failed to fetch playbook data');
     } finally {
       setIsLoading(false);
     }
@@ -140,20 +148,42 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
   };
 
   const handleCreatePlaybook = async () => {
-    if (!newPlaybook.name) return;
+    if (!newPlaybook.name.trim()) {
+      toast.error(t('superadmin.customers.playbooks.validation.nameRequired'));
+      return;
+    }
+    if (newPlaybook.actions.length === 0) {
+      toast.error(t('superadmin.customers.playbooks.validation.actionsRequired'));
+      return;
+    }
 
     try {
-      await Api.createSuccessPlaybook(newPlaybook);
+      setIsSaving(true);
+      const payload = { ...newPlaybook, name: newPlaybook.name.trim() };
+      if (editingPlaybook) {
+        await Api.updateSuccessPlaybook(editingPlaybook.id, {
+          ...payload,
+          isActive: editingPlaybook.is_active,
+        });
+        toast.success(t('superadmin.customers.playbooks.toasts.updated'));
+      } else {
+        await Api.createSuccessPlaybook(payload);
+        toast.success(t('superadmin.customers.playbooks.toasts.created'));
+      }
       setShowCreateModal(false);
+      setEditingPlaybook(null);
       setNewPlaybook({
         name: '',
         description: '',
         triggerConditions: { type: 'onboarding_complete', conditions: {} },
         actions: [],
       });
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to create playbook:', error);
+      toast.error(error?.message || 'Failed to save playbook');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -161,13 +191,18 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
     if (!confirm(t('superadmin.customers.playbooks.confirmDelete'))) return;
 
     try {
+      setIsSaving(true);
       await Api.deleteSuccessPlaybook(playbookId);
+      toast.success(t('superadmin.customers.playbooks.toasts.deleted'));
       if (selectedPlaybook?.id === playbookId) {
         setSelectedPlaybook(null);
       }
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to delete playbook:', error);
+      toast.error(error?.message || 'Failed to delete playbook');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -177,14 +212,50 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
     setIsExecuting(true);
     try {
       await Api.executeSuccessPlaybook(selectedPlaybook.id, executeOrgId);
+      toast.success(t('superadmin.customers.playbooks.toasts.executed'));
       setShowExecuteModal(false);
       setExecuteOrgId('');
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to execute playbook:', error);
+      toast.error(error?.message || 'Failed to execute playbook');
     } finally {
       setIsExecuting(false);
     }
+  };
+
+  const openCreatePlaybook = () => {
+    setEditingPlaybook(null);
+    setNewPlaybook({
+      name: '',
+      description: '',
+      triggerConditions: { type: 'onboarding_complete', conditions: {} },
+      actions: [],
+    });
+    setShowCreateModal(true);
+  };
+
+  const openEditPlaybook = (playbook: Playbook) => {
+    let triggerConditions = { type: 'onboarding_complete', conditions: {} };
+    let actions: { type: string; config: Record<string, any> }[] = [];
+    try {
+      triggerConditions = JSON.parse(playbook.trigger_conditions_json || '{}');
+    } catch {
+      triggerConditions = { type: 'onboarding_complete', conditions: {} };
+    }
+    try {
+      actions = JSON.parse(playbook.actions_json || '[]');
+    } catch {
+      actions = [];
+    }
+    setEditingPlaybook(playbook);
+    setNewPlaybook({
+      name: playbook.name,
+      description: playbook.description || '',
+      triggerConditions,
+      actions,
+    });
+    setShowCreateModal(true);
   };
 
   const addActionToPlaybook = (actionType: string) => {
@@ -267,13 +338,19 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
           <InfoButton cardId="superadmin-playbooks" />
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
+          onClick={openCreatePlaybook}
           className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
         >
           <Plus className="w-4 h-4" />
           {t('superadmin.customers.playbooks.newPlaybook')}
         </button>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
 
       {/* Overview Stats */}
       {stats && (
@@ -452,6 +529,12 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <button
+                      onClick={() => openEditPlaybook(selectedPlaybook)}
+                      className="p-2 text-slate-500 hover:text-blue-500 hover:bg-blue-600/10 rounded-lg transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => setShowExecuteModal(true)}
                       className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm transition-colors"
                     >
@@ -601,7 +684,9 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-navy-700">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-              {t('superadmin.customers.playbooks.modals.createTitle')}
+              {editingPlaybook
+                ? t('superadmin.customers.playbooks.modals.editTitle')
+                : t('superadmin.customers.playbooks.modals.createTitle')}
             </h3>
             <div className="space-y-4">
               <div>
@@ -691,17 +776,24 @@ const CustomerSuccessPlaybooksView: React.FC = () => {
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditingPlaybook(null);
+                }}
                 className="px-4 py-2 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
                 {t('common.cancel')}
               </button>
               <button
                 onClick={handleCreatePlaybook}
-                disabled={!newPlaybook.name || newPlaybook.actions.length === 0}
+                disabled={!newPlaybook.name.trim() || newPlaybook.actions.length === 0 || isSaving}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
-                {t('superadmin.customers.playbooks.modals.createCta')}
+                {isSaving
+                  ? t('common.saving')
+                  : editingPlaybook
+                    ? t('superadmin.customers.playbooks.modals.editCta')
+                    : t('superadmin.customers.playbooks.modals.createCta')}
               </button>
             </div>
           </div>

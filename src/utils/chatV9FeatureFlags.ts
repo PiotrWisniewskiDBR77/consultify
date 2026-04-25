@@ -56,78 +56,106 @@ import {
 } from './backToChatShortcutFlag';
 import { BARGE_IN_TOAST_FLAG_KEYS, isBargeInToastEnabled } from './bargeInToastFlag';
 import {
-  FLAGS_PANEL_FILTER_FLAG_KEYS,
-  isFlagsPanelFilterEnabled,
-} from './flagsPanelFilterFlag';
+  FLAGS_PANEL_DESCRIPTION_EXPAND_FLAG_KEYS,
+  isFlagsPanelDescriptionExpandEnabled,
+} from './flagsPanelDescriptionExpandFlag';
+import {
+  FLAGS_PANEL_DOC_LINKS_FLAG_KEYS,
+  isFlagsPanelDocLinksEnabled,
+} from './flagsPanelDocLinksFlag';
+import {
+  FLAGS_PANEL_FILTER_ESCAPE_CLEAR_FLAG_KEYS,
+  isFlagsPanelFilterEscapeClearEnabled,
+} from './flagsPanelFilterEscapeClearFlag';
+import { FLAGS_PANEL_FILTER_FLAG_KEYS, isFlagsPanelFilterEnabled } from './flagsPanelFilterFlag';
 import {
   FLAGS_PANEL_GROUPING_FLAG_KEYS,
   isFlagsPanelGroupingEnabled,
 } from './flagsPanelGroupingFlag';
-import { FLAGS_RESET_URL_FLAG_KEYS, isFlagsResetUrlEnabled } from './flagsResetUrlFlag';
 import {
-  FLAGS_SNAPSHOT_COPY_FLAG_KEYS,
-  isFlagsSnapshotCopyEnabled,
-} from './flagsSnapshotCopyFlag';
+  FLAGS_PANEL_OVERRIDE_URL_COPY_FLAG_KEYS,
+  isFlagsPanelOverrideUrlCopyEnabled,
+} from './flagsPanelOverrideUrlCopyFlag';
+import {
+  FLAGS_PANEL_ROW_SHORTCUTS_FLAG_KEYS,
+  isFlagsPanelRowShortcutsEnabled,
+} from './flagsPanelRowShortcutsFlag';
+import {
+  FLAGS_PANEL_SHORTCUT_CHEAT_SHEET_FLAG_KEYS,
+  isFlagsPanelShortcutCheatSheetEnabled,
+} from './flagsPanelShortcutCheatSheetFlag';
+import {
+  FLAGS_PANEL_STICKY_GROUP_HEADERS_FLAG_KEYS,
+  isFlagsPanelStickyGroupHeadersEnabled,
+} from './flagsPanelStickyGroupHeadersFlag';
+import { FLAGS_RESET_URL_FLAG_KEYS, isFlagsResetUrlEnabled } from './flagsResetUrlFlag';
+import { FLAGS_SNAPSHOT_COPY_FLAG_KEYS, isFlagsSnapshotCopyEnabled } from './flagsSnapshotCopyFlag';
 import { INPUT_CHAR_COUNTER_FLAG_KEYS, isInputCharCounterEnabled } from './inputCharCounterFlag';
+import { INPUT_HINT_STRIP_FLAG_KEYS, isInputHintStripEnabled } from './inputHintStripFlag';
+import {
+  INPUT_SOFT_LIMIT_TOAST_FLAG_KEYS,
+  isInputSoftLimitToastEnabled,
+} from './inputSoftLimitToastFlag';
 import { isNextModelChipEnabled, NEXT_MODEL_CHIP_FLAG_KEYS } from './nextModelChipFlag';
 import {
-  isPiiHeuristicToastEnabled,
-  PII_HEURISTIC_TOAST_FLAG_KEYS,
-} from './piiHeuristicToastFlag';
-import {
-  isTrustBadgeReasoningEnabled,
-  TRUST_BADGE_REASONING_FLAG_KEYS,
-} from './trustBadgeReasoningFlag';
+  isPiiHeuristicSessionDismissEnabled,
+  PII_HEURISTIC_SESSION_DISMISS_FLAG_KEYS,
+} from './piiHeuristicSessionDismissFlag';
+import { isPiiHeuristicToastEnabled, PII_HEURISTIC_TOAST_FLAG_KEYS } from './piiHeuristicToastFlag';
 import {
   isPrivateModeDetailsEnabled,
   PRIVATE_MODE_DETAILS_FLAG_KEYS,
 } from './privateModeDetailsFlag';
 import {
+  isTrustBadgeCitationDomainEnabled,
+  TRUST_BADGE_CITATION_DOMAIN_FLAG_KEYS,
+} from './trustBadgeCitationDomainFlag';
+import {
+  isTrustBadgeCitationLinksEnabled,
+  TRUST_BADGE_CITATION_LINKS_FLAG_KEYS,
+} from './trustBadgeCitationLinksFlag';
+import {
   isTrustBadgeCopyCitationsEnabled,
   TRUST_BADGE_COPY_CITATIONS_FLAG_KEYS,
 } from './trustBadgeCopyCitationsFlag';
+import {
+  isTrustBadgeCopyReasoningEnabled,
+  TRUST_BADGE_COPY_REASONING_FLAG_KEYS,
+} from './trustBadgeCopyReasoningFlag';
 import { isTrustBadgeEnabled, TRUST_BADGE_FLAG_KEYS } from './trustBadgeFlag';
 import {
   isTrustBadgeHumanizeModelEnabled,
   TRUST_BADGE_HUMANIZE_MODEL_FLAG_KEYS,
 } from './trustBadgeHumanizeModelFlag';
 import {
+  isTrustBadgeReasoningEnabled,
+  TRUST_BADGE_REASONING_FLAG_KEYS,
+} from './trustBadgeReasoningFlag';
+import {
   isVoiceFunnelTelemetryEnabled,
   VOICE_FUNNEL_TELEMETRY_FLAG_KEYS,
 } from './voiceFunnelTelemetryFlag';
+import {
+  isVoiceLegendCopyTextEnabled,
+  VOICE_LEGEND_COPY_TEXT_FLAG_KEYS,
+} from './voiceLegendCopyTextFlag';
 import {
   isVoiceLegendShortcutEnabled,
   VOICE_LEGEND_SHORTCUT_FLAG_KEYS,
 } from './voiceLegendShortcutFlag';
 import { isVoiceModeLegendEnabled, VOICE_MODE_LEGEND_FLAG_KEYS } from './voiceModeLegendFlag';
 import {
-  isVoiceLegendCopyTextEnabled,
-  VOICE_LEGEND_COPY_TEXT_FLAG_KEYS,
-} from './voiceLegendCopyTextFlag';
+  isWorkspaceBreadcrumbConversationEnabled,
+  WORKSPACE_BREADCRUMB_CONVERSATION_FLAG_KEYS,
+} from './workspaceBreadcrumbConversationFlag';
 import {
   isWorkspaceBreadcrumbEnabled,
   WORKSPACE_BREADCRUMB_FLAG_KEYS,
 } from './workspaceBreadcrumbFlag';
 import {
-  isWorkspaceBreadcrumbConversationEnabled,
-  WORKSPACE_BREADCRUMB_CONVERSATION_FLAG_KEYS,
-} from './workspaceBreadcrumbConversationFlag';
-import {
-  isFlagsPanelDocLinksEnabled,
-  FLAGS_PANEL_DOC_LINKS_FLAG_KEYS,
-} from './flagsPanelDocLinksFlag';
-import {
-  isInputHintStripEnabled,
-  INPUT_HINT_STRIP_FLAG_KEYS,
-} from './inputHintStripFlag';
-import {
-  isPiiHeuristicSessionDismissEnabled,
-  PII_HEURISTIC_SESSION_DISMISS_FLAG_KEYS,
-} from './piiHeuristicSessionDismissFlag';
-import {
-  isFlagsPanelDescriptionExpandEnabled,
-  FLAGS_PANEL_DESCRIPTION_EXPAND_FLAG_KEYS,
-} from './flagsPanelDescriptionExpandFlag';
+  isWorkspaceBreadcrumbRecentsArrowKeysEnabled,
+  WORKSPACE_BREADCRUMB_RECENTS_ARROW_KEYS_FLAG_KEYS,
+} from './workspaceBreadcrumbRecentsArrowKeysFlag';
 import {
   isWorkspaceBreadcrumbRecentsEnabled,
   WORKSPACE_BREADCRUMB_RECENTS_FLAG_KEYS,
@@ -137,38 +165,6 @@ import {
   WORKSPACE_BREADCRUMB_RECENTS_PINNED_FLAG_KEYS,
 } from './workspaceBreadcrumbRecentsPinnedFlag';
 import {
-  isWorkspaceBreadcrumbRecentsViewAllEnabled,
-  WORKSPACE_BREADCRUMB_RECENTS_VIEW_ALL_FLAG_KEYS,
-} from './workspaceBreadcrumbRecentsViewAllFlag';
-import {
-  isFlagsPanelStickyGroupHeadersEnabled,
-  FLAGS_PANEL_STICKY_GROUP_HEADERS_FLAG_KEYS,
-} from './flagsPanelStickyGroupHeadersFlag';
-import {
-  isFlagsPanelRowShortcutsEnabled,
-  FLAGS_PANEL_ROW_SHORTCUTS_FLAG_KEYS,
-} from './flagsPanelRowShortcutsFlag';
-import {
-  isFlagsPanelShortcutCheatSheetEnabled,
-  FLAGS_PANEL_SHORTCUT_CHEAT_SHEET_FLAG_KEYS,
-} from './flagsPanelShortcutCheatSheetFlag';
-import {
-  isFlagsPanelOverrideUrlCopyEnabled,
-  FLAGS_PANEL_OVERRIDE_URL_COPY_FLAG_KEYS,
-} from './flagsPanelOverrideUrlCopyFlag';
-import {
-  isFlagsPanelFilterEscapeClearEnabled,
-  FLAGS_PANEL_FILTER_ESCAPE_CLEAR_FLAG_KEYS,
-} from './flagsPanelFilterEscapeClearFlag';
-import {
-  isInputSoftLimitToastEnabled,
-  INPUT_SOFT_LIMIT_TOAST_FLAG_KEYS,
-} from './inputSoftLimitToastFlag';
-import {
-  isWorkspaceBreadcrumbRecentsArrowKeysEnabled,
-  WORKSPACE_BREADCRUMB_RECENTS_ARROW_KEYS_FLAG_KEYS,
-} from './workspaceBreadcrumbRecentsArrowKeysFlag';
-import {
   isWorkspaceBreadcrumbRecentsTriggerArrowEnabled,
   WORKSPACE_BREADCRUMB_RECENTS_TRIGGER_ARROW_FLAG_KEYS,
 } from './workspaceBreadcrumbRecentsTriggerArrowFlag';
@@ -177,24 +173,11 @@ import {
   WORKSPACE_BREADCRUMB_RECENTS_TRIGGER_ARROW_UP_FLAG_KEYS,
 } from './workspaceBreadcrumbRecentsTriggerArrowUpFlag';
 import {
-  isTrustBadgeCopyReasoningEnabled,
-  TRUST_BADGE_COPY_REASONING_FLAG_KEYS,
-} from './trustBadgeCopyReasoningFlag';
-import {
-  isTrustBadgeCitationLinksEnabled,
-  TRUST_BADGE_CITATION_LINKS_FLAG_KEYS,
-} from './trustBadgeCitationLinksFlag';
-import {
-  isTrustBadgeCitationDomainEnabled,
-  TRUST_BADGE_CITATION_DOMAIN_FLAG_KEYS,
-} from './trustBadgeCitationDomainFlag';
+  isWorkspaceBreadcrumbRecentsViewAllEnabled,
+  WORKSPACE_BREADCRUMB_RECENTS_VIEW_ALL_FLAG_KEYS,
+} from './workspaceBreadcrumbRecentsViewAllFlag';
 
-export type ChatV9Block =
-  | 'navigation'
-  | 'trust'
-  | 'voice'
-  | 'input'
-  | 'admin';
+export type ChatV9Block = 'navigation' | 'trust' | 'voice' | 'input' | 'admin';
 
 export interface ChatV9FlagKeys {
   readonly localStorage: string;
@@ -279,9 +262,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isVoiceLegendShortcutEnabled,
     telemetry: ['voice_mode_legend_shortcut'],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3-1',
-    ],
+    specDocs: ['docs/Chat V9/VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3-1'],
   },
   {
     id: 'voice-legend-copy-text',
@@ -289,15 +270,13 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'voice',
     title: 'Voice legend · "Copy legend" button',
     description:
-      "VM3.2: adds a small `Copy` button in the `VoiceModeLegend` popover footer. Produces a deterministic, dependency-free Markdown-ish payload (`buildVoiceLegendCopyText`) that mirrors whichever layout the popover is currently showing — two-mode (Dictation / Conversation live) OR the VM1-lite \"voice is unavailable\" message. The button owns an idle → copied → idle (or idle → failed → idle) transient feedback window; closing the popover resets the feedback so the next open starts clean. Zero telemetry; `voice_mode_legend_opened` already tracks intent, whether the user then copies is refinement. Kill-switch OFF removes the button and the copy handler; the popover is pixel-identical to the pre-VM3.2 build.",
+      'VM3.2: adds a small `Copy` button in the `VoiceModeLegend` popover footer. Produces a deterministic, dependency-free Markdown-ish payload (`buildVoiceLegendCopyText`) that mirrors whichever layout the popover is currently showing — two-mode (Dictation / Conversation live) OR the VM1-lite "voice is unavailable" message. The button owns an idle → copied → idle (or idle → failed → idle) transient feedback window; closing the popover resets the feedback so the next open starts clean. Zero telemetry; `voice_mode_legend_opened` already tracks intent, whether the user then copies is refinement. Kill-switch OFF removes the button and the copy handler; the popover is pixel-identical to the pre-VM3.2 build.',
     default: true,
     keys: VOICE_LEGEND_COPY_TEXT_FLAG_KEYS,
     isEnabled: isVoiceLegendCopyTextEnabled,
     telemetry: [],
     testId: 'voice-mode-legend-copy',
-    specDocs: [
-      'docs/Chat V9/VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3-2',
-    ],
+    specDocs: ['docs/Chat V9/VOICE_MODE_AUDIO_EXPERIENCE_DEVELOPMENT_PLAN_2026-04-18.md#vm3-2'],
   },
   {
     id: 'voice-funnel-telemetry',
@@ -356,7 +335,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'navigation',
     title: 'Back-to-chat keyboard shortcut',
     description:
-      'Headless global `keydown` listener mounted at the App root. Alt+Shift+C (macOS Option+Shift+C) triggers the same `returnToFullChat()` action as NAV-M1\'s button, using the same view / conversation gates plus an editable-focus / open-modal guard so the shortcut never hijacks typing or cancels a confirm dialog. Kill-switch: when off the listener is detached entirely; the NAV-M1 button remains as the visible affordance.',
+      "Headless global `keydown` listener mounted at the App root. Alt+Shift+C (macOS Option+Shift+C) triggers the same `returnToFullChat()` action as NAV-M1's button, using the same view / conversation gates plus an editable-focus / open-modal guard so the shortcut never hijacks typing or cancels a confirm dialog. Kill-switch: when off the listener is detached entirely; the NAV-M1 button remains as the visible affordance.",
     default: true,
     keys: BACK_TO_CHAT_SHORTCUT_FLAG_KEYS,
     isEnabled: isBackToChatShortcutEnabled,
@@ -405,7 +384,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'navigation',
     title: 'Workspace breadcrumb · recent conversations dropdown',
     description:
-      "NAV-M3-lite: adds a small caret button next to the `Chat` segment of the workspace breadcrumb pill. Clicking it opens a popover listing the 5 most-recent non-active, non-archived, non-deleted conversations (as filtered / sorted by `buildRecentConversationsList`, keyed on `lastMessageAt` with `updatedAt` fallback). Selecting an entry calls `setActiveConversation(id)` and then the existing `returnToFullChat()` verb, so the user lands in the chosen chat at the main surface — same landing spot as NAV-M1 / NAV-M1.1 / NAV-M2-lite. Escape or outside-click closes the popover; no telemetry fires because the existing navigation-back-to-chat signal already covers the \"returned to chat\" event. Kill-switch OFF hides the caret entirely and the breadcrumb collapses back to the NAV-M2.1 shape.",
+      'NAV-M3-lite: adds a small caret button next to the `Chat` segment of the workspace breadcrumb pill. Clicking it opens a popover listing the 5 most-recent non-active, non-archived, non-deleted conversations (as filtered / sorted by `buildRecentConversationsList`, keyed on `lastMessageAt` with `updatedAt` fallback). Selecting an entry calls `setActiveConversation(id)` and then the existing `returnToFullChat()` verb, so the user lands in the chosen chat at the main surface — same landing spot as NAV-M1 / NAV-M1.1 / NAV-M2-lite. Escape or outside-click closes the popover; no telemetry fires because the existing navigation-back-to-chat signal already covers the "returned to chat" event. Kill-switch OFF hides the caret entirely and the breadcrumb collapses back to the NAV-M2.1 shape.',
     default: true,
     keys: WORKSPACE_BREADCRUMB_RECENTS_FLAG_KEYS,
     isEnabled: isWorkspaceBreadcrumbRecentsEnabled,
@@ -437,7 +416,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'navigation',
     title: 'Workspace breadcrumb · pinned conversations first',
     description:
-      "NAV-M3-lite+ extension of the recent-conversations dropdown: when an entry's upstream `Conversation.starred` or `Conversation.isPinned` is `true`, `buildRecentConversationsList` marks it `pinned=true` and bubbles it above non-pinned rows while preserving newest-first order within both groups. The dropdown renders a small `★` glyph left of the title and exposes `aria-label=\"Pinned: <full title>\"` for screen readers; a `data-pinned` attribute keeps it scriptable. Total cap stays at 5 entries — pins compete for the same slots, which is intentional (a user with 5+ pins has already told us those are the only threads worth showing). Zero new telemetry; the existing `returnToFullChat()` path still covers the land-in-chat signal. Kill-switch OFF drops the glyph and collapses ordering back to pure chronological (NAV-M3-lite v1 shape), and the base `ff.workspace_breadcrumb_recents` remains the outer safety net.",
+      'NAV-M3-lite+ extension of the recent-conversations dropdown: when an entry\'s upstream `Conversation.starred` or `Conversation.isPinned` is `true`, `buildRecentConversationsList` marks it `pinned=true` and bubbles it above non-pinned rows while preserving newest-first order within both groups. The dropdown renders a small `★` glyph left of the title and exposes `aria-label="Pinned: <full title>"` for screen readers; a `data-pinned` attribute keeps it scriptable. Total cap stays at 5 entries — pins compete for the same slots, which is intentional (a user with 5+ pins has already told us those are the only threads worth showing). Zero new telemetry; the existing `returnToFullChat()` path still covers the land-in-chat signal. Kill-switch OFF drops the glyph and collapses ordering back to pure chronological (NAV-M3-lite v1 shape), and the base `ff.workspace_breadcrumb_recents` remains the outer safety net.',
     default: true,
     keys: WORKSPACE_BREADCRUMB_RECENTS_PINNED_FLAG_KEYS,
     isEnabled: isWorkspaceBreadcrumbRecentsPinnedEnabled,
@@ -459,9 +438,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isNextModelChipEnabled,
     telemetry: [],
     testId: 'next-model-chip',
-    specDocs: [
-      'docs/Chat V9/INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in1',
-    ],
+    specDocs: ['docs/Chat V9/INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in1'],
   },
   {
     id: 'input-char-counter',
@@ -475,9 +452,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isInputCharCounterEnabled,
     telemetry: [],
     testId: 'input-char-counter',
-    specDocs: [
-      'docs/Chat V9/INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in2',
-    ],
+    specDocs: ['docs/Chat V9/INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in2'],
   },
   {
     id: 'input-hint-strip',
@@ -491,9 +466,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isInputHintStripEnabled,
     telemetry: [],
     testId: 'chat-v9-input-hint-strip',
-    specDocs: [
-      'docs/Chat V9/INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in4-lite',
-    ],
+    specDocs: ['docs/Chat V9/INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in4-lite'],
   },
   {
     id: 'trust-badge',
@@ -524,9 +497,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isTrustBadgeHumanizeModelEnabled,
     telemetry: [],
     testId: 'trust-badge-answered-by',
-    specDocs: [
-      'docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1-2',
-    ],
+    specDocs: ['docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1-2'],
   },
   {
     id: 'trust-badge-copy-citations',
@@ -540,9 +511,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isTrustBadgeCopyCitationsEnabled,
     telemetry: [],
     testId: 'trust-badge-copy-citations',
-    specDocs: [
-      'docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1-3',
-    ],
+    specDocs: ['docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr1-3'],
   },
   {
     id: 'trust-badge-reasoning',
@@ -556,9 +525,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isTrustBadgeReasoningEnabled,
     telemetry: [],
     testId: 'trust-badge-reasoning',
-    specDocs: [
-      'docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr2',
-    ],
+    specDocs: ['docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr2'],
   },
   {
     id: 'trust-badge-copy-reasoning',
@@ -566,15 +533,13 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'trust',
     title: 'Trust Badge "Copy reasoning" button',
     description:
-      "T-TR1.4: mirrors the T-TR1.3 \"Copy citations\" affordance but exports the T-TR2 \"Why this answer?\" observations as a deterministic Markdown block (`buildTrustBadgeReasoningText` — header line + numbered `N. <headline> — <body>` list, humanised model label suffix when available). The button renders inside the T-TR2 disclosure body (and only when the disclosure is expanded), reuses the existing `writeToClipboard` seam + `CopyFeedback` state pattern from T-TR1.3, and drives its own `idle → copied → idle` / `idle → failed → idle` transition so the two copy buttons never clobber each other. Kill-switch OFF removes the button entirely; the disclosure behaves exactly as it did before T-TR1.4.",
+      'T-TR1.4: mirrors the T-TR1.3 "Copy citations" affordance but exports the T-TR2 "Why this answer?" observations as a deterministic Markdown block (`buildTrustBadgeReasoningText` — header line + numbered `N. <headline> — <body>` list, humanised model label suffix when available). The button renders inside the T-TR2 disclosure body (and only when the disclosure is expanded), reuses the existing `writeToClipboard` seam + `CopyFeedback` state pattern from T-TR1.3, and drives its own `idle → copied → idle` / `idle → failed → idle` transition so the two copy buttons never clobber each other. Kill-switch OFF removes the button entirely; the disclosure behaves exactly as it did before T-TR1.4.',
     default: true,
     keys: TRUST_BADGE_COPY_REASONING_FLAG_KEYS,
     isEnabled: isTrustBadgeCopyReasoningEnabled,
     telemetry: [],
     testId: 'trust-badge-copy-reasoning',
-    specDocs: [
-      'docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr14',
-    ],
+    specDocs: ['docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr14'],
   },
   {
     id: 'trust-badge-citation-links',
@@ -598,15 +563,13 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'trust',
     title: 'Trust Badge citation row · domain pill',
     description:
-      "T-TR3.4: renders a small secondary pill after every citation title in the Trust Badge popover showing the hostname of the source URL, stripped of a leading `www.` (e.g. `nytimes.com`, `wikipedia.org`). The pill is a provenance signal that complements the T-TR3-lite clickable-link path but is deliberately INDEPENDENT of it — tenants that keep citations non-interactive (T-TR3-lite OFF) still benefit from a visible source hint. Extraction goes through the `extractCitationDomain` pure helper, which accepts `http:` and `https:` only and rejects `javascript:` / `data:` / `blob:` / `file:` / `about:` / `vbscript:` prefixes so a stray unsafe URL cannot smuggle a rendered payload into the popover. Citations with missing / unparsable / non-http(s) links render no pill — silent degrade. Kill-switch OFF removes the `<span data-testid=\"trust-badge-citation-domain-*\">` for every row; layout is pixel-identical to pre-T-TR3.4. Zero telemetry.",
+      'T-TR3.4: renders a small secondary pill after every citation title in the Trust Badge popover showing the hostname of the source URL, stripped of a leading `www.` (e.g. `nytimes.com`, `wikipedia.org`). The pill is a provenance signal that complements the T-TR3-lite clickable-link path but is deliberately INDEPENDENT of it — tenants that keep citations non-interactive (T-TR3-lite OFF) still benefit from a visible source hint. Extraction goes through the `extractCitationDomain` pure helper, which accepts `http:` and `https:` only and rejects `javascript:` / `data:` / `blob:` / `file:` / `about:` / `vbscript:` prefixes so a stray unsafe URL cannot smuggle a rendered payload into the popover. Citations with missing / unparsable / non-http(s) links render no pill — silent degrade. Kill-switch OFF removes the `<span data-testid="trust-badge-citation-domain-*">` for every row; layout is pixel-identical to pre-T-TR3.4. Zero telemetry.',
     default: true,
     keys: TRUST_BADGE_CITATION_DOMAIN_FLAG_KEYS,
     isEnabled: isTrustBadgeCitationDomainEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr34',
-    ],
+    specDocs: ['docs/Chat V9/TRUST_SECURITY_EXPLAINABILITY_DEVELOPMENT_PLAN_2026-04-18.md#t-tr34'],
   },
   {
     id: 'pii-heuristic-toast',
@@ -652,9 +615,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsSnapshotCopyEnabled,
     telemetry: [],
     testId: 'chat-v9-flags-copy-snapshot',
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v12',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v12'],
   },
   {
     id: 'flags-reset-url',
@@ -668,9 +629,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsResetUrlEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v13',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v13'],
   },
   {
     id: 'flags-panel-filter',
@@ -684,9 +643,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsPanelFilterEnabled,
     telemetry: [],
     testId: 'chat-v9-flags-filter-input',
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v15',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v15'],
   },
   {
     id: 'flags-panel-grouping',
@@ -700,9 +657,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsPanelGroupingEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v16',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v16'],
   },
   {
     id: 'flags-panel-doc-links',
@@ -716,9 +671,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsPanelDocLinksEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v17',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v17'],
   },
   {
     id: 'flags-panel-description-expand',
@@ -732,9 +685,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsPanelDescriptionExpandEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v18',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v18'],
   },
   {
     id: 'flags-panel-sticky-group-headers',
@@ -742,15 +693,13 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'admin',
     title: 'Admin flag panel · sticky block-group headers',
     description:
-      "AG1 v1.9: when the AG1 v1.6 grouping flag is ON, each block-group header (`navigation`, `trust`, `voice`, `control`, `input`, `admin`, `context`) now sticks to the top of the `ChatV9FlagsPanel` scroll container. Admins keep the block label + override badge + expand chevron in view while scrolling through a long, filtered list, so context never gets lost between two-dozen navigation flags. The header gains `position: sticky; top: 0; z-index: 10` plus an opaque background and a 1 px bottom shadow so row content below never bleeds through while the header is pinned. When grouping is OFF (flat list) the flag is moot; when the sticky kill-switch itself is OFF, headers scroll normally and the panel looks pixel-for-pixel identical to AG1 v1.6 v1. Zero telemetry, zero persistence.",
+      'AG1 v1.9: when the AG1 v1.6 grouping flag is ON, each block-group header (`navigation`, `trust`, `voice`, `control`, `input`, `admin`, `context`) now sticks to the top of the `ChatV9FlagsPanel` scroll container. Admins keep the block label + override badge + expand chevron in view while scrolling through a long, filtered list, so context never gets lost between two-dozen navigation flags. The header gains `position: sticky; top: 0; z-index: 10` plus an opaque background and a 1 px bottom shadow so row content below never bleeds through while the header is pinned. When grouping is OFF (flat list) the flag is moot; when the sticky kill-switch itself is OFF, headers scroll normally and the panel looks pixel-for-pixel identical to AG1 v1.6 v1. Zero telemetry, zero persistence.',
     default: true,
     keys: FLAGS_PANEL_STICKY_GROUP_HEADERS_FLAG_KEYS,
     isEnabled: isFlagsPanelStickyGroupHeadersEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v19',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v19'],
   },
   {
     id: 'flags-panel-row-shortcuts',
@@ -764,9 +713,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsPanelRowShortcutsEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v110',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v110'],
   },
   {
     id: 'flags-panel-shortcut-cheat-sheet',
@@ -780,9 +727,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsPanelShortcutCheatSheetEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v111',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v111'],
   },
   {
     id: 'flags-panel-filter-escape-clear',
@@ -790,15 +735,13 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'admin',
     title: 'Admin flag panel · Escape clears the filter input',
     description:
-      "AG1 v1.13: when the AG1 v1.5 filter input has focus AND contains text, pressing `Escape` clears the text in place rather than bubbling to the overlay. Matches APG search-input convention — one-keystroke undo for a filter typo without dismissing the whole panel. When the input is empty, `Escape` is deliberately NOT handled, so the overlay keeps its one-keystroke close for admins who want to exit the panel without first blurring the filter. Advertised as an accelerator via `aria-keyshortcuts=\"Escape\"` only while the behaviour is live. Kill-switch OFF restores the pre-AG1-v1.13 bubble-through behaviour pixel-for-pixel; tests inject `isFilterEscapeClearEnabled={() => false}` to pin that path.",
+      'AG1 v1.13: when the AG1 v1.5 filter input has focus AND contains text, pressing `Escape` clears the text in place rather than bubbling to the overlay. Matches APG search-input convention — one-keystroke undo for a filter typo without dismissing the whole panel. When the input is empty, `Escape` is deliberately NOT handled, so the overlay keeps its one-keystroke close for admins who want to exit the panel without first blurring the filter. Advertised as an accelerator via `aria-keyshortcuts="Escape"` only while the behaviour is live. Kill-switch OFF restores the pre-AG1-v1.13 bubble-through behaviour pixel-for-pixel; tests inject `isFilterEscapeClearEnabled={() => false}` to pin that path.',
     default: true,
     keys: FLAGS_PANEL_FILTER_ESCAPE_CLEAR_FLAG_KEYS,
     isEnabled: isFlagsPanelFilterEscapeClearEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v113',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v113'],
   },
   {
     id: 'flags-panel-override-url-copy',
@@ -812,9 +755,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     isEnabled: isFlagsPanelOverrideUrlCopyEnabled,
     telemetry: [],
     testId: 'chat-v9-flags-copy-override-url',
-    specDocs: [
-      'docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v112',
-    ],
+    specDocs: ['docs/Chat V9/ADMIN_PRODUCT_GOVERNANCE_DEVELOPMENT_PLAN_2026-04-18.md#ag1-v112'],
   },
   {
     id: 'workspace-breadcrumb-recents-arrow-keys',
@@ -838,7 +779,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'navigation',
     title: 'Workspace breadcrumb · recents trigger ArrowDown shortcut',
     description:
-      "NAV-M3.4: ARIA-APG menu-button shortcut on the `RecentConversationsDropdown` trigger. When the trigger is focused and the popover is closed, pressing ArrowDown opens the popover and lets NAV-M3-lite v1's open-effect auto-focus the first menuitem — one keystroke instead of Tab + Enter. `event.preventDefault()` suppresses the native page-scroll. The trigger advertises the affordance declaratively via `aria-keyshortcuts=\"ArrowDown\"` so screen readers and keyboard-help overlays can announce it. Enter / Space continue to open the popover through the native `<button>` activation path. Kill-switch OFF removes the handler and the `aria-keyshortcuts` attribute; the trigger behaves like a plain button again (NAV-M3-lite v1 behaviour pixel-for-pixel).",
+      'NAV-M3.4: ARIA-APG menu-button shortcut on the `RecentConversationsDropdown` trigger. When the trigger is focused and the popover is closed, pressing ArrowDown opens the popover and lets NAV-M3-lite v1\'s open-effect auto-focus the first menuitem — one keystroke instead of Tab + Enter. `event.preventDefault()` suppresses the native page-scroll. The trigger advertises the affordance declaratively via `aria-keyshortcuts="ArrowDown"` so screen readers and keyboard-help overlays can announce it. Enter / Space continue to open the popover through the native `<button>` activation path. Kill-switch OFF removes the handler and the `aria-keyshortcuts` attribute; the trigger behaves like a plain button again (NAV-M3-lite v1 behaviour pixel-for-pixel).',
     default: true,
     keys: WORKSPACE_BREADCRUMB_RECENTS_TRIGGER_ARROW_FLAG_KEYS,
     isEnabled: isWorkspaceBreadcrumbRecentsTriggerArrowEnabled,
@@ -854,7 +795,7 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'navigation',
     title: 'Workspace breadcrumb · recents trigger ArrowUp shortcut',
     description:
-      "NAV-M3.5: mirror of NAV-M3.4 on the opposite side. When the recents-dropdown caret trigger is focused and the popover is closed, pressing ArrowUp opens the popover AND lands focus on the **last** menuitem — matching the ARIA-APG menu-button pattern where ArrowDown opens to the top and ArrowUp opens to the bottom. `event.preventDefault()` suppresses the native page-scroll. When both NAV-M3.4 and NAV-M3.5 are ON the trigger's `aria-keyshortcuts` advertises `\"ArrowDown ArrowUp\"`; when only one is ON only that shortcut is advertised; with both OFF the attribute is omitted and the trigger reverts to click-only semantics. The existing roving-focus handler (NAV-M3-lite^3) then takes over for all subsequent in-popover navigation. Kill-switch OFF removes the ArrowUp branch from the trigger handler and drops `ArrowUp` from the advertised shortcut string — no other behaviour changes.",
+      'NAV-M3.5: mirror of NAV-M3.4 on the opposite side. When the recents-dropdown caret trigger is focused and the popover is closed, pressing ArrowUp opens the popover AND lands focus on the **last** menuitem — matching the ARIA-APG menu-button pattern where ArrowDown opens to the top and ArrowUp opens to the bottom. `event.preventDefault()` suppresses the native page-scroll. When both NAV-M3.4 and NAV-M3.5 are ON the trigger\'s `aria-keyshortcuts` advertises `"ArrowDown ArrowUp"`; when only one is ON only that shortcut is advertised; with both OFF the attribute is omitted and the trigger reverts to click-only semantics. The existing roving-focus handler (NAV-M3-lite^3) then takes over for all subsequent in-popover navigation. Kill-switch OFF removes the ArrowUp branch from the trigger handler and drops `ArrowUp` from the advertised shortcut string — no other behaviour changes.',
     default: true,
     keys: WORKSPACE_BREADCRUMB_RECENTS_TRIGGER_ARROW_UP_FLAG_KEYS,
     isEnabled: isWorkspaceBreadcrumbRecentsTriggerArrowUpEnabled,
@@ -870,15 +811,13 @@ export const CHAT_V9_FLAGS: readonly ChatV9FlagDescriptor[] = [
     block: 'input',
     title: 'Input soft-limit inline toast (rose threshold nudge)',
     description:
-      "C-IN6-lite: one-shot `toast.custom` fired the first time the C-IN2 `InputCharCounter` crosses its rose threshold (`value.length >= max`, default 8000 chars) in a browser tab. The toast renders a calm nudge — \"Teresa may trim or summarise long inputs; shorten if every line matters\" — with a \"Don't show again this session\" button modelled on T-PM2.1 that writes `chatV9.inputSoftLimitToastDismissedForSession = '1'` to sessionStorage. A separate `chatV9.inputSoftLimitToastFiredForSession` sentinel guarantees at-most-once-per-tab firing even without an explicit dismiss, so the pill stays the primary signal for sustained over-limit composition. Detector runs only on the rising edge (`prev < max && curr >= max`) so typing past the limit does not re-fire per keystroke. Kill-switch OFF = pure no-op; the counter colouring is unchanged. Zero telemetry, never blocks Send.",
+      'C-IN6-lite: one-shot `toast.custom` fired the first time the C-IN2 `InputCharCounter` crosses its rose threshold (`value.length >= max`, default 8000 chars) in a browser tab. The toast renders a calm nudge — "Teresa may trim or summarise long inputs; shorten if every line matters" — with a "Don\'t show again this session" button modelled on T-PM2.1 that writes `chatV9.inputSoftLimitToastDismissedForSession = \'1\'` to sessionStorage. A separate `chatV9.inputSoftLimitToastFiredForSession` sentinel guarantees at-most-once-per-tab firing even without an explicit dismiss, so the pill stays the primary signal for sustained over-limit composition. Detector runs only on the rising edge (`prev < max && curr >= max`) so typing past the limit does not re-fire per keystroke. Kill-switch OFF = pure no-op; the counter colouring is unchanged. Zero telemetry, never blocks Send.',
     default: true,
     keys: INPUT_SOFT_LIMIT_TOAST_FLAG_KEYS,
     isEnabled: isInputSoftLimitToastEnabled,
     telemetry: [],
     testId: null,
-    specDocs: [
-      'docs/Chat V9/INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in6-lite',
-    ],
+    specDocs: ['docs/Chat V9/INPUT_CONTROL_DEVELOPMENT_PLAN_2026-04-18.md#c-in6-lite'],
   },
 ] as const;
 

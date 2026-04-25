@@ -63,4 +63,3 @@ describe('chatPolicyGateway contract (P34-B)', () => {
     expect(res.decision.evidence.uncertaintyMarkerRequiredIfInsufficientEvidence).toBe(true);
   });
 });
-

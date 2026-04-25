@@ -25,6 +25,7 @@ import {
   History,
   Layers,
   Link2Off,
+  List,
   Loader2,
   MessageSquare,
   Pause,
@@ -37,7 +38,6 @@ import {
   Trash2,
   Unplug,
   Users,
-  List,
   X,
   XCircle,
   Zap,
@@ -76,15 +76,24 @@ import {
 
 import { API_URL, getHeaders } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
-import MappingDriftPanel from '../settings/integrations/MappingDriftPanel';
-import { IntegrationHealthDashboard } from '../settings/integrations/IntegrationHealthDashboard';
 import { useAppStore } from '../../store/useAppStore';
+import { IntegrationHealthDashboard } from '../settings/integrations/IntegrationHealthDashboard';
+import MappingDriftPanel from '../settings/integrations/MappingDriftPanel';
 
 // ── Types ──────────────────────────────────────────────────────
 
 type IntegrationStatus = 'connected' | 'disconnected' | 'error' | 'pending' | 'requires_reauth';
 type HealthStatus = 'healthy' | 'degraded' | 'unhealthy';
-type TabId = 'apps' | 'health' | 'runs' | 'workflows' | 'mappings' | 'users' | 'logs' | 'policies' | 'audit';
+type TabId =
+  | 'apps'
+  | 'health'
+  | 'runs'
+  | 'workflows'
+  | 'mappings'
+  | 'users'
+  | 'logs'
+  | 'policies'
+  | 'audit';
 
 interface AdminIntegrationOwnershipItem {
   integrationId: string;
@@ -401,6 +410,20 @@ function formatConfigFieldLabel(field: string): string {
   return field.replace(/_/g, ' ');
 }
 
+function getReadableErrorMessage(value: unknown, fallback: string): string {
+  if (!value) return fallback;
+  if (typeof value === 'string') return value;
+  if (value instanceof Error) return value.message || fallback;
+  if (typeof value === 'object') {
+    const record = value as Record<string, unknown>;
+    for (const key of ['message', 'error', 'code', 'type']) {
+      const candidate = record[key];
+      if (typeof candidate === 'string' && candidate.trim()) return candidate;
+    }
+  }
+  return fallback;
+}
+
 function isSecretConfigField(field: string): boolean {
   return field.includes('secret') || field.includes('token');
 }
@@ -414,7 +437,10 @@ function getAuditDetailBoolean(details: Record<string, unknown> | undefined, key
   return details?.[key] === true;
 }
 
-function getAuditDetailString(details: Record<string, unknown> | undefined, key: string): string | null {
+function getAuditDetailString(
+  details: Record<string, unknown> | undefined,
+  key: string
+): string | null {
   const value = details?.[key];
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
@@ -501,9 +527,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   const [credentialDrafts, setCredentialDrafts] = useState<Record<string, CredentialDraft>>({});
   const [editingRefreshSecretId, setEditingRefreshSecretId] = useState<string | null>(null);
   const [savingRefreshSecretId, setSavingRefreshSecretId] = useState<string | null>(null);
-  const [refreshSecretDrafts, setRefreshSecretDrafts] = useState<Record<string, RefreshSecretDraft>>(
-    {}
-  );
+  const [refreshSecretDrafts, setRefreshSecretDrafts] = useState<
+    Record<string, RefreshSecretDraft>
+  >({});
   const [storedRefreshSecrets, setStoredRefreshSecrets] = useState<
     Record<string, V8SyncRefreshSecretRef>
   >({});
@@ -779,26 +805,23 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     }
   }, []);
 
-  const fetchRuns = useCallback(
-    async (integrationId?: string, status?: string) => {
-      setV8RunsLoading(true);
-      try {
-        const data = await V8SyncApi.getRuns({
-          integrationId: integrationId || undefined,
-          status: status || undefined,
-          limit: 50,
-        });
-        setV8Runs(data.runs || []);
-        setV8RunsTotal(data.total ?? 0);
-      } catch {
-        setV8Runs([]);
-        setV8RunsTotal(0);
-      } finally {
-        setV8RunsLoading(false);
-      }
-    },
-    []
-  );
+  const fetchRuns = useCallback(async (integrationId?: string, status?: string) => {
+    setV8RunsLoading(true);
+    try {
+      const data = await V8SyncApi.getRuns({
+        integrationId: integrationId || undefined,
+        status: status || undefined,
+        limit: 50,
+      });
+      setV8Runs(data.runs || []);
+      setV8RunsTotal(data.total ?? 0);
+    } catch {
+      setV8Runs([]);
+      setV8RunsTotal(0);
+    } finally {
+      setV8RunsLoading(false);
+    }
+  }, []);
 
   const fetchWorkflows = useCallback(async () => {
     setV8WorkflowsLoading(true);
@@ -819,13 +842,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       const res = await fetch(`${API_URL}/admin/integrations/users`, { headers: getHeaders() });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || `HTTP ${res.status}`);
+        throw new Error(getReadableErrorMessage(body, `HTTP ${res.status}`));
       }
       const data = (await res.json()) as { items?: AdminIntegrationOwnershipItem[] };
       setOwnershipItems(Array.isArray(data.items) ? data.items : []);
     } catch (e: any) {
       setOwnershipItems([]);
-      setOwnershipError(e?.message || 'Failed to load integrations ownership');
+      setOwnershipError(getReadableErrorMessage(e, 'Failed to load integrations ownership'));
     } finally {
       setOwnershipLoading(false);
     }
@@ -847,15 +870,18 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || `HTTP ${res.status}`);
+        throw new Error(getReadableErrorMessage(body, `HTTP ${res.status}`));
       }
-      const data = (await res.json()) as { items?: AdminIntegrationConnectionLogItem[]; total?: number };
+      const data = (await res.json()) as {
+        items?: AdminIntegrationConnectionLogItem[];
+        total?: number;
+      };
       setConnectionLogItems(Array.isArray(data.items) ? data.items : []);
       setConnectionLogTotal(Number(data.total || 0));
     } catch (e: any) {
       setConnectionLogItems([]);
       setConnectionLogTotal(0);
-      setConnectionLogError(e?.message || 'Failed to load connection logs');
+      setConnectionLogError(getReadableErrorMessage(e, 'Failed to load connection logs'));
     } finally {
       setConnectionLogLoading(false);
     }
@@ -910,7 +936,6 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
   useEffect(() => {
     loadAllRef.current();
     trackFunnelEvent('integration_sync_hub_viewed');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -946,6 +971,13 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       try {
         const data = await V8SyncApi.connectIntegration(connectorId);
         initiatedIntegration = data.integration;
+        if (data.externalAuth) {
+          setExternalAuthSessions((current) => ({
+            ...current,
+            [data.integration.id]: data.externalAuth as ExternalAuthSessionInfo,
+          }));
+          openExternalAuthSession(data.externalAuth as ExternalAuthSessionInfo);
+        }
       } catch (error) {
         if (!shouldFallbackToLegacySync(error)) {
           throw error;
@@ -957,8 +989,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
           body: JSON.stringify({ connectorId, config: {} }),
         });
         if (!res.ok) {
-          const err = await res.json();
-          toast.error(err.error || 'Failed to connect');
+          const err = await res.json().catch(() => ({}));
+          toast.error(getReadableErrorMessage(err, 'Failed to connect'));
           return;
         }
 
@@ -992,8 +1024,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         setShowConnectModal(false);
         await loadAll();
       }
-    } catch {
-      toast.error(t('integrations.syncHub.connectFailed', 'Connection failed'));
+    } catch (error) {
+      toast.error(
+        getReadableErrorMessage(error, t('integrations.syncHub.connectFailed', 'Connection failed'))
+      );
     }
   };
 
@@ -1408,11 +1442,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       tokenEndpoint: '',
     };
 
-    if (
-      !draft.clientId.trim() ||
-      !draft.clientSecret.trim() ||
-      !draft.refreshToken.trim()
-    ) {
+    if (!draft.clientId.trim() || !draft.clientSecret.trim() || !draft.refreshToken.trim()) {
       toast.error(
         t(
           'integrations.syncHub.refreshSecretFieldsRequired',
@@ -1438,10 +1468,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         [integration.id]: data.refreshSecret,
       }));
       toast.success(
-        t(
-          'integrations.syncHub.refreshSecretSaved',
-          'Governed refresh runtime secret materialized'
-        )
+        t('integrations.syncHub.refreshSecretSaved', 'Governed refresh runtime secret materialized')
       );
       setEditingRefreshSecretId(null);
       setRefreshSecretDrafts((current) => ({
@@ -1627,7 +1654,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <thead className="bg-navy-900/40 text-slate-400">
                         <tr className="text-left text-xs">
                           <th className="px-3 py-2 w-10" />
-                          <th className="px-3 py-2">{t('integrations.syncHub.catalogApp', 'App')}</th>
+                          <th className="px-3 py-2">
+                            {t('integrations.syncHub.catalogApp', 'App')}
+                          </th>
                           <th className="px-3 py-2 hidden md:table-cell">
                             {t('integrations.syncHub.catalogCapabilities', 'Capabilities')}
                           </th>
@@ -1643,12 +1672,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                       <tbody className="divide-y divide-navy-700/40">
                         {rows.map((conn) => {
                           const isConnected = connectedIds.has(conn.id);
-                          const connectable = !conn.comingSoon;
+                          const connectable = !conn.comingSoon && conn.isV2Ready !== false;
                           const status = isConnected
                             ? 'connected'
                             : conn.comingSoon
                               ? 'coming_soon'
-                              : 'ready';
+                              : connectable
+                                ? 'ready'
+                                : 'not_ready';
                           return (
                             <tr key={conn.id} className="text-slate-200 hover:bg-navy-800/40">
                               <td className="px-3 py-2.5">
@@ -1703,6 +1734,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                                 ) : status === 'coming_soon' ? (
                                   <span className="text-xs text-slate-500 italic">
                                     {t('integrations.syncHub.comingSoon', 'Coming soon')}
+                                  </span>
+                                ) : status === 'not_ready' ? (
+                                  <span className="text-xs text-slate-500 italic">
+                                    {t('integrations.syncHub.notReady', 'Not available')}
                                   </span>
                                 ) : (
                                   <span className="text-xs text-slate-400">
@@ -1936,7 +1971,10 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         key: 'connect',
         label: t('integrations.syncHub.lifecycleConnect', 'Connect'),
         state: 'done' as const,
-        detail: t('integrations.syncHub.lifecycleConnectDone', 'Provider entry exists in governed sync.'),
+        detail: t(
+          'integrations.syncHub.lifecycleConnectDone',
+          'Provider entry exists in governed sync.'
+        ),
       },
       {
         key: 'configure',
@@ -2048,7 +2086,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         key: 'monitor',
         label: t('integrations.syncHub.lifecycleMonitor', 'Monitor'),
         state:
-          int.lastRun || int.lastSyncAt || int.status === 'connected' ? ('done' as const) : ('todo' as const),
+          int.lastRun || int.lastSyncAt || int.status === 'connected'
+            ? ('done' as const)
+            : ('todo' as const),
         detail:
           int.lastRun || int.lastSyncAt || int.status === 'connected'
             ? t(
@@ -2375,10 +2415,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         className="inline-flex items-center gap-1.5 rounded-md border border-sky-500/20 bg-sky-500/10 px-2.5 py-1.5 text-[11px] font-medium text-sky-100 hover:bg-sky-500/15 transition-colors"
                       >
                         <ExternalLink size={12} />
-                        {t(
-                          'integrations.syncHub.openExternalAuth',
-                          'Open provider authorization'
-                        )}
+                        {t('integrations.syncHub.openExternalAuth', 'Open provider authorization')}
                       </button>
                     ) : null}
                   </div>
@@ -2410,7 +2447,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         >
                           <div className="flex items-center justify-between gap-2">
                             <div className="font-medium">{step.label}</div>
-                            <span className={`rounded-full px-2 py-0.5 text-[10px] ${badgeClasses}`}>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] ${badgeClasses}`}
+                            >
                               {badgeLabel}
                             </span>
                           </div>
@@ -2733,7 +2772,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             {t('integrations.syncHub.refreshSecretStatus', 'Secret status')}
                           </div>
                           <div className="mt-1">
-                            {refreshRuntimeRef.clientIdPresent && refreshRuntimeRef.refreshTokenPresent
+                            {refreshRuntimeRef.clientIdPresent &&
+                            refreshRuntimeRef.refreshTokenPresent
                               ? t(
                                   'integrations.syncHub.refreshSecretStatusStored',
                                   'Stored for governed refresh execution'
@@ -2749,7 +2789,8 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             {t('integrations.syncHub.tokenEndpoint', 'Token endpoint')}
                           </div>
                           <div className="mt-1 break-all">
-                            {refreshRuntimeRef.tokenEndpoint || t('common.notAvailable', 'Not available')}
+                            {refreshRuntimeRef.tokenEndpoint ||
+                              t('common.notAvailable', 'Not available')}
                           </div>
                         </div>
                       </div>
@@ -2779,11 +2820,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             type="password"
                             value={refreshSecretDraft.clientSecret}
                             onChange={(e) =>
-                              handleRefreshSecretDraftChange(
-                                int.id,
-                                'clientSecret',
-                                e.target.value
-                              )
+                              handleRefreshSecretDraftChange(int.id, 'clientSecret', e.target.value)
                             }
                             placeholder="client-secret"
                             className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
@@ -2797,11 +2834,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                             type="password"
                             value={refreshSecretDraft.refreshToken}
                             onChange={(e) =>
-                              handleRefreshSecretDraftChange(
-                                int.id,
-                                'refreshToken',
-                                e.target.value
-                              )
+                              handleRefreshSecretDraftChange(int.id, 'refreshToken', e.target.value)
                             }
                             placeholder="refresh-token"
                             className="w-full rounded-lg border border-navy-700 bg-navy-900 px-3 py-2 text-xs text-white placeholder:text-slate-500 focus:border-sky-500/40 focus:outline-none"
@@ -3680,9 +3713,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
         )}
       </div>
 
-      {currentUser && (
-        <IntegrationHealthDashboard currentUser={currentUser} />
-      )}
+      {currentUser && <IntegrationHealthDashboard currentUser={currentUser} />}
     </div>
   );
 
@@ -3743,7 +3774,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               <tr className="text-left text-xs">
                 <th className="px-3 py-2">{t('integrations.syncHub.user', 'User')}</th>
                 <th className="px-3 py-2">{t('integrations.syncHub.connector', 'Connector')}</th>
-                <th className="px-3 py-2">{t('integrations.syncHub.integration', 'Integration')}</th>
+                <th className="px-3 py-2">
+                  {t('integrations.syncHub.integration', 'Integration')}
+                </th>
                 <th className="px-3 py-2">{t('integrations.syncHub.status', 'Status')}</th>
                 <th className="px-3 py-2">{t('integrations.syncHub.updated', 'Updated')}</th>
               </tr>
@@ -3785,7 +3818,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         <div className="text-sm text-slate-100">{item.integrationName}</div>
                         <div className="text-xs text-slate-600 mt-0.5">{item.integrationId}</div>
                       </td>
-                      <td className="px-3 py-2.5">{renderStatusChip(item.status as IntegrationStatus)}</td>
+                      <td className="px-3 py-2.5">
+                        {renderStatusChip(item.status as IntegrationStatus)}
+                      </td>
                       <td className="px-3 py-2.5 text-slate-500 text-xs">
                         {item.updatedAt ? timeAgo(item.updatedAt) : '—'}
                       </td>
@@ -3806,7 +3841,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-500">{t('integrations.syncHub.filter', 'Filter')}</span>
+          <span className="text-xs text-slate-500">
+            {t('integrations.syncHub.filter', 'Filter')}
+          </span>
           <select
             value={connectionLogEventType}
             onChange={(e) => {
@@ -3861,7 +3898,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                 <th className="px-3 py-2">{t('integrations.syncHub.time', 'Time')}</th>
                 <th className="px-3 py-2">{t('integrations.syncHub.connector', 'Connector')}</th>
                 <th className="px-3 py-2">{t('integrations.syncHub.event', 'Event')}</th>
-                <th className="px-3 py-2">{t('integrations.syncHub.integration', 'Integration')}</th>
+                <th className="px-3 py-2">
+                  {t('integrations.syncHub.integration', 'Integration')}
+                </th>
                 <th className="px-3 py-2">{t('integrations.syncHub.user', 'User')}</th>
               </tr>
             </thead>
@@ -3913,11 +3952,14 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
 
       <div className="flex items-center justify-between text-xs text-slate-500">
         <div>
-          {t('integrations.syncHub.showing', 'Showing')} {connectionLogItems.length} / {connectionLogTotal}
+          {t('integrations.syncHub.showing', 'Showing')} {connectionLogItems.length} /{' '}
+          {connectionLogTotal}
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setConnectionLogOffset(Math.max(0, connectionLogOffset - connectionLogLimit))}
+            onClick={() =>
+              setConnectionLogOffset(Math.max(0, connectionLogOffset - connectionLogLimit))
+            }
             disabled={connectionLogOffset === 0}
             className="px-3 py-2 rounded-lg border border-navy-700 bg-navy-800/50 hover:bg-navy-800 text-slate-200 disabled:opacity-40 transition-colors"
           >
@@ -3950,7 +3992,9 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
       return (
         <div className="text-center py-12">
           <Activity className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">{t('integrations.syncHub.noWorkflows', 'No workflows configured yet.')}</p>
+          <p className="text-sm text-slate-500">
+            {t('integrations.syncHub.noWorkflows', 'No workflows configured yet.')}
+          </p>
         </div>
       );
     }
@@ -3969,11 +4013,19 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             <thead>
               <tr className="text-xs text-slate-500 uppercase tracking-wider border-b border-white/10">
                 <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfName', 'Name')}</th>
-                <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfConnector', 'Connector')}</th>
-                <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfState', 'State')}</th>
+                <th className="text-left pb-2 pr-4">
+                  {t('integrations.syncHub.wfConnector', 'Connector')}
+                </th>
+                <th className="text-left pb-2 pr-4">
+                  {t('integrations.syncHub.wfState', 'State')}
+                </th>
                 <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfMode', 'Mode')}</th>
-                <th className="text-left pb-2 pr-4">{t('integrations.syncHub.wfPaused', 'Paused')}</th>
-                <th className="text-left pb-2">{t('integrations.syncHub.wfLastSync', 'Last Sync')}</th>
+                <th className="text-left pb-2 pr-4">
+                  {t('integrations.syncHub.wfPaused', 'Paused')}
+                </th>
+                <th className="text-left pb-2">
+                  {t('integrations.syncHub.wfLastSync', 'Last Sync')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -3987,8 +4039,16 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                     </span>
                   </td>
                   <td className="py-2 pr-4 text-slate-400">{wf.mode}</td>
-                  <td className="py-2 pr-4">{wf.isPaused ? <span className="text-amber-400">Yes</span> : <span className="text-green-400">No</span>}</td>
-                  <td className="py-2 text-slate-500">{wf.lastSyncAt ? new Date(wf.lastSyncAt).toLocaleString() : '—'}</td>
+                  <td className="py-2 pr-4">
+                    {wf.isPaused ? (
+                      <span className="text-amber-400">Yes</span>
+                    ) : (
+                      <span className="text-green-400">No</span>
+                    )}
+                  </td>
+                  <td className="py-2 text-slate-500">
+                    {wf.lastSyncAt ? new Date(wf.lastSyncAt).toLocaleString() : '—'}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -4151,9 +4211,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
               void fetchRuns(v8RunsFilter || undefined, e.target.value || undefined);
             }}
           >
-            <option value="">
-              {t('integrations.syncHub.runsAllStatuses', 'All statuses')}
-            </option>
+            <option value="">{t('integrations.syncHub.runsAllStatuses', 'All statuses')}</option>
             <option value="running">{t('integrations.syncHub.runsRunning', 'Running')}</option>
             <option value="completed">
               {t('integrations.syncHub.runsCompleted', 'Completed')}
@@ -4235,12 +4293,12 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                         </td>
                         <td className="px-4 py-2 text-slate-400">{run.triggeredBy || '—'}</td>
                         <td className="px-4 py-2 text-slate-500">
-                          {run.startedAt
-                            ? new Date(run.startedAt).toLocaleString()
-                            : '—'}
+                          {run.startedAt ? new Date(run.startedAt).toLocaleString() : '—'}
                         </td>
                         <td className="px-4 py-2">
-                          <span className={`text-xs font-medium ${lifecycleColors[run.lifecycleState] || 'text-slate-400'}`}>
+                          <span
+                            className={`text-xs font-medium ${lifecycleColors[run.lifecycleState] || 'text-slate-400'}`}
+                          >
                             {run.lifecycleState}
                           </span>
                         </td>
@@ -4252,10 +4310,17 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
                               onClick={async () => {
                                 try {
                                   await V8SyncApi.replayRun(run.id);
-                                  toast.success(t('integrations.syncHub.replayInitiated', 'Replay initiated'));
-                                  void fetchRuns(v8RunsFilter || undefined, v8RunsStatusFilter || undefined);
+                                  toast.success(
+                                    t('integrations.syncHub.replayInitiated', 'Replay initiated')
+                                  );
+                                  void fetchRuns(
+                                    v8RunsFilter || undefined,
+                                    v8RunsStatusFilter || undefined
+                                  );
                                 } catch {
-                                  toast.error(t('integrations.syncHub.replayFailed', 'Replay failed'));
+                                  toast.error(
+                                    t('integrations.syncHub.replayFailed', 'Replay failed')
+                                  );
                                 }
                               }}
                             >
@@ -4433,9 +4498,7 @@ export const UnifiedSyncHub: React.FC<{ className?: string }> = ({ className = '
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
-            {renderCatalogTable({ inModal: true })}
-          </div>
+          <div className="flex-1 overflow-y-auto p-4">{renderCatalogTable({ inModal: true })}</div>
         </motion.div>
       </div>
     );

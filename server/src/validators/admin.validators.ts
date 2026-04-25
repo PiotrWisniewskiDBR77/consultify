@@ -11,7 +11,14 @@ import { z } from 'zod';
 // REQUEST SCHEMAS
 // ==========================================
 
-const userStatusValues = ['active', 'blocked', 'inactive', 'suspended', 'pending', 'deleted'] as const;
+const userStatusValues = [
+  'active',
+  'blocked',
+  'inactive',
+  'suspended',
+  'pending',
+  'deleted',
+] as const;
 
 const userStatusSchema = z
   .string()
@@ -21,9 +28,10 @@ const userStatusSchema = z
   .pipe(z.enum(userStatusValues));
 
 export const UpdateOrganizationAdminSchema = z.object({
-  plan: z.enum(['free', 'starter', 'professional', 'enterprise']).optional(),
-  status: z.enum(['active', 'suspended', 'cancelled', 'trial']).optional(),
+  plan: z.enum(['free', 'trial', 'starter', 'pro', 'professional', 'enterprise']).optional(),
+  status: z.enum(['active', 'pending', 'blocked', 'suspended', 'cancelled', 'trial']).optional(),
   name: z.string().max(255).optional(),
+  discount_percent: z.coerce.number().min(0).max(100).optional(),
 });
 
 export const CreateUserAdminSchema = z.object({
@@ -32,6 +40,8 @@ export const CreateUserAdminSchema = z.object({
   lastName: z.string().min(1).max(255),
   role: z.enum(['USER', 'ADMIN', 'SUPERADMIN', 'MANAGER']).optional(),
   organizationId: z.string().trim().min(1).max(255).optional(),
+  password: z.string().min(8).max(255).optional(),
+  licensePlanId: z.string().trim().max(255).nullable().optional(),
 });
 
 export const UpdateUserAdminSchema = z.object({
@@ -49,9 +59,18 @@ export const ImpersonateUserSchema = z.object({
 });
 
 export const CreateAccessCodeSchema = z.object({
-  code: z.string().min(1).max(100),
-  maxUses: z.number().int().positive().optional(),
-  expiresAt: z.string().datetime().optional(),
+  code: z.string().trim().min(1).max(100).optional().or(z.literal('')),
+  role: z.string().trim().min(1).max(50).optional(),
+  maxUses: z.coerce.number().int().positive().optional(),
+  organizationId: z.string().trim().min(1).max(255).optional(),
+  expiresAt: z
+    .string()
+    .trim()
+    .optional()
+    .or(z.literal(''))
+    .refine((value) => !value || !Number.isNaN(Date.parse(value)), {
+      message: 'expiresAt must be a valid date',
+    }),
 });
 
 export const UpdateUserTierSchema = z.object({

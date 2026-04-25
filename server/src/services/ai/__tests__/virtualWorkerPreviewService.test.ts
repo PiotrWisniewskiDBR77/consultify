@@ -42,8 +42,8 @@ vi.mock('../llmService.js', () => ({
   },
 }));
 
-import { VirtualWorkerValidationError } from '../virtualWorkerService.js';
 import { previewVirtualWorkerResponse } from '../virtualWorkerPreviewService.js';
+import { VirtualWorkerValidationError } from '../virtualWorkerService.js';
 
 describe('virtualWorkerPreviewService', () => {
   beforeEach(() => {

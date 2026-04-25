@@ -369,9 +369,9 @@ if (typeof process !== 'undefined' && process.env) {
   process.env.MOCK_DB = process.env.MOCK_DB || 'true';
   process.env.POSTGRES_SKIP_INIT_IN_TEST = process.env.POSTGRES_SKIP_INIT_IN_TEST || 'true';
   // PostgreSQL required. Unit tests use MOCK_DB (no real connection).
-  // Integration tests need real DATABASE_URL to consultinity_test.
+  // Integration tests default to the same local DB credentials as CI.
   if (!process.env.DATABASE_URL) {
-    process.env.DATABASE_URL = 'postgresql://consultinity:consultinity@localhost:5432/consultinity_test';
+    process.env.DATABASE_URL = 'postgresql://iris:iris_test@localhost:5432/iris_test';
   }
   // Stub API keys to prevent real calls if mocking is accidentally bypassed
   process.env.GEMINI_API_KEY = 'test-gemini-key';

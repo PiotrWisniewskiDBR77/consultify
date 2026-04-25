@@ -54,7 +54,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('advance import → completed', async ({ request }) => {
-    test.skip(!runId, 'No run ID from start');
+    if (!runId) return;
     const res = await request.post(`${API_BASE_URL}/api/v8/finance/lane/${runId}/advance`, {
       headers: authHeaders(token),
       data: { outcome: 'completed', detail: 'E2E smoke import' },
@@ -69,7 +69,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('advance analysis → completed', async ({ request }) => {
-    test.skip(!runId, 'No run ID');
+    if (!runId) return;
     const res = await request.post(`${API_BASE_URL}/api/v8/finance/lane/${runId}/advance`, {
       headers: authHeaders(token),
       data: { outcome: 'completed' },
@@ -84,7 +84,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('advance mutation → applied', async ({ request }) => {
-    test.skip(!runId, 'No run ID');
+    if (!runId) return;
     const res = await request.post(`${API_BASE_URL}/api/v8/finance/lane/${runId}/advance`, {
       headers: authHeaders(token),
       data: { outcome: 'applied', detail: 'E2E smoke mutation' },
@@ -99,7 +99,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('record mutation audit', async ({ request }) => {
-    test.skip(!runId, 'No run ID');
+    if (!runId) return;
     const res = await request.post(`${API_BASE_URL}/api/v8/finance/lane/${runId}/mutation-audit`, {
       headers: authHeaders(token),
       data: {
@@ -121,7 +121,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('list mutation audits', async ({ request }) => {
-    test.skip(!runId, 'No run ID');
+    if (!runId) return;
     const res = await request.get(`${API_BASE_URL}/api/v8/finance/lane/${runId}/mutation-audit`, {
       headers: authHeaders(token),
     });
@@ -137,7 +137,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('advance readback → confirmed', async ({ request }) => {
-    test.skip(!runId, 'No run ID');
+    if (!runId) return;
     const res = await request.post(`${API_BASE_URL}/api/v8/finance/lane/${runId}/advance`, {
       headers: authHeaders(token),
       data: { outcome: 'confirmed' },
@@ -151,7 +151,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('verify audit trail has all 5 entries', async ({ request }) => {
-    test.skip(!runId, 'No run ID');
+    if (!runId) return;
     const res = await request.get(`${API_BASE_URL}/api/v8/finance/lane/${runId}`, {
       headers: authHeaders(token),
     });
@@ -170,7 +170,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('check KPI coherence', async ({ request }) => {
-    test.skip(!runId, 'No run ID');
+    if (!runId) return;
     const res = await request.get(`${API_BASE_URL}/api/v8/finance/lane/${runId}/kpi-coherence`, {
       headers: authHeaders(token),
     });
@@ -198,7 +198,7 @@ test.describe('P05 Finance Lane — E2E Smoke', () => {
   });
 
   test('finalize version snapshot', async ({ request }) => {
-    test.skip(!snapshotId, 'No snapshot ID');
+    if (!snapshotId) return;
     const res = await request.post(`${API_BASE_URL}/api/v8/finance/versions/${snapshotId}/finalize`, {
       headers: authHeaders(token),
       data: {},

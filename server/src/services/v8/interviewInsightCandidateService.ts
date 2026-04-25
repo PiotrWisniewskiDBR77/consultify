@@ -1,14 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 
-import { getById as getInsightById } from '../InterviewInsightService.js';
 import * as queryHelpers from '../../utils/queryHelpers.js';
-
+import { getById as getInsightById } from '../InterviewInsightService.js';
 import { buildInsightAnalysis } from './interviewInsightAnalysisService.js';
 import {
   listFindings,
-  updateFinding,
   type P10ConfidenceLevel,
   type P10Finding,
+  updateFinding,
 } from './interviewInsightFindingsService.js';
 
 export type CandidateTriageStatus =
@@ -86,13 +85,7 @@ function normalizeConfidenceHint(value?: string): P10ConfidenceLevel {
 }
 
 function uniqueStrings(items: Array<string | null | undefined>): string[] {
-  return Array.from(
-    new Set(
-      items
-        .map((item) => String(item || '').trim())
-        .filter(Boolean)
-    )
-  );
+  return Array.from(new Set(items.map((item) => String(item || '').trim()).filter(Boolean)));
 }
 
 function mapCandidateRow(row: CandidateRow): InsightCandidateFinding {
@@ -273,8 +266,7 @@ async function ensureBackfilledCandidates(insightId: string): Promise<void> {
       linkedFinding && linkedFinding.review_status && linkedFinding.review_status !== 'draft'
         ? 'promoted'
         : triage.triageStatus;
-    const followupType =
-      triageStatus === 'promoted' ? 'publish' : triage.followupType;
+    const followupType = triageStatus === 'promoted' ? 'publish' : triage.followupType;
     const followupRecommendation =
       triageStatus === 'promoted'
         ? 'Candidate already resolved into a persisted finding.'
@@ -307,7 +299,10 @@ async function ensureBackfilledCandidates(insightId: string): Promise<void> {
   }
 }
 
-async function getCandidateRow(insightId: string, candidateId: string): Promise<CandidateRow | null> {
+async function getCandidateRow(
+  insightId: string,
+  candidateId: string
+): Promise<CandidateRow | null> {
   return queryHelpers.queryOne<CandidateRow>(
     `SELECT *
      FROM interview_insight_candidates
@@ -399,7 +394,9 @@ export async function triageCandidate(
     },
   });
 
-  return { candidate: mapCandidateRow((await getCandidateRow(insightId, candidateId)) as CandidateRow) };
+  return {
+    candidate: mapCandidateRow((await getCandidateRow(insightId, candidateId)) as CandidateRow),
+  };
 }
 
 export async function promoteCandidateToFinding(
@@ -430,7 +427,9 @@ export async function promoteCandidateToFinding(
     ? findings.find((finding) => finding.source_key === candidate.source_key)
     : undefined;
   if (!linkedFinding) {
-    return { error: 'No persisted finding exists for this candidate source. Regenerate findings first.' };
+    return {
+      error: 'No persisted finding exists for this candidate source. Regenerate findings first.',
+    };
   }
 
   const findingResult = await updateFinding(
@@ -438,11 +437,10 @@ export async function promoteCandidateToFinding(
     linkedFinding.id,
     {
       finding_statement: input.finding_statement?.trim() || candidate.candidate_statement,
-      confidence_level: input.confidence_level || normalizeConfidenceHint(candidate.confidence_hint),
+      confidence_level:
+        input.confidence_level || normalizeConfidenceHint(candidate.confidence_hint),
       limits:
-        input.limits?.trim() ||
-        linkedFinding.limits ||
-        'Operator review required before publish.',
+        input.limits?.trim() || linkedFinding.limits || 'Operator review required before publish.',
       next_action:
         input.next_action?.trim() ||
         linkedFinding.next_action ||
@@ -450,7 +448,8 @@ export async function promoteCandidateToFinding(
     },
     options?.actorUserId
   );
-  if (findingResult.error || !findingResult.finding) return { error: findingResult.error || 'Failed to promote candidate' };
+  if (findingResult.error || !findingResult.finding)
+    return { error: findingResult.error || 'Failed to promote candidate' };
 
   await queryHelpers.queryRun(
     `UPDATE interview_insight_candidates

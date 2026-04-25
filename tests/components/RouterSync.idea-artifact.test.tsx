@@ -93,7 +93,7 @@ describe('RouterSync idea artifact deep links', () => {
     render(<RouterSync />);
 
     await waitFor(() => {
-      expect(navigateMock).toHaveBeenCalledWith('/my-work', { replace: true });
+      expect(navigateMock).toHaveBeenCalledWith('/interview', { replace: true });
     });
 
     expect(setMyWorkIntentMock).not.toHaveBeenCalled();

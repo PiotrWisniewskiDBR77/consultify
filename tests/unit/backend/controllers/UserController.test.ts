@@ -44,8 +44,8 @@ describe('UserController', () => {
       await UserController.getUsers(mockReq, mockRes, vi.fn());
 
       expect(queryHelpers.queryAll).toHaveBeenCalledWith(
-        expect.stringContaining('WHERE organization_id = ?'),
-        ['org-1']
+        expect.stringContaining('WHERE u.organization_id = ?'),
+        ['org-1', 'org-1']
       );
       expect(jsonFn).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -62,8 +62,8 @@ describe('UserController', () => {
       await UserController.getUsers(mockReq, mockRes, vi.fn());
 
       expect(queryHelpers.queryAll).toHaveBeenCalledWith(
-        expect.stringContaining("AND (role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER')"),
-        ['org-1']
+        expect.stringContaining("role IN ('ADMIN', 'MANAGER', 'REVIEWER', 'LEADER')"),
+        ['org-1', 'org-1']
       );
     });
 

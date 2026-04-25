@@ -18,17 +18,34 @@ export const ConversationRouteSync: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
   const navigate = useNavigate();
   const activeConversationId = useConversationStore((s) => s.activeConversationId);
+  const activeMessagesCount = useConversationStore((s) => s.activeMessages.length);
+  const isLoading = useConversationStore((s) => s.isLoading);
   const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
+  const fetchConversation = useConversationStore((s) => s.fetchConversation);
 
   // Guard to prevent Store→URL sync from firing right after URL→Store sync
   const syncingFromUrl = useRef(false);
+  const ensuredConversationId = useRef<string | null>(null);
 
   // URL → Store sync
   useEffect(() => {
-    if (!conversationId || conversationId === activeConversationId) {
+    if (!conversationId) {
       return;
     }
 
+    if (conversationId === activeConversationId) {
+      if (
+        !isLoading &&
+        activeMessagesCount === 0 &&
+        ensuredConversationId.current !== conversationId
+      ) {
+        ensuredConversationId.current = conversationId;
+        void fetchConversation(conversationId);
+      }
+      return;
+    }
+
+    ensuredConversationId.current = conversationId;
     syncingFromUrl.current = true;
     setActiveConversation(conversationId);
     // Reset flag after a tick so Store→URL effect doesn't fire for this change
@@ -36,7 +53,14 @@ export const ConversationRouteSync: React.FC = () => {
       syncingFromUrl.current = false;
     }, 100);
     return () => clearTimeout(timer);
-  }, [conversationId, activeConversationId, setActiveConversation]);
+  }, [
+    conversationId,
+    activeConversationId,
+    activeMessagesCount,
+    isLoading,
+    fetchConversation,
+    setActiveConversation,
+  ]);
 
   // Store → URL sync (only when user changes conversation via UI, not from URL sync)
   useEffect(() => {

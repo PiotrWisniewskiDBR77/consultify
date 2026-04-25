@@ -104,7 +104,9 @@ router.post(
     const id = requireUser(req, res);
     if (!id) return;
     try {
-      res.json(await resultsEnterpriseService.runConnectorNow(id.orgId, req.params.connectorId, id.userId));
+      res.json(
+        await resultsEnterpriseService.runConnectorNow(id.orgId, req.params.connectorId, id.userId)
+      );
     } catch (error: any) {
       if (String(error?.message || '').includes('not found')) {
         res.status(404).json({ error: 'Connector not found' });
@@ -250,7 +252,13 @@ router.post(
     const id = requireUser(req, res);
     if (!id) return;
     try {
-      res.json(await resultsEnterpriseService.runReportScheduleNow(id.orgId, req.params.scheduleId, id.userId));
+      res.json(
+        await resultsEnterpriseService.runReportScheduleNow(
+          id.orgId,
+          req.params.scheduleId,
+          id.userId
+        )
+      );
     } catch (error: any) {
       if (String(error?.message || '').includes('not found')) {
         res.status(404).json({ error: 'Schedule not found' });

@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 
 import { useDemoSession } from '../../hooks/useDemoSession';
 import { cn } from '../../lib/utils';
+import { Api } from '../../services/api';
 import { User } from '../../types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import {
@@ -62,45 +63,28 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
   const [formData, setFormData] = useState({ name: '', content: '' });
   const [saving, setSaving] = useState(false);
 
+  const loadSignatures = useCallback(async () => {
+    const data = await Api.get('/settings/signatures');
+    setSignatures(data.signatures || []);
+    return data.signatures || [];
+  }, []);
+
   const buildDefaultDemoSignature = useCallback((): EmailSignature => {
     return {
       id: 'demo-1',
-      name: 'Professional',
+      name: t('settings.signatures.defaultDemoName', 'Professional'),
       content: `Best regards,\n${currentUser.firstName || currentUser.displayName || 'User'} ${currentUser.lastName || ''}\n${currentUser.jobTitle || ''}\n${currentUser.email}`,
       isDefault: true,
       createdAt: new Date().toISOString(),
     };
-  }, [currentUser]);
+  }, [currentUser, t]);
 
   // Fetch signatures
   useEffect(() => {
     const fetchSignatures = async () => {
       setLoading(true);
       try {
-        const response = await fetch('/api/settings/signatures', {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setSignatures(data.signatures || []);
-        } else {
-          if (isDemo) {
-            setSignatures([buildDefaultDemoSignature()]);
-          } else {
-            setSignatures([]);
-            toast({
-              title: t('settings.signatures.error', 'Error'),
-              description: t(
-                'settings.signatures.loadFailed',
-                'Failed to load signatures. Please try again later.'
-              ),
-              variant: 'destructive',
-            });
-          }
-        }
+        await loadSignatures();
       } catch (error) {
         console.error('Failed to fetch signatures:', error);
         if (isDemo) {
@@ -122,7 +106,7 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
     };
 
     fetchSignatures();
-  }, [buildDefaultDemoSignature, currentUser, isDemo, t, toast]);
+  }, [buildDefaultDemoSignature, currentUser, isDemo, loadSignatures, t, toast]);
 
   // Handle create/edit signature
   const handleSave = async () => {
@@ -139,49 +123,23 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
     try {
       if (editingSignature) {
         // Update existing
-        const response = await fetch(`/api/settings/signatures/${editingSignature.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify(formData),
+        await Api.put(`/settings/signatures/${editingSignature.id}`, formData);
+        await loadSignatures();
+        toast({
+          title: t('settings.signatures.updated', 'Signature Updated'),
+          description: t('settings.signatures.updatedDesc', 'Your signature has been updated'),
         });
-
-        if (response.ok) {
-          setSignatures((prev) =>
-            prev.map((sig) => (sig.id === editingSignature.id ? { ...sig, ...formData } : sig))
-          );
-          toast({
-            title: t('settings.signatures.updated', 'Signature Updated'),
-            description: t('settings.signatures.updatedDesc', 'Your signature has been updated'),
-          });
-        }
       } else {
         // Create new
-        const response = await fetch('/api/settings/signatures', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-          },
-          body: JSON.stringify({
-            ...formData,
-            isDefault: signatures.length === 0,
-          }),
+        await Api.post('/settings/signatures', {
+          ...formData,
+          isDefault: signatures.length === 0,
         });
-
-        if (response.ok) {
-          const data = await response.json();
-          setSignatures((prev) => [...prev, data.signature]);
-          toast({
-            title: t('settings.signatures.created', 'Signature Created'),
-            description: t(
-              'settings.signatures.createdDesc',
-              'Your new signature has been created'
-            ),
-          });
-        }
+        await loadSignatures();
+        toast({
+          title: t('settings.signatures.created', 'Signature Created'),
+          description: t('settings.signatures.createdDesc', 'Your new signature has been created'),
+        });
       }
 
       setIsDialogOpen(false);
@@ -202,14 +160,9 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
   // Handle delete signature
   const handleDelete = async (id: string) => {
     try {
-      await fetch(`/api/settings/signatures/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      await Api.delete(`/settings/signatures/${id}`);
+      await loadSignatures();
 
-      setSignatures((prev) => prev.filter((sig) => sig.id !== id));
       toast({
         title: t('settings.signatures.deleted', 'Signature Deleted'),
         description: t('settings.signatures.deletedDesc', 'The signature has been removed'),
@@ -222,19 +175,9 @@ export const EmailSignaturesSettings: React.FC<EmailSignaturesSettingsProps> = (
   // Handle set default
   const handleSetDefault = async (id: string) => {
     try {
-      await fetch(`/api/settings/signatures/${id}/default`, {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      await Api.put(`/settings/signatures/${id}/default`, {});
+      await loadSignatures();
 
-      setSignatures((prev) =>
-        prev.map((sig) => ({
-          ...sig,
-          isDefault: sig.id === id,
-        }))
-      );
       toast({
         title: t('settings.signatures.defaultSet', 'Default Updated'),
         description: t('settings.signatures.defaultSetDesc', 'Default signature has been updated'),

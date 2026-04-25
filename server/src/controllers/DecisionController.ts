@@ -1510,7 +1510,9 @@ export class DecisionController {
 
       const validation = validateDecisionWorkflowTransition(currentWorkflow, targetWorkflow);
       if (!validation.allowed) {
-        res.status(400).json({ error: (validation as { allowed: false; message: string }).message });
+        res
+          .status(400)
+          .json({ error: (validation as { allowed: false; message: string }).message });
         return;
       }
 

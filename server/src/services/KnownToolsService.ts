@@ -193,7 +193,11 @@ type SeedKnownTool = {
 
 // Only tools that are actually prepared in our current library
 // should be openable from the Tools table.
-const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>(['dynamic-swot']);
+const ACTIVE_KNOWN_TOOL_TYPES = new Set<string>([
+  'dynamic-swot',
+  'market-forces',
+  'growth-paths',
+]);
 
 const SQLITE_KNOWN_TOOLS_SEED: SeedKnownTool[] = [
   {

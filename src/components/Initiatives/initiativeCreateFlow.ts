@@ -1,7 +1,7 @@
-import type { KanbanScope } from '../Portfolio/PortfolioKanbanView';
+import { ACTIVE_STATUSES } from '@/utils/initiativeHelpers';
 
 import { InitiativeStatus, type PortfolioInitiative } from '../../types';
-import { ACTIVE_STATUSES } from '@/utils/initiativeHelpers';
+import type { KanbanScope } from '../Portfolio/PortfolioKanbanView';
 
 export interface InitiativeCreateRevealState {
   scope: KanbanScope;

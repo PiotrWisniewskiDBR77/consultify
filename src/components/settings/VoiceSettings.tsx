@@ -51,6 +51,15 @@ const VOICE_OPTIONS = [
   { value: 'shimmer', label: 'Shimmer' },
 ];
 
+const BROWSER_VOICE_HINTS: Record<string, string[]> = {
+  alloy: ['Google US English', 'Samantha', 'Microsoft Jenny'],
+  echo: ['Daniel', 'Microsoft Guy', 'Google UK English Male'],
+  fable: ['Serena', 'Google UK English Female', 'Microsoft Sonia'],
+  onyx: ['Alex', 'Microsoft David', 'Fred'],
+  nova: ['Victoria', 'Microsoft Aria', 'Google US English'],
+  shimmer: ['Karen', 'Microsoft Zira', 'Google Australian English'],
+};
+
 export const VoiceSettings: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<AIVoicePreferences>(defaultPreferences);
@@ -59,6 +68,7 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
@@ -81,6 +91,14 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
     load();
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const loadVoices = () => setBrowserVoices(window.speechSynthesis.getVoices());
+    loadVoices();
+    window.speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    return () => window.speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+  }, []);
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
@@ -95,25 +113,35 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
   }, [preferences, t]);
 
   const testVoice = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      toast.error(
+        t('settings.voice.unsupported', 'Text-to-speech is not supported in this browser')
+      );
+      return;
+    }
     setTesting(true);
+    window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(
       t('settings.voice.testText', 'Hello! This is a test of the voice settings.')
     );
     utterance.rate = preferences.speed;
+    const hints = BROWSER_VOICE_HINTS[preferences.voice] || [];
+    utterance.voice =
+      browserVoices.find((voice) => hints.some((hint) => voice.name.includes(hint))) ||
+      browserVoices.find((voice) => voice.lang?.toLowerCase().startsWith('en')) ||
+      browserVoices[0] ||
+      null;
     utterance.onend = () => setTesting(false);
     utterance.onerror = () => setTesting(false);
-    speechSynthesis.speak(utterance);
+    window.speechSynthesis.speak(utterance);
   };
 
   const stopTest = () => {
-    speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
     setTesting(false);
   };
 
-  const update = <K extends keyof AIVoicePreferences>(
-    key: K,
-    value: AIVoicePreferences[K]
-  ) => {
+  const update = <K extends keyof AIVoicePreferences>(key: K, value: AIVoicePreferences[K]) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
@@ -151,10 +179,7 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
             checked={preferences.ttsEnabled}
             onChange={(checked) => update('ttsEnabled', checked)}
             label={t('settings.voice.enableTTS', 'Text-to-Speech')}
-            description={t(
-              'settings.voice.enableTTSDesc',
-              'Enable voice output for AI responses.'
-            )}
+            description={t('settings.voice.enableTTSDesc', 'Enable voice output for AI responses.')}
           />
 
           {/* Auto-speak */}

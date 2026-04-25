@@ -6,6 +6,7 @@
 
 import React from 'react';
 
+import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
 import {
   ProposalCardType,
   SessionGenerationStatus,
@@ -14,9 +15,6 @@ import {
   ToolType,
 } from '@/store/useToolStore';
 
-import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
-
-import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
 import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
 import { ContextStep } from './steps/ContextStep';
 import { ImpactHypothesisStep } from './steps/ImpactHypothesisStep';
@@ -28,12 +26,23 @@ import { ReasoningStep } from './steps/ReasoningStep';
 import { ReportStep } from './steps/ReportStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { SummaryStep } from './steps/SummaryStep';
+import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
 import { ToolContextPanel } from './ToolContextPanel';
 import { SWOTBuildPhase } from './tools/DynamicSWOT/SWOTBuildPhase';
 import { SWOTInputExplorationPhase } from './tools/DynamicSWOT/SWOTInputExplorationPhase';
 import { SWOTInsightsPhase } from './tools/DynamicSWOT/SWOTInsightsPhase';
-import { GrowthPathQuadrantStep } from './tools/GrowthPaths/GrowthPathQuadrantStep';
-import { ForceStep } from './tools/MarketForces/ForceStep';
+import {
+  GrowthPathsInputPhase,
+  GrowthPathsInsightsPhase,
+  GrowthPathsOptionsPhase,
+  GrowthPathsOutputsPhase,
+} from './tools/GrowthPaths/GrowthPathsPhases';
+import {
+  MarketForcesBuildPhase,
+  MarketForcesInputPhase,
+  MarketForcesInsightsPhase,
+  MarketForcesOutputsPhase,
+} from './tools/MarketForces/MarketForcesPhases';
 import {
   A3CountermeasuresStep,
   A3ProblemStep,
@@ -289,50 +298,145 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     }
 
     if (toolType === 'market-forces') {
-      // Porter force steps
-      if (
-        ['rivalry', 'newEntrants', 'substitutes', 'buyerPower', 'supplierPower'].includes(
-          stepDefinition.id
-        )
-      ) {
+      if (stepDefinition.id === 'mission') {
         return (
-          <ForceStep
-            forceId={
-              stepDefinition.id as
-                | 'rivalry'
-                | 'newEntrants'
-                | 'substitutes'
-                | 'buyerPower'
-                | 'supplierPower'
-            }
+          <ContextStep
+            toolType={toolType}
             session={session}
             isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
           />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <MarketForcesInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'forces') {
+        return (
+          <MarketForcesBuildPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <MarketForcesInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <MarketForcesOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
         );
       }
     }
 
     if (toolType === 'growth-paths') {
-      if (
-        [
-          'market-penetration',
-          'market-development',
-          'product-development',
-          'diversification',
-        ].includes(stepDefinition.id)
-      ) {
+      if (stepDefinition.id === 'mission') {
         return (
-          <GrowthPathQuadrantStep
-            quadrant={
-              stepDefinition.id as
-                | 'market-penetration'
-                | 'market-development'
-                | 'product-development'
-                | 'diversification'
-            }
+          <ContextStep
+            toolType={toolType}
             session={session}
             isPolish={isPolish}
+            onGenerateFullSession={onGenerateFullSession}
+            sessionGenerationStatus={sessionGenerationStatus}
           />
+        );
+      }
+
+      if (stepDefinition.id === 'input') {
+        return (
+          <GrowthPathsInputPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'options') {
+        return (
+          <GrowthPathsOptionsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'insights') {
+        return (
+          <GrowthPathsInsightsPhase
+            session={session}
+            isPolish={isPolish}
+            onAcceptCard={onAcceptCard}
+            onRejectCard={onRejectCard}
+            onRethinkCard={onRethinkCard}
+          />
+        );
+      }
+
+      if (stepDefinition.id === 'outputs') {
+        return (
+          <div className="space-y-6">
+            <GrowthPathsOutputsPhase
+              session={session}
+              isPolish={isPolish}
+              onAcceptCard={onAcceptCard}
+              onRejectCard={onRejectCard}
+              onRethinkCard={onRethinkCard}
+            />
+            <InitiativesStep
+              toolType={toolType}
+              session={session}
+              isPolish={isPolish}
+              generatedInitiatives={generatedInitiatives}
+              onOpenInitiatives={onOpenInitiatives}
+              onOpenChat={onOpenChat}
+            />
+          </div>
         );
       }
     }

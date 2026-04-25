@@ -7,6 +7,14 @@ export function normalizeAppRole(role: string | null | undefined): string {
     return 'SUPERADMIN';
   }
 
+  if (normalized === 'ADMINISTRATOR' || normalized === 'PROJECT_MANAGER') {
+    return 'ADMIN';
+  }
+
+  if (normalized === 'TEAM_MEMBER') {
+    return 'USER';
+  }
+
   return normalized;
 }
 
@@ -16,7 +24,7 @@ export function isSuperAdminRole(role: string | null | undefined): boolean {
 
 export function isAdminOrSuperAdminRole(role: string | null | undefined): boolean {
   const normalized = normalizeAppRole(role);
-  return normalized === 'ADMIN' || normalized === 'SUPERADMIN';
+  return normalized === 'ADMIN' || normalized === 'OWNER' || normalized === 'SUPERADMIN';
 }
 
 export function isAdminOwnerOrSuperAdminRole(role: string | null | undefined): boolean {

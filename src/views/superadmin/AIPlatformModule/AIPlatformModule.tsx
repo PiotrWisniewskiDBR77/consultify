@@ -74,8 +74,8 @@ import { MarketInboxTab } from './Operations/MarketInboxTab';
 // Operations Tab Components
 import { MissionControlTab } from './Operations/MissionControlTab';
 import { PerformanceDashboardTab } from './Operations/PerformanceDashboardTab';
-import { PolicyEnforcementTab } from './Policy/PolicyEnforcementTab';
 import { SLAManagementTab } from './Operations/SLAManagementTab';
+import { PolicyEnforcementTab } from './Policy/PolicyEnforcementTab';
 import { AccessControlTab } from './Security/AccessControlTab';
 // Security Tab Components
 import { APIKeysTab } from './Security/APIKeysTab';
@@ -203,12 +203,14 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<string | null>(initialSubTab || null);
   const [internetSignal, setInternetSignal] = useState<{
     loading: boolean;
+    error: string | null;
     internetEnabled: boolean;
     tavilyConfigured: boolean;
     webSearchAvailable: boolean;
     searchProvider: string | null;
   }>({
     loading: true,
+    error: null,
     internetEnabled: false,
     tavilyConfigured: false,
     webSearchAvailable: false,
@@ -440,6 +442,7 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
         const runtime = json?.data?.runtime || null;
         setInternetSignal({
           loading: false,
+          error: null,
           internetEnabled: Boolean(summary?.internetEnabled),
           tavilyConfigured: Boolean(runtime?.tavilyConfigured),
           webSearchAvailable: Boolean(runtime?.webSearchAvailable),
@@ -449,9 +452,13 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
               : null,
         });
       })
-      .catch(() => {
+      .catch((error: any) => {
         if (!mounted) return;
-        setInternetSignal((prev) => ({ ...prev, loading: false }));
+        setInternetSignal((prev) => ({
+          ...prev,
+          loading: false,
+          error: error?.message || 'Unable to load internet policy',
+        }));
       });
     return () => {
       mounted = false;
@@ -460,17 +467,21 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
 
   const internetDotClass = internetSignal.loading
     ? 'bg-slate-300 dark:bg-slate-600'
-    : internetSignal.webSearchAvailable
-      ? 'bg-emerald-500'
-      : 'bg-red-500';
+    : internetSignal.error
+      ? 'bg-amber-500'
+      : internetSignal.webSearchAvailable
+        ? 'bg-emerald-500'
+        : 'bg-red-500';
 
   const internetLabel = internetSignal.loading
     ? 'Internet: checking'
-    : internetSignal.webSearchAvailable
-      ? 'Internet: ON'
-      : internetSignal.internetEnabled && !internetSignal.tavilyConfigured
-        ? 'Internet: KEY MISSING'
-        : 'Internet: OFF';
+    : internetSignal.error
+      ? 'Internet: UNKNOWN'
+      : internetSignal.webSearchAvailable
+        ? 'Internet: ON'
+        : internetSignal.internetEnabled && !internetSignal.tavilyConfigured
+          ? 'Internet: KEY MISSING'
+          : 'Internet: OFF';
 
   return (
     <div className="h-full flex flex-col bg-slate-50 dark:bg-navy-950 overflow-hidden">
@@ -490,9 +501,11 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
               title={
                 internetSignal.loading
                   ? 'Checking internet & web search configuration'
-                  : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Provider: ${
-                      internetSignal.searchProvider || 'unavailable'
-                    }; Tavily key: ${internetSignal.tavilyConfigured ? 'configured' : 'missing'}`
+                  : internetSignal.error
+                    ? `Internet policy status unavailable: ${internetSignal.error}`
+                    : `Policy: ${internetSignal.internetEnabled ? 'enabled' : 'disabled'}; Provider: ${
+                        internetSignal.searchProvider || 'unavailable'
+                      }; Tavily key: ${internetSignal.tavilyConfigured ? 'configured' : 'missing'}`
               }
             >
               <span className={`w-2 h-2 rounded-full ${internetDotClass}`} />

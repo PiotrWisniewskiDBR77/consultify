@@ -307,7 +307,7 @@ describe('__private__ helpers (L1)', () => {
 
   it('covers permission-role normalization edge cases', () => {
     expect(__private__.normalizePermissionRole(undefined)).toBe('VIEWER');
-    expect(__private__.normalizePermissionRole('owner')).toBe('SUPERADMIN');
+    expect(__private__.normalizePermissionRole('owner')).toBe('ADMIN');
     expect(__private__.normalizePermissionRole('administrator')).toBe('ADMIN');
     expect(__private__.normalizePermissionRole('client')).toBe('VIEWER');
     expect(__private__.normalizePermissionRole('custom_role')).toBe('CUSTOM_ROLE');

@@ -109,11 +109,13 @@ router.post('/:orgId/members', validateBody(AddMemberSchema), async (req, res, n
   const originalJson = res.json.bind(res);
   res.json = function (body: any) {
     if (res.statusCode < 400) {
-      adminAuditService.logAction({
-        adminId: (req as any).userId || (req as any).user?.id || 'unknown',
-        actionType: 'add_member',
-        details: { orgId: req.params.orgId, member: req.body, isSensitive: true },
-      }).catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
+      adminAuditService
+        .logAction({
+          adminId: (req as any).userId || (req as any).user?.id || 'unknown',
+          actionType: 'add_member',
+          details: { orgId: req.params.orgId, member: req.body, isSensitive: true },
+        })
+        .catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
     }
     return originalJson(body);
   } as any;
@@ -131,11 +133,18 @@ router.patch(
     const originalJson = res.json.bind(res);
     res.json = function (body: any) {
       if (res.statusCode < 400) {
-        adminAuditService.logAction({
-          adminId: (req as any).userId || (req as any).user?.id || 'unknown',
-          actionType: 'update_member_role',
-          details: { orgId: req.params.orgId, memberId: req.params.memberId, role: req.body, isSensitive: true },
-        }).catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
+        adminAuditService
+          .logAction({
+            adminId: (req as any).userId || (req as any).user?.id || 'unknown',
+            actionType: 'update_member_role',
+            details: {
+              orgId: req.params.orgId,
+              memberId: req.params.memberId,
+              role: req.body,
+              isSensitive: true,
+            },
+          })
+          .catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
       }
       return originalJson(body);
     } as any;
@@ -151,11 +160,13 @@ router.delete('/:orgId/members/:memberId', async (req, res, next) => {
   const originalJson = res.json.bind(res);
   res.json = function (body: any) {
     if (res.statusCode < 400) {
-      adminAuditService.logAction({
-        adminId: (req as any).userId || (req as any).user?.id || 'unknown',
-        actionType: 'remove_member',
-        details: { orgId: req.params.orgId, memberId: req.params.memberId, isSensitive: true },
-      }).catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
+      adminAuditService
+        .logAction({
+          adminId: (req as any).userId || (req as any).user?.id || 'unknown',
+          actionType: 'remove_member',
+          details: { orgId: req.params.orgId, memberId: req.params.memberId, isSensitive: true },
+        })
+        .catch((err: unknown) => logger.warn('[Org] audit logging failed', err));
     }
     return originalJson(body);
   } as any;

@@ -48,9 +48,24 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
       console.error('Failed to fetch calendars:', error);
       // Fallback to defaults
       setCalendars([
-        { id: 'google', name: 'Google Calendar', icon: '📅', connected: false },
-        { id: 'outlook', name: 'Outlook', icon: '📆', connected: false },
-        { id: 'apple', name: 'Apple Calendar', icon: '🍎', connected: false },
+        {
+          id: 'google',
+          name: t('settings.integrations.calendarProviders.google', 'Google Calendar'),
+          icon: '📅',
+          connected: false,
+        },
+        {
+          id: 'outlook',
+          name: t('settings.integrations.calendarProviders.outlook', 'Outlook'),
+          icon: '📆',
+          connected: false,
+        },
+        {
+          id: 'apple',
+          name: t('settings.integrations.calendarProviders.apple', 'Apple Calendar'),
+          icon: '🍎',
+          connected: false,
+        },
       ]);
     } finally {
       setLoading(false);
@@ -74,9 +89,16 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
       const data = await Api.connectCalendar(calendarId);
       if (data?.authUrl) {
         window.location.href = data.authUrl;
+        return;
       }
+      await fetchCalendars();
+      toast.success(t('settings.integrations.connected', 'Calendar connected'));
     } catch (error) {
-      toast.error(t('settings.integrations.connectError', 'Failed to connect calendar'));
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : t('settings.integrations.connectError', 'Failed to connect calendar')
+      );
     }
   };
 
@@ -85,9 +107,7 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
 
     try {
       await Api.disconnectCalendar(calendarId);
-      setCalendars((prev) =>
-        prev.map((c) => (c.id === calendarId ? { ...c, connected: false, connection: null } : c))
-      );
+      await fetchCalendars();
       toast.success(t('settings.integrations.disconnected', 'Calendar disconnected'));
     } catch (error) {
       toast.error(t('settings.integrations.disconnectError', 'Failed to disconnect'));
@@ -101,8 +121,9 @@ export const CalendarSyncSettings: React.FC<CalendarSyncSettingsProps> = ({ clas
         syncTasks: tasks,
         syncMeetings: meetings,
       });
-      setSyncTasks(tasks);
-      setSyncMeetings(meetings);
+      const persisted = await Api.getCalendarSettings().catch(() => null);
+      setSyncTasks(persisted?.syncTasks ?? tasks);
+      setSyncMeetings(persisted?.syncMeetings ?? meetings);
       toast.success(t('settings.saved', 'Settings saved'));
     } catch (error) {
       toast.error(t('settings.saveError', 'Failed to save settings'));

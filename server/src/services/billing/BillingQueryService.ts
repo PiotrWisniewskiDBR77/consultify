@@ -135,10 +135,7 @@ export class BillingQueryService {
     } | null>);
     return {
       billingModel:
-        row?.billing_rail ||
-        row?.billing_model ||
-        row?.plan_billing_model ||
-        'subscription',
+        row?.billing_rail || row?.billing_model || row?.plan_billing_model || 'subscription',
     };
   }
 

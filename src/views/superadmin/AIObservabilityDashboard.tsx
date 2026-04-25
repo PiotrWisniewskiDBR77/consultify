@@ -189,7 +189,8 @@ const AIObservabilityDashboard: React.FC = () => {
                   {alert.severity}
                 </span>
                 <span className="text-white/70">
-                  {alert.metric}: {typeof alert.currentValue === 'number' && alert.currentValue < 1
+                  {alert.metric}:{' '}
+                  {typeof alert.currentValue === 'number' && alert.currentValue < 1
                     ? pct(alert.currentValue)
                     : alert.currentValue.toFixed(1)}{' '}
                   ({alert.operator === 'lt' ? '<' : '>'}{' '}
@@ -251,15 +252,21 @@ const AIObservabilityDashboard: React.FC = () => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-white/50 text-sm">Grounding Score</span>
-              <span className="text-white font-medium">{pct(metrics.grounding.avgGroundingScore)}</span>
+              <span className="text-white font-medium">
+                {pct(metrics.grounding.avgGroundingScore)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/50 text-sm">Confidence Score</span>
-              <span className="text-white font-medium">{pct(metrics.grounding.avgConfidenceScore)}</span>
+              <span className="text-white font-medium">
+                {pct(metrics.grounding.avgConfidenceScore)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/50 text-sm">Citation Accuracy</span>
-              <span className="text-white font-medium">{pct(metrics.grounding.avgCitationAccuracy)}</span>
+              <span className="text-white font-medium">
+                {pct(metrics.grounding.avgCitationAccuracy)}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-white/50 text-sm">Total Validated</span>

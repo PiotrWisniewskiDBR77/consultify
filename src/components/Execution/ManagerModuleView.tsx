@@ -40,7 +40,11 @@ export interface ManagerModuleDef {
   id: ManagerModuleId;
   title: string;
   icon: React.ReactNode;
-  metrics: Array<{ label: string; value: number | string; variant?: 'default' | 'warn' | 'critical' }>;
+  metrics: Array<{
+    label: string;
+    value: number | string;
+    variant?: 'default' | 'warn' | 'critical';
+  }>;
   description: string;
 }
 
@@ -89,7 +93,9 @@ function useManagerProblems(moduleId: string, projectId?: string) {
     }
   }, [moduleId, projectId]);
 
-  useEffect(() => { fetchProblems(); }, [fetchProblems]);
+  useEffect(() => {
+    fetchProblems();
+  }, [fetchProblems]);
 
   return { rows, loading, refresh: fetchProblems };
 }

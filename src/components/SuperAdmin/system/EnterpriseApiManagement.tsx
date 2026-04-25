@@ -184,8 +184,7 @@ export const EnterpriseApiManagement: React.FC = () => {
   const handleCreateKey = async (formData: any) => {
     try {
       if (editingKey) {
-        // Update implementation would go here
-        // await (Api as any).updateUserApiKey(editingKey.id, formData);
+        await (Api as any).updateApiKey(editingKey.id, formData);
       } else {
         await (Api as any).createUserApiKey(formData.name, formData.scopes);
       }

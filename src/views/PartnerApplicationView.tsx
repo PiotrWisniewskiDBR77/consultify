@@ -65,9 +65,7 @@ export const PartnerApplicationView: React.FC = () => {
       setForm(INITIAL_FORM);
     } catch (submitError) {
       setError(
-        submitError instanceof Error
-          ? submitError.message
-          : 'Failed to submit partner application'
+        submitError instanceof Error ? submitError.message : 'Failed to submit partner application'
       );
     } finally {
       setIsSubmitting(false);
@@ -105,7 +103,10 @@ export const PartnerApplicationView: React.FC = () => {
                 'Reviewed in the superadmin approval queue',
                 'Built to qualify serious commercial partners quickly',
               ].map((item) => (
-                <div key={item} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
+                <div
+                  key={item}
+                  className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4"
+                >
                   <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-300" />
                   <span className="text-sm text-white/75">{item}</span>
                 </div>
@@ -154,23 +155,59 @@ export const PartnerApplicationView: React.FC = () => {
 
                 <form onSubmit={handleSubmit} className="mt-8 grid gap-4">
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Input label="Full name" value={form.fullName} onChange={(value) => updateField('fullName', value)} required />
-                    <Input label="Business email" type="email" value={form.email} onChange={(value) => updateField('email', value)} required />
+                    <Input
+                      label="Full name"
+                      value={form.fullName}
+                      onChange={(value) => updateField('fullName', value)}
+                      required
+                    />
+                    <Input
+                      label="Business email"
+                      type="email"
+                      value={form.email}
+                      onChange={(value) => updateField('email', value)}
+                      required
+                    />
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Input label="Company" value={form.company} onChange={(value) => updateField('company', value)} required />
-                    <Input label="Website" value={form.website} onChange={(value) => updateField('website', value)} />
+                    <Input
+                      label="Company"
+                      value={form.company}
+                      onChange={(value) => updateField('company', value)}
+                      required
+                    />
+                    <Input
+                      label="Website"
+                      value={form.website}
+                      onChange={(value) => updateField('website', value)}
+                    />
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Input label="Country" value={form.country} onChange={(value) => updateField('country', value)} />
-                    <Input label="Your role" value={form.role} onChange={(value) => updateField('role', value)} />
+                    <Input
+                      label="Country"
+                      value={form.country}
+                      onChange={(value) => updateField('country', value)}
+                    />
+                    <Input
+                      label="Your role"
+                      value={form.role}
+                      onChange={(value) => updateField('role', value)}
+                    />
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <Input label="Team size" value={form.teamSize} onChange={(value) => updateField('teamSize', value)} />
-                    <Input label="Primary focus area" value={form.focusArea} onChange={(value) => updateField('focusArea', value)} />
+                    <Input
+                      label="Team size"
+                      value={form.teamSize}
+                      onChange={(value) => updateField('teamSize', value)}
+                    />
+                    <Input
+                      label="Primary focus area"
+                      value={form.focusArea}
+                      onChange={(value) => updateField('focusArea', value)}
+                    />
                   </div>
 
                   <label className="grid gap-2">
@@ -197,7 +234,9 @@ export const PartnerApplicationView: React.FC = () => {
                     disabled={isSubmitting}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-violet-600 px-6 py-3 text-sm font-black text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isSubmitting ? t('partner.apply.submitting', 'Submitting...') : t('partner.apply.submit', 'Submit partner application')}
+                    {isSubmitting
+                      ? t('partner.apply.submitting', 'Submitting...')
+                      : t('partner.apply.submit', 'Submit partner application')}
                     <ArrowRight size={16} />
                   </button>
                 </form>

@@ -22,9 +22,11 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { Api } from '@/services/api';
-import { type FinanceVersionSnapshot, shouldFallbackToLegacyFinance, V8FinanceApi } from '@/services/api/v8/finance';
-
-import { FinanceVersionTimeline } from './FinanceVersionTimeline';
+import {
+  type FinanceVersionSnapshot,
+  shouldFallbackToLegacyFinance,
+  V8FinanceApi,
+} from '@/services/api/v8/finance';
 
 import {
   type FinanceAnalysisRow,
@@ -37,6 +39,7 @@ import {
   getTypeCode,
   type PreviewDataState,
 } from './financeTypes';
+import { FinanceVersionTimeline } from './FinanceVersionTimeline';
 
 const KIND_ICON_MAP: Record<FinanceKind, typeof Calculator> = {
   statements: FileText,
@@ -69,7 +72,20 @@ async function approveModelWithFallback(modelId: string) {
   }
 }
 
-function PackValidationsSection({ validations }: { validations: Array<{ checkCode: string; checkName: string; severity: string; status: string; message?: string | null; expectedValue?: number | null; actualValue?: number | null; computedAt?: string }> }) {
+function PackValidationsSection({
+  validations,
+}: {
+  validations: Array<{
+    checkCode: string;
+    checkName: string;
+    severity: string;
+    status: string;
+    message?: string | null;
+    expectedValue?: number | null;
+    actualValue?: number | null;
+    computedAt?: string;
+  }>;
+}) {
   const [expanded, setExpanded] = React.useState(false);
   const shown = expanded ? validations : validations.slice(0, 3);
   return (
@@ -102,14 +118,22 @@ function PackValidationsSection({ validations }: { validations: Array<{ checkCod
       )}
       {expanded && (
         <div className="mt-2 space-y-1.5">
-          {validations.filter((v) => v.status !== 'pass').map((v) => (
-            <div key={`${v.checkCode}-detail`} className="text-[10px] text-slate-600 dark:text-slate-400">
-              <span className="font-medium">{v.checkCode}</span>: {v.message || v.checkName}
-              {v.expectedValue != null && v.actualValue != null && (
-                <span className="text-slate-400"> (expected: {v.expectedValue}, actual: {v.actualValue})</span>
-              )}
-            </div>
-          ))}
+          {validations
+            .filter((v) => v.status !== 'pass')
+            .map((v) => (
+              <div
+                key={`${v.checkCode}-detail`}
+                className="text-[10px] text-slate-600 dark:text-slate-400"
+              >
+                <span className="font-medium">{v.checkCode}</span>: {v.message || v.checkName}
+                {v.expectedValue != null && v.actualValue != null && (
+                  <span className="text-slate-400">
+                    {' '}
+                    (expected: {v.expectedValue}, actual: {v.actualValue})
+                  </span>
+                )}
+              </div>
+            ))}
         </div>
       )}
     </div>
@@ -538,7 +562,9 @@ export function useFinancePreview({
                       )}
                     {Array.isArray(statementPreviewDetail.packValidations) &&
                       statementPreviewDetail.packValidations.length > 0 && (
-                        <PackValidationsSection validations={statementPreviewDetail.packValidations} />
+                        <PackValidationsSection
+                          validations={statementPreviewDetail.packValidations}
+                        />
                       )}
                   </div>
                 </>

@@ -2,8 +2,8 @@ import { KeyRound, Link2, Shield, UserCog, UsersRound } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { ApiKeysManagementView } from '../../views/admin/ApiKeysManagementView';
 import { cn } from '../../utils/cn';
+import { ApiKeysManagementView } from '../../views/admin/ApiKeysManagementView';
 import { AdminCollaborationControlsPanel } from './AdminCollaborationControlsPanel';
 import { AdminIamPolicyPanel } from './AdminIamPolicyPanel';
 import { AdminScimLifecyclePanel } from './AdminScimLifecyclePanel';

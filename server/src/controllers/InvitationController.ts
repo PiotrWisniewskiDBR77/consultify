@@ -6,10 +6,10 @@
  */
 
 import type { Response } from 'express';
-import logger from '../utils/Logger.js';
 
 import type { AuthenticatedRequest } from '../types/index.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import logger from '../utils/Logger.js';
 import type {
   AcceptInvitationRequest,
   CreateInvitationRequest,

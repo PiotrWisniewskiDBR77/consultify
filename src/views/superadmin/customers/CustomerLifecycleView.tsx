@@ -15,6 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { Card } from '../../../components/Admin/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
@@ -67,6 +68,8 @@ const CustomerLifecycleView: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showTransitionModal, setShowTransitionModal] = useState(false);
   const [editingStage, setEditingStage] = useState<LifecycleStage | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [newStage, setNewStage] = useState({
     name: '',
@@ -88,6 +91,7 @@ const CustomerLifecycleView: React.FC = () => {
 
   const fetchData = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const [stagesData, transitionsData, statsData] = await Promise.all([
         Api.getLifecycleStages(),
@@ -97,44 +101,64 @@ const CustomerLifecycleView: React.FC = () => {
       setStages(stagesData || []);
       setTransitions(transitionsData || []);
       setStats(statsData as any);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch lifecycle data:', error);
+      setLoadError(error?.message || 'Failed to fetch lifecycle data');
+      toast.error(error?.message || 'Failed to fetch lifecycle data');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCreateStage = async () => {
-    if (!newStage.name) return;
+    if (!newStage.name.trim()) {
+      toast.error('Stage name is required');
+      return;
+    }
 
     try {
+      setIsSaving(true);
       await Api.createLifecycleStage({
         ...newStage,
+        name: newStage.name.trim(),
         orderIndex: stages.length,
       });
+      toast.success('Lifecycle stage created');
       setShowCreateModal(false);
       setNewStage({ name: '', description: '', orderIndex: 0, color: STAGE_COLORS[0] });
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to create stage:', error);
+      toast.error(error?.message || 'Failed to create stage');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleUpdateStage = async () => {
     if (!editingStage) return;
+    if (!editingStage.name.trim()) {
+      toast.error('Stage name is required');
+      return;
+    }
 
     try {
+      setIsSaving(true);
       await Api.updateLifecycleStage(editingStage.id, {
-        name: editingStage.name,
+        name: editingStage.name.trim(),
         description: editingStage.description,
         orderIndex: editingStage.order_index,
         color: editingStage.color,
         isActive: editingStage.is_active,
       });
+      toast.success('Lifecycle stage updated');
       setEditingStage(null);
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to update stage:', error);
+      toast.error(error?.message || 'Failed to update stage');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -142,23 +166,39 @@ const CustomerLifecycleView: React.FC = () => {
     if (!confirm('Are you sure you want to delete this stage?')) return;
 
     try {
+      setIsSaving(true);
       await Api.deleteLifecycleStage(stageId);
-      fetchData();
-    } catch (error) {
+      toast.success('Lifecycle stage deleted');
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to delete stage:', error);
+      toast.error(error?.message || 'Failed to delete stage');
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleTransition = async () => {
-    if (!newTransition.organizationId || !newTransition.toStageId) return;
+    if (!newTransition.organizationId.trim() || !newTransition.toStageId) {
+      toast.error('Organization and target stage are required');
+      return;
+    }
 
     try {
-      await Api.transitionOrganizationLifecycle(newTransition);
+      setIsSaving(true);
+      await Api.transitionOrganizationLifecycle({
+        ...newTransition,
+        organizationId: newTransition.organizationId.trim(),
+      });
+      toast.success('Organization transitioned');
       setShowTransitionModal(false);
       setNewTransition({ organizationId: '', fromStageId: '', toStageId: '', notes: '' });
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to create transition:', error);
+      toast.error(error?.message || 'Failed to transition organization');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -207,6 +247,12 @@ const CustomerLifecycleView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
 
       {/* Overview Stats */}
       <div className="grid grid-cols-4 gap-4">
@@ -445,10 +491,10 @@ const CustomerLifecycleView: React.FC = () => {
               </button>
               <button
                 onClick={handleCreateStage}
-                disabled={!newStage.name}
+                disabled={!newStage.name.trim() || isSaving}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
-                Create Stage
+                {isSaving ? 'Creating...' : 'Create Stage'}
               </button>
             </div>
           </div>
@@ -522,9 +568,10 @@ const CustomerLifecycleView: React.FC = () => {
               </button>
               <button
                 onClick={handleUpdateStage}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+                disabled={isSaving || !editingStage.name.trim()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
-                Save Changes
+                {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -607,10 +654,12 @@ const CustomerLifecycleView: React.FC = () => {
               </button>
               <button
                 onClick={handleTransition}
-                disabled={!newTransition.organizationId || !newTransition.toStageId}
+                disabled={
+                  !newTransition.organizationId.trim() || !newTransition.toStageId || isSaving
+                }
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
-                Transition
+                {isSaving ? 'Transitioning...' : 'Transition'}
               </button>
             </div>
           </div>

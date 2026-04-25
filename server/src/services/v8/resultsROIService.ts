@@ -490,7 +490,8 @@ export async function createExecutiveReviewPack(
     organizationId: validated.organizationId,
     reviewPeriod: validated.reviewPeriod,
     kpiSummaries: validated.kpiSummaries as ExecutiveReviewPack['kpiSummaries'],
-    deviationHighlights: validated.deviationHighlights as ExecutiveReviewPack['deviationHighlights'],
+    deviationHighlights:
+      validated.deviationHighlights as ExecutiveReviewPack['deviationHighlights'],
     roiSnapshot: validated.roiSnapshot as ExecutiveReviewPack['roiSnapshot'],
     status: 'draft',
     createdAt: now,
@@ -597,11 +598,12 @@ export async function initiateReconciliation(
       [reconciliation.kpiId, reconciliation.organizationId],
       { fallback: true }
     );
-    const orgMembers: Array<{ user_id: string }> = await dbAll(
-      `SELECT user_id FROM organization_members WHERE organization_id = ? AND role IN ('owner', 'admin') LIMIT 5`,
-      [reconciliation.organizationId],
-      { fallback: true }
-    ) || [];
+    const orgMembers: Array<{ user_id: string }> =
+      (await dbAll(
+        `SELECT user_id FROM organization_members WHERE organization_id = ? AND role IN ('owner', 'admin') LIMIT 5`,
+        [reconciliation.organizationId],
+        { fallback: true }
+      )) || [];
     for (const member of orgMembers) {
       if (member.user_id === reconciliation.initiatedBy) continue;
       sendNotification({
@@ -614,7 +616,9 @@ export async function initiateReconciliation(
         entityType: 'kpi',
         entityId: reconciliation.kpiId,
         actionUrl: `/benefits?tab=results_kpi&mode=queue`,
-      }).catch((err: unknown) => logger.warn('[ResultsROI] reconciliation notification failed', err));
+      }).catch((err: unknown) =>
+        logger.warn('[ResultsROI] reconciliation notification failed', err)
+      );
     }
   } catch {
     // non-blocking
@@ -681,7 +685,9 @@ export async function resolveReconciliation(
       entityType: 'kpi',
       entityId: updated.kpiId,
       actionUrl: `/benefits?tab=results_kpi&mode=queue`,
-    }).catch((err: any) => logger.debug(`${LOG_PREFIX} Reconciliation resolved notification failed: ${err?.message}`));
+    }).catch((err: any) =>
+      logger.debug(`${LOG_PREFIX} Reconciliation resolved notification failed: ${err?.message}`)
+    );
   }
 
   return updated;
@@ -1005,8 +1011,12 @@ interface ResultsSnapshotRow {
   created_at: string | null;
 }
 
-function normalizeLifecycleBucket(status: string | null | undefined): 'in-realization' | 'realized' | null {
-  const normalized = String(status || '').trim().toUpperCase();
+function normalizeLifecycleBucket(
+  status: string | null | undefined
+): 'in-realization' | 'realized' | null {
+  const normalized = String(status || '')
+    .trim()
+    .toUpperCase();
   if (['APPROVED', 'SCHEDULED', 'EXECUTING'].includes(normalized)) return 'in-realization';
   if (['DONE', 'TRACKING'].includes(normalized)) return 'realized';
   return null;
@@ -1105,7 +1115,9 @@ async function listResultsTrackedInitiatives(
     for (const snapshot of snapshots || []) {
       const filters = safeJsonParse<Record<string, unknown>>(snapshot.filters_json, {});
       const linkedInitiativeIds = Array.isArray(filters.initiativeIds)
-        ? (filters.initiativeIds as unknown[]).map((entry) => String(entry || '').trim()).filter(Boolean)
+        ? (filters.initiativeIds as unknown[])
+            .map((entry) => String(entry || '').trim())
+            .filter(Boolean)
         : [];
 
       for (const initiativeId of linkedInitiativeIds) {
@@ -1122,7 +1134,9 @@ async function listResultsTrackedInitiatives(
     }
   }
 
-  return Array.from(byInitiative.values()).sort((a, b) => a.initiativeName.localeCompare(b.initiativeName));
+  return Array.from(byInitiative.values()).sort((a, b) =>
+    a.initiativeName.localeCompare(b.initiativeName)
+  );
 }
 
 interface LegacyKpiTimeSeriesRow {
@@ -1591,32 +1605,37 @@ export async function getResultsKpiCatalog(
       redThresholdPct: row.red_threshold_pct,
       amberThresholdAbs: row.amber_threshold_abs,
       redThresholdAbs: row.red_threshold_abs,
-      definitionSource: (
-        String(row.definition_source || '').trim().toLowerCase() === 'library'
-          ? 'library'
-          : 'initiative-custom'
-      ) as 'library' | 'initiative-custom',
-      observationPhase: (
-        String(row.observation_phase || '').trim().toLowerCase() === 'realization'
-          ? 'realization'
-          : String(row.observation_phase || '').trim().toLowerCase() === 'both'
-            ? 'both'
-            : 'post-implementation'
-      ) as 'realization' | 'both' | 'post-implementation',
+      definitionSource: (String(row.definition_source || '')
+        .trim()
+        .toLowerCase() === 'library'
+        ? 'library'
+        : 'initiative-custom') as 'library' | 'initiative-custom',
+      observationPhase: (String(row.observation_phase || '')
+        .trim()
+        .toLowerCase() === 'realization'
+        ? 'realization'
+        : String(row.observation_phase || '')
+              .trim()
+              .toLowerCase() === 'both'
+          ? 'both'
+          : 'post-implementation') as 'realization' | 'both' | 'post-implementation',
       trackedInRealization: Boolean(row.tracked_in_realization),
       trackedPostImplementation:
         row.tracked_post_implementation == null ? true : Boolean(row.tracked_post_implementation),
-      observationStatus: (
-        String(row.observation_status || '').trim().toLowerCase() === 'paused'
-          ? 'paused'
-          : String(row.observation_status || '').trim().toLowerCase() === 'completed'
-            ? 'completed'
-            : 'active'
-      ) as 'active' | 'completed' | 'paused',
+      observationStatus: (String(row.observation_status || '')
+        .trim()
+        .toLowerCase() === 'paused'
+        ? 'paused'
+        : String(row.observation_status || '')
+              .trim()
+              .toLowerCase() === 'completed'
+          ? 'completed'
+          : 'active') as 'active' | 'completed' | 'paused',
       realizationExpectation: {
         baselineValue: row.realization_baseline_value,
         targetValue: row.realization_target_value,
-        measurementFrequency: row.realization_measurement_frequency || row.measurement_frequency || 'MONTHLY',
+        measurementFrequency:
+          row.realization_measurement_frequency || row.measurement_frequency || 'MONTHLY',
       },
       postImplementationExpectation: {
         baselineValue: row.post_implementation_baseline_value,
@@ -1642,28 +1661,32 @@ export async function getResultsKpiCatalog(
     kpiId: row.kpi_id,
     kpiName: row.kpi_name,
     impactDirection: row.impact_direction,
-    definitionSource: (
-      String(row.definition_source || '').trim().toLowerCase() === 'library'
-        ? 'library'
-        : 'initiative-custom'
-    ) as 'library' | 'initiative-custom',
-    observationPhase: (
-      String(row.observation_phase || '').trim().toLowerCase() === 'realization'
-        ? 'realization'
-        : String(row.observation_phase || '').trim().toLowerCase() === 'both'
-          ? 'both'
-          : 'post-implementation'
-    ) as 'realization' | 'both' | 'post-implementation',
+    definitionSource: (String(row.definition_source || '')
+      .trim()
+      .toLowerCase() === 'library'
+      ? 'library'
+      : 'initiative-custom') as 'library' | 'initiative-custom',
+    observationPhase: (String(row.observation_phase || '')
+      .trim()
+      .toLowerCase() === 'realization'
+      ? 'realization'
+      : String(row.observation_phase || '')
+            .trim()
+            .toLowerCase() === 'both'
+        ? 'both'
+        : 'post-implementation') as 'realization' | 'both' | 'post-implementation',
     trackedInRealization: Boolean(row.tracked_in_realization),
     trackedPostImplementation:
       row.tracked_post_implementation == null ? true : Boolean(row.tracked_post_implementation),
-    observationStatus: (
-      String(row.observation_status || '').trim().toLowerCase() === 'paused'
-        ? 'paused'
-        : String(row.observation_status || '').trim().toLowerCase() === 'completed'
-          ? 'completed'
-          : 'active'
-    ) as 'active' | 'completed' | 'paused',
+    observationStatus: (String(row.observation_status || '')
+      .trim()
+      .toLowerCase() === 'paused'
+      ? 'paused'
+      : String(row.observation_status || '')
+            .trim()
+            .toLowerCase() === 'completed'
+        ? 'completed'
+        : 'active') as 'active' | 'completed' | 'paused',
   }));
 
   const initiatives = await listResultsTrackedInitiatives(organizationId, kpis);
@@ -2115,7 +2138,9 @@ export async function createKpiSignal(params: {
         entityType: 'kpi',
         entityId: params.kpiId,
         actionUrl: `/benefits?tab=results_kpi&mode=queue`,
-      }).catch((err: any) => logger.debug(`${LOG_PREFIX} Signal notification failed: ${err?.message}`));
+      }).catch((err: any) =>
+        logger.debug(`${LOG_PREFIX} Signal notification failed: ${err?.message}`)
+      );
     }
   } catch {
     // non-blocking
@@ -2259,7 +2284,9 @@ export async function createKpiNextAction(params: {
       entityType: 'kpi',
       entityId: params.kpiId,
       actionUrl: `/benefits?tab=results_kpi&mode=queue`,
-    }).catch((err: any) => logger.debug(`${LOG_PREFIX} Next action notification failed: ${err?.message}`));
+    }).catch((err: any) =>
+      logger.debug(`${LOG_PREFIX} Next action notification failed: ${err?.message}`)
+    );
   }
 
   return action;
@@ -2303,7 +2330,10 @@ export async function getKpiNextActions(
   }));
 }
 
-export async function completeKpiNextAction(actionId: string, organizationId: string): Promise<void> {
+export async function completeKpiNextAction(
+  actionId: string,
+  organizationId: string
+): Promise<void> {
   const now = new Date().toISOString();
   await dbRun(
     `UPDATE v8_kpi_next_actions SET status = 'completed', completed_at = ?
@@ -2401,7 +2431,9 @@ export async function getKpiWorkflowStatus(
   }
 
   const openSignals = signals.filter((s) => s.nextActionStatus === 'pending').length;
-  const pendingActions = actions.filter((a) => a.status === 'open' || a.status === 'in_progress').length;
+  const pendingActions = actions.filter(
+    (a) => a.status === 'open' || a.status === 'in_progress'
+  ).length;
 
   return {
     kpiId,

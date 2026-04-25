@@ -7,19 +7,29 @@
 import bcrypt from 'bcryptjs';
 import { Response, Router } from 'express';
 
-import { login } from '../controllers/AuthController.js';
-import logger from '../utils/Logger.js';
 import {
   authRuntimeConfig,
   buildPasswordResetLink,
   getPasswordResetExpiresAt,
 } from '../config/authRuntime.js';
+import { login } from '../controllers/AuthController.js';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { validateBody, validateParams } from '../middleware/validation.middleware.js';
-import mfaService from '../services/MFAService.js';
-import refreshTokenService from '../services/RefreshTokenService.js';
 import auditEventsService from '../services/AuditEventsService.js';
+import legalService from '../services/legalService.js';
+import mfaService from '../services/MFAService.js';
+import {
+  assertOrganizationNameAvailable,
+  DuplicateOrganizationNameError,
+  isGenericOrganizationName,
+} from '../services/organizationIdentityService.js';
+import refreshTokenService from '../services/RefreshTokenService.js';
+import slackService from '../services/slackService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import {
+  buildCaseInsensitiveUserEmailLookupQuery,
+  normalizeAuthEmail,
+} from '../utils/authEmail.js';
 import {
   ACCESS_TOKEN_COOKIE,
   clearAuthCookies,
@@ -27,6 +37,7 @@ import {
   setAuthCookies,
 } from '../utils/cookieAuth.js';
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import logger from '../utils/Logger.js';
 import {
   ChangePasswordRequestSchema,
   ForgotPasswordRequestSchema,
@@ -42,17 +53,6 @@ import {
   SessionIdParamSchema,
   VerifyEmailRequestSchema,
 } from '../validators/auth.validators.js';
-import legalService from '../services/legalService.js';
-import {
-  DuplicateOrganizationNameError,
-  assertOrganizationNameAvailable,
-  isGenericOrganizationName,
-} from '../services/organizationIdentityService.js';
-import {
-  buildCaseInsensitiveUserEmailLookupQuery,
-  normalizeAuthEmail,
-} from '../utils/authEmail.js';
-import slackService from '../services/slackService.js';
 
 const router = Router();
 import crypto from 'crypto';
@@ -107,9 +107,8 @@ async function assignAplixDefaultInterviews(params: {
     .toUpperCase();
   if (normalizedAccessCode !== APLIX_ACCESS_CODE) return;
 
-  const { default: interviewAssignmentService } = (await import(
-    '../services/InterviewAssignmentService.js'
-  )) as any;
+  const { default: interviewAssignmentService } =
+    (await import('../services/InterviewAssignmentService.js')) as any;
   const dueAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
   for (const templateSuffix of APLIX_DEFAULT_TEMPLATE_SUFFIXES) {
@@ -313,6 +312,10 @@ router.get(
         phone: string | null;
         timezone: string | null;
         location: string | null;
+        company_name: string | null;
+        date_format: string | null;
+        time_format: string | null;
+        out_of_office_message: string | null;
         // VTS metrics
         seniority_level: string | null;
         site_location: string | null;
@@ -332,6 +335,7 @@ router.get(
                    u.display_name, u.pronouns, u.department, u.job_title,
                    u.status_message, u.out_of_office, u.vacation_end,
                    u.linkedin_id, u.phone, u.timezone, u.location,
+                   u.company_name, u.date_format, u.time_format, u.out_of_office_message,
                    u.seniority_level, u.site_location, u.tenure_years,
                    u.manages_team, u.team_size, u.expertise_tags,
                    u.engagement_level, u.profile_survey_completed_at,
@@ -479,7 +483,9 @@ router.get(
       let parsedExpertiseTags: string[] = [];
       try {
         if (user.expertise_tags) parsedExpertiseTags = JSON.parse(user.expertise_tags);
-      } catch { /* ignore bad JSON */ }
+      } catch {
+        /* ignore bad JSON */
+      }
 
       const response: {
         user: Record<string, unknown>;
@@ -498,7 +504,6 @@ router.get(
           lastName: user.last_name,
           avatarUrl: user.avatar_url,
           impersonatorId: user.impersonator_id,
-          companyName: user.organization_name,
           isAuthenticated: true,
           accessLevel:
             user.organization_status === 'active' &&
@@ -513,10 +518,14 @@ router.get(
           statusMessage: user.status_message || null,
           isOutOfOffice: user.out_of_office === 1,
           outOfOfficeUntil: user.vacation_end || null,
+          outOfOfficeMessage: user.out_of_office_message || null,
           linkedinId: user.linkedin_id || null,
           phone: user.phone || null,
           timezone: user.timezone || null,
+          dateFormat: user.date_format || null,
+          timeFormat: user.time_format || null,
           location: user.location || null,
+          companyName: user.company_name || user.organization_name,
           // VTS metrics
           seniorityLevel: user.seniority_level || null,
           siteLocation: user.site_location || null,
@@ -619,7 +628,9 @@ router.post(
         });
       }
 
-      const orgType = String(membership.organization_type || '').trim().toUpperCase();
+      const orgType = String(membership.organization_type || '')
+        .trim()
+        .toUpperCase();
       const isDemo = orgType === ORG_TYPES.DEMO;
 
       // Update users.organization_id so token refresh stays consistent
@@ -658,7 +669,14 @@ router.post(
           await dbRun(
             `INSERT INTO organization_switch_log (id, user_id, from_organization_id, to_organization_id, ip_address, user_agent)
              VALUES (?, ?, ?, ?, ?, ?)`,
-            [uuidv4(), userId, previousOrgId || null, organizationId, req.ip || null, req.get('user-agent') || null]
+            [
+              uuidv4(),
+              userId,
+              previousOrgId || null,
+              organizationId,
+              req.ip || null,
+              req.get('user-agent') || null,
+            ]
           );
         } catch {
           // Non-critical audit logging
@@ -1709,10 +1727,14 @@ router.post(
       }>('SELECT * FROM access_codes WHERE code = ? AND is_active = 1', [accessCode]);
 
       if (!codeRow) {
-        return res.status(400).json({ error: 'Invalid access code', errorCode: 'INVALID_ACCESS_CODE' });
+        return res
+          .status(400)
+          .json({ error: 'Invalid access code', errorCode: 'INVALID_ACCESS_CODE' });
       } else {
         if (codeRow.expires_at && new Date(codeRow.expires_at) < new Date()) {
-          return res.status(400).json({ error: 'Access code has expired', errorCode: 'ACCESS_CODE_EXPIRED' });
+          return res
+            .status(400)
+            .json({ error: 'Access code has expired', errorCode: 'ACCESS_CODE_EXPIRED' });
         } else if (codeRow.max_uses > 0 && codeRow.current_uses >= codeRow.max_uses) {
           return res.status(400).json({
             error: 'Access code usage limit reached',

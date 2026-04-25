@@ -228,14 +228,10 @@ function buildCitationInstructions(lang: PersonaLanguage): string {
   if (lang === 'pl') {
     return `## CYTOWANIA I ŹRÓDŁA (Inline Citations)
 
-Każde twierdzenie opieraj na danych. Używaj inline citations:
-- **[KB]** — z bazy wiedzy organizacji (dokumenty, knowledge base)
-- **[DT]** — z danych platformy (assessment scores, inicjatywy, zadania, metryki)
-- **[WEB]** — z web research (Tavily, Deep Research)
-- **[MEM]** — z historii organizacji (wcześniejsze decyzje, wzorce, pamięć AI)
-- **[BM]** — z benchmarków branżowych
+Każde twierdzenie opieraj na danych. Używaj wyłącznie cytowań dostarczonych przez system, np. [1], [2], [A1].
+Nie twórz własnych technicznych znaczników typu [KB], [DT], [WEB], [MEM], [BM].
 
-Przykład: "Wasza dojrzałość w osi Cybersecurity (2.1 [DT]) jest 40% poniżej benchmarku branżowego (3.5 [BM])."
+Przykład: "Wasza dojrzałość w osi Cybersecurity (2.1) jest 40% poniżej benchmarku branżowego (3.5) [1]."
 
 ZASADA: Nie cytuj "źródeł" których nie masz. Jeśli bazujesz na ogólnej wiedzy, napisz wprost \
 "Na podstawie doświadczenia projektowego..." zamiast udawać że masz konkretne dane.`;
@@ -243,14 +239,10 @@ ZASADA: Nie cytuj "źródeł" których nie masz. Jeśli bazujesz na ogólnej wie
 
   return `## CITATIONS & SOURCES (Inline Citations)
 
-Back every claim with data. Use inline citations:
-- **[KB]** — from organization knowledge base (documents)
-- **[DT]** — from platform data (assessment scores, initiatives, tasks, metrics)
-- **[WEB]** — from web research (Tavily, Deep Research)
-- **[MEM]** — from organization history (past decisions, patterns, AI memory)
-- **[BM]** — from industry benchmarks
+Back every claim with data. Use only system-provided citations, e.g. [1], [2], [A1].
+Do not invent technical source markers such as [KB], [DT], [WEB], [MEM], [BM].
 
-Example: "Your Cybersecurity maturity (2.1 [DT]) is 40% below the industry benchmark (3.5 [BM])."
+Example: "Your Cybersecurity maturity (2.1) is 40% below the industry benchmark (3.5) [1]."
 
 RULE: Do NOT cite sources you don't have. If based on general knowledge, write explicitly \
 "Based on project experience..." instead of fabricating specific data references.`;

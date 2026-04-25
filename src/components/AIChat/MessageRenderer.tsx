@@ -44,6 +44,7 @@ import { InlineResponseFeedback } from './InlineResponseFeedback';
 import { ResearchProgress } from './ResearchProgress';
 import { SourcesStrip } from './SourcesStrip';
 import { StructuredOutputBlock } from './StructuredOutputBlock';
+import { TeresaProposalCard } from './TeresaProposalCard';
 import { ThinkingStatusLine } from './ThinkingStatusLine';
 import { TrustBadge } from './TrustBadge';
 import { TrustPanel } from './TrustPanel';
@@ -82,12 +83,27 @@ const V8_EXECUTION_MESSAGE_TYPES = new Set<string>([
 //    path where the pipeline never attached citations).
 // ============================================================================
 
-const CITATION_MARKER_RE = /\[(\d{1,3})\]/g;
+const CITATION_MARKER_RE = /\[(A?)(\d{1,3})\]/gi;
 const VERBOSE_CITATION_PREFIX_RE = /\s*Source\s+\d+\s*;\s*[A-Za-z0-9_-]+\s*;\s*(\[\d{1,3}\])/g;
+const INTERNAL_SOURCE_MARKER_RE = /\s*\[(?:MEM|DT|BM|KB|WEB|ASS|FIN)\](?=[\s.,;:!?)]|$)/gi;
+const INTERNAL_RAG_ID_RE = /\b(?:rag|chunk)_\d+\b/gi;
+const INTERNAL_DEBUG_LINE_RE =
+  /^[^\S\r\n]*(?:No sources|Uncertainty\s*\/\s*verification|Source ledger|cross_tenant)\b.*(?:\r?\n)?/gim;
 
 function stripVerboseCitationPrefixes(text: string): string {
   if (!text) return text;
   return text.replace(VERBOSE_CITATION_PREFIX_RE, ' $1');
+}
+
+export function sanitizeUserVisibleAiText(text: string): string {
+  if (!text) return text;
+  return text
+    .replace(INTERNAL_DEBUG_LINE_RE, '')
+    .replace(INTERNAL_SOURCE_MARKER_RE, '')
+    .replace(INTERNAL_RAG_ID_RE, '')
+    .replace(/[ \t]{2,}/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
 function renderNodesWithCitations(
@@ -110,7 +126,7 @@ function renderNodesWithCitations(
         if (match.index > lastIndex) {
           parts.push(node.slice(lastIndex, match.index));
         }
-        const num = parseInt(match[1], 10);
+        const num = parseInt(match[2], 10);
         const citation = citations[num - 1];
         if (citation) {
           parts.push(
@@ -288,8 +304,9 @@ export interface MessageRendererProps {
   // V8 governed proposal handlers (CHAT_V8_ACTIONS_AND_APPROVALS)
   onProposalApprove?: (proposalId: string, msg: ChatMessage) => void;
   onProposalReject?: (proposalId: string, msg: ChatMessage, reason?: string) => void;
+  onProposalExecute?: (proposalId: string, msg: ChatMessage) => void;
   onProposalInspect?: (proposalId: string, msg: ChatMessage) => void;
-  proposalBusyById?: Record<string, { approve?: boolean; reject?: boolean }>;
+  proposalBusyById?: Record<string, { approve?: boolean; reject?: boolean; execute?: boolean }>;
 }
 
 // ============================================================================
@@ -364,6 +381,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   onOptionSelect,
   onProposalApprove,
   onProposalReject,
+  onProposalExecute,
   onProposalInspect,
   proposalBusyById,
 }) => {
@@ -378,12 +396,14 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const isHovered = hoveredMessageId === msg.id;
   const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
   const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
-  const hasCitations = msg.citations && msg.citations.length > 0;
+  const hasCitations = Array.isArray(msg.citations) && msg.citations.length > 0;
   const isCopied = copiedMessageId === msg.id;
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
   const isContextSaved = contextSavedMessageIds.has(msg.id);
   const canSaveToContext = msg.role === 'user' || msg.role === 'ai';
   const contextSaveRole: 'user' | 'ai' = msg.role === 'user' ? 'user' : 'ai';
+  const userVisibleContent =
+    msg.role === 'ai' ? sanitizeUserVisibleAiText(msg.content || '') : msg.content || '';
   const isDeepThinkingConfirm = (msg as any).metadata?.deepThinking?.kind === 'confirm';
   const confirmPayload =
     isDeepThinkingConfirm && dtPendingConfirm?.messageId === msg.id
@@ -393,14 +413,18 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const policyNotices = Array.isArray((msg as any).metadata?.policyNotices)
     ? ((msg as any).metadata.policyNotices as any[])
     : [];
-  const sourceLedger = (msg as any).metadata?.sourceLedger || null;
+  const visiblePolicyNotices = policyNotices.filter((n: any) => n?.displayToUser === true);
   const policyUncertaintyNotice =
-    policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'uncertainty') ||
-    policyNotices.find((n: any) => n?.kind === 'uncertainty') ||
+    visiblePolicyNotices.find(
+      (n: any) => n?.type === 'policy_notice' && n?.kind === 'uncertainty'
+    ) ||
+    visiblePolicyNotices.find((n: any) => n?.kind === 'uncertainty') ||
     null;
   const policyNoSourcesNotice =
-    policyNotices.find((n: any) => n?.type === 'policy_notice' && n?.kind === 'no_sources') ||
-    policyNotices.find((n: any) => n?.kind === 'no_sources') ||
+    visiblePolicyNotices.find(
+      (n: any) => n?.type === 'policy_notice' && n?.kind === 'no_sources'
+    ) ||
+    visiblePolicyNotices.find((n: any) => n?.kind === 'no_sources') ||
     null;
   const isPolicyRefusal = msg.role === 'ai' && policyDecision && policyDecision.allowed === false;
 
@@ -422,9 +446,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         isRtl={isRtlChatLanguage}
         onApprove={onProposalApprove}
         onReject={onProposalReject}
+        onExecute={onProposalExecute}
         onInspect={onProposalInspect}
         isApproveBusy={!!busy?.approve}
         isRejectBusy={!!busy?.reject}
+        isExecuteBusy={!!busy?.execute}
       />
     );
   }
@@ -450,7 +476,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               steps={thinkingSteps
                 .filter((s) => String((s as any)?.label || '').trim())
                 .map((s) => ({
-                  label: String((s as any)?.label || '').trim(),
+                  label: sanitizeUserVisibleAiText(String((s as any)?.label || '').trim()).replace(
+                    /\bthinking\b/gi,
+                    'working'
+                  ),
                   status:
                     s.status === 'done' || s.status === 'completed'
                       ? ('done' as const)
@@ -459,7 +488,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                         : ('pending' as const),
                 }))
                 .slice(-6)}
-              label={t('thinking.processing', 'Thinking…') as string}
+              label={t('thinking.processing', 'Preparing answer…') as string}
             />
           </div>
         )}
@@ -551,7 +580,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-                {!isPolicyRefusal && policyNoSourcesNotice && (
+                {!isPolicyRefusal && policyNoSourcesNotice && !hasCitations && (
                   <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-white/70 dark:bg-navy-900/30">
                     <div className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                       {t('policy.noSources.title', 'No sources found')}
@@ -568,35 +597,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   </div>
                 )}
 
-                {!isPolicyRefusal &&
-                  sourceLedger &&
-                  Array.isArray((sourceLedger as any).blocked_sources) &&
-                  (sourceLedger as any).blocked_sources.length > 0 && (
-                    <div className="not-prose mb-3 p-3 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50/70 dark:bg-navy-900/25">
-                      <div className="text-xs font-semibold text-slate-700 dark:text-slate-200">
-                        {t('policy.sourceLedger.title', 'Source ledger')}
-                      </div>
-                      <div className="mt-1 text-[11px] text-slate-600 dark:text-slate-300">
-                        {t('policy.sourceLedger.blockedLabel', 'Blocked scopes (high-level):')}
-                      </div>
-                      <ul className="mt-1 list-disc pl-4 space-y-0.5 text-[11px] text-slate-600 dark:text-slate-300">
-                        {(sourceLedger as any).blocked_sources
-                          .slice(0, 8)
-                          .map((b: any, i: number) => (
-                            <li key={i}>
-                              {String(b?.category || 'blocked')}
-                              {b?.reason ? ` (${String(b.reason)})` : ''}
-                            </li>
-                          ))}
-                      </ul>
-                      {sourceLedger?.degraded?.mode ? (
-                        <div className="mt-2 text-[11px] text-slate-500 dark:text-slate-400">
-                          {t('policy.sourceLedger.degraded', 'Degraded mode:')}{' '}
-                          <span className="font-medium">{String(sourceLedger.degraded.mode)}</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
+                {/* Source ledger remains in message metadata for operator telemetry.
+                    It is intentionally not rendered in the normal chat UX. */}
 
                 {/* Deep Thinking: Research progress (SSE events) */}
                 {(msg as any).metadata?.researchVisibility?.items && (
@@ -649,6 +651,15 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     />
                   </div>
                 )}
+
+                {msg.role === 'ai' &&
+                  !msg.isStreaming &&
+                  (msg as any).metadata?.proposal &&
+                  (msg as any).metadata?.type !== 'table_proposal' && (
+                    <div className="not-prose mb-3">
+                      <TeresaProposalCard proposal={(msg as any).metadata.proposal} />
+                    </div>
+                  )}
 
                 {(msg as any).metadata?.type === 'table_proposal' ? (
                   <div className="not-prose">
@@ -884,9 +895,11 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       while ((match = ideaHintRegex.exec(msg.content)) !== null) {
                         hints.push({ title: match[1].trim(), description: match[2].trim() });
                       }
-                      const cleanContent = stripVerboseCitationPrefixes(
-                        msg.content.replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '')
-                      ).trim();
+                      const cleanContent = sanitizeUserVisibleAiText(
+                        stripVerboseCitationPrefixes(
+                          msg.content.replace(/💡\s*IDEA_HINT:\s*.+?\|.+/g, '')
+                        )
+                      );
 
                       const structuredEnvelope = (msg as any)?.metadata?.structuredOutput ?? null;
 
@@ -1319,7 +1332,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <span>{msg.content}</span>
+                  <span>{userVisibleContent}</span>
                 )}
               </>
             )}
@@ -1350,7 +1363,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   {t('stream.complete', 'Response complete')}
                 </span>
                 {/* Cost-per-analysis estimate badge */}
-                {msg.content && msg.content.length > 50 && (
+                {userVisibleContent && userVisibleContent.length > 50 && (
                   <span
                     className="text-slate-400 dark:text-slate-500"
                     title={t(
@@ -1360,8 +1373,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   >
                     ~$
                     {(
-                      (msg.content.length / 4) * 0.000015 +
-                      (msg.content.length / 4) * 0.00006
+                      (userVisibleContent.length / 4) * 0.000015 +
+                      (userVisibleContent.length / 4) * 0.00006
                     ).toFixed(4)}{' '}
                     est.
                   </span>
@@ -1488,7 +1501,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               >
                 {/* Copy */}
                 <button
-                  onClick={() => handleCopyMessage(msg.content, msg.id)}
+                  onClick={() => handleCopyMessage(userVisibleContent, msg.id)}
                   className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700"
                   title={t('chat.actions.copy', 'Copy')}
                 >
@@ -1508,7 +1521,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 
                 {canSaveToContext && (
                   <button
-                    onClick={() => handleSaveToContext(msg.id, msg.content, contextSaveRole)}
+                    onClick={() => handleSaveToContext(msg.id, userVisibleContent, contextSaveRole)}
                     disabled={isContextSaveBusy || isContextSaved}
                     className="p-1 rounded-md text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-navy-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     title={
@@ -1545,7 +1558,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       // Replay behavior: always restart reading from the beginning.
                       stopSpeaking();
                       setTimeout(() => {
-                        speak(msg.content);
+                        speak(userVisibleContent);
                       }, 60);
                     }}
                     className={`p-1 rounded-md ${voiceState.isSpeaking ? 'text-red-500' : 'text-slate-500 dark:text-slate-400'} hover:bg-slate-100 dark:hover:bg-navy-700`}
@@ -1652,27 +1665,27 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
           <InlineResponseFeedback
             messageId={msg.id}
             conversationId={activeConversationId || undefined}
-            responseLength={msg.content.length}
-            onFeedback={(feedback) => handleFeedback(msg.id, msg.content, feedback)}
+            responseLength={userVisibleContent.length}
+            onFeedback={(feedback) => handleFeedback(msg.id, userVisibleContent, feedback)}
             compact={isCompact}
           />
           <div className="flex items-center gap-1 border-l border-slate-200 dark:border-navy-700 pl-3">
             <button
-              onClick={() => handleSaveAsIdea(msg.id, msg.content)}
+              onClick={() => handleSaveAsIdea(msg.id, userVisibleContent)}
               className="p-1.5 rounded-md text-amber-600 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
               title={t('myWork.ideas.saveAsIdea', 'Save as idea')}
             >
               <Lightbulb size={14} />
             </button>
             <button
-              onClick={() => handleSaveAsNote(msg.id, msg.content)}
+              onClick={() => handleSaveAsNote(msg.id, userVisibleContent)}
               className="p-1.5 rounded-md text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
               title={t('myWork.notebook.saveAsNote', 'Save as note')}
             >
               <Bookmark size={14} />
             </button>
             <button
-              onClick={() => handleSaveToContext(msg.id, msg.content, 'ai')}
+              onClick={() => handleSaveToContext(msg.id, userVisibleContent, 'ai')}
               disabled={isContextSaveBusy || isContextSaved}
               className="p-1.5 rounded-md text-violet-600 hover:text-violet-700 dark:text-violet-400 dark:hover:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title={
@@ -1746,7 +1759,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
             </p>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => handleSaveAsDecision(msg.id, msg.content)}
+                onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-primary-600 hover:bg-primary-700 text-white disabled:opacity-50 transition-colors flex items-center gap-1"
               >
@@ -1756,7 +1769,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   : t('deepThinking.saveDecision', 'Save as Decision')}
               </button>
               <button
-                onClick={() => handleSaveAsDecision(msg.id, msg.content)}
+                onClick={() => handleSaveAsDecision(msg.id, userVisibleContent)}
                 disabled={dtSavingDecision === msg.id}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 disabled:opacity-50 transition-colors flex items-center gap-1"
               >
@@ -1777,7 +1790,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     '---',
                     '',
                   ].join('\n');
-                  const fullContent = header + msg.content;
+                  const fullContent = header + userVisibleContent;
                   const blob = new Blob([fullContent], { type: 'text/markdown' });
                   const url = URL.createObjectURL(blob);
                   const link = document.createElement('a');
@@ -1798,7 +1811,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   const reportType = isMarketResearch ? 'Market Research' : 'Deep Thinking';
                   const dateStr = new Date().toISOString().slice(0, 10);
                   const reportTitle = `${reportType} Report — ${dateStr}`;
-                  handleSaveAsNote(msg.id, `# ${reportTitle}\n\n${msg.content}`);
+                  handleSaveAsNote(msg.id, `# ${reportTitle}\n\n${userVisibleContent}`);
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"
               >
@@ -1808,7 +1821,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
               {/* Voice Executive Brief */}
               <button
                 onClick={() => {
-                  const brief = formatExecutiveBrief(msg.content, 'en');
+                  const brief = formatExecutiveBrief(userVisibleContent, 'en');
                   speak(brief);
                 }}
                 className="px-3 py-1.5 text-xs font-medium rounded-lg bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors flex items-center gap-1"

@@ -3107,7 +3107,9 @@ const parseMarkdownTable = (tableLines: string[]): any => {
   }
 
   if (rows.length === 0) {
-    return new Table({ rows: [new TableRow({ children: [new TableCell({ children: [new Paragraph('')] })] })] });
+    return new Table({
+      rows: [new TableRow({ children: [new TableCell({ children: [new Paragraph('')] })] })],
+    });
   }
 
   const thinBorder = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
@@ -3115,21 +3117,24 @@ const parseMarkdownTable = (tableLines: string[]): any => {
 
   return new Table({
     width: { size: 100, type: WidthType.PERCENTAGE },
-    rows: rows.map((cells, rowIdx) =>
-      new TableRow({
-        children: cells.map((cellText) =>
-          new TableCell({
-            borders,
-            children: [
-              new Paragraph({
-                children: rowIdx === 0
-                  ? [new TextRun({ text: cellText, bold: true, size: 20 })]
-                  : parseInlineMarkdown(cellText),
-              }),
-            ],
-          })
-        ),
-      })
+    rows: rows.map(
+      (cells, rowIdx) =>
+        new TableRow({
+          children: cells.map(
+            (cellText) =>
+              new TableCell({
+                borders,
+                children: [
+                  new Paragraph({
+                    children:
+                      rowIdx === 0
+                        ? [new TextRun({ text: cellText, bold: true, size: 20 })]
+                        : parseInlineMarkdown(cellText),
+                  }),
+                ],
+              })
+          ),
+        })
     ),
   });
 };
@@ -3202,7 +3207,12 @@ const markdownToDocxParagraphs = (markdown: string): any[] => {
 
     // Horizontal rule
     if (/^[-*_]{3,}$/.test(line.trim())) {
-      out.push(new Paragraph({ text: '', border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' } } }));
+      out.push(
+        new Paragraph({
+          text: '',
+          border: { bottom: { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' } },
+        })
+      );
       continue;
     }
 
@@ -3244,7 +3254,11 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
   }
   children.push(
     new Paragraph({
-      text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      text: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
       alignment: AlignmentType.CENTER,
     })
   );
@@ -3252,9 +3266,7 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
 
   // Table of Contents
   if (enabledSections.length >= 3) {
-    children.push(
-      new Paragraph({ text: 'Table of Contents', heading: HeadingLevel.HEADING_1 })
-    );
+    children.push(new Paragraph({ text: 'Table of Contents', heading: HeadingLevel.HEADING_1 }));
     for (let idx = 0; idx < enabledSections.length; idx++) {
       const secTitle = enabledSections[idx].title || enabledSections[idx].sectionKey || 'Section';
       children.push(
@@ -3288,15 +3300,19 @@ const writeReportBuilderDocx = async (report: any, sections: any[], filePath: st
 
   const doc = new Document({
     numbering: {
-      config: [{
-        reference: 'default-numbering',
-        levels: [{
-          level: 0,
-          format: 'decimal' as any,
-          text: '%1.',
-          alignment: AlignmentType.LEFT,
-        }],
-      }],
+      config: [
+        {
+          reference: 'default-numbering',
+          levels: [
+            {
+              level: 0,
+              format: 'decimal' as any,
+              text: '%1.',
+              alignment: AlignmentType.LEFT,
+            },
+          ],
+        },
+      ],
     },
     sections: [
       {

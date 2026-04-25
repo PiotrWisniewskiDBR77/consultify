@@ -85,7 +85,11 @@ export const AdminMembersRolesPanel: React.FC = () => {
   }, [loadMembers]);
 
   const handleInvite = async () => {
-    if (!orgId || !inviteEmail.trim()) return;
+    if (!orgId) return;
+    if (!inviteEmail.trim()) {
+      toast.error('Enter an email address before adding a member');
+      return;
+    }
     try {
       setInviting(true);
       await Api.addOrganizationMember(orgId, inviteEmail.trim(), inviteRole);
@@ -140,7 +144,7 @@ export const AdminMembersRolesPanel: React.FC = () => {
         expiresInDays: 7,
       });
 
-      const code = response?.code?.code;
+      const code = response?.code?.code || response?.code;
       if (!code) {
         throw new Error('Code was not returned by the server');
       }
@@ -223,10 +227,14 @@ export const AdminMembersRolesPanel: React.FC = () => {
             </select>
             <button
               onClick={handleInvite}
-              disabled={inviting || !inviteEmail.trim()}
+              disabled={inviting}
               className="inline-flex items-center justify-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
-              {inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+              {inviting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <UserPlus className="h-4 w-4" />
+              )}
               Add member
             </button>
           </div>
@@ -328,8 +336,8 @@ export const AdminMembersRolesPanel: React.FC = () => {
               Pilot Access Code
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Generate one shared code for tomorrow's VTS onboarding. The default limit is set to
-              50 participants and you can copy the ready registration link below.
+              Generate one shared code for tomorrow's VTS onboarding. The default limit is set to 50
+              participants and you can copy the ready registration link below.
             </p>
             <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
               Participants register with email and password after opening the invite link. Phone
@@ -353,7 +361,9 @@ export const AdminMembersRolesPanel: React.FC = () => {
               value={generatedInviteMaxUses}
               aria-label="Maximum participant registrations"
               onChange={(event) =>
-                setGeneratedInviteMaxUses(Math.min(500, Math.max(1, Number(event.target.value || 1))))
+                setGeneratedInviteMaxUses(
+                  Math.min(500, Math.max(1, Number(event.target.value || 1)))
+                )
               }
               className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 dark:border-white/10 dark:bg-navy-900 dark:text-white"
             />

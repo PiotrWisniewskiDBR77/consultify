@@ -2822,8 +2822,12 @@ export const InterviewHub: React.FC = () => {
                 ...(((insight as any).issues as Array<any>) || []),
                 ...(((insight as any).opportunities as Array<any>) || []),
               ];
-              const crossPerspectiveCount = topicCollections.filter((item) => item?.crossSessionPattern).length;
-              const divergenceCount = topicCollections.filter((item) => item?.divergence_note).length;
+              const crossPerspectiveCount = topicCollections.filter(
+                (item) => item?.crossSessionPattern
+              ).length;
+              const divergenceCount = topicCollections.filter(
+                (item) => item?.divergence_note
+              ).length;
               const typeConfig = getInsightTypeConfig(promptType);
               const status = ((insight.reviewStatus === 'in_review' ||
               insight.reviewStatus === 'published'
@@ -5610,7 +5614,9 @@ Return ONLY the answer text (no markdown fences).`;
               ...(((insight as any).issues as Array<any>) || []),
               ...(((insight as any).opportunities as Array<any>) || []),
             ];
-            const crossPerspectiveCount = topicCollections.filter((item) => item?.crossSessionPattern).length;
+            const crossPerspectiveCount = topicCollections.filter(
+              (item) => item?.crossSessionPattern
+            ).length;
             const divergenceCount = topicCollections.filter((item) => item?.divergence_note).length;
 
             return (

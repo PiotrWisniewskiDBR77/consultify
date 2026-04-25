@@ -43,6 +43,7 @@ let _inflightFetchConversations: Promise<void> | null = null;
 let _lastFetchConversationsAt = 0;
 const _inflightFetchConversationById: Record<string, Promise<void>> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
+const _conversationMessagesCache: Record<string, ConversationMessage[]> = {};
 
 function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -336,7 +337,13 @@ interface ConversationState {
   chatLanguageByConversationId: Record<string, SupportedLanguage>;
 
   // Deep-link / lifecycle state for the active conversation (§2.3.5)
-  _activeConversationState: 'active' | 'archived' | 'deleted' | 'not_found' | 'permission_denied' | null;
+  _activeConversationState:
+    | 'active'
+    | 'archived'
+    | 'deleted'
+    | 'not_found'
+    | 'permission_denied'
+    | null;
   _activeConversationStateMessage: string | null;
 
   // UI State
@@ -374,6 +381,7 @@ interface ConversationState {
   createConversation: (options?: {
     title?: string;
     projectId?: string;
+    chatProjectId?: string;
     pmoContext?: {
       assessmentId?: string;
       initiativeIds?: string[];
@@ -446,11 +454,14 @@ interface ConversationState {
   /**
    * Export a conversation (§2.3.5 E10).
    */
-  exportConversation: (id: string, params?: {
-    from?: string;
-    to?: string;
-    format?: 'json' | 'markdown' | 'text';
-  }) => Promise<any>;
+  exportConversation: (
+    id: string,
+    params?: {
+      from?: string;
+      to?: string;
+      format?: 'json' | 'markdown' | 'text';
+    }
+  ) => Promise<any>;
 
   /**
    * Purge own data — hard-delete a conversation (§2.3.3 delete-my-data).
@@ -617,9 +628,18 @@ export const useConversationStore = create<ConversationState>()(
 
         if (_inflightFetchConversationById[id]) return _inflightFetchConversationById[id];
         if (now - (_lastFetchConversationAt[id] || 0) < FETCH_DEDUPE_WINDOW_MS) {
-          // Dedupe: a recent successful fetch for this id is in cache. If the id
-          // is now the active one we already synced above; otherwise the call was
-          // preemptive and we can safely return.
+          // Dedupe: a recent successful fetch for this id is in cache. Make the
+          // terminal state explicit so setActiveConversation cannot leave the UI
+          // stuck in "Loading conversation…" after it eagerly set isLoading=true.
+          const cachedMessages = _conversationMessagesCache[id];
+          if (cachedMessages && get().activeConversationId === id) {
+            set({
+              activeMessages: cachedMessages,
+              isLoading: false,
+            });
+          } else {
+            set({ isLoading: false });
+          }
           return;
         }
         _lastFetchConversationAt[id] = now;
@@ -627,7 +647,11 @@ export const useConversationStore = create<ConversationState>()(
         set({ isLoading: true });
         _inflightFetchConversationById[id] = (async () => {
           try {
-            const result = await Api.getConversation(id);
+            const result = await withDeadline(
+              Api.getConversation(id),
+              FETCH_HARD_TIMEOUT_MS,
+              'fetchConversation'
+            );
 
             // Handle deep-link states: deleted conversation
             if (result?._state === 'deleted') {
@@ -636,7 +660,8 @@ export const useConversationStore = create<ConversationState>()(
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'deleted',
-                _activeConversationStateMessage: result?._stateMessage || 'This conversation has been deleted.',
+                _activeConversationStateMessage:
+                  result?._stateMessage || 'This conversation has been deleted.',
               });
               return;
             }
@@ -658,6 +683,7 @@ export const useConversationStore = create<ConversationState>()(
             }
 
             const messages = (result?.messages || []).map(mapApiMessage);
+            _conversationMessagesCache[id] = messages;
             set((state) => {
               const fromApiRaw = result?.language;
               const fromApiBase = fromApiRaw ? String(fromApiRaw).split('-')[0] : null;
@@ -686,7 +712,8 @@ export const useConversationStore = create<ConversationState>()(
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'permission_denied',
-                _activeConversationStateMessage: reason || 'You do not have access to this conversation.',
+                _activeConversationStateMessage:
+                  reason || 'You do not have access to this conversation.',
               });
               return;
             }
@@ -717,6 +744,7 @@ export const useConversationStore = create<ConversationState>()(
           const result = await Api.createConversation({
             title: options?.title,
             projectId: options?.projectId,
+            chatProjectId: options?.chatProjectId,
             pmoContext: options?.pmoContext,
             language,
           });
@@ -753,12 +781,15 @@ export const useConversationStore = create<ConversationState>()(
             ? { ...updates, expectedVersion: current.version }
             : updates;
 
-          await Api.updateConversation(id, payload);
+          const updated = await Api.updateConversation(id, payload);
+          const mappedUpdated = updated?.id ? mapApiConversation(updated) : null;
 
           set((state) => {
             const newConversations = state.conversations.map((c) =>
               c.id === id
-                ? { ...c, ...updates, updatedAt: new Date(), version: (c.version || 1) + 1 }
+                ? mappedUpdated
+                  ? { ...c, ...mappedUpdated }
+                  : { ...c, ...updates, updatedAt: new Date(), version: (c.version || 1) + 1 }
                 : c
             );
             return {
@@ -786,7 +817,9 @@ export const useConversationStore = create<ConversationState>()(
                   };
                 });
               }
-            } catch { /* best effort refresh */ }
+            } catch {
+              /* best effort refresh */
+            }
           }
           console.error('[ConversationStore] Update error:', err);
           throw err;
@@ -867,6 +900,16 @@ export const useConversationStore = create<ConversationState>()(
 
           const newMessage = mapApiMessage(result);
 
+          const cachedForConversation = _conversationMessagesCache[conversationId] || [];
+          const optimisticIndex = cachedForConversation.findIndex((m) => m.id === optimisticId);
+          if (optimisticIndex >= 0) {
+            _conversationMessagesCache[conversationId] = cachedForConversation.map((m) =>
+              m.id === optimisticId ? newMessage : m
+            );
+          } else {
+            _conversationMessagesCache[conversationId] = [...cachedForConversation, newMessage];
+          }
+
           // Persist attachment pointers if message had attachments in metadata (§2.3.1)
           const msgAttachments = message.metadata?.attachments;
           if (Array.isArray(msgAttachments) && msgAttachments.length > 0 && newMessage.id) {
@@ -892,7 +935,9 @@ export const useConversationStore = create<ConversationState>()(
           set((state) => {
             const isActive = state.activeConversationId === conversationId;
             const nextActiveMessages = isActive
-              ? state.activeMessages.map((m) => (m.id === optimisticId ? newMessage : m))
+              ? state.activeMessages.some((m) => m.id === optimisticId)
+                ? state.activeMessages.map((m) => (m.id === optimisticId ? newMessage : m))
+                : [...state.activeMessages, newMessage]
               : state.activeMessages;
             return {
               activeMessages: nextActiveMessages,
@@ -998,10 +1043,11 @@ export const useConversationStore = create<ConversationState>()(
           // net, but doing it here avoids a one-frame delay on every click.
           const prev = get().activeConversationId;
           if (prev !== id) {
+            const cachedMessages = _conversationMessagesCache[id] || [];
             set({
               activeConversationId: id,
-              activeMessages: [],
-              isLoading: true,
+              activeMessages: cachedMessages,
+              isLoading: cachedMessages.length === 0,
               _activeConversationState: null,
               _activeConversationStateMessage: null,
             });
@@ -1170,6 +1216,7 @@ export const useConversationStore = create<ConversationState>()(
 
       renameConversation: async (id, title) => {
         // Mark titleSource as 'user' so auto-title generation won't overwrite
+        const previous = get().conversations.find((c) => c.id === id) || null;
         set((state) => {
           const next = state.conversations.map((c) =>
             c.id === id ? { ...c, title, titleSource: 'user' as const } : c
@@ -1179,7 +1226,20 @@ export const useConversationStore = create<ConversationState>()(
             groupedConversations: groupConversations(next),
           };
         });
-        await get().updateConversation(id, { title, titleSource: 'user' } as any);
+        try {
+          await get().updateConversation(id, { title, titleSource: 'user' } as any);
+        } catch (err) {
+          if (previous) {
+            set((state) => {
+              const next = state.conversations.map((c) => (c.id === id ? previous : c));
+              return {
+                conversations: next,
+                groupedConversations: groupConversations(next),
+              };
+            });
+          }
+          throw err;
+        }
       },
 
       // ==================== BULK ====================
@@ -1285,7 +1345,7 @@ export const useConversationStore = create<ConversationState>()(
 
       getConversationsByProject: (projectId) => {
         const { conversations } = get();
-        return conversations.filter((c) => c.projectId === projectId);
+        return conversations.filter((c) => c.chatProjectId === projectId);
       },
 
       serverSearch: async (params) => {
@@ -1312,9 +1372,22 @@ export const useConversationStore = create<ConversationState>()(
           console.error('[ConversationStore] Server search error:', err);
           const status = err?.response?.status || err?.status;
           if (status === 429) {
-            return { conversations: [], nextCursor: null, hasMore: false, partial: true, rateLimited: true, scopeBlocked: 0 };
+            return {
+              conversations: [],
+              nextCursor: null,
+              hasMore: false,
+              partial: true,
+              rateLimited: true,
+              scopeBlocked: 0,
+            };
           }
-          return { conversations: [], nextCursor: null, hasMore: false, partial: true, scopeBlocked: 0 };
+          return {
+            conversations: [],
+            nextCursor: null,
+            hasMore: false,
+            partial: true,
+            scopeBlocked: 0,
+          };
         }
       },
 
@@ -1351,9 +1424,11 @@ export const useConversationStore = create<ConversationState>()(
             return {
               conversations: newConversations,
               groupedConversations: groupConversations(newConversations),
-              activeConversationId: state.activeConversationId === id ? null : state.activeConversationId,
+              activeConversationId:
+                state.activeConversationId === id ? null : state.activeConversationId,
               activeMessages: state.activeConversationId === id ? [] : state.activeMessages,
-              _activeConversationState: state.activeConversationId === id ? null : state._activeConversationState,
+              _activeConversationState:
+                state.activeConversationId === id ? null : state._activeConversationState,
             };
           });
         } catch (err) {
@@ -1553,13 +1628,25 @@ function mapApiConversation(api: any): Conversation {
 }
 
 function mapApiMessage(api: any): ConversationMessage {
+  const rawMetadata = api.metadata;
+  const metadata =
+    typeof rawMetadata === 'string'
+      ? (() => {
+          try {
+            return JSON.parse(rawMetadata);
+          } catch {
+            return {};
+          }
+        })()
+      : rawMetadata || {};
+
   return {
     id: api.id,
     conversationId: api.conversation_id,
     role: api.role,
     content: api.content,
     messageType: api.message_type || 'text',
-    metadata: api.metadata,
+    metadata,
     tokenCount: api.token_count,
     modelUsed: api.model_used,
     authorUserId: api.author_user_id || null,

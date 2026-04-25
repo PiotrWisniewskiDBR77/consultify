@@ -1,3 +1,4 @@
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   Insight,
   InsightIssue,
@@ -5,9 +6,11 @@ import type {
   InsightTheme,
 } from '../InterviewInsightService.js';
 import { getById as getInsightById } from '../InterviewInsightService.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
-
-import { listFindings, type P10ConfidenceLevel, type P10Finding } from './interviewInsightFindingsService.js';
+import {
+  listFindings,
+  type P10ConfidenceLevel,
+  type P10Finding,
+} from './interviewInsightFindingsService.js';
 
 type TopicKind = 'theme' | 'issue' | 'opportunity';
 type LensKind = 'session' | 'stakeholder';
@@ -136,13 +139,7 @@ export interface InsightAnalysis {
 }
 
 function uniqueStrings(items: Array<string | null | undefined>): string[] {
-  return Array.from(
-    new Set(
-      items
-        .map((item) => String(item || '').trim())
-        .filter(Boolean)
-    )
-  );
+  return Array.from(new Set(items.map((item) => String(item || '').trim()).filter(Boolean)));
 }
 
 function toSafeLabel(...values: Array<string | null | undefined>): string {
@@ -153,7 +150,10 @@ function toSafeLabel(...values: Array<string | null | undefined>): string {
   return 'Unknown';
 }
 
-function inferFallbackConfidence(kind: TopicKind, item: TopicBase & Partial<InsightTheme & InsightIssue & InsightOpportunity>): P10ConfidenceLevel {
+function inferFallbackConfidence(
+  kind: TopicKind,
+  item: TopicBase & Partial<InsightTheme & InsightIssue & InsightOpportunity>
+): P10ConfidenceLevel {
   if (kind === 'theme') {
     const strength = String((item as InsightTheme).strength || '').toLowerCase();
     if (strength === 'strong') return 'high';
@@ -230,10 +230,7 @@ function buildTopicEntries(params: {
     return acc;
   }, {});
 
-  const makeEntries = <T extends TopicBase>(
-    kind: TopicKind,
-    items: T[]
-  ): TopicEntry[] =>
+  const makeEntries = <T extends TopicBase>(kind: TopicKind, items: T[]): TopicEntry[] =>
     items.map((item, index) => {
       const sourceKey = `${kind}:${index}`;
       const finding = findingsBySourceKey[sourceKey];
@@ -287,14 +284,19 @@ function buildSessionLenses(
   topicEntries: TopicEntry[],
   findings: P10Finding[]
 ): InsightAnalysisLens[] {
-  const findingIdsByTopicId = topicEntries.reduce<Record<string, string | undefined>>((acc, topic) => {
-    const finding = findings.find((item) => item.source_key === topic.sourceKey);
-    acc[topic.id] = finding?.id;
-    return acc;
-  }, {});
+  const findingIdsByTopicId = topicEntries.reduce<Record<string, string | undefined>>(
+    (acc, topic) => {
+      const finding = findings.find((item) => item.source_key === topic.sourceKey);
+      acc[topic.id] = finding?.id;
+      return acc;
+    },
+    {}
+  );
 
   return sourceSessions.map((session) => {
-    const supportedTopics = topicEntries.filter((topic) => topic.supportSessionIds.includes(session.id));
+    const supportedTopics = topicEntries.filter((topic) =>
+      topic.supportSessionIds.includes(session.id)
+    );
     const supportedFindingIds = uniqueStrings(
       supportedTopics.map((topic) => findingIdsByTopicId[topic.id]).filter(Boolean)
     );
@@ -332,11 +334,14 @@ function buildStakeholderLenses(
     groups.set(key, existing);
   });
 
-  const findingIdsByTopicId = topicEntries.reduce<Record<string, string | undefined>>((acc, topic) => {
-    const finding = findings.find((item) => item.source_key === topic.sourceKey);
-    acc[topic.id] = finding?.id;
-    return acc;
-  }, {});
+  const findingIdsByTopicId = topicEntries.reduce<Record<string, string | undefined>>(
+    (acc, topic) => {
+      const finding = findings.find((item) => item.source_key === topic.sourceKey);
+      acc[topic.id] = finding?.id;
+      return acc;
+    },
+    {}
+  );
 
   return Array.from(groups.entries()).map(([label, lenses]) => {
     const sessionIds = uniqueStrings(lenses.flatMap((lens) => lens.sessionIds));
@@ -362,7 +367,10 @@ function buildStakeholderLenses(
   });
 }
 
-function buildCells(topicEntries: TopicEntry[], lenses: InsightAnalysisLens[]): InsightAnalysisMatrixCell[] {
+function buildCells(
+  topicEntries: TopicEntry[],
+  lenses: InsightAnalysisLens[]
+): InsightAnalysisMatrixCell[] {
   return topicEntries.flatMap((topic) =>
     lenses.map((lens) => {
       const supportingSessionIds = topic.supportSessionIds.filter((sessionId) =>
@@ -398,16 +406,26 @@ function buildCoverageGaps(params: {
   const { insight, sourceSessions, stakeholderLenses, topicEntries } = params;
   const gaps = [...(insight.missingData || [])];
   if (sourceSessions.some((session) => !String(session.job_title || '').trim())) {
-    gaps.push('Some source sessions are missing role metadata, which narrows stakeholder analysis.');
+    gaps.push(
+      'Some source sessions are missing role metadata, which narrows stakeholder analysis.'
+    );
   }
   if (sourceSessions.some((session) => !String(session.department || '').trim())) {
-    gaps.push('Some source sessions are missing department metadata, which limits cross-functional analysis.');
+    gaps.push(
+      'Some source sessions are missing department metadata, which limits cross-functional analysis.'
+    );
   }
   if (stakeholderLenses.length <= 1 && sourceSessions.length > 1) {
-    gaps.push('Most respondents currently collapse into one stakeholder lens; wide comparison remains limited.');
+    gaps.push(
+      'Most respondents currently collapse into one stakeholder lens; wide comparison remains limited.'
+    );
   }
-  if (topicEntries.some((topic) => !topic.crossSessionPattern && topic.supportSessionIds.length <= 1)) {
-    gaps.push('Several topics are still local-only signals and should not be treated as organization-wide truth.');
+  if (
+    topicEntries.some((topic) => !topic.crossSessionPattern && topic.supportSessionIds.length <= 1)
+  ) {
+    gaps.push(
+      'Several topics are still local-only signals and should not be treated as organization-wide truth.'
+    );
   }
   return uniqueStrings(gaps);
 }
@@ -422,10 +440,11 @@ export async function buildInsightAnalysis(insightId: string): Promise<InsightAn
     ...(insight.themes || []).flatMap((theme) => theme.evidence_refs || []),
     ...(insight.issues || []).flatMap((issue) => issue.evidence_refs || []),
     ...(insight.opportunities || []).flatMap((opportunity) => opportunity.evidence_refs || []),
-    ...findings.flatMap((finding) =>
-      (finding.evidence_pointers || [])
-        .map((pointer) => parsePointerAnswerId(pointer.sourceRef))
-        .filter(Boolean) as string[]
+    ...findings.flatMap(
+      (finding) =>
+        (finding.evidence_pointers || [])
+          .map((pointer) => parsePointerAnswerId(pointer.sourceRef))
+          .filter(Boolean) as string[]
     ),
   ]);
   const answerSessionMap = await loadAnswerSessionMap(answerIds);
@@ -435,14 +454,14 @@ export async function buildInsightAnalysis(insightId: string): Promise<InsightAn
 
   const topics: InsightAnalysisTopic[] = topicEntries.map((topic) => {
     const finding = findings.find((item) => item.source_key === topic.sourceKey);
-    const supportingStakeholderLabels = uniqueStrings(
-      [
-        ...topic.perspectiveLabels,
-        ...stakeholderLenses
-        .filter((lens) => topic.supportSessionIds.some((sessionId) => lens.sessionIds.includes(sessionId)))
+    const supportingStakeholderLabels = uniqueStrings([
+      ...topic.perspectiveLabels,
+      ...stakeholderLenses
+        .filter((lens) =>
+          topic.supportSessionIds.some((sessionId) => lens.sessionIds.includes(sessionId))
+        )
         .map((lens) => lens.label),
-      ]
-    );
+    ]);
     return {
       id: topic.id,
       sourceKey: topic.sourceKey,
@@ -467,12 +486,13 @@ export async function buildInsightAnalysis(insightId: string): Promise<InsightAn
   const roles = uniqueStrings(sourceSessions.map((session) => session.job_title));
   const departments = uniqueStrings(sourceSessions.map((session) => session.department));
   const stakeholderLabels = stakeholderLenses.map((lens) => lens.label);
-  const posture: InsightAnalysisScope['posture'] =
-    topics.some((topic) => topic.crossSessionPattern && topic.supportingStakeholderLabels.length > 1)
-      ? 'organization_synthesis'
-      : sourceSessions.length > 1
-        ? 'cross_perspective'
-        : 'single_perspective';
+  const posture: InsightAnalysisScope['posture'] = topics.some(
+    (topic) => topic.crossSessionPattern && topic.supportingStakeholderLabels.length > 1
+  )
+    ? 'organization_synthesis'
+    : sourceSessions.length > 1
+      ? 'cross_perspective'
+      : 'single_perspective';
 
   return {
     insightId,

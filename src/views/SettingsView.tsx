@@ -236,6 +236,10 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   );
 
   useEffect(() => {
+    if (location.pathname.replace(/\/+$/, '') === ROUTES.SETTINGS.ROOT) {
+      navigate(ROUTES.SETTINGS.PROFILE, { replace: true });
+      return;
+    }
     const redirectTarget = resolveLegacySyncSettingsEntry(location.pathname, currentUser?.role);
     if (!redirectTarget) return;
     navigate(redirectTarget, { replace: true });

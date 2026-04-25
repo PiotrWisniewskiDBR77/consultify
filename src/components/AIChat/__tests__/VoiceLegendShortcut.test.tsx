@@ -154,7 +154,7 @@ describe('VoiceLegendShortcut', () => {
     const ev = fireKey({ altKey: true, shiftKey: true, key: 'v' });
     expect(ev.defaultPrevented).toBe(true);
     expect(trackFunnelEventMock).toHaveBeenCalledWith('voice_mode_legend_shortcut', {});
-    const dispatched = dispatchSpy.mock.calls.find(
+    const dispatched = (dispatchSpy.mock.calls as [Event][]).find(
       ([call]) => call instanceof Event && call.type === VOICE_LEGEND_OPEN_EVENT
     );
     expect(dispatched).toBeTruthy();
@@ -164,7 +164,7 @@ describe('VoiceLegendShortcut', () => {
     render(<VoiceLegendShortcut isEnabled={() => false} />);
     fireKey({ altKey: true, shiftKey: true, key: 'v' });
     expect(trackFunnelEventMock).not.toHaveBeenCalled();
-    const dispatched = dispatchSpy.mock.calls.find(
+    const dispatched = (dispatchSpy.mock.calls as [Event][]).find(
       ([call]) => call instanceof Event && call.type === VOICE_LEGEND_OPEN_EVENT
     );
     expect(dispatched).toBeFalsy();
@@ -205,7 +205,7 @@ describe('VoiceLegendShortcut', () => {
     });
     render(<VoiceLegendShortcut isEnabled={() => true} />);
     fireKey({ altKey: true, shiftKey: true, key: 'v' });
-    const dispatched = dispatchSpy.mock.calls.find(
+    const dispatched = (dispatchSpy.mock.calls as [Event][]).find(
       ([call]) => call instanceof Event && call.type === VOICE_LEGEND_OPEN_EVENT
     );
     expect(dispatched).toBeTruthy();

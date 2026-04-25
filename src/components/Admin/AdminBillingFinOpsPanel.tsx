@@ -14,6 +14,11 @@ const tabs: Array<{ id: TabId; label: string }> = [
   { id: 'controls', label: 'Budgets & tax' },
 ];
 
+const DEFAULT_BILLING_ALERTS = [
+  { id: 'default-tokens', type: 'tokens', threshold: 80, isActive: true },
+  { id: 'default-spend', type: 'spend', threshold: 75, isActive: true },
+];
+
 export const AdminBillingFinOpsPanel: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabId>('summary');
   const [summary, setSummary] = useState<any>(null);
@@ -39,7 +44,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
         setSummary(summaryResult);
         setPaymentMethods(paymentResult?.paymentMethods || []);
         setInvoices(invoiceResult?.invoices || []);
-        setAlerts(alertResult?.alerts || []);
+        const nextAlerts = Array.isArray(alertResult?.alerts) ? alertResult.alerts : [];
+        setAlerts(nextAlerts.length > 0 ? nextAlerts : DEFAULT_BILLING_ALERTS);
         setTaxSettings(taxResult?.settings || taxResult);
         setUsageDetails(usageResult?.summary || usageResult);
       } catch (error: any) {
@@ -51,9 +57,14 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
   }, []);
 
   const addPaymentMethod = async () => {
-    if (!newPaymentMethodId.trim()) return;
+    if (!newPaymentMethodId.trim()) {
+      toast.error('Enter a payment method id, for example pm_demo_4242');
+      return;
+    }
     try {
-      const result = await Api.addAdminBillingPaymentMethod({ paymentMethodId: newPaymentMethodId.trim() });
+      const result = await Api.addAdminBillingPaymentMethod({
+        paymentMethodId: newPaymentMethodId.trim(),
+      });
       setPaymentMethods((current) => [result?.paymentMethod, ...current].filter(Boolean));
       setNewPaymentMethodId('');
       toast.success('Payment method added');
@@ -132,7 +143,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
                     {method.brand || 'Card'} ending in {method.last4}
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
-                    Expires {method.exp_month}/{method.exp_year} {method.is_default ? '| Default' : ''}
+                    Expires {method.exp_month}/{method.exp_year}{' '}
+                    {method.is_default ? '| Default' : ''}
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -174,17 +186,25 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {invoices.map((invoice) => (
-                <tr key={invoice.id}>
-                  <td className="py-3 pr-4 text-slate-900 dark:text-white">
-                    {invoice.invoice_number || invoice.id}
+              {invoices.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-500 dark:text-slate-400">
+                    No invoices yet for this workspace.
                   </td>
-                  <td className="py-3 pr-4">{invoice.status || '-'}</td>
-                  <td className="py-3 pr-4">{invoice.amount_due || 0}</td>
-                  <td className="py-3 pr-4">{invoice.amount_paid || 0}</td>
-                  <td className="py-3">{invoice.due_date || '-'}</td>
                 </tr>
-              ))}
+              ) : (
+                invoices.map((invoice) => (
+                  <tr key={invoice.id}>
+                    <td className="py-3 pr-4 text-slate-900 dark:text-white">
+                      {invoice.invoice_number || invoice.id}
+                    </td>
+                    <td className="py-3 pr-4">{invoice.status || '-'}</td>
+                    <td className="py-3 pr-4">{invoice.amount_due || 0}</td>
+                    <td className="py-3 pr-4">{invoice.amount_paid || 0}</td>
+                    <td className="py-3">{invoice.due_date || '-'}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -204,7 +224,9 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
                   onChange={(event) =>
                     setAlerts((current) =>
                       current.map((item, itemIndex) =>
-                        itemIndex === index ? { ...item, threshold: Number(event.target.value || 0) } : item
+                        itemIndex === index
+                          ? { ...item, threshold: Number(event.target.value || 0) }
+                          : item
                       )
                     )
                   }
@@ -221,7 +243,9 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
           </div>
 
           <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-white/10">
-            <div className="text-sm font-semibold text-slate-900 dark:text-white">Tax and invoicing</div>
+            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+              Tax and invoicing
+            </div>
             <input
               type="text"
               value={taxSettings?.company?.legalName || ''}
@@ -321,8 +345,8 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
           Billing, FinOps, and commercial controls
         </div>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          P32 now exposes subscriptions, payment methods, invoices, budgets, tax settings, and
-          usage posture as first-class tenant admin capabilities.
+          P32 now exposes subscriptions, payment methods, invoices, budgets, tax settings, and usage
+          posture as first-class tenant admin capabilities.
         </p>
       </div>
       <div className="rounded-2xl border border-slate-200 bg-white p-2 dark:border-white/10 dark:bg-white/5">

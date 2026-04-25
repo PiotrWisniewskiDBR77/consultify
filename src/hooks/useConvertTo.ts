@@ -35,7 +35,11 @@ export interface UseConvertToReturn {
   sources: MyWorkDerivedSource[];
 }
 
-function navigateToOutput(navigate: ReturnType<typeof useNavigate>, targetType: string, outputId: string) {
+function navigateToOutput(
+  navigate: ReturnType<typeof useNavigate>,
+  targetType: string,
+  outputId: string
+) {
   const id = encodeURIComponent(outputId);
   const routes: Record<string, string> = {
     initiative: `/initiatives?open=${id}&mode=doc`,

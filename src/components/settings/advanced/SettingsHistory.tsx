@@ -62,7 +62,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = ({ currentUser })
       );
 
       if (response?.entries) {
-        setEntries(response.entries);
+        setEntries(response.entries as HistoryEntry[]);
       }
     } catch (error) {
       console.error('Error loading history:', error);

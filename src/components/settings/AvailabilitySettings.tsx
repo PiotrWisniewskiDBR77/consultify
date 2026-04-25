@@ -6,15 +6,7 @@
  * Section 2: Scheduled Quiet Hours (recurring schedule + exceptions + auto-reply)
  */
 
-import {
-  AlertTriangle,
-  Bell,
-  BellOff,
-  Clock,
-  MessageCircle,
-  Moon,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, Bell, BellOff, Clock, MessageCircle, Moon, X } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -35,26 +27,43 @@ interface DndPreferences {
 }
 
 const DND_PRESETS = [
-  { labelKey: 'dnd.preset1h', label: '1 hour', hours: 1 },
-  { labelKey: 'dnd.preset2h', label: '2 hours', hours: 2 },
-  { labelKey: 'dnd.preset4h', label: '4 hours', hours: 4 },
-  { labelKey: 'dnd.presetTomorrow', label: 'Until tomorrow 9 AM', hours: null as number | null, untilTomorrow: true },
+  { labelKey: 'preset1h', label: '1 hour', hours: 1 },
+  { labelKey: 'preset2h', label: '2 hours', hours: 2 },
+  { labelKey: 'preset4h', label: '4 hours', hours: 4 },
+  {
+    labelKey: 'presetTomorrow',
+    label: 'Until tomorrow 9 AM',
+    hours: null as number | null,
+    untilTomorrow: true,
+  },
 ] as const;
 
 const DAYS_OF_WEEK = [
-  { value: 0, label: 'Sun', fullLabel: 'Sunday' },
-  { value: 1, label: 'Mon', fullLabel: 'Monday' },
-  { value: 2, label: 'Tue', fullLabel: 'Tuesday' },
-  { value: 3, label: 'Wed', fullLabel: 'Wednesday' },
-  { value: 4, label: 'Thu', fullLabel: 'Thursday' },
-  { value: 5, label: 'Fri', fullLabel: 'Friday' },
-  { value: 6, label: 'Sat', fullLabel: 'Saturday' },
+  { value: 0, key: 'sun', label: 'Sun', fullLabel: 'Sunday' },
+  { value: 1, key: 'mon', label: 'Mon', fullLabel: 'Monday' },
+  { value: 2, key: 'tue', label: 'Tue', fullLabel: 'Tuesday' },
+  { value: 3, key: 'wed', label: 'Wed', fullLabel: 'Wednesday' },
+  { value: 4, key: 'thu', label: 'Thu', fullLabel: 'Thursday' },
+  { value: 5, key: 'fri', label: 'Fri', fullLabel: 'Friday' },
+  { value: 6, key: 'sat', label: 'Sat', fullLabel: 'Saturday' },
 ];
 
 const QUIET_PRESETS = [
-  { key: 'nights', label: 'Nights (10pm–8am)', start: '22:00', end: '08:00', days: [0, 1, 2, 3, 4, 5, 6] },
+  {
+    key: 'nights',
+    label: 'Nights (10pm–8am)',
+    start: '22:00',
+    end: '08:00',
+    days: [0, 1, 2, 3, 4, 5, 6],
+  },
   { key: 'weekends', label: 'Weekends only', start: '00:00', end: '23:59', days: [0, 6] },
-  { key: 'afterWork', label: 'After work (6pm–9am, weekdays)', start: '18:00', end: '09:00', days: [1, 2, 3, 4, 5] },
+  {
+    key: 'afterWork',
+    label: 'After work (6pm–9am, weekdays)',
+    start: '18:00',
+    end: '09:00',
+    days: [1, 2, 3, 4, 5],
+  },
 ] as const;
 
 export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
@@ -89,8 +98,8 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
 
   useEffect(() => {
     const dirty =
-      JSON.stringify({ enabled: dndEnabled, until: dndUntil || null }) !== JSON.stringify(originalDnd) ||
-      JSON.stringify(quietHours) !== JSON.stringify(originalQuiet);
+      JSON.stringify({ enabled: dndEnabled, until: dndUntil || null }) !==
+        JSON.stringify(originalDnd) || JSON.stringify(quietHours) !== JSON.stringify(originalQuiet);
     setIsDirty(dirty);
   }, [dndEnabled, dndUntil, quietHours, originalDnd, originalQuiet]);
 
@@ -131,8 +140,23 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
         }),
         Api.put('/settings/preferences/quietHours', quietHours),
       ]);
-      setOriginalDnd({ enabled: dndEnabled, until: dndUntil || null });
-      setOriginalQuiet({ ...quietHours });
+      const [dndRes, qhRes] = await Promise.all([
+        Api.get('/settings/notifications/dnd').catch(() => null),
+        Api.get('/settings/preferences/quietHours').catch(() => null),
+      ]);
+      const nextDnd =
+        dndRes && typeof dndRes === 'object'
+          ? ({
+              enabled: (dndRes as Partial<DndPreferences>).enabled ?? false,
+              until: (dndRes as Partial<DndPreferences>).until || null,
+            } satisfies DndPreferences)
+          : { enabled: dndEnabled, until: dndUntil || null };
+      const nextQuiet = qhRes?.preferences ? (qhRes.preferences as QuietHoursType) : quietHours;
+      setDndEnabled(nextDnd.enabled);
+      setDndUntil(nextDnd.until || '');
+      setQuietHours(nextQuiet);
+      setOriginalDnd(nextDnd);
+      setOriginalQuiet(nextQuiet);
       toast.success(t('settings.availability.saved', 'Availability settings saved'));
     } catch (err) {
       toast.error(t('settings.availability.error', 'Failed to save availability settings'));
@@ -142,7 +166,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
   }, [dndEnabled, dndUntil, quietHours, t]);
 
   // --- DND preset handler ---
-  const handleDndPreset = (preset: typeof DND_PRESETS[number]) => {
+  const handleDndPreset = (preset: (typeof DND_PRESETS)[number]) => {
     const now = new Date();
     let until: Date;
     if ('untilTomorrow' in preset && preset.untilTomorrow) {
@@ -171,7 +195,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
     }));
   };
 
-  const applyQuietPreset = (preset: typeof QUIET_PRESETS[number]) => {
+  const applyQuietPreset = (preset: (typeof QUIET_PRESETS)[number]) => {
     setQuietHours((prev) => ({
       ...prev,
       enabled: true,
@@ -215,7 +239,8 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
     );
 
   const cardClass = 'bg-navy-900/30 border border-white/5 rounded-lg p-5';
-  const sectionLabel = 'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
+  const sectionLabel =
+    'text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2 mb-4';
   const inputClass =
     'w-full px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white focus:ring-2 focus:ring-violet-500/50 outline-none transition-all';
 
@@ -332,7 +357,10 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
             checked={quietHours.enabled}
             onChange={(val) => setQuietHours((prev) => ({ ...prev, enabled: val }))}
             label={t('settings.availability.enableQuiet', 'Enable Quiet Hours')}
-            description={t('settings.availability.enableQuietDesc', 'Pause notifications during scheduled times')}
+            description={t(
+              'settings.availability.enableQuietDesc',
+              'Pause notifications during scheduled times'
+            )}
           />
 
           {quietHours.enabled && (
@@ -351,7 +379,9 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
                     <input
                       type="time"
                       value={quietHours.startTime}
-                      onChange={(e) => setQuietHours((prev) => ({ ...prev, startTime: e.target.value }))}
+                      onChange={(e) =>
+                        setQuietHours((prev) => ({ ...prev, startTime: e.target.value }))
+                      }
                       className={inputClass}
                     />
                   </div>
@@ -362,7 +392,9 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
                     <input
                       type="time"
                       value={quietHours.endTime}
-                      onChange={(e) => setQuietHours((prev) => ({ ...prev, endTime: e.target.value }))}
+                      onChange={(e) =>
+                        setQuietHours((prev) => ({ ...prev, endTime: e.target.value }))
+                      }
                       className={inputClass}
                     />
                   </div>
@@ -377,7 +409,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
                     <button
                       key={day.value}
                       onClick={() => toggleDay(day.value)}
-                      title={day.fullLabel}
+                      title={t(`settings.availability.days.${day.key}.full`, day.fullLabel)}
                       className={cn(
                         'px-3 py-1.5 rounded-lg text-sm font-medium transition-all border',
                         quietHours.daysOfWeek.includes(day.value)
@@ -385,7 +417,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
                           : 'bg-navy-800/50 text-slate-400 border-white/5 hover:border-white/20'
                       )}
                     >
-                      {day.label}
+                      {t(`settings.availability.days.${day.key}.short`, day.label)}
                     </button>
                   ))}
                 </div>
@@ -411,26 +443,40 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
                   {t('settings.availability.exceptions', 'Exceptions')}
                 </h5>
                 <p className="text-xs text-slate-500 mb-4">
-                  {t('settings.availability.exceptionsDesc', 'Allow certain notifications even during quiet hours')}
+                  {t(
+                    'settings.availability.exceptionsDesc',
+                    'Allow certain notifications even during quiet hours'
+                  )}
                 </p>
                 <div className="space-y-3">
                   <SettingsToggle
                     checked={quietHours.allowUrgent}
                     onChange={(val) => setQuietHours((prev) => ({ ...prev, allowUrgent: val }))}
                     label={t('settings.availability.allowUrgent', 'Allow urgent notifications')}
-                    description={t('settings.availability.allowUrgentDesc', 'High-priority alerts will still come through')}
+                    description={t(
+                      'settings.availability.allowUrgentDesc',
+                      'High-priority alerts will still come through'
+                    )}
                   />
                   <SettingsToggle
                     checked={quietHours.allowMentions}
                     onChange={(val) => setQuietHours((prev) => ({ ...prev, allowMentions: val }))}
                     label={t('settings.availability.allowMentions', 'Allow @mentions')}
-                    description={t('settings.availability.allowMentionsDesc', 'Get notified when someone mentions you')}
+                    description={t(
+                      'settings.availability.allowMentionsDesc',
+                      'Get notified when someone mentions you'
+                    )}
                   />
                   <SettingsToggle
                     checked={quietHours.allowDirectMessages}
-                    onChange={(val) => setQuietHours((prev) => ({ ...prev, allowDirectMessages: val }))}
+                    onChange={(val) =>
+                      setQuietHours((prev) => ({ ...prev, allowDirectMessages: val }))
+                    }
                     label={t('settings.availability.allowDMs', 'Allow direct messages')}
-                    description={t('settings.availability.allowDMsDesc', 'Private messages will still notify you')}
+                    description={t(
+                      'settings.availability.allowDMsDesc',
+                      'Private messages will still notify you'
+                    )}
                   />
                 </div>
               </div>
@@ -445,7 +491,10 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
                   checked={quietHours.autoReplyEnabled}
                   onChange={(val) => setQuietHours((prev) => ({ ...prev, autoReplyEnabled: val }))}
                   label={t('settings.availability.enableAutoReply', 'Enable auto-reply')}
-                  description={t('settings.availability.enableAutoReplyDesc', 'Automatically respond to messages during quiet hours')}
+                  description={t(
+                    'settings.availability.enableAutoReplyDesc',
+                    'Automatically respond to messages during quiet hours'
+                  )}
                 />
                 {quietHours.autoReplyEnabled && (
                   <div className="mt-3">
@@ -454,7 +503,9 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
                     </label>
                     <textarea
                       value={quietHours.autoReplyMessage}
-                      onChange={(e) => setQuietHours((prev) => ({ ...prev, autoReplyMessage: e.target.value }))}
+                      onChange={(e) =>
+                        setQuietHours((prev) => ({ ...prev, autoReplyMessage: e.target.value }))
+                      }
                       placeholder={t(
                         'settings.availability.autoReplyPlaceholder',
                         "I'm currently unavailable. I'll respond when I return."

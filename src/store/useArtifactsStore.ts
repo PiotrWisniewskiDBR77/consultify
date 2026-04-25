@@ -238,31 +238,36 @@ export const parseArtifactsFromResponse = (response: string): Artifact[] => {
   const artifacts: Artifact[] = [];
   const processedPositions = new Set<number>(); // Track positions to avoid duplicates
 
+  const normalizeArtifactType = (type: string): Artifact['type'] | null => {
+    const normalized = type === 'comparison' ? 'comparison-matrix' : type;
+    return isValidArtifactType(normalized) ? (normalized as Artifact['type']) : null;
+  };
+
   // Pattern for artifact blocks with language: ```artifact:type:language:title\ncontent\n```
-  const artifactPatternWithLang = /```artifact:(\w+):(\w+):([^\n]+)\n([\s\S]*?)```/g;
+  const artifactPatternWithLang = /```artifact:([\w-]+):(\w+):([^\n]+)\n([\s\S]*?)```/g;
   let match;
 
   while ((match = artifactPatternWithLang.exec(response)) !== null) {
     const [, type, language, title, content] = match;
-    if (isValidArtifactType(type)) {
+    const artifactType = normalizeArtifactType(type);
+    if (artifactType) {
       processedPositions.add(match.index);
-      artifacts.push(
-        createArtifact(type as Artifact['type'], title.trim(), content.trim(), { language })
-      );
+      artifacts.push(createArtifact(artifactType, title.trim(), content.trim(), { language }));
     }
   }
 
   // Pattern for artifact blocks without language: ```artifact:type:title\ncontent\n```
-  const artifactPattern = /```artifact:(\w+):([^\n]+)\n([\s\S]*?)```/g;
+  const artifactPattern = /```artifact:([\w-]+):([^\n]+)\n([\s\S]*?)```/g;
 
   while ((match = artifactPattern.exec(response)) !== null) {
     // Skip if already processed by language pattern
     if (processedPositions.has(match.index)) continue;
 
     const [, type, title, content] = match;
-    if (isValidArtifactType(type)) {
+    const artifactType = normalizeArtifactType(type);
+    if (artifactType) {
       processedPositions.add(match.index);
-      artifacts.push(createArtifact(type as Artifact['type'], title.trim(), content.trim()));
+      artifacts.push(createArtifact(artifactType, title.trim(), content.trim()));
     }
   }
 
@@ -317,6 +322,13 @@ export const parseArtifactsFromResponse = (response: string): Artifact[] => {
 
   return artifacts;
 };
+
+export const stripArtifactsFromResponse = (response: string): string =>
+  String(response || '')
+    .replace(/```artifact:[\w-]+(?::\w+)?:[^\n]+\n[\s\S]*?```/g, '')
+    .replace(/```json:artifact\n[\s\S]*?```/g, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
 const isValidArtifactType = (type: string): type is Artifact['type'] => {
   return [

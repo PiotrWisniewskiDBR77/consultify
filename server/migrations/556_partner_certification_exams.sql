@@ -38,7 +38,7 @@ ALTER TABLE partner_learning_modules
 
 -- Exam question bank (minimum 20 Q per language for sales certification)
 CREATE TABLE IF NOT EXISTS partner_exam_questions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
   certification_type TEXT NOT NULL, -- sales
   language TEXT NOT NULL DEFAULT 'en',
   question_text TEXT NOT NULL,
@@ -52,10 +52,10 @@ CREATE INDEX IF NOT EXISTS idx_partner_exam_questions_type_lang
 
 -- Attempts (audit)
 CREATE TABLE IF NOT EXISTS partner_certification_attempts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  certification_id UUID NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
-  partner_org_id UUID NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  certification_id TEXT NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
+  partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
   started_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   deadline_at TIMESTAMP WITH TIME ZONE NOT NULL,
   submitted_at TIMESTAMP WITH TIME ZONE,
@@ -75,15 +75,15 @@ CREATE INDEX IF NOT EXISTS idx_partner_cert_attempts_org_user_time
 
 -- Certificates (revocable)
 CREATE TABLE IF NOT EXISTS partner_certificates (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  partner_org_id UUID NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL,
-  certification_id UUID NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+  partner_org_id TEXT NOT NULL REFERENCES partner_organizations(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,
+  certification_id TEXT NOT NULL REFERENCES partner_certifications(id) ON DELETE CASCADE,
   certificate_type TEXT NOT NULL, -- sales
   earned_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   expires_at TIMESTAMP WITH TIME ZONE,
   revoked_at TIMESTAMP WITH TIME ZONE,
-  revoked_by UUID,
+  revoked_by TEXT,
   revoke_reason TEXT,
   share_token TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()

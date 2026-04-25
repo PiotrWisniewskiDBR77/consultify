@@ -64,6 +64,39 @@ const JOB_TITLE_SUGGESTIONS = [
   'Other',
 ];
 
+const JOB_TITLE_I18N_KEYS: Record<string, string> = {
+  CEO: 'ceo',
+  CTO: 'cto',
+  CFO: 'cfo',
+  COO: 'coo',
+  CMO: 'cmo',
+  'VP of Engineering': 'vpEngineering',
+  'VP of Product': 'vpProduct',
+  'VP of Operations': 'vpOperations',
+  Director: 'director',
+  'Senior Manager': 'seniorManager',
+  Manager: 'manager',
+  'Project Manager': 'projectManager',
+  'Product Manager': 'productManager',
+  'Program Manager': 'programManager',
+  'Team Lead': 'teamLead',
+  'Tech Lead': 'techLead',
+  'Engineering Lead': 'engineeringLead',
+  'Senior Developer': 'seniorDeveloper',
+  Developer: 'developer',
+  'Software Engineer': 'softwareEngineer',
+  'Business Analyst': 'businessAnalyst',
+  'Data Analyst': 'dataAnalyst',
+  'Data Scientist': 'dataScientist',
+  Consultant: 'consultant',
+  'Senior Consultant': 'seniorConsultant',
+  'Principal Consultant': 'principalConsultant',
+  Designer: 'designer',
+  'UX Designer': 'uxDesigner',
+  'Product Designer': 'productDesigner',
+  Other: 'other',
+};
+
 // Common timezones
 const COMMON_TIMEZONES = [
   { value: 'Europe/Warsaw', label: 'Warsaw (CET/CEST)' },
@@ -213,13 +246,20 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     outOfOfficeMessage: currentUser.outOfOfficeMessage || '',
   });
 
+  const getJobTitleLabel = (title: string) =>
+    t(`settings.profile.jobTitleSuggestions.${JOB_TITLE_I18N_KEYS[title] || 'other'}`, title);
+  const formatI18nKey = (value: string) =>
+    value.replace(/\//g, '_slash_').replace(/\./g, '_dot_').replace(/-/g, '_dash_');
+
   // Filter job title suggestions
   const filteredJobTitles = useMemo(() => {
     if (!formState.jobTitle) return JOB_TITLE_SUGGESTIONS;
-    return JOB_TITLE_SUGGESTIONS.filter((title) =>
-      title.toLowerCase().includes(formState.jobTitle.toLowerCase())
+    const query = formState.jobTitle.toLowerCase();
+    return JOB_TITLE_SUGGESTIONS.filter(
+      (title) =>
+        title.toLowerCase().includes(query) || getJobTitleLabel(title).toLowerCase().includes(query)
     );
-  }, [formState.jobTitle]);
+  }, [formState.jobTitle, t]);
 
   // Initial state sync
   useEffect(() => {
@@ -248,7 +288,8 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     setIsSaving(true);
     try {
       await Api.updateUser(currentUser.id, formState as any);
-      onUpdateUser(formState as any);
+      const persistedUser = await Api.getMe();
+      onUpdateUser((persistedUser || formState) as Partial<User>);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
     } catch (error) {
@@ -578,12 +619,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                           key={title}
                           type="button"
                           onClick={() => {
-                            setFormState({ ...formState, jobTitle: title });
+                            setFormState({ ...formState, jobTitle: getJobTitleLabel(title) });
                             setShowJobTitleSuggestions(false);
                           }}
                           className="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-purple-50 dark:hover:bg-purple-500/10 transition-colors"
                         >
-                          {title}
+                          {getJobTitleLabel(title)}
                         </button>
                       ))}
                     </div>
@@ -733,7 +774,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   >
                     {COMMON_TIMEZONES.map((tz) => (
                       <option key={tz.value} value={tz.value}>
-                        {tz.label}
+                        {t(`settings.profile.timezones.${tz.value}`, tz.label)}
                       </option>
                     ))}
                   </select>
@@ -755,7 +796,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 </div>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   {t('settings.profile.timezoneHint', 'Current local time:')}{' '}
-                  {new Date().toLocaleTimeString('en-US', {
+                  {new Date().toLocaleTimeString(undefined, {
                     timeZone: formState.timezone,
                     hour: '2-digit',
                     minute: '2-digit',
@@ -780,7 +821,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   >
                     {DATE_FORMATS.map((fmt) => (
                       <option key={fmt.value} value={fmt.value}>
-                        {fmt.label}
+                        {t(`settings.profile.dateFormats.${formatI18nKey(fmt.value)}`, fmt.label)}
                       </option>
                     ))}
                   </select>
@@ -825,7 +866,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                         onChange={(e) => setFormState({ ...formState, timeFormat: e.target.value })}
                         className="sr-only"
                       />
-                      <span className="text-sm font-medium">{fmt.label}</span>
+                      <span className="text-sm font-medium">
+                        {t(`settings.profile.timeFormats.${formatI18nKey(fmt.value)}`, fmt.label)}
+                      </span>
                     </label>
                   ))}
                 </div>

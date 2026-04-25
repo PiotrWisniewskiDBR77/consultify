@@ -1,4 +1,12 @@
-import { BadgeCheck, Building2, Globe2, MapPinned, ShieldCheck, Sparkles, Users } from 'lucide-react';
+import {
+  BadgeCheck,
+  Building2,
+  Globe2,
+  MapPinned,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import React from 'react';
 
 interface OrganizationV8CanonPanelProps {
@@ -10,25 +18,29 @@ const PILLARS = [
   {
     id: 'identity',
     title: 'Profile and branding',
-    description: 'Define who the organization is, how it presents itself, and the tenant identity others trust.',
+    description:
+      'Define who the organization is, how it presents itself, and the tenant identity others trust.',
     icon: Building2,
   },
   {
     id: 'ownership',
     title: 'Ownership and lifecycle',
-    description: 'Make ownership, roles, invitations, and tenant continuity explicit rather than implicit.',
+    description:
+      'Make ownership, roles, invitations, and tenant continuity explicit rather than implicit.',
     icon: Users,
   },
   {
     id: 'regional',
     title: 'Regional and fiscal defaults',
-    description: 'Country, currency, language, and fiscal assumptions should govern downstream runtime behavior.',
+    description:
+      'Country, currency, language, and fiscal assumptions should govern downstream runtime behavior.',
     icon: MapPinned,
   },
   {
     id: 'trust',
     title: 'Domains and trust controls',
-    description: 'Approved domains and related controls make the tenant boundary visible and enforceable.',
+    description:
+      'Approved domains and related controls make the tenant boundary visible and enforceable.',
     icon: ShieldCheck,
   },
 ];
@@ -56,13 +68,17 @@ export const OrganizationV8CanonPanel: React.FC<OrganizationV8CanonPanelProps> =
           >
             One canonical tenant organization product
           </h2>
-          <p className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}>
+          <p
+            className={`mt-2 max-w-3xl text-slate-600 dark:text-slate-400 ${compact ? 'text-sm' : 'text-base'}`}
+          >
             Organization should define identity, operating defaults, trust boundaries, and reusable
             tenant context before wider settings and admin surfaces branch out.
           </p>
         </div>
 
-        <div className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.35fr_0.9fr]'}`}>
+        <div
+          className={`grid gap-4 ${compact ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-[1.35fr_0.9fr]'}`}
+        >
           <div className="rounded-2xl border border-slate-200/80 dark:border-navy-700 bg-slate-50/90 dark:bg-navy-950/70 p-4">
             <div className="mb-4 text-sm font-semibold text-slate-900 dark:text-white">
               Canonical organization model
@@ -96,9 +112,18 @@ export const OrganizationV8CanonPanel: React.FC<OrganizationV8CanonPanelProps> =
             </div>
             <div className="space-y-3">
               {[
-                { icon: Sparkles, text: 'AI context and assistance should inherit org identity, language, and operating defaults.' },
-                { icon: Globe2, text: 'Partner, sync, and external trust surfaces should reuse domains, locale, and tenant metadata.' },
-                { icon: ShieldCheck, text: 'Admin and settings layers should extend organization truth, not duplicate or redefine it.' },
+                {
+                  icon: Sparkles,
+                  text: 'AI context and assistance should inherit org identity, language, and operating defaults.',
+                },
+                {
+                  icon: Globe2,
+                  text: 'Partner, sync, and external trust surfaces should reuse domains, locale, and tenant metadata.',
+                },
+                {
+                  icon: ShieldCheck,
+                  text: 'Admin and settings layers should extend organization truth, not duplicate or redefine it.',
+                },
               ].map((item) => {
                 const Icon = item.icon;
                 return (

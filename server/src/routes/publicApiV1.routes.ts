@@ -21,7 +21,10 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 const router = Router();
 const TaskController = TaskControllerRaw as any;
 
-function requireApiKeyActor(req: any, res: Response): { userId: string; organizationId: string } | null {
+function requireApiKeyActor(
+  req: any,
+  res: Response
+): { userId: string; organizationId: string } | null {
   const userId = String(req.userId || '').trim();
   const organizationId = String(req.organizationId || '').trim();
   if (!organizationId) {
@@ -44,7 +47,6 @@ function attachUserContext(req: any): void {
   // Many controllers expect `req.user` with id + organizationId.
   // We keep the shape minimal and let downstream enforce RBAC where applicable.
   req.user = { id: req.userId, organizationId: req.organizationId };
-  req.organizationId = req.organizationId;
 }
 
 router.use(apiKeyAuth);
@@ -73,8 +75,14 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const actor = requireApiKeyActor(req as any, res);
     if (!actor) return;
-    const sources = await calendarInteropService.getCalendarSources(actor.organizationId, actor.userId);
-    res.json({ data: sources, meta: { version: 'public-v1', contract: 'po1_calendar_sources_v1' } });
+    const sources = await calendarInteropService.getCalendarSources(
+      actor.organizationId,
+      actor.userId
+    );
+    res.json({
+      data: sources,
+      meta: { version: 'public-v1', contract: 'po1_calendar_sources_v1' },
+    });
   })
 );
 
@@ -106,7 +114,9 @@ router.post(
       permissionGradient,
     });
 
-    res.status(201).json({ data: source, meta: { version: 'public-v1', contract: 'po1_calendar_sources_v1' } });
+    res
+      .status(201)
+      .json({ data: source, meta: { version: 'public-v1', contract: 'po1_calendar_sources_v1' } });
   })
 );
 
@@ -122,7 +132,9 @@ router.get(
     const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 250) : 50;
 
     if (!sourceId) {
-      res.status(400).json({ error: 'sourceId is required', code: 'PO1_CALENDAR_SOURCE_ID_REQUIRED' });
+      res
+        .status(400)
+        .json({ error: 'sourceId is required', code: 'PO1_CALENDAR_SOURCE_ID_REQUIRED' });
       return;
     }
 
@@ -138,4 +150,3 @@ router.get(
 );
 
 export default router;
-

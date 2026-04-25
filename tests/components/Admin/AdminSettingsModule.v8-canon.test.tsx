@@ -102,8 +102,8 @@ describe('AdminSettingsModule v8 canon', () => {
   it('shows the canonical tenant operator cockpit above admin content', async () => {
     render(<AdminSettingsModule currentUser={{ id: 'user-1', email: 'user@example.com' } as any} />);
 
-    expect(await screen.findByText('One tenant operator cockpit')).toBeInTheDocument();
-    expect(screen.getByText('Canonical admin system')).toBeInTheDocument();
-    expect(screen.getByText('OrganizationProfileForm')).toBeInTheDocument();
+    expect(await screen.findByText('People & Access')).toBeInTheDocument();
+    expect(screen.getByText(/Membership operations/)).toBeInTheDocument();
+    expect(screen.getByText('AdminSettingsSidebar')).toBeInTheDocument();
   });
 });

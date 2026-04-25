@@ -168,7 +168,10 @@ describe('virtualWorkerKnowledgeService locale-aware retrieval quality', () => {
     ]);
 
     const hitsByDocumentId = new Map([
-      ['vector-doc', { documentId: 'vector-doc', content: 'Vector worker context', similarity: 0.8 }],
+      [
+        'vector-doc',
+        { documentId: 'vector-doc', content: 'Vector worker context', similarity: 0.8 },
+      ],
       ['iris-doc', { documentId: 'iris-doc', content: 'IRIS worker context', similarity: 0.95 }],
       [
         'consultify-doc',

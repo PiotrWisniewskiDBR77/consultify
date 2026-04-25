@@ -333,13 +333,13 @@ export const InvoiceCenterView: React.FC = () => {
     setCreatingInvoice(true);
     try {
       const dueDate = newInvoice.dueDate ? `${newInvoice.dueDate}T00:00:00.000Z` : undefined;
-      await Api.post('/billing/invoices', {
+      await Api.post('/superadmin/invoices', {
         organizationId: newInvoice.organizationId.trim(),
         lineItems: [
           {
             description: newInvoice.description.trim(),
-            amount: Math.round(newInvoice.amount * 100),
             quantity: 1,
+            unitPrice: newInvoice.amount,
           },
         ],
         currency: newInvoice.currency,
@@ -1175,32 +1175,23 @@ export const InvoiceCenterView: React.FC = () => {
       {/* Tabs */}
       <div className="flex items-center gap-1 bg-slate-100 dark:bg-navy-900 p-1 rounded-lg w-fit overflow-x-auto">
         {[
-          { id: 'invoices', label: 'Invoices', icon: <Receipt size={16} />, disabled: false },
-          { id: 'credits', label: 'Credit Notes', icon: <CreditCard size={16} />, disabled: false },
-          { id: 'tax', label: 'Tax Settings', icon: <FileText size={16} />, disabled: false },
-          { id: 'usage', label: 'Usage Billing', icon: <TrendingUp size={16} />, disabled: false },
-          { id: 'templates', label: 'Templates', icon: <FileText size={16} />, disabled: false },
+          { id: 'invoices', label: 'Invoices', icon: <Receipt size={16} /> },
+          { id: 'credits', label: 'Credit Notes', icon: <CreditCard size={16} /> },
+          { id: 'tax', label: 'Tax Settings', icon: <FileText size={16} /> },
+          { id: 'usage', label: 'Usage Billing', icon: <TrendingUp size={16} /> },
+          { id: 'templates', label: 'Templates', icon: <FileText size={16} /> },
         ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => !tab.disabled && setActiveTab(tab.id as TabType)}
-            disabled={tab.disabled}
-            title={tab.disabled ? 'Coming soon' : undefined}
+            onClick={() => setActiveTab(tab.id as TabType)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab.disabled
-                ? 'text-slate-400 dark:text-slate-600 cursor-not-allowed opacity-50'
-                : activeTab === tab.id
-                  ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              activeTab === tab.id
+                ? 'bg-white dark:bg-navy-800 text-violet-600 dark:text-violet-400 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {tab.icon}
             {tab.label}
-            {tab.disabled && (
-              <span className="text-[10px] bg-slate-200 dark:bg-navy-700 px-1.5 py-0.5 rounded-full">
-                Soon
-              </span>
-            )}
           </button>
         ))}
       </div>

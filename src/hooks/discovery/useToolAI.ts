@@ -9,15 +9,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
-import { useAIStream } from '@/hooks/useAIStream';
-import { SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
-
 import {
   getToolPhaseAiActions,
   type ToolPhaseAiActionDefinition,
   type ToolPhaseAiActionId,
 } from '@/components/DiscoveryTools/toolAiActions';
+import type { ConsultingMissionContext } from '@/config/consultingToolsStandard';
+import { useAIStream } from '@/hooks/useAIStream';
+import { GrowthPathsData, SWOTData, ToolType, useToolStore } from '@/store/useToolStore';
 
 import {
   applyDynamicSwotPendingAction,
@@ -27,6 +26,18 @@ import {
   createEmptyMissionContext,
   type ToolAiPendingAction,
 } from './toolAi/dynamicSwot';
+import {
+  applyMarketForcesPendingAction,
+  buildMarketForcesFullSessionPrompt,
+  buildMarketForcesImplicationsPrompt,
+  buildMarketForcesRethinkPrompt,
+} from './toolAi/marketForces';
+import {
+  applyGrowthPathsPendingAction,
+  buildGrowthPathsFullSessionPrompt,
+  buildGrowthPathsRethinkPrompt,
+  buildGrowthPathsSynthesisPrompt,
+} from './toolAi/growthPaths';
 import { getToolStepOpeningQuestion } from './toolAi/openingQuestions';
 import { getToolSuggestionPrompt, getToolSummaryPrompt } from './toolAi/promptRegistry';
 import { getToolSystemPrompt } from './toolAi/systemPrompts';
@@ -93,9 +104,8 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   const [error, setError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<ToolAiPendingAction | null>(null);
   const [activeAiActionId, setActiveAiActionId] = useState<ToolPhaseAiActionId | null>(null);
-  const [missionSuggestion, setMissionSuggestion] = useState<Partial<ConsultingMissionContext> | null>(
-    null
-  );
+  const [missionSuggestion, setMissionSuggestion] =
+    useState<Partial<ConsultingMissionContext> | null>(null);
   const [rethinkTarget, setRethinkTarget] = useState<{
     phaseId: string;
     cardType: string;
@@ -164,11 +174,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
     if (!currentStepDef) return;
 
-    const prompt = getToolSuggestionPrompt(
-      toolType,
-      currentStepDef.id,
-      currentSession?.inputData
-    );
+    const prompt = getToolSuggestionPrompt(toolType, currentStepDef.id, currentSession?.inputData);
 
     if (prompt) {
       setPendingAction('suggestions');
@@ -177,9 +183,37 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     }
   }, [currentSession?.inputData, currentStepDef, sendMessage, toolType]);
 
-  // Generate correlations (SWOT-specific)
+  // Generate correlations / synthesis for strategic tools
   const generateCorrelations = useCallback(async () => {
-    if (toolType !== 'dynamic-swot' || !currentSession) return;
+    if (!currentSession) return;
+
+    if (toolType === 'growth-paths') {
+      setError(null);
+      const prompt = buildGrowthPathsSynthesisPrompt(currentSession.inputData as GrowthPathsData);
+      if (!prompt) {
+        setError('Need growth options to generate synthesis');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('generate-correlations');
+      await sendMessage(prompt);
+      return;
+    }
+
+    if (toolType === 'market-forces') {
+      setError(null);
+      const prompt = buildMarketForcesImplicationsPrompt(currentSession.inputData as any);
+      if (!prompt) {
+        setError('Need Porter forces to generate implications');
+        return;
+      }
+      setPendingAction('correlations');
+      setActiveAiActionId('generate-correlations');
+      await sendMessage(prompt);
+      return;
+    }
+
+    if (toolType !== 'dynamic-swot') return;
 
     setError(null);
 
@@ -210,14 +244,26 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   }, [toolType, currentSession, sendMessage]);
 
   const generateFullSession = useCallback(async () => {
-    if (toolType !== 'dynamic-swot' || !currentSession) return;
+    if (!currentSession) return;
 
     setError(null);
     setSessionGenerationStatus('generating');
-    const prompt = buildDynamicSwotFullSessionPrompt(
-      currentSession.inputData as SWOTData | undefined,
-      formatForPrompt()
-    );
+    const prompt =
+      toolType === 'growth-paths'
+        ? buildGrowthPathsFullSessionPrompt(currentSession.inputData as GrowthPathsData, formatForPrompt())
+        : toolType === 'market-forces'
+        ? buildMarketForcesFullSessionPrompt(currentSession.inputData as any, formatForPrompt())
+        : toolType === 'dynamic-swot'
+          ? buildDynamicSwotFullSessionPrompt(
+              currentSession.inputData as SWOTData | undefined,
+              formatForPrompt()
+            )
+          : '';
+
+    if (!prompt) {
+      setSessionGenerationStatus('idle');
+      return;
+    }
 
     setPendingAction('full-session');
     setActiveAiActionId('generate-full-session');
@@ -266,17 +312,36 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
   const rethinkCard = useCallback(
     async (phaseId: string, cardType: string, cardId: string, userComment?: string) => {
-      if (toolType !== 'dynamic-swot' || !currentSession) return;
+      if (
+        !currentSession ||
+        (toolType !== 'dynamic-swot' && toolType !== 'market-forces' && toolType !== 'growth-paths')
+      )
+        return;
 
       setError(null);
       markRethinking(cardType as any, cardId);
       setRethinkTarget({ phaseId, cardType, cardId });
-      const prompt = buildDynamicSwotRethinkPrompt(
-        currentSession.inputData as SWOTData,
-        cardType,
-        cardId,
-        userComment
-      );
+      const prompt =
+        toolType === 'growth-paths'
+          ? buildGrowthPathsRethinkPrompt(
+              currentSession.inputData as GrowthPathsData,
+              cardType,
+              cardId,
+              userComment
+            )
+          : toolType === 'market-forces'
+          ? buildMarketForcesRethinkPrompt(
+              currentSession.inputData as any,
+              cardType,
+              cardId,
+              userComment
+            )
+          : buildDynamicSwotRethinkPrompt(
+              currentSession.inputData as SWOTData,
+              cardType,
+              cardId,
+              userComment
+            );
 
       setPendingAction('rethink');
       await sendMessage(prompt);
@@ -285,7 +350,13 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
   );
 
   useEffect(() => {
-    if (isStreaming || !pendingAction || !streamedContent || toolType !== 'dynamic-swot') return;
+    if (
+      isStreaming ||
+      !pendingAction ||
+      !streamedContent ||
+      (toolType !== 'dynamic-swot' && toolType !== 'market-forces' && toolType !== 'growth-paths')
+    )
+      return;
 
     const parsed = extractObject(streamedContent);
     if (!parsed) {
@@ -294,39 +365,93 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
       return;
     }
 
-    const result = applyDynamicSwotPendingAction({
-      pendingAction,
-      parsed,
-      currentStepId: currentStepDef?.id,
-      swotData: (currentSession?.inputData as SWOTData | undefined) || {
-        context: createEmptyMissionContext(),
-        signals: [],
-        items: [],
-        correlations: [],
-        tensions: [],
-        recommendedMoves: [],
-        outputCandidates: [],
-      },
-      rethinkTarget,
-      toolType,
-      actions: {
-        updateInputData,
-        addSWOTSignal,
-        addSWOTItem,
-        addCorrelation,
-        setSWOTTensions,
-        setSWOTMoves,
-        setSWOTOutputCandidates,
-        setSWOTSummary,
-        setInitiatives,
-        setSessionGenerationStatus,
-        updateCardAfterRethink,
-      },
-    });
-    if (result.missionSuggestion !== undefined) {
-      setMissionSuggestion(result.missionSuggestion);
+    const result =
+      toolType === 'growth-paths'
+        ? applyGrowthPathsPendingAction({
+            pendingAction,
+            parsed,
+            currentStepId: currentStepDef?.id,
+            growthData: (currentSession?.inputData as GrowthPathsData | undefined) || {
+              context: createEmptyMissionContext(),
+              signals: [],
+              quadrants: {
+                marketPenetration: [],
+                marketDevelopment: [],
+                productDevelopment: [],
+                diversification: [],
+              },
+              comparisons: [],
+              recommendedMoves: [],
+              outputCandidates: [],
+            },
+            rethinkTarget,
+            toolType,
+            actions: {
+              updateInputData,
+              setInitiatives,
+              setSessionGenerationStatus,
+              updateCardAfterRethink,
+            },
+          })
+        : toolType === 'market-forces'
+        ? applyMarketForcesPendingAction({
+            pendingAction,
+            parsed,
+            currentStepId: currentStepDef?.id,
+            porterData: (currentSession?.inputData as any) || {
+              context: { industry: '', geographicScope: '', position: 'challenger' },
+              signals: [],
+              forces: {},
+              implications: [],
+              recommendedMoves: [],
+              outputCandidates: [],
+            },
+            rethinkTarget,
+            toolType,
+            actions: {
+              updateInputData,
+              setInitiatives,
+              setSessionGenerationStatus,
+              updateCardAfterRethink,
+            },
+          })
+        : applyDynamicSwotPendingAction({
+            pendingAction,
+            parsed,
+            currentStepId: currentStepDef?.id,
+            swotData: (currentSession?.inputData as SWOTData | undefined) || {
+              context: createEmptyMissionContext(),
+              signals: [],
+              items: [],
+              correlations: [],
+              tensions: [],
+              recommendedMoves: [],
+              outputCandidates: [],
+            },
+            rethinkTarget,
+            toolType,
+            actions: {
+              updateInputData,
+              addSWOTSignal,
+              addSWOTItem,
+              addCorrelation,
+              setSWOTTensions,
+              setSWOTMoves,
+              setSWOTOutputCandidates,
+              setSWOTSummary,
+              setInitiatives,
+              setSessionGenerationStatus,
+              updateCardAfterRethink,
+            },
+          });
+    const normalizedResult = result as {
+      missionSuggestion?: Partial<ConsultingMissionContext> | null;
+      clearRethinkTarget?: boolean;
+    };
+    if (normalizedResult.missionSuggestion !== undefined) {
+      setMissionSuggestion(normalizedResult.missionSuggestion);
     }
-    if (result.clearRethinkTarget) {
+    if (normalizedResult.clearRethinkTarget) {
       setRethinkTarget(null);
     }
 

@@ -37,6 +37,61 @@ CREATE TABLE IF NOT EXISTS competency_levels (
 
 CREATE INDEX IF NOT EXISTS idx_comp_levels_org ON competency_levels(organization_id);
 
+-- Baseline Postgres migrations skip the legacy SQLite-first capabilities migration (<500).
+-- Keep the competency taxonomy migration self-contained for fresh Postgres databases.
+CREATE TABLE IF NOT EXISTS capabilities (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  organization_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  domain TEXT NOT NULL DEFAULT 'general',
+  tags JSONB DEFAULT '[]'::jsonb,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_capabilities_org ON capabilities(organization_id);
+CREATE INDEX IF NOT EXISTS idx_capabilities_org_domain ON capabilities(organization_id, domain);
+
+CREATE TABLE IF NOT EXISTS user_capabilities (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  user_id TEXT NOT NULL,
+  organization_id TEXT NOT NULL,
+  capability_id TEXT NOT NULL REFERENCES capabilities(id) ON DELETE CASCADE,
+  level INTEGER NOT NULL CHECK (level BETWEEN 1 AND 10),
+  certifications JSONB DEFAULT '[]'::jsonb,
+  notes TEXT,
+  verified_by TEXT,
+  verified_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, capability_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_capabilities_user ON user_capabilities(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_capabilities_org ON user_capabilities(organization_id);
+CREATE INDEX IF NOT EXISTS idx_user_capabilities_cap ON user_capabilities(capability_id);
+
+CREATE TABLE IF NOT EXISTS capability_requirements (
+  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  organization_id TEXT NOT NULL,
+  initiative_id TEXT,
+  task_id TEXT,
+  capability_id TEXT NOT NULL REFERENCES capabilities(id) ON DELETE CASCADE,
+  min_level INTEGER NOT NULL CHECK (min_level BETWEEN 1 AND 10),
+  priority TEXT NOT NULL DEFAULT 'required' CHECK (priority IN ('required', 'nice_to_have')),
+  notes TEXT,
+  created_by TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cap_req_initiative ON capability_requirements(initiative_id);
+CREATE INDEX IF NOT EXISTS idx_cap_req_task ON capability_requirements(task_id);
+CREATE INDEX IF NOT EXISTS idx_cap_req_org ON capability_requirements(organization_id);
+
 -- 3. Add category_id to existing capabilities table
 DO $$
 BEGIN

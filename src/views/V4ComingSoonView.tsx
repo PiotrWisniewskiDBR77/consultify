@@ -1,4 +1,4 @@
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, type Variants } from 'framer-motion';
 import {
   BarChart3,
   Bell,
@@ -350,7 +350,10 @@ function resolveModuleKey(pathname: string): ModuleKey {
   return 'iris';
 }
 
-const accentMap: Record<string, { badge: string; icon: string; highlight: string; button: string; buttonRegistered: string }> = {
+const accentMap: Record<
+  string,
+  { badge: string; icon: string; highlight: string; button: string; buttonRegistered: string }
+> = {
   blue: {
     badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     icon: 'text-blue-400',
@@ -395,12 +398,12 @@ const accentMap: Record<string, { badge: string; icon: string; highlight: string
   },
 };
 
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
   visible: (i: number) => ({
     opacity: 1,
     y: 0,
-    transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { delay: i * 0.1, duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] as const },
   }),
 };
 
@@ -428,7 +431,9 @@ export const V4ComingSoonView: React.FC = () => {
         // not critical
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleRegister = useCallback(async () => {
@@ -476,7 +481,11 @@ export const V4ComingSoonView: React.FC = () => {
             'shrink-0 inline-flex items-center gap-2 rounded-lg font-medium transition-all duration-200',
             isLg ? 'px-6 py-3 text-sm' : 'px-5 py-2.5 text-sm',
             isRegistered ? accent.buttonRegistered : accent.button,
-            isSubmitting ? 'opacity-70 cursor-wait' : isRegistered ? 'cursor-default' : 'cursor-pointer',
+            isSubmitting
+              ? 'opacity-70 cursor-wait'
+              : isRegistered
+                ? 'cursor-default'
+                : 'cursor-pointer',
           ].join(' ')}
         >
           {isRegistered ? (
@@ -502,7 +511,11 @@ export const V4ComingSoonView: React.FC = () => {
           'shrink-0 inline-flex items-center gap-2 rounded-lg font-medium transition-all duration-200',
           isLg ? 'px-6 py-3 text-sm' : 'px-5 py-2.5 text-sm',
           isRegistered ? accent.buttonRegistered : accent.button,
-          isSubmitting ? 'opacity-70 cursor-wait' : isRegistered ? 'cursor-default' : 'cursor-pointer',
+          isSubmitting
+            ? 'opacity-70 cursor-wait'
+            : isRegistered
+              ? 'cursor-default'
+              : 'cursor-pointer',
         ].join(' ')}
       >
         {isRegistered ? (
@@ -546,7 +559,9 @@ export const V4ComingSoonView: React.FC = () => {
           animate="visible"
           className="relative overflow-hidden rounded-2xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900"
         >
-          <div className={`absolute inset-0 bg-gradient-to-br ${copy.gradient} pointer-events-none`} />
+          <div
+            className={`absolute inset-0 bg-gradient-to-br ${copy.gradient} pointer-events-none`}
+          />
 
           <div className="relative grid grid-cols-1 lg:grid-cols-2 gap-0">
             {/* Left: Content */}
@@ -588,8 +603,12 @@ export const V4ComingSoonView: React.FC = () => {
               <motion.div variants={fadeUp} custom={4} className="mt-6 flex gap-6">
                 {copy.highlights.map((h) => (
                   <div key={h.label}>
-                    <div className="text-2xl font-bold text-slate-900 dark:text-white">{h.value}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{h.label}</div>
+                    <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                      {h.value}
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                      {h.label}
+                    </div>
                   </div>
                 ))}
               </motion.div>
@@ -601,11 +620,7 @@ export const V4ComingSoonView: React.FC = () => {
             </div>
 
             {/* Right: Image */}
-            <motion.div
-              variants={fadeUp}
-              custom={2}
-              className="relative hidden lg:block"
-            >
+            <motion.div variants={fadeUp} custom={2} className="relative hidden lg:block">
               <div className="absolute inset-0 bg-gradient-to-l from-transparent to-white/80 dark:to-navy-900/80 z-10 pointer-events-none" />
               <img
                 src={copy.imageUrl}
@@ -644,7 +659,13 @@ export const V4ComingSoonView: React.FC = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
               <div className={`mt-0.5 shrink-0 ${accent.icon}`}>
-                {isContactRequired ? <Lock size={20} /> : hasLpUrl ? <ExternalLink size={20} /> : <Bell size={20} />}
+                {isContactRequired ? (
+                  <Lock size={20} />
+                ) : hasLpUrl ? (
+                  <ExternalLink size={20} />
+                ) : (
+                  <Bell size={20} />
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-900 dark:text-white">

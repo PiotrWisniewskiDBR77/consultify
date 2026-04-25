@@ -41,13 +41,14 @@ type ConvStoreState = {
 let mockAppState: AppStoreState = {};
 let mockConvState: ConvStoreState = {};
 
+const firstMockArg = (mock: { mock: { calls: unknown[][] } }) => mock.mock.calls[0]?.[0] as any;
+
 vi.mock('../../../store/useAppStore', () => ({
   useAppStore: (selector: (state: AppStoreState) => unknown) => selector(mockAppState),
 }));
 
 vi.mock('../../../store/useConversationStore', () => ({
-  useConversationStore: (selector: (state: ConvStoreState) => unknown) =>
-    selector(mockConvState),
+  useConversationStore: (selector: (state: ConvStoreState) => unknown) => selector(mockConvState),
 }));
 
 const trackFunnelEventMock = vi.fn();
@@ -119,9 +120,7 @@ describe('WorkspaceBreadcrumb', () => {
     render(<WorkspaceBreadcrumb isEnabled={() => true} />);
 
     expect(screen.getByTestId('workspace-breadcrumb')).toBeTruthy();
-    expect(screen.getByTestId('workspace-breadcrumb-segment-0')).toHaveTextContent(
-      'Chat'
-    );
+    expect(screen.getByTestId('workspace-breadcrumb-segment-0')).toHaveTextContent('Chat');
     expect(screen.getByTestId('workspace-breadcrumb-segment-1')).toHaveTextContent(
       'Assessment · SIRI'
     );
@@ -206,7 +205,7 @@ describe('WorkspaceBreadcrumb', () => {
     render(<WorkspaceBreadcrumb isEnabled={() => true} build={build} />);
 
     expect(build).toHaveBeenCalledTimes(1);
-    expect(build.mock.calls[0][0]).toMatchObject({
+    expect(firstMockArg(build)).toMatchObject({
       view: AppView.ASSESSMENT_SIRI,
       hasActiveConversation: true,
     });
@@ -245,7 +244,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       expect(build).toHaveBeenCalledTimes(1);
-      expect(build.mock.calls[0][0]).toMatchObject({
+      expect(firstMockArg(build)).toMatchObject({
         conversationTitle: 'SIRI rollout Q3',
         conversationSegmentEnabled: true,
       });
@@ -274,7 +273,7 @@ describe('WorkspaceBreadcrumb', () => {
         />
       );
 
-      expect(build.mock.calls[0][0]).toMatchObject({
+      expect(firstMockArg(build)).toMatchObject({
         conversationTitle: null,
       });
     });
@@ -302,7 +301,7 @@ describe('WorkspaceBreadcrumb', () => {
         />
       );
 
-      expect(build.mock.calls[0][0]).toMatchObject({
+      expect(firstMockArg(build)).toMatchObject({
         conversationSegmentEnabled: false,
       });
     });
@@ -331,9 +330,7 @@ describe('WorkspaceBreadcrumb', () => {
         />
       );
 
-      expect(screen.getByTestId('workspace-breadcrumb-segment-0')).toHaveTextContent(
-        'Chat'
-      );
+      expect(screen.getByTestId('workspace-breadcrumb-segment-0')).toHaveTextContent('Chat');
       expect(screen.getByTestId('workspace-breadcrumb-segment-1')).toHaveTextContent(
         'Assessment · SIRI'
       );
@@ -599,7 +596,13 @@ describe('WorkspaceBreadcrumb', () => {
           isRecentsEnabled={() => true}
           build={baseBuild}
           buildRecents={() => [
-            { id: 'conv-2', label: 'Sibling', fullTitle: 'Sibling', truncated: false, pinned: false },
+            {
+              id: 'conv-2',
+              label: 'Sibling',
+              fullTitle: 'Sibling',
+              truncated: false,
+              pinned: false,
+            },
           ]}
         />
       );
@@ -632,7 +635,13 @@ describe('WorkspaceBreadcrumb', () => {
           isRecentsEnabled={() => true}
           build={baseBuild}
           buildRecents={() => [
-            { id: 'conv-2', label: 'Sibling', fullTitle: 'Sibling', truncated: false, pinned: false },
+            {
+              id: 'conv-2',
+              label: 'Sibling',
+              fullTitle: 'Sibling',
+              truncated: false,
+              pinned: false,
+            },
           ]}
         />
       );
@@ -668,10 +677,10 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       expect(buildRecents).toHaveBeenCalledTimes(1);
-      expect(buildRecents.mock.calls[0][0]).toMatchObject({
+      expect(firstMockArg(buildRecents)).toMatchObject({
         activeConversationId: 'conv-1',
       });
-      expect(buildRecents.mock.calls[0][0].conversations).toBe(conversations);
+      expect(firstMockArg(buildRecents).conversations).toBe(conversations);
     });
 
     // -----------------------------------------------------------
@@ -698,7 +707,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       expect(buildRecents).toHaveBeenCalledTimes(1);
-      expect(buildRecents.mock.calls[0][0].pinnedEnabled).toBe(true);
+      expect(firstMockArg(buildRecents).pinnedEnabled).toBe(true);
     });
 
     it('passes pinnedEnabled=false to the builder when the pinned flag is OFF', () => {
@@ -722,7 +731,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       expect(buildRecents).toHaveBeenCalledTimes(1);
-      expect(buildRecents.mock.calls[0][0].pinnedEnabled).toBe(false);
+      expect(firstMockArg(buildRecents).pinnedEnabled).toBe(false);
     });
 
     it('renders the pin glyph next to pinned rows in the popover', () => {
@@ -765,13 +774,13 @@ describe('WorkspaceBreadcrumb', () => {
 
       fireEvent.click(screen.getByTestId('workspace-breadcrumb-recents-trigger'));
 
-      expect(
-        screen.getByTestId('workspace-breadcrumb-recent-0').getAttribute('data-pinned')
-      ).toBe('true');
+      expect(screen.getByTestId('workspace-breadcrumb-recent-0').getAttribute('data-pinned')).toBe(
+        'true'
+      );
       expect(screen.getByTestId('workspace-breadcrumb-recent-0-pin')).toBeTruthy();
-      expect(
-        screen.getByTestId('workspace-breadcrumb-recent-1').getAttribute('data-pinned')
-      ).toBe('false');
+      expect(screen.getByTestId('workspace-breadcrumb-recent-1').getAttribute('data-pinned')).toBe(
+        'false'
+      );
       expect(screen.queryByTestId('workspace-breadcrumb-recent-1-pin')).toBeNull();
     });
 
@@ -809,9 +818,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       fireEvent.click(screen.getByTestId('workspace-breadcrumb-recents-trigger'));
-      expect(
-        screen.getByTestId('workspace-breadcrumb-recents-view-all')
-      ).toBeTruthy();
+      expect(screen.getByTestId('workspace-breadcrumb-recents-view-all')).toBeTruthy();
     });
 
     it('suppresses the footer when the eligible count fits in the cap', () => {
@@ -843,9 +850,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       fireEvent.click(screen.getByTestId('workspace-breadcrumb-recents-trigger'));
-      expect(
-        screen.queryByTestId('workspace-breadcrumb-recents-view-all')
-      ).toBeNull();
+      expect(screen.queryByTestId('workspace-breadcrumb-recents-view-all')).toBeNull();
     });
 
     it('suppresses the footer when the view-all kill-switch is OFF (even on overflow)', () => {
@@ -878,9 +883,7 @@ describe('WorkspaceBreadcrumb', () => {
       );
 
       fireEvent.click(screen.getByTestId('workspace-breadcrumb-recents-trigger'));
-      expect(
-        screen.queryByTestId('workspace-breadcrumb-recents-view-all')
-      ).toBeNull();
+      expect(screen.queryByTestId('workspace-breadcrumb-recents-view-all')).toBeNull();
       // When the kill-switch is OFF, the counter is skipped
       // entirely — zero cost at steady state.
       expect(countEligibleRecents).not.toHaveBeenCalled();
@@ -1015,7 +1018,13 @@ describe('WorkspaceBreadcrumb', () => {
           isRecentsEnabled={() => true}
           build={baseBuild}
           buildRecents={() => [
-            { id: 'conv-2', label: 'Sibling', fullTitle: 'Sibling', truncated: false, pinned: false },
+            {
+              id: 'conv-2',
+              label: 'Sibling',
+              fullTitle: 'Sibling',
+              truncated: false,
+              pinned: false,
+            },
           ]}
         />
       );

@@ -8,8 +8,8 @@
 import type { Response } from 'express';
 
 import type { AuthenticatedRequest } from '../types/index.js';
-import { get as dbGet } from '../utils/DbPromise.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { get as dbGet } from '../utils/DbPromise.js';
 import type {
   AddMemberRequest,
   CreateOrganizationRequest,
@@ -21,7 +21,9 @@ import type {
 const ADMIN_MEMBERSHIP_ROLES = new Set(['OWNER', 'ADMIN']);
 
 function getDeniedGuidance(role?: string): string {
-  const normalized = String(role || '').trim().toUpperCase();
+  const normalized = String(role || '')
+    .trim()
+    .toUpperCase();
   if (normalized === 'GUEST' || normalized === 'VIEWER') {
     return 'Guests cannot access admin tools.';
   }
@@ -55,7 +57,9 @@ export class OrganizationController {
       const { getUserOrganizations } = await import('../services/organizationService.js');
       const orgs = await getUserOrganizations(userId);
 
-      console.log(`[OrgSwitcher] userId=${userId} orgs=${orgs.length}: ${orgs.map((o: any) => `${o.name}(${o.id})`).join(', ')}`);
+      console.log(
+        `[OrgSwitcher] userId=${userId} orgs=${orgs.length}: ${orgs.map((o: any) => `${o.name}(${o.id})`).join(', ')}`
+      );
 
       const currentOrgId = (req as any).organizationId;
       const enriched = orgs.map((org) => ({
@@ -207,14 +211,12 @@ export class OrganizationController {
         getMembers,
         addMember: addMemberService,
         normalizeOrganizationRole,
-      } =
-        await import('../services/organizationService.js');
+      } = await import('../services/organizationService.js');
 
       const members = await getMembers(orgId);
       const currentUserMember = members.find((m) => m.user_id === userId);
       const actorRole = normalizeOrganizationRole(currentUserMember?.role || req.user?.role);
-      const isSuperAdmin =
-        req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
+      const isSuperAdmin = req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
 
       if (!currentUserMember && !isSuperAdmin) {
         forbidden(
@@ -260,7 +262,8 @@ export class OrganizationController {
           res.status(404).json({
             error: 'User not found for the provided email',
             code: 'USER_NOT_FOUND',
-            guidance: 'Invite an existing workspace user or create the account before adding membership.',
+            guidance:
+              'Invite an existing workspace user or create the account before adding membership.',
           });
           return;
         }
@@ -312,19 +315,15 @@ export class OrganizationController {
         return;
       }
 
-      const {
-        getMembers,
-        updateMemberRole,
-        normalizeOrganizationRole,
-      } = await import('../services/organizationService.js');
+      const { getMembers, updateMemberRole, normalizeOrganizationRole } =
+        await import('../services/organizationService.js');
       const members = await getMembers(orgId);
       const actor = members.find((m) => m.user_id === userId);
       const target = members.find((m) => m.user_id === memberId);
       const actorRole = normalizeOrganizationRole(actor?.role || req.user?.role);
       const currentTargetRole = normalizeOrganizationRole(target?.role);
       const nextRole = normalizeOrganizationRole(role);
-      const isSuperAdmin =
-        req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
+      const isSuperAdmin = req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
 
       if (!target) {
         res.status(404).json({
@@ -355,7 +354,11 @@ export class OrganizationController {
         return;
       }
 
-      if ((currentTargetRole === 'OWNER' || nextRole === 'OWNER') && actorRole !== 'OWNER' && !isSuperAdmin) {
+      if (
+        (currentTargetRole === 'OWNER' || nextRole === 'OWNER') &&
+        actorRole !== 'OWNER' &&
+        !isSuperAdmin
+      ) {
         forbidden(
           res,
           'Only an owner can change owner roles',
@@ -411,18 +414,14 @@ export class OrganizationController {
         return;
       }
 
-      const {
-        getMembers,
-        removeMember,
-        normalizeOrganizationRole,
-      } = await import('../services/organizationService.js');
+      const { getMembers, removeMember, normalizeOrganizationRole } =
+        await import('../services/organizationService.js');
       const members = await getMembers(orgId);
       const actor = members.find((m) => m.user_id === userId);
       const target = members.find((m) => m.user_id === memberId);
       const actorRole = normalizeOrganizationRole(actor?.role || req.user?.role);
       const targetRole = normalizeOrganizationRole(target?.role);
-      const isSuperAdmin =
-        req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
+      const isSuperAdmin = req.user?.role === 'SUPERADMIN' || req.user?.role === 'SUPER_ADMIN';
 
       if (!target) {
         res.status(404).json({

@@ -82,7 +82,9 @@ export const SparkField: React.FC<SparkFieldProps> = ({ block, onAction }) => {
               <Plus size={18} />
             </div>
             <div className="text-sm font-semibold text-amber-50">{t('myWork.radar.newIdea')}</div>
-            <div className="mt-1 text-xs text-slate-300/65">{t('myWork.radar.newIdeaSubtitle')}</div>
+            <div className="mt-1 text-xs text-slate-300/65">
+              {t('myWork.radar.newIdeaSubtitle')}
+            </div>
           </button>
         </div>
 

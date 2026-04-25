@@ -598,11 +598,12 @@ export const V8FinanceApi = {
 
   // P05 Lane endpoints
   startLaneRun: (versionType?: FinanceVersionType) =>
-    v8Post<{ data: FinanceLaneRun }>('/finance/lane/start', { versionType: versionType || 'current' }),
+    v8Post<{ data: FinanceLaneRun }>('/finance/lane/start', {
+      versionType: versionType || 'current',
+    }),
   advanceLaneStep: (runId: string, outcome: string, detail?: string) =>
     v8Post<{ data: FinanceLaneRun }>(`/finance/lane/${runId}/advance`, { outcome, detail }),
-  getLaneRun: (runId: string) =>
-    v8Get<{ data: FinanceLaneRun }>(`/finance/lane/${runId}`),
+  getLaneRun: (runId: string) => v8Get<{ data: FinanceLaneRun }>(`/finance/lane/${runId}`),
   getLaneRuns: (limit?: number) =>
     v8Get<{ data: FinanceLaneRun[] }>('/finance/lane', {
       ...(typeof limit === 'number' ? { limit: String(limit) } : {}),
@@ -616,8 +617,7 @@ export const V8FinanceApi = {
       newValue: string;
       outcome: string;
     }
-  ) =>
-    v8Post<{ data: FinanceMutationAudit }>(`/finance/lane/${runId}/mutation-audit`, params),
+  ) => v8Post<{ data: FinanceMutationAudit }>(`/finance/lane/${runId}/mutation-audit`, params),
   getMutationAudits: (runId: string) =>
     v8Get<{ data: FinanceMutationAudit[] }>(`/finance/lane/${runId}/mutation-audit`),
   checkKpiCoherence: (runId: string) =>
@@ -625,7 +625,10 @@ export const V8FinanceApi = {
 
   // P05 Version endpoints
   createVersionSnapshot: (versionType: FinanceVersionType, snapshotData: Record<string, unknown>) =>
-    v8Post<{ data: FinanceVersionSnapshot }>('/finance/versions/snapshot', { versionType, snapshotData }),
+    v8Post<{ data: FinanceVersionSnapshot }>('/finance/versions/snapshot', {
+      versionType,
+      snapshotData,
+    }),
   finalizeVersion: (snapshotId: string) =>
     v8Post<{ data: FinanceVersionSnapshot }>(`/finance/versions/${snapshotId}/finalize`, {}),
   getVersionSnapshots: (versionType?: FinanceVersionType) =>

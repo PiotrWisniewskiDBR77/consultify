@@ -545,10 +545,7 @@ export async function deleteAttachment(attachmentId: string): Promise<void> {
 // ============================================================================
 
 /** Search across all tables in the organization */
-export async function searchRecordsGlobal(
-  query: string,
-  limit?: number
-): Promise<any> {
+export async function searchRecordsGlobal(query: string, limit?: number): Promise<any> {
   const params = new URLSearchParams({ q: query });
   if (limit) params.set('limit', String(limit));
   const res = await fetchWithRetry(`${BASE_PATH}/search?${params}`, {

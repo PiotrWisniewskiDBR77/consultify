@@ -87,8 +87,12 @@ router.post(
             consumerClass: merged.consumerClass,
             effectiveScopeRef: merged.effectiveScopeRef,
             resolvedRoleRef: merged.resolvedRoleRef,
-            artifactRefsLen: Array.isArray(merged.artifactRefs) ? merged.artifactRefs.length : merged.artifactRefs,
-            sourceContextRefsLen: Array.isArray(merged.sourceContextRefs) ? merged.sourceContextRefs.length : merged.sourceContextRefs,
+            artifactRefsLen: Array.isArray(merged.artifactRefs)
+              ? merged.artifactRefs.length
+              : merged.artifactRefs,
+            sourceContextRefsLen: Array.isArray(merged.sourceContextRefs)
+              ? merged.sourceContextRefs.length
+              : merged.sourceContextRefs,
           },
         });
         return res.status(400).json({

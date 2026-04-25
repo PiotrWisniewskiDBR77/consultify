@@ -40,19 +40,17 @@ describe('buildTrustBadgeCitationsText', () => {
     const out = buildTrustBadgeCitationsText([citation()], {
       modelLabel: 'Claude 3.5 Sonnet',
     });
-    expect(out.split('\n')[0]).toBe(
-      'Sources for this reply (answered by Claude 3.5 Sonnet):'
-    );
+    expect(out.split('\n')[0]).toBe('Sources for this reply (answered by Claude 3.5 Sonnet):');
   });
 
   it('falls back to no-model header when modelLabel is empty / whitespace / non-string', () => {
     const expected = 'Sources for this reply:';
-    expect(buildTrustBadgeCitationsText([citation()], { modelLabel: '' }).startsWith(expected)).toBe(
-      true
-    );
-    expect(buildTrustBadgeCitationsText([citation()], { modelLabel: '   ' }).startsWith(expected)).toBe(
-      true
-    );
+    expect(
+      buildTrustBadgeCitationsText([citation()], { modelLabel: '' }).startsWith(expected)
+    ).toBe(true);
+    expect(
+      buildTrustBadgeCitationsText([citation()], { modelLabel: '   ' }).startsWith(expected)
+    ).toBe(true);
     expect(
       buildTrustBadgeCitationsText([citation()], {
         modelLabel: null as unknown as string,
@@ -61,9 +59,7 @@ describe('buildTrustBadgeCitationsText', () => {
   });
 
   it('renders the "No cited sources" stub for an empty list', () => {
-    expect(buildTrustBadgeCitationsText([])).toBe(
-      'Sources for this reply:\n\nNo cited sources.'
-    );
+    expect(buildTrustBadgeCitationsText([])).toBe('Sources for this reply:\n\nNo cited sources.');
   });
 
   it('renders the "No cited sources" stub for non-array input', () => {
@@ -95,28 +91,22 @@ describe('buildTrustBadgeCitationsText', () => {
   });
 
   it('renders plain title when link is missing or empty', () => {
+    expect(buildTrustBadgeCitationsText([citation({ title: 'No link', reference: '' })])).toContain(
+      '1. No link'
+    );
     expect(
-      buildTrustBadgeCitationsText([citation({ title: 'No link', reference: '' })])
-    ).toContain('1. No link');
-    expect(
-      buildTrustBadgeCitationsText([
-        citation({ title: 'Empty link', link: '', reference: 'r' }),
-      ])
+      buildTrustBadgeCitationsText([citation({ title: 'Empty link', link: '', reference: 'r' })])
     ).toContain('1. Empty link — ref:r');
   });
 
   it('omits the reference suffix when reference is missing / empty', () => {
-    const out = buildTrustBadgeCitationsText([
-      citation({ title: 'No ref', reference: '' }),
-    ]);
+    const out = buildTrustBadgeCitationsText([citation({ title: 'No ref', reference: '' })]);
     expect(out).toContain('1. No ref');
     expect(out).not.toContain('ref:');
   });
 
   it('escapes pipes in titles for Notion-table round-trip safety', () => {
-    const out = buildTrustBadgeCitationsText([
-      citation({ title: 'OKRs | 2026', reference: '' }),
-    ]);
+    const out = buildTrustBadgeCitationsText([citation({ title: 'OKRs | 2026', reference: '' })]);
     expect(out).toContain('1. OKRs \\| 2026');
   });
 
@@ -130,20 +120,14 @@ describe('buildTrustBadgeCitationsText', () => {
   });
 
   it('falls back to "No cited sources" when every entry has an empty title', () => {
-    const out = buildTrustBadgeCitationsText([
-      citation({ title: '' }),
-      citation({ title: '   ' }),
-    ]);
+    const out = buildTrustBadgeCitationsText([citation({ title: '' }), citation({ title: '   ' })]);
     expect(out).toContain('No cited sources.');
   });
 
   it('emits header + blank line + list in that exact order', () => {
-    const out = buildTrustBadgeCitationsText(
-      [citation({ title: 'A', reference: 'r' })],
-      { modelLabel: 'GPT-4o' }
-    );
-    expect(out).toBe(
-      'Sources for this reply (answered by GPT-4o):\n\n1. A — ref:r'
-    );
+    const out = buildTrustBadgeCitationsText([citation({ title: 'A', reference: 'r' })], {
+      modelLabel: 'GPT-4o',
+    });
+    expect(out).toBe('Sources for this reply (answered by GPT-4o):\n\n1. A — ref:r');
   });
 });

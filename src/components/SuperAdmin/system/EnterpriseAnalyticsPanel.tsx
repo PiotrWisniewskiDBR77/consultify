@@ -208,8 +208,29 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
   }, [timeRange]);
 
   const fetchScheduledReports = useCallback(async () => {
-    // Empty state - no mock data
-    setScheduledReports([]);
+    try {
+      const reports = await Api.getAnalyticsReports();
+      setScheduledReports(
+        reports
+          .filter((report: any) => report.schedule)
+          .map((report: any) => ({
+            id: report.id,
+            name: report.name,
+            type: report.report_type || report.type || 'custom',
+            schedule:
+              typeof report.schedule === 'string'
+                ? report.schedule
+                : report.schedule?.frequency || 'scheduled',
+            recipients: Array.isArray(report.recipients) ? report.recipients : [],
+            last_sent: report.last_sent || report.lastSent || undefined,
+            next_run: report.next_run || report.nextRun || undefined,
+            is_active: report.status !== 'paused' && report.status !== 'disabled',
+          }))
+      );
+    } catch (error) {
+      console.error('Failed to fetch scheduled reports:', error);
+      toast.error('Failed to load scheduled reports');
+    }
   }, []);
 
   useEffect(() => {
@@ -225,8 +246,31 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
   };
 
   const handleExport = (format: 'pdf' | 'csv' | 'xlsx') => {
-    toast.success(`Exporting report as ${format.toUpperCase()}...`);
-    // In real implementation, this would call the API
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      timeRange,
+      metrics,
+      apiChartData,
+      aiChartData,
+    };
+    const filename = `superadmin-analytics-${timeRange}.${format === 'pdf' ? 'json' : format}`;
+    const content =
+      format === 'csv'
+        ? [
+            'metric,value,change',
+            ...metrics.map((metric) => `${metric.title},${metric.value},${metric.change}`),
+          ].join('\n')
+        : JSON.stringify(payload, null, 2);
+    const blob = new Blob([content], {
+      type: format === 'csv' ? 'text/csv;charset=utf-8' : 'application/json;charset=utf-8',
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Report exported as ${filename}`);
   };
 
   const generateTimeLabels = (range: string): string[] => {

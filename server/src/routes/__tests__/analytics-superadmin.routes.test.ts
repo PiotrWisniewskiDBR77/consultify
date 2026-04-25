@@ -141,3 +141,101 @@ describe('Analytics Superadmin Routes — degraded failures are explicit', () =>
     });
   });
 });
+
+describe('Analytics Superadmin Routes — report executions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('GET /executions returns recent executions across reports', async () => {
+    dbAll.mockResolvedValueOnce([
+      {
+        id: 'exec-1',
+        report_id: 'report-1',
+        report_name: 'Weekly Metrics',
+        report_type: 'system',
+      },
+    ]);
+
+    const router = await importRouter();
+    const layer = router.stack.find(
+      (entry: any) => entry.route?.path === '/executions' && entry.route?.methods?.get
+    );
+    expect(layer).toBeDefined();
+
+    const req = createMockReq({ query: { limit: '25' } });
+    const res = createMockRes();
+    const handlers = layer!.route!.stack;
+    await handlers[handlers.length - 1].handle(req, res, vi.fn());
+
+    expect(dbAll).toHaveBeenCalledWith(
+      expect.stringContaining('analytics_report_executions'),
+      [25]
+    );
+    expect(res.json).toHaveBeenCalledWith({
+      executions: [
+        {
+          id: 'exec-1',
+          report_id: 'report-1',
+          report_name: 'Weekly Metrics',
+          report_type: 'system',
+        },
+      ],
+    });
+  });
+});
+
+describe('Analytics Superadmin Routes — deterministic predictions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('POST /models/:id/predict projects revenue without random growth', async () => {
+    dbGet.mockResolvedValueOnce({ id: 'model-1', model_type: 'revenue' }).mockResolvedValueOnce({
+      accuracy_score: 0.81,
+      parameters_json: JSON.stringify({
+        currentMRR: 10000,
+        activeSubscriptions: 20,
+        avgRevenuePerSubscription: 500,
+      }),
+    });
+    dbRun.mockResolvedValueOnce({ changes: 1 });
+
+    const router = await importRouter();
+    const layer = router.stack.find(
+      (entry: any) => entry.route?.path === '/models/:id/predict' && entry.route?.methods?.post
+    );
+    expect(layer).toBeDefined();
+
+    const req = createMockReq({ params: { id: 'model-1' }, body: { input: {} } });
+    const res = createMockRes();
+    const handlers = layer!.route!.stack;
+    await handlers[handlers.length - 1].handle(req, res, vi.fn());
+
+    expect(dbRun).toHaveBeenCalledWith(
+      expect.stringContaining('predictive_model_predictions'),
+      expect.arrayContaining([
+        'model-1',
+        'revenue',
+        JSON.stringify({}),
+        JSON.stringify({
+          predictedValue: '$10,020 projected MRR',
+          factors: {
+            currentMRR: 10000,
+            projectedMRR: 10020,
+            activeSubs: 20,
+            avgRevenuePerSubscription: 500,
+          },
+        }),
+        0.81,
+      ])
+    );
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        predictedValue: '$10,020 projected MRR',
+        confidence: 0.81,
+      })
+    );
+  });
+});

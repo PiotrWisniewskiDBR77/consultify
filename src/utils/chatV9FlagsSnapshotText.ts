@@ -63,7 +63,8 @@ export function buildChatV9FlagSnapshotText(options: BuildSnapshotTextOptions = 
     return `${header}\n\nNo Chat V9 flags are registered.`;
   }
 
-  const headerRow = '| Ticket | ID | Block | State | Override | Default | Matches default | Storage key |';
+  const headerRow =
+    '| Ticket | ID | Block | State | Override | Default | Matches default | Storage key |';
   const dividerRow = '|---|---|---|---|---|---|---|---|';
 
   const rows = CHAT_V9_FLAGS.map((flag) => {

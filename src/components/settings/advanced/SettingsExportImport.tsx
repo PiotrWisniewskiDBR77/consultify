@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   Calendar,
   CheckCircle,
-  Copy,
   Download,
   FileJson,
   FileText,
@@ -62,16 +61,32 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
     warnings: [],
     errors: [],
   });
+  const [lastImportResult, setLastImportResult] = useState<{
+    imported: string[];
+    skipped: string[];
+  } | null>(null);
 
   const categories = [
-    { key: 'profile', label: 'Profile & Contact', icon: '👤' },
-    { key: 'security', label: 'Security Settings', icon: '🔒' },
-    { key: 'privacy', label: 'Privacy Settings', icon: '🛡️' },
-    { key: 'aiPreferences', label: 'AI Preferences', icon: '🤖' },
-    { key: 'notifications', label: 'Notifications', icon: '🔔' },
-    { key: 'integrations', label: 'Integrations', icon: '🔗' },
-    { key: 'appearance', label: 'Appearance', icon: '🎨' },
-    { key: 'keyboard', label: 'Keyboard Shortcuts', icon: '⌨️' },
+    { key: 'profile', label: t('settings.importExport.categories.profile', 'Profile & Contact') },
+    { key: 'security', label: t('settings.importExport.categories.security', 'Security Settings') },
+    { key: 'privacy', label: t('settings.importExport.categories.privacy', 'Privacy Settings') },
+    {
+      key: 'aiPreferences',
+      label: t('settings.importExport.categories.aiPreferences', 'AI Preferences'),
+    },
+    {
+      key: 'notifications',
+      label: t('settings.importExport.categories.notifications', 'Notifications'),
+    },
+    {
+      key: 'integrations',
+      label: t('settings.importExport.categories.integrations', 'Integrations'),
+    },
+    { key: 'appearance', label: t('settings.importExport.categories.appearance', 'Appearance') },
+    {
+      key: 'keyboard',
+      label: t('settings.importExport.categories.keyboard', 'Keyboard Shortcuts'),
+    },
   ];
 
   const handleExport = async () => {
@@ -87,7 +102,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       const response = await Api.exportSettings(selectedCategories);
 
       if (!response?.data) {
-        throw new Error('No data received');
+        throw new Error(t('settings.importExport.noData', 'No data received'));
       }
 
       // Create download
@@ -101,9 +116,9 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success('Settings exported successfully');
+      toast.success(t('settings.importExport.exportSuccess', 'Settings exported successfully'));
     } catch (error) {
-      toast.error('Failed to export settings');
+      toast.error(t('settings.importExport.exportError', 'Failed to export settings'));
     } finally {
       setExporting(false);
     }
@@ -124,12 +139,26 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       const warnings: string[] = [];
       const errors: string[] = [];
 
-      if (!data.version) errors.push('Missing version information');
-      if (!data.settings) errors.push('Missing settings data');
+      if (!data.version)
+        errors.push(
+          t('settings.importExport.validation.missingVersion', 'Missing version information')
+        );
+      if (!data.settings)
+        errors.push(t('settings.importExport.validation.missingSettings', 'Missing settings data'));
       if (data.version && data.version !== '1.0.0')
-        warnings.push('Different settings version - some options may not apply');
+        warnings.push(
+          t(
+            'settings.importExport.validation.versionWarning',
+            'Different settings version - some options may not apply'
+          )
+        );
       if (data.userId && data.userId !== currentUser.id)
-        warnings.push('Settings from different user account');
+        warnings.push(
+          t(
+            'settings.importExport.validation.differentUser',
+            'Settings from different user account'
+          )
+        );
 
       setImportValidation({
         valid: errors.length === 0,
@@ -140,7 +169,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       setImportValidation({
         valid: false,
         warnings: [],
-        errors: ['Invalid JSON file'],
+        errors: [t('settings.importExport.validation.invalidJson', 'Invalid JSON file')],
       });
     }
   };
@@ -153,17 +182,25 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
       // Call API to import settings
       const response = await Api.importSettings(importPreview, true);
+      const imported = response?.imported || [];
+      const skipped = response?.skipped || [];
+      setLastImportResult({ imported, skipped });
 
-      if (response?.imported?.length > 0) {
-        toast.success(`Settings imported successfully (${response.imported.length} categories)`);
+      if (imported.length > 0) {
+        toast.success(
+          t('settings.importExport.importSuccessWithCount', {
+            defaultValue: 'Settings imported successfully ({{count}} categories)',
+            count: imported.length,
+          })
+        );
       } else {
-        toast.success('Settings imported successfully');
+        toast.success(t('settings.importExport.importSuccess', 'Settings imported successfully'));
       }
 
       setImportFile(null);
       setImportPreview(null);
     } catch (error) {
-      toast.error('Failed to import settings');
+      toast.error(t('settings.importExport.importError', 'Failed to import settings'));
     } finally {
       setImporting(false);
     }
@@ -189,10 +226,10 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       <div>
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
           <FileJson size={28} className="text-emerald-500" />
-          Settings Export & Import
+          {t('settings.importExport.title', 'Settings Export & Import')}
         </h2>
         <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-          Backup and restore your settings configuration
+          {t('settings.importExport.subtitle', 'Backup and restore your settings configuration')}
         </p>
       </div>
 
@@ -204,9 +241,11 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
               <Download size={20} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 dark:text-white">Export Settings</h3>
+              <h3 className="font-semibold text-slate-900 dark:text-white">
+                {t('settings.importExport.exportTitle', 'Export Settings')}
+              </h3>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Download your settings as JSON file
+                {t('settings.importExport.exportDesc', 'Download your settings as JSON file')}
               </p>
             </div>
           </div>
@@ -216,13 +255,15 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg disabled:opacity-50"
           >
             {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-            Export Selected
+            {t('settings.importExport.exportSelected', 'Export Selected')}
           </button>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between p-2 bg-slate-50 dark:bg-navy-950 rounded-lg">
-            <span className="font-medium text-slate-700 dark:text-slate-300">Select All</span>
+            <span className="font-medium text-slate-700 dark:text-slate-300">
+              {t('settings.importExport.selectAll', 'Select All')}
+            </span>
             <input
               type="checkbox"
               checked={Object.values(exportConfig).every(Boolean)}
@@ -238,7 +279,6 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                 className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-950 rounded-lg cursor-pointer hover:bg-slate-100 dark:hover:bg-navy-800"
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-xl">{cat.icon}</span>
                   <span className="font-medium text-slate-700 dark:text-slate-300">
                     {cat.label}
                   </span>
@@ -264,9 +304,11 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
             <Upload size={20} className="text-blue-600 dark:text-blue-400" />
           </div>
           <div>
-            <h3 className="font-semibold text-slate-900 dark:text-white">Import Settings</h3>
+            <h3 className="font-semibold text-slate-900 dark:text-white">
+              {t('settings.importExport.importTitle', 'Import Settings')}
+            </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Restore settings from a JSON file
+              {t('settings.importExport.importDesc', 'Restore settings from a JSON file')}
             </p>
           </div>
         </div>
@@ -275,10 +317,13 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
           <label className="flex flex-col items-center justify-center p-8 border-2 border-dashed border-slate-300 dark:border-white/20 rounded-xl cursor-pointer hover:border-blue-400 dark:hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-500/5 transition-colors">
             <FileText size={48} className="text-slate-400 dark:text-slate-500 mb-3" />
             <p className="font-medium text-slate-700 dark:text-slate-300">
-              Drop settings file here or click to browse
+              {t('settings.importExport.dropFile', 'Drop settings file here or click to browse')}
             </p>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              Accepts .json files exported from Consultify
+              {t(
+                'settings.importExport.acceptsJson',
+                'Accepts .json files exported from Consultify'
+              )}
             </p>
             <input type="file" accept=".json" onChange={handleFileSelect} className="hidden" />
           </label>
@@ -291,7 +336,10 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
                   <p className="font-medium text-slate-900 dark:text-white">{importFile.name}</p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {importPreview?.exportedAt && (
-                      <>Exported: {new Date(importPreview.exportedAt).toLocaleDateString()}</>
+                      <>
+                        {t('settings.importExport.exportedAt', 'Exported')}:{' '}
+                        {new Date(importPreview.exportedAt).toLocaleDateString()}
+                      </>
                     )}
                   </p>
                 </div>
@@ -312,11 +360,11 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
               <div className="p-4 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
                 <div className="flex items-center gap-2 text-red-700 dark:text-red-400 font-medium mb-2">
                   <AlertTriangle size={16} />
-                  Errors Found
+                  {t('settings.importExport.errorsFound', 'Errors Found')}
                 </div>
                 <ul className="text-sm text-red-600 dark:text-red-300 space-y-1">
                   {importValidation.errors.map((err, i) => (
-                    <li key={i}>• {err}</li>
+                    <li key={i}>- {err}</li>
                   ))}
                 </ul>
               </div>
@@ -326,11 +374,11 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
               <div className="p-4 bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/20 rounded-lg">
                 <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-400 font-medium mb-2">
                   <AlertTriangle size={16} />
-                  Warnings
+                  {t('settings.importExport.warnings', 'Warnings')}
                 </div>
                 <ul className="text-sm text-yellow-600 dark:text-yellow-300 space-y-1">
                   {importValidation.warnings.map((warn, i) => (
-                    <li key={i}>• {warn}</li>
+                    <li key={i}>- {warn}</li>
                   ))}
                 </ul>
               </div>
@@ -340,7 +388,9 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
               <div className="p-4 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg">
                 <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                   <CheckCircle size={16} />
-                  <span className="font-medium">File validated successfully</span>
+                  <span className="font-medium">
+                    {t('settings.importExport.fileValid', 'File validated successfully')}
+                  </span>
                 </div>
               </div>
             )}
@@ -349,7 +399,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
             {importPreview?.settings && (
               <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
                 <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Settings to import:
+                  {t('settings.importExport.settingsToImport', 'Settings to import:')}
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {Object.keys(importPreview.settings).map((key) => (
@@ -370,20 +420,51 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
               className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-lg disabled:opacity-50"
             >
               {importing ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              Import Settings
+              {t('settings.importExport.importButton', 'Import Settings')}
             </button>
           </div>
         )}
       </div>
 
+      {lastImportResult && (
+        <div className="bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-xl p-4">
+          <h4 className="font-medium text-green-700 dark:text-green-400 mb-2">
+            {t('settings.importExport.lastImportTitle', 'Last import result')}
+          </h4>
+          <p className="text-sm text-green-700 dark:text-green-300">
+            {t('settings.importExport.lastImportSummary', {
+              defaultValue: 'Imported: {{imported}}. Skipped: {{skipped}}.',
+              imported: lastImportResult.imported.length,
+              skipped: lastImportResult.skipped.length,
+            })}
+          </p>
+        </div>
+      )}
+
       {/* Info */}
       <div className="bg-slate-50 dark:bg-navy-950 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-        <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">💡 Tips</h4>
+        <h4 className="font-medium text-slate-700 dark:text-slate-300 mb-2">
+          {t('settings.importExport.tipsTitle', 'Tips')}
+        </h4>
         <ul className="text-sm text-slate-500 dark:text-slate-400 space-y-1">
-          <li>• Export settings before making major changes</li>
-          <li>• Settings files are portable between devices</li>
-          <li>• Sensitive data (passwords, tokens) is not exported</li>
-          <li>• Integration credentials need to be re-authenticated after import</li>
+          <li>
+            {t('settings.importExport.tipBackup', 'Export settings before making major changes')}
+          </li>
+          <li>
+            {t('settings.importExport.tipPortable', 'Settings files are portable between devices')}
+          </li>
+          <li>
+            {t(
+              'settings.importExport.tipSensitive',
+              'Sensitive data (passwords, tokens) is not exported'
+            )}
+          </li>
+          <li>
+            {t(
+              'settings.importExport.tipIntegrations',
+              'Integration credentials need to be re-authenticated after import'
+            )}
+          </li>
         </ul>
       </div>
     </div>

@@ -5,7 +5,8 @@ const P05_ERROR_MESSAGES: Record<string, string> = {
   P05_INVALID_OUTCOME: 'Invalid step outcome. Check allowed actions for current step.',
   P05_PERMISSION_DENIED: 'Permission denied. Contact your organization admin.',
   P05_CONCURRENT_RUN_EXISTS: 'An active lane run already exists. Complete or cancel it first.',
-  P05_SWITCHOVER_MISCONFIGURED: 'Cannot finalize: version must be "actual" and not already finalized.',
+  P05_SWITCHOVER_MISCONFIGURED:
+    'Cannot finalize: version must be "actual" and not already finalized.',
   P05_SNAPSHOT_NOT_FOUND: 'Version snapshot not found.',
   P05_SNAPSHOT_ID_REQUIRED: 'Snapshot ID is required.',
   P05_VERSION_PARAMS_REQUIRED: 'Version type and snapshot data are required.',

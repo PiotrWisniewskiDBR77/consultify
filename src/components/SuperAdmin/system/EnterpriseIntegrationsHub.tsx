@@ -282,7 +282,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       }
     } catch (error) {
       console.warn('[EnterpriseIntegrationsHub] Falling back to bundled connector catalog', error);
-      setCatalogNotice('Live connector catalog is unavailable. Showing bundled connector definitions.');
+      setCatalogNotice(
+        'Live connector catalog is unavailable. Showing bundled connector definitions.'
+      );
     }
   }, []);
 

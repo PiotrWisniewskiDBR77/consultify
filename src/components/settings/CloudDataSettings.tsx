@@ -87,7 +87,10 @@ export const CloudDataSettings: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     const confirmed = window.confirm(
-      t('cloud.deleteConfirm', 'Are you sure you want to disconnect this cloud source? This will stop syncing files from this source.')
+      t(
+        'cloud.deleteConfirm',
+        'Are you sure you want to disconnect this cloud source? This will stop syncing files from this source.'
+      )
     );
     if (!confirmed) return;
 
@@ -110,6 +113,9 @@ export const CloudDataSettings: React.FC = () => {
     const url = urls[source.provider];
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   };
+
+  const getProviderLabel = (provider: string) =>
+    t(`cloud.providers.${provider}`, PROVIDER_LABELS[provider] || provider);
 
   return (
     <div className="space-y-4">
@@ -146,7 +152,7 @@ export const CloudDataSettings: React.FC = () => {
             >
               {Object.entries(PROVIDER_LABELS).map(([key, label]) => (
                 <option key={key} value={key}>
-                  {PROVIDER_ICONS[key]} {label}
+                  {PROVIDER_ICONS[key]} {getProviderLabel(key)}
                 </option>
               ))}
             </select>
@@ -202,7 +208,7 @@ export const CloudDataSettings: React.FC = () => {
                     {source.name}
                   </div>
                   <div className="text-xs text-slate-400">
-                    {PROVIDER_LABELS[source.provider] || source.provider} ·{' '}
+                    {getProviderLabel(source.provider)} ·{' '}
                     <span
                       className={
                         source.status === 'active'

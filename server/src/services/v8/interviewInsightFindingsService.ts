@@ -1,5 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
+import logger from '../../utils/Logger.js';
+import * as queryHelpers from '../../utils/queryHelpers.js';
 import type {
   Insight,
   InsightIssue,
@@ -8,17 +10,15 @@ import type {
   InsightTheme,
 } from '../InterviewInsightService.js';
 import { getById as getInsightById } from '../InterviewInsightService.js';
-import logger from '../../utils/Logger.js';
-import * as queryHelpers from '../../utils/queryHelpers.js';
 import {
-  type P10ConfidenceLevel,
-  type P10EvidencePointer,
-  type P10EvidencePointerType,
-  type P10HandoffToInitiativesPayload,
   buildP10HandoffToInitiativesSkeleton,
   canPublishFinding,
   isValidP10ConfidenceLevel,
   isValidP10EvidencePointerType,
+  type P10ConfidenceLevel,
+  type P10EvidencePointer,
+  type P10EvidencePointerType,
+  type P10HandoffToInitiativesPayload,
 } from './interviewInsightCanon.js';
 
 export const NOTEBOOK_REF_PREFIX = 'notebook://';
@@ -52,7 +52,9 @@ export async function resolveNotebookReference(sourceRef: string): Promise<Noteb
 
   try {
     const { get } = await import('../../utils/DbPromise.js');
-    const row: any = await get(`SELECT id, title FROM notebook_pages WHERE id = ? LIMIT 1`, [pageId]);
+    const row: any = await get(`SELECT id, title FROM notebook_pages WHERE id = ? LIMIT 1`, [
+      pageId,
+    ]);
     if (!row) {
       return { valid: false, pageId, error: `Notebook page not found: ${pageId}` };
     }
@@ -217,7 +219,9 @@ function defaultLimitsForSection(
   return 'Manual finding requires explicit confirmation of scope, assumptions, and remaining unknowns.';
 }
 
-function defaultNextActionForSection(sectionType: 'theme' | 'issue' | 'opportunity' | 'manual'): string {
+function defaultNextActionForSection(
+  sectionType: 'theme' | 'issue' | 'opportunity' | 'manual'
+): string {
   switch (sectionType) {
     case 'theme':
       return 'Review pattern with an operator, confirm evidence coverage, and decide whether it should move to publish.';
@@ -403,7 +407,9 @@ async function loadFindingRows(insightId: string): Promise<FindingRow[]> {
   return Array.isArray(rows) ? rows : [];
 }
 
-async function loadPointersByFinding(insightId: string): Promise<Record<string, P10EvidencePointer[]>> {
+async function loadPointersByFinding(
+  insightId: string
+): Promise<Record<string, P10EvidencePointer[]>> {
   await ensureTables();
   const rows = await queryHelpers.queryAll<any>(
     `SELECT id, finding_id, pointer_type, source_ref, source_fingerprint, captured_excerpt, captured_at,
@@ -433,7 +439,10 @@ async function loadPointersByFinding(insightId: string): Promise<Record<string, 
 }
 
 async function mapFindingRows(insightId: string): Promise<P10Finding[]> {
-  const [rows, pointerMap] = await Promise.all([loadFindingRows(insightId), loadPointersByFinding(insightId)]);
+  const [rows, pointerMap] = await Promise.all([
+    loadFindingRows(insightId),
+    loadPointersByFinding(insightId),
+  ]);
   return rows.map((row) => ({
     id: String(row.id),
     insightId: String(row.insight_id),
@@ -547,7 +556,10 @@ async function insertPointer(
   };
 }
 
-async function ensureBackfilledFindings(insightId: string, insight?: Insight | null): Promise<void> {
+async function ensureBackfilledFindings(
+  insightId: string,
+  insight?: Insight | null
+): Promise<void> {
   await ensureTables();
   const countRow = await queryHelpers.queryOne<{ count: number }>(
     `SELECT COUNT(*) as count FROM interview_insight_findings WHERE insight_id = ?`,
@@ -579,7 +591,8 @@ async function ensureBackfilledFindings(insightId: string, insight?: Insight | n
       statement: String(theme.description || theme.title || '').trim(),
       confidence,
       limits:
-        splitLines((theme as any).limits).join('\n') || defaultLimitsForSection('theme', confidence),
+        splitLines((theme as any).limits).join('\n') ||
+        defaultLimitsForSection('theme', confidence),
       nextAction: defaultNextActionForSection('theme'),
       pointers: buildBackfillPointers({
         insight: resolvedInsight,
@@ -598,7 +611,8 @@ async function ensureBackfilledFindings(insightId: string, insight?: Insight | n
       statement: String(issue.description || issue.title || '').trim(),
       confidence,
       limits:
-        splitLines((issue as any).limits).join('\n') || defaultLimitsForSection('issue', confidence),
+        splitLines((issue as any).limits).join('\n') ||
+        defaultLimitsForSection('issue', confidence),
       nextAction: defaultNextActionForSection('issue'),
       pointers: buildBackfillPointers({
         insight: resolvedInsight,
@@ -678,7 +692,10 @@ export async function listFindings(insightId: string): Promise<P10Finding[]> {
   return mapFindingRows(insightId);
 }
 
-export async function getFinding(insightId: string, findingId: string): Promise<P10Finding | undefined> {
+export async function getFinding(
+  insightId: string,
+  findingId: string
+): Promise<P10Finding | undefined> {
   const findings = await listFindings(insightId);
   return findings.find((item) => item.id === findingId);
 }
@@ -819,9 +836,12 @@ export async function updateFinding(
   }
 
   const nextStatement =
-    input.finding_statement !== undefined ? input.finding_statement.trim() : finding.finding_statement;
+    input.finding_statement !== undefined
+      ? input.finding_statement.trim()
+      : finding.finding_statement;
   const nextLimits = input.limits !== undefined ? input.limits.trim() : finding.limits;
-  const nextAction = input.next_action !== undefined ? input.next_action.trim() : finding.next_action;
+  const nextAction =
+    input.next_action !== undefined ? input.next_action.trim() : finding.next_action;
 
   if (!nextStatement) return { error: 'finding_statement cannot be empty' };
   if (!nextLimits) return { error: 'limits cannot be empty' };
@@ -862,7 +882,9 @@ export async function updateFinding(
     action: 'updated',
     actorUserId: actorUserId || null,
     detail: {
-      changedFields: Object.keys(input).filter((key) => (input as Record<string, unknown>)[key] !== undefined),
+      changedFields: Object.keys(input).filter(
+        (key) => (input as Record<string, unknown>)[key] !== undefined
+      ),
     },
   });
 
@@ -1010,7 +1032,9 @@ export async function buildHandoffPayload(
     insightArtifactId: insightId,
     findingId: finding.id,
     findingStatement: finding.finding_statement,
-    confidenceLevel: (finding.confidence_level === 'insufficient' ? 'unknown' : finding.confidence_level) as any,
+    confidenceLevel: (finding.confidence_level === 'insufficient'
+      ? 'unknown'
+      : finding.confidence_level) as any,
     limits: finding.limits,
     nextAction: finding.next_action,
     evidencePointers: finding.evidence_pointers.filter((pointer) => !pointer.isTombstone),
@@ -1100,7 +1124,11 @@ export async function getHandoffLog(insightId: string): Promise<HandoffLogEntry[
   }));
 }
 
-function scheduleSurveyLinkageValidation(insightId: string, findingId: string, sourceRef: string): void {
+function scheduleSurveyLinkageValidation(
+  insightId: string,
+  findingId: string,
+  sourceRef: string
+): void {
   void (async () => {
     try {
       const { validateSurveyLinkage } = await import('./insightSignalBridgeService.js');

@@ -14,7 +14,9 @@ export const SuperAdminUserManagement: React.FC<SuperAdminUserManagementProps> =
   selectedOrganizationId = '',
   onSelectedOrganizationChange,
 }) => {
-  const selectedOrganization = organizations.find((organization) => organization.id === selectedOrganizationId);
+  const selectedOrganization = organizations.find(
+    (organization) => organization.id === selectedOrganizationId
+  );
 
   return (
     <div className="p-8 overflow-y-auto relative">

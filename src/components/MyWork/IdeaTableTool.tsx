@@ -140,7 +140,10 @@ import { SnapshotManager } from './table/SnapshotManager';
 import { StatusBar } from './table/StatusBar';
 import { StickyNoteView } from './table/StickyNoteView';
 import { SyncManager } from './table/sync/SyncManager';
+// P15 Table Platform – extracted components
+import { TableDataProvider } from './table/TableDataProvider';
 import { TableTabStrip } from './table/TableTabStrip';
+import { TableToolbar as P15TableToolbar } from './table/TableToolbar';
 import type {
   ColumnDef,
   FilterGroup,
@@ -152,10 +155,6 @@ import type {
 import { computeAggregation } from './table/tableTypes';
 import { TemplateGallery } from './table/TemplateGallery';
 import { TimelineView } from './table/TimelineView';
-// P15 Table Platform – extracted components
-import { TableDataProvider } from './table/TableDataProvider';
-import { TableToolbar as P15TableToolbar } from './table/TableToolbar';
-import { ViewRouter as P15ViewRouter } from './table/ViewRouter';
 // Domain hooks extracted from this file (Stage 1 refactor)
 import { useRollupComputation } from './table/useRollupComputation';
 import { useTableKeyboard } from './table/useTableKeyboard';
@@ -167,6 +166,7 @@ import { useTableRows } from './table/useTableRows';
 import { useTableSchema } from './table/useTableSchema';
 import { useTableViews } from './table/useTableViews';
 import { useUndoRedo } from './table/useUndoRedo';
+import { ViewRouter as P15ViewRouter } from './table/ViewRouter';
 import type { ViewConfigState } from './table/views/ViewConfigPanel';
 import { ViewRouter as LegacyViewRouter } from './table/views/ViewRouter';
 import { VoiceImageInput } from './table/VoiceImageInput';
@@ -412,7 +412,12 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
       fieldCount: platformIntegration.platformFields?.length || 0,
       recordCount: platformIntegration.totalRecords || 0,
     });
-  }, [usePlatform, platformIntegration.table?.id, platformIntegration.activeViewId, onTableContextChange]);
+  }, [
+    usePlatform,
+    platformIntegration.table?.id,
+    platformIntegration.activeViewId,
+    onTableContextChange,
+  ]);
 
   // Platform override: rows
   const effectiveNodes = (usePlatform ? platformIntegration.nodes : nodes) ?? [];
@@ -644,7 +649,10 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     const views = platformIntegration.platformViews ?? [];
     return views.find(
       (v: { viewType?: string; name?: string }) =>
-        v.viewType === 'interface' || String(v.name ?? '').toLowerCase().includes('interface')
+        v.viewType === 'interface' ||
+        String(v.name ?? '')
+          .toLowerCase()
+          .includes('interface')
     ) as
       | {
           id?: string;
@@ -679,7 +687,6 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usePlatform, ideaId]);
 
   const handleTabSelectTable = useCallback(
@@ -1226,230 +1233,1748 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
           locked={locked}
           isPl={!!isPl}
         >
-        {/* Toolbar */}
-        {usePlatform ? (
-          <P15TableToolbar
-            ideaId={ideaId}
-            nodesUndo={nodesUndo}
-            onPlatformUndo={handlePlatformUndo}
-            onCSVImport={handleCSVImport}
-            onExportCSV={() => {
-              const csv = exportToCSV(_cols, effectiveNodes);
-              downloadCSV(csv, `idea-${ideaId}.csv`);
-            }}
-            onCopyToClipboard={() => {
-              copyTableToClipboard(_cols, effectiveNodes);
-              toast.success(isPl ? 'Skopiowano' : 'Copied');
-            }}
-            onAddRowWithTemplate={handleAddRowWithTemplate}
-            onBulkConvert={handleBulkConvert}
-            onShowAIAssistant={() => setShowAIAssistant(true)}
-            onShowAICategorize={() => setShowAICategorize(true)}
-            onShowScoringModel={() => setShowScoringModel(true)}
-            onShowExportPresentation={() => setShowExportPresentation(true)}
-            onShowPipeline={() => setShowPipeline(true)}
-            onShowCopilot={() => setShowCopilot(true)}
-            onShowVoiceInput={() => setShowVoiceInput(true)}
-            onShowCrossRelations={() => setShowCrossRelations(true)}
-            onShowFrameworkGen={() => setShowFrameworkGen(true)}
-            onShowConditionalFmt={() => setShowConditionalFmt(true)}
-            onShowKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
-            connectors={connectors}
-            onShowConnectorWizard={() => setShowConnectorWizard(true)}
-            onShowConnectorList={() => setShowConnectorList(true)}
-            onShowWebhookRelays={() => setShowWebhookRelays(true)}
-            onShowAutomationsManager={() => setShowAutomationsManager(true)}
-            onShowSyncManager={() => setShowSyncManager(true)}
-            onShowSharingManager={() => setShowSharingManager(true)}
-            onShowDistributionManager={() => setShowDistributionManager(true)}
-            onShowConsultifyLink={() => setShowConsultifyLink(true)}
-            heatmapColumns={heatmapColumns}
-            showHeatmap={showHeatmap}
-            onToggleHeatmap={() => setShowHeatmap((p) => !p)}
-            onToggleHeatmapColumn={toggleHeatmapColumn}
-            heatmapPalette={heatmapPalette}
-            onHeatmapPaletteChange={(id) => setHeatmapPalette(id as typeof heatmapPalette)}
-            activePalette={activePalette}
-            onAutoAssignColors={handleAutoAssignColors}
-            onPaletteChange={(id) => setActivePalette(id)}
-            formatRules={formatRules}
-            realtime={realtime}
-            isV8MultiplayerEnabled={isV8MultiplayerEnabled}
-            currentUserId={currentUserId}
-            currentUserName={currentUserName}
-            workspaceId={workspaceId || ''}
-            remotePresenceUsers={remotePresenceUsers}
-            onPresenceUpdate={setRemotePresenceUsers}
-            filterInput={filterInput}
-            onFilterInputChange={setFilterInput}
-            FilterBuilderComponent={FilterBuilder}
-            FilterPanelComponent={FilterPanel}
-            HeatmapControlsComponent={HeatmapControls}
-            ColorPaletteComponent={ColorPalette}
-            MobileToolbarMenuComponent={MobileToolbarMenu}
-            BatchAIFillButtonComponent={BatchAIFillButton}
-            WorkspacePresenceIndicatorComponent={WorkspacePresenceIndicator}
-            WorkspaceLockIndicatorComponent={WorkspaceLockIndicator}
-            CollaborationPresenceComponent={CollaborationPresence}
-            PresenceIndicatorsComponent={PresenceIndicators}
-          />
-        ) : (
-        <div className="flex flex-wrap items-center gap-1 md:gap-2 px-2 md:px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
-          <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-2">
-            {isPl ? 'Tabela' : 'Table'}
-          </div>
-
-          {/* Collaboration Presence */}
-          <WorkspacePresenceIndicator
-            workspaceId={workspaceId}
-            currentUserId={currentUserId}
-            enabled={isV8MultiplayerEnabled}
-          />
-          <WorkspaceLockIndicator
-            workspaceId={workspaceId}
-            currentUserId={currentUserId}
-            enabled={isV8MultiplayerEnabled}
-          />
-          <CollaborationPresence
-            ideaId={ideaId}
-            currentUserId={currentUserId}
-            currentUserName={currentUserName}
-            enabled={true}
-            renderIndicator={!isV8MultiplayerEnabled}
-            onPresenceUpdate={setRemotePresenceUsers}
-          />
-          {usePlatform && (
-            <PresenceIndicators
-              presence={realtime.presence}
+          {/* Toolbar */}
+          {usePlatform ? (
+            <P15TableToolbar
+              ideaId={ideaId}
+              nodesUndo={nodesUndo}
+              onPlatformUndo={handlePlatformUndo}
+              onCSVImport={handleCSVImport}
+              onExportCSV={() => {
+                const csv = exportToCSV(_cols, effectiveNodes);
+                downloadCSV(csv, `idea-${ideaId}.csv`);
+              }}
+              onCopyToClipboard={() => {
+                copyTableToClipboard(_cols, effectiveNodes);
+                toast.success(isPl ? 'Skopiowano' : 'Copied');
+              }}
+              onAddRowWithTemplate={() => handleAddRowWithTemplate()}
+              onBulkConvert={handleBulkConvert}
+              onShowAIAssistant={() => setShowAIAssistant(true)}
+              onShowAICategorize={() => setShowAICategorize(true)}
+              onShowScoringModel={() => setShowScoringModel(true)}
+              onShowExportPresentation={() => setShowExportPresentation(true)}
+              onShowPipeline={() => setShowPipeline(true)}
+              onShowCopilot={() => setShowCopilot(true)}
+              onShowVoiceInput={() => setShowVoiceInput(true)}
+              onShowCrossRelations={() => setShowCrossRelations(true)}
+              onShowFrameworkGen={() => setShowFrameworkGen(true)}
+              onShowConditionalFmt={() => setShowConditionalFmt(true)}
+              onShowKeyboardShortcuts={() => setShowKeyboardShortcuts(true)}
+              connectors={connectors}
+              onShowConnectorWizard={() => setShowConnectorWizard(true)}
+              onShowConnectorList={() => setShowConnectorList(true)}
+              onShowWebhookRelays={() => setShowWebhookRelays(true)}
+              onShowAutomationsManager={() => setShowAutomationsManager(true)}
+              onShowSyncManager={() => setShowSyncManager(true)}
+              onShowSharingManager={() => setShowSharingManager(true)}
+              onShowDistributionManager={() => setShowDistributionManager(true)}
+              onShowConsultifyLink={() => setShowConsultifyLink(true)}
+              heatmapColumns={heatmapColumns}
+              showHeatmap={showHeatmap}
+              onToggleHeatmap={() => setShowHeatmap((p) => !p)}
+              onToggleHeatmapColumn={toggleHeatmapColumn}
+              heatmapPalette={heatmapPalette}
+              onHeatmapPaletteChange={(id) => setHeatmapPalette(id as typeof heatmapPalette)}
+              activePalette={activePalette}
+              onAutoAssignColors={handleAutoAssignColors}
+              onPaletteChange={(id) => setActivePalette(id)}
+              formatRules={formatRules}
+              realtime={realtime}
+              isV8MultiplayerEnabled={isV8MultiplayerEnabled}
               currentUserId={currentUserId}
-              connectionState={realtime.connectionState}
-              enabled={usePlatform}
+              currentUserName={currentUserName}
+              workspaceId={workspaceId || ''}
+              remotePresenceUsers={remotePresenceUsers}
+              onPresenceUpdate={(users) => setRemotePresenceUsers(users as PresenceUser[])}
+              filterInput={filterInput}
+              onFilterInputChange={setFilterInput}
+              FilterBuilderComponent={FilterBuilder}
+              FilterPanelComponent={FilterPanel}
+              HeatmapControlsComponent={HeatmapControls}
+              ColorPaletteComponent={ColorPalette}
+              MobileToolbarMenuComponent={MobileToolbarMenu}
+              BatchAIFillButtonComponent={BatchAIFillButton}
+              WorkspacePresenceIndicatorComponent={WorkspacePresenceIndicator}
+              WorkspaceLockIndicatorComponent={WorkspaceLockIndicator}
+              CollaborationPresenceComponent={CollaborationPresence}
+              PresenceIndicatorsComponent={PresenceIndicators}
             />
-          )}
+          ) : (
+            <div className="flex flex-wrap items-center gap-1 md:gap-2 px-2 md:px-4 py-2 border-b border-slate-200/60 dark:border-navy-700/60 bg-slate-50/80 dark:bg-navy-900/80 flex-shrink-0">
+              <div className="text-xs font-semibold text-slate-700 dark:text-slate-200 mr-2">
+                {isPl ? 'Tabela' : 'Table'}
+              </div>
 
-          {/* View tabs */}
-          <div className="flex items-center gap-0.5 mr-2">
-            {savedViews.map((v) => (
-              <div key={v.id} className="relative">
-                {renamingViewId === v.id ? (
-                  <input
-                    autoFocus
-                    value={renamingViewName}
-                    onChange={(e) => setRenamingViewName(e.target.value)}
-                    onBlur={() => {
-                      if (renamingViewName.trim())
-                        updateSavedView(v.id, { name: renamingViewName.trim() });
-                      setRenamingViewId(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        if (renamingViewName.trim())
-                          updateSavedView(v.id, { name: renamingViewName.trim() });
-                        setRenamingViewId(null);
-                      } else if (e.key === 'Escape') {
-                        setRenamingViewId(null);
-                      }
-                    }}
-                    className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-navy-800 border border-primary-400 outline-none w-20"
-                  />
-                ) : (
+              {/* Collaboration Presence */}
+              <WorkspacePresenceIndicator
+                workspaceId={workspaceId}
+                currentUserId={currentUserId}
+                enabled={isV8MultiplayerEnabled}
+              />
+              <WorkspaceLockIndicator
+                workspaceId={workspaceId}
+                currentUserId={currentUserId}
+                enabled={isV8MultiplayerEnabled}
+              />
+              <CollaborationPresence
+                ideaId={ideaId}
+                currentUserId={currentUserId}
+                currentUserName={currentUserName}
+                enabled={true}
+                renderIndicator={!isV8MultiplayerEnabled}
+                onPresenceUpdate={(users) => setRemotePresenceUsers(users)}
+              />
+              {usePlatform && (
+                <PresenceIndicators
+                  presence={realtime.presence}
+                  currentUserId={currentUserId}
+                  connectionState={realtime.connectionState}
+                  enabled={usePlatform}
+                />
+              )}
+
+              {/* View tabs */}
+              <div className="flex items-center gap-0.5 mr-2">
+                {savedViews.map((v) => (
+                  <div key={v.id} className="relative">
+                    {renamingViewId === v.id ? (
+                      <input
+                        autoFocus
+                        value={renamingViewName}
+                        onChange={(e) => setRenamingViewName(e.target.value)}
+                        onBlur={() => {
+                          if (renamingViewName.trim())
+                            updateSavedView(v.id, { name: renamingViewName.trim() });
+                          setRenamingViewId(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            if (renamingViewName.trim())
+                              updateSavedView(v.id, { name: renamingViewName.trim() });
+                            setRenamingViewId(null);
+                          } else if (e.key === 'Escape') {
+                            setRenamingViewId(null);
+                          }
+                        }}
+                        className="px-2 py-1 rounded-lg text-[10px] font-bold bg-white dark:bg-navy-800 border border-primary-400 outline-none w-20"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => applyView(v)}
+                        onContextMenu={(e) => {
+                          e.preventDefault();
+                          if (v.id !== 'default')
+                            setViewContextMenu({ viewId: v.id, x: e.clientX, y: e.clientY });
+                        }}
+                        className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
+                          activeViewId === v.id
+                            ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                            : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                        }`}
+                      >
+                        {v.name}
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {!locked && (
                   <button
-                    onClick={() => applyView(v)}
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      if (v.id !== 'default')
-                        setViewContextMenu({ viewId: v.id, x: e.clientX, y: e.clientY });
+                    onClick={() => {
+                      setSaveViewName('');
+                      setShowSaveViewDialog(true);
                     }}
-                    className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${
-                      activeViewId === v.id
-                        ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                        : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                    }`}
+                    className="p-1 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
+                    title={isPl ? 'Zapisz widok' : 'Save view'}
                   >
-                    {v.name}
+                    <Plus size={12} />
                   </button>
                 )}
               </div>
-            ))}
-            {!locked && (
-              <button
-                onClick={() => {
-                  setSaveViewName('');
-                  setShowSaveViewDialog(true);
-                }}
-                className="p-1 rounded-lg text-slate-400 hover:text-primary-500 hover:bg-primary-500/10 transition-colors"
-                title={isPl ? 'Zapisz widok' : 'Save view'}
-              >
-                <Plus size={12} />
-              </button>
-            )}
-          </div>
 
-          {/* Save view dialog */}
-          {showSaveViewDialog && (
-            <div
-              className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20"
-              onClick={() => setShowSaveViewDialog(false)}
-            >
-              <div
-                className="bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 w-72"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-slate-200">
-                  {isPl ? 'Zapisz widok' : 'Save view'}
-                </h3>
-                <input
-                  autoFocus
-                  value={saveViewName}
-                  onChange={(e) => setSaveViewName(e.target.value)}
-                  placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
-                  className="w-full h-8 px-3 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-primary-500/30 mb-3"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && saveViewName.trim()) {
-                      saveCurrentView(saveViewName.trim(), columns);
-                      setShowSaveViewDialog(false);
-                    }
-                  }}
+              {/* Save view dialog */}
+              {showSaveViewDialog && (
+                <div
+                  className="fixed inset-0 z-[60] flex items-center justify-center bg-black/20"
+                  onClick={() => setShowSaveViewDialog(false)}
+                >
+                  <div
+                    className="bg-white dark:bg-navy-900 rounded-xl shadow-xl border border-slate-200 dark:border-navy-700 p-4 w-72"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <h3 className="text-sm font-semibold mb-2 text-slate-800 dark:text-slate-200">
+                      {isPl ? 'Zapisz widok' : 'Save view'}
+                    </h3>
+                    <input
+                      autoFocus
+                      value={saveViewName}
+                      onChange={(e) => setSaveViewName(e.target.value)}
+                      placeholder={isPl ? 'Nazwa widoku…' : 'View name…'}
+                      className="w-full h-8 px-3 rounded-lg text-xs bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 outline-none focus:ring-2 focus:ring-primary-500/30 mb-3"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && saveViewName.trim()) {
+                          saveCurrentView(saveViewName.trim(), columns);
+                          setShowSaveViewDialog(false);
+                        }
+                      }}
+                    />
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setShowSaveViewDialog(false)}
+                        className="px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                      >
+                        {isPl ? 'Anuluj' : 'Cancel'}
+                      </button>
+                      <button
+                        disabled={!saveViewName.trim()}
+                        onClick={() => {
+                          saveCurrentView(saveViewName.trim(), columns);
+                          setShowSaveViewDialog(false);
+                        }}
+                        className="px-3 py-1.5 text-xs rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40"
+                      >
+                        {isPl ? 'Zapisz' : 'Save'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* View context menu */}
+              {viewContextMenu && (
+                <div className="fixed inset-0 z-[60]" onClick={() => setViewContextMenu(null)}>
+                  <div
+                    className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[140px]"
+                    style={{ left: viewContextMenu.x, top: viewContextMenu.y }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                      onClick={() => {
+                        const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
+                        if (v) {
+                          setRenamingViewId(v.id);
+                          setRenamingViewName(v.name);
+                        }
+                        setViewContextMenu(null);
+                      }}
+                    >
+                      {isPl ? 'Zmień nazwę' : 'Rename'}
+                    </button>
+                    <button
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                      onClick={() => {
+                        updateSavedView(viewContextMenu.viewId, {
+                          sort: sort ? [sort] : undefined,
+                          filters,
+                          groupBy: groupBy ?? undefined,
+                          layout: viewLayout,
+                          columns: columns.map((c) => ({
+                            key: c.key,
+                            visible: c.visible !== false,
+                            width: c.width,
+                          })),
+                        });
+                        toast.success(isPl ? 'Widok zaktualizowany' : 'View updated');
+                        setViewContextMenu(null);
+                      }}
+                    >
+                      {isPl ? 'Aktualizuj' : 'Update'}
+                    </button>
+                    <button
+                      className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+                      onClick={() => {
+                        deleteSavedView(viewContextMenu.viewId);
+                        toast.success(isPl ? 'Widok usunięty' : 'View deleted');
+                        setViewContextMenu(null);
+                      }}
+                    >
+                      {isPl ? 'Usuń' : 'Delete'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
+
+              {/* Quick filter */}
+              <div className="relative flex-1 max-w-[200px]">
+                <Filter
+                  size={12}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400"
                 />
-                <div className="flex justify-end gap-2">
+                <input
+                  value={filterInput}
+                  onChange={(e) => setFilterInput(e.target.value)}
+                  placeholder={isPl ? 'Filtruj…' : 'Filter…'}
+                  className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-white dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
+                />
+                {filterInput && (
                   <button
-                    onClick={() => setShowSaveViewDialog(false)}
-                    className="px-3 py-1.5 text-xs rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
+                    onClick={() => setFilterInput('')}
+                    className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
-                    {isPl ? 'Anuluj' : 'Cancel'}
+                    <X size={10} />
                   </button>
-                  <button
-                    disabled={!saveViewName.trim()}
-                    onClick={() => {
-                      saveCurrentView(saveViewName.trim(), columns);
-                      setShowSaveViewDialog(false);
+                )}
+              </div>
+
+              {/* Advanced filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowFilterPanel(!showFilterPanel)}
+                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                    _filters.rules.length > 0
+                      ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                  }`}
+                >
+                  <Filter size={12} />
+                  {_filters.rules.length > 0 && (
+                    <span className="text-[9px]">({_filters.rules.length})</span>
+                  )}
+                </button>
+                {usePlatform ? (
+                  <FilterBuilder
+                    open={showFilterPanel}
+                    onClose={() => setShowFilterPanel(false)}
+                    filters={{
+                      logic: _filters.logic,
+                      rules: _filters.rules.map((r) => ({
+                        fieldId: (r as any).fieldId ?? (r as any).column,
+                        operator: (r as any).operator,
+                        value: (r as any).value,
+                      })),
                     }}
-                    className="px-3 py-1.5 text-xs rounded-lg bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-40"
+                    onChange={(pf) => {
+                      effectiveSetFilters({
+                        logic: pf.logic,
+                        rules: pf.rules.map((r) => ({
+                          id: `${r.fieldId}-${r.operator}`,
+                          column: r.fieldId,
+                          operator: r.operator as any,
+                          value: (r.value ?? '') as any,
+                        })),
+                      });
+                      void platformIntegration.applyPlatformFilters(pf);
+                    }}
+                    fields={platformIntegration.platformFields}
+                  />
+                ) : (
+                  <FilterPanel
+                    open={showFilterPanel}
+                    onClose={() => setShowFilterPanel(false)}
+                    filters={_filters}
+                    onChange={setFilters}
+                    columns={_visCols}
+                  />
+                )}
+              </div>
+
+              {/* Group by */}
+              <button
+                onClick={() =>
+                  (usePlatform ? effectiveSetGroupBy : setGroupBy)(_groupBy ? null : 'status')
+                }
+                className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                  _groupBy
+                    ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                }`}
+                title={isPl ? 'Grupuj' : 'Group'}
+              >
+                <Group size={12} />
+                <span className="hidden sm:inline">{isPl ? 'Grupuj' : 'Group'}</span>
+              </button>
+
+              {/* V5-IDEA-24: View layout switcher — FROZEN order: table → kanban → timeline → calendar → matrix → grid */}
+              <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+                {(
+                  [
+                    { id: 'table', icon: Table2, label: isPl ? 'Tabela' : 'Table' },
+                    { id: 'kanban', icon: KanbanSquare, label: 'Kanban' },
+                    { id: 'timeline', icon: GanttChart, label: 'Timeline / Gantt' },
+                    { id: 'calendar', icon: Calendar, label: isPl ? 'Kalendarz' : 'Calendar' },
+                    { id: 'matrix', icon: LayoutGrid, label: 'Matrix' },
+                    { id: 'grid', icon: Grid3X3, label: isPl ? 'Galeria' : 'Gallery' },
+                  ] as const
+                ).map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => (usePlatform ? effectiveSetViewLayout : setViewLayout)(v.id)}
+                    className={`relative p-1.5 transition-colors ${_vl === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    title={v.label}
                   >
-                    {isPl ? 'Zapisz' : 'Save'}
+                    <v.icon size={12} />
+                    {_vl === v.id && (
+                      <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-primary-500" />
+                    )}
                   </button>
+                ))}
+              </div>
+
+              {/* AI Assistant */}
+              <button
+                onClick={() => setShowAIAssistant(true)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                title={isPl ? 'Asystent AI (/)' : 'AI Assistant (/)'}
+              >
+                <Sparkles size={12} />
+              </button>
+
+              {/* Batch AI Fill */}
+              {!locked && (
+                <BatchAIFillButton
+                  nodes={processedRowsWithRollups}
+                  columns={_cols}
+                  ideaId={ideaId}
+                  onFill={_fieldChange}
+                  selectedIds={_selIds}
+                />
+              )}
+
+              {/* Secondary actions — hidden on mobile, shown in overflow menu */}
+              <div className="hidden md:contents">
+                {/* AI Categorize */}
+                {!locked && (
+                  <button
+                    onClick={() => setShowAICategorize(true)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+                  >
+                    <Layers size={12} />
+                  </button>
+                )}
+
+                {/* Scoring Model */}
+                <button
+                  onClick={() => setShowScoringModel(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Model scoringowy' : 'Scoring Model'}
+                >
+                  <Trophy size={12} />
+                </button>
+
+                {/* Export to Presentation */}
+                <button
+                  onClick={() => setShowExportPresentation(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
+                >
+                  <Presentation size={12} />
+                </button>
+
+                {/* Pipeline */}
+                <button
+                  onClick={() => setShowPipeline(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}
+                >
+                  <Rocket size={12} />
+                </button>
+
+                {/* AI Copilot */}
+                <button
+                  onClick={() => setShowCopilot(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'AI Copilot' : 'AI Copilot'}
+                >
+                  <Brain size={12} />
+                </button>
+
+                {/* Voice / Image Input */}
+                <button
+                  onClick={() => setShowVoiceInput(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Głos / Obraz' : 'Voice / Image'}
+                >
+                  <Mic size={12} />
+                </button>
+
+                {/* Cross-table Relations */}
+                <button
+                  onClick={() => setShowCrossRelations(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}
+                >
+                  <Network size={12} />
+                </button>
+
+                {/* Heatmap */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowHeatmap(!showHeatmap)}
+                    className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    title={isPl ? 'Heatmapa' : 'Heatmap'}
+                  >
+                    <Flame size={12} />
+                  </button>
+                  <HeatmapControls
+                    open={showHeatmap}
+                    onClose={() => setShowHeatmap(false)}
+                    columns={_cols}
+                    enabledColumns={heatmapColumns}
+                    onToggleColumn={toggleHeatmapColumn}
+                    palette={heatmapPalette}
+                    onPaletteChange={setHeatmapPalette}
+                  />
+                </div>
+
+                {/* History / Audit */}
+                <button
+                  onClick={() => setShowAuditTrail((p) => !p)}
+                  className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  title={isPl ? 'Historia zmian' : 'History'}
+                >
+                  <History size={12} />
+                </button>
+
+                {/* Activity Feed */}
+                <button
+                  onClick={() => setShowActivityFeed((p) => !p)}
+                  className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  title={isPl ? 'Aktywność' : 'Activity'}
+                >
+                  <Activity size={12} />
+                </button>
+
+                {/* Snapshots */}
+                <button
+                  onClick={() => setShowSnapshotManager(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Migawki' : 'Snapshots'}
+                >
+                  <Camera size={12} />
+                </button>
+
+                {/* Keyboard shortcuts */}
+                <button
+                  onClick={() => setShowKeyboardShortcuts(true)}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
+                >
+                  <Keyboard size={12} />
+                </button>
+
+                {/* Templates */}
+                {!locked && (
+                  <button
+                    onClick={() => setShowTemplateGallery(true)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    title={isPl ? 'Szablony' : 'Templates'}
+                  >
+                    <LayoutTemplate size={12} />
+                  </button>
+                )}
+
+                {/* Distribute */}
+                {!locked && (
+                  <button
+                    onClick={() => setShowDistributionBuilder(true)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    title={isPl ? 'Dystrybucja' : 'Distribute'}
+                  >
+                    <Send size={12} />
+                  </button>
+                )}
+
+                {/* Framework generator */}
+                {!locked && (
+                  <button
+                    onClick={() => setShowFrameworkGen(true)}
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    title={isPl ? 'Generator frameworków' : 'Framework Generator'}
+                  >
+                    <LayoutGrid size={12} />
+                    <span className="hidden lg:inline">{isPl ? 'Framework' : 'Framework'}</span>
+                  </button>
+                )}
+
+                {/* Conditional formatting */}
+                <button
+                  onClick={() => setShowConditionalFmt(true)}
+                  className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                  title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
+                >
+                  <Paintbrush size={12} />
+                </button>
+
+                {/* Color palette */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowColorPalette(!showColorPalette)}
+                    className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    title={isPl ? 'Paleta kolorów' : 'Color Palette'}
+                  >
+                    <Palette size={12} />
+                  </button>
+                  <ColorPalette
+                    open={showColorPalette}
+                    onClose={() => setShowColorPalette(false)}
+                    activePalette={activePalette}
+                    onPaletteChange={(id) => {
+                      setActivePalette(id);
+                      setShowColorPalette(false);
+                    }}
+                    onAutoAssign={handleAutoAssignColors}
+                  />
+                </div>
+
+                {/* Platform tab switcher: Data / Forms / Interfaces */}
+                {usePlatform && (
+                  <div className="flex items-center rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5">
+                    <button
+                      onClick={() => setPlatformTab('data')}
+                      className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                        platformTab === 'data'
+                          ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      {isPl ? 'Dane' : 'Data'}
+                    </button>
+                    <button
+                      onClick={() => setPlatformTab('forms')}
+                      className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                        platformTab === 'forms'
+                          ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      {isPl ? 'Formularze' : 'Forms'}
+                    </button>
+                    <button
+                      onClick={() => setPlatformTab('interfaces')}
+                      className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                        platformTab === 'interfaces'
+                          ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      {isPl ? 'Interfejsy' : 'Interfaces'}
+                    </button>
+                    <button
+                      onClick={() => setPlatformTab('models')}
+                      className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                        platformTab === 'models'
+                          ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      {isPl ? 'Modele' : 'Models'}
+                    </button>
+                    <button
+                      onClick={() => setPlatformTab('workflow')}
+                      className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                        platformTab === 'workflow'
+                          ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
+                      }`}
+                    >
+                      {isPl ? 'Workflow' : 'Workflow'}
+                    </button>
+                  </div>
+                )}
+
+                {/* Interface Designer (direct open) */}
+                {usePlatform && (
+                  <button
+                    onClick={() => setShowInterfaceDesigner(true)}
+                    className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
+                    title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
+                  >
+                    <Layout size={12} />
+                  </button>
+                )}
+
+                {/* Form Builder (direct open) */}
+                {usePlatform && !locked && (
+                  <button
+                    onClick={() => setShowFormBuilder(true)}
+                    className="p-1.5 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    title={isPl ? 'Kreator formularzy' : 'Form Builder'}
+                  >
+                    <FileText size={12} />
+                  </button>
+                )}
+
+                {/* Tools dropdown — quick access to platform features */}
+                {usePlatform && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowToolsMenu((p) => !p)}
+                      className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
+                        showToolsMenu
+                          ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
+                      }`}
+                      title={isPl ? 'Narzędzia' : 'Tools'}
+                    >
+                      <Grid3X3 size={12} />
+                      <span className="hidden lg:inline">{isPl ? 'Narzędzia' : 'Tools'}</span>
+                      <ChevronDown size={10} />
+                    </button>
+                    {showToolsMenu && (
+                      <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto">
+                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          {isPl ? 'Workflow' : 'Workflow'}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowAutomationsManager(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <Rocket size={14} className="text-amber-500" />
+                          {isPl ? 'Automatyzacje' : 'Automations'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowSyncManager(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <Link2 size={14} className="text-cyan-500" />
+                          {isPl ? 'Synchronizacja danych' : 'Data Sync'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowWebhookRelays(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <Webhook size={14} className="text-indigo-500" />
+                          {isPl ? 'Webhook Relay' : 'Webhook Relays'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowSharingManager(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <Network size={14} className="text-green-500" />
+                          {isPl ? 'Udostępnianie' : 'Sharing & Permissions'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowDistributionManager(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <Send size={14} className="text-pink-500" />
+                          {isPl ? 'Dystrybucja' : 'Distribution'}
+                        </button>
+                        <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                        <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                          {isPl ? 'Budowanie' : 'Build'}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowFormBuilder(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <FileText size={14} className="text-blue-500" />
+                          {isPl ? 'Formularze' : 'Forms'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowInterfaceDesigner(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <Layout size={14} className="text-violet-500" />
+                          {isPl ? 'Interfejsy' : 'Interfaces'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowTemplateGallery(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <LayoutTemplate size={14} className="text-emerald-500" />
+                          {isPl ? 'Szablony' : 'Templates'}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowConnectorWizard(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <Download size={14} className="text-teal-500" />
+                          {isPl ? 'Konektory' : 'Connectors'}
+                        </button>
+                        <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
+                        <button
+                          onClick={() => {
+                            setShowConsultifyLink(true);
+                            setShowToolsMenu(false);
+                          }}
+                          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                        >
+                          <Layers size={14} className="text-indigo-500" />
+                          {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile overflow menu for secondary actions */}
+              <MobileToolbarMenu>
+                {!locked && (
+                  <button
+                    onClick={() => setShowAICategorize(true)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                  >
+                    <Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowScoringModel(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}
+                </button>
+                <button
+                  onClick={() => setShowExportPresentation(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}
+                </button>
+                <button
+                  onClick={() => setShowPipeline(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}
+                </button>
+                <button
+                  onClick={() => setShowCopilot(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Brain size={14} /> AI Copilot
+                </button>
+                <button
+                  onClick={() => setShowVoiceInput(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}
+                </button>
+                <button
+                  onClick={() => setShowCrossRelations(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Network size={14} /> {isPl ? 'Relacje' : 'Relations'}
+                </button>
+                <button
+                  onClick={() => setShowHeatmap(!showHeatmap)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}
+                </button>
+                <button
+                  onClick={() => setShowAuditTrail((p) => !p)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <History size={14} /> {isPl ? 'Historia' : 'History'}
+                </button>
+                <button
+                  onClick={() => setShowActivityFeed((p) => !p)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
+                </button>
+                <button
+                  onClick={() => setShowSnapshotManager(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Camera size={14} /> {isPl ? 'Migawki' : 'Snapshots'}
+                </button>
+                <button
+                  onClick={() => setShowConditionalFmt(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                >
+                  <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
+                </button>
+                {!locked && (
+                  <button
+                    onClick={() => setShowFrameworkGen(true)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                  >
+                    <LayoutGrid size={14} /> Framework
+                  </button>
+                )}
+                {!locked && (
+                  <button
+                    onClick={() => setShowTemplateGallery(true)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
+                  >
+                    <LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}
+                  </button>
+                )}
+              </MobileToolbarMenu>
+
+              {/* CSV import/export + Connectors */}
+              <div className="flex items-center gap-0.5">
+                {!locked && (
+                  <button
+                    onClick={() => setShowConnectorWizard(true)}
+                    className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
+                    title={isPl ? 'Importuj dane' : 'Import data'}
+                  >
+                    <Network size={12} />
+                    {isPl ? 'Import' : 'Import'}
+                  </button>
+                )}
+                {connectors.connectors.length > 0 && (
+                  <button
+                    onClick={() => setShowConnectorList((v) => !v)}
+                    className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    title={isPl ? 'Konektory' : 'Connectors'}
+                  >
+                    <Layers size={12} />
+                    {connectors.connectors.some((c) => c.lastRunStatus === 'running') && (
+                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    )}
+                    {connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
+                      <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+                    )}
+                  </button>
+                )}
+                {usePlatform && (
+                  <button
+                    onClick={() => setShowWebhookRelays(true)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
+                    title={isPl ? 'Webhook Relay (Zapier/Make)' : 'Webhook Relays (Zapier/Make)'}
+                  >
+                    <Webhook size={12} />
+                  </button>
+                )}
+                <input
+                  ref={csvInputRef}
+                  type="file"
+                  accept=".csv,.tsv,.txt"
+                  className="hidden"
+                  onChange={handleCSVImport}
+                />
+                {!locked && (
+                  <button
+                    onClick={() => csvInputRef.current?.click()}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                    title={isPl ? 'Importuj CSV' : 'Import CSV'}
+                  >
+                    <Upload size={12} />
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    const csv = exportToCSV(_cols, effectiveNodes);
+                    downloadCSV(csv, `idea-${ideaId}.csv`);
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Eksportuj CSV' : 'Export CSV'}
+                >
+                  <Download size={12} />
+                </button>
+                <button
+                  onClick={() => {
+                    copyTableToClipboard(_cols, effectiveNodes);
+                    toast.success(isPl ? 'Skopiowano' : 'Copied');
+                  }}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+                  title={isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
+                >
+                  <ClipboardCopy size={12} />
+                </button>
+              </div>
+
+              {/* Column config */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowColumnConfig(!showColumnConfig)}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                  title={isPl ? 'Kolumny' : 'Columns'}
+                >
+                  <Columns3 size={12} />
+                </button>
+                {showColumnConfig && (
+                  <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-2">
+                    {_cols.map((col) => (
+                      <button
+                        key={col.key}
+                        onClick={() => toggleColumn(col.key)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
+                      >
+                        {col.visible ? (
+                          <Eye size={12} className="text-primary-500" />
+                        ) : (
+                          <EyeOff size={12} className="text-slate-400" />
+                        )}
+                        {col.header}
+                        <span className="ml-auto text-[9px] text-slate-400">{col.type}</span>
+                      </button>
+                    ))}
+                    <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-1 pt-1">
+                      <button
+                        onClick={() => {
+                          setShowColumnConfig(false);
+                          setShowAddColumn(true);
+                        }}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                      >
+                        <Plus size={12} />
+                        {isPl ? 'Nowa kolumna' : 'New column'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Undo / Redo */}
+              <div className="flex items-center gap-0.5">
+                <button
+                  onClick={handlePlatformUndo}
+                  disabled={!usePlatform && !nodesUndo.canUndo}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+                  title="Undo (Ctrl+Z)"
+                >
+                  <Undo2 size={13} />
+                </button>
+                <button
+                  onClick={nodesUndo.redo}
+                  disabled={!nodesUndo.canRedo}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
+                  title="Redo (Ctrl+Y)"
+                >
+                  <Redo2 size={13} />
+                </button>
+              </div>
+
+              <div className="flex-1" />
+
+              {/* Bulk actions */}
+              {_selIds.size > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-lg">
+                    {_selIds.size} {isPl ? 'zaznaczonych' : 'selected'}
+                  </span>
+                  {!locked && (
+                    <>
+                      <div className="relative">
+                        <button
+                          onClick={() => setShowBulkConvertMenu((p) => !p)}
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
+                        >
+                          <ArrowRight size={11} />
+                          {isPl ? 'Konwertuj' : 'Convert'}
+                          <ChevronDown size={9} />
+                        </button>
+                        {showBulkConvertMenu && (
+                          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1">
+                            {(['initiative', 'task', 'decision'] as const).map((t) => (
+                              <button
+                                key={t}
+                                onClick={() => handleBulkConvert(t)}
+                                className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors capitalize"
+                              >
+                                →{' '}
+                                {t === 'initiative'
+                                  ? isPl
+                                    ? 'Inicjatywa'
+                                    : 'Initiative'
+                                  : t === 'task'
+                                    ? isPl
+                                      ? 'Zadanie'
+                                      : 'Task'
+                                    : isPl
+                                      ? 'Decyzja'
+                                      : 'Decision'}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={_bulkDel}
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-red-600 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                      >
+                        <Trash2 size={11} />
+                        {isPl ? 'Usuń' : 'Delete'}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Add row (click = blank, dropdown = templates) */}
+              {!locked && (
+                <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
+                  <button
+                    onClick={_addRow}
+                    className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
+                    title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
+                  >
+                    <Plus size={12} />
+                    {isPl ? 'Wiersz' : 'Row'}
+                  </button>
+                  <button
+                    onClick={handleAddRowWithTemplate}
+                    className="px-1 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60"
+                    title={isPl ? 'Dodaj z szablonu' : 'Add from template'}
+                  >
+                    <ChevronDown size={10} />
+                  </button>
+                </div>
+              )}
+
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">{_saveLabel}</span>
+              <button
+                type="button"
+                onClick={_save}
+                disabled={_saving || _loading || locked}
+                className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  _saving || _loading || locked
+                    ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
+                    : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
+                }`}
+              >
+                {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                {_saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
+              </button>
+            </div>
+          )}
+
+          {/* AI Table Assistant overlay */}
+          <AITableAssistant
+            open={showAIAssistant}
+            onClose={() => setShowAIAssistant(false)}
+            ideaId={ideaId}
+            columns={_cols}
+            artifactContext={effectiveNodes
+              .filter((n) => n.data?.label)
+              .slice(0, 20)
+              .map((n) => ({
+                id: n.id,
+                type: String(n.type || 'idea'),
+                title: String(n.data?.label || ''),
+                snippet: String(n.data?.description || n.data?.bodyMarkdown || '').slice(0, 200),
+              }))}
+            onSort={(s) => (usePlatform ? effectiveSetSort : setSort)(s)}
+            onFilter={(f) => (usePlatform ? effectiveSetFilters : setFilters)(f)}
+            onGroup={(g) => (usePlatform ? effectiveSetGroupBy : setGroupBy)(g)}
+            onAddColumn={handleAddColumn}
+            onAddRows={handleAIAddRows}
+            onProposal={(p) => {
+              setAiProposal(p);
+              setShowAIAssistant(false);
+            }}
+            usePlatform={usePlatform}
+            workspaceId={ideaId}
+          />
+
+          {/* AI Table Proposal overlay */}
+          {aiProposal && (
+            <div className="absolute left-4 right-4 top-14 z-50">
+              <AITableProposal
+                proposal={aiProposal}
+                onAccept={(accepted) => {
+                  if (accepted.columns) {
+                    for (const col of accepted.columns) handleAddColumn(col);
+                  }
+                  if (accepted.views) {
+                    setSavedViews((prev) => [...prev, ...accepted.views!]);
+                  }
+                  if (accepted.rows) {
+                    handleAIAddRows(accepted.rows);
+                  }
+                  setAiProposal(null);
+                }}
+                onReject={() => setAiProposal(null)}
+              />
+            </div>
+          )}
+
+          {locked && (
+            <div className="px-3 md:px-4 pt-3">
+              <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300">
+                <div className="font-medium text-slate-900 dark:text-slate-100">
+                  {isPl ? 'Tryb tylko do odczytu' : 'Read-only mode'}
+                </div>
+                <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {isPl
+                    ? 'Możesz przeglądać tabelę, ale edycja i zapis są obecnie zablokowane.'
+                    : 'You can review the table, but editing and saving are currently disabled.'}
                 </div>
               </div>
             </div>
           )}
 
-          {/* View context menu */}
-          {viewContextMenu && (
-            <div className="fixed inset-0 z-[60]" onClick={() => setViewContextMenu(null)}>
+          {effectiveLoadError && !_loading && effectiveNodes.length === 0 && (
+            <div className="px-3 md:px-4 pt-3">
+              <EmptyStateInline
+                icon={Table2}
+                dashed={false}
+                message={
+                  isPl
+                    ? 'Widok tabeli jest chwilowo niedostępny.'
+                    : 'Table view is temporarily unavailable.'
+                }
+                hint={
+                  isPl
+                    ? 'To nie oznacza, że tabela jest pusta. Spróbuj ponownie wczytać dane i sprawdź jeszcze raz.'
+                    : 'This does not mean the table is empty. Retry loading the data and check again.'
+                }
+                action={{
+                  label: isPl ? 'Ponów' : 'Retry',
+                  onClick: () => {
+                    void effectiveRefresh();
+                  },
+                }}
+                className="mb-2"
+              />
+            </div>
+          )}
+
+          {/* Content area — switchable between Data / Forms / Interfaces + optional AI Panel */}
+          <div className="flex flex-1 overflow-hidden min-h-0">
+            <div className="flex-1 overflow-hidden min-w-0">
+              {usePlatform && platformTab === 'forms' ? (
+                <div className="flex-1 overflow-y-auto">
+                  <FormsIndex
+                    tableId={platformTableId ?? ideaId}
+                    tableFields={
+                      platformIntegration.platformFields.length > 0
+                        ? platformIntegration.platformFields
+                        : effectiveColumns.map((c) => ({
+                            id: c.key,
+                            tableId: platformTableId ?? ideaId,
+                            name: c.header,
+                            fieldType: (c.type ??
+                              'singleLineText') as import('@/types/tablePlatform').FieldType,
+                            options: {},
+                            isComputed: false,
+                            order: 0,
+                            createdAt: '',
+                            updatedAt: '',
+                          }))
+                    }
+                    locked={locked}
+                  />
+                </div>
+              ) : usePlatform && platformTab === 'interfaces' ? (
+                <div className="flex-1 overflow-y-auto">
+                  <InterfacesIndex
+                    baseId={ideaId}
+                    tableId={platformTableId ?? ideaId}
+                    tables={[
+                      {
+                        id: platformTableId ?? ideaId,
+                        name: isPl ? 'Bieżąca tabela' : 'Current table',
+                        fields: _cols.map((c) => ({ id: c.key, name: c.header })),
+                      },
+                    ]}
+                    platformViews={platformIntegration.platformViews}
+                    onCreateView={platformIntegration.createPlatformView}
+                    locked={locked}
+                  />
+                </div>
+              ) : usePlatform && platformTab === 'models' ? (
+                <div className="flex-1 overflow-y-auto">
+                  <GovernedModelsDashboard
+                    baseId={ideaId}
+                    tables={baseTables.map((t) => ({
+                      id: t.id,
+                      name: t.name,
+                      fields:
+                        t.id === (platformTableId ?? ideaId)
+                          ? _cols.map((c) => ({ id: c.key, name: c.header }))
+                          : [],
+                    }))}
+                    locked={locked}
+                    onOpenTable={(tableId) => {
+                      const tab = baseTables.find((bt) => bt.id === tableId);
+                      if (tab) handleTabSelectTable(tab.id);
+                    }}
+                  />
+                </div>
+              ) : usePlatform && platformTab === 'workflow' ? (
+                <div className="flex-1 overflow-hidden">
+                  <WorkflowDashboard
+                    tableId={platformTableId ?? ideaId}
+                    baseId={ideaId}
+                    workspaceId={ideaId}
+                    tables={baseTables.map((t) => ({
+                      id: t.id,
+                      name: t.name,
+                      fields:
+                        t.id === (platformTableId ?? ideaId)
+                          ? _cols.map((c) => ({
+                              id: c.key,
+                              name: c.header,
+                              fieldType: c.type ?? 'singleLineText',
+                            }))
+                          : [],
+                    }))}
+                    fields={_cols.map((c) => ({
+                      id: c.key,
+                      name: c.header,
+                      fieldType: c.type ?? 'singleLineText',
+                    }))}
+                    views={platformIntegration.platformViews.map((v: any) => ({
+                      id: v.id,
+                      name: v.name,
+                      shareToken: v.shareToken,
+                    }))}
+                    locked={locked}
+                  />
+                </div>
+              ) : usePlatform ? (
+                <P15ViewRouter onCSVImport={handleCSVImport} />
+              ) : _loading ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <Loader2 className="animate-spin text-slate-400" size={24} />
+                </div>
+              ) : usePlatform && (_vl === 'kanban' || _vl === 'calendar' || _vl === 'grid') ? (
+                <LegacyViewRouter
+                  viewType={_vl === 'grid' ? 'gallery' : (_vl as 'kanban' | 'calendar')}
+                  records={processedRowsWithRollups}
+                  columns={_cols}
+                  viewConfig={{
+                    ...platformViewConfig,
+                    viewType: _vl === 'grid' ? 'gallery' : (_vl as 'kanban' | 'calendar'),
+                    visibleFieldIds:
+                      platformViewConfig.visibleFieldIds.length > 0
+                        ? platformViewConfig.visibleFieldIds
+                        : _visCols.map((c) => c.key),
+                    groupByFieldId: platformViewConfig.groupByFieldId || _groupBy || undefined,
+                    dateFieldId:
+                      platformViewConfig.dateFieldId || _cols.find((c) => c.type === 'date')?.key,
+                  }}
+                  onRecordUpdate={_fieldChange}
+                  onRecordClick={(id) => setDetailNodeId(id)}
+                  onAddRecord={(defaults) => {
+                    if (defaults) {
+                      const id = `node-${Date.now()}`;
+                      const now = new Date().toISOString();
+                      const newNode = {
+                        id,
+                        type: 'idea',
+                        data: {
+                          label: '',
+                          status: 'todo',
+                          ...defaults,
+                          created_time: now,
+                          created_by: currentUserId,
+                          last_edited_time: now,
+                          last_edited_by: currentUserId,
+                        },
+                        position: { x: 0, y: 0 },
+                      };
+                      nodesUndo.push([...nodes, newNode]);
+                    } else {
+                      _addRow();
+                    }
+                  }}
+                />
+              ) : _vl === 'timeline' ? (
+                <TimelineView
+                  nodes={processedRowsWithRollups}
+                  edges={edges}
+                  columns={_cols}
+                  locked={locked}
+                  onFieldChange={_fieldChange}
+                  onNodeClick={(id) => setDetailNodeId(id)}
+                />
+              ) : _vl === 'sticky' ? (
+                <StickyNoteView
+                  nodes={processedRowsWithRollups}
+                  columns={_cols}
+                  onNodeClick={(id) => setDetailNodeId(id)}
+                  onReorder={handleReorderNode}
+                  onFieldChange={_fieldChange}
+                  groupBy={_groupBy}
+                />
+              ) : _vl === 'kanban' ? (
+                <KanbanView
+                  nodes={processedRowsWithRollups}
+                  groupByColumn={
+                    _cols.find(
+                      (c) =>
+                        c.key === (_groupBy || 'status') &&
+                        (c.type === 'select' || c.type === 'multiselect' || c.type === 'status')
+                    ) ||
+                    _cols.find((c) => c.type === 'status' || c.type === 'select') ||
+                    _cols[0]
+                  }
+                  columns={_cols}
+                  locked={locked}
+                  onFieldChange={_fieldChange}
+                  onAddRow={_addRow}
+                  onNodeClick={(id) => setDetailNodeId(id)}
+                />
+              ) : _vl === 'calendar' ? (
+                <CalendarView
+                  rows={processedRowsWithRollups}
+                  columns={_cols}
+                  locked={locked}
+                  onNodeClick={(id) => setDetailNodeId(id)}
+                  onFieldChange={_fieldChange}
+                  onAddEventAtDate={handleAddEventAtDate}
+                />
+              ) : _vl === 'grid' ? (
+                <GridView
+                  rows={processedRowsWithRollups}
+                  columns={_cols}
+                  locked={locked}
+                  onNodeClick={(id) => setDetailNodeId(id)}
+                  onFieldChange={_fieldChange}
+                />
+              ) : _vl === 'matrix' ? (
+                <MatrixView
+                  nodes={processedRowsWithRollups}
+                  columns={_cols}
+                  xAxis={
+                    (matrixAxisXKey && _cols.find((c) => c.key === matrixAxisXKey)) ||
+                    _cols.find(
+                      (c) => c.key === 'impact' && (c.type === 'number' || c.type === 'rating')
+                    ) ||
+                    _cols.find((c) => c.type === 'rating') ||
+                    _cols[0]!
+                  }
+                  yAxis={
+                    (matrixAxisYKey && _cols.find((c) => c.key === matrixAxisYKey)) ||
+                    _cols.find(
+                      (c) => c.key === 'effort' && (c.type === 'number' || c.type === 'rating')
+                    ) ||
+                    _cols.filter((c) => c.type === 'rating')[1] ||
+                    _cols[1] ||
+                    _cols[0]!
+                  }
+                  locked={locked}
+                  onNodeClick={(id) => setDetailNodeId(id)}
+                  onFieldChange={_fieldChange}
+                  onAxisChange={(axis, col) => {
+                    if (axis === 'x') setMatrixAxisXKey(col.key);
+                    else setMatrixAxisYKey(col.key);
+                  }}
+                />
+              ) : (
+                <div
+                  ref={tableContainerRef}
+                  className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch"
+                >
+                  <ConnectionLines
+                    selectedNodeId={selectedNodeForLines}
+                    edges={edges}
+                    allNodes={effectiveNodes}
+                    containerRef={tableContainerRef}
+                  />
+                  <table
+                    className="w-full text-left"
+                    style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
+                  >
+                    <thead className="sticky top-0 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60 z-10">
+                      <tr>
+                        <th className="w-8 px-2 py-2">
+                          <input
+                            type="checkbox"
+                            checked={
+                              _selIds.size === processedRowsWithRollups.length &&
+                              processedRowsWithRollups.length > 0
+                            }
+                            onChange={() => {
+                              const setSelFn = usePlatform
+                                ? effectiveSetSelectedRowIds
+                                : setSelectedRowIds;
+                              if (_selIds.size === processedRowsWithRollups.length) {
+                                setSelFn(new Set());
+                                onSelectionChange?.(EMPTY_SELECTION);
+                              } else {
+                                const all = new Set(processedRowsWithRollups.map((r) => r.id));
+                                setSelFn(all);
+                                onSelectionChange?.({
+                                  type: 'row',
+                                  count: all.size,
+                                  ids: Array.from(all),
+                                });
+                              }
+                            }}
+                            className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
+                          />
+                        </th>
+                        <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-400 dark:text-slate-500 text-right select-none">
+                          #
+                        </th>
+                        {stretchedVisibleCols.map((col) => (
+                          <th
+                            key={col.key}
+                            style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
+                            className="relative px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none group"
+                            draggable={editingHeaderKey !== col.key}
+                            onDragStart={() => handleColDragStart(col.key)}
+                            onDragOver={(e) => handleColDragOver(e, col.key)}
+                            onDragEnd={handleColDragEnd}
+                          >
+                            {editingHeaderKey === col.key ? (
+                              <input
+                                autoFocus
+                                defaultValue={col.header}
+                                className="w-full bg-white dark:bg-navy-800 border border-primary-500/40 rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 outline-none"
+                                onBlur={(e) => {
+                                  renameColumn(col.key, e.target.value);
+                                  setEditingHeaderKey(null);
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    renameColumn(col.key, (e.target as HTMLInputElement).value);
+                                    setEditingHeaderKey(null);
+                                  }
+                                  if (e.key === 'Escape') setEditingHeaderKey(null);
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              <div
+                                className="flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
+                                onClick={() => effectiveCycleSort(col.key)}
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!locked) setEditingHeaderKey(col.key);
+                                }}
+                                onContextMenu={(e) => {
+                                  e.preventDefault();
+                                  if (!locked)
+                                    setColContextMenu({
+                                      colKey: col.key,
+                                      x: e.clientX,
+                                      y: e.clientY,
+                                    });
+                                }}
+                              >
+                                <GripVertical
+                                  size={10}
+                                  className="opacity-0 group-hover:opacity-40 cursor-grab"
+                                />
+                                {col.header}
+                                {_sort?.key === col.key ? (
+                                  _sort.direction === 'asc' ? (
+                                    <ArrowUp size={10} />
+                                  ) : (
+                                    <ArrowDown size={10} />
+                                  )
+                                ) : (
+                                  <ArrowUpDown size={10} className="opacity-30" />
+                                )}
+                              </div>
+                            )}
+                            {/* Resize handle */}
+                            <div
+                              className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500/30 transition-colors"
+                              onMouseDown={(e) => handleResizeStart(col.key, e)}
+                            />
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {effectiveGroupedRows ? (
+                        Object.entries(effectiveGroupedRows).map(([groupKey, rows]) => (
+                          <React.Fragment key={groupKey}>
+                            <tr className="bg-slate-100/50 dark:bg-navy-800/50">
+                              <td
+                                colSpan={_visCols.length + 2}
+                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
+                              >
+                                {groupKey || (isPl ? '(brak wartości)' : '(empty)')}{' '}
+                                <span className="text-slate-400 font-normal ml-1">
+                                  ({rows.length})
+                                </span>
+                              </td>
+                            </tr>
+                            {rows.map((row, idx) => renderRow(row, idx))}
+                          </React.Fragment>
+                        ))
+                      ) : processedRowsWithRollups.length === 0 ? (
+                        <tr>
+                          <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
+                            <div className="mx-auto max-w-xl text-slate-400 dark:text-slate-500">
+                              <div className="text-sm font-semibold mb-1">
+                                {isPl ? 'Tabela jest jeszcze pusta' : 'This table is still empty'}
+                              </div>
+                              <div className="text-[11px] leading-relaxed">
+                                {isPl
+                                  ? 'Zacznij od struktury: wybierz framework, dodaj pierwszy wiersz lub użyj szablonu. AI zostaw na moment, gdy model tabeli będzie już wiarygodny.'
+                                  : 'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'}
+                              </div>
+                              {!locked && (
+                                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                                  <button
+                                    onClick={_addRow}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
+                                  >
+                                    <Plus size={14} />
+                                    {isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
+                                  </button>
+                                  <button
+                                    onClick={handleAddRowWithTemplate}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-white/[0.05] dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-colors"
+                                  >
+                                    <Layers size={14} />
+                                    {isPl ? 'Użyj szablonu wiersza' : 'Use row template'}
+                                  </button>
+                                  <button
+                                    onClick={() => setShowFrameworkGen(true)}
+                                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
+                                  >
+                                    <LayoutGrid size={14} />
+                                    {isPl ? 'Zbuduj framework' : 'Build framework'}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        processedRowsWithRollups.map((row, idx) => renderRow(row, idx))
+                      )}
+                    </tbody>
+                    {/* Footer aggregations */}
+                    {processedRowsWithRollups.length > 0 &&
+                      _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
+                        <tfoot className="border-t-2 border-slate-200/60 dark:border-navy-700/60">
+                          <tr className="bg-slate-50/50 dark:bg-navy-900/50">
+                            <td className="px-2 py-1.5" />
+                            <td className="w-10 px-1 py-1.5" />
+                            {stretchedVisibleCols.map((col) => {
+                              const agg = col.aggregation;
+                              if (!agg || agg === 'none')
+                                return <td key={col.key} className="px-2 py-1.5" />;
+                              const values = processedRowsWithRollups.map((r) => r.data?.[col.key]);
+                              return (
+                                <td
+                                  key={col.key}
+                                  className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums"
+                                >
+                                  <span className="text-[8px] text-slate-400 uppercase mr-1">
+                                    {agg}
+                                  </span>
+                                  {computeAggregation(agg, values)}
+                                </td>
+                              );
+                            })}
+                          </tr>
+                        </tfoot>
+                      )}
+                  </table>
+
+                  {/* Edges table */}
+                  {edges.length > 0 && (
+                    <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-4">
+                      <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {isPl ? 'Połączenia' : 'Edges'} ({edges.length})
+                      </div>
+                      <table className="w-full text-left">
+                        <thead>
+                          <tr className="border-b border-slate-200/40 dark:border-navy-700/40">
+                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                              {isPl ? 'Źródło' : 'Source'}
+                            </th>
+                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                              {isPl ? 'Cel' : 'Target'}
+                            </th>
+                            <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 w-28">
+                              Kind
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {edges.map((e) => (
+                            <tr
+                              key={e.id}
+                              className="border-b border-slate-200/20 dark:border-white/[0.02]"
+                            >
+                              <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                                {e.source}
+                              </td>
+                              <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                                {e.target}
+                              </td>
+                              <td className="px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+                                {e?.data?.kind ? String(e.data.kind) : e.type || 'edge'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Status Bar — record count + aggregates */}
+              {usePlatform && (
+                <StatusBar
+                  totalRecords={platformIntegration.totalRecords}
+                  selectedCount={_selIds.size}
+                  columns={platformIntegration.platformFields.map((f) => ({
+                    id: f.id,
+                    name: f.name,
+                    fieldType: f.fieldType,
+                  }))}
+                  records={platformIntegration.nodes.map((n) => n.data ?? {})}
+                  aggregateConfig={
+                    statusBarAggConfig as Record<
+                      string,
+                      'none' | 'sum' | 'avg' | 'min' | 'max' | 'count'
+                    >
+                  }
+                  onAggregateChange={(fieldId, mode) =>
+                    setStatusBarAggConfig((prev) => ({ ...prev, [fieldId]: mode }))
+                  }
+                />
+              )}
+
+              {/* Table Tab Strip — multi-table navigation */}
+              {usePlatform && baseTables.length > 0 && (
+                <TableTabStrip
+                  baseId={ideaId}
+                  tables={baseTables}
+                  activeTableId={
+                    platformTableOverrideId ?? platformTableId ?? baseTables[0]?.id ?? ''
+                  }
+                  onSelectTable={handleTabSelectTable}
+                  onCreateTable={handleTabCreateTable}
+                  onRenameTable={handleTabRenameTable}
+                  onDuplicateTable={handleTabDuplicateTable}
+                  onDeleteTable={handleTabDeleteTable}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Column context menu */}
+          {colContextMenu && (
+            <div className="fixed inset-0 z-[60]" onClick={() => setColContextMenu(null)}>
               <div
-                className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[140px]"
-                style={{ left: viewContextMenu.x, top: viewContextMenu.y }}
+                className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[160px]"
+                style={{ left: colContextMenu.x, top: colContextMenu.y }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                   onClick={() => {
-                    const v = savedViews.find((sv) => sv.id === viewContextMenu.viewId);
-                    if (v) {
-                      setRenamingViewId(v.id);
-                      setRenamingViewName(v.name);
-                    }
-                    setViewContextMenu(null);
+                    setEditingHeaderKey(colContextMenu.colKey);
+                    setColContextMenu(null);
                   }}
                 >
                   {isPl ? 'Zmień nazwę' : 'Rename'}
@@ -1457,1550 +2982,35 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
                   onClick={() => {
-                    updateSavedView(viewContextMenu.viewId, {
-                      sort: sort ? [sort] : undefined,
-                      filters,
-                      groupBy: groupBy ?? undefined,
-                      layout: viewLayout,
-                      columns: columns.map((c) => ({
-                        key: c.key,
-                        visible: c.visible !== false,
-                        width: c.width,
-                      })),
-                    });
-                    toast.success(isPl ? 'Widok zaktualizowany' : 'View updated');
-                    setViewContextMenu(null);
+                    effectiveCycleSort(colContextMenu.colKey);
+                    setColContextMenu(null);
                   }}
                 >
-                  {isPl ? 'Aktualizuj' : 'Update'}
+                  {isPl ? 'Sortuj' : 'Sort'}
                 </button>
+                <button
+                  className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
+                  onClick={() => {
+                    toggleColumn(colContextMenu.colKey);
+                    setColContextMenu(null);
+                  }}
+                >
+                  {isPl ? 'Ukryj kolumnę' : 'Hide column'}
+                </button>
+                <div className="h-px bg-slate-200 dark:bg-navy-700 my-1" />
                 <button
                   className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
                   onClick={() => {
-                    deleteSavedView(viewContextMenu.viewId);
-                    toast.success(isPl ? 'Widok usunięty' : 'View deleted');
-                    setViewContextMenu(null);
+                    deleteColumn(colContextMenu.colKey);
+                    toast.success(isPl ? 'Kolumna usunięta' : 'Column deleted');
+                    setColContextMenu(null);
                   }}
                 >
-                  {isPl ? 'Usuń' : 'Delete'}
+                  {isPl ? 'Usuń kolumnę' : 'Delete column'}
                 </button>
               </div>
             </div>
           )}
-
-          <div className="w-px h-5 bg-slate-200 dark:bg-navy-700" />
-
-          {/* Quick filter */}
-          <div className="relative flex-1 max-w-[200px]">
-            <Filter size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              value={filterInput}
-              onChange={(e) => setFilterInput(e.target.value)}
-              placeholder={isPl ? 'Filtruj…' : 'Filter…'}
-              className="w-full h-7 pl-7 pr-2 rounded-lg text-[11px] bg-white dark:bg-white/[0.04] border border-slate-200/60 dark:border-white/[0.08] text-slate-800 dark:text-slate-200 outline-none focus:ring-2 focus:ring-primary-500/30"
-            />
-            {filterInput && (
-              <button
-                onClick={() => setFilterInput('')}
-                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-              >
-                <X size={10} />
-              </button>
-            )}
-          </div>
-
-          {/* Advanced filter */}
-          <div className="relative">
-            <button
-              onClick={() => setShowFilterPanel(!showFilterPanel)}
-              className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                _filters.rules.length > 0
-                  ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
-              }`}
-            >
-              <Filter size={12} />
-              {_filters.rules.length > 0 && (
-                <span className="text-[9px]">({_filters.rules.length})</span>
-              )}
-            </button>
-            {usePlatform ? (
-              <FilterBuilder
-                open={showFilterPanel}
-                onClose={() => setShowFilterPanel(false)}
-                filters={{
-                  logic: _filters.logic,
-                  rules: _filters.rules.map((r) => ({
-                    fieldId: (r as any).fieldId ?? (r as any).column,
-                    operator: (r as any).operator,
-                    value: (r as any).value,
-                  })),
-                }}
-                onChange={(pf) => {
-                  effectiveSetFilters({
-                    logic: pf.logic,
-                    rules: pf.rules.map((r) => ({
-                      id: `${r.fieldId}-${r.operator}`,
-                      column: r.fieldId,
-                      operator: r.operator as any,
-                      value: (r.value ?? '') as any,
-                    })),
-                  });
-                  void platformIntegration.applyPlatformFilters(pf);
-                }}
-                fields={platformIntegration.platformFields}
-              />
-            ) : (
-              <FilterPanel
-                open={showFilterPanel}
-                onClose={() => setShowFilterPanel(false)}
-                filters={_filters}
-                onChange={setFilters}
-                columns={_visCols}
-              />
-            )}
-          </div>
-
-          {/* Group by */}
-          <button
-            onClick={() =>
-              (usePlatform ? effectiveSetGroupBy : setGroupBy)(_groupBy ? null : 'status')
-            }
-            className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-              _groupBy
-                ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
-            }`}
-            title={isPl ? 'Grupuj' : 'Group'}
-          >
-            <Group size={12} />
-            <span className="hidden sm:inline">{isPl ? 'Grupuj' : 'Group'}</span>
-          </button>
-
-          {/* V5-IDEA-24: View layout switcher — FROZEN order: table → kanban → timeline → calendar → matrix → grid */}
-          <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-            {(
-              [
-                { id: 'table', icon: Table2, label: isPl ? 'Tabela' : 'Table' },
-                { id: 'kanban', icon: KanbanSquare, label: 'Kanban' },
-                { id: 'timeline', icon: GanttChart, label: 'Timeline / Gantt' },
-                { id: 'calendar', icon: Calendar, label: isPl ? 'Kalendarz' : 'Calendar' },
-                { id: 'matrix', icon: LayoutGrid, label: 'Matrix' },
-                { id: 'grid', icon: Grid3X3, label: isPl ? 'Galeria' : 'Gallery' },
-              ] as const
-            ).map((v) => (
-              <button
-                key={v.id}
-                onClick={() => (usePlatform ? effectiveSetViewLayout : setViewLayout)(v.id)}
-                className={`relative p-1.5 transition-colors ${_vl === v.id ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                title={v.label}
-              >
-                <v.icon size={12} />
-                {_vl === v.id && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3 h-0.5 rounded-full bg-primary-500" />
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* AI Assistant */}
-          <button
-            onClick={() => setShowAIAssistant(true)}
-            className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
-            title={isPl ? 'Asystent AI (/)' : 'AI Assistant (/)'}
-          >
-            <Sparkles size={12} />
-          </button>
-
-          {/* Batch AI Fill */}
-          {!locked && (
-            <BatchAIFillButton
-              nodes={processedRowsWithRollups}
-              columns={_cols}
-              ideaId={ideaId}
-              onFill={_fieldChange}
-              selectedIds={_selIds}
-            />
-          )}
-
-          {/* Secondary actions — hidden on mobile, shown in overflow menu */}
-          <div className="hidden md:contents">
-            {/* AI Categorize */}
-            {!locked && (
-              <button
-                onClick={() => setShowAICategorize(true)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                title={isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
-              >
-                <Layers size={12} />
-              </button>
-            )}
-
-            {/* Scoring Model */}
-            <button
-              onClick={() => setShowScoringModel(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Model scoringowy' : 'Scoring Model'}
-            >
-              <Trophy size={12} />
-            </button>
-
-            {/* Export to Presentation */}
-            <button
-              onClick={() => setShowExportPresentation(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Eksport do prezentacji' : 'Export to Presentation'}
-            >
-              <Presentation size={12} />
-            </button>
-
-            {/* Pipeline */}
-            <button
-              onClick={() => setShowPipeline(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Pipeline pomysłów' : 'Idea Pipeline'}
-            >
-              <Rocket size={12} />
-            </button>
-
-            {/* AI Copilot */}
-            <button
-              onClick={() => setShowCopilot(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'AI Copilot' : 'AI Copilot'}
-            >
-              <Brain size={12} />
-            </button>
-
-            {/* Voice / Image Input */}
-            <button
-              onClick={() => setShowVoiceInput(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Głos / Obraz' : 'Voice / Image'}
-            >
-              <Mic size={12} />
-            </button>
-
-            {/* Cross-table Relations */}
-            <button
-              onClick={() => setShowCrossRelations(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Relacje między tabelami' : 'Cross-table Relations'}
-            >
-              <Network size={12} />
-            </button>
-
-            {/* Heatmap */}
-            <div className="relative">
-              <button
-                onClick={() => setShowHeatmap(!showHeatmap)}
-                className={`p-1.5 rounded-lg transition-colors ${heatmapColumns.size > 0 ? 'text-amber-500 bg-amber-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                title={isPl ? 'Heatmapa' : 'Heatmap'}
-              >
-                <Flame size={12} />
-              </button>
-              <HeatmapControls
-                open={showHeatmap}
-                onClose={() => setShowHeatmap(false)}
-                columns={_cols}
-                enabledColumns={heatmapColumns}
-                onToggleColumn={toggleHeatmapColumn}
-                palette={heatmapPalette}
-                onPaletteChange={setHeatmapPalette}
-              />
-            </div>
-
-            {/* History / Audit */}
-            <button
-              onClick={() => setShowAuditTrail((p) => !p)}
-              className={`p-1.5 rounded-lg transition-colors ${showAuditTrail ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Historia zmian' : 'History'}
-            >
-              <History size={12} />
-            </button>
-
-            {/* Activity Feed */}
-            <button
-              onClick={() => setShowActivityFeed((p) => !p)}
-              className={`p-1.5 rounded-lg transition-colors ${showActivityFeed ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Aktywność' : 'Activity'}
-            >
-              <Activity size={12} />
-            </button>
-
-            {/* Snapshots */}
-            <button
-              onClick={() => setShowSnapshotManager(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Migawki' : 'Snapshots'}
-            >
-              <Camera size={12} />
-            </button>
-
-            {/* Keyboard shortcuts */}
-            <button
-              onClick={() => setShowKeyboardShortcuts(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Skróty klawiszowe (?)' : 'Keyboard shortcuts (?)'}
-            >
-              <Keyboard size={12} />
-            </button>
-
-            {/* Templates */}
-            {!locked && (
-              <button
-                onClick={() => setShowTemplateGallery(true)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                title={isPl ? 'Szablony' : 'Templates'}
-              >
-                <LayoutTemplate size={12} />
-              </button>
-            )}
-
-            {/* Distribute */}
-            {!locked && (
-              <button
-                onClick={() => setShowDistributionBuilder(true)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                title={isPl ? 'Dystrybucja' : 'Distribute'}
-              >
-                <Send size={12} />
-              </button>
-            )}
-
-            {/* Framework generator */}
-            {!locked && (
-              <button
-                onClick={() => setShowFrameworkGen(true)}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPl ? 'Generator frameworków' : 'Framework Generator'}
-              >
-                <LayoutGrid size={12} />
-                <span className="hidden lg:inline">{isPl ? 'Framework' : 'Framework'}</span>
-              </button>
-            )}
-
-            {/* Conditional formatting */}
-            <button
-              onClick={() => setShowConditionalFmt(true)}
-              className={`p-1.5 rounded-lg transition-colors ${formatRules.length > 0 ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-              title={isPl ? 'Formatowanie warunkowe' : 'Conditional Formatting'}
-            >
-              <Paintbrush size={12} />
-            </button>
-
-            {/* Color palette */}
-            <div className="relative">
-              <button
-                onClick={() => setShowColorPalette(!showColorPalette)}
-                className={`p-1.5 rounded-lg transition-colors ${showColorPalette ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                title={isPl ? 'Paleta kolorów' : 'Color Palette'}
-              >
-                <Palette size={12} />
-              </button>
-              <ColorPalette
-                open={showColorPalette}
-                onClose={() => setShowColorPalette(false)}
-                activePalette={activePalette}
-                onPaletteChange={(id) => {
-                  setActivePalette(id);
-                  setShowColorPalette(false);
-                }}
-                onAutoAssign={handleAutoAssignColors}
-              />
-            </div>
-
-            {/* Platform tab switcher: Data / Forms / Interfaces */}
-            {usePlatform && (
-              <div className="flex items-center rounded-lg bg-slate-100 dark:bg-navy-800 p-0.5">
-                <button
-                  onClick={() => setPlatformTab('data')}
-                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                    platformTab === 'data'
-                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
-                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                  }`}
-                >
-                  {isPl ? 'Dane' : 'Data'}
-                </button>
-                <button
-                  onClick={() => setPlatformTab('forms')}
-                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                    platformTab === 'forms'
-                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
-                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                  }`}
-                >
-                  {isPl ? 'Formularze' : 'Forms'}
-                </button>
-                <button
-                  onClick={() => setPlatformTab('interfaces')}
-                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                    platformTab === 'interfaces'
-                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
-                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                  }`}
-                >
-                  {isPl ? 'Interfejsy' : 'Interfaces'}
-                </button>
-                <button
-                  onClick={() => setPlatformTab('models')}
-                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                    platformTab === 'models'
-                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
-                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                  }`}
-                >
-                  {isPl ? 'Modele' : 'Models'}
-                </button>
-                <button
-                  onClick={() => setPlatformTab('workflow')}
-                  className={`rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
-                    platformTab === 'workflow'
-                      ? 'bg-white text-slate-800 shadow-sm dark:bg-navy-700 dark:text-white'
-                      : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300'
-                  }`}
-                >
-                  {isPl ? 'Workflow' : 'Workflow'}
-                </button>
-              </div>
-            )}
-
-            {/* Interface Designer (direct open) */}
-            {usePlatform && (
-              <button
-                onClick={() => setShowInterfaceDesigner(true)}
-                className={`p-1.5 rounded-lg transition-colors ${showInterfaceDesigner ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-                title={isPl ? 'Projektant interfejsu' : 'Interface Designer'}
-              >
-                <Layout size={12} />
-              </button>
-            )}
-
-            {/* Form Builder (direct open) */}
-            {usePlatform && !locked && (
-              <button
-                onClick={() => setShowFormBuilder(true)}
-                className="p-1.5 rounded-lg transition-colors text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                title={isPl ? 'Kreator formularzy' : 'Form Builder'}
-              >
-                <FileText size={12} />
-              </button>
-            )}
-
-            {/* Tools dropdown — quick access to platform features */}
-            {usePlatform && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowToolsMenu((p) => !p)}
-                  className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
-                    showToolsMenu
-                      ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
-                  }`}
-                  title={isPl ? 'Narzędzia' : 'Tools'}
-                >
-                  <Grid3X3 size={12} />
-                  <span className="hidden lg:inline">{isPl ? 'Narzędzia' : 'Tools'}</span>
-                  <ChevronDown size={10} />
-                </button>
-                {showToolsMenu && (
-                  <div className="absolute left-0 top-full mt-1 z-50 w-56 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl py-1 max-h-[70vh] overflow-y-auto">
-                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                      {isPl ? 'Workflow' : 'Workflow'}
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowAutomationsManager(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Rocket size={14} className="text-amber-500" />
-                      {isPl ? 'Automatyzacje' : 'Automations'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowSyncManager(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Link2 size={14} className="text-cyan-500" />
-                      {isPl ? 'Synchronizacja danych' : 'Data Sync'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowWebhookRelays(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Webhook size={14} className="text-indigo-500" />
-                      {isPl ? 'Webhook Relay' : 'Webhook Relays'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowSharingManager(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Network size={14} className="text-green-500" />
-                      {isPl ? 'Udostępnianie' : 'Sharing & Permissions'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowDistributionManager(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Send size={14} className="text-pink-500" />
-                      {isPl ? 'Dystrybucja' : 'Distribution'}
-                    </button>
-                    <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                    <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                      {isPl ? 'Budowanie' : 'Build'}
-                    </div>
-                    <button
-                      onClick={() => {
-                        setShowFormBuilder(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <FileText size={14} className="text-blue-500" />
-                      {isPl ? 'Formularze' : 'Forms'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowInterfaceDesigner(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Layout size={14} className="text-violet-500" />
-                      {isPl ? 'Interfejsy' : 'Interfaces'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowTemplateGallery(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <LayoutTemplate size={14} className="text-emerald-500" />
-                      {isPl ? 'Szablony' : 'Templates'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowConnectorWizard(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Download size={14} className="text-teal-500" />
-                      {isPl ? 'Konektory' : 'Connectors'}
-                    </button>
-                    <div className="border-t border-slate-100 dark:border-navy-700 my-1" />
-                    <button
-                      onClick={() => {
-                        setShowConsultifyLink(true);
-                        setShowToolsMenu(false);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-xs text-left hover:bg-slate-50 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                    >
-                      <Layers size={14} className="text-indigo-500" />
-                      {isPl ? 'Połączenie z Consultify' : 'Consultify Link'}
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Mobile overflow menu for secondary actions */}
-          <MobileToolbarMenu>
-            {!locked && (
-              <button
-                onClick={() => setShowAICategorize(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-              >
-                <Layers size={14} /> {isPl ? 'AI Kategoryzacja' : 'AI Categorize'}
-              </button>
-            )}
-            <button
-              onClick={() => setShowScoringModel(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Trophy size={14} /> {isPl ? 'Scoring' : 'Scoring'}
-            </button>
-            <button
-              onClick={() => setShowExportPresentation(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Presentation size={14} /> {isPl ? 'Prezentacja' : 'Presentation'}
-            </button>
-            <button
-              onClick={() => setShowPipeline(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Rocket size={14} /> {isPl ? 'Pipeline' : 'Pipeline'}
-            </button>
-            <button
-              onClick={() => setShowCopilot(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Brain size={14} /> AI Copilot
-            </button>
-            <button
-              onClick={() => setShowVoiceInput(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Mic size={14} /> {isPl ? 'Głos / Obraz' : 'Voice / Image'}
-            </button>
-            <button
-              onClick={() => setShowCrossRelations(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Network size={14} /> {isPl ? 'Relacje' : 'Relations'}
-            </button>
-            <button
-              onClick={() => setShowHeatmap(!showHeatmap)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Flame size={14} /> {isPl ? 'Heatmapa' : 'Heatmap'}
-            </button>
-            <button
-              onClick={() => setShowAuditTrail((p) => !p)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <History size={14} /> {isPl ? 'Historia' : 'History'}
-            </button>
-            <button
-              onClick={() => setShowActivityFeed((p) => !p)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Activity size={14} /> {isPl ? 'Aktywność' : 'Activity'}
-            </button>
-            <button
-              onClick={() => setShowSnapshotManager(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Camera size={14} /> {isPl ? 'Migawki' : 'Snapshots'}
-            </button>
-            <button
-              onClick={() => setShowConditionalFmt(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-            >
-              <Paintbrush size={14} /> {isPl ? 'Formatowanie' : 'Formatting'}
-            </button>
-            {!locked && (
-              <button
-                onClick={() => setShowFrameworkGen(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-              >
-                <LayoutGrid size={14} /> Framework
-              </button>
-            )}
-            {!locked && (
-              <button
-                onClick={() => setShowTemplateGallery(true)}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 min-h-[44px]"
-              >
-                <LayoutTemplate size={14} /> {isPl ? 'Szablony' : 'Templates'}
-              </button>
-            )}
-          </MobileToolbarMenu>
-
-          {/* CSV import/export + Connectors */}
-          <div className="flex items-center gap-0.5">
-            {!locked && (
-              <button
-                onClick={() => setShowConnectorWizard(true)}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-500/10 hover:bg-primary-100 dark:hover:bg-primary-500/20 transition-colors"
-                title={isPl ? 'Importuj dane' : 'Import data'}
-              >
-                <Network size={12} />
-                {isPl ? 'Import' : 'Import'}
-              </button>
-            )}
-            {connectors.connectors.length > 0 && (
-              <button
-                onClick={() => setShowConnectorList((v) => !v)}
-                className="relative p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                title={isPl ? 'Konektory' : 'Connectors'}
-              >
-                <Layers size={12} />
-                {connectors.connectors.some((c) => c.lastRunStatus === 'running') && (
-                  <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
-                )}
-                {connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
-                  <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
-                )}
-              </button>
-            )}
-            {usePlatform && (
-              <button
-                onClick={() => setShowWebhookRelays(true)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors"
-                title={isPl ? 'Webhook Relay (Zapier/Make)' : 'Webhook Relays (Zapier/Make)'}
-              >
-                <Webhook size={12} />
-              </button>
-            )}
-            <input
-              ref={csvInputRef}
-              type="file"
-              accept=".csv,.tsv,.txt"
-              className="hidden"
-              onChange={handleCSVImport}
-            />
-            {!locked && (
-              <button
-                onClick={() => csvInputRef.current?.click()}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-                title={isPl ? 'Importuj CSV' : 'Import CSV'}
-              >
-                <Upload size={12} />
-              </button>
-            )}
-            <button
-              onClick={() => {
-                const csv = exportToCSV(_cols, effectiveNodes);
-                downloadCSV(csv, `idea-${ideaId}.csv`);
-              }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Eksportuj CSV' : 'Export CSV'}
-            >
-              <Download size={12} />
-            </button>
-            <button
-              onClick={() => {
-                copyTableToClipboard(_cols, effectiveNodes);
-                toast.success(isPl ? 'Skopiowano' : 'Copied');
-              }}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-              title={isPl ? 'Kopiuj do schowka' : 'Copy to clipboard'}
-            >
-              <ClipboardCopy size={12} />
-            </button>
-          </div>
-
-          {/* Column config */}
-          <div className="relative">
-            <button
-              onClick={() => setShowColumnConfig(!showColumnConfig)}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-              title={isPl ? 'Kolumny' : 'Columns'}
-            >
-              <Columns3 size={12} />
-            </button>
-            {showColumnConfig && (
-              <div className="absolute right-0 top-full mt-1 z-50 w-52 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-2">
-                {_cols.map((col) => (
-                  <button
-                    key={col.key}
-                    onClick={() => toggleColumn(col.key)}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors"
-                  >
-                    {col.visible ? (
-                      <Eye size={12} className="text-primary-500" />
-                    ) : (
-                      <EyeOff size={12} className="text-slate-400" />
-                    )}
-                    {col.header}
-                    <span className="ml-auto text-[9px] text-slate-400">{col.type}</span>
-                  </button>
-                ))}
-                <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-1 pt-1">
-                  <button
-                    onClick={() => {
-                      setShowColumnConfig(false);
-                      setShowAddColumn(true);
-                    }}
-                    className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
-                  >
-                    <Plus size={12} />
-                    {isPl ? 'Nowa kolumna' : 'New column'}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Undo / Redo */}
-          <div className="flex items-center gap-0.5">
-            <button
-              onClick={handlePlatformUndo}
-              disabled={!usePlatform && !nodesUndo.canUndo}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
-              title="Undo (Ctrl+Z)"
-            >
-              <Undo2 size={13} />
-            </button>
-            <button
-              onClick={nodesUndo.redo}
-              disabled={!nodesUndo.canRedo}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 disabled:opacity-30 transition-colors"
-              title="Redo (Ctrl+Y)"
-            >
-              <Redo2 size={13} />
-            </button>
-          </div>
-
-          <div className="flex-1" />
-
-          {/* Bulk actions */}
-          {_selIds.size > 0 && (
-            <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/10 px-2 py-0.5 rounded-lg">
-                {_selIds.size} {isPl ? 'zaznaczonych' : 'selected'}
-              </span>
-              {!locked && (
-                <>
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowBulkConvertMenu((p) => !p)}
-                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 hover:bg-emerald-500/20 transition-colors"
-                    >
-                      <ArrowRight size={11} />
-                      {isPl ? 'Konwertuj' : 'Convert'}
-                      <ChevronDown size={9} />
-                    </button>
-                    {showBulkConvertMenu && (
-                      <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 shadow-xl p-1">
-                        {(['initiative', 'task', 'decision'] as const).map((t) => (
-                          <button
-                            key={t}
-                            onClick={() => handleBulkConvert(t)}
-                            className="w-full text-left px-3 py-1.5 rounded-lg text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-800 transition-colors capitalize"
-                          >
-                            →{' '}
-                            {t === 'initiative'
-                              ? isPl
-                                ? 'Inicjatywa'
-                                : 'Initiative'
-                              : t === 'task'
-                                ? isPl
-                                  ? 'Zadanie'
-                                  : 'Task'
-                                : isPl
-                                  ? 'Decyzja'
-                                  : 'Decision'}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={_bulkDel}
-                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-semibold text-red-600 bg-red-500/10 hover:bg-red-500/20 transition-colors"
-                  >
-                    <Trash2 size={11} />
-                    {isPl ? 'Usuń' : 'Delete'}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Add row (click = blank, dropdown = templates) */}
-          {!locked && (
-            <div className="flex items-center rounded-lg border border-slate-200/60 dark:border-navy-700/60 overflow-hidden">
-              <button
-                onClick={_addRow}
-                className="inline-flex items-center gap-1 px-2 py-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors"
-                title={isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
-              >
-                <Plus size={12} />
-                {isPl ? 'Wiersz' : 'Row'}
-              </button>
-              <button
-                onClick={handleAddRowWithTemplate}
-                className="px-1 py-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800 transition-colors border-l border-slate-200/60 dark:border-navy-700/60"
-                title={isPl ? 'Dodaj z szablonu' : 'Add from template'}
-              >
-                <ChevronDown size={10} />
-              </button>
-            </div>
-          )}
-
-          <span className="text-[11px] text-slate-500 dark:text-slate-400">{_saveLabel}</span>
-          <button
-            type="button"
-            onClick={_save}
-            disabled={_saving || _loading || locked}
-            className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-colors ${
-              _saving || _loading || locked
-                ? 'bg-slate-200/60 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
-                : 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100'
-            }`}
-          >
-            {_saving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-            {_saving ? (isPl ? 'Zapisuję…' : 'Saving…') : isPl ? 'Zapisz' : 'Save'}
-          </button>
-        </div>
-        )}
-
-        {/* AI Table Assistant overlay */}
-        <AITableAssistant
-          open={showAIAssistant}
-          onClose={() => setShowAIAssistant(false)}
-          ideaId={ideaId}
-          columns={_cols}
-          artifactContext={effectiveNodes
-            .filter((n) => n.data?.label)
-            .slice(0, 20)
-            .map((n) => ({
-              id: n.id,
-              type: String(n.type || 'idea'),
-              title: String(n.data?.label || ''),
-              snippet: String(n.data?.description || n.data?.bodyMarkdown || '').slice(0, 200),
-            }))}
-          onSort={(s) => (usePlatform ? effectiveSetSort : setSort)(s)}
-          onFilter={(f) => (usePlatform ? effectiveSetFilters : setFilters)(f)}
-          onGroup={(g) => (usePlatform ? effectiveSetGroupBy : setGroupBy)(g)}
-          onAddColumn={handleAddColumn}
-          onAddRows={handleAIAddRows}
-          onProposal={(p) => {
-            setAiProposal(p);
-            setShowAIAssistant(false);
-          }}
-          usePlatform={usePlatform}
-          workspaceId={ideaId}
-        />
-
-        {/* AI Table Proposal overlay */}
-        {aiProposal && (
-          <div className="absolute left-4 right-4 top-14 z-50">
-            <AITableProposal
-              proposal={aiProposal}
-              onAccept={(accepted) => {
-                if (accepted.columns) {
-                  for (const col of accepted.columns) handleAddColumn(col);
-                }
-                if (accepted.views) {
-                  setSavedViews((prev) => [...prev, ...accepted.views!]);
-                }
-                if (accepted.rows) {
-                  handleAIAddRows(accepted.rows);
-                }
-                setAiProposal(null);
-              }}
-              onReject={() => setAiProposal(null)}
-            />
-          </div>
-        )}
-
-        {locked && (
-          <div className="px-3 md:px-4 pt-3">
-            <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3 text-sm text-slate-600 dark:border-white/[0.06] dark:bg-white/[0.03] dark:text-slate-300">
-              <div className="font-medium text-slate-900 dark:text-slate-100">
-                {isPl ? 'Tryb tylko do odczytu' : 'Read-only mode'}
-              </div>
-              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                {isPl
-                  ? 'Możesz przeglądać tabelę, ale edycja i zapis są obecnie zablokowane.'
-                  : 'You can review the table, but editing and saving are currently disabled.'}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {effectiveLoadError && !_loading && effectiveNodes.length === 0 && (
-          <div className="px-3 md:px-4 pt-3">
-            <EmptyStateInline
-              icon={Table2}
-              dashed={false}
-              message={
-                isPl
-                  ? 'Widok tabeli jest chwilowo niedostępny.'
-                  : 'Table view is temporarily unavailable.'
-              }
-              hint={
-                isPl
-                  ? 'To nie oznacza, że tabela jest pusta. Spróbuj ponownie wczytać dane i sprawdź jeszcze raz.'
-                  : 'This does not mean the table is empty. Retry loading the data and check again.'
-              }
-              action={{
-                label: isPl ? 'Ponów' : 'Retry',
-                onClick: () => {
-                  void effectiveRefresh();
-                },
-              }}
-              className="mb-2"
-            />
-          </div>
-        )}
-
-        {/* Content area — switchable between Data / Forms / Interfaces + optional AI Panel */}
-        <div className="flex flex-1 overflow-hidden min-h-0">
-          <div className="flex-1 overflow-hidden min-w-0">
-            {usePlatform && platformTab === 'forms' ? (
-              <div className="flex-1 overflow-y-auto">
-                <FormsIndex
-                  tableId={platformTableId ?? ideaId}
-                  tableFields={
-                    platformIntegration.platformFields.length > 0
-                      ? platformIntegration.platformFields
-                      : effectiveColumns.map((c) => ({
-                          id: c.key,
-                          tableId: platformTableId ?? ideaId,
-                          name: c.header,
-                          fieldType: (c.type ??
-                            'singleLineText') as import('@/types/tablePlatform').FieldType,
-                          options: {},
-                          isComputed: false,
-                          order: 0,
-                          createdAt: '',
-                          updatedAt: '',
-                        }))
-                  }
-                  locked={locked}
-                />
-              </div>
-            ) : usePlatform && platformTab === 'interfaces' ? (
-              <div className="flex-1 overflow-y-auto">
-                <InterfacesIndex
-                  baseId={ideaId}
-                  tableId={platformTableId ?? ideaId}
-                  tables={[
-                    {
-                      id: platformTableId ?? ideaId,
-                      name: isPl ? 'Bieżąca tabela' : 'Current table',
-                      fields: _cols.map((c) => ({ id: c.key, name: c.header })),
-                    },
-                  ]}
-                  platformViews={platformIntegration.platformViews}
-                  onCreateView={platformIntegration.createPlatformView}
-                  locked={locked}
-                />
-              </div>
-            ) : usePlatform && platformTab === 'models' ? (
-              <div className="flex-1 overflow-y-auto">
-                <GovernedModelsDashboard
-                  baseId={ideaId}
-                  tables={baseTables.map((t) => ({
-                    id: t.id,
-                    name: t.name,
-                    fields:
-                      t.id === (platformTableId ?? ideaId)
-                        ? _cols.map((c) => ({ id: c.key, name: c.header }))
-                        : [],
-                  }))}
-                  locked={locked}
-                  onOpenTable={(tableId) => {
-                    const tab = baseTables.find((bt) => bt.id === tableId);
-                    if (tab) handleTabSelectTable(tab.id);
-                  }}
-                />
-              </div>
-            ) : usePlatform && platformTab === 'workflow' ? (
-              <div className="flex-1 overflow-hidden">
-                <WorkflowDashboard
-                  tableId={platformTableId ?? ideaId}
-                  baseId={ideaId}
-                  workspaceId={ideaId}
-                  tables={baseTables.map((t) => ({
-                    id: t.id,
-                    name: t.name,
-                    fields:
-                      t.id === (platformTableId ?? ideaId)
-                        ? _cols.map((c) => ({
-                            id: c.key,
-                            name: c.header,
-                            fieldType: c.type ?? 'singleLineText',
-                          }))
-                        : [],
-                  }))}
-                  fields={_cols.map((c) => ({
-                    id: c.key,
-                    name: c.header,
-                    fieldType: c.type ?? 'singleLineText',
-                  }))}
-                  views={platformIntegration.platformViews.map((v: any) => ({
-                    id: v.id,
-                    name: v.name,
-                    shareToken: v.shareToken,
-                  }))}
-                  locked={locked}
-                />
-              </div>
-            ) : usePlatform ? (
-              <P15ViewRouter onCSVImport={handleCSVImport} />
-            ) : _loading ? (
-              <div className="flex-1 flex items-center justify-center">
-                <Loader2 className="animate-spin text-slate-400" size={24} />
-              </div>
-            ) : usePlatform && (_vl === 'kanban' || _vl === 'calendar' || _vl === 'grid') ? (
-              <LegacyViewRouter
-                viewType={_vl === 'grid' ? 'gallery' : (_vl as 'kanban' | 'calendar')}
-                records={processedRowsWithRollups}
-                columns={_cols}
-                viewConfig={{
-                  ...platformViewConfig,
-                  viewType: _vl === 'grid' ? 'gallery' : (_vl as 'kanban' | 'calendar'),
-                  visibleFieldIds:
-                    platformViewConfig.visibleFieldIds.length > 0
-                      ? platformViewConfig.visibleFieldIds
-                      : _visCols.map((c) => c.key),
-                  groupByFieldId: platformViewConfig.groupByFieldId || _groupBy || undefined,
-                  dateFieldId:
-                    platformViewConfig.dateFieldId || _cols.find((c) => c.type === 'date')?.key,
-                }}
-                onRecordUpdate={_fieldChange}
-                onRecordClick={(id) => setDetailNodeId(id)}
-                onAddRecord={(defaults) => {
-                  if (defaults) {
-                    const id = `node-${Date.now()}`;
-                    const now = new Date().toISOString();
-                    const newNode = {
-                      id,
-                      type: 'idea',
-                      data: {
-                        label: '',
-                        status: 'todo',
-                        ...defaults,
-                        created_time: now,
-                        created_by: currentUserId,
-                        last_edited_time: now,
-                        last_edited_by: currentUserId,
-                      },
-                      position: { x: 0, y: 0 },
-                    };
-                    nodesUndo.push([...nodes, newNode]);
-                  } else {
-                    _addRow();
-                  }
-                }}
-              />
-            ) : _vl === 'timeline' ? (
-              <TimelineView
-                nodes={processedRowsWithRollups}
-                edges={edges}
-                columns={_cols}
-                locked={locked}
-                onFieldChange={_fieldChange}
-                onNodeClick={(id) => setDetailNodeId(id)}
-              />
-            ) : _vl === 'sticky' ? (
-              <StickyNoteView
-                nodes={processedRowsWithRollups}
-                columns={_cols}
-                onNodeClick={(id) => setDetailNodeId(id)}
-                onReorder={handleReorderNode}
-                onFieldChange={_fieldChange}
-                groupBy={_groupBy}
-              />
-            ) : _vl === 'kanban' ? (
-              <KanbanView
-                nodes={processedRowsWithRollups}
-                groupByColumn={
-                  _cols.find(
-                    (c) =>
-                      c.key === (_groupBy || 'status') &&
-                      (c.type === 'select' || c.type === 'multiselect' || c.type === 'status')
-                  ) ||
-                  _cols.find((c) => c.type === 'status' || c.type === 'select') ||
-                  _cols[0]
-                }
-                columns={_cols}
-                locked={locked}
-                onFieldChange={_fieldChange}
-                onAddRow={_addRow}
-                onNodeClick={(id) => setDetailNodeId(id)}
-              />
-            ) : _vl === 'calendar' ? (
-              <CalendarView
-                rows={processedRowsWithRollups}
-                columns={_cols}
-                locked={locked}
-                onNodeClick={(id) => setDetailNodeId(id)}
-                onFieldChange={_fieldChange}
-                onAddEventAtDate={handleAddEventAtDate}
-              />
-            ) : _vl === 'grid' ? (
-              <GridView
-                rows={processedRowsWithRollups}
-                columns={_cols}
-                locked={locked}
-                onNodeClick={(id) => setDetailNodeId(id)}
-                onFieldChange={_fieldChange}
-              />
-            ) : _vl === 'matrix' ? (
-              <MatrixView
-                nodes={processedRowsWithRollups}
-                columns={_cols}
-                xAxis={
-                  (matrixAxisXKey && _cols.find((c) => c.key === matrixAxisXKey)) ||
-                  _cols.find(
-                    (c) => c.key === 'impact' && (c.type === 'number' || c.type === 'rating')
-                  ) ||
-                  _cols.find((c) => c.type === 'rating') ||
-                  _cols[0]!
-                }
-                yAxis={
-                  (matrixAxisYKey && _cols.find((c) => c.key === matrixAxisYKey)) ||
-                  _cols.find(
-                    (c) => c.key === 'effort' && (c.type === 'number' || c.type === 'rating')
-                  ) ||
-                  _cols.filter((c) => c.type === 'rating')[1] ||
-                  _cols[1] ||
-                  _cols[0]!
-                }
-                locked={locked}
-                onNodeClick={(id) => setDetailNodeId(id)}
-                onFieldChange={_fieldChange}
-                onAxisChange={(axis, col) => {
-                  if (axis === 'x') setMatrixAxisXKey(col.key);
-                  else setMatrixAxisYKey(col.key);
-                }}
-              />
-            ) : (
-              <div
-                ref={tableContainerRef}
-                className="flex-1 overflow-x-auto overflow-y-auto relative -webkit-overflow-scrolling-touch"
-              >
-                <ConnectionLines
-                  selectedNodeId={selectedNodeForLines}
-                  edges={edges}
-                  allNodes={effectiveNodes}
-                  containerRef={tableContainerRef}
-                />
-                <table
-                  className="w-full text-left"
-                  style={{ width: tableWidth, minWidth: tableWidth, tableLayout: 'fixed' }}
-                >
-                  <thead className="sticky top-0 bg-slate-50/95 dark:bg-navy-900/95 backdrop-blur-sm border-b border-slate-200/60 dark:border-navy-700/60 z-10">
-                    <tr>
-                      <th className="w-8 px-2 py-2">
-                        <input
-                          type="checkbox"
-                          checked={
-                            _selIds.size === processedRowsWithRollups.length &&
-                            processedRowsWithRollups.length > 0
-                          }
-                          onChange={() => {
-                            const setSelFn = usePlatform
-                              ? effectiveSetSelectedRowIds
-                              : setSelectedRowIds;
-                            if (_selIds.size === processedRowsWithRollups.length) {
-                              setSelFn(new Set());
-                              onSelectionChange?.(EMPTY_SELECTION);
-                            } else {
-                              const all = new Set(processedRowsWithRollups.map((r) => r.id));
-                              setSelFn(all);
-                              onSelectionChange?.({
-                                type: 'row',
-                                count: all.size,
-                                ids: Array.from(all),
-                              });
-                            }
-                          }}
-                          className="w-3.5 h-3.5 rounded border-slate-300 dark:border-navy-600 text-primary-500 focus:ring-primary-500/30"
-                        />
-                      </th>
-                      <th className="w-10 px-1 py-2 text-[10px] font-normal text-slate-400 dark:text-slate-500 text-right select-none">
-                        #
-                      </th>
-                      {stretchedVisibleCols.map((col) => (
-                        <th
-                          key={col.key}
-                          style={{ width: col.width, minWidth: col.width, maxWidth: col.width }}
-                          className="relative px-2 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 select-none group"
-                          draggable={editingHeaderKey !== col.key}
-                          onDragStart={() => handleColDragStart(col.key)}
-                          onDragOver={(e) => handleColDragOver(e, col.key)}
-                          onDragEnd={handleColDragEnd}
-                        >
-                          {editingHeaderKey === col.key ? (
-                            <input
-                              autoFocus
-                              defaultValue={col.header}
-                              className="w-full bg-white dark:bg-navy-800 border border-primary-500/40 rounded px-1 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 outline-none"
-                              onBlur={(e) => {
-                                renameColumn(col.key, e.target.value);
-                                setEditingHeaderKey(null);
-                              }}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter') {
-                                  renameColumn(col.key, (e.target as HTMLInputElement).value);
-                                  setEditingHeaderKey(null);
-                                }
-                                if (e.key === 'Escape') setEditingHeaderKey(null);
-                              }}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          ) : (
-                            <div
-                              className="flex items-center gap-1 cursor-pointer hover:text-slate-700 dark:hover:text-slate-200"
-                              onClick={() => effectiveCycleSort(col.key)}
-                              onDoubleClick={(e) => {
-                                e.stopPropagation();
-                                if (!locked) setEditingHeaderKey(col.key);
-                              }}
-                              onContextMenu={(e) => {
-                                e.preventDefault();
-                                if (!locked)
-                                  setColContextMenu({
-                                    colKey: col.key,
-                                    x: e.clientX,
-                                    y: e.clientY,
-                                  });
-                              }}
-                            >
-                              <GripVertical
-                                size={10}
-                                className="opacity-0 group-hover:opacity-40 cursor-grab"
-                              />
-                              {col.header}
-                              {_sort?.key === col.key ? (
-                                _sort.direction === 'asc' ? (
-                                  <ArrowUp size={10} />
-                                ) : (
-                                  <ArrowDown size={10} />
-                                )
-                              ) : (
-                                <ArrowUpDown size={10} className="opacity-30" />
-                              )}
-                            </div>
-                          )}
-                          {/* Resize handle */}
-                          <div
-                            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500/30 transition-colors"
-                            onMouseDown={(e) => handleResizeStart(col.key, e)}
-                          />
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {effectiveGroupedRows ? (
-                      Object.entries(effectiveGroupedRows).map(([groupKey, rows]) => (
-                        <React.Fragment key={groupKey}>
-                          <tr className="bg-slate-100/50 dark:bg-navy-800/50">
-                            <td
-                              colSpan={_visCols.length + 2}
-                              className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300"
-                            >
-                              {groupKey || (isPl ? '(brak wartości)' : '(empty)')}{' '}
-                              <span className="text-slate-400 font-normal ml-1">
-                                ({rows.length})
-                              </span>
-                            </td>
-                          </tr>
-                          {rows.map((row, idx) => renderRow(row, idx))}
-                        </React.Fragment>
-                      ))
-                    ) : processedRowsWithRollups.length === 0 ? (
-                      <tr>
-                        <td colSpan={_visCols.length + 2} className="px-4 py-12 text-center">
-                          <div className="mx-auto max-w-xl text-slate-400 dark:text-slate-500">
-                            <div className="text-sm font-semibold mb-1">
-                              {isPl ? 'Tabela jest jeszcze pusta' : 'This table is still empty'}
-                            </div>
-                            <div className="text-[11px] leading-relaxed">
-                              {isPl
-                                ? 'Zacznij od struktury: wybierz framework, dodaj pierwszy wiersz lub użyj szablonu. AI zostaw na moment, gdy model tabeli będzie już wiarygodny.'
-                                : 'Start with structure: choose a framework, add the first row, or use a template. Save AI for the moment when the table model is already trustworthy.'}
-                            </div>
-                            {!locked && (
-                              <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                                <button
-                                  onClick={_addRow}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 transition-colors"
-                                >
-                                  <Plus size={14} />
-                                  {isPl ? 'Dodaj pusty wiersz' : 'Add blank row'}
-                                </button>
-                                <button
-                                  onClick={handleAddRowWithTemplate}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 dark:bg-white/[0.05] dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/[0.08] transition-colors"
-                                >
-                                  <Layers size={14} />
-                                  {isPl ? 'Użyj szablonu wiersza' : 'Use row template'}
-                                </button>
-                                <button
-                                  onClick={() => setShowFrameworkGen(true)}
-                                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 transition-colors"
-                                >
-                                  <LayoutGrid size={14} />
-                                  {isPl ? 'Zbuduj framework' : 'Build framework'}
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    ) : (
-                      processedRowsWithRollups.map((row, idx) => renderRow(row, idx))
-                    )}
-                  </tbody>
-                  {/* Footer aggregations */}
-                  {processedRowsWithRollups.length > 0 &&
-                    _visCols.some((c) => c.aggregation && c.aggregation !== 'none') && (
-                      <tfoot className="border-t-2 border-slate-200/60 dark:border-navy-700/60">
-                        <tr className="bg-slate-50/50 dark:bg-navy-900/50">
-                          <td className="px-2 py-1.5" />
-                          <td className="w-10 px-1 py-1.5" />
-                          {stretchedVisibleCols.map((col) => {
-                            const agg = col.aggregation;
-                            if (!agg || agg === 'none')
-                              return <td key={col.key} className="px-2 py-1.5" />;
-                            const values = processedRowsWithRollups.map((r) => r.data?.[col.key]);
-                            return (
-                              <td
-                                key={col.key}
-                                className="px-2 py-1.5 text-[10px] font-bold text-slate-600 dark:text-slate-300 tabular-nums"
-                              >
-                                <span className="text-[8px] text-slate-400 uppercase mr-1">
-                                  {agg}
-                                </span>
-                                {computeAggregation(agg, values)}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      </tfoot>
-                    )}
-                </table>
-
-                {/* Edges table */}
-                {edges.length > 0 && (
-                  <div className="border-t border-slate-200/60 dark:border-navy-700/60 mt-4">
-                    <div className="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {isPl ? 'Połączenia' : 'Edges'} ({edges.length})
-                    </div>
-                    <table className="w-full text-left">
-                      <thead>
-                        <tr className="border-b border-slate-200/40 dark:border-navy-700/40">
-                          <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
-                            {isPl ? 'Źródło' : 'Source'}
-                          </th>
-                          <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
-                            {isPl ? 'Cel' : 'Target'}
-                          </th>
-                          <th className="px-3 py-1.5 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 w-28">
-                            Kind
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {edges.map((e) => (
-                          <tr
-                            key={e.id}
-                            className="border-b border-slate-200/20 dark:border-white/[0.02]"
-                          >
-                            <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-                              {e.source}
-                            </td>
-                            <td className="px-3 py-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-                              {e.target}
-                            </td>
-                            <td className="px-3 py-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                              {e?.data?.kind ? String(e.data.kind) : e.type || 'edge'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Status Bar — record count + aggregates */}
-            {usePlatform && (
-              <StatusBar
-                totalRecords={platformIntegration.totalRecords}
-                selectedCount={_selIds.size}
-                columns={platformIntegration.platformFields.map((f) => ({
-                  id: f.id,
-                  name: f.name,
-                  fieldType: f.fieldType,
-                }))}
-                records={platformIntegration.nodes.map((n) => n.data ?? {})}
-                aggregateConfig={
-                  statusBarAggConfig as Record<
-                    string,
-                    'none' | 'sum' | 'avg' | 'min' | 'max' | 'count'
-                  >
-                }
-                onAggregateChange={(fieldId, mode) =>
-                  setStatusBarAggConfig((prev) => ({ ...prev, [fieldId]: mode }))
-                }
-              />
-            )}
-
-            {/* Table Tab Strip — multi-table navigation */}
-            {usePlatform && baseTables.length > 0 && (
-              <TableTabStrip
-                baseId={ideaId}
-                tables={baseTables}
-                activeTableId={
-                  platformTableOverrideId ?? platformTableId ?? baseTables[0]?.id ?? ''
-                }
-                onSelectTable={handleTabSelectTable}
-                onCreateTable={handleTabCreateTable}
-                onRenameTable={handleTabRenameTable}
-                onDuplicateTable={handleTabDuplicateTable}
-                onDeleteTable={handleTabDeleteTable}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Column context menu */}
-        {colContextMenu && (
-          <div className="fixed inset-0 z-[60]" onClick={() => setColContextMenu(null)}>
-            <div
-              className="absolute bg-white dark:bg-navy-900 rounded-lg shadow-xl border border-slate-200 dark:border-navy-700 py-1 min-w-[160px]"
-              style={{ left: colContextMenu.x, top: colContextMenu.y }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                onClick={() => {
-                  setEditingHeaderKey(colContextMenu.colKey);
-                  setColContextMenu(null);
-                }}
-              >
-                {isPl ? 'Zmień nazwę' : 'Rename'}
-              </button>
-              <button
-                className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                onClick={() => {
-                  effectiveCycleSort(colContextMenu.colKey);
-                  setColContextMenu(null);
-                }}
-              >
-                {isPl ? 'Sortuj' : 'Sort'}
-              </button>
-              <button
-                className="w-full px-3 py-1.5 text-xs text-left hover:bg-slate-100 dark:hover:bg-navy-800 text-slate-700 dark:text-slate-300"
-                onClick={() => {
-                  toggleColumn(colContextMenu.colKey);
-                  setColContextMenu(null);
-                }}
-              >
-                {isPl ? 'Ukryj kolumnę' : 'Hide column'}
-              </button>
-              <div className="h-px bg-slate-200 dark:bg-navy-700 my-1" />
-              <button
-                className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
-                onClick={() => {
-                  deleteColumn(colContextMenu.colKey);
-                  toast.success(isPl ? 'Kolumna usunięta' : 'Column deleted');
-                  setColContextMenu(null);
-                }}
-              >
-                {isPl ? 'Usuń kolumnę' : 'Delete column'}
-              </button>
-            </div>
-          </div>
-        )}
         </TableDataProvider>
       </div>
 
@@ -3057,7 +3067,7 @@ export const IdeaTableTool: React.FC<IdeaTableToolProps> = ({
         }}
         ideaId={ideaId}
         fields={usePlatform ? platformIntegration.platformFields : undefined}
-        platformTableId={usePlatform ? platformTableId ?? ideaId : undefined}
+        platformTableId={usePlatform ? (platformTableId ?? ideaId) : undefined}
       />
 
       {/* Add Column Dialog */}

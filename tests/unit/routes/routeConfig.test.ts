@@ -13,13 +13,13 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromRoute('/superadmin/overview')).toBe(AppView.SUPERADMIN_OVERVIEW);
     expect(getAppViewFromRoute('/superadmin/customers')).toBe(AppView.SUPERADMIN_CUSTOMERS);
     expect(getAppViewFromRoute('/superadmin/customers/communication')).toBe(
-      AppView.SUPERADMIN_COMMUNICATION,
+      AppView.SUPERADMIN_COMMUNICATION
     );
     expect(getAppViewFromRoute('/superadmin/customers/commercial')).toBe(
-      AppView.SUPERADMIN_REVENUE,
+      AppView.SUPERADMIN_REVENUE
     );
     expect(getAppViewFromRoute('/superadmin/customers/commercial/invoices')).toBe(
-      AppView.SUPERADMIN_INVOICES,
+      AppView.SUPERADMIN_INVOICES
     );
   });
 
@@ -70,10 +70,10 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/superadmin/analytics')).toBe(AppView.SUPERADMIN_ANALYTICS);
     expect(getAppViewFromPath('/superadmin/configuration')).toBe(AppView.SUPERADMIN_CONFIGURATION);
     expect(getAppViewFromPath('/superadmin/customers/communication')).toBe(
-      AppView.SUPERADMIN_COMMUNICATION,
+      AppView.SUPERADMIN_COMMUNICATION
     );
     expect(getAppViewFromPath('/superadmin/customers/commercial/billing')).toBe(
-      AppView.SUPERADMIN_BILLING,
+      AppView.SUPERADMIN_BILLING
     );
   });
 
@@ -96,10 +96,27 @@ describe('routeConfig helpers', () => {
   it('getRouteFromAppView: maps settings entrypoints to mounted settings sections', () => {
     expect(getRouteFromAppView(AppView.SETTINGS_AI)).toBe('/settings/ai-behavior');
     expect(getRouteFromAppView(AppView.SETTINGS_NOTIFICATIONS)).toBe(
-      '/settings/notifications-overview',
+      '/settings/notifications-overview'
     );
     expect(getRouteFromAppView(AppView.SETTINGS_SECURITY)).toBe('/settings/security-dashboard');
     expect(getRouteFromAppView(AppView.SETTINGS_API_KEYS)).toBe('/settings/api-keys');
     expect(getRouteFromAppView(AppView.SETTINGS_PRIVACY)).toBe('/settings/privacy');
+  });
+
+  it('getAppViewFromPath: keeps settings URL sync on module views', () => {
+    expect(getRouteFromAppView(AppView.SETTINGS_PROFILE_MODULE)).toBe('/settings/profile');
+    expect(getAppViewFromPath('/settings/profile')).toBe(AppView.SETTINGS_PROFILE_MODULE);
+    expect(getAppViewFromPath('/settings/ai-behavior')).toBe(AppView.SETTINGS_AI_MODULE);
+    expect(getAppViewFromPath('/settings/ai-prompt-library')).toBe(AppView.SETTINGS_AI_MODULE);
+    expect(getAppViewFromPath('/settings/notifications-overview')).toBe(
+      AppView.SETTINGS_NOTIFICATIONS_MODULE
+    );
+    expect(getAppViewFromPath('/settings/notifications-email-digest')).toBe(
+      AppView.SETTINGS_NOTIFICATIONS_MODULE
+    );
+    expect(getAppViewFromPath('/settings/security-dashboard')).toBe(
+      AppView.SETTINGS_SECURITY_MODULE
+    );
+    expect(getAppViewFromPath('/settings/integrations')).toBe(AppView.SETTINGS_INTEGRATIONS_MODULE);
   });
 });

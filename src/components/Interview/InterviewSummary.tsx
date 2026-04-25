@@ -61,6 +61,12 @@ const SUMMARY_CATEGORY_CONFIG: Record<
     color: 'text-emerald-600 dark:text-emerald-400',
     bgColor: 'bg-emerald-100 dark:bg-emerald-900/30',
   },
+  general: {
+    label: 'General',
+    icon: CheckCircle,
+    color: 'text-slate-600 dark:text-slate-400',
+    bgColor: 'bg-slate-100 dark:bg-slate-900/30',
+  },
 };
 
 const CATEGORY_KEYS = Object.keys(SUMMARY_CATEGORY_CONFIG) as InterviewCategory[];

@@ -104,14 +104,30 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
     }
   };
 
+  const getChannelName = (channel: string) =>
+    t(`settings.notifications.channels.channel.${channel}`, channel);
+
+  const refreshChannels = async () => {
+    const response = await Api.get('/api/user/notification-channels').catch(() => null);
+    if (response?.success && response.data) {
+      const next = { ...defaultChannels, ...response.data };
+      setChannels(next);
+      return next;
+    }
+    return channels;
+  };
+
   const handleSave = async () => {
     try {
       setSaving(true);
       await Api.put('/api/user/notification-channels', channels);
-      toast.success(t('settings.notifications.channelsSaved', 'Notification channels saved'));
+      await refreshChannels();
+      toast.success(
+        t('settings.notifications.channels.channelsSaved', 'Notification channels saved')
+      );
     } catch (error) {
       toast.error(
-        t('settings.notifications.channelsError', 'Failed to save notification channels')
+        t('settings.notifications.channels.channelsError', 'Failed to save notification channels')
       );
     } finally {
       setSaving(false);
@@ -126,24 +142,51 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       if (response.success) {
         if (response.authUrl) {
           window.open(response.authUrl, '_blank', 'width=600,height=700');
-          toast.success('Authorization started. Finish the external auth step to complete setup.');
+          toast.success(
+            t(
+              'settings.notifications.channels.authStarted',
+              'Authorization started. Finish the external auth step to complete setup.'
+            )
+          );
         } else if (
           response.onboardingStatus === 'pending_external_auth_or_configuration' ||
           response.onboardingStatus === 'pending_configuration'
         ) {
-          toast.success('Setup started. Complete the required configuration fields to continue.');
+          toast.success(
+            t(
+              'settings.notifications.channels.setupStarted',
+              'Setup started. Complete the required configuration fields to continue.'
+            )
+          );
         } else if (response.onboardingStatus === 'configuration_submitted_pending_validation') {
-          toast.success('Configuration submitted. Validation is still pending.');
+          toast.success(
+            t(
+              'settings.notifications.channels.validationPending',
+              'Configuration submitted. Validation is still pending.'
+            )
+          );
         } else {
           setChannels({
             ...channels,
             [channel]: { ...channels[channel as keyof ChannelsState], connected: true },
           });
-          toast.success(`${channel} connected successfully`);
+          toast.success(
+            t(
+              'settings.notifications.channels.connectedToast',
+              '{{channel}} connected successfully',
+              {
+                channel: getChannelName(channel),
+              }
+            )
+          );
         }
       }
     } catch (error) {
-      toast.error(`Failed to connect ${channel}`);
+      toast.error(
+        t('settings.notifications.channels.connectError', 'Failed to connect {{channel}}', {
+          channel: getChannelName(channel),
+        })
+      );
     } finally {
       setConnecting(null);
     }
@@ -160,9 +203,18 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
           enabled: false,
         },
       });
-      toast.success(`${channel} disconnected`);
+      await refreshChannels();
+      toast.success(
+        t('settings.notifications.channels.disconnectedToast', '{{channel}} disconnected', {
+          channel: getChannelName(channel),
+        })
+      );
     } catch (error) {
-      toast.error(`Failed to disconnect ${channel}`);
+      toast.error(
+        t('settings.notifications.channels.disconnectError', 'Failed to disconnect {{channel}}', {
+          channel: getChannelName(channel),
+        })
+      );
     }
   };
 
@@ -170,9 +222,13 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
     try {
       await Api.post('/api/user/notification-channels/sms/setup', { phoneNumber });
       setShowSmsVerification(true);
-      toast.success('Verification code sent to your phone');
+      toast.success(
+        t('settings.notifications.channels.smsCodeSent', 'Verification code sent to your phone')
+      );
     } catch (error) {
-      toast.error('Failed to send verification code');
+      toast.error(
+        t('settings.notifications.channels.smsCodeError', 'Failed to send verification code')
+      );
     }
   };
 
@@ -184,9 +240,10 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         sms: { ...channels.sms, connected: true, verified: true },
       });
       setShowSmsVerification(false);
-      toast.success('Phone number verified');
+      await refreshChannels();
+      toast.success(t('settings.notifications.channels.phoneVerified', 'Phone number verified'));
     } catch (error) {
-      toast.error('Invalid verification code');
+      toast.error(t('settings.notifications.channels.invalidCode', 'Invalid verification code'));
     }
   };
 
@@ -226,7 +283,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         {config.connected && (
           <span className="flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
             <Check size={12} />
-            Connected
+            {t('settings.notifications.channels.connected', 'Connected')}
           </span>
         )}
       </div>
@@ -236,7 +293,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
           <>
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600 dark:text-slate-400">
-                Enable notifications
+                {t('settings.notifications.channels.enableNotifications', 'Enable notifications')}
               </span>
               <button
                 onClick={() =>
@@ -261,7 +318,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               className="w-full flex items-center justify-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
             >
               <Unlink size={16} />
-              Disconnect
+              {t('common.disconnect', 'Disconnect')}
             </button>
           </>
         ) : (
@@ -275,7 +332,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
             ) : (
               <Link size={16} />
             )}
-            Connect {name}
+            {t('common.connect', 'Connect')} {name}
           </button>
         )}
       </div>
@@ -306,7 +363,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
           className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-          Save Changes
+          {t('common.saveChanges', 'Save Changes')}
         </button>
       </div>
 
@@ -315,7 +372,10 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         <ChannelCard
           id="slack"
           name="Slack"
-          description="Receive notifications in Slack"
+          description={t(
+            'settings.notifications.channels.slackDescription',
+            'Receive notifications in Slack'
+          )}
           icon={MessageSquare}
           iconColor="bg-[#4A154B]"
           config={channels.slack}
@@ -323,7 +383,10 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         <ChannelCard
           id="teams"
           name="Microsoft Teams"
-          description="Receive notifications in Teams"
+          description={t(
+            'settings.notifications.channels.teamsDescription',
+            'Receive notifications in Teams'
+          )}
           icon={MessageSquare}
           iconColor="bg-[#6264A7]"
           config={channels.teams}
@@ -344,16 +407,21 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               <Phone size={24} className="text-white" />
             </div>
             <div>
-              <h4 className="font-semibold text-slate-900 dark:text-white">SMS Notifications</h4>
+              <h4 className="font-semibold text-slate-900 dark:text-white">
+                {t('settings.notifications.channels.smsTitle', 'SMS Notifications')}
+              </h4>
               <p className="text-sm text-slate-500 dark:text-slate-400">
-                Receive critical notifications via SMS
+                {t(
+                  'settings.notifications.channels.smsDescription',
+                  'Receive critical notifications via SMS'
+                )}
               </p>
             </div>
           </div>
           {channels.sms.verified && (
             <span className="flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-700 rounded-full">
               <Check size={12} />
-              Verified
+              {t('settings.notifications.channels.verified', 'Verified')}
             </span>
           )}
         </div>
@@ -375,7 +443,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               onClick={() => handleSmsSetup(channels.sms.phoneNumber || '')}
               className="w-full px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg"
             >
-              Send Verification Code
+              {t('settings.notifications.channels.sendCode', 'Send Verification Code')}
             </button>
           </div>
         )}
@@ -383,7 +451,10 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
         {showSmsVerification && (
           <div className="space-y-3">
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Enter the verification code sent to your phone
+              {t(
+                'settings.notifications.channels.enterCode',
+                'Enter the verification code sent to your phone'
+              )}
             </p>
             <input
               type="text"
@@ -397,7 +468,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               onClick={verifySms}
               className="w-full px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg"
             >
-              Verify
+              {t('settings.notifications.channels.verify', 'Verify')}
             </button>
           </div>
         )}
@@ -406,7 +477,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600 dark:text-slate-400">
-                Enable SMS notifications
+                {t('settings.notifications.channels.enableSms', 'Enable SMS notifications')}
               </span>
               <button
                 onClick={() =>
@@ -441,7 +512,10 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
                 }
                 className="rounded"
               />
-              Critical notifications only (urgent tasks, security alerts)
+              {t(
+                'settings.notifications.channels.criticalOnly',
+                'Critical notifications only (urgent tasks, security alerts)'
+              )}
             </label>
           </div>
         )}
@@ -451,7 +525,10 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
       <ChannelCard
         id="whatsapp"
         name="WhatsApp"
-        description="Receive notifications via WhatsApp"
+        description={t(
+          'settings.notifications.channels.whatsappDescription',
+          'Receive notifications via WhatsApp'
+        )}
         icon={Smartphone}
         iconColor="bg-[#25D366]"
         config={channels.whatsapp}
@@ -465,10 +542,13 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
           </div>
           <div>
             <h4 className="font-semibold text-slate-900 dark:text-white">
-              In-App Notification Center
+              {t('settings.notifications.channels.inAppTitle', 'In-App Notification Center')}
             </h4>
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Configure the in-app notification experience
+              {t(
+                'settings.notifications.channels.inAppDescription',
+                'Configure the in-app notification experience'
+              )}
             </p>
           </div>
         </div>
@@ -477,18 +557,27 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
           {[
             {
               key: 'showUnreadBadge',
-              label: 'Show Unread Badge',
-              desc: 'Display count of unread notifications',
+              label: t('settings.notifications.channels.showUnreadBadge', 'Show Unread Badge'),
+              desc: t(
+                'settings.notifications.channels.showUnreadBadgeDesc',
+                'Display count of unread notifications'
+              ),
             },
             {
               key: 'autoMarkAsRead',
-              label: 'Auto Mark as Read',
-              desc: 'Mark notifications as read when viewed',
+              label: t('settings.notifications.channels.autoMarkAsRead', 'Auto Mark as Read'),
+              desc: t(
+                'settings.notifications.channels.autoMarkAsReadDesc',
+                'Mark notifications as read when viewed'
+              ),
             },
             {
               key: 'groupByType',
-              label: 'Group by Type',
-              desc: 'Group similar notifications together',
+              label: t('settings.notifications.channels.groupByType', 'Group by Type'),
+              desc: t(
+                'settings.notifications.channels.groupByTypeDesc',
+                'Group similar notifications together'
+              ),
             },
           ].map((item) => (
             <div
@@ -526,7 +615,7 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
 
           <div className="p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
             <label className="block text-sm font-medium text-slate-900 dark:text-white mb-2">
-              Max Notifications to Keep
+              {t('settings.notifications.channels.maxToKeep', 'Max Notifications to Keep')}
             </label>
             <select
               value={channels.inApp.maxNotifications}
@@ -538,10 +627,26 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               }
               className="w-full px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
             >
-              <option value={50}>50 notifications</option>
-              <option value={100}>100 notifications</option>
-              <option value={200}>200 notifications</option>
-              <option value={500}>500 notifications</option>
+              <option value={50}>
+                {t('settings.notifications.channels.notificationCount', '{{count}} notifications', {
+                  count: 50,
+                })}
+              </option>
+              <option value={100}>
+                {t('settings.notifications.channels.notificationCount', '{{count}} notifications', {
+                  count: 100,
+                })}
+              </option>
+              <option value={200}>
+                {t('settings.notifications.channels.notificationCount', '{{count}} notifications', {
+                  count: 200,
+                })}
+              </option>
+              <option value={500}>
+                {t('settings.notifications.channels.notificationCount', '{{count}} notifications', {
+                  count: 500,
+                })}
+              </option>
             </select>
           </div>
         </div>
@@ -555,7 +660,9 @@ export const NotificationChannelsSettings: React.FC<NotificationChannelsSettings
               <Mail size={24} className="text-white" />
             </div>
             <div>
-              <h4 className="font-semibold text-slate-900 dark:text-white">Email Notifications</h4>
+              <h4 className="font-semibold text-slate-900 dark:text-white">
+                {t('settings.notifications.channels.emailTitle', 'Email Notifications')}
+              </h4>
               <p className="text-sm text-slate-500 dark:text-slate-400">{currentUser.email}</p>
             </div>
           </div>

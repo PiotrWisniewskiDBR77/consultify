@@ -25,9 +25,7 @@ describe('buildWorkspaceBreadcrumb — visibility rules', () => {
   it.each([AppView.AI_CHAT, AppView.WELCOME, AppView.AUTH])(
     'returns null for hidden view %s',
     (view) => {
-      expect(
-        buildWorkspaceBreadcrumb({ view, hasActiveConversation: true })
-      ).toBeNull();
+      expect(buildWorkspaceBreadcrumb({ view, hasActiveConversation: true })).toBeNull();
     }
   );
 
@@ -41,12 +39,8 @@ describe('buildWorkspaceBreadcrumb — visibility rules', () => {
   });
 
   it('returns null for nullish view input', () => {
-    expect(
-      buildWorkspaceBreadcrumb({ view: null, hasActiveConversation: true })
-    ).toBeNull();
-    expect(
-      buildWorkspaceBreadcrumb({ view: undefined, hasActiveConversation: true })
-    ).toBeNull();
+    expect(buildWorkspaceBreadcrumb({ view: null, hasActiveConversation: true })).toBeNull();
+    expect(buildWorkspaceBreadcrumb({ view: undefined, hasActiveConversation: true })).toBeNull();
   });
 });
 
@@ -210,9 +204,7 @@ describe('_humaniseAppViewForTest — deterministic fallback formatter', () => {
   });
 
   it('collapses consecutive underscores without producing empty chunks', () => {
-    expect(_humaniseAppViewForTest('FULL__STEP1__ASSESSMENT')).toBe(
-      'Full · Step1 assessment'
-    );
+    expect(_humaniseAppViewForTest('FULL__STEP1__ASSESSMENT')).toBe('Full · Step1 assessment');
   });
 
   it('falls back to "View" for empty / whitespace input', () => {

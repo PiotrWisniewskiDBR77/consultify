@@ -55,7 +55,14 @@ export type ToolType =
 
 export type StepStatus = 'pending' | 'in_progress' | 'completed' | 'skipped';
 
-export type DynamicSwotPhaseId = 'mission' | 'input' | 'swot' | 'insights' | 'outputs';
+export type DynamicSwotPhaseId =
+  | 'mission'
+  | 'input'
+  | 'swot'
+  | 'forces'
+  | 'options'
+  | 'insights'
+  | 'outputs';
 export type SWOTEvidenceType = 'fact' | 'observation' | 'hypothesis';
 export type SWOTSignalState = 'accepted' | 'proposed' | 'needs-evidence';
 export type SWOTCardStatus = 'accepted' | 'proposed';
@@ -195,6 +202,13 @@ export interface SWOTData {
 }
 
 // Porter's Forces types
+export type PorterForceId =
+  | 'rivalry'
+  | 'newEntrants'
+  | 'substitutes'
+  | 'buyerPower'
+  | 'supplierPower';
+
 export interface ForceData {
   id: string;
   name: string;
@@ -202,6 +216,62 @@ export interface ForceData {
   trend: 'increasing' | 'stable' | 'decreasing';
   drivers: string[];
   aiAnalysis?: string;
+  evidence?: string[];
+  implication?: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PorterSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PorterImplication {
+  id: string;
+  title: string;
+  forceIds: PorterForceId[];
+  insight: string;
+  marginImpact: 'high' | 'medium' | 'low';
+  urgency: 'high' | 'medium' | 'low';
+  recommendation: string;
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PorterMove {
+  id: string;
+  title: string;
+  category: 'positioning' | 'pricing' | 'partnership' | 'capability-build' | 'defensive-move';
+  rationale: string;
+  linkedImplicationIds: string[];
+  linkedForceIds: PorterForceId[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface PorterOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedMoveIds: string[];
+  linkedForceIds: PorterForceId[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface PorterData {
@@ -209,7 +279,15 @@ export interface PorterData {
     industry: string;
     geographicScope: string;
     position: 'leader' | 'challenger' | 'follower' | 'niche';
+    goal?: string;
+    scope?: string;
+    successSignal?: string;
+    timeframe?: 'short' | 'medium' | 'long';
+    constraints?: string;
+    assumptions?: string;
+    kpiTarget?: string;
   };
+  signals: PorterSignal[];
   forces: {
     rivalry: ForceData;
     newEntrants: ForceData;
@@ -217,31 +295,110 @@ export interface PorterData {
     buyerPower: ForceData;
     supplierPower: ForceData;
   };
+  implications: PorterImplication[];
+  recommendedMoves: PorterMove[];
+  outputCandidates: PorterOutputCandidate[];
   overallAttractiveness?: number;
-  summary?: {
+  summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
     keyInsights: string[];
     recommendedInitiatives: InitiativeDraft[];
   };
 }
 
 // Growth Paths (Ansoff) types
+export type GrowthQuadrantId =
+  | 'marketPenetration'
+  | 'marketDevelopment'
+  | 'productDevelopment'
+  | 'diversification';
+
 export interface GrowthPathItem {
   id: string;
   title: string;
   description: string;
   impact: 'high' | 'medium' | 'low';
   effort: 'high' | 'medium' | 'low';
+  quadrant?: GrowthQuadrantId;
+  rationale?: string;
+  evidence?: string[];
+  riskLevel?: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface GrowthSignal {
+  id: string;
+  type: 'interview' | 'file' | 'link' | 'ai' | 'benchmark';
+  content: string;
+  sourceLabel: string;
+  confidence?: number;
+  tags?: string[];
+  evidenceType?: SWOTEvidenceType;
+  state?: SWOTSignalState;
+  provenance?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface GrowthComparison {
+  id: string;
+  title: string;
+  insight: string;
+  linkedQuadrants: GrowthQuadrantId[];
+  recommendation: string;
+  priority: 'high' | 'medium' | 'low';
+  confidence?: number;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface GrowthMove {
+  id: string;
+  title: string;
+  category: 'scale-core' | 'enter-market' | 'build-product' | 'diversify' | 'validate-first';
+  rationale: string;
+  linkedOptionIds: string[];
+  linkedQuadrants: GrowthQuadrantId[];
+  expectedImpact: 'high' | 'medium' | 'low';
+  estimatedEffort: 'high' | 'medium' | 'low';
+  riskLevel: 'high' | 'medium' | 'low';
+  confidence?: number;
+  firstStep?: string;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
+}
+
+export interface GrowthOutputCandidate extends ConsultingOutputCandidateBase {
+  linkedOptionIds: string[];
+  linkedQuadrants: GrowthQuadrantId[];
+  readiness?: SWOTOutputReadiness;
+  proposalStatus?: ProposalStatus;
+  userComment?: string;
 }
 
 export interface GrowthPathsData {
   context: ConsultingMissionContext;
+  signals: GrowthSignal[];
   quadrants: {
     marketPenetration: GrowthPathItem[];
     marketDevelopment: GrowthPathItem[];
     productDevelopment: GrowthPathItem[];
     diversification: GrowthPathItem[];
   };
+  comparisons: GrowthComparison[];
+  recommendedMoves: GrowthMove[];
+  outputCandidates: GrowthOutputCandidate[];
   summary?: ConsultingSummarySnapshot & {
+    proposalId?: string;
+    proposalStatus?: ProposalStatus;
+    userComment?: string;
+    keyInsights: string[];
+    appliedConclusions: string[];
     recommendedInitiatives: InitiativeDraft[];
   };
 }
@@ -492,65 +649,47 @@ export const SWOT_STEPS: StepDefinition[] = [
 
 export const PORTER_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Industry Context',
-    namePl: 'Kontekst Branżowy',
-    description: 'Define the industry, market, and competitive position',
-    descriptionPl: 'Zdefiniuj branżę, rynek i pozycję konkurencyjną',
+    id: 'mission',
+    name: 'Mission & Market Context',
+    namePl: 'Mission & Market Context',
+    description: 'Define the market, scope, decision frame, and success signal',
+    descriptionPl: 'Zdefiniuj rynek, zakres, ramę decyzji i sygnał sukcesu',
     required: true,
     aiAssisted: false,
   },
   {
-    id: 'rivalry',
-    name: 'Competitive Rivalry',
-    namePl: 'Rywalizacja Konkurencyjna',
-    description: 'Assess intensity of competition among existing players',
-    descriptionPl: 'Oceń intensywność konkurencji między istniejącymi graczami',
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description: 'Capture market evidence, interview notes, benchmarks, and competitive signals',
+    descriptionPl: 'Zbierz dowody rynkowe, wywiad, benchmarki i sygnały konkurencyjne',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'newEntrants',
-    name: 'Threat of New Entrants',
-    namePl: 'Zagrożenie Nowych Graczy',
-    description: 'Evaluate barriers to entry and threat of new competitors',
-    descriptionPl: 'Oceń bariery wejścia i zagrożenie ze strony nowych konkurentów',
+    id: 'forces',
+    name: 'Five Forces Build',
+    namePl: 'Five Forces Build',
+    description: 'Turn signals into scored Porter forces with drivers, evidence, and confidence',
+    descriptionPl: 'Zamień sygnały w ocenione siły Portera z driverami, dowodami i confidence',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'substitutes',
-    name: 'Threat of Substitutes',
-    namePl: 'Zagrożenie Substytutów',
-    description: 'Identify substitute products and their impact',
-    descriptionPl: 'Zidentyfikuj produkty zastępcze i ich wpływ',
+    id: 'insights',
+    name: 'Strategic Implications',
+    namePl: 'Strategic Implications',
+    description: 'Synthesize market structure into margin pressure, levers, and strategic moves',
+    descriptionPl: 'Przekształć strukturę rynku w presję marży, dźwignie i ruchy strategiczne',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'buyerPower',
-    name: 'Buyer Power',
-    namePl: 'Siła Nabywców',
-    description: 'Assess bargaining power of customers',
-    descriptionPl: 'Oceń siłę przetargową klientów',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'supplierPower',
-    name: 'Supplier Power',
-    namePl: 'Siła Dostawców',
-    description: 'Assess bargaining power of suppliers',
-    descriptionPl: 'Oceń siłę przetargową dostawców',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Review analysis and generate competitive initiatives',
-    descriptionPl: 'Przegląd analizy i generowanie inicjatyw konkurencyjnych',
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and generate downstream outputs and initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz wygeneruj outputy i inicjatywy',
     required: true,
     aiAssisted: true,
   },
@@ -558,56 +697,47 @@ export const PORTER_STEPS: StepDefinition[] = [
 
 export const GROWTH_PATHS_STEPS: StepDefinition[] = [
   {
-    id: 'context',
-    name: 'Growth Context',
-    namePl: 'Kontekst Wzrostu',
-    description: 'Define the growth goal, scope, and time horizon',
-    descriptionPl: 'Zdefiniuj cel wzrostu, zakres i horyzont czasowy',
+    id: 'mission',
+    name: 'Growth Mission & Context',
+    namePl: 'Growth Mission & Context',
+    description: 'Define the growth ambition, scope, constraints, and success signal',
+    descriptionPl: 'Zdefiniuj ambicję wzrostu, zakres, ograniczenia i sygnał sukcesu',
     required: true,
     aiAssisted: false,
   },
   {
-    id: 'market-penetration',
-    name: 'Market Penetration',
-    namePl: 'Penetracja Rynku',
-    description: 'Opportunities to grow in current markets with current products',
-    descriptionPl: 'Możliwości wzrostu na obecnych rynkach z obecnymi produktami',
+    id: 'input',
+    name: 'Input & Exploration',
+    namePl: 'Input & Exploration',
+    description: 'Capture growth signals from interviews, organization context, and market evidence',
+    descriptionPl: 'Zbierz sygnały wzrostu z wywiadów, kontekstu organizacji i rynku',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'market-development',
-    name: 'Market Development',
-    namePl: 'Rozwój Rynku',
-    description: 'Opportunities to enter new markets with current products',
-    descriptionPl: 'Wejście na nowe rynki z obecnymi produktami',
+    id: 'options',
+    name: 'Ansoff Options Build',
+    namePl: 'Ansoff Options Build',
+    description: 'Turn signals into growth options across the four Ansoff quadrants',
+    descriptionPl: 'Zamień sygnały w opcje wzrostu w czterech polach Ansoffa',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'product-development',
-    name: 'Product Development',
-    namePl: 'Rozwój Produktu',
-    description: 'Opportunities to develop new products for current markets',
-    descriptionPl: 'Nowe produkty dla obecnych rynków',
+    id: 'insights',
+    name: 'Strategic Comparison',
+    namePl: 'Strategic Comparison',
+    description: 'Compare options, expose trade-offs, and select recommended growth moves',
+    descriptionPl: 'Porównaj opcje, pokaż trade-offy i wybierz rekomendowane ruchy wzrostu',
     required: true,
     aiAssisted: true,
   },
   {
-    id: 'diversification',
-    name: 'Diversification',
-    namePl: 'Dywersyfikacja',
-    description: 'Opportunities to enter new markets with new products',
-    descriptionPl: 'Wejście na nowe rynki z nowymi produktami',
-    required: true,
-    aiAssisted: true,
-  },
-  {
-    id: 'summary',
-    name: 'Summary & Initiatives',
-    namePl: 'Podsumowanie i Inicjatywy',
-    description: 'Review growth paths and generate initiatives',
-    descriptionPl: 'Przegląd ścieżek wzrostu i generowanie inicjatyw',
+    id: 'outputs',
+    name: 'Outputs & Actions',
+    namePl: 'Outputs & Actions',
+    description: 'Prepare the final source summary and downstream growth initiatives',
+    descriptionPl: 'Przygotuj final source summary oraz dalsze inicjatywy wzrostowe',
     required: true,
     aiAssisted: true,
   },
@@ -1177,7 +1307,15 @@ const createInitialPorterData = (): PorterData => ({
     industry: '',
     geographicScope: '',
     position: 'challenger',
+    goal: '',
+    scope: '',
+    successSignal: '',
+    timeframe: 'medium',
+    constraints: '',
+    assumptions: '',
+    kpiTarget: '',
   },
+  signals: [],
   forces: {
     rivalry: { id: 'rivalry', name: 'Competitive Rivalry', score: 3, trend: 'stable', drivers: [] },
     newEntrants: {
@@ -1197,16 +1335,23 @@ const createInitialPorterData = (): PorterData => ({
       drivers: [],
     },
   },
+  implications: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialGrowthPathsData = (): GrowthPathsData => ({
   context: createConsultingMissionContext(),
+  signals: [],
   quadrants: {
     marketPenetration: [],
     marketDevelopment: [],
     productDevelopment: [],
     diversification: [],
   },
+  comparisons: [],
+  recommendedMoves: [],
+  outputCandidates: [],
 });
 
 const createInitialPortfolioPriorityData = (): PortfolioPriorityData => ({
@@ -1373,7 +1518,9 @@ const TOOL_INITIAL_DATA: Record<
 const generateId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 const normalizeCanonicalStatus = (status?: string | null): CanonicalToolSessionStatus => {
-  const normalized = String(status || 'DRAFT').trim().toUpperCase();
+  const normalized = String(status || 'DRAFT')
+    .trim()
+    .toUpperCase();
   if (
     normalized === 'DRAFT' ||
     normalized === 'IN_PROGRESS' ||
@@ -1473,6 +1620,165 @@ const normalizeDynamicSwotData = (input: SWOTData): SWOTData => ({
   })),
 });
 
+const normalizePorterData = (input: PorterData): PorterData => {
+  const initial = createInitialPorterData();
+  return {
+    ...initial,
+    ...input,
+    context: {
+      ...initial.context,
+      ...(input.context || {}),
+    },
+    signals: (input.signals || []).map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+      proposalStatus: signal.proposalStatus || (signal.type === 'ai' ? 'ai-proposed' : 'accepted'),
+    })),
+    forces: (Object.keys(initial.forces) as PorterForceId[]).reduce<PorterData['forces']>(
+      (acc, forceId) => {
+        const current = input.forces?.[forceId];
+        acc[forceId] = {
+          ...initial.forces[forceId],
+          ...current,
+          drivers: current?.drivers || [],
+          evidence: current?.evidence || [],
+          proposalStatus: current?.proposalStatus || 'accepted',
+        };
+        return acc;
+      },
+      { ...initial.forces }
+    ),
+    implications: (input.implications || []).map((implication) => ({
+      ...implication,
+      proposalStatus: implication.proposalStatus || 'accepted',
+    })),
+    recommendedMoves: (input.recommendedMoves || []).map((move) => ({
+      ...move,
+      proposalStatus: move.proposalStatus || 'accepted',
+    })),
+    outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+      ...candidate,
+      readiness: candidate.readiness || 'keep-as-idea',
+      proposalStatus: candidate.proposalStatus || 'accepted',
+    })),
+  };
+};
+
+const normalizeGrowthPathsData = (input: GrowthPathsData): GrowthPathsData => {
+  const initial = createInitialGrowthPathsData();
+  const quadrants = {
+    ...initial.quadrants,
+    ...(input.quadrants || {}),
+  };
+  return {
+    ...initial,
+    ...input,
+    context: {
+      ...initial.context,
+      ...(input.context || {}),
+    },
+    signals: (input.signals || []).map((signal) => ({
+      ...signal,
+      evidenceType: signal.evidenceType || (signal.type === 'benchmark' ? 'fact' : 'observation'),
+      state: signal.state || (signal.type === 'ai' ? 'proposed' : 'accepted'),
+      provenance: signal.provenance || signal.sourceLabel,
+      proposalStatus: signal.proposalStatus || (signal.type === 'ai' ? 'ai-proposed' : 'accepted'),
+    })),
+    quadrants: (Object.keys(initial.quadrants) as GrowthQuadrantId[]).reduce<
+      GrowthPathsData['quadrants']
+    >(
+      (acc, quadrant) => {
+        acc[quadrant] = (quadrants[quadrant] || []).map((option) => ({
+          ...option,
+          quadrant: option.quadrant || quadrant,
+          evidence: option.evidence || [],
+          riskLevel: option.riskLevel || 'medium',
+          confidence: option.confidence ?? 3,
+          proposalStatus: option.proposalStatus || 'accepted',
+        }));
+        return acc;
+      },
+      { ...initial.quadrants }
+    ),
+    comparisons: (input.comparisons || []).map((comparison) => ({
+      ...comparison,
+      linkedQuadrants: comparison.linkedQuadrants || [],
+      priority: comparison.priority || 'medium',
+      proposalStatus: comparison.proposalStatus || 'accepted',
+    })),
+    recommendedMoves: (input.recommendedMoves || []).map((move) => ({
+      ...move,
+      linkedOptionIds: move.linkedOptionIds || [],
+      linkedQuadrants: move.linkedQuadrants || [],
+      proposalStatus: move.proposalStatus || 'accepted',
+    })),
+    outputCandidates: (input.outputCandidates || []).map((candidate) => ({
+      ...candidate,
+      linkedOptionIds: candidate.linkedOptionIds || [],
+      linkedQuadrants: candidate.linkedQuadrants || [],
+      readiness: candidate.readiness || 'keep-as-idea',
+      proposalStatus: candidate.proposalStatus || 'accepted',
+    })),
+    summary: input.summary
+      ? {
+          ...input.summary,
+          keyInsights: input.summary.keyInsights || [],
+          appliedConclusions: input.summary.appliedConclusions || [],
+          recommendedInitiatives: input.summary.recommendedInitiatives || [],
+          proposalStatus: input.summary.proposalStatus || 'accepted',
+        }
+      : undefined,
+  };
+};
+
+const updateGrowthProposalCard = (
+  growthData: GrowthPathsData,
+  cardType: ProposalCardType,
+  cardId: string,
+  updates: Record<string, unknown>
+): GrowthPathsData => {
+  const updateList = <T extends { id: string }>(items: T[]) =>
+    items.map((item) => (item.id === cardId ? ({ ...item, ...updates } as T) : item));
+
+  if (cardType === 'signal') {
+    return { ...growthData, signals: updateList(growthData.signals) };
+  }
+
+  if (cardType === 'item') {
+    const quadrants = { ...growthData.quadrants };
+    (Object.keys(quadrants) as GrowthQuadrantId[]).forEach((quadrant) => {
+      quadrants[quadrant] = updateList(quadrants[quadrant]);
+    });
+    return { ...growthData, quadrants };
+  }
+
+  if (cardType === 'tension' || cardType === 'correlation') {
+    return { ...growthData, comparisons: updateList(growthData.comparisons) };
+  }
+
+  if (cardType === 'move') {
+    return { ...growthData, recommendedMoves: updateList(growthData.recommendedMoves) };
+  }
+
+  if (cardType === 'output-candidate') {
+    return { ...growthData, outputCandidates: updateList(growthData.outputCandidates) };
+  }
+
+  if (cardType === 'conclusion' && growthData.summary) {
+    return {
+      ...growthData,
+      summary: {
+        ...growthData.summary,
+        ...updates,
+      },
+    };
+  }
+
+  return growthData;
+};
+
 const mergeToolAnswersWithInitialData = (
   toolType: ToolType,
   answers: Record<string, unknown>
@@ -1539,6 +1845,14 @@ const mergeToolAnswersWithInitialData = (
     return normalizeDynamicSwotData(merged as SWOTData);
   }
 
+  if (toolType === 'market-forces') {
+    return normalizePorterData(merged as PorterData);
+  }
+
+  if (toolType === 'growth-paths') {
+    return normalizeGrowthPathsData(merged as GrowthPathsData);
+  }
+
   return merged as any;
 };
 
@@ -1588,6 +1902,78 @@ const computeStepStatusFromAnswers = (
         return swotAnswers.summary?.executiveSummary ||
           (swotAnswers.summary?.keyInsights?.length || 0) > 0 ||
           (swotAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
+    if (toolType === 'market-forces') {
+      const porterAnswers = normalizePorterData(answers as PorterData);
+
+      if (stepId === 'mission') {
+        return porterAnswers.context?.industry && porterAnswers.context?.geographicScope
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (porterAnswers.signals?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'forces') {
+        return (Object.values(porterAnswers.forces || {}) as ForceData[]).every(
+          (force) => (force.drivers?.length || 0) > 0
+        )
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (porterAnswers.implications?.length || 0) > 0 ||
+          (porterAnswers.recommendedMoves?.length || 0) > 0 ||
+          (porterAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return porterAnswers.summary?.executiveSummary ||
+          (porterAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (porterAnswers.outputCandidates?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+    }
+
+    if (toolType === 'growth-paths') {
+      const growthAnswers = normalizeGrowthPathsData(answers as GrowthPathsData);
+
+      if (stepId === 'mission') {
+        return growthAnswers.context?.goal && growthAnswers.context?.scope ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'input') {
+        return (growthAnswers.signals?.length || 0) > 0 ? 'completed' : 'pending';
+      }
+
+      if (stepId === 'options') {
+        return Object.values(growthAnswers.quadrants || {}).some((items) => (items?.length || 0) > 0)
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'insights') {
+        return (growthAnswers.comparisons?.length || 0) > 0 ||
+          (growthAnswers.recommendedMoves?.length || 0) > 0 ||
+          (growthAnswers.summary?.appliedConclusions?.length || 0) > 0
+          ? 'completed'
+          : 'pending';
+      }
+
+      if (stepId === 'outputs') {
+        return growthAnswers.summary?.executiveSummary ||
+          (growthAnswers.summary?.keyInsights?.length || 0) > 0 ||
+          (growthAnswers.outputCandidates?.length || 0) > 0
           ? 'completed'
           : 'pending';
       }
@@ -1744,6 +2130,24 @@ const normalizeSessionForRuntime = (session: ToolSession): ToolSession => {
   };
   if (session.toolType === 'dynamic-swot') {
     return normalizeDynamicSwotSession(normalizedBase);
+  }
+
+  if (session.toolType === 'market-forces') {
+    const inputData = normalizePorterData(normalizedBase.inputData as PorterData);
+    return {
+      ...normalizedBase,
+      inputData,
+      steps: buildToolSteps('market-forces', inputData),
+    };
+  }
+
+  if (session.toolType === 'growth-paths') {
+    const inputData = normalizeGrowthPathsData(normalizedBase.inputData as GrowthPathsData);
+    return {
+      ...normalizedBase,
+      inputData,
+      steps: buildToolSteps('growth-paths', inputData),
+    };
   }
 
   return normalizedBase;
@@ -1937,6 +2341,40 @@ export const useToolStore = create<ToolStoreState>()(
           }
         }
 
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+
+          if (stepDef.id === 'mission') {
+            return Boolean(porterData.context?.industry && porterData.context?.geographicScope);
+          }
+
+          if (stepDef.id === 'input') {
+            return (porterData.signals?.length || 0) > 0;
+          }
+
+          if (stepDef.id === 'forces') {
+            return (Object.values(porterData.forces || {}) as ForceData[]).every(
+              (force) => (force.drivers?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'insights') {
+            return (
+              (porterData.implications?.length || 0) > 0 ||
+              (porterData.recommendedMoves?.length || 0) > 0 ||
+              (porterData.summary?.appliedConclusions?.length || 0) > 0
+            );
+          }
+
+          if (stepDef.id === 'outputs') {
+            return Boolean(
+              porterData.summary?.executiveSummary ||
+              (porterData.summary?.keyInsights?.length || 0) > 0 ||
+              (porterData.outputCandidates?.length || 0) > 0
+            );
+          }
+        }
+
         // Context step: check if required fields are filled
         if (stepDef.id === 'context') {
           const data = currentSession.inputData as
@@ -2119,7 +2557,11 @@ export const useToolStore = create<ToolStoreState>()(
         const nextInputData =
           currentSession.toolType === 'dynamic-swot'
             ? normalizeDynamicSwotData(mergedInputData as SWOTData)
-            : mergedInputData;
+            : currentSession.toolType === 'market-forces'
+              ? normalizePorterData(mergedInputData as PorterData)
+              : currentSession.toolType === 'growth-paths'
+                ? normalizeGrowthPathsData(mergedInputData as GrowthPathsData)
+                : mergedInputData;
 
         set({
           currentSession: withRecomputedSteps(currentSession, nextInputData),
@@ -2333,7 +2775,48 @@ export const useToolStore = create<ToolStoreState>()(
 
       acceptCard: (cardType, cardId) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            proposalStatus: 'accepted' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.id === cardId ? { ...item, proposalStatus: 'accepted' as ProposalStatus } : item
+            );
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                proposalStatus: 'accepted',
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = {
+              ...porterData.summary,
+              proposalStatus: 'accepted' as ProposalStatus,
+            };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) =>
@@ -2345,7 +2828,7 @@ export const useToolStore = create<ToolStoreState>()(
         else if (cardType === 'tension') updated.tensions = update(swotData.tensions);
         else if (cardType === 'move') updated.recommendedMoves = update(swotData.recommendedMoves);
         else if (cardType === 'correlation') updated.correlations = update(swotData.correlations);
-        else if (cardType === 'output-candidate')
+        else if ((cardType as ProposalCardType) === 'output-candidate')
           updated.outputCandidates = update(swotData.outputCandidates);
         else if (cardType === 'conclusion' && swotData.summary) {
           updated.summary = { ...swotData.summary, proposalStatus: 'accepted' as ProposalStatus };
@@ -2355,7 +2838,48 @@ export const useToolStore = create<ToolStoreState>()(
 
       rejectCard: (cardType, cardId) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            proposalStatus: 'rejected' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.id === cardId ? { ...item, proposalStatus: 'rejected' as ProposalStatus } : item
+            );
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                proposalStatus: 'rejected',
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = {
+              ...porterData.summary,
+              proposalStatus: 'rejected' as ProposalStatus,
+            };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) =>
@@ -2377,7 +2901,43 @@ export const useToolStore = create<ToolStoreState>()(
 
       commentOnCard: (cardType, cardId, comment) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            userComment: comment,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) => (item.id === cardId ? { ...item, userComment: comment } : item));
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                userComment: comment,
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = { ...porterData.summary, userComment: comment };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) => (item.id === cardId ? { ...item, userComment: comment } : item));
@@ -2397,7 +2957,50 @@ export const useToolStore = create<ToolStoreState>()(
 
       markRethinking: (cardType, cardId) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            proposalStatus: 'rethinking' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.id === cardId
+                ? { ...item, proposalStatus: 'rethinking' as ProposalStatus }
+                : item
+            );
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                proposalStatus: 'rethinking',
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = {
+              ...porterData.summary,
+              proposalStatus: 'rethinking' as ProposalStatus,
+            };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) =>
@@ -2419,7 +3022,53 @@ export const useToolStore = create<ToolStoreState>()(
 
       updateCardAfterRethink: (cardType, cardId, updates) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const updated = updateGrowthProposalCard(growthData, cardType, cardId, {
+            ...updates,
+            proposalStatus: 'ai-proposed' as ProposalStatus,
+          });
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const update = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.id === cardId
+                ? { ...item, ...updates, proposalStatus: 'ai-proposed' as ProposalStatus }
+                : item
+            );
+          const updated: Partial<PorterData> = {};
+          if (cardType === 'signal') updated.signals = update(porterData.signals);
+          else if (cardType === 'item') {
+            updated.forces = { ...porterData.forces };
+            if (updated.forces[cardId as PorterForceId]) {
+              updated.forces[cardId as PorterForceId] = {
+                ...updated.forces[cardId as PorterForceId],
+                ...updates,
+                proposalStatus: 'ai-proposed',
+              };
+            }
+          } else if (cardType === 'tension') updated.implications = update(porterData.implications);
+          else if (cardType === 'move')
+            updated.recommendedMoves = update(porterData.recommendedMoves);
+          else if (cardType === 'output-candidate')
+            updated.outputCandidates = update(porterData.outputCandidates);
+          else if (cardType === 'conclusion' && porterData.summary) {
+            updated.summary = {
+              ...porterData.summary,
+              ...updates,
+              proposalStatus: 'ai-proposed' as ProposalStatus,
+            };
+          }
+          set({
+            currentSession: withRecomputedSteps(currentSession, { ...porterData, ...updated }),
+          });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const update = (arr: any[]) =>
           arr.map((item: any) =>
@@ -2447,7 +3096,74 @@ export const useToolStore = create<ToolStoreState>()(
 
       acceptAllInPhase: (phaseId) => {
         const { currentSession } = get();
-        if (!currentSession || currentSession.toolType !== 'dynamic-swot') return;
+        if (!currentSession) return;
+        if (currentSession.toolType === 'growth-paths') {
+          const growthData = normalizeGrowthPathsData(currentSession.inputData as GrowthPathsData);
+          const acceptAll = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.proposalStatus === 'ai-proposed'
+                ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+                : item
+            );
+          const updated = { ...growthData };
+          if (phaseId === 'input') updated.signals = acceptAll(growthData.signals);
+          else if (phaseId === 'options') {
+            updated.quadrants = Object.fromEntries(
+              Object.entries(growthData.quadrants).map(([quadrant, items]) => [
+                quadrant,
+                acceptAll(items),
+              ])
+            ) as GrowthPathsData['quadrants'];
+          } else if (phaseId === 'insights') {
+            updated.comparisons = acceptAll(growthData.comparisons);
+            updated.recommendedMoves = acceptAll(growthData.recommendedMoves);
+          } else if (phaseId === 'outputs') {
+            if (updated.summary?.proposalStatus === 'ai-proposed') {
+              updated.summary = {
+                ...updated.summary,
+                proposalStatus: 'accepted' as ProposalStatus,
+              };
+            }
+            updated.outputCandidates = acceptAll(growthData.outputCandidates);
+          }
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType === 'market-forces') {
+          const porterData = normalizePorterData(currentSession.inputData as PorterData);
+          const acceptAll = (arr: any[]) =>
+            arr.map((item: any) =>
+              item.proposalStatus === 'ai-proposed'
+                ? { ...item, proposalStatus: 'accepted' as ProposalStatus }
+                : item
+            );
+          const updated = { ...porterData };
+          if (phaseId === 'input') updated.signals = acceptAll(porterData.signals);
+          else if (phaseId === 'forces') {
+            updated.forces = Object.fromEntries(
+              Object.entries(porterData.forces).map(([forceId, force]) => [
+                forceId,
+                force.proposalStatus === 'ai-proposed'
+                  ? { ...force, proposalStatus: 'accepted' as ProposalStatus }
+                  : force,
+              ])
+            ) as PorterData['forces'];
+          } else if (phaseId === 'insights') {
+            updated.implications = acceptAll(porterData.implications);
+            updated.recommendedMoves = acceptAll(porterData.recommendedMoves);
+          } else if (phaseId === 'outputs') {
+            if (updated.summary?.proposalStatus === 'ai-proposed') {
+              updated.summary = {
+                ...updated.summary,
+                proposalStatus: 'accepted' as ProposalStatus,
+              };
+            }
+            updated.outputCandidates = acceptAll(porterData.outputCandidates);
+          }
+          set({ currentSession: withRecomputedSteps(currentSession, updated) });
+          return;
+        }
+        if (currentSession.toolType !== 'dynamic-swot') return;
         const swotData = normalizeDynamicSwotData(currentSession.inputData as SWOTData);
         const acceptAll = (arr: any[]) =>
           arr.map((item: any) =>

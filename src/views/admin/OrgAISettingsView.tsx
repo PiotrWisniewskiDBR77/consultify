@@ -119,6 +119,34 @@ const normalizeOrgAISettings = (
   updatedBy: raw?.updatedBy || null,
 });
 
+const getReadableErrorMessage = (error: unknown, fallback: string): string => {
+  if (error instanceof Error && error.message.trim()) return error.message;
+  if (typeof error === 'string' && error.trim()) return error;
+  if (error && typeof error === 'object') {
+    const candidate = error as { message?: unknown; error?: unknown; code?: unknown };
+    for (const value of [candidate.message, candidate.error, candidate.code]) {
+      if (typeof value === 'string' && value.trim()) return value;
+    }
+  }
+  return fallback;
+};
+
+const validateOrgAISettings = (settings: OrgAISettings): string | null => {
+  if (settings.maxAICallsPerDay < 1) return 'Daily AI call limit must be at least 1.';
+  if (settings.maxTokensPerMonth < 1) return 'Monthly token limit must be at least 1.';
+  if (settings.monthlyBudgetUSD < 0 || settings.hardLimitUSD < 0) {
+    return 'Budget limits cannot be negative.';
+  }
+  if (settings.hardLimitUSD > 0 && settings.monthlyBudgetUSD > settings.hardLimitUSD) {
+    return 'Monthly budget cannot be higher than the hard limit.';
+  }
+  if (settings.activeRoles.length === 0) return 'At least one AI role must remain active.';
+  if (!settings.activeRoles.includes(settings.defaultRole)) {
+    return 'Default AI role must be one of the active roles.';
+  }
+  return null;
+};
+
 export const OrgAISettingsView: React.FC = () => {
   const { currentOrganization } = useAppStore();
   const [activeTab, setActiveTab] = useState<SettingsTab>('policy');
@@ -147,7 +175,7 @@ export const OrgAISettingsView: React.FC = () => {
       );
     } catch (error) {
       console.error('Failed to load settings:', error);
-      toast.error('Failed to load organization AI settings');
+      toast.error(getReadableErrorMessage(error, 'Failed to load organization AI settings'));
     } finally {
       setLoading(false);
     }
@@ -155,17 +183,26 @@ export const OrgAISettingsView: React.FC = () => {
 
   const saveSettings = async () => {
     if (!settings || !currentOrganization?.id) return;
+    const validationError = validateOrgAISettings(settings);
+    if (validationError) {
+      toast.error(validationError);
+      return;
+    }
 
     setSaving(true);
     try {
-      const updated = await AdminApi.updateOrganizationAISettings(currentOrganization.id, settings);
+      const updated = await AdminApi.updateOrganizationAISettings(
+        currentOrganization.id,
+        settings as unknown as Record<string, unknown>
+      );
       setSettings(updated as OrgAISettings);
       setHasChanges(false);
       toast.success('Organization AI settings saved');
     } catch (error) {
-      toast.error('Failed to save settings');
+      toast.error(getReadableErrorMessage(error, 'Failed to save organization AI settings'));
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const updateSetting = <K extends keyof OrgAISettings>(key: K, value: OrgAISettings[K]) => {
@@ -176,10 +213,19 @@ export const OrgAISettingsView: React.FC = () => {
   const toggleRole = (roleId: string) => {
     if (!settings) return;
     const currentRoles = settings.activeRoles;
+    if (currentRoles.includes(roleId as any) && currentRoles.length === 1) {
+      toast.error('At least one AI role must remain active.');
+      return;
+    }
     const newRoles = currentRoles.includes(roleId as any)
       ? currentRoles.filter((r) => r !== roleId)
       : [...currentRoles, roleId as any];
-    updateSetting('activeRoles', newRoles);
+    setSettings((prev) => {
+      if (!prev) return prev;
+      const nextDefaultRole = newRoles.includes(prev.defaultRole) ? prev.defaultRole : newRoles[0];
+      return { ...prev, activeRoles: newRoles, defaultRole: nextDefaultRole };
+    });
+    setHasChanges(true);
   };
 
   const tabs = [

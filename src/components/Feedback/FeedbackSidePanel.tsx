@@ -312,10 +312,7 @@ export const FeedbackSidePanel: React.FC = () => {
       try {
         if (!file.type?.startsWith('image/')) {
           toast.error(
-            t(
-              'feedback.attach.notAnImage',
-              'Plik musi być obrazem (PNG, JPG, GIF lub WebP).'
-            )
+            t('feedback.attach.notAnImage', 'Plik musi być obrazem (PNG, JPG, GIF lub WebP).')
           );
           return;
         }
@@ -336,10 +333,7 @@ export const FeedbackSidePanel: React.FC = () => {
         });
         if (!dataUrl || dataUrl.length < 100) {
           toast.error(
-            t(
-              'feedback.attach.readFailed',
-              'Nie udało się odczytać pliku. Spróbuj ponownie.'
-            )
+            t('feedback.attach.readFailed', 'Nie udało się odczytać pliku. Spróbuj ponownie.')
           );
           return;
         }
@@ -356,10 +350,9 @@ export const FeedbackSidePanel: React.FC = () => {
           height: dims.height || 0,
           fileName: fileName || (file as File).name || 'screenshot.png',
         });
-        toast.success(
-          t('feedback.attach.uploaded', 'Screenshot dodany do zgłoszenia.'),
-          { duration: 1500 }
-        );
+        toast.success(t('feedback.attach.uploaded', 'Screenshot dodany do zgłoszenia.'), {
+          duration: 1500,
+        });
       } catch (err) {
         console.warn('[FeedbackSidePanel] loadScreenshotFromFile failed:', err);
         toast.error(
@@ -966,10 +959,7 @@ export const FeedbackSidePanel: React.FC = () => {
               </button>
             ) : (
               <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                {t(
-                  'feedback.attach.pasteHint',
-                  'lub wklej (Ctrl/⌘+V)'
-                )}
+                {t('feedback.attach.pasteHint', 'lub wklej (Ctrl/⌘+V)')}
               </span>
             )}
             <input

@@ -55,9 +55,16 @@ export const HelpDeepLinkListener: React.FC = () => {
     }
 
     // Remove deep-link params so refreshing doesn't reopen the panel.
-    ['help_article', 'helpArticle', 'help_module', 'helpModule', 'help_surface', 'helpSurface', 'help_tab', 'helpTab'].forEach(
-      (k) => params.delete(k)
-    );
+    [
+      'help_article',
+      'helpArticle',
+      'help_module',
+      'helpModule',
+      'help_surface',
+      'helpSurface',
+      'help_tab',
+      'helpTab',
+    ].forEach((k) => params.delete(k));
 
     const nextSearch = params.toString();
     navigate(
@@ -82,4 +89,3 @@ export const HelpDeepLinkListener: React.FC = () => {
 };
 
 export default HelpDeepLinkListener;
-

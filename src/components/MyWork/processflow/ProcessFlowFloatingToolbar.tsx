@@ -1,11 +1,4 @@
-import {
-  Copy,
-  Edit3,
-  GitMerge,
-  Link2,
-  MessageSquare,
-  Trash2,
-} from 'lucide-react';
+import { Copy, Edit3, GitMerge, Link2, MessageSquare, Trash2 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { ArtifactLink } from '@/utils/artifactLinks';
@@ -163,7 +156,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
                   className="flex items-center justify-between text-[10px] text-slate-600 dark:text-slate-400"
                 >
                   <span className="truncate flex-1">
-                    {link.title || link.targetId}
+                    {link.label || link.artifactIndex || link.artifactRef.id}
                   </span>
                   <button
                     type="button"

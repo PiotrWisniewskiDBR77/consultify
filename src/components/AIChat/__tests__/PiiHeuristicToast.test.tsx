@@ -33,9 +33,7 @@ vi.mock('../../../services/funnelAnalytics', () => ({
 
 function fireCheck(text: unknown) {
   act(() => {
-    window.dispatchEvent(
-      new CustomEvent(CHAT_V9_PII_CHECK_EVENT, { detail: { text } })
-    );
+    window.dispatchEvent(new CustomEvent(CHAT_V9_PII_CHECK_EVENT, { detail: { text } }));
   });
 }
 

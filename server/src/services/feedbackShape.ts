@@ -177,7 +177,11 @@ export function shapeFeedbackRow(row: Record<string, unknown>): Record<string, u
       ? ((meta as Record<string, unknown>).dossier as Record<string, unknown>)
       : null;
   const hasScreenshot =
-    !!dossier && typeof dossier.screenshot === 'object' && dossier.screenshot !== null;
+    (!!dossier && typeof dossier.screenshot === 'object' && dossier.screenshot !== null) ||
+    (Array.isArray((meta as Record<string, unknown>).artifacts) &&
+      ((meta as Record<string, unknown>).artifacts as Array<{ kind?: string }>).some(
+        (artifact) => artifact?.kind === 'screenshot'
+      ));
   const hasDiagnostics =
     !!dossier &&
     (Array.isArray(dossier.consoleLogs) ||

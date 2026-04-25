@@ -6,10 +6,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   InitiativeStatus,
-  VALID_TRANSITIONS,
-  isValidTransition,
-  validateTransition,
   type InitiativeStatusType,
+  isValidTransition,
+  VALID_TRANSITIONS,
+  validateTransition,
 } from '../../../constants/initiativeStatuses.js';
 
 const ALL_STATUSES = Object.values(InitiativeStatus) as InitiativeStatusType[];
@@ -36,12 +36,9 @@ const FORBIDDEN_PAIRS: Array<[InitiativeStatusType, InitiativeStatusType, string
 ];
 
 describe('P11 §2.3.2 — forbidden transitions (AC-30)', () => {
-  it.each(FORBIDDEN_PAIRS)(
-    'rejects %s → %s (%s)',
-    (from, to, _reason) => {
-      expect(isValidTransition(from, to)).toBe(false);
-    }
-  );
+  it.each(FORBIDDEN_PAIRS)('rejects %s → %s (%s)', (from, to, _reason) => {
+    expect(isValidTransition(from, to)).toBe(false);
+  });
 
   it('ARCHIVED is a terminal state with zero valid transitions', () => {
     const next = VALID_TRANSITIONS[InitiativeStatus.ARCHIVED];
@@ -69,11 +66,7 @@ describe('P11 §2.3.2 — forbidden transitions (AC-30)', () => {
       InitiativeStatus.ARCHIVED,
     ];
 
-    const allowedBackward = new Set([
-      'PENDING_REVIEW→DRAFT',
-      'REVIEW→DRAFT',
-      'BLOCKED→EXECUTING',
-    ]);
+    const allowedBackward = new Set(['PENDING_REVIEW→DRAFT', 'REVIEW→DRAFT', 'BLOCKED→EXECUTING']);
 
     for (const [from, targets] of Object.entries(VALID_TRANSITIONS)) {
       for (const to of targets as InitiativeStatusType[]) {
@@ -91,11 +84,9 @@ describe('P11 §2.3.2 — forbidden transitions (AC-30)', () => {
   });
 
   it('validateTransition rejects invalid from→to with descriptive reason', () => {
-    const result = validateTransition(
-      InitiativeStatus.DONE,
-      InitiativeStatus.EXECUTING,
-      { userRole: 'ADMIN' as any }
-    );
+    const result = validateTransition(InitiativeStatus.DONE, InitiativeStatus.EXECUTING, {
+      userRole: 'ADMIN' as any,
+    });
     expect(result.valid).toBe(false);
     expect(result.reason).toContain('Cannot transition');
   });

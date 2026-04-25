@@ -306,9 +306,7 @@ describe('RecentConversationsDropdown', () => {
       );
 
       const pinned = screen.getByTestId('workspace-breadcrumb-recent-0');
-      expect(pinned.getAttribute('aria-label')).toBe(
-        'Pinned: Quarter planning for 2026 GTM ramp'
-      );
+      expect(pinned.getAttribute('aria-label')).toBe('Pinned: Quarter planning for 2026 GTM ramp');
     });
 
     it('does not set aria-label on unpinned rows (falls back to visible label)', () => {
@@ -389,9 +387,9 @@ describe('RecentConversationsDropdown', () => {
         />
       );
 
-      expect(
-        screen.getByTestId('workspace-breadcrumb-recents-view-all').textContent
-      ).toBe('Browse all threads');
+      expect(screen.getByTestId('workspace-breadcrumb-recents-view-all').textContent).toBe(
+        'Browse all threads'
+      );
     });
 
     it('clicking the footer calls onViewAll and closes the popover', () => {
@@ -478,9 +476,7 @@ describe('RecentConversationsDropdown', () => {
 
   // ---------- NAV-M3-lite^3 — roving arrow-key navigation ---------
   describe('NAV-M3-lite^3 · arrow-key navigation', () => {
-    function renderRing(
-      opts: { arrowKeysEnabled?: boolean; count?: number } = {}
-    ) {
+    function renderRing(opts: { arrowKeysEnabled?: boolean; count?: number } = {}) {
       const entries = Array.from({ length: opts.count ?? 4 }).map((_, i) =>
         entry(`id-${i}`, `Label ${i}`)
       );
@@ -808,9 +804,7 @@ describe('RecentConversationsDropdown', () => {
           isTriggerArrowEnabled={() => false}
         />
       );
-      fireEvent.click(
-        screen.getByTestId('workspace-breadcrumb-recents-trigger')
-      );
+      fireEvent.click(screen.getByTestId('workspace-breadcrumb-recents-trigger'));
       expect(onOpenChange).toHaveBeenCalledWith(true);
     });
 
@@ -1076,18 +1070,14 @@ describe('RecentConversationsDropdown', () => {
       act(() => {
         vi.advanceTimersByTime(32);
       });
-      expect(document.activeElement).toBe(
-        screen.getByTestId('workspace-breadcrumb-recent-2')
-      );
+      expect(document.activeElement).toBe(screen.getByTestId('workspace-breadcrumb-recent-2'));
       // Close via Escape, then re-open via native click.
       fireEvent.keyDown(window, { key: 'Escape' });
       fireEvent.click(trigger);
       act(() => {
         vi.advanceTimersByTime(32);
       });
-      expect(document.activeElement).toBe(
-        screen.getByTestId('workspace-breadcrumb-recent-0')
-      );
+      expect(document.activeElement).toBe(screen.getByTestId('workspace-breadcrumb-recent-0'));
     });
   });
 });

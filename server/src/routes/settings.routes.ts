@@ -9,12 +9,12 @@ import { Response, Router } from 'express';
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import { getSettingsActorRole, isRequestSuperAdmin } from '../middleware/requestAccess.js';
 import { createAccountDeletionRequest, createDataExportRequest } from '../services/gdprService.js';
+import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import { CONNECTORS } from '../services/integrationHubService.js';
 import { disconnectIntegration } from '../services/integrationHubService.js';
 import { updateIntegrationStatus } from '../services/integrationHubService.js';
 import * as oauthEngine from '../services/integrationOAuthEngine.js';
 import { setIntegrationOwner } from '../services/integrationOwnershipService.js';
-import { logIntegrationConnectionEvent } from '../services/integrationConnectionLogService.js';
 import {
   buildGovernedExternalAuthSession,
   getGovernedExternalAuthConfigFields,
@@ -31,6 +31,80 @@ const router = Router();
 const preferencesKey = (prefType: string) => `settings:${prefType}`;
 const LEGACY_SETTINGS_ROOT_GUIDANCE =
   'Use /api/settings/registry for scoped settings and /api/superadmin for platform-wide settings.';
+const PROFILE_EXPORT_COLUMNS = [
+  'id',
+  'email',
+  'first_name',
+  'last_name',
+  'phone',
+  'avatar_url',
+  'job_title',
+  'title',
+  'display_name',
+  'pronouns',
+  'department',
+  'status_message',
+  'out_of_office',
+  'vacation_end',
+  'out_of_office_message',
+  'company_name',
+  'timezone',
+  'date_format',
+  'time_format',
+  'seniority_level',
+  'site_location',
+  'tenure_years',
+  'manages_team',
+  'team_size',
+  'expertise_tags',
+  'engagement_level',
+];
+const PROFILE_IMPORT_COLUMNS = PROFILE_EXPORT_COLUMNS.filter(
+  (column) => !['id', 'email'].includes(column)
+);
+
+const snakeToCamel = (value: string) =>
+  value.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());
+
+const upsertSettingsValue = async (key: string, value: string) => {
+  const result = await dbRun(
+    `INSERT INTO settings (key, value, updated_at)
+     VALUES (?, ?, CURRENT_TIMESTAMP)
+     ON CONFLICT (key) DO UPDATE SET
+       value = EXCLUDED.value,
+       updated_at = CURRENT_TIMESTAMP`,
+    [key, value],
+    { fallback: false }
+  );
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to save setting');
+  }
+};
+
+const upsertUserPreferenceValue = async (userId: string, key: string, value: string) => {
+  const result = await dbRun(
+    `INSERT INTO user_preferences (user_id, key, value, updated_at)
+     VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+     ON CONFLICT (user_id, key) DO UPDATE SET
+       value = EXCLUDED.value,
+       updated_at = CURRENT_TIMESTAMP`,
+    [userId, key, value],
+    { fallback: false }
+  );
+
+  if (!result.success) {
+    throw new Error(result.error || 'Failed to save preference');
+  }
+
+  return result;
+};
+
+const assertDbRunSuccess = (result: { success?: boolean; error?: string }, message: string) => {
+  if (!result?.success) {
+    throw new Error(result?.error || message);
+  }
+};
 
 /**
  * GET /api/settings
@@ -88,16 +162,10 @@ router.post(
     }
 
     try {
-      const sql = `INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)`;
-      const result = await dbRun(
-        sql,
-        [key, typeof value === 'object' ? JSON.stringify(value) : String(value)],
-        { fallback: false }
+      await upsertSettingsValue(
+        key,
+        typeof value === 'object' ? JSON.stringify(value) : String(value)
       );
-
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to save setting');
-      }
 
       return res.json({ success: true });
     } catch (err: any) {
@@ -165,16 +233,18 @@ router.get(
       let tenantDefaults: { timezone?: string | null; currency?: string | null } = {};
       if (orgId) {
         try {
-          const { default: organizationContextService } = await import(
-            '../services/organizationContext/OrganizationContextService.js'
-          );
+          const { default: organizationContextService } =
+            await import('../services/organizationContext/OrganizationContextService.js');
           const context = await organizationContextService.buildResolvedContext(orgId);
           tenantDefaults = {
             timezone: context.profile.defaultTimezone,
             currency: context.profile.currency,
           };
         } catch (contextErr) {
-          logger.warn('[settings] Failed to hydrate tenant regional defaults from organization context:', contextErr);
+          logger.warn(
+            '[settings] Failed to hydrate tenant regional defaults from organization context:',
+            contextErr
+          );
         }
       }
 
@@ -219,11 +289,10 @@ router.put(
     try {
       await ensureUserPreferencesTable();
 
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('regional'), JSON.stringify(preferences)],
-        { fallback: false }
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('regional'),
+        JSON.stringify(preferences)
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -302,11 +371,10 @@ router.put(
     try {
       await ensureUserPreferencesTable();
 
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('notifications'), JSON.stringify(preferences)],
-        { fallback: false }
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('notifications'),
+        JSON.stringify(preferences)
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -389,11 +457,10 @@ router.put(
 
     try {
       await ensureUserPreferencesTable();
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('quietHours'), JSON.stringify(preferences)],
-        { fallback: false }
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('quietHours'),
+        JSON.stringify(preferences)
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -402,6 +469,174 @@ router.put(
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[settings] Error updating quiet hours:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+const normalizeInboxAIThreshold = (value: unknown) => {
+  const numeric = typeof value === 'number' && Number.isFinite(value) ? value : 0.85;
+  return Math.max(0.5, Math.min(0.99, numeric));
+};
+
+const normalizeUserAIProviders = (value: unknown) => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((provider) => provider && typeof provider === 'object')
+    .map((rawProvider) => {
+      const provider = rawProvider as Record<string, unknown>;
+      return {
+        id: typeof provider.id === 'string' ? provider.id : crypto.randomUUID(),
+        name: typeof provider.name === 'string' ? provider.name : '',
+        provider: typeof provider.provider === 'string' ? provider.provider : 'openai',
+        apiKey: typeof provider.apiKey === 'string' ? provider.apiKey : undefined,
+        endpoint: typeof provider.endpoint === 'string' ? provider.endpoint : undefined,
+        isEnabled: provider.isEnabled !== false,
+        isLocal: Boolean(provider.isLocal),
+      };
+    })
+    .filter((provider) => provider.name.trim().length > 0);
+};
+
+/**
+ * GET /api/settings/preferences/inbox-ai
+ * Get user's inbox AI automation preferences.
+ */
+router.get(
+  '/preferences/inbox-ai',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('inbox-ai')],
+        { fallback: false }
+      );
+
+      if (prefs?.preferences_data) {
+        const parsed = JSON.parse(prefs.preferences_data) as { threshold?: unknown };
+        return res.json({
+          preferences: {
+            threshold: normalizeInboxAIThreshold(parsed.threshold),
+          },
+        });
+      }
+
+      return res.json({ preferences: { threshold: 0.85 } });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching inbox AI preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/inbox-ai
+ * Update user's inbox AI automation preferences.
+ */
+router.put(
+  '/preferences/inbox-ai',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      const preferences = {
+        threshold: normalizeInboxAIThreshold(
+          req.body?.threshold ?? req.body?.preferences?.threshold
+        ),
+      };
+
+      await ensureUserPreferencesTable();
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('inbox-ai'),
+        JSON.stringify(preferences)
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
+
+      return res.json({ success: true, preferences });
+    } catch (err: any) {
+      logger.error('[settings] Error updating inbox AI preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * GET /api/settings/preferences/ai-providers
+ * Get current user's personal AI provider configuration.
+ */
+router.get(
+  '/preferences/ai-providers',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('ai-providers')],
+        { fallback: false }
+      );
+
+      if (prefs?.preferences_data) {
+        const parsed = JSON.parse(prefs.preferences_data) as { providers?: unknown };
+        return res.json({ providers: normalizeUserAIProviders(parsed.providers) });
+      }
+
+      return res.json({ providers: [] });
+    } catch (err: any) {
+      logger.error('[settings] Error fetching personal AI providers:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/preferences/ai-providers
+ * Update current user's personal AI provider configuration.
+ */
+router.put(
+  '/preferences/ai-providers',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      const providers = normalizeUserAIProviders(req.body?.providers);
+      await ensureUserPreferencesTable();
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('ai-providers'),
+        JSON.stringify({ providers })
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
+
+      return res.json({ success: true, providers });
+    } catch (err: any) {
+      logger.error('[settings] Error updating personal AI providers:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -469,12 +704,7 @@ router.put(
       await ensureUserPreferencesTable();
 
       const data = JSON.stringify({ enabled, until });
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('dnd'), data],
-        { fallback: false }
-      );
+      const result = await upsertUserPreferenceValue(userId, preferencesKey('dnd'), data);
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] DND settings updated for user ${userId}`);
@@ -496,6 +726,13 @@ const defaultNotificationPreferences = {
   taskUpdates: { email: false, inApp: true },
   milestones: { email: true, inApp: true },
   mentions: { email: true, inApp: true },
+};
+
+const defaultEmailNotificationPreferences = {
+  taskUpdates: true,
+  projectAlerts: true,
+  weeklyDigest: true,
+  marketing: false,
 };
 
 /**
@@ -558,18 +795,88 @@ router.post(
       await ensureUserPreferencesTable();
 
       const data = JSON.stringify(preferences);
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('notifications'), data],
-        { fallback: false }
-      );
+      const result = await upsertUserPreferenceValue(userId, preferencesKey('notifications'), data);
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Notification preferences updated for user ${userId}`);
       return res.json({ success: true });
     } catch (err: any) {
       logger.error('[settings] Error saving notification preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * GET /api/settings/notifications/email
+ * Get email notification category preferences used by Email & Digest settings.
+ */
+router.get(
+  '/notifications/email',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const prefs = await dbGet<{ preferences_data: string }>(
+        `SELECT value AS preferences_data FROM user_preferences WHERE user_id = ? AND key = ?`,
+        [userId, preferencesKey('notification-email')],
+        { fallback: false }
+      );
+
+      if (prefs?.preferences_data) {
+        return res.json({
+          ...defaultEmailNotificationPreferences,
+          ...JSON.parse(prefs.preferences_data),
+        });
+      }
+
+      return res.json(defaultEmailNotificationPreferences);
+    } catch (err: any) {
+      logger.error('[settings] Error fetching email notification preferences:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/notifications/email
+ * Update email notification category preferences used by Email & Digest settings.
+ */
+router.put(
+  '/notifications/email',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      const preferences = {
+        ...defaultEmailNotificationPreferences,
+        ...(req.body && typeof req.body === 'object' ? req.body : {}),
+      };
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('notification-email'),
+        JSON.stringify(preferences)
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to save preference');
+
+      logger.info(`[settings] Email notification preferences updated for user ${userId}`);
+      return res.json({ success: true, preferences });
+    } catch (err: any) {
+      logger.error('[settings] Error updating email notification preferences:', err);
       return res.status(500).json({ error: err.message });
     }
   })
@@ -640,11 +947,10 @@ router.put(
       await ensureUserPreferencesTable();
 
       const data = JSON.stringify(preferences || defaultSoundPreferences);
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('notification-sounds'), data],
-        { fallback: false }
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('notification-sounds'),
+        data
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -721,11 +1027,10 @@ router.put(
       await ensureUserPreferencesTable();
 
       const data = JSON.stringify(preferences || defaultDigestPreferences);
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('notification-digest'), data],
-        { fallback: false }
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('notification-digest'),
+        data
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -745,26 +1050,91 @@ router.put(
 const defaultIntegrationProviders = [
   // Email & Communication
   { id: 'gmail', name: 'Gmail', capabilities: ['email', 'contacts'], category: 'email' },
-  { id: 'outlook', name: 'Microsoft Outlook', capabilities: ['email', 'contacts'], category: 'email' },
+  {
+    id: 'outlook',
+    name: 'Microsoft Outlook',
+    capabilities: ['email', 'contacts'],
+    category: 'email',
+  },
   { id: 'slack', name: 'Slack', capabilities: ['messages', 'notifications'], category: 'email' },
-  { id: 'teams', name: 'Microsoft Teams', capabilities: ['messages', 'meetings'], category: 'email' },
+  {
+    id: 'teams',
+    name: 'Microsoft Teams',
+    capabilities: ['messages', 'meetings'],
+    category: 'email',
+  },
   // Calendar
-  { id: 'google_calendar', name: 'Google Calendar', capabilities: ['events', 'reminders'], category: 'calendar' },
-  { id: 'outlook_calendar', name: 'Outlook Calendar', capabilities: ['events', 'reminders'], category: 'calendar' },
-  { id: 'apple_calendar', name: 'Apple Calendar (iCal)', capabilities: ['events'], category: 'calendar' },
-  { id: 'calendly', name: 'Calendly', capabilities: ['scheduling', 'events'], category: 'calendar' },
+  {
+    id: 'google_calendar',
+    name: 'Google Calendar',
+    capabilities: ['events', 'reminders'],
+    category: 'calendar',
+  },
+  {
+    id: 'outlook_calendar',
+    name: 'Outlook Calendar',
+    capabilities: ['events', 'reminders'],
+    category: 'calendar',
+  },
+  {
+    id: 'apple_calendar',
+    name: 'Apple Calendar (iCal)',
+    capabilities: ['events'],
+    category: 'calendar',
+  },
+  {
+    id: 'calendly',
+    name: 'Calendly',
+    capabilities: ['scheduling', 'events'],
+    category: 'calendar',
+  },
   // Task Management
   { id: 'jira', name: 'Jira', capabilities: ['issues', 'sprints'], category: 'task_management' },
   { id: 'asana', name: 'Asana', capabilities: ['tasks', 'projects'], category: 'task_management' },
   { id: 'trello', name: 'Trello', capabilities: ['boards', 'cards'], category: 'task_management' },
-  { id: 'clickup', name: 'ClickUp', capabilities: ['tasks', 'spaces'], category: 'task_management' },
-  { id: 'monday', name: 'Monday.com', capabilities: ['boards', 'items'], category: 'task_management' },
-  { id: 'notion', name: 'Notion', capabilities: ['databases', 'pages'], category: 'task_management' },
-  { id: 'todoist', name: 'Todoist', capabilities: ['tasks', 'projects'], category: 'task_management' },
-  { id: 'linear', name: 'Linear', capabilities: ['issues', 'projects'], category: 'task_management' },
+  {
+    id: 'clickup',
+    name: 'ClickUp',
+    capabilities: ['tasks', 'spaces'],
+    category: 'task_management',
+  },
+  {
+    id: 'monday',
+    name: 'Monday.com',
+    capabilities: ['boards', 'items'],
+    category: 'task_management',
+  },
+  {
+    id: 'notion',
+    name: 'Notion',
+    capabilities: ['databases', 'pages'],
+    category: 'task_management',
+  },
+  {
+    id: 'todoist',
+    name: 'Todoist',
+    capabilities: ['tasks', 'projects'],
+    category: 'task_management',
+  },
+  {
+    id: 'linear',
+    name: 'Linear',
+    capabilities: ['issues', 'projects'],
+    category: 'task_management',
+  },
   // Cloud Storage
-  { id: 'google_drive', name: 'Google Drive', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
-  { id: 'onedrive', name: 'OneDrive', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
+  {
+    id: 'google_drive',
+    name: 'Google Drive',
+    capabilities: ['files', 'sharing'],
+    category: 'cloud_storage',
+  },
+  {
+    id: 'onedrive',
+    name: 'OneDrive',
+    capabilities: ['files', 'sharing'],
+    category: 'cloud_storage',
+  },
   { id: 'dropbox', name: 'Dropbox', capabilities: ['files', 'sharing'], category: 'cloud_storage' },
   { id: 'box', name: 'Box', capabilities: ['files', 'workflows'], category: 'cloud_storage' },
 ];
@@ -1160,9 +1530,15 @@ router.post(
           integrationId,
           connectorId: connector.id,
           eventType: 'external_auth_prepared',
-          metadata: { source: 'settings', mode: 'connect', callbackUrl: session.callbackUrl, expiresAt: session.expiresAt },
+          metadata: {
+            source: 'settings',
+            mode: 'connect',
+            callbackUrl: session.callbackUrl,
+            expiresAt: session.expiresAt,
+          },
           ipAddress: typeof req.ip === 'string' ? req.ip : null,
-          userAgent: typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
+          userAgent:
+            typeof req.headers['user-agent'] === 'string' ? req.headers['user-agent'] : null,
         });
       }
 
@@ -1253,7 +1629,9 @@ router.post(
     const integrations = await loadEffectiveSettingsIntegrations(userId, organizationId);
     const item = integrations.find((integration) => integration.provider === provider);
     if (!item) {
-      return res.status(404).json({ success: false, error: oauthResult.error || 'Integration not connected' });
+      return res
+        .status(404)
+        .json({ success: false, error: oauthResult.error || 'Integration not connected' });
     }
 
     if (item.status !== 'active') {
@@ -1297,12 +1675,17 @@ router.get(
     }
 
     if (cfg.authType === 'basic') {
-      return res.status(400).json({ error: 'This connector uses credential-based auth, not OAuth. Use POST /connect with credentials.' });
+      return res.status(400).json({
+        error:
+          'This connector uses credential-based auth, not OAuth. Use POST /connect with credentials.',
+      });
     }
 
     const result = oauthEngine.generateAuthUrl(connectorId, userId, organizationId);
     if (!result) {
-      return res.status(503).json({ error: 'Connector not configured. Missing API credentials in environment.' });
+      return res
+        .status(503)
+        .json({ error: 'Connector not configured. Missing API credentials in environment.' });
     }
 
     await logIntegrationConnectionEvent({
@@ -1349,7 +1732,9 @@ router.get(
 
     const tokens = await oauthEngine.exchangeCode(pending.connectorId, code);
     if (!tokens) {
-      return res.redirect(`/settings/integrations?oauth_error=token_exchange_failed&connector=${pending.connectorId}`);
+      return res.redirect(
+        `/settings/integrations?oauth_error=token_exchange_failed&connector=${pending.connectorId}`
+      );
     }
 
     const cfg = oauthEngine.getConnectorConfig(pending.connectorId);
@@ -1761,11 +2146,10 @@ const loadCalendarConnections = async (userId: string): Promise<CalendarConnecti
 const saveCalendarConnections = async (userId: string, data: CalendarConnection[]) => {
   await ensureUserPreferencesTable();
   const payload = JSON.stringify(data);
-  const result = await dbRun(
-    `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-     VALUES (?, ?, ?, datetime('now'))`,
-    [userId, preferencesKey('calendar-connections'), payload],
-    { fallback: false }
+  const result = await upsertUserPreferenceValue(
+    userId,
+    preferencesKey('calendar-connections'),
+    payload
   );
   if (!result.success) throw new Error(result.error || 'Failed to save calendar connections');
 };
@@ -1887,11 +2271,10 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('calendar-settings'), payload],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('calendar-settings'),
+      payload
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -1956,12 +2339,7 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('privacy'), payload],
-      { fallback: false }
-    );
+    const result = await upsertUserPreferenceValue(userId, preferencesKey('privacy'), payload);
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] Privacy preferences updated for user ${userId}`);
@@ -2030,11 +2408,10 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('accessibility'), payload],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('accessibility'),
+      payload
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -2092,12 +2469,7 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(shortcuts);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('shortcuts'), payload],
-      { fallback: false }
-    );
+    const result = await upsertUserPreferenceValue(userId, preferencesKey('shortcuts'), payload);
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] Shortcuts updated for user ${userId}`);
@@ -2207,11 +2579,10 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(consents);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('gdpr-consents'), payload],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('gdpr-consents'),
+      payload
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -2256,11 +2627,10 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(retention);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('gdpr-retention'), payload],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('gdpr-retention'),
+      payload
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -2288,8 +2658,8 @@ const ensureGdprRequestsTable = async () => {
             completed_at TEXT,
             error_message TEXT,
             metadata TEXT DEFAULT '{}',
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id)
         )
     `);
@@ -2428,7 +2798,7 @@ router.post(
       const exportJson = JSON.stringify(exportData, null, 2);
 
       await dbRun(
-        `UPDATE gdpr_requests SET status = 'completed', metadata = ?, completed_at = datetime('now'), updated_at = datetime('now') WHERE id = ?`,
+        `UPDATE gdpr_requests SET status = 'completed', metadata = ?, completed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         [exportJson, requestId]
       );
 
@@ -2445,7 +2815,7 @@ router.post(
       });
     } catch (err: any) {
       await dbRun(
-        `UPDATE gdpr_requests SET status = 'failed', error_message = ?, updated_at = datetime('now') WHERE id = ?`,
+        `UPDATE gdpr_requests SET status = 'failed', error_message = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
         [err.message, requestId]
       );
       throw err;
@@ -2616,7 +2986,7 @@ router.post(
     }
 
     await dbRun(
-      `UPDATE gdpr_requests SET status = 'cancelled', updated_at = datetime('now') WHERE id = ?`,
+      `UPDATE gdpr_requests SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
       [(request as any).id]
     );
 
@@ -2704,11 +3074,10 @@ router.put(
 
     try {
       await ensureUserPreferencesTable();
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('dashboard'), JSON.stringify(preferences)],
-        { fallback: false }
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('dashboard'),
+        JSON.stringify(preferences)
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -2801,11 +3170,10 @@ router.put(
 
     try {
       await ensureUserPreferencesTable();
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('work'), JSON.stringify(preferences)],
-        { fallback: false }
+      const result = await upsertUserPreferenceValue(
+        userId,
+        preferencesKey('work'),
+        JSON.stringify(preferences)
       );
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -2894,12 +3262,7 @@ router.put(
       await ensureUserPreferencesTable();
 
       const data = JSON.stringify({ timezone, schedule });
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey('working-hours'), data],
-        { fallback: false }
-      );
+      const result = await upsertUserPreferenceValue(userId, preferencesKey('working-hours'), data);
       if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
       logger.info(`[settings] Working hours updated for user ${userId}`);
@@ -2927,8 +3290,8 @@ const ensureEmailSignaturesTable = async () => {
             name TEXT NOT NULL,
             content TEXT NOT NULL,
             is_default INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
@@ -2995,13 +3358,19 @@ router.post(
 
       // If setting as default, unset other defaults
       if (isDefault) {
-        await dbRun(`UPDATE email_signatures SET is_default = 0 WHERE user_id = ?`, [userId]);
+        assertDbRunSuccess(
+          await dbRun(`UPDATE email_signatures SET is_default = 0 WHERE user_id = ?`, [userId]),
+          'Failed to clear default signature'
+        );
       }
 
-      await dbRun(
-        `INSERT INTO email_signatures (id, user_id, name, content, is_default)
+      assertDbRunSuccess(
+        await dbRun(
+          `INSERT INTO email_signatures (id, user_id, name, content, is_default)
                  VALUES (?, ?, ?, ?, ?)`,
-        [id, userId, name, content, isDefault ? 1 : 0]
+          [id, userId, name, content, isDefault ? 1 : 0]
+        ),
+        'Failed to create signature'
       );
 
       logger.info(`[settings] Signature created for user ${userId}`);
@@ -3050,13 +3419,16 @@ router.put(
         return res.status(404).json({ error: 'Signature not found' });
       }
 
-      await dbRun(
-        `UPDATE email_signatures SET 
+      assertDbRunSuccess(
+        await dbRun(
+          `UPDATE email_signatures SET
                     name = COALESCE(?, name),
                     content = COALESCE(?, content),
-                    updated_at = datetime('now')
+                    updated_at = CURRENT_TIMESTAMP
                  WHERE id = ? AND user_id = ?`,
-        [name, content, id, userId]
+          [name, content, id, userId]
+        ),
+        'Failed to update signature'
       );
 
       logger.info(`[settings] Signature ${id} updated for user ${userId}`);
@@ -3087,14 +3459,29 @@ router.put(
     try {
       await ensureEmailSignaturesTable();
 
+      const existing = await dbGet(`SELECT id FROM email_signatures WHERE id = ? AND user_id = ?`, [
+        id,
+        userId,
+      ]);
+
+      if (!existing) {
+        return res.status(404).json({ error: 'Signature not found' });
+      }
+
       // Unset all defaults for user
-      await dbRun(`UPDATE email_signatures SET is_default = 0 WHERE user_id = ?`, [userId]);
+      assertDbRunSuccess(
+        await dbRun(`UPDATE email_signatures SET is_default = 0 WHERE user_id = ?`, [userId]),
+        'Failed to clear default signature'
+      );
 
       // Set this one as default
-      await dbRun(
-        `UPDATE email_signatures SET is_default = 1, updated_at = datetime('now') 
+      assertDbRunSuccess(
+        await dbRun(
+          `UPDATE email_signatures SET is_default = 1, updated_at = CURRENT_TIMESTAMP
                  WHERE id = ? AND user_id = ?`,
-        [id, userId]
+          [id, userId]
+        ),
+        'Failed to set default signature'
       );
 
       logger.info(`[settings] Signature ${id} set as default for user ${userId}`);
@@ -3125,7 +3512,10 @@ router.delete(
     try {
       await ensureEmailSignaturesTable();
 
-      await dbRun(`DELETE FROM email_signatures WHERE id = ? AND user_id = ?`, [id, userId]);
+      assertDbRunSuccess(
+        await dbRun(`DELETE FROM email_signatures WHERE id = ? AND user_id = ?`, [id, userId]),
+        'Failed to delete signature'
+      );
 
       logger.info(`[settings] Signature ${id} deleted for user ${userId}`);
 
@@ -3286,11 +3676,10 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('ai-instructions'), payload],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('ai-instructions'),
+      payload
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -3342,12 +3731,7 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('ai-model'), payload],
-      { fallback: false }
-    );
+    const result = await upsertUserPreferenceValue(userId, preferencesKey('ai-model'), payload);
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI model preferences updated for user ${userId}`);
@@ -3398,11 +3782,10 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('ai-parameters'), payload],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('ai-parameters'),
+      payload
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -3454,11 +3837,10 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('ai-personality'), payload],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('ai-personality'),
+      payload
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -3510,11 +3892,10 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('ai-autocomplete'), payload],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('ai-autocomplete'),
+      payload
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -3566,12 +3947,7 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('ai-memory'), payload],
-      { fallback: false }
-    );
+    const result = await upsertUserPreferenceValue(userId, preferencesKey('ai-memory'), payload);
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI memory preferences updated for user ${userId}`);
@@ -3645,12 +4021,7 @@ router.put(
 
     await ensureUserPreferencesTable();
     const payload = JSON.stringify(preferences);
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('ai-voice'), payload],
-      { fallback: false }
-    );
+    const result = await upsertUserPreferenceValue(userId, preferencesKey('ai-voice'), payload);
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
     logger.info(`[settings] AI voice preferences updated for user ${userId}`);
@@ -3701,11 +4072,10 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('ai-privacy'), JSON.stringify(preferences)],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('ai-privacy'),
+      JSON.stringify(preferences)
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -3757,11 +4127,10 @@ router.put(
     }
 
     await ensureUserPreferencesTable();
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('prompt-library'), JSON.stringify(prompts)],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('prompt-library'),
+      JSON.stringify(prompts)
     );
     if (!result.success) throw new Error(result.error || 'Failed to save prompt library');
 
@@ -3880,8 +4249,8 @@ const ensureSettingsTemplatesTable = async () => {
             type TEXT DEFAULT 'custom',
             settings_data TEXT NOT NULL,
             is_active INTEGER DEFAULT 1,
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
@@ -3991,7 +4360,7 @@ router.put(
                 description = COALESCE(?, description),
                 icon = COALESCE(?, icon),
                 settings_data = COALESCE(?, settings_data),
-                updated_at = datetime('now')
+                updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND user_id = ?`,
       [name, description, icon, settingsData ? JSON.stringify(settingsData) : null, id, userId]
     );
@@ -4080,7 +4449,7 @@ const ensureSettingsAuditLogTable = async () => {
             new_value TEXT,
             device TEXT,
             ip_address TEXT,
-            created_at TEXT DEFAULT (datetime('now')),
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
@@ -4201,6 +4570,23 @@ router.post(
     );
 
     const exportData: Record<string, any> = {};
+    if (!categories || categories.includes('profile')) {
+      const userColumns = await getTableColumns('users');
+      const selectedColumns = PROFILE_EXPORT_COLUMNS.filter((column) => userColumns.has(column));
+      if (selectedColumns.length > 0) {
+        const profileRow = await dbGet<Record<string, unknown>>(
+          `SELECT ${selectedColumns.join(', ')} FROM users WHERE id = ? LIMIT 1`,
+          [userId],
+          { fallback: false }
+        );
+        if (profileRow) {
+          exportData.profile = Object.fromEntries(
+            Object.entries(profileRow).map(([key, value]) => [snakeToCamel(key), value])
+          );
+        }
+      }
+    }
+
     for (const pref of preferences as { key: string; value: string }[]) {
       const type = pref.key.startsWith('settings:') ? pref.key.slice('settings:'.length) : pref.key;
       // Filter by categories if specified
@@ -4242,6 +4628,39 @@ router.post(
     const skipped: string[] = [];
 
     for (const [type, value] of Object.entries(data.settings)) {
+      if (type === 'profile' && value && typeof value === 'object' && !Array.isArray(value)) {
+        const userColumns = await getTableColumns('users');
+        const profile = value as Record<string, unknown>;
+        const updates: string[] = [];
+        const params: unknown[] = [];
+        const addProfileColumn = (column: string, apiKey = snakeToCamel(column)) => {
+          if (!userColumns.has(column) || profile[apiKey] === undefined) return;
+          updates.push(`${column} = ?`);
+          params.push(profile[apiKey] === null ? null : String(profile[apiKey]));
+        };
+
+        for (const column of PROFILE_IMPORT_COLUMNS) addProfileColumn(column);
+        if (
+          userColumns.has('job_title') &&
+          profile.title !== undefined &&
+          profile.jobTitle === undefined
+        ) {
+          addProfileColumn('job_title', 'title');
+        }
+
+        if (updates.length > 0) {
+          updates.push('updated_at = CURRENT_TIMESTAMP');
+          const result = await dbRun(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, [
+            ...params,
+            userId,
+          ]);
+          if (!result.success) throw new Error(result.error || 'Failed to import profile');
+        }
+
+        imported.push(type);
+        continue;
+      }
+
       const existing = await dbGet(
         `SELECT 1 AS ok FROM user_preferences WHERE user_id = ? AND key = ?`,
         [userId, preferencesKey(type)],
@@ -4254,12 +4673,7 @@ router.post(
       }
 
       const payload = JSON.stringify(value);
-      const result = await dbRun(
-        `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-         VALUES (?, ?, ?, datetime('now'))`,
-        [userId, preferencesKey(type), payload],
-        { fallback: false }
-      );
+      const result = await upsertUserPreferenceValue(userId, preferencesKey(type), payload);
       if (!result.success) throw new Error(result.error || 'Failed to import preference');
       imported.push(type);
     }
@@ -4306,7 +4720,10 @@ const ensureUserApiKeysTable = async () => {
     ['last_used_at', `ALTER TABLE user_api_keys ADD COLUMN last_used_at TIMESTAMPTZ`],
     ['expires_at', `ALTER TABLE user_api_keys ADD COLUMN expires_at TIMESTAMPTZ`],
     ['is_active', `ALTER TABLE user_api_keys ADD COLUMN is_active INTEGER DEFAULT 1`],
-    ['updated_at', `ALTER TABLE user_api_keys ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`],
+    [
+      'updated_at',
+      `ALTER TABLE user_api_keys ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
+    ],
   ];
 
   for (const [column, sql] of alterations) {
@@ -4371,19 +4788,22 @@ router.post(
 
     const keyHash = hashApiKey(apiKey);
 
-    await dbRun(
-      `INSERT INTO user_api_keys (id, user_id, name, key_hash, key_prefix, permissions, rate_limit, expires_at)
+    assertDbRunSuccess(
+      await dbRun(
+        `INSERT INTO user_api_keys (id, user_id, name, key_hash, key_prefix, permissions, rate_limit, expires_at)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        id,
-        userId,
-        name,
-        keyHash,
-        keyPrefix,
-        JSON.stringify(permissions || []),
-        rateLimit || 1000,
-        expiresAt || null,
-      ]
+        [
+          id,
+          userId,
+          name,
+          keyHash,
+          keyPrefix,
+          JSON.stringify(permissions || []),
+          rateLimit || 1000,
+          expiresAt || null,
+        ]
+      ),
+      'Failed to create API key'
     );
 
     logger.info(`[settings] API key created for user ${userId}`);
@@ -4410,15 +4830,18 @@ router.put(
 
     await ensureUserApiKeysTable();
 
-    await dbRun(
-      `UPDATE user_api_keys SET 
+    assertDbRunSuccess(
+      await dbRun(
+        `UPDATE user_api_keys SET
                 name = COALESCE(?, name),
                 permissions = COALESCE(?, permissions),
                 rate_limit = COALESCE(?, rate_limit),
                 is_active = COALESCE(?, is_active),
                 updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND user_id = ?`,
-      [name, permissions ? JSON.stringify(permissions) : null, rateLimit, isActive, id, userId]
+        [name, permissions ? JSON.stringify(permissions) : null, rateLimit, isActive, id, userId]
+      ),
+      'Failed to update API key'
     );
 
     return res.json({ success: true });
@@ -4437,7 +4860,10 @@ router.delete(
     if (!userId) return res.status(401).json({ error: 'User not authenticated' });
 
     await ensureUserApiKeysTable();
-    await dbRun(`DELETE FROM user_api_keys WHERE id = ? AND user_id = ?`, [id, userId]);
+    assertDbRunSuccess(
+      await dbRun(`DELETE FROM user_api_keys WHERE id = ? AND user_id = ?`, [id, userId]),
+      'Failed to delete API key'
+    );
 
     logger.info(`[settings] API key ${id} deleted for user ${userId}`);
     return res.json({ success: true });
@@ -4461,10 +4887,13 @@ router.post(
     const keyPrefix = newKey.substring(0, 10);
     const keyHash = hashApiKey(newKey);
 
-    await dbRun(
-      `UPDATE user_api_keys SET key_hash = ?, key_prefix = ?, updated_at = CURRENT_TIMESTAMP
+    assertDbRunSuccess(
+      await dbRun(
+        `UPDATE user_api_keys SET key_hash = ?, key_prefix = ?, updated_at = CURRENT_TIMESTAMP
              WHERE id = ? AND user_id = ?`,
-      [keyHash, keyPrefix, id, userId]
+        [keyHash, keyPrefix, id, userId]
+      ),
+      'Failed to rotate API key'
     );
 
     logger.info(`[settings] API key ${id} rotated for user ${userId}`);
@@ -4509,7 +4938,10 @@ const ensureUserWebhooksTable = async () => {
     ['last_triggered_at', `ALTER TABLE user_webhooks ADD COLUMN last_triggered_at TIMESTAMPTZ`],
     ['last_status', `ALTER TABLE user_webhooks ADD COLUMN last_status INTEGER`],
     ['failure_count', `ALTER TABLE user_webhooks ADD COLUMN failure_count INTEGER DEFAULT 0`],
-    ['updated_at', `ALTER TABLE user_webhooks ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`],
+    [
+      'updated_at',
+      `ALTER TABLE user_webhooks ADD COLUMN updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP`,
+    ],
   ];
 
   for (const [column, sql] of alterations) {
@@ -4771,11 +5203,10 @@ router.put(
       }
     }
 
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey('appearance'), JSON.stringify(merged)],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey('appearance'),
+      JSON.stringify(merged)
     );
     if (!result.success) throw new Error(result.error || 'Failed to save preference');
 
@@ -4804,8 +5235,8 @@ const ensureDeveloperSettingsTable = async () => {
             verbose_errors INTEGER DEFAULT 0,
             show_debug_info INTEGER DEFAULT 0,
             beta_features TEXT DEFAULT '[]',
-            created_at TEXT DEFAULT (datetime('now')),
-            updated_at TEXT DEFAULT (datetime('now')),
+            created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `);
@@ -4875,10 +5306,17 @@ router.put(
     const { v4: uuidv4 } = await import('uuid');
     const id = existing?.id || uuidv4();
 
-    await dbRun(
-      `INSERT OR REPLACE INTO developer_settings 
+    const result = await dbRun(
+      `INSERT INTO developer_settings
              (id, user_id, developer_mode, api_logging, verbose_errors, show_debug_info, beta_features, updated_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+             ON CONFLICT (user_id) DO UPDATE SET
+               developer_mode = EXCLUDED.developer_mode,
+               api_logging = EXCLUDED.api_logging,
+               verbose_errors = EXCLUDED.verbose_errors,
+               show_debug_info = EXCLUDED.show_debug_info,
+               beta_features = EXCLUDED.beta_features,
+               updated_at = CURRENT_TIMESTAMP`,
       [
         id,
         userId,
@@ -4887,8 +5325,10 @@ router.put(
         verboseErrors ? 1 : 0,
         showDebugInfo ? 1 : 0,
         JSON.stringify(betaFeatures || []),
-      ]
+      ],
+      { fallback: false }
     );
+    if (!result.success) throw new Error(result.error || 'Failed to save developer settings');
 
     // Log to audit
     await logSettingsChange(userId, 'developer', 'settings', 'updated', null, req.body);
@@ -4933,7 +5373,7 @@ router.get(
                     COUNT(*) as requests,
                     COALESCE(SUM(CAST(json_extract(metadata, '$.tokens') AS INTEGER)), 0) as tokens
                  FROM api_logs 
-                 WHERE api_key_id = ? AND created_at > datetime('now', '-30 days')`,
+                 WHERE api_key_id = ? AND created_at > CURRENT_TIMESTAMP - INTERVAL '30 days'`,
         [id]
       );
 
@@ -5126,17 +5566,20 @@ async function applySettingsPayload(userId: string, settings: Record<string, unk
   await ensureUserPreferencesTable();
 
   for (const [type, value] of Object.entries(settings || {})) {
-    const result = await dbRun(
-      `INSERT OR REPLACE INTO user_preferences (user_id, key, value, updated_at)
-       VALUES (?, ?, ?, datetime('now'))`,
-      [userId, preferencesKey(type), JSON.stringify(value)],
-      { fallback: false }
+    const result = await upsertUserPreferenceValue(
+      userId,
+      preferencesKey(type),
+      JSON.stringify(value)
     );
     if (!result.success) throw new Error(result.error || `Failed to apply setting ${type}`);
   }
 }
 
-async function restoreSettingsValue(userId: string, category: string, value: Record<string, unknown>) {
+async function restoreSettingsValue(
+  userId: string,
+  category: string,
+  value: Record<string, unknown>
+) {
   if (category === 'developer') {
     await ensureDeveloperSettingsTable();
     const existing = await dbGet<{ id: string }>(
@@ -5146,10 +5589,17 @@ async function restoreSettingsValue(userId: string, category: string, value: Rec
     const { v4: uuidv4 } = await import('uuid');
     const id = existing?.id || uuidv4();
 
-    await dbRun(
-      `INSERT OR REPLACE INTO developer_settings
+    const result = await dbRun(
+      `INSERT INTO developer_settings
          (id, user_id, developer_mode, api_logging, verbose_errors, show_debug_info, beta_features, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+       ON CONFLICT (user_id) DO UPDATE SET
+         developer_mode = EXCLUDED.developer_mode,
+         api_logging = EXCLUDED.api_logging,
+         verbose_errors = EXCLUDED.verbose_errors,
+         show_debug_info = EXCLUDED.show_debug_info,
+         beta_features = EXCLUDED.beta_features,
+         updated_at = CURRENT_TIMESTAMP`,
       [
         id,
         userId,
@@ -5158,8 +5608,10 @@ async function restoreSettingsValue(userId: string, category: string, value: Rec
         value?.verboseErrors ? 1 : 0,
         value?.showDebugInfo ? 1 : 0,
         JSON.stringify(value?.betaFeatures || []),
-      ]
+      ],
+      { fallback: false }
     );
+    if (!result.success) throw new Error(result.error || 'Failed to restore developer settings');
     return;
   }
 
@@ -5179,8 +5631,8 @@ router.get(
     const owner = req.query.owner as string | undefined;
 
     let keys = registryService.getRegistry();
-    if (scope) keys = keys.filter(k => k.scope === scope);
-    if (owner) keys = keys.filter(k => k.ownerContract === owner);
+    if (scope) keys = keys.filter((k) => k.scope === scope);
+    if (owner) keys = keys.filter((k) => k.ownerContract === owner);
 
     res.json({ keys, total: keys.length });
   })
@@ -5237,9 +5689,11 @@ router.put(
         req.params.key,
         meta.readOnlyInSettings || meta.managedIn !== 'settings' ? 'read_only' : 'permission_denied'
       );
-      return res
-        .status(denial.status)
-        .json({ ...denial, guidance: routing.guidance || denial.guidance, routeTo: denial.routeTo || routing.routeTo });
+      return res.status(denial.status).json({
+        ...denial,
+        guidance: routing.guidance || denial.guidance,
+        routeTo: denial.routeTo || routing.routeTo,
+      });
     }
 
     if (meta?.confirmationGate && !req.body.confirmed) {
@@ -5254,7 +5708,11 @@ router.put(
     const userId = req.userId || req.user?.id;
     const organizationId = req.user?.organizationId;
     const { value } = req.body;
-    const writeTarget = registryService.getWriteTarget(req.params.key, userRole, req.body.targetScope);
+    const writeTarget = registryService.getWriteTarget(
+      req.params.key,
+      userRole,
+      req.body.targetScope
+    );
 
     if (writeTarget === 'blocked') {
       const denial = registryService.buildDenialResponse(req.params.key, 'permission_denied');
@@ -5264,21 +5722,27 @@ router.put(
     if (writeTarget === 'personal') {
       await dbRun(
         'INSERT INTO user_preferences (user_id, key, value, updated_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP) ON CONFLICT (user_id, key) DO UPDATE SET value = $3, updated_at = CURRENT_TIMESTAMP',
-        [userId, `settings:${meta.key}`, typeof value === 'object' ? JSON.stringify(value) : String(value)],
+        [
+          userId,
+          `settings:${meta.key}`,
+          typeof value === 'object' ? JSON.stringify(value) : String(value),
+        ],
         { fallback: false }
       );
     } else {
       if (!organizationId) {
-        return res.status(400).json({ error: 'Organization context is required for non-personal settings writes.' });
+        return res
+          .status(400)
+          .json({ error: 'Organization context is required for non-personal settings writes.' });
       }
 
-      const storeKey = writeTarget === 'tenant'
-        ? `tenant:${organizationId}:${meta.key}`
-        : `module:${organizationId}:${meta.moduleId}:${meta.key}`;
-      await dbRun(
-        'INSERT OR REPLACE INTO settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)',
-        [storeKey, typeof value === 'object' ? JSON.stringify(value) : String(value)],
-        { fallback: false }
+      const storeKey =
+        writeTarget === 'tenant'
+          ? `tenant:${organizationId}:${meta.key}`
+          : `module:${organizationId}:${meta.moduleId}:${meta.key}`;
+      await upsertSettingsValue(
+        storeKey,
+        typeof value === 'object' ? JSON.stringify(value) : String(value)
       );
     }
 
@@ -5290,7 +5754,9 @@ router.put(
         [crypto.randomUUID(), userId, writeTarget, meta.key, 'updated', null, String(value)],
         { fallback: true }
       );
-    } catch { /* audit best-effort */ }
+    } catch {
+      /* audit best-effort */
+    }
 
     res.json({
       success: true,

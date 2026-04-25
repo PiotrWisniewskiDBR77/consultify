@@ -173,9 +173,7 @@ describe('ChatV9FlagsResetHandler', () => {
       throw new Error('simulated ls quota exceeded');
     });
 
-    expect(() =>
-      render(<ChatV9FlagsResetHandler performReset={performReset} />)
-    ).not.toThrow();
+    expect(() => render(<ChatV9FlagsResetHandler performReset={performReset} />)).not.toThrow();
     expect(performReset).toHaveBeenCalledTimes(1);
     expect(replaceStateSpy).toHaveBeenCalled();
     const rewrittenUrl = replaceStateSpy.mock.calls.at(-1)?.[2];

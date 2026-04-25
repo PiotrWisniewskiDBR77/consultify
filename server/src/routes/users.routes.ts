@@ -14,8 +14,8 @@ import multer from 'multer';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-import { asyncHandler } from '../utils/asyncHandler.js';
 import { AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 
@@ -210,10 +210,13 @@ router.put(
         return res.status(400).json({ error: 'No valid fields to update' });
       }
 
-      setClause.push('updated_at = datetime("now")');
+      setClause.push('updated_at = CURRENT_TIMESTAMP');
       values.push(id);
 
-      await dbRun(`UPDATE users SET ${setClause.join(', ')} WHERE id = ?`, values);
+      const result = await dbRun(`UPDATE users SET ${setClause.join(', ')} WHERE id = ?`, values, {
+        fallback: false,
+      });
+      if (!result.success) throw new Error(result.error || 'Failed to update user');
 
       logger.info(`[users] User ${id} updated`);
       return res.json({ success: true, data: updates });
@@ -260,10 +263,12 @@ router.post(
       const avatarUrl = `/uploads/avatars/${req.file.filename}`;
 
       // Update user with new avatar
-      await dbRun('UPDATE users SET avatar_url = ?, updated_at = datetime("now") WHERE id = ?', [
-        avatarUrl,
-        id,
-      ]);
+      const result = await dbRun(
+        'UPDATE users SET avatar_url = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [avatarUrl, id],
+        { fallback: false }
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to persist avatar');
 
       // Delete old avatar file if exists and is local
       if (oldUser?.avatar_url && oldUser.avatar_url.startsWith('/uploads/')) {
@@ -325,9 +330,12 @@ router.delete(
       }
 
       // Update user to remove avatar
-      await dbRun('UPDATE users SET avatar_url = NULL, updated_at = datetime("now") WHERE id = ?', [
-        id,
-      ]);
+      const result = await dbRun(
+        'UPDATE users SET avatar_url = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        [id],
+        { fallback: false }
+      );
+      if (!result.success) throw new Error(result.error || 'Failed to remove avatar');
 
       logger.info(`[users] Avatar removed for user ${id}`);
       return res.json({ success: true });

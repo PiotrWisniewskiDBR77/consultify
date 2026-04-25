@@ -38,9 +38,9 @@ import { ChatExportModal } from '../components/AIChat/ChatExportModal';
 import { ChatSlidingPanel } from '../components/AIChat/ChatSlidingPanel';
 import { CitationList } from '../components/AIChat/CitationList';
 import { EnhancedChatInput } from '../components/AIChat/EnhancedChatInput';
-import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
 import { MessageActions } from '../components/AIChat/Messages/MessageActions';
 import { ThinkingBlock } from '../components/AIChat/Messages/ThinkingBlock';
+import { OutputToolSelector } from '../components/AIChat/OutputToolSelector';
 import { ResearchProgress } from '../components/AIChat/ResearchProgress';
 import { ResponseActions } from '../components/AIChat/ResponseActions';
 import { SmartSuggestions } from '../components/AIChat/SmartSuggestions';
@@ -53,8 +53,8 @@ import { ThinkingStatusLine } from '../components/AIChat/ThinkingStatusLine';
 import { TTSIndicator } from '../components/AIChat/TTSIndicator';
 import { V8ArtifactRunControl } from '../components/AIChat/V8ArtifactRunControl';
 import { V8ContextIndicator } from '../components/AIChat/V8ContextIndicator';
-import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useTeresaVoiceContext } from '../contexts/TeresaVoiceContext';
+import { ACTION_TYPES, ActionPayload, useActionHandler } from '../hooks/useActionHandler';
 import { useAIStream } from '../hooks/useAIStream';
 import { useUniversalVoice } from '../hooks/useUniversalVoice';
 import { useAppStore } from '../store/useAppStore';
@@ -62,8 +62,8 @@ import { useConversationStore } from '../store/useConversationStore';
 import { usePMOStore } from '../store/usePMOStore';
 import { ChatCitation, ChatMessage, ChatResponseAction, TeresaChatProposal } from '../types';
 import { MessageFeedback } from '../types';
-import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
 import { readPreferredChatLanguage } from '../utils/chatLanguagePreference';
+import { buildPersistedAiResponseMetadata } from '../utils/chatPersistence';
 import { exportConversationToPDF } from '../utils/pdfExport';
 import { cleanTextForSpeech } from '../utils/textCleaning';
 import { isRtlLanguage, textDirection } from '../utils/textDirection';
@@ -890,6 +890,15 @@ For example: REMEMBER: preferred_language: Polish`;
         filename: string;
         mimeType?: string;
         size?: number;
+        extractionStatus?: string;
+      }> = [];
+      const failedAttachments: Array<{
+        filename: string;
+        mimeType?: string;
+        size?: number;
+        error: string;
+        code?: string;
+        extractionStatus?: string;
       }> = [];
 
       for (const file of files) {
@@ -921,14 +930,32 @@ For example: REMEMBER: preferred_language: Polish`;
             filename: file.name,
             mimeType: file.type || undefined,
             size: file.size,
+            extractionStatus: String((resp as any)?.extractionStatus || 'extracted'),
           });
-        } catch (err) {
+        } catch (err: any) {
           console.error('[AIChatWelcomeView] Failed to upload attachment:', err);
+          failedAttachments.push({
+            filename: file.name,
+            mimeType: file.type || undefined,
+            size: file.size,
+            error:
+              String(err?.data?.error || err?.message || '').trim() ||
+              t('aiChat.attachmentUploadFailed', 'Nie udało się odczytać pliku.'),
+            code: typeof err?.data?.code === 'string' ? err.data.code : undefined,
+            extractionStatus:
+              typeof err?.data?.extractionStatus === 'string'
+                ? err.data.extractionStatus
+                : 'failed',
+          });
         }
       }
 
       const attachmentDocIds = Array.from(
-        new Set([...existingAttachmentDocIds, ...uploadedAttachments.map((a) => a.docId)])
+        new Set(
+          uploadedAttachments.length > 0
+            ? uploadedAttachments.map((a) => a.docId)
+            : existingAttachmentDocIds
+        )
       );
 
       // Add user message
@@ -947,8 +974,8 @@ For example: REMEMBER: preferred_language: Polish`;
           content: message.trim(),
           messageType: 'text',
           metadata:
-            uploadedAttachments.length > 0
-              ? ({ attachments: uploadedAttachments } as any)
+            uploadedAttachments.length > 0 || failedAttachments.length > 0
+              ? ({ attachments: uploadedAttachments, failedAttachments } as any)
               : undefined,
         });
       } catch (err) {
@@ -980,6 +1007,7 @@ For example: REMEMBER: preferred_language: Polish`;
         conversationLanguage: chatLanguage,
         attachmentDocIds,
         attachments: uploadedAttachments,
+        failedAttachments,
         virtualWorkerSlug: 'teresa',
         proposalMode: 'proposal_first',
       };
@@ -1733,7 +1761,7 @@ When citing knowledge base articles, always reference them by article_id (slug).
                           label={
                             retryInfo
                               ? `Attempt ${retryInfo.attempt}/${retryInfo.maxRetries}...`
-                              : 'Thinking...'
+                              : 'Preparing answer...'
                           }
                           compact
                         />
@@ -2038,6 +2066,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
                 onStopGenerating={abortStream}
                 onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
                 teresaVoiceStatus={teresaVoice.voiceStatus}
+                teresaVoiceAvailable={teresaVoice.voiceAvailable}
+                teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
                 teresaVoiceMuted={teresaVoice.isMuted}
                 onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
                 isStreaming={isStreaming}
@@ -2061,7 +2091,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
           onClose={() => setShowExportModal(false)}
           onExport={handleExportFormat}
         />
-
       </div>
     );
   }
@@ -2171,6 +2200,8 @@ When citing knowledge base articles, always reference them by article_id (slug).
               onStopGenerating={abortStream}
               onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
               teresaVoiceStatus={teresaVoice.voiceStatus}
+              teresaVoiceAvailable={teresaVoice.voiceAvailable}
+              teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
               teresaVoiceMuted={teresaVoice.isMuted}
               onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
               isStreaming={isStreaming}
@@ -2379,7 +2410,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
 
       {/* TTS Indicator - shows when speaking */}
       <TTSIndicator />
-
     </div>
   );
 };

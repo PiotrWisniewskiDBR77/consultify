@@ -8,9 +8,7 @@ type RequestWithOrganizationContext = Request & {
   } | null;
 };
 
-export function resolveRequestOrganizationId(
-  req: RequestWithOrganizationContext
-): string | null {
+export function resolveRequestOrganizationId(req: RequestWithOrganizationContext): string | null {
   const organizationId = String(
     req.organizationId || req.user?.organizationId || req.user?.organization_id || ''
   ).trim();

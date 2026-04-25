@@ -324,11 +324,11 @@ export const AddFilesMenu: React.FC<AddFilesMenuProps> = ({
       {/* Dropdown */}
       {isOpen && (
         <div
-          className="absolute left-0 bottom-full mb-2 z-50 w-[250px] py-1.5
+          className="absolute left-0 top-full mt-2 z-50 w-[250px] py-1.5
             bg-white/95 dark:bg-[#1a1d2e]/95 backdrop-blur-xl
             border border-slate-200/40 dark:border-white/[0.08]
             rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]
-            animate-in fade-in-0 slide-in-from-bottom-2 duration-150"
+            animate-in fade-in-0 slide-in-from-top-2 duration-150"
         >
           {/* Upload file */}
           <MenuItem

@@ -216,9 +216,7 @@ describe('VoiceModeLegend', () => {
   // ---------------------------------------------------------------------
   describe('VM3.2 copy-legend button', () => {
     it('renders the copy button when the kill-switch is ON and popover is open', () => {
-      render(
-        <VoiceModeLegend isEnabled={() => true} isCopyTextEnabled={() => true} />
-      );
+      render(<VoiceModeLegend isEnabled={() => true} isCopyTextEnabled={() => true} />);
       fireEvent.click(screen.getByTestId('voice-mode-legend-trigger'));
       const copyBtn = screen.getByTestId('voice-mode-legend-copy');
       expect(copyBtn).toBeInTheDocument();
@@ -226,13 +224,9 @@ describe('VoiceModeLegend', () => {
     });
 
     it('does NOT render the copy button when the kill-switch is OFF', () => {
-      render(
-        <VoiceModeLegend isEnabled={() => true} isCopyTextEnabled={() => false} />
-      );
+      render(<VoiceModeLegend isEnabled={() => true} isCopyTextEnabled={() => false} />);
       fireEvent.click(screen.getByTestId('voice-mode-legend-trigger'));
-      expect(
-        screen.queryByTestId('voice-mode-legend-copy')
-      ).not.toBeInTheDocument();
+      expect(screen.queryByTestId('voice-mode-legend-copy')).not.toBeInTheDocument();
     });
 
     it('writes the two-mode Markdown payload to the clipboard and transitions to "copied"', async () => {
@@ -369,15 +363,14 @@ describe('VoiceModeLegend', () => {
       await act(async () => {
         fireEvent.click(screen.getByTestId('voice-mode-legend-copy'));
       });
-      expect(screen.getByTestId('voice-mode-legend-copy').getAttribute('data-state'))
-        .toBe('copied');
+      expect(screen.getByTestId('voice-mode-legend-copy').getAttribute('data-state')).toBe(
+        'copied'
+      );
 
       fireEvent.click(trigger); // close
       fireEvent.click(trigger); // re-open
 
-      expect(
-        screen.getByTestId('voice-mode-legend-copy').getAttribute('data-state')
-      ).toBe('idle');
+      expect(screen.getByTestId('voice-mode-legend-copy').getAttribute('data-state')).toBe('idle');
     });
 
     it('does NOT fire telemetry when the copy button is clicked (VM3.2 is telemetry-free)', async () => {

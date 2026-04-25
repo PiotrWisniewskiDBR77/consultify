@@ -15,6 +15,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
 import { Card } from '../../../components/Admin/shared/Card';
 import { InfoButton } from '../../../components/shared/InfoButton';
@@ -77,6 +78,9 @@ const ContractManagementView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>('');
+  const [editingContract, setEditingContract] = useState<Contract | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [newContract, setNewContract] = useState({
     organizationId: '',
@@ -86,6 +90,7 @@ const ContractManagementView: React.FC = () => {
     renewalDate: '',
     value: '',
     currency: 'USD',
+    status: 'active',
     terms: {},
     documentUrl: '',
   });
@@ -96,6 +101,7 @@ const ContractManagementView: React.FC = () => {
 
   const fetchData = async () => {
     setIsLoading(true);
+    setLoadError(null);
     try {
       const [contractsData, statsData, renewalsData] = await Promise.all([
         Api.getCustomerContracts(filterStatus ? { status: filterStatus } : undefined),
@@ -105,22 +111,42 @@ const ContractManagementView: React.FC = () => {
       setContracts(contractsData || []);
       setStats(statsData as any);
       setUpcomingRenewals(renewalsData || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch contract data:', error);
+      setLoadError(error?.message || 'Failed to fetch contract data');
+      toast.error(error?.message || 'Failed to fetch contract data');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleCreateContract = async () => {
-    if (!newContract.organizationId || !newContract.startDate) return;
+    const value = Number(newContract.value);
+    if (!newContract.organizationId.trim() || !newContract.startDate) {
+      toast.error('Organization and start date are required');
+      return;
+    }
+    if (!Number.isFinite(value) || value < 0) {
+      toast.error('Contract value must be a non-negative number');
+      return;
+    }
 
     try {
-      await Api.createCustomerContract({
+      setIsSaving(true);
+      const payload = {
         ...newContract,
-        value: parseFloat(newContract.value) || 0,
-      });
+        organizationId: newContract.organizationId.trim(),
+        value,
+      };
+      if (editingContract) {
+        await Api.updateCustomerContract(editingContract.id, payload);
+        toast.success('Contract updated');
+      } else {
+        await Api.createCustomerContract(payload);
+        toast.success('Contract created');
+      }
       setShowCreateModal(false);
+      setEditingContract(null);
       setNewContract({
         organizationId: '',
         contractType: 'subscription',
@@ -129,12 +155,16 @@ const ContractManagementView: React.FC = () => {
         renewalDate: '',
         value: '',
         currency: 'USD',
+        status: 'active',
         terms: {},
         documentUrl: '',
       });
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to create contract:', error);
+      toast.error(error?.message || 'Failed to save contract');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -142,14 +172,63 @@ const ContractManagementView: React.FC = () => {
     if (!confirm('Are you sure you want to delete this contract?')) return;
 
     try {
+      setIsSaving(true);
       await Api.deleteCustomerContract(contractId);
+      toast.success('Contract deleted');
       if (selectedContract?.id === contractId) {
         setSelectedContract(null);
       }
-      fetchData();
-    } catch (error) {
+      await fetchData();
+    } catch (error: any) {
       console.error('Failed to delete contract:', error);
+      toast.error(error?.message || 'Failed to delete contract');
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const resetContractForm = () => {
+    setNewContract({
+      organizationId: '',
+      contractType: 'subscription',
+      startDate: '',
+      endDate: '',
+      renewalDate: '',
+      value: '',
+      currency: 'USD',
+      status: 'active',
+      terms: {},
+      documentUrl: '',
+    });
+  };
+
+  const openCreateContract = () => {
+    setEditingContract(null);
+    resetContractForm();
+    setShowCreateModal(true);
+  };
+
+  const openEditContract = (contract: Contract) => {
+    setEditingContract(contract);
+    setNewContract({
+      organizationId: contract.organization_id,
+      contractType: contract.contract_type || 'subscription',
+      startDate: contract.start_date || '',
+      endDate: contract.end_date || '',
+      renewalDate: contract.renewal_date || '',
+      value: String(contract.value ?? ''),
+      currency: contract.currency || 'USD',
+      status: contract.status || 'active',
+      terms: (() => {
+        try {
+          return JSON.parse(contract.terms_json || '{}');
+        } catch {
+          return {};
+        }
+      })(),
+      documentUrl: contract.document_url || '',
+    });
+    setShowCreateModal(true);
   };
 
   const getStatusColor = (status: string) => {
@@ -216,7 +295,7 @@ const ContractManagementView: React.FC = () => {
             ))}
           </select>
           <button
-            onClick={() => setShowCreateModal(true)}
+            onClick={openCreateContract}
             className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -224,6 +303,12 @@ const ContractManagementView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          {loadError}
+        </div>
+      )}
 
       {/* Overview Stats */}
       {stats && (
@@ -396,6 +481,12 @@ const ContractManagementView: React.FC = () => {
                     </a>
                   )}
                   <button
+                    onClick={() => openEditContract(selectedContract)}
+                    className="p-2 text-slate-500 hover:text-blue-500 hover:bg-blue-600/10 rounded-lg transition-colors"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
                     onClick={() => handleDeleteContract(selectedContract.id)}
                     className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
                   >
@@ -533,7 +624,7 @@ const ContractManagementView: React.FC = () => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-navy-800 rounded-xl p-6 w-full max-w-lg border border-slate-200 dark:border-navy-700">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-4">
-              Create New Contract
+              {editingContract ? 'Edit Contract' : 'Create New Contract'}
             </h3>
             <div className="space-y-4">
               <div>
@@ -621,6 +712,22 @@ const ContractManagementView: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Status
+                </label>
+                <select
+                  value={newContract.status}
+                  onChange={(e) => setNewContract({ ...newContract, status: e.target.value })}
+                  className="w-full bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white"
+                >
+                  {CONTRACT_STATUSES.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Renewal Date
                 </label>
                 <input
@@ -633,17 +740,20 @@ const ContractManagementView: React.FC = () => {
             </div>
             <div className="flex justify-end gap-3 mt-6">
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setEditingContract(null);
+                }}
                 className="px-4 py-2 border border-slate-200 dark:border-navy-700 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateContract}
-                disabled={!newContract.organizationId || !newContract.startDate}
+                disabled={!newContract.organizationId.trim() || !newContract.startDate || isSaving}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
               >
-                Create Contract
+                {isSaving ? 'Saving...' : editingContract ? 'Save Contract' : 'Create Contract'}
               </button>
             </div>
           </div>

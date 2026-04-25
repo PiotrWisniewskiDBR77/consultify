@@ -19,6 +19,24 @@ END $$;
 -- ==========================================
 -- 2. security_events: add description, details columns
 -- ==========================================
+CREATE TABLE IF NOT EXISTS security_events (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    organization_id TEXT,
+    user_id TEXT,
+    event_type TEXT,
+    severity TEXT DEFAULT 'info',
+    ip_address TEXT,
+    location_city TEXT,
+    location_country TEXT,
+    resolved BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_events_org ON security_events(organization_id);
+CREATE INDEX IF NOT EXISTS idx_security_events_user ON security_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_security_events_type ON security_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_security_events_created ON security_events(created_at);
+
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -60,6 +78,14 @@ END $$;
 -- ==========================================
 -- 3. usage_counters: add counter_date, ai_calls_count + unique constraint
 -- ==========================================
+CREATE TABLE IF NOT EXISTS usage_counters (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::TEXT,
+    organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    counter_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -171,6 +197,34 @@ CREATE INDEX IF NOT EXISTS idx_user_budgets_user ON user_budgets(user_id);
 -- ==========================================
 -- 7. knowledge_documents: add file_path, last_indexed_at
 -- ==========================================
+CREATE TABLE IF NOT EXISTS knowledge_documents (
+    id TEXT PRIMARY KEY,
+    organization_id TEXT REFERENCES organizations(id),
+    project_id TEXT REFERENCES projects(id),
+    title TEXT NOT NULL,
+    document_type TEXT NOT NULL DEFAULT 'markdown',
+    source_type TEXT DEFAULT 'upload',
+    source_url TEXT,
+    original_filename TEXT,
+    storage_path TEXT,
+    file_hash TEXT,
+    raw_content TEXT,
+    processing_status TEXT DEFAULT 'pending',
+    scope TEXT DEFAULT 'organization',
+    visibility TEXT DEFAULT 'organization',
+    is_active BOOLEAN DEFAULT TRUE,
+    created_by TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_knowledge_docs_org ON knowledge_documents(organization_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_docs_project ON knowledge_documents(project_id);
+CREATE INDEX IF NOT EXISTS idx_knowledge_docs_scope ON knowledge_documents(scope);
+CREATE INDEX IF NOT EXISTS idx_knowledge_docs_status ON knowledge_documents(processing_status);
+CREATE INDEX IF NOT EXISTS idx_knowledge_docs_active ON knowledge_documents(is_active, scope);
+CREATE INDEX IF NOT EXISTS idx_knowledge_docs_hash ON knowledge_documents(file_hash);
+
 DO $$
 BEGIN
     IF NOT EXISTS (

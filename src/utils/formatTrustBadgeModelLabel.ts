@@ -48,7 +48,7 @@ type Rule = {
 const RULES: readonly Rule[] = [
   // GPT family — date / version suffixes are noisy, drop them.
   {
-    test: (id) => /^gpt-4o(-mini)?(-[0-9\-]+)?$/.test(id),
+    test: (id) => /^gpt-4o(-mini)?(-[0-9-]+)?$/.test(id),
     label: (id) => (id.includes('mini') ? 'GPT-4o mini' : 'GPT-4o'),
   },
   {
