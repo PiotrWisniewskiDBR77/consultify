@@ -284,6 +284,15 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       });
       return { changes: 1 };
     }
+    if (normalized.includes("SET status = 'paused'")) {
+      const [progressJson, sessionId] = params;
+      Object.assign(db.sessions.get(sessionId), {
+        status: 'paused',
+        progress_json: progressJson,
+        updated_at: new Date().toISOString(),
+      });
+      return { changes: 1 };
+    }
     throw new Error(`Unhandled dbRun SQL: ${normalized}`);
   },
   get: async (sql: string, params: any[] = []) => {
@@ -496,5 +505,125 @@ describe('ResearchSession Wave 4 runtime lifecycle', () => {
     const gateway = readFileSync('server/src/Gateway.ts', 'utf8');
     expect(gateway).toContain("app.use('/api/research', researchRoutes)");
     expect(gateway).not.toContain("mountStub('/api/research'");
+    expect(gateway).toContain('recoverInterruptedResearchSessions');
+  });
+
+  it('enforces allowedSources by disabling web research and web evidence', async () => {
+    const { planResearchSession, transitionResearchSession, runResearchSession } = await import(
+      '../../../server/src/services/researchSessionService.js'
+    );
+
+    const planned = await planResearchSession({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      mission: 'Attachment-only research',
+      allowedSources: ['attachment'],
+      attachmentDocIds: ['doc-1'],
+    });
+    await transitionResearchSession({
+      sessionId: planned.sessionId,
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+      status: 'approved',
+    });
+
+    const completed = await runResearchSession({
+      sessionId: planned.sessionId,
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+    });
+
+    const dependencies = researchDeps.conductDeepResearch.mock.calls.at(-1)?.[2];
+    expect(dependencies.webSearchService).toBeUndefined();
+    expect(completed.evidenceGraph).toHaveLength(1);
+    expect(completed.evidenceGraph[0].sourceClass).toBe('attachment');
+  });
+
+  it('pauses an active run cooperatively when cancel is requested', async () => {
+    const {
+      planResearchSession,
+      transitionResearchSession,
+      runResearchSession,
+      cancelResearchSession,
+    } = await import('../../../server/src/services/researchSessionService.js');
+
+    const planned = await planResearchSession({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      mission: 'Runtime cancel',
+      allowedSources: ['web'],
+    });
+    await transitionResearchSession({
+      sessionId: planned.sessionId,
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+      status: 'approved',
+    });
+    researchDeps.conductDeepResearch.mockImplementationOnce(
+      async (_topic: string, _options: any, dependencies: any) => {
+        await cancelResearchSession({
+          sessionId: planned.sessionId,
+          organizationId: 'org-1',
+          actorUserId: 'user-1',
+        });
+        dependencies?.onProgress?.({ stage: 'searching', queries: [], round: 1, totalRounds: 1 });
+        throw new Error('should not reach after cancellation');
+      }
+    );
+
+    const paused = await runResearchSession({
+      sessionId: planned.sessionId,
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+    });
+
+    expect(paused.status).toBe('paused');
+    expect(paused.events.map((event: any) => event.eventType)).toContain('cancel_requested');
+    expect(paused.events.map((event: any) => event.eventType)).toContain('cancelled');
+  });
+
+  it('recovers interrupted background sessions after process restart', async () => {
+    const {
+      planResearchSession,
+      transitionResearchSession,
+      beginResearchSessionInBackground,
+      recoverInterruptedResearchSessions,
+    } = await import('../../../server/src/services/researchSessionService.js');
+    const setImmediateSpy = vi
+      .spyOn(globalThis, 'setImmediate')
+      .mockImplementation(((_cb: (...args: any[]) => void) => 1 as any) as any);
+
+    const planned = await planResearchSession({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      mission: 'Recoverable background research',
+      allowedSources: ['web'],
+    });
+    await transitionResearchSession({
+      sessionId: planned.sessionId,
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+      status: 'approved',
+    });
+    await beginResearchSessionInBackground({
+      sessionId: planned.sessionId,
+      organizationId: 'org-1',
+      actorUserId: 'user-1',
+    });
+
+    setImmediateSpy.mockClear();
+    const recovered = await recoverInterruptedResearchSessions();
+    setImmediateSpy.mockRestore();
+
+    expect(recovered.recovered).toBe(1);
+    expect(db.events.map((event) => event.event_type)).toContain('background_recovered');
+  });
+
+  it('exposes Wave 4 dock controls for create-session and accepted background polling', () => {
+    const dock = readFileSync('src/components/AIChat/ResearchSessionsDock.tsx', 'utf8');
+    expect(dock).toContain('Api.createResearchSession');
+    expect(dock).toContain('Create planned session');
+    expect(dock).toContain('window.setInterval');
+    expect(dock).toContain('Background job accepted');
   });
 });
