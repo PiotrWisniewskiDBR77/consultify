@@ -8,10 +8,17 @@ type Wave7Connector = {
   provider: string;
   displayName: string;
   status: string;
+  authState?: string;
+  accessState?: string;
   scopes?: string[];
   projectIds?: string[];
   freshnessAgeMinutes?: number | null;
   freshnessTtlMinutes?: number;
+  tokenExpiresAt?: string | null;
+  tokenExpired?: boolean;
+  reconnectRequired?: boolean;
+  accessRevokedAt?: string | null;
+  revokedReason?: string | null;
   failureState?: string | null;
   tenantPolicy?: { externalConnectorId?: string | null };
 };
@@ -151,6 +158,49 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
     }
   };
 
+  const reconnectConnector = async () => {
+    if (!selectedConnectorId) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      await Api.updateWave7Connector(selectedConnectorId, {
+        status: 'connected',
+        reconnectRequired: false,
+        accessRevokedAt: null,
+        revokedReason: null,
+        failureState: null,
+      } as any);
+      setMessage('Connector marked reconnected; OAuth session state cleared.');
+      await load();
+    } catch (err: any) {
+      setMessage(err?.message || 'Reconnect failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const revokeConnector = async () => {
+    if (!selectedConnectorId) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      await Api.updateWave7Connector(selectedConnectorId, {
+        status: 'disconnected',
+        reconnectRequired: true,
+        accessRevokedAt: new Date().toISOString(),
+        revokedReason: 'oauth_access_revoked',
+        failureState: 'revoked_access',
+      } as any);
+      setMessage('Connector access marked revoked and blocked until reconnect.');
+      await load();
+    } catch (err: any) {
+      setMessage(err?.message || 'Revoke failed');
+      await load();
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const reindexConnector = async () => {
     if (!selectedConnectorId) return;
     setLoading(true);
@@ -173,7 +223,7 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
         <div>
           <h1 className="text-2xl font-semibold">Wave 7 Connector Admin</h1>
           <p className="mt-1 text-sm text-slate-500">
-            Permission-aware connector registry, freshness state, source trace and safe tool
+            Permission-aware connector registry, OAuth/session lifecycle, source trace and safe tool
             execution.
           </p>
         </div>
@@ -324,6 +374,28 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
               </button>
             </div>
           </div>
+
+          <h2 className="mt-6 flex items-center gap-2 font-semibold">
+            <ShieldAlert size={18} /> OAuth Session Lifecycle
+          </h2>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={reconnectConnector}
+              disabled={loading || !selectedConnectorId}
+              className="rounded-md border px-2 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
+            >
+              Mark reconnected
+            </button>
+            <button
+              type="button"
+              onClick={revokeConnector}
+              disabled={loading || !selectedConnectorId}
+              className="rounded-md border border-rose-200 px-2 py-2 text-xs font-medium text-rose-700 disabled:opacity-50 dark:border-rose-900 dark:text-rose-200"
+            >
+              Mark access revoked
+            </button>
+          </div>
         </section>
 
         <section className="space-y-4">
@@ -348,6 +420,22 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                     {connector.freshnessAgeMinutes ?? 'unknown'} min; TTL:{' '}
                     {connector.freshnessTtlMinutes ?? 'unknown'} min
                   </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    OAuth access: {connector.accessState || connector.authState || 'unknown'}; token
+                    expiry: {connector.tokenExpiresAt || 'not recorded'}
+                  </div>
+                  {(connector.reconnectRequired ||
+                    connector.tokenExpired ||
+                    connector.accessRevokedAt) && (
+                    <div className="mt-2 rounded bg-amber-50 p-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                      Reconnect required
+                      {connector.accessRevokedAt
+                        ? `; access revoked${connector.revokedReason ? ` (${connector.revokedReason})` : ''}`
+                        : connector.tokenExpired
+                          ? '; token expired'
+                          : ''}
+                    </div>
+                  )}
                   <div className="mt-1 text-xs text-slate-500">
                     ACL:{' '}
                     {(connector.projectIds || []).length
@@ -381,6 +469,10 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
                   <div className="mt-1 text-slate-500">
                     ACL: {run.aclDecision?.reason || 'unknown'}; freshness:{' '}
                     {run.freshnessWarning || 'fresh'}
+                  </div>
+                  <div className="mt-1 text-slate-500">
+                    OAuth: {run.sourceTrace?.accessState || 'unknown'}; token expiry:{' '}
+                    {run.sourceTrace?.tokenExpiresAt || 'not tracked'}
                   </div>
                   {run.error && <div className="mt-1 text-rose-600">Error: {run.error}</div>}
                 </div>

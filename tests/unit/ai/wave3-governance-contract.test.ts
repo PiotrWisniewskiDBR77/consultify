@@ -47,22 +47,37 @@ describe('Wave 3 AI actions governance contract', () => {
     expect(routes).toContain("'/actions/center'");
     expect(routes).toContain("'/actions/runs'");
     expect(routes).toContain("'/actions/:id/audit'");
+    expect(routes).toContain("scope: z.enum(['mine', 'org']).optional()");
+    expect(routes).toContain("scope === 'org'");
     expect(api).toContain('getAIActionCenter');
     expect(api).toContain('getAIRunLedger');
+    expect(api).toContain("scope?: 'mine' | 'org'");
     expect(api).toContain('getAIActionAuditTrail');
     expect(appRoutes).toContain('path="/ai/action-center"');
     expect(actionCenter).toContain('Action Center');
     expect(actionCenter).toContain('Audit Viewer');
     expect(actionCenter).toContain('Run Ledger');
+    expect(actionCenter).toContain('ledgerWarning');
+    expect(actionCenter).toContain("Api.getAIRunLedger({ scope: 'mine', limit: 100 })");
   });
 
   it('forces mutating actions through approval before execution', () => {
     const executor = read('server/src/services/aiActionExecutor.ts');
 
     expect(executor).toContain('isGovernedMutationAction(actionType)');
+    expect(executor).toContain('allowsPatternAutoApprovalForGovernedMutation(permission, actionType)');
+    expect(executor).toContain('allowDestructiveAutoApproval');
     expect(executor).toContain("action.status !== ACTION_STATUS.APPROVED");
     expect(executor).toContain("eventType: 'proposal_approved'");
     expect(executor).toContain("eventType: 'execution_started'");
     expect(executor).toContain("eventType: 'execution_failed'");
+  });
+
+  it('records explicit rollback status in AIRun audit output', () => {
+    const executor = read('server/src/services/aiActionExecutor.ts');
+
+    expect(executor).toContain('rollbackStatus');
+    expect(executor).toContain('rollback_available');
+    expect(executor).toContain('rollback_unavailable');
   });
 });

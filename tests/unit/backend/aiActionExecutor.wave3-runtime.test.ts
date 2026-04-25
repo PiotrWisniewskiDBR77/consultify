@@ -11,6 +11,18 @@ const db = vi.hoisted(() => ({
   uuidCounter: 0,
 }));
 
+const approvalPatternService = vi.hoisted(() => ({
+  service: {
+    __unavailable__: true as boolean | undefined,
+    canAutoDecide: vi.fn(),
+    recordDecision: vi.fn(),
+  },
+}));
+
+const aiPolicyEngine = vi.hoisted(() => ({
+  canPerformAction: vi.fn(),
+}));
+
 function resetDb() {
   db.actions.clear();
   db.ledgers.clear();
@@ -18,6 +30,17 @@ function resetDb() {
   db.tasks.length = 0;
   db.auditLogs.length = 0;
   db.uuidCounter = 0;
+  approvalPatternService.service.__unavailable__ = true;
+  approvalPatternService.service.canAutoDecide.mockReset();
+  approvalPatternService.service.canAutoDecide.mockResolvedValue({ canAutoDecide: false });
+  approvalPatternService.service.recordDecision.mockReset();
+  aiPolicyEngine.canPerformAction.mockReset();
+  aiPolicyEngine.canPerformAction.mockResolvedValue({
+    allowed: true,
+    requiresApproval: false,
+    requiredLevel: 'standard',
+    currentLevel: 'standard',
+  });
 }
 
 function nextUuid() {
@@ -30,18 +53,11 @@ vi.mock('uuid', () => ({
 }));
 
 vi.mock('../../../server/src/services/aiPolicyEngine.js', () => ({
-  default: {
-    canPerformAction: vi.fn(async () => ({
-      allowed: true,
-      requiresApproval: false,
-      requiredLevel: 'standard',
-      currentLevel: 'standard',
-    })),
-  },
+  default: aiPolicyEngine,
 }));
 
 vi.mock('../../../server/src/services/approvalPatternService.js', () => ({
-  default: { __unavailable__: true },
+  default: approvalPatternService.service,
 }));
 
 vi.mock('../../../server/src/services/notificationService.js', () => ({
@@ -299,6 +315,7 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
     expect(executed.success).toBe(true);
     expect(executed.status).toBe('EXECUTED');
     expect(executed.lifecycleState).toBe('audited');
+    expect(executed.rollbackStatus).toBe('rollback_available');
     expect(db.tasks).toHaveLength(1);
     expect(db.tasks[0].title).toBe('COO follow-up');
     expect(db.events.map((event) => event.event_type)).toEqual([
@@ -308,6 +325,101 @@ describe('AIActionExecutor Wave 3 runtime lifecycle', () => {
       'execution_succeeded',
     ]);
     expect(db.ledgers.get(created.actionId)?.status).toBe('audited');
+    expect(JSON.parse(db.ledgers.get(created.actionId)?.audit || '{}')).toMatchObject({
+      rollbackStatus: 'rollback_available',
+      rollbackAvailable: true,
+    });
+  });
+
+  it('does not let learned approval patterns bypass governed mutation review', async () => {
+    approvalPatternService.service.__unavailable__ = undefined;
+    approvalPatternService.service.canAutoDecide.mockResolvedValue({
+      canAutoDecide: true,
+      decision: 'APPROVED',
+      confidence: 0.99,
+      reason: 'previous approvals',
+      pattern: { id: 'pattern-1', decision_count: 12 },
+    });
+
+    const { default: AIActionExecutor } = await import('../../../server/src/services/aiActionExecutor.js');
+
+    const created = await AIActionExecutor.createDraft(
+      'task',
+      { title: 'Still needs review' },
+      'user-owner',
+      'org-1',
+      'project-1'
+    );
+
+    expect(created.success).toBe(true);
+    expect(created.requiresApproval).toBe(true);
+    expect(created.status).toBe('PENDING');
+    expect(created.autoApproved).toBeUndefined();
+    expect(db.tasks).toHaveLength(0);
+  });
+
+  it('allows learned approval patterns only when explicit policy permits it', async () => {
+    approvalPatternService.service.__unavailable__ = undefined;
+    approvalPatternService.service.canAutoDecide.mockResolvedValue({
+      canAutoDecide: true,
+      decision: 'APPROVED',
+      confidence: 0.99,
+      reason: 'explicit policy allows auto approval',
+      pattern: { id: 'pattern-2', decision_count: 20 },
+    });
+    aiPolicyEngine.canPerformAction.mockResolvedValue({
+      allowed: true,
+      requiresApproval: false,
+      requiredLevel: 'standard',
+      currentLevel: 'AUTOPILOT',
+    });
+
+    const { default: AIActionExecutor } = await import('../../../server/src/services/aiActionExecutor.js');
+
+    const created = await AIActionExecutor.requestAction(
+      'CREATE_DRAFT_TASK',
+      { title: 'Policy permitted' },
+      'user-owner',
+      'org-1',
+      'project-1'
+    );
+
+    expect(created.success).toBe(true);
+    expect(created.requiresApproval).toBe(false);
+    expect(created.status).toBe('APPROVED');
+    expect(created.autoApproved).toBe(true);
+  });
+
+  it('requires destructive actions to have a destructive auto-approval policy', async () => {
+    approvalPatternService.service.__unavailable__ = undefined;
+    approvalPatternService.service.canAutoDecide.mockResolvedValue({
+      canAutoDecide: true,
+      decision: 'APPROVED',
+      confidence: 0.99,
+      reason: 'explicit non-destructive policy is not enough',
+      pattern: { id: 'pattern-3', decision_count: 20 },
+    });
+    aiPolicyEngine.canPerformAction.mockResolvedValue({
+      allowed: true,
+      requiresApproval: false,
+      requiredLevel: 'standard',
+      currentLevel: 'AUTOPILOT',
+    });
+
+    const { default: AIActionExecutor } = await import('../../../server/src/services/aiActionExecutor.js');
+
+    const created = await AIActionExecutor.requestAction(
+      'DELETE_TASK',
+      { title: 'Destructive action' },
+      'user-owner',
+      'org-1',
+      'project-1'
+    );
+
+    expect(created.success).toBe(true);
+    expect(created.requiresApproval).toBe(true);
+    expect(created.status).toBe('PENDING');
+    expect(created.autoApproved).toBeUndefined();
   });
 
   it('never executes a rejected proposal', async () => {

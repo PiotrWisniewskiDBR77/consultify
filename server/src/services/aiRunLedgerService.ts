@@ -383,16 +383,19 @@ export async function listActionCenter(params: {
 
 export async function listAIRuns(params: {
   organizationId: string;
+  userId?: string | null;
   projectId?: string | null;
   status?: string | null;
   limit?: number;
+  adminView?: boolean;
 }): Promise<any[]> {
   return listActionCenter({
     organizationId: params.organizationId,
+    userId: params.userId,
     projectId: params.projectId,
     status: params.status,
     limit: params.limit,
-    adminView: true,
+    adminView: params.adminView === true,
   });
 }
 

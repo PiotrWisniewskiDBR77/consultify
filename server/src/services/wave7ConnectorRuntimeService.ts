@@ -18,6 +18,8 @@ export interface RegisterWave7ConnectorInput {
   ownerUserId?: string | null;
   tenantPolicy?: Record<string, unknown>;
   freshnessTtlMinutes?: number | null;
+  tokenExpiresAt?: string | null;
+  reconnectRequired?: boolean;
 }
 
 export interface ExecuteWave7ConnectorInput {
@@ -40,6 +42,11 @@ export interface UpdateWave7ConnectorInput {
   externalConnectorId?: string | null;
   projectIds?: string[];
   failureState?: string | null;
+  tokenExpiresAt?: string | null;
+  reconnectRequired?: boolean;
+  accessRevokedAt?: string | null;
+  revokedReason?: string | null;
+  lastSyncAt?: string | null;
 }
 
 let schemaReady: Promise<void> | null = null;
@@ -73,11 +80,26 @@ function minutesSince(raw: string | null | undefined): number | null {
   return Math.floor((Date.now() - time) / 60000);
 }
 
+function isExpired(raw: string | null | undefined): boolean {
+  if (!raw) return false;
+  const time = Date.parse(raw);
+  return Number.isFinite(time) && time <= Date.now();
+}
+
+function buildAccessState(row: any): string {
+  const authState = String(row.auth_state || 'not_connected');
+  if (row.access_revoked_at || authState === 'revoked') return 'revoked';
+  if (Number(row.reconnect_required || 0) === 1) return 'reconnect_required';
+  if (isExpired(row.token_expires_at)) return 'token_expired';
+  return authState;
+}
+
 function mapConnector(row: any): any {
   if (!row) return null;
   const ttl = Number(row.freshness_ttl_minutes || 240);
   const age = minutesSince(row.last_sync_at);
   const isStale = age != null && age > ttl;
+  const accessState = buildAccessState(row);
   return {
     connectorId: row.connector_id,
     organizationId: row.organization_id,
@@ -85,11 +107,17 @@ function mapConnector(row: any): any {
     displayName: row.display_name,
     status: row.status === 'connected' && isStale ? 'stale' : row.status,
     authState: row.auth_state,
+    accessState,
     scopes: safeJsonParse(row.scopes_json, []),
     projectIds: safeJsonParse(row.project_ids_json, []),
     ownerUserId: row.owner_user_id || null,
     tenantPolicy: safeJsonParse(row.tenant_policy_json, {}),
     lastSyncAt: row.last_sync_at || null,
+    tokenExpiresAt: row.token_expires_at || null,
+    tokenExpired: accessState === 'token_expired',
+    reconnectRequired: Number(row.reconnect_required || 0) === 1,
+    accessRevokedAt: row.access_revoked_at || null,
+    revokedReason: row.revoked_reason || null,
     freshnessTtlMinutes: ttl,
     freshnessAgeMinutes: age,
     failureState: row.failure_state || null,
@@ -141,12 +169,28 @@ export async function ensureWave7ConnectorRuntimeSchema(): Promise<void> {
         owner_user_id TEXT,
         tenant_policy_json TEXT NOT NULL DEFAULT '{}',
         last_sync_at TEXT,
+        token_expires_at TEXT,
+        reconnect_required INTEGER NOT NULL DEFAULT 0,
+        access_revoked_at TEXT,
+        revoked_reason TEXT,
         freshness_ttl_minutes INTEGER NOT NULL DEFAULT 240,
         failure_state TEXT,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await dbRun(`ALTER TABLE wave7_connectors ADD COLUMN token_expires_at TEXT`).catch(
+      () => undefined
+    );
+    await dbRun(
+      `ALTER TABLE wave7_connectors ADD COLUMN reconnect_required INTEGER DEFAULT 0`
+    ).catch(() => undefined);
+    await dbRun(`ALTER TABLE wave7_connectors ADD COLUMN access_revoked_at TEXT`).catch(
+      () => undefined
+    );
+    await dbRun(`ALTER TABLE wave7_connectors ADD COLUMN revoked_reason TEXT`).catch(
+      () => undefined
+    );
     await dbRun(`
       CREATE TABLE IF NOT EXISTS wave7_connector_runs (
         run_id TEXT PRIMARY KEY,
@@ -199,8 +243,9 @@ export async function registerWave7Connector(input: RegisterWave7ConnectorInput)
     `INSERT INTO wave7_connectors (
       connector_id, organization_id, provider, display_name, status, auth_state,
       scopes_json, project_ids_json, owner_user_id, tenant_policy_json, last_sync_at,
+      token_expires_at, reconnect_required, access_revoked_at, revoked_reason,
       freshness_ttl_minutes, failure_state
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       connectorId,
       input.organizationId,
@@ -213,6 +258,10 @@ export async function registerWave7Connector(input: RegisterWave7ConnectorInput)
       input.ownerUserId || input.userId,
       safeJsonStringify(input.tenantPolicy || { acl: 'tenant' }),
       status === 'connected' ? nowIso() : null,
+      input.tokenExpiresAt || null,
+      input.reconnectRequired === true ? 1 : 0,
+      null,
+      null,
       input.freshnessTtlMinutes || 240,
       status === 'failed' ? 'registration_failed' : null,
     ]
@@ -254,26 +303,58 @@ export async function updateWave7Connector(input: UpdateWave7ConnectorInput): Pr
       ? { externalConnectorId: input.externalConnectorId || null }
       : {}),
   };
+  const reconnectRequired =
+    input.reconnectRequired !== undefined
+      ? input.reconnectRequired
+      : input.status === 'disconnected'
+        ? true
+        : input.status === 'connected'
+          ? false
+          : connector.reconnectRequired;
+  const accessRevokedAt =
+    input.accessRevokedAt !== undefined
+      ? input.accessRevokedAt || null
+      : input.status === 'connected'
+        ? null
+        : connector.accessRevokedAt || null;
+  const revokedReason =
+    input.revokedReason !== undefined
+      ? input.revokedReason || null
+      : input.status === 'connected'
+        ? null
+        : connector.revokedReason || null;
   await dbRun(
     `UPDATE wave7_connectors
      SET status = COALESCE(?, status),
          auth_state = CASE
            WHEN ? = 'connected' THEN 'authorized'
+           WHEN ? IS NOT NULL THEN 'revoked'
            WHEN ? IN ('disconnected', 'failed') THEN 'not_connected'
            ELSE auth_state
          END,
          project_ids_json = COALESCE(?, project_ids_json),
          tenant_policy_json = ?,
          failure_state = ?,
+         token_expires_at = ?,
+         reconnect_required = ?,
+         access_revoked_at = ?,
+         revoked_reason = ?,
+         last_sync_at = COALESCE(?, last_sync_at),
          updated_at = CURRENT_TIMESTAMP
      WHERE connector_id = ? AND organization_id = ?`,
     [
       input.status || null,
       input.status || null,
+      accessRevokedAt,
       input.status || null,
       input.projectIds ? safeJsonStringify(input.projectIds) : null,
       safeJsonStringify(tenantPolicy),
       input.failureState !== undefined ? input.failureState : connector.failureState || null,
+      input.tokenExpiresAt !== undefined ? input.tokenExpiresAt || null : connector.tokenExpiresAt,
+      reconnectRequired ? 1 : 0,
+      accessRevokedAt,
+      revokedReason,
+      input.lastSyncAt || null,
       input.connectorId,
       input.organizationId,
     ]
@@ -294,6 +375,7 @@ export async function disconnectWave7Connector(params: {
     organizationId: params.organizationId,
     connectorId: params.connectorId,
     status: 'disconnected',
+    reconnectRequired: true,
     failureState: null,
   });
 }
@@ -316,6 +398,10 @@ export async function linkWave7ConnectorToExternal(input: {
     connectorId: input.connectorId,
     externalConnectorId: input.externalConnectorId,
     status: 'connected',
+    reconnectRequired: false,
+    accessRevokedAt: null,
+    revokedReason: null,
+    lastSyncAt: nowIso(),
     failureState: null,
   });
 }
@@ -343,6 +429,15 @@ function evaluateConnectorAccess(connector: any, input: ExecuteWave7ConnectorInp
   }
   if (connector.organizationId !== input.organizationId) {
     return { allowed: false, reason: 'cross_tenant_forbidden' };
+  }
+  if (connector.accessState === 'revoked') {
+    return { allowed: false, reason: 'connector_access_revoked' };
+  }
+  if (connector.accessState === 'reconnect_required') {
+    return { allowed: false, reason: 'connector_reconnect_required' };
+  }
+  if (connector.accessState === 'token_expired') {
+    return { allowed: false, reason: 'connector_token_expired' };
   }
   if (connector.status === 'failed' || connector.status === 'disconnected') {
     return { allowed: false, reason: `connector_${connector.status}` };
@@ -533,6 +628,8 @@ export async function executeWave7ConnectorTool(input: ExecuteWave7ConnectorInpu
     provider: connector?.provider || null,
     connectorId: connector?.connectorId || input.connectorId,
     projectId: input.projectId || null,
+    accessState: connector?.accessState || null,
+    tokenExpiresAt: connector?.tokenExpiresAt || null,
     freshness: freshnessWarning ? 'stale' : 'fresh',
     query: input.query || null,
   };

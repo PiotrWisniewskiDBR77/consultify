@@ -7,6 +7,7 @@ import {
   decideWave6MemoryCandidate,
   forgetWave6ContextLedgerEntry,
   listWave6ContextPanel,
+  normalizeWave6AssistantScope,
   recordWave6ContextLedgerEntry,
 } from '../services/wave6ContextLearningService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -102,7 +103,7 @@ router.post(
     const result = await captureWave6MemoryCandidate({
       organizationId,
       userId,
-      assistantScope: 'teresa_tenant',
+      assistantScope: normalizeWave6AssistantScope(req.body.assistantScope),
       memoryScope: req.body.memoryScope,
       key: String(req.body.key || ''),
       value: String(req.body.value || ''),

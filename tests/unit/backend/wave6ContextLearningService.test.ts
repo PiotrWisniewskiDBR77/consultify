@@ -177,24 +177,55 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
     const normalized = sql.replace(/\s+/g, ' ').trim();
     if (normalized.includes('FROM wave6_context_snapshots')) return db.snapshots.get(params[0]) || null;
     if (normalized.includes('FROM wave6_context_ledger')) return db.ledger.get(params[0]) || null;
-    if (normalized.includes('FROM wave6_memory_candidates')) return db.candidates.get(params[0]) || null;
+    if (normalized.includes('FROM wave6_memory_candidates')) {
+      const row = db.candidates.get(params[0]) || null;
+      if (params[1] && row?.organization_id !== params[1]) return null;
+      return row;
+    }
     throw new Error(`Unhandled dbGet SQL: ${normalized}`);
   },
   all: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    const [organizationId, userId, projectId] = params;
-    const matchesScope = (row: Row) =>
+    const [organizationId, userId] = params;
+    const hasProjectScope = normalized.includes('project_id IS NULL OR project_id = ?');
+    const hasAssistantScope = normalized.includes('assistant_scope = ?');
+    const projectId = hasProjectScope ? params[2] : null;
+    const assistantScope = hasAssistantScope ? params[hasProjectScope ? 3 : 2] : null;
+    const isUnexpired = (row: Row) => {
+      if (!row.retention_until) return true;
+      return Date.parse(String(row.retention_until)) > Date.now();
+    };
+    const matchesScopedUserRows = (row: Row) =>
       row.organization_id === organizationId &&
       row.user_id === userId &&
-      (!projectId || row.project_id == null || row.project_id === projectId);
+      (projectId ? row.project_id == null || row.project_id === projectId : row.project_id == null) &&
+      (!assistantScope || row.assistant_scope === assistantScope);
     if (normalized.includes('FROM wave6_context_snapshots')) {
-      return Array.from(db.snapshots.values()).filter(matchesScope);
+      const projectUserId = params[2];
+      const snapshotProjectId = params[3];
+      return Array.from(db.snapshots.values()).filter((row) => {
+        if (row.organization_id !== organizationId) return false;
+        if (row.snapshot_type === 'org' && row.project_id == null) return true;
+        if (row.user_id === userId && row.snapshot_type === 'user' && row.project_id == null) {
+          return true;
+        }
+        return (
+          snapshotProjectId &&
+          row.user_id === projectUserId &&
+          row.snapshot_type === 'project' &&
+          row.project_id === snapshotProjectId
+        );
+      });
     }
     if (normalized.includes('FROM wave6_context_ledger')) {
-      return Array.from(db.ledger.values()).filter((row) => matchesScope(row) && !row.forgotten_at);
+      return Array.from(db.ledger.values()).filter(
+        (row) => matchesScopedUserRows(row) && !row.forgotten_at
+      );
     }
     if (normalized.includes('FROM wave6_memory_candidates')) {
-      return Array.from(db.candidates.values()).filter(matchesScope);
+      return Array.from(db.candidates.values()).filter(
+        (row) => matchesScopedUserRows(row) && isUnexpired(row)
+      );
     }
     throw new Error(`Unhandled dbAll SQL: ${normalized}`);
   },
@@ -219,6 +250,15 @@ describe('Wave 6 context and controlled learning runtime', () => {
       forgetWave6ContextLedgerEntry,
     } = await import('../../../server/src/services/wave6ContextLearningService.js');
 
+    await captureWave6ContextSnapshot({
+      organizationId: 'org-1',
+      userId: 'admin-1',
+      snapshotType: 'org',
+      projectId: 'ignored-project',
+      facts: { decision: 'Use org-wide governance model' },
+      sourceRefs: [{ sourceTitle: 'Operating model' }],
+      permissions: { scope: 'org' },
+    });
     await captureWave6ContextSnapshot({
       organizationId: 'org-1',
       userId: 'user-1',
@@ -249,9 +289,19 @@ describe('Wave 6 context and controlled learning runtime', () => {
       userId: 'user-1',
       projectId: 'project-a',
     });
-    expect(panelA.snapshots).toHaveLength(1);
-    expect(panelA.snapshots[0].facts.decision).toBe('Use project A roadmap');
+    expect(panelA.snapshots).toHaveLength(2);
+    expect(panelA.snapshots.map((snapshot: Row) => snapshot.facts.decision)).toEqual(
+      expect.arrayContaining(['Use org-wide governance model', 'Use project A roadmap'])
+    );
     expect(panelA.ledger[0].sourceTitle).toBe('Project A source');
+
+    const panelWithoutProject = await listWave6ContextPanel({
+      organizationId: 'org-1',
+      userId: 'user-1',
+    });
+    expect(panelWithoutProject.snapshots.map((snapshot: Row) => snapshot.facts.decision)).toEqual([
+      'Use org-wide governance model',
+    ]);
 
     await forgetWave6ContextLedgerEntry({
       organizationId: 'org-1',
@@ -323,9 +373,11 @@ describe('Wave 6 context and controlled learning runtime', () => {
   });
 
   it('keeps Anna public learning separated from Teresa tenant memory', async () => {
-    const { captureWave6MemoryCandidate } = await import(
-      '../../../server/src/services/wave6ContextLearningService.js'
-    );
+    const {
+      buildWave6UserWorkProfile,
+      captureWave6MemoryCandidate,
+      decideWave6MemoryCandidate,
+    } = await import('../../../server/src/services/wave6ContextLearningService.js');
 
     const annaTenantAttempt = await captureWave6MemoryCandidate({
       organizationId: 'org-1',
@@ -346,6 +398,101 @@ describe('Wave 6 context and controlled learning runtime', () => {
       value: 'Explain product pricing neutrally',
     });
     expect(annaPublic.blocked).toBe(false);
+
+    const retainedPublic = await decideWave6MemoryCandidate({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      candidateId: annaPublic.candidate.candidateId,
+      decision: 'approve',
+      reason: 'Public product learning approved',
+    });
+    expect(retainedPublic.status).toBe('retained');
+    expect(db.memories.size).toBe(0);
+
+    const teresaOrg = await captureWave6MemoryCandidate({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      assistantScope: 'teresa_tenant',
+      memoryScope: 'org',
+      key: 'governance_style',
+      value: 'Use tenant governance language',
+    });
+    expect(teresaOrg.blocked).toBe(false);
+
+    await decideWave6MemoryCandidate({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      candidateId: teresaOrg.candidate.candidateId,
+      decision: 'approve',
+      reason: 'Tenant learning approved',
+    });
+    const teresaProfile = await buildWave6UserWorkProfile({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      assistantScope: 'teresa_tenant',
+    });
+    const annaProfile = await buildWave6UserWorkProfile({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      assistantScope: 'anna_public',
+    });
+    expect(teresaProfile.preferences.map((memory) => memory.key)).toContain('governance_style');
+    expect(annaProfile.preferences).toHaveLength(0);
+  });
+
+  it('enforces project scope, organization ACL, and retention on retained memory', async () => {
+    const {
+      buildWave6UserWorkProfile,
+      captureWave6MemoryCandidate,
+      decideWave6MemoryCandidate,
+    } = await import('../../../server/src/services/wave6ContextLearningService.js');
+
+    const missingProject = await captureWave6MemoryCandidate({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      assistantScope: 'teresa_tenant',
+      memoryScope: 'project',
+      key: 'project_style',
+      value: 'Use project-only language',
+    });
+    expect(missingProject.reason).toBe('project_memory_requires_project_scope');
+
+    const retained = await captureWave6MemoryCandidate({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      assistantScope: 'teresa_tenant',
+      memoryScope: 'project',
+      projectId: 'project-a',
+      key: 'project_style',
+      value: 'Use project-only language',
+      retentionDays: 1,
+    });
+    expect(retained.candidate.retentionUntil).toEqual(expect.any(String));
+
+    await expect(
+      decideWave6MemoryCandidate({
+        organizationId: 'org-2',
+        userId: 'user-1',
+        candidateId: retained.candidate.candidateId,
+        decision: 'approve',
+      })
+    ).rejects.toThrow('Memory candidate not found');
+
+    await decideWave6MemoryCandidate({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      candidateId: retained.candidate.candidateId,
+      decision: 'approve',
+    });
+    db.candidates.get(retained.candidate.candidateId)!.retention_until = '2000-01-01T00:00:00.000Z';
+
+    const expiredProfile = await buildWave6UserWorkProfile({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      projectId: 'project-a',
+      assistantScope: 'teresa_tenant',
+    });
+    expect(expiredProfile.preferences).toHaveLength(0);
   });
 
   it('exposes Wave 6 API and UI contract', () => {
@@ -366,10 +513,10 @@ describe('Wave 6 context and controlled learning runtime', () => {
     expect(gateway).toContain('/api/ai-context');
     expect(routes).toContain('/memory/candidates/:candidateId/decision');
     expect(routes).not.toContain('default-org');
-    expect(routes).toContain("assistantScope: 'teresa_tenant'");
+    expect(routes).toContain('normalizeWave6AssistantScope');
     expect(aiIndex).not.toContain("router.use('/memory-v2'");
     expect(api).toContain('captureWave6MemoryCandidate');
-    expect(panel).toContain('Private mode blocks learning writes');
+    expect(panel).toContain('Organization snapshot');
     expect(panel).toContain('Memory Stewardship Queue');
     expect(streamHook).toContain("evt.type === 'memory_candidate'");
     expect(chat).toContain('Memory candidate created');
@@ -378,7 +525,7 @@ describe('Wave 6 context and controlled learning runtime', () => {
     expect(aiRoutes).toContain('recordWave6ContextLedgerEntry');
     expect(aiRoutes).toContain('memory_candidate');
     expect(aiRoutes).toContain('buildWave6UserWorkProfilePrompt');
-    expect(aiRoutes).toContain('if (!privateMode && req.organizationId && req.userId)');
+    expect(aiRoutes).toContain("assistantScope === 'teresa_tenant'");
     expect(legacyMemoryController).toContain('MEMORY_REQUIRES_STEWARDSHIP');
     expect(legacyMemoryController).toContain('MEMORY_WRITE_DISABLED');
     expect(legacyMemoryController).toContain('canReadMemory');

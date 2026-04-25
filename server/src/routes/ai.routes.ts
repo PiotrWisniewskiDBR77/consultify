@@ -1241,6 +1241,8 @@ router.post(
       provider?: string;
       endpoint?: string;
       privateMode?: boolean;
+      assistantScope?: 'anna_public' | 'teresa_tenant';
+      memoryScope?: 'public_product' | 'tenant' | 'org' | 'user' | 'project';
       aiModes?: {
         deepResearch?: boolean;
         webSearch?: boolean;
@@ -1877,6 +1879,30 @@ router.post(
               .trim()
               .toLowerCase()
           : null;
+      const assistantScope = (() => {
+        const raw =
+          (body as any).assistantScope ??
+          (context as any)?.assistantScope ??
+          (context as any)?.assistant?.scope;
+        if (raw === 'anna_public' || raw === 'teresa_tenant') return raw;
+        return virtualWorkerSlug === 'anna' ? 'anna_public' : 'teresa_tenant';
+      })();
+      const wave6MemoryScope = (() => {
+        const raw = (body as any).memoryScope ?? (context as any)?.memoryScope;
+        if (
+          raw === 'public_product' ||
+          raw === 'tenant' ||
+          raw === 'org' ||
+          raw === 'user' ||
+          raw === 'project'
+        ) {
+          return raw;
+        }
+        if (assistantScope === 'anna_public') return 'public_product';
+        if (projectId) return 'project';
+        if (knowledgeSources?.organizationData) return 'org';
+        return 'user';
+      })();
       const isGovernedProductTruthQuery = isDbr77ProductTruthQuery(String(message || ''));
       const isProductAssistantHowToQuery =
         Boolean(virtualWorkerSlug) &&
@@ -1895,19 +1921,29 @@ router.post(
       const focusMode = (context as any)?.focusMode || bodyFocusMode || 'all';
       let wave6ProfilePrompt = '';
       try {
-        if (!privateMode && req.organizationId && req.userId) {
+        if (
+          !privateMode &&
+          req.organizationId &&
+          req.userId &&
+          assistantScope === 'teresa_tenant'
+        ) {
           const wave6 = await import('../services/wave6ContextLearningService.js');
           const workProfile = await wave6.buildWave6UserWorkProfile({
             organizationId: req.organizationId,
             userId: req.userId,
             projectId,
             privateMode: Boolean(privateMode) || Boolean(aiModes?.deepResearch),
+            assistantScope,
           });
           wave6ProfilePrompt = wave6.buildWave6UserWorkProfilePrompt(workProfile);
           await wave6.captureWave6ContextSnapshot({
             organizationId: req.organizationId,
             userId: req.userId,
-            snapshotType: projectId ? 'project' : 'user',
+            snapshotType: projectId
+              ? 'project'
+              : wave6MemoryScope === 'org' || wave6MemoryScope === 'tenant'
+                ? 'org'
+                : 'user',
             projectId,
             facts: {
               conversationId: conversationId || null,
@@ -1923,7 +1959,7 @@ router.post(
               },
             ],
             permissions: {
-              assistantScope: 'teresa_tenant',
+              assistantScope,
               projectId,
               privateMode: Boolean(privateMode),
             },
@@ -4155,7 +4191,7 @@ router.post(
               if (req.organizationId && req.userId) {
                 try {
                   const wave6 = await import('../services/wave6ContextLearningService.js');
-                  if (!privateMode) {
+                  if (!privateMode && assistantScope === 'teresa_tenant') {
                     for (const source of used_sources.slice(0, 12)) {
                       await wave6.recordWave6ContextLedgerEntry({
                         organizationId: req.organizationId,
@@ -4166,7 +4202,11 @@ router.post(
                         sourceTitle: source.title || source.reference || null,
                         sourceUrl: source.link || source.reference || null,
                         freshnessAt: new Date().toISOString(),
-                        permissionScope: projectId ? 'project' : 'tenant',
+                        permissionScope: projectId
+                          ? 'project'
+                          : wave6MemoryScope === 'org'
+                            ? 'org'
+                            : 'tenant',
                       });
                     }
                   }
@@ -4175,8 +4215,8 @@ router.post(
                     const memoryCandidate = await wave6.captureWave6MemoryCandidate({
                       organizationId: req.organizationId,
                       userId: req.userId,
-                      assistantScope: 'teresa_tenant',
-                      memoryScope: projectId ? 'project' : 'user',
+                      assistantScope,
+                      memoryScope: wave6MemoryScope,
                       key: memoryRequest.key,
                       value: memoryRequest.value,
                       projectId,
@@ -5278,19 +5318,25 @@ router.get(
       projectId: z.string().uuid().optional(),
       status: z.string().optional(),
       limit: z.coerce.number().int().min(1).max(250).optional(),
+      scope: z.enum(['mine', 'org']).optional(),
     })
   ),
   asyncHandler(async (req: AuthRequest, res: Response) => {
-    if (req.userRole !== 'ADMIN' && req.userRole !== 'SUPERADMIN') {
+    const adminView =
+      (req.query as any).scope === 'org' &&
+      (req.userRole === 'ADMIN' || req.userRole === 'SUPERADMIN');
+    if ((req.query as any).scope === 'org' && !adminView) {
       return res.status(403).json({ success: false, error: 'Admin role required' });
     }
     try {
       const { listAIRuns } = await import('../services/aiRunLedgerService.js');
       const runs = await listAIRuns({
         organizationId: req.organizationId as string,
+        userId: req.userId as string,
         projectId: ((req.query as any).projectId as string | undefined) || null,
         status: ((req.query as any).status as string | undefined) || null,
         limit: ((req.query as any).limit as number | undefined) || 100,
+        adminView,
       });
       return res.json({ success: true, runs });
     } catch (err: any) {

@@ -30,6 +30,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
   const [requestedTools, setRequestedTools] = React.useState('search_knowledge_base');
   const [approvalAiRunId, setApprovalAiRunId] = React.useState('');
   const [approvalBudget, setApprovalBudget] = React.useState(false);
+  const [evalRunEnabled, setEvalRunEnabled] = React.useState(false);
   const [cadence, setCadence] = React.useState<'none' | 'daily' | 'weekly'>('none');
   const [swarmEnabled, setSwarmEnabled] = React.useState(false);
   const [swarmApproved, setSwarmApproved] = React.useState(false);
@@ -102,6 +103,13 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
           aiRunId: approvalAiRunId || null,
           budgetApproved: approvalBudget,
         },
+        evalRun: evalRunEnabled
+          ? {
+              enabled: true,
+              evaluatorAgentId: 'governance-agent',
+              criteria: ['schema', 'tool_scope', 'source_trace'],
+            }
+          : null,
       });
       setMessage(
         res?.allowed
@@ -219,6 +227,14 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
+                checked={evalRunEnabled}
+                onChange={(event) => setEvalRunEnabled(event.target.checked)}
+              />
+              Register eval run hook
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
                 checked={swarmEnabled}
                 onChange={(event) => setSwarmEnabled(event.target.checked)}
               />
@@ -306,7 +322,7 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               disabled={loading}
               className="mt-3 rounded-md border px-3 py-2 text-xs font-medium disabled:opacity-50 dark:border-navy-700"
             >
-              Process due schedules
+              Process due schedules (manual sweep)
             </button>
             <div className="mt-3 space-y-2">
               {schedules.map((schedule) => (
@@ -315,6 +331,10 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                   className="rounded-lg border p-3 text-xs dark:border-navy-700"
                 >
                   {schedule.agentId} / {schedule.cadence} / owner {schedule.ownerUserId}
+                  <div className="mt-1 text-slate-500">
+                    Scheduler: {schedule.schedulerMode || 'manual_process_due_endpoint'}; next:{' '}
+                    {schedule.nextRunAt || 'on demand'}
+                  </div>
                 </div>
               ))}
               {schedules.length === 0 && (
@@ -341,6 +361,11 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                     {run.audit?.swarmDecision?.reason || 'unknown'}; approval:{' '}
                     {run.audit?.approvalDecision?.reason || 'unknown'}
                   </div>
+                  <div className="mt-1 text-slate-500">
+                    Scheduler: {run.audit?.scheduler?.status || 'unknown'} /{' '}
+                    {run.audit?.scheduler?.trigger || 'unknown'}; eval hook:{' '}
+                    {run.audit?.evalRunHook?.status || 'not_requested'}
+                  </div>
                 </div>
               ))}
               {runs.length === 0 && <div className="text-sm text-slate-500">No runs yet.</div>}
@@ -357,6 +382,9 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
                 >
                   {notification.notificationType} / run {notification.runId} / owner{' '}
                   {notification.ownerUserId}
+                  <div className="mt-1 text-slate-500">
+                    Delivery: {notification.payload?.delivery?.dispatchMode || 'audit_log_only'}
+                  </div>
                 </div>
               ))}
               {notifications.length === 0 && (

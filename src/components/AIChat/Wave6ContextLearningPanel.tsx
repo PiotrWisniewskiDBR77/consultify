@@ -14,16 +14,17 @@ type Wave6Memory = {
   privateMode?: boolean;
 };
 
+type Wave6AssistantScope = 'anna_public' | 'teresa_tenant';
+type Wave6MemoryScope = 'public_product' | 'tenant' | 'org' | 'user' | 'project';
+type Wave6SnapshotScope = 'org' | 'project' | 'user';
+
 export const Wave6ContextLearningPanel: React.FC = () => {
   const [panel, setPanel] = React.useState<any>(null);
   const [projectId, setProjectId] = React.useState('');
+  const [snapshotScope, setSnapshotScope] = React.useState<Wave6SnapshotScope>('user');
   const [privateMode, setPrivateMode] = React.useState(false);
-  const [assistantScope, setAssistantScope] = React.useState<'anna_public' | 'teresa_tenant'>(
-    'teresa_tenant'
-  );
-  const [memoryScope, setMemoryScope] = React.useState<
-    'public_product' | 'tenant' | 'user' | 'project'
-  >('user');
+  const [assistantScope, setAssistantScope] = React.useState<Wave6AssistantScope>('teresa_tenant');
+  const [memoryScope, setMemoryScope] = React.useState<Wave6MemoryScope>('user');
   const [memoryKey, setMemoryKey] = React.useState('communication_style');
   const [memoryValue, setMemoryValue] = React.useState('');
   const [message, setMessage] = React.useState<string | null>(null);
@@ -46,28 +47,43 @@ export const Wave6ContextLearningPanel: React.FC = () => {
     void load();
   }, [load]);
 
+  React.useEffect(() => {
+    if (assistantScope === 'anna_public') {
+      setMemoryScope('public_product');
+    } else if (memoryScope === 'public_product') {
+      setMemoryScope(projectId.trim() ? 'project' : 'user');
+    }
+  }, [assistantScope, memoryScope, projectId]);
+
   const captureSnapshot = async () => {
+    if (snapshotScope === 'project' && !projectId.trim()) {
+      setMessage('Project snapshot requires a project id.');
+      return;
+    }
     setLoading(true);
     setMessage(null);
     try {
+      const snapshotType = snapshotScope;
+      const snapshotProjectId = snapshotType === 'project' ? projectId.trim() : null;
       const facts = {
-        projectId: projectId || null,
+        projectId: snapshotProjectId,
+        scope: snapshotType,
         userPreferencePreview: memoryValue || null,
         capturedBy: 'wave6_context_panel',
       };
       const res = await Api.captureWave6ContextSnapshot({
-        snapshotType: projectId ? 'project' : 'user',
-        projectId: projectId || null,
+        snapshotType,
+        projectId: snapshotProjectId,
         facts,
         sourceRefs: [{ sourceType: 'manual_panel', sourceTitle: 'Wave 6 context panel' }],
-        permissions: { scope: projectId ? 'project' : 'user', canForget: true },
+        permissions: { scope: snapshotType, canForget: true },
         privateMode,
       });
       if (res?.success === false) throw new Error(res?.error || 'Snapshot failed');
       setMessage(
         privateMode
           ? 'Private snapshot captured with limited retention.'
-          : 'Context snapshot captured.'
+          : `${snapshotType.toUpperCase()} context snapshot captured.`
       );
       await load();
     } catch (err: any) {
@@ -90,7 +106,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
         memoryScope,
         key: memoryKey.trim(),
         value: memoryValue.trim(),
-        projectId: projectId || null,
+        projectId: memoryScope === 'project' ? projectId.trim() || null : null,
         sourceLabel: 'Wave 6 panel user request',
         privateMode,
         retentionDays: 180,
@@ -169,6 +185,18 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               placeholder="Optional project id"
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />
+            <label className="block text-xs font-medium text-slate-500">Snapshot scope</label>
+            <select
+              value={snapshotScope}
+              onChange={(event) => setSnapshotScope(event.target.value as Wave6SnapshotScope)}
+              className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+            >
+              <option value="user">User work profile snapshot</option>
+              <option value="org">Organization snapshot</option>
+              <option value="project" disabled={!projectId.trim()}>
+                Project snapshot
+              </option>
+            </select>
             <label className="flex items-center gap-2 rounded-md border p-3 text-sm dark:border-navy-700">
               <input
                 type="checkbox"
@@ -193,7 +221,15 @@ export const Wave6ContextLearningPanel: React.FC = () => {
           <div className="mt-4 space-y-3">
             <select
               value={assistantScope}
-              onChange={(event) => setAssistantScope(event.target.value as typeof assistantScope)}
+              onChange={(event) => {
+                const nextScope = event.target.value as Wave6AssistantScope;
+                setAssistantScope(nextScope);
+                if (nextScope === 'anna_public') {
+                  setMemoryScope('public_product');
+                } else if (memoryScope === 'public_product') {
+                  setMemoryScope(projectId.trim() ? 'project' : 'user');
+                }
+              }}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
               <option value="teresa_tenant">Teresa tenant memory</option>
@@ -201,11 +237,12 @@ export const Wave6ContextLearningPanel: React.FC = () => {
             </select>
             <select
               value={memoryScope}
-              onChange={(event) => setMemoryScope(event.target.value as typeof memoryScope)}
+              onChange={(event) => setMemoryScope(event.target.value as Wave6MemoryScope)}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             >
               <option value="user">User</option>
               <option value="project">Project</option>
+              <option value="org">Organization</option>
               <option value="tenant">Tenant</option>
               <option value="public_product">Public product</option>
             </select>

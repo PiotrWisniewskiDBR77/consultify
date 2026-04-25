@@ -356,12 +356,13 @@ const handleResponse = async (res: Response, defaultError: string) => {
   })();
 
   const data = parsed.kind === 'json' ? parsed.json : {};
+  const errorInput = parsed.kind === 'json' ? data : parsed.kind === 'text' ? parsed.text : {};
 
   // Normalize error payloads to a readable string.
   // Some endpoints return { error: {...} } which would otherwise surface as "[object Object]".
   // If payload isn't helpful, include HTTP status (avoids generic "Request failed").
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
-  const normalizedMessage = normalizeApiErrorMessage(data, fallbackHttp || defaultError);
+  const normalizedMessage = normalizeApiErrorMessage(errorInput, fallbackHttp || defaultError);
 
   // Check for Demo Block
   if (
@@ -1323,6 +1324,8 @@ export const Api = {
       marketResearch?: boolean;
       coThinkerMode?: string | null;
       privateMode?: boolean;
+      assistantScope?: 'anna_public' | 'teresa_tenant';
+      memoryScope?: 'public_product' | 'tenant' | 'org' | 'user' | 'project';
       knowledgeSources?: {
         pmoDocuments?: boolean;
         projectData?: boolean;
@@ -1490,6 +1493,8 @@ export const Api = {
         | 'friendly';
       selectedTier?: 'BUDGET' | 'STANDARD' | 'PREMIUM' | 'REASONING';
       selectedModelId?: string | null;
+      assistantScope?: 'anna_public' | 'teresa_tenant';
+      memoryScope?: 'public_product' | 'tenant' | 'org' | 'user' | 'project';
     },
     abortSignal?: AbortSignal
   ) => {
@@ -1572,6 +1577,8 @@ export const Api = {
           knowledgeSources,
           responseStyle,
           privateMode: Boolean((options as any)?.privateMode),
+          assistantScope: options?.assistantScope ?? context?.assistantScope,
+          memoryScope: options?.memoryScope ?? context?.memoryScope,
           // Model routing
           selectedTier: options?.selectedTier,
           selectedModelId: nonEmptyStringOrNull(
@@ -12403,11 +12410,17 @@ export const Api = {
     }
   },
 
-  getAIRunLedger: async (params?: { projectId?: string; status?: string; limit?: number }) => {
+  getAIRunLedger: async (params?: {
+    projectId?: string;
+    status?: string;
+    scope?: 'mine' | 'org';
+    limit?: number;
+  }) => {
     try {
       const qs = new URLSearchParams();
       if (params?.projectId) qs.set('projectId', params.projectId);
       if (params?.status) qs.set('status', params.status);
+      if (params?.scope) qs.set('scope', params.scope);
       if (params?.limit) qs.set('limit', String(params.limit));
       const suffix = qs.toString() ? `?${qs.toString()}` : '';
       const res = await fetchWithRetry(`${API_URL}/ai/actions/runs${suffix}`);
@@ -12686,7 +12699,7 @@ export const Api = {
 
   captureWave6MemoryCandidate: async (payload: {
     assistantScope: 'anna_public' | 'teresa_tenant';
-    memoryScope: 'public_product' | 'tenant' | 'user' | 'project';
+    memoryScope: 'public_product' | 'tenant' | 'org' | 'user' | 'project';
     key: string;
     value: string;
     projectId?: string | null;
@@ -12831,6 +12844,11 @@ export const Api = {
       aiRunId?: string | null;
       budgetApproved?: boolean;
     } | null;
+    evalRun?: {
+      enabled: boolean;
+      evaluatorAgentId?: string | null;
+      criteria?: string[];
+    } | null;
   }) => {
     const res = await fetchWithRetry(`${API_URL}/ai-agents/launch`, {
       method: 'POST',
@@ -12881,6 +12899,31 @@ export const Api = {
   listWave9Outcomes: async () => {
     const res = await fetchWithRetry(`${API_URL}/ai-outcomes/outcomes`);
     return handleResponse(res, 'Failed to load Wave 9 outcomes');
+  },
+
+  registerWave9Evidence: async (payload: {
+    evidenceType:
+      | 'initiative'
+      | 'task'
+      | 'kpi'
+      | 'regression_pack'
+      | 'ciso_pack'
+      | 'business_persona_pack'
+      | 'compliance_audit'
+      | 'ai_ops_eval_pack';
+    sourceType: string;
+    sourceId: string;
+    title?: string | null;
+    status: 'pass' | 'fail' | 'pending';
+    verifiedBy?: string | null;
+    verificationMethod?: string | null;
+    payload?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/evidence`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to register Wave 9 evidence');
   },
 
   createWave9Outcome: async (payload: {
@@ -12935,6 +12978,51 @@ export const Api = {
     return handleResponse(res, 'Failed to record Wave 9 provider health');
   },
 
+  recordWave9EvalRun: async (payload: {
+    promptKey: string;
+    promptVersion?: string | null;
+    category?: 'golden_prompt' | 'hallucination_check' | 'tool_misuse_check' | 'regression_gate';
+    status: 'pass' | 'fail';
+    score?: number | null;
+    hallucinationCheckPassed?: boolean | null;
+    toolMisuseCheckPassed?: boolean | null;
+    runRef?: string | null;
+    details?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/eval-runs`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to record Wave 9 eval run');
+  },
+
+  listWave9AcceptanceRuns: async () => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/acceptance-runs`);
+    return handleResponse(res, 'Failed to load Wave 9 acceptance runs');
+  },
+
+  registerWave9AcceptanceRun: async (payload: {
+    runType:
+      | 'regression_pack'
+      | 'ciso_pack'
+      | 'business_persona_pack'
+      | 'compliance_audit'
+      | 'ai_ops_eval_pack';
+    status: 'pass' | 'fail';
+    runRef?: string | null;
+    buildId?: string | null;
+    commitSha?: string | null;
+    verifiedBy?: string | null;
+    verificationMethod?: string | null;
+    payload?: Record<string, unknown>;
+  }) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-outcomes/acceptance-runs`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return handleResponse(res, 'Failed to register Wave 9 acceptance run');
+  },
+
   recordWave9Incident: async (payload: {
     severity: 'low' | 'medium' | 'high' | 'critical';
     title: string;
@@ -12966,6 +13054,15 @@ export const Api = {
       cisoPackRunId?: string | null;
       businessPersonaPackRunId?: string | null;
       complianceAuditRef?: string | null;
+      aiOpsEvalRunId?: string | null;
+      aiOpsEvalPackRunId?: string | null;
+    };
+    acceptanceRunRefs?: {
+      regressionRunId?: string | null;
+      cisoPackRunId?: string | null;
+      businessPersonaPackRunId?: string | null;
+      complianceAuditRunId?: string | null;
+      aiOpsEvalPackRunId?: string | null;
     };
     acceptedLimitations?: string[];
   }) => {
@@ -13273,10 +13370,10 @@ export const Api = {
     try {
       const q = new URLSearchParams();
       if (params?.status?.length) q.set('status', params.status.join(','));
-      if (params?.userScope) q.set('userScope', params.userScope);
+      if (params?.userScope) q.set('scope', params.userScope === 'org' ? 'org' : 'mine');
       if (params?.limit) q.set('limit', String(params.limit));
       const qs = q.toString();
-      const res = await fetchWithRetry(`${API_URL}/ai/research/sessions${qs ? `?${qs}` : ''}`, {
+      const res = await fetchWithRetry(`${API_URL}/research/sessions${qs ? `?${qs}` : ''}`, {
         method: 'GET',
       });
       if (!res.ok) return { sessions: [] as any[] };

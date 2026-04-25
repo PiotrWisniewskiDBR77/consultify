@@ -122,6 +122,46 @@ function isGovernedMutationAction(actionType: string): boolean {
   return ![ACTION_TYPES.EXPLAIN_CONTEXT, ACTION_TYPES.ANALYZE_RISKS].includes(actionType);
 }
 
+function isDestructiveAction(actionType: string): boolean {
+  return /(^|_)(DELETE|REMOVE|ARCHIVE|REVOKE|RESET|ROLLBACK|PURGE)(_|$)/i.test(actionType || '');
+}
+
+function allowsPatternAutoApprovalForGovernedMutation(
+  permission: any,
+  actionType: string
+): boolean {
+  if (isDestructiveAction(actionType)) {
+    return permission?.allowDestructiveAutoApproval === true;
+  }
+  return (
+    permission?.allowLearnedAutoApproval === true ||
+    permission?.learnedAutoApprovalAllowed === true ||
+    permission?.allowGovernedMutationAutoApproval === true ||
+    permission?.currentLevel === 'AUTOPILOT'
+  );
+}
+
+function rollbackStateForResult(result: any): {
+  rollbackStatus: 'rollback_available' | 'rollback_unavailable';
+  rollbackAvailable: boolean;
+  rollbackStrategy?: string;
+} {
+  const hasOutputRef = Boolean(
+    result && Object.entries(result).some(([key, value]) => /id$/i.test(key) && Boolean(value))
+  );
+  if (hasOutputRef) {
+    return {
+      rollbackStatus: 'rollback_available',
+      rollbackAvailable: true,
+      rollbackStrategy: 'delete_created_output_refs',
+    };
+  }
+  return {
+    rollbackStatus: 'rollback_unavailable',
+    rollbackAvailable: false,
+  };
+}
+
 function normalizeActionRow(action: any): any {
   return {
     id: action.id,
@@ -365,7 +405,20 @@ const AIActionExecutor = {
           };
         }
 
-        requiresApproval = false;
+        if (
+          !isGovernedMutationAction(actionType) ||
+          allowsPatternAutoApprovalForGovernedMutation(permission, actionType)
+        ) {
+          requiresApproval = false;
+        } else {
+          autoDecided = false;
+          autoDecision = null;
+          patternInfo = {
+            ...patternInfo,
+            reason: 'Learned approval pattern requires explicit policy allowance',
+            bypassBlocked: true,
+          };
+        }
       }
     }
 
@@ -798,18 +851,21 @@ const AIActionExecutor = {
             .filter(([key, value]) => /id$/i.test(key) && value)
             .map(([key, value]) => ({ type: key.replace(/Id$/i, ''), id: value }))
         : [];
+      const rollback = rollbackStateForResult(result);
       const aiRun = await recordAIRunEvent({
         action: { ...actionRow, status: ACTION_STATUS.EXECUTED },
         eventType: 'execution_succeeded',
         status: 'audited',
         actorUserId: _userId,
-        details: { result },
+        details: { result, rollbackStatus: rollback.rollbackStatus },
         outputRefs,
         audit: {
           executedBy: _userId,
           executedAt: new Date().toISOString(),
           result,
-          rollbackAvailable: false,
+          rollbackStatus: rollback.rollbackStatus,
+          rollbackAvailable: rollback.rollbackAvailable,
+          rollbackStrategy: rollback.rollbackStrategy || null,
         },
       });
 
@@ -834,6 +890,7 @@ const AIActionExecutor = {
         actionId,
         runId: aiRun?.runId || aiRun?.run_id,
         result,
+        rollbackStatus: rollback.rollbackStatus,
         status: ACTION_STATUS.EXECUTED,
         lifecycleState: 'audited',
         aiRun,
@@ -851,10 +908,13 @@ const AIActionExecutor = {
         details: {
           error: (err as Error).message,
           rollbackRequired: false,
+          rollbackStatus: 'rollback_unavailable',
         },
         audit: {
           failedAt: new Date().toISOString(),
           error: (err as Error).message,
+          rollbackStatus: 'rollback_unavailable',
+          rollbackAvailable: false,
         },
       });
       if (options?.conversationId) {
@@ -876,6 +936,7 @@ const AIActionExecutor = {
         actionId,
         runId: aiRun?.runId || aiRun?.run_id,
         error: (err as Error).message,
+        rollbackStatus: 'rollback_unavailable',
         status: ACTION_STATUS.FAILED,
         lifecycleState: 'failed',
         aiRun,

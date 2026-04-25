@@ -5,7 +5,7 @@ import { canWriteMemory, getUserPrivacySettings } from './ai/userPrivacyService.
 
 export type Wave6SnapshotType = 'org' | 'project' | 'user';
 export type Wave6AssistantScope = 'anna_public' | 'teresa_tenant';
-export type Wave6MemoryScope = 'public_product' | 'tenant' | 'user' | 'project';
+export type Wave6MemoryScope = 'public_product' | 'tenant' | 'org' | 'user' | 'project';
 export type Wave6MemoryStatus =
   | 'captured'
   | 'candidate'
@@ -53,6 +53,7 @@ export interface Wave6UserWorkProfile {
   userId: string;
   organizationId: string;
   projectId: string | null;
+  assistantScope: Wave6AssistantScope;
   preferences: Array<{ key: string; value: string; sourceLabel: string | null; status: string }>;
   sourceLabel: 'wave6_memory_stewardship';
 }
@@ -82,6 +83,41 @@ function retentionUntil(days?: number | null): string | null {
   const date = new Date();
   date.setDate(date.getDate() + days);
   return date.toISOString();
+}
+
+function hasNotExpired(raw: unknown): boolean {
+  if (!raw) return true;
+  const expiresAt = Date.parse(String(raw));
+  return Number.isNaN(expiresAt) || expiresAt > Date.now();
+}
+
+export function normalizeWave6AssistantScope(
+  value: unknown,
+  fallback: Wave6AssistantScope = 'teresa_tenant'
+): Wave6AssistantScope {
+  return value === 'anna_public' || value === 'teresa_tenant' ? value : fallback;
+}
+
+export function normalizeWave6MemoryScope(
+  value: unknown,
+  fallback: Wave6MemoryScope = 'user',
+  assistantScope: Wave6AssistantScope = 'teresa_tenant'
+): Wave6MemoryScope {
+  if (assistantScope === 'anna_public') return 'public_product';
+  return value === 'public_product' ||
+    value === 'tenant' ||
+    value === 'org' ||
+    value === 'user' ||
+    value === 'project'
+    ? value
+    : fallback;
+}
+
+export function normalizeWave6SnapshotType(
+  value: unknown,
+  fallback: Wave6SnapshotType = 'user'
+): Wave6SnapshotType {
+  return value === 'org' || value === 'project' || value === 'user' ? value : fallback;
 }
 
 function mapSnapshot(row: any): any {
@@ -232,6 +268,8 @@ export async function captureWave6ContextSnapshot(
 ): Promise<any> {
   await ensureWave6ContextLearningSchema();
   const snapshotId = `ctx6-${uuidv4()}`;
+  const snapshotType = normalizeWave6SnapshotType(input.snapshotType);
+  const projectId = snapshotType === 'project' ? input.projectId || null : null;
   const expiresAt = input.privateMode ? retentionUntil(1) : null;
   await dbRun(
     `INSERT INTO wave6_context_snapshots (
@@ -241,9 +279,9 @@ export async function captureWave6ContextSnapshot(
     [
       snapshotId,
       input.organizationId,
-      input.projectId || null,
+      projectId,
       input.userId,
-      input.snapshotType,
+      snapshotType,
       safeJsonStringify(input.facts || {}),
       safeJsonStringify(input.sourceRefs || []),
       safeJsonStringify(input.permissions || {}),
@@ -299,15 +337,28 @@ export async function listWave6ContextPanel(params: {
   projectId?: string | null;
 }): Promise<any> {
   await ensureWave6ContextLearningSchema();
-  const projectFilter = params.projectId ? `AND (project_id IS NULL OR project_id = ?)` : '';
+  const projectFilter = params.projectId
+    ? `AND (project_id IS NULL OR project_id = ?)`
+    : `AND project_id IS NULL`;
   const values = params.projectId
     ? [params.organizationId, params.userId, params.projectId]
     : [params.organizationId, params.userId];
+  const snapshotProjectClause = params.projectId
+    ? `OR (user_id = ? AND snapshot_type = 'project' AND project_id = ?)`
+    : '';
+  const snapshotValues = params.projectId
+    ? [params.organizationId, params.userId, params.userId, params.projectId]
+    : [params.organizationId, params.userId];
   const snapshots = await dbAll(
     `SELECT * FROM wave6_context_snapshots
-     WHERE organization_id = ? AND user_id = ? ${projectFilter}
+     WHERE organization_id = ?
+       AND (
+         (snapshot_type = 'org' AND project_id IS NULL)
+         OR (user_id = ? AND snapshot_type = 'user' AND project_id IS NULL)
+         ${snapshotProjectClause}
+       )
      ORDER BY created_at DESC LIMIT 25`,
-    values
+    snapshotValues
   );
   const ledger = await dbAll(
     `SELECT * FROM wave6_context_ledger
@@ -325,9 +376,13 @@ export async function listWave6ContextPanel(params: {
     organizationId: params.organizationId,
     userId: params.userId,
     projectId: params.projectId || null,
-    snapshots: (snapshots || []).map(mapSnapshot),
+    snapshots: (snapshots || [])
+      .filter((row: any) => hasNotExpired(row.expires_at))
+      .map(mapSnapshot),
     ledger: (ledger || []).map(mapLedger),
-    memories: (memories || []).map(mapCandidate),
+    memories: (memories || [])
+      .filter((row: any) => hasNotExpired(row.retention_until))
+      .map(mapCandidate),
   };
 }
 
@@ -336,33 +391,41 @@ export async function buildWave6UserWorkProfile(params: {
   userId: string;
   projectId?: string | null;
   privateMode?: boolean;
+  assistantScope?: Wave6AssistantScope;
 }): Promise<Wave6UserWorkProfile> {
   await ensureWave6ContextLearningSchema();
-  if (params.privateMode) {
+  const assistantScope = normalizeWave6AssistantScope(params.assistantScope);
+  if (params.privateMode || assistantScope === 'anna_public') {
     return {
       userId: params.userId,
       organizationId: params.organizationId,
       projectId: params.projectId || null,
+      assistantScope,
       preferences: [],
       sourceLabel: 'wave6_memory_stewardship',
     };
   }
-  const projectFilter = params.projectId ? `AND (project_id IS NULL OR project_id = ?)` : '';
+  const projectFilter = params.projectId
+    ? `AND (project_id IS NULL OR project_id = ?)`
+    : `AND project_id IS NULL`;
   const values = params.projectId
-    ? [params.organizationId, params.userId, params.projectId]
-    : [params.organizationId, params.userId];
+    ? [params.organizationId, params.userId, params.projectId, assistantScope]
+    : [params.organizationId, params.userId, assistantScope];
   const rows = await dbAll(
     `SELECT * FROM wave6_memory_candidates
      WHERE organization_id = ? AND user_id = ? ${projectFilter}
+       AND assistant_scope = ?
        AND status IN ('retained', 'applied')
      ORDER BY updated_at DESC LIMIT 20`,
     values
   );
+  const unexpiredRows = (rows || []).filter((row: any) => hasNotExpired(row.retention_until));
   return {
     userId: params.userId,
     organizationId: params.organizationId,
     projectId: params.projectId || null,
-    preferences: (rows || []).map((row: any) => ({
+    assistantScope,
+    preferences: unexpiredRows.map((row: any) => ({
       key: row.memory_key,
       value: row.memory_value,
       sourceLabel: row.source_label || null,
@@ -406,6 +469,12 @@ export async function captureWave6MemoryCandidate(
   input: CaptureWave6MemoryCandidateInput
 ): Promise<any> {
   await ensureWave6ContextLearningSchema();
+  const assistantScope = normalizeWave6AssistantScope(input.assistantScope);
+  const requestedMemoryScope = normalizeWave6MemoryScope(input.memoryScope, 'user');
+  const memoryScope =
+    assistantScope === 'anna_public'
+      ? normalizeWave6MemoryScope(input.memoryScope, 'user', assistantScope)
+      : requestedMemoryScope;
   if (input.privateMode) {
     return {
       blocked: true,
@@ -413,20 +482,28 @@ export async function captureWave6MemoryCandidate(
       candidate: null,
     };
   }
-  if (input.assistantScope === 'anna_public' && input.memoryScope !== 'public_product') {
+  if (assistantScope === 'anna_public' && requestedMemoryScope !== 'public_product') {
     return {
       blocked: true,
       reason: 'anna_cannot_learn_tenant_or_user_data',
       candidate: null,
     };
   }
-  if (input.assistantScope === 'teresa_tenant' && input.memoryScope === 'public_product') {
+  if (assistantScope === 'teresa_tenant' && memoryScope === 'public_product') {
     return {
       blocked: true,
       reason: 'teresa_memory_must_stay_in_tenant_scope',
       candidate: null,
     };
   }
+  if (memoryScope === 'project' && !input.projectId) {
+    return {
+      blocked: true,
+      reason: 'project_memory_requires_project_scope',
+      candidate: null,
+    };
+  }
+  const projectId = memoryScope === 'project' ? input.projectId || null : null;
   const candidateId = `mem6-${uuidv4()}`;
   await dbRun(
     `INSERT INTO wave6_memory_candidates (
@@ -437,10 +514,10 @@ export async function captureWave6MemoryCandidate(
     [
       candidateId,
       input.organizationId,
-      input.projectId || null,
+      projectId,
       input.userId,
-      input.assistantScope,
-      input.memoryScope,
+      assistantScope,
+      memoryScope,
       input.key,
       input.value,
       input.sourceLabel || 'user_requested_memory',
@@ -468,7 +545,9 @@ export async function decideWave6MemoryCandidate(
   if (input.decision === 'approve') status = 'retained';
   if (input.decision === 'apply') status = 'applied';
   if (input.decision === 'expire') status = 'expired';
-  if (status === 'retained' || status === 'applied') {
+  const writesUserMemory =
+    candidate.assistantScope === 'teresa_tenant' && candidate.memoryScope !== 'public_product';
+  if ((status === 'retained' || status === 'applied') && writesUserMemory) {
     const privacy = await getUserPrivacySettings(candidate.userId);
     if (!canWriteMemory(privacy, false)) {
       throw new Error('Memory writes are disabled by privacy settings');

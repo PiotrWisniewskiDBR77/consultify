@@ -120,6 +120,8 @@ export const ChatStreamRequestSchema = z.object({
   endpoint: z.string().min(1).optional(),
   // Privacy
   privateMode: z.boolean().optional(),
+  assistantScope: z.enum(['anna_public', 'teresa_tenant']).optional(),
+  memoryScope: z.enum(['public_product', 'tenant', 'org', 'user', 'project']).optional(),
   aiModes: z
     .object({
       deepResearch: z.boolean().optional(),

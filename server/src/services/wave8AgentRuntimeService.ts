@@ -62,6 +62,15 @@ export interface LaunchWave8AgentInput {
     aiRunId?: string | null;
     budgetApproved?: boolean;
   } | null;
+  evalRun?: {
+    enabled: boolean;
+    evaluatorAgentId?: string | null;
+    criteria?: string[];
+  } | null;
+  schedulerContext?: {
+    scheduleId?: string | null;
+    trigger: 'launch_request' | 'manual_process_due';
+  } | null;
 }
 
 let schemaReady: Promise<void> | null = null;
@@ -342,11 +351,15 @@ export async function ensureWave8AgentRuntimeSchema(): Promise<void> {
         owner_user_id TEXT NOT NULL,
         cadence TEXT NOT NULL,
         next_run_at TEXT,
+        scheduler_mode TEXT NOT NULL DEFAULT 'manual_process_due_endpoint',
         status TEXT NOT NULL,
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await dbRun(
+      `ALTER TABLE wave8_agent_schedules ADD COLUMN scheduler_mode TEXT DEFAULT 'manual_process_due_endpoint'`
+    ).catch(() => undefined);
     await dbRun(
       `CREATE INDEX IF NOT EXISTS idx_wave8_agent_runs_org ON wave8_agent_runs(organization_id, created_at)`
     );
@@ -445,6 +458,47 @@ async function recordWave8Notification(input: {
   );
 }
 
+function buildSchedulerAudit(input: LaunchWave8AgentInput): Record<string, unknown> {
+  if (input.schedule) {
+    return {
+      requested: true,
+      status: 'registered',
+      schedulerMode: 'manual_process_due_endpoint',
+      cronBacked: false,
+      trigger: 'launch_request',
+      cadence: input.schedule.cadence,
+      nextRunAt: input.schedule.nextRunAt || null,
+      note: 'Schedule is registered for explicit process-due sweeps; no background cron is implied here.',
+    };
+  }
+  if (input.schedulerContext?.trigger === 'manual_process_due') {
+    return {
+      requested: false,
+      status: 'triggered',
+      schedulerMode: 'manual_process_due_endpoint',
+      cronBacked: false,
+      trigger: 'manual_process_due',
+      scheduleId: input.schedulerContext.scheduleId || null,
+    };
+  }
+  return { requested: false, status: 'not_scheduled', trigger: 'direct_launch' };
+}
+
+function buildEvalRunHook(input: LaunchWave8AgentInput): Record<string, unknown> {
+  if (!input.evalRun?.enabled) {
+    return { requested: false, status: 'not_requested' };
+  }
+  return {
+    requested: true,
+    status: 'registered',
+    mode: 'audit_hook_only',
+    evaluatorAgentId: input.evalRun.evaluatorAgentId || 'governance-agent',
+    criteria: Array.isArray(input.evalRun.criteria) ? input.evalRun.criteria : [],
+    executed: false,
+    note: 'Eval hook is recorded for a downstream evaluator; this launch path does not execute an eval run.',
+  };
+}
+
 function outputForAgent(definition: Wave8AgentDefinition, input: LaunchWave8AgentInput): any {
   const base = {
     agentId: definition.agentId,
@@ -537,12 +591,16 @@ export async function launchWave8Agent(input: LaunchWave8AgentInput): Promise<an
         : 'completed'
       : 'blocked';
   const runId = `agent8-${uuidv4()}`;
-  const output = status === 'blocked' ? null : outputForAgent(definition, input);
+  const output = status === 'completed' ? outputForAgent(definition, input) : null;
   const schemaValid = output ? validateOutputSchema(definition, output) : false;
+  const schedulerAudit = buildSchedulerAudit(input);
+  const evalRunHook = buildEvalRunHook(input);
   const audit = {
     toolDecision,
     swarmDecision,
     approvalDecision,
+    scheduler: schedulerAudit,
+    evalRunHook,
     approvalPolicy: definition.approvalPolicy,
     costClass: definition.costClass,
     noSilentExecution: true,
@@ -577,8 +635,8 @@ export async function launchWave8Agent(input: LaunchWave8AgentInput): Promise<an
   if (status === 'scheduled' && input.schedule) {
     await dbRun(
       `INSERT INTO wave8_agent_schedules (
-        schedule_id, organization_id, agent_id, owner_user_id, cadence, next_run_at, status
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        schedule_id, organization_id, agent_id, owner_user_id, cadence, next_run_at, scheduler_mode, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         `sched8-${uuidv4()}`,
         input.organizationId,
@@ -586,6 +644,7 @@ export async function launchWave8Agent(input: LaunchWave8AgentInput): Promise<an
         input.schedule.ownerUserId || input.userId,
         input.schedule.cadence,
         input.schedule.nextRunAt || null,
+        'manual_process_due_endpoint',
         'active',
       ]
     );
@@ -600,6 +659,30 @@ export async function launchWave8Agent(input: LaunchWave8AgentInput): Promise<an
         agentId: input.agentId,
         status,
         schemaValid,
+        scheduler: schedulerAudit,
+        evalRunHook,
+        delivery: {
+          channel: 'in_app_audit',
+          dispatchMode: 'audit_log_only',
+          deliveredExternally: false,
+        },
+      },
+    });
+  }
+  if (evalRunHook.requested === true) {
+    await recordWave8Notification({
+      organizationId: input.organizationId,
+      runId,
+      ownerUserId: input.schedule?.ownerUserId || input.userId,
+      notificationType: 'agent_eval_hook_registered',
+      payload: {
+        agentId: input.agentId,
+        evalRunHook,
+        delivery: {
+          channel: 'in_app_audit',
+          dispatchMode: 'audit_log_only',
+          deliveredExternally: false,
+        },
       },
     });
   }
@@ -673,6 +756,10 @@ export async function processDueWave8AgentSchedules(params: {
       requestedTools: [],
       schedule: null,
       approval: { budgetApproved: true },
+      schedulerContext: {
+        scheduleId: row.schedule_id,
+        trigger: 'manual_process_due',
+      },
     });
     const nextRunAt =
       cadence === 'daily'
@@ -686,6 +773,24 @@ export async function processDueWave8AgentSchedules(params: {
        WHERE schedule_id = ?`,
       [nextRunAt, cadence === 'once' ? 'completed' : 'active', row.schedule_id]
     ).catch(() => undefined);
+    await recordWave8Notification({
+      organizationId: row.organization_id,
+      runId: result.run.runId,
+      ownerUserId: row.owner_user_id,
+      notificationType: 'agent_schedule_processed',
+      payload: {
+        scheduleId: row.schedule_id,
+        cadence,
+        schedulerMode: row.scheduler_mode || 'manual_process_due_endpoint',
+        nextRunAt,
+        scheduleStatus: cadence === 'once' ? 'completed' : 'active',
+        delivery: {
+          channel: 'in_app_audit',
+          dispatchMode: 'audit_log_only',
+          deliveredExternally: false,
+        },
+      },
+    });
     processed.push(result.run);
   }
   return processed;
@@ -716,8 +821,10 @@ export async function listWave8AgentSchedules(params: { organizationId: string }
     ownerUserId: row.owner_user_id,
     cadence: row.cadence,
     nextRunAt: row.next_run_at || null,
+    schedulerMode: row.scheduler_mode || 'manual_process_due_endpoint',
     status: row.status,
     createdAt: row.created_at,
+    updatedAt: row.updated_at || null,
   }));
 }
 

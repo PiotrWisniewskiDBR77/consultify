@@ -28,7 +28,11 @@ vi.mock('../../../server/src/services/ai/toolDefinitions.js', () => ({
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.startsWith('CREATE TABLE') || normalized.startsWith('CREATE INDEX')) {
+    if (
+      normalized.startsWith('CREATE TABLE') ||
+      normalized.startsWith('CREATE INDEX') ||
+      normalized.startsWith('ALTER TABLE')
+    ) {
       return { changes: 0 };
     }
     if (normalized.startsWith('INSERT INTO wave8_agent_runs')) {
@@ -68,7 +72,16 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       return { changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO wave8_agent_schedules')) {
-      const [scheduleId, organizationId, agentId, ownerUserId, cadence, nextRunAt, status] = params;
+      const [
+        scheduleId,
+        organizationId,
+        agentId,
+        ownerUserId,
+        cadence,
+        nextRunAt,
+        schedulerMode,
+        status,
+      ] = params;
       db.schedules.set(scheduleId, {
         schedule_id: scheduleId,
         organization_id: organizationId,
@@ -76,8 +89,10 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         owner_user_id: ownerUserId,
         cadence,
         next_run_at: nextRunAt,
+        scheduler_mode: schedulerMode,
         status,
         created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       });
       return { changes: 1 };
     }
@@ -150,9 +165,8 @@ describe('Wave 8 agent runtime', () => {
   });
 
   it('exposes a complete specialized agent catalog with scoped tools and schemas', async () => {
-    const { listWave8AgentDefinitions } = await import(
-      '../../../server/src/services/wave8AgentRuntimeService.js'
-    );
+    const { listWave8AgentDefinitions } =
+      await import('../../../server/src/services/wave8AgentRuntimeService.js');
     const agents = await listWave8AgentDefinitions();
 
     expect(agents.map((agent) => agent.agentId)).toEqual(
@@ -174,9 +188,8 @@ describe('Wave 8 agent runtime', () => {
   });
 
   it('blocks tool misuse and swarm without approval and budget gate', async () => {
-    const { launchWave8Agent } = await import(
-      '../../../server/src/services/wave8AgentRuntimeService.js'
-    );
+    const { launchWave8Agent } =
+      await import('../../../server/src/services/wave8AgentRuntimeService.js');
 
     const blockedTool = await launchWave8Agent({
       organizationId: 'org-1',
@@ -203,9 +216,8 @@ describe('Wave 8 agent runtime', () => {
   });
 
   it('launches role-specific schema-valid output and creates owner-audited schedules', async () => {
-    const { launchWave8Agent, listWave8AgentNotifications, listWave8AgentSchedules } = await import(
-      '../../../server/src/services/wave8AgentRuntimeService.js'
-    );
+    const { launchWave8Agent, listWave8AgentNotifications, listWave8AgentSchedules } =
+      await import('../../../server/src/services/wave8AgentRuntimeService.js');
 
     const cfo = await launchWave8Agent({
       organizationId: 'org-1',
@@ -217,6 +229,7 @@ describe('Wave 8 agent runtime', () => {
     expect(cfo.allowed).toBe(true);
     expect(cfo.run.schemaValid).toBe(true);
     expect(cfo.run.output.type).toBe('financial_model');
+    expect(cfo.run.audit.scheduler.status).toBe('not_scheduled');
 
     const scheduled = await launchWave8Agent({
       organizationId: 'org-1',
@@ -231,17 +244,33 @@ describe('Wave 8 agent runtime', () => {
       },
     });
     expect(scheduled.run.status).toBe('scheduled');
+    expect(scheduled.run.output).toBeNull();
+    expect(scheduled.run.schemaValid).toBe(false);
+    expect(scheduled.run.audit.scheduler).toEqual(
+      expect.objectContaining({
+        schedulerMode: 'manual_process_due_endpoint',
+        cronBacked: false,
+        status: 'registered',
+      })
+    );
     expect(scheduled.run.ownerUserId).toBe('owner-1');
     const schedules = await listWave8AgentSchedules({ organizationId: 'org-1' });
-    expect(schedules[0]).toEqual(expect.objectContaining({ ownerUserId: 'owner-1' }));
+    expect(schedules[0]).toEqual(
+      expect.objectContaining({
+        ownerUserId: 'owner-1',
+        schedulerMode: 'manual_process_due_endpoint',
+      })
+    );
     const notifications = await listWave8AgentNotifications({ organizationId: 'org-1' });
     expect(notifications.length).toBeGreaterThan(0);
+    expect(
+      notifications.some((item) => item.payload?.delivery?.dispatchMode === 'audit_log_only')
+    ).toBe(true);
   });
 
   it('enforces approvalPolicy and processes due schedules', async () => {
-    const { launchWave8Agent, processDueWave8AgentSchedules } = await import(
-      '../../../server/src/services/wave8AgentRuntimeService.js'
-    );
+    const { launchWave8Agent, processDueWave8AgentSchedules } =
+      await import('../../../server/src/services/wave8AgentRuntimeService.js');
 
     const blockedExecution = await launchWave8Agent({
       organizationId: 'org-1',
@@ -305,12 +334,48 @@ describe('Wave 8 agent runtime', () => {
       now: '2026-04-26T00:00:00.000Z',
     });
     expect(processed.length).toBeGreaterThan(0);
+    expect(processed[0].audit.scheduler).toEqual(
+      expect.objectContaining({
+        trigger: 'manual_process_due',
+        cronBacked: false,
+      })
+    );
+  });
+
+  it('records eval run hooks as audit-only hooks without executing an evaluator', async () => {
+    const { launchWave8Agent, listWave8AgentNotifications } =
+      await import('../../../server/src/services/wave8AgentRuntimeService.js');
+
+    const result = await launchWave8Agent({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      agentId: 'research-agent',
+      goal: 'Research with eval hook',
+      requestedTools: ['search_knowledge_base'],
+      evalRun: {
+        enabled: true,
+        evaluatorAgentId: 'governance-agent',
+        criteria: ['schema', 'source_trace'],
+      },
+    });
+
+    expect(result.allowed).toBe(true);
+    expect(result.run.audit.evalRunHook).toEqual(
+      expect.objectContaining({
+        status: 'registered',
+        mode: 'audit_hook_only',
+        executed: false,
+      })
+    );
+    const notifications = await listWave8AgentNotifications({ organizationId: 'org-1' });
+    expect(
+      notifications.some((item) => item.notificationType === 'agent_eval_hook_registered')
+    ).toBe(true);
   });
 
   it('enforces tool scope before executing agent tools', async () => {
-    const { executeWave8AgentTool } = await import(
-      '../../../server/src/services/wave8AgentRuntimeService.js'
-    );
+    const { executeWave8AgentTool } =
+      await import('../../../server/src/services/wave8AgentRuntimeService.js');
 
     const denied = await executeWave8AgentTool({
       organizationId: 'org-1',

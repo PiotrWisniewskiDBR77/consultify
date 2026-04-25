@@ -97,7 +97,11 @@ vi.mock('../../../server/src/services/dataCollection/index.js', () => ({
 vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   run: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
-    if (normalized.startsWith('CREATE TABLE') || normalized.startsWith('CREATE INDEX')) {
+    if (
+      normalized.startsWith('CREATE TABLE') ||
+      normalized.startsWith('CREATE INDEX') ||
+      normalized.startsWith('ALTER TABLE')
+    ) {
       return { changes: 0 };
     }
     if (normalized.startsWith('INSERT INTO wave7_connectors')) {
@@ -113,6 +117,10 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         ownerUserId,
         tenantPolicyJson,
         lastSyncAt,
+        tokenExpiresAt,
+        reconnectRequired,
+        accessRevokedAt,
+        revokedReason,
         freshnessTtlMinutes,
         failureState,
       ] = params;
@@ -128,6 +136,10 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
         owner_user_id: ownerUserId,
         tenant_policy_json: tenantPolicyJson,
         last_sync_at: lastSyncAt,
+        token_expires_at: tokenExpiresAt,
+        reconnect_required: reconnectRequired,
+        access_revoked_at: accessRevokedAt,
+        revoked_reason: revokedReason,
         freshness_ttl_minutes: freshnessTtlMinutes,
         failure_state: failureState,
         created_at: new Date().toISOString(),
@@ -177,10 +189,16 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       const [
         status,
         authStatusA,
+        authRevokedAt,
         authStatusB,
         projectIdsJson,
         tenantPolicyJson,
         failureState,
+        tokenExpiresAt,
+        reconnectRequired,
+        accessRevokedAt,
+        revokedReason,
+        lastSyncAt,
         connectorId,
         organizationId,
       ] = params;
@@ -188,12 +206,18 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       if (!row || row.organization_id !== organizationId) return { changes: 0 };
       if (status) row.status = status;
       if (authStatusA === 'connected') row.auth_state = 'authorized';
+      if (authRevokedAt) row.auth_state = 'revoked';
       if (authStatusB === 'disconnected' || authStatusB === 'failed') {
         row.auth_state = 'not_connected';
       }
       if (projectIdsJson) row.project_ids_json = projectIdsJson;
       row.tenant_policy_json = tenantPolicyJson;
       row.failure_state = failureState;
+      row.token_expires_at = tokenExpiresAt;
+      row.reconnect_required = reconnectRequired;
+      row.access_revoked_at = accessRevokedAt;
+      row.revoked_reason = revokedReason;
+      if (lastSyncAt) row.last_sync_at = lastSyncAt;
       row.updated_at = new Date().toISOString();
       return { changes: 1 };
     }
@@ -235,9 +259,8 @@ describe('Wave 7 connector runtime', () => {
   });
 
   it('registers connectors and blocks project ACL leakage', async () => {
-    const { executeWave7ConnectorTool, registerWave7Connector } = await import(
-      '../../../server/src/services/wave7ConnectorRuntimeService.js'
-    );
+    const { executeWave7ConnectorTool, registerWave7Connector } =
+      await import('../../../server/src/services/wave7ConnectorRuntimeService.js');
 
     const connector = await registerWave7Connector({
       organizationId: 'org-1',
@@ -262,9 +285,8 @@ describe('Wave 7 connector runtime', () => {
   });
 
   it('marks stale connector data and preserves source trace', async () => {
-    const { executeWave7ConnectorTool, registerWave7Connector } = await import(
-      '../../../server/src/services/wave7ConnectorRuntimeService.js'
-    );
+    const { executeWave7ConnectorTool, registerWave7Connector } =
+      await import('../../../server/src/services/wave7ConnectorRuntimeService.js');
 
     const connector = await registerWave7Connector({
       organizationId: 'org-1',
@@ -293,10 +315,88 @@ describe('Wave 7 connector runtime', () => {
     );
   });
 
-  it('uses a real dataCollection connector binding instead of synthetic results', async () => {
-    const { executeWave7ConnectorTool, registerWave7Connector } = await import(
-      '../../../server/src/services/wave7ConnectorRuntimeService.js'
+  it('blocks expired OAuth sessions and keeps reconnect audit fields visible', async () => {
+    const { executeWave7ConnectorTool, registerWave7Connector } =
+      await import('../../../server/src/services/wave7ConnectorRuntimeService.js');
+
+    const connector = await registerWave7Connector({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      provider: 'jira',
+      tokenExpiresAt: new Date(Date.now() - 60_000).toISOString(),
+    });
+
+    const result = await executeWave7ConnectorTool({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      connectorId: connector.connectorId,
+      toolName: 'connector_search',
+      toolKind: 'search',
+      query: 'blocked until reconnect',
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.connector.accessState).toBe('token_expired');
+    expect(result.connector.tokenExpired).toBe(true);
+    expect(result.run.error).toBe('connector_token_expired');
+    expect(result.run.sourceTrace).toEqual(
+      expect.objectContaining({
+        accessState: 'token_expired',
+        tokenExpiresAt: connector.tokenExpiresAt,
+      })
     );
+  });
+
+  it('tracks revoked connector access and clears it on reconnect', async () => {
+    const { executeWave7ConnectorTool, registerWave7Connector, updateWave7Connector } =
+      await import('../../../server/src/services/wave7ConnectorRuntimeService.js');
+
+    const connector = await registerWave7Connector({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      provider: 'jira',
+    });
+
+    const revoked = await updateWave7Connector({
+      organizationId: 'org-1',
+      connectorId: connector.connectorId,
+      status: 'disconnected',
+      reconnectRequired: true,
+      accessRevokedAt: '2026-04-25T10:00:00.000Z',
+      revokedReason: 'oauth_access_revoked',
+      failureState: 'revoked_access',
+    });
+    expect(revoked.accessState).toBe('revoked');
+    expect(revoked.accessRevokedAt).toBe('2026-04-25T10:00:00.000Z');
+
+    const blocked = await executeWave7ConnectorTool({
+      organizationId: 'org-1',
+      userId: 'user-1',
+      connectorId: connector.connectorId,
+      toolName: 'connector_search',
+      toolKind: 'search',
+    });
+    expect(blocked.allowed).toBe(false);
+    expect(blocked.run.error).toBe('connector_access_revoked');
+
+    const reconnected = await updateWave7Connector({
+      organizationId: 'org-1',
+      connectorId: connector.connectorId,
+      status: 'connected',
+      reconnectRequired: false,
+      accessRevokedAt: null,
+      revokedReason: null,
+      failureState: null,
+      tokenExpiresAt: new Date(Date.now() + 60_000).toISOString(),
+    });
+    expect(reconnected.accessState).toBe('authorized');
+    expect(reconnected.reconnectRequired).toBe(false);
+    expect(reconnected.accessRevokedAt).toBeNull();
+  });
+
+  it('uses a real dataCollection connector binding instead of synthetic results', async () => {
+    const { executeWave7ConnectorTool, registerWave7Connector } =
+      await import('../../../server/src/services/wave7ConnectorRuntimeService.js');
 
     const connector = await registerWave7Connector({
       organizationId: 'org-1',
@@ -328,9 +428,8 @@ describe('Wave 7 connector runtime', () => {
   });
 
   it('does not fabricate connector results when no external binding exists', async () => {
-    const { executeWave7ConnectorTool, registerWave7Connector } = await import(
-      '../../../server/src/services/wave7ConnectorRuntimeService.js'
-    );
+    const { executeWave7ConnectorTool, registerWave7Connector } =
+      await import('../../../server/src/services/wave7ConnectorRuntimeService.js');
 
     const connector = await registerWave7Connector({
       organizationId: 'org-1',
@@ -353,9 +452,8 @@ describe('Wave 7 connector runtime', () => {
   });
 
   it('requires AIRun for mutating connector tools', async () => {
-    const { executeWave7ConnectorTool, registerWave7Connector } = await import(
-      '../../../server/src/services/wave7ConnectorRuntimeService.js'
-    );
+    const { executeWave7ConnectorTool, registerWave7Connector } =
+      await import('../../../server/src/services/wave7ConnectorRuntimeService.js');
 
     const connector = await registerWave7Connector({
       organizationId: 'org-1',
@@ -407,9 +505,8 @@ describe('Wave 7 connector runtime', () => {
   });
 
   it('runs a real dataCollection connector for approved mutating tools when bound', async () => {
-    const { executeWave7ConnectorTool, registerWave7Connector } = await import(
-      '../../../server/src/services/wave7ConnectorRuntimeService.js'
-    );
+    const { executeWave7ConnectorTool, registerWave7Connector } =
+      await import('../../../server/src/services/wave7ConnectorRuntimeService.js');
 
     db.airuns.set('airun-2', {
       run_id: 'airun-2',
@@ -486,7 +583,10 @@ describe('Wave 7 connector runtime', () => {
     const panel = readFileSync('src/components/AIChat/Wave7ConnectorAdminPanel.tsx', 'utf8');
     const appRoutes = readFileSync('src/routes/AppRoutes.tsx', 'utf8');
     const tools = readFileSync('server/src/services/ai/toolDefinitions.ts', 'utf8');
-    const migration = readFileSync('server/migrations/20260425_wave7_connector_runtime.sql', 'utf8');
+    const migration = readFileSync(
+      'server/migrations/20260425_wave7_connector_runtime.sql',
+      'utf8'
+    );
 
     expect(gateway).toContain('/api/ai-connectors');
     expect(routes).toContain('/execute');
@@ -500,6 +600,7 @@ describe('Wave 7 connector runtime', () => {
     expect(panel).toContain('ConnectorRun Audit');
     expect(panel).toContain('Write (requires AIRun)');
     expect(panel).toContain('Real Source Binding');
+    expect(panel).toContain('OAuth Session Lifecycle');
     expect(appRoutes).toContain('/ai/connectors');
     expect(tools).toContain('list_enterprise_connectors');
     expect(tools).toContain('search_enterprise_connector');

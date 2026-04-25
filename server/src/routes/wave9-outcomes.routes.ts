@@ -6,9 +6,13 @@ import {
   buildWave9FinanceScenarios,
   buildWave9Report,
   createWave9Outcome,
+  listWave9AcceptanceRuns,
   listWave9Outcomes,
+  recordWave9EvalRun,
   recordWave9Incident,
   recordWave9ProviderHealth,
+  registerWave9AcceptanceRun,
+  registerWave9Evidence,
   runWave9FinalAcceptance,
 } from '../services/wave9OutcomeRuntimeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -23,6 +27,41 @@ function getAuthContext(req: AuthRequest): { userId: string; organizationId: str
   if (!organizationId) throw new Error('Organization context is required');
   return { userId, organizationId };
 }
+
+function requireAIOpsVerifier(req: AuthRequest): void {
+  const user = req.user as any;
+  const role = String(user?.role || user?.systemRole || '').toLowerCase();
+  const isVerifier =
+    role === 'admin' ||
+    role === 'owner' ||
+    role === 'superadmin' ||
+    user?.isAdmin === true ||
+    user?.isSuperAdmin === true;
+  if (!isVerifier) {
+    throw new Error('Wave 9 evidence registration requires AI Ops verifier privileges');
+  }
+}
+
+router.post(
+  '/evidence',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    requireAIOpsVerifier(req);
+    const evidence = await registerWave9Evidence({
+      organizationId,
+      evidenceType: req.body.evidenceType || 'kpi',
+      sourceType: String(req.body.sourceType || 'unknown'),
+      sourceId: String(req.body.sourceId || ''),
+      title: req.body.title ? String(req.body.title) : null,
+      status: req.body.status || 'pass',
+      verifiedBy: userId,
+      verificationMethod: 'ai_ops_verified_route',
+      payload: req.body.payload && typeof req.body.payload === 'object' ? req.body.payload : {},
+    });
+    return res.status(201).json({ success: true, evidence });
+  })
+);
 
 router.get(
   '/outcomes',
@@ -111,6 +150,62 @@ router.post(
 );
 
 router.post(
+  '/eval-runs',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const evalRun = await recordWave9EvalRun({
+      organizationId,
+      promptKey: String(req.body.promptKey || ''),
+      promptVersion: req.body.promptVersion || null,
+      category: req.body.category || 'golden_prompt',
+      status: req.body.status || 'pass',
+      score: req.body.score == null ? null : Number(req.body.score),
+      hallucinationCheckPassed:
+        req.body.hallucinationCheckPassed == null
+          ? null
+          : req.body.hallucinationCheckPassed === true,
+      toolMisuseCheckPassed:
+        req.body.toolMisuseCheckPassed == null ? null : req.body.toolMisuseCheckPassed === true,
+      runRef: req.body.runRef || null,
+      details: req.body.details && typeof req.body.details === 'object' ? req.body.details : {},
+    });
+    return res.status(201).json({ success: true, evalRun });
+  })
+);
+
+router.get(
+  '/acceptance-runs',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const acceptanceRuns = await listWave9AcceptanceRuns({ organizationId });
+    return res.json({ success: true, acceptanceRuns });
+  })
+);
+
+router.post(
+  '/acceptance-runs',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    requireAIOpsVerifier(req);
+    const acceptanceRun = await registerWave9AcceptanceRun({
+      organizationId,
+      runType: req.body.runType,
+      status: req.body.status || 'pass',
+      runRef: req.body.runRef || null,
+      buildId: req.body.buildId || null,
+      commitSha: req.body.commitSha || null,
+      verifiedBy: req.body.verifiedBy ? String(req.body.verifiedBy) : userId,
+      verificationMethod: req.body.verificationMethod || 'ai_ops_verified_route',
+      payload: req.body.payload && typeof req.body.payload === 'object' ? req.body.payload : {},
+    });
+    return res.status(201).json({ success: true, acceptanceRun });
+  })
+);
+
+router.post(
   '/incidents',
   verifyToken,
   asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -155,6 +250,10 @@ router.post(
       evidenceRefs:
         req.body.evidenceRefs && typeof req.body.evidenceRefs === 'object'
           ? req.body.evidenceRefs
+          : {},
+      acceptanceRunRefs:
+        req.body.acceptanceRunRefs && typeof req.body.acceptanceRunRefs === 'object'
+          ? req.body.acceptanceRunRefs
           : {},
       acceptedLimitations: Array.isArray(req.body.acceptedLimitations)
         ? req.body.acceptedLimitations.map(String)

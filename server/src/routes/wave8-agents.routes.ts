@@ -51,6 +51,7 @@ router.post(
       swarm: req.body.swarm && typeof req.body.swarm === 'object' ? req.body.swarm : null,
       approval:
         req.body.approval && typeof req.body.approval === 'object' ? req.body.approval : null,
+      evalRun: req.body.evalRun && typeof req.body.evalRun === 'object' ? req.body.evalRun : null,
     });
     return res.status(result.allowed ? 201 : 403).json({ success: result.allowed, ...result });
   })

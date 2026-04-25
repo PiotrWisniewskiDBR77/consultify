@@ -52,17 +52,15 @@ export const ActionCenter: React.FC = () => {
   const [selectedAudit, setSelectedAudit] = React.useState<any | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [ledgerWarning, setLedgerWarning] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
+    setLedgerWarning(null);
     try {
-      const [center, ledger] = await Promise.all([
-        Api.getAIActionCenter({ scope: 'mine', limit: 100 }),
-        Api.getAIRunLedger({ limit: 100 }),
-      ]);
+      const center = await Api.getAIActionCenter({ scope: 'mine', limit: 100 });
       setActions(Array.isArray(center?.actions) ? center.actions : []);
-      setRuns(Array.isArray(ledger?.runs) ? ledger.runs : []);
       const actionId = selectedActionId || center?.actions?.[0]?.id || null;
       if (actionId) {
         const audit = await Api.getAIActionAuditTrail(actionId);
@@ -70,6 +68,17 @@ export const ActionCenter: React.FC = () => {
       }
     } catch (err: any) {
       setError(err?.message || 'Action Center failed to load');
+    }
+
+    try {
+      const ledger = await Api.getAIRunLedger({ scope: 'mine', limit: 100 });
+      setRuns(Array.isArray(ledger?.runs) ? ledger.runs : []);
+      if (ledger?.success === false && ledger?.error) {
+        setLedgerWarning(ledger.error);
+      }
+    } catch (err: any) {
+      setRuns([]);
+      setLedgerWarning(err?.message || 'Run ledger is not available for this view');
     } finally {
       setLoading(false);
     }
@@ -218,6 +227,11 @@ export const ActionCenter: React.FC = () => {
         <aside className="space-y-4">
           <section className="rounded-xl border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-900 p-4">
             <h2 className="font-semibold text-slate-900 dark:text-white">Run Ledger</h2>
+            {ledgerWarning && (
+              <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                Ledger read-only view unavailable: {ledgerWarning}
+              </p>
+            )}
             <div className="mt-3 space-y-2 max-h-64 overflow-auto">
               {runs.length === 0 ? (
                 <p className="text-sm text-slate-500">No AIRuns visible.</p>
@@ -257,6 +271,13 @@ export const ActionCenter: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-xs text-slate-500">Decision and Output</div>
+                  <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                    Rollback:{' '}
+                    {String(selectedAudit.audit?.rollbackStatus || 'rollback_unavailable').replace(
+                      /_/g,
+                      ' '
+                    )}
+                  </div>
                   <pre className="mt-1 max-h-48 overflow-auto rounded-lg bg-slate-50 dark:bg-navy-950 p-3 text-[11px] text-slate-700 dark:text-slate-200">
                     {JSON.stringify(
                       {

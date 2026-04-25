@@ -67,6 +67,11 @@ router.post(
       freshnessTtlMinutes: req.body.freshnessTtlMinutes
         ? Number(req.body.freshnessTtlMinutes)
         : 240,
+      tokenExpiresAt:
+        req.body.tokenExpiresAt !== undefined
+          ? String(req.body.tokenExpiresAt || '') || null
+          : null,
+      reconnectRequired: req.body.reconnectRequired === true,
     });
     return res.status(201).json({ success: true, connector });
   })
@@ -88,6 +93,20 @@ router.patch(
       projectIds: Array.isArray(req.body.projectIds) ? req.body.projectIds.map(String) : undefined,
       failureState:
         req.body.failureState !== undefined ? String(req.body.failureState || '') : undefined,
+      tokenExpiresAt:
+        req.body.tokenExpiresAt !== undefined
+          ? String(req.body.tokenExpiresAt || '') || null
+          : undefined,
+      reconnectRequired:
+        req.body.reconnectRequired !== undefined ? req.body.reconnectRequired === true : undefined,
+      accessRevokedAt:
+        req.body.accessRevokedAt !== undefined
+          ? String(req.body.accessRevokedAt || '') || null
+          : undefined,
+      revokedReason:
+        req.body.revokedReason !== undefined
+          ? String(req.body.revokedReason || '') || null
+          : undefined,
     });
     if (!connector) return res.status(404).json({ success: false, error: 'Connector not found' });
     return res.json({ success: true, connector });
