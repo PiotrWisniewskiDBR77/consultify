@@ -636,11 +636,15 @@ describe('ResearchSession Wave 4 runtime lifecycle', () => {
 
   it('exposes Wave 4 dock controls for create-session and accepted background polling', () => {
     const dock = readFileSync('src/components/AIChat/ResearchSessionsDock.tsx', 'utf8');
+    const routes = readFileSync('server/src/routes/research.routes.ts', 'utf8');
     expect(dock).toContain('Api.createResearchSession');
     expect(dock).toContain('Create planned session');
     expect(dock).toContain('Api.approveResearchSession');
     expect(dock).toContain('Api.startResearchSession');
     expect(dock).toContain('window.setInterval');
     expect(dock).toContain('Background job accepted');
+    expect(routes).toContain("'/sessions/:sessionId/approve'");
+    expect(routes).toContain('beginResearchSessionInBackground');
+    expect(routes).toContain('background: true');
   });
 });
