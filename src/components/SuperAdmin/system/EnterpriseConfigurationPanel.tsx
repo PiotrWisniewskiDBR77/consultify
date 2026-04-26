@@ -10,35 +10,26 @@
  */
 
 import {
-  AlertTriangle,
-  Check,
-  CheckCircle,
   ChevronDown,
   ChevronRight,
-  Copy,
   Download,
   Edit,
   Eye,
   EyeOff,
-  GitCompare,
   History,
   Loader2,
   Lock,
   Plus,
-  RefreshCw,
   RotateCcw,
-  Save,
   Search,
-  Settings,
   Trash2,
-  Upload,
   X,
-  XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { DegradedState } from '../../Admin/AdminState';
 
 interface ConfigItem {
   id: string;
@@ -88,6 +79,7 @@ const TYPE_ICONS = {
 export const EnterpriseConfigurationPanel: React.FC = () => {
   const [configs, setConfigs] = useState<ConfigItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedEnvironment, setSelectedEnvironment] = useState('development');
@@ -96,6 +88,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [historyConfig, setHistoryConfig] = useState<ConfigItem | null>(null);
   const [versions, setVersions] = useState<ConfigVersion[]>([]);
+  const [historyLoadError, setHistoryLoadError] = useState<string | null>(null);
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
     'general',
     'security',
@@ -127,12 +120,15 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const fetchConfigs = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const data = await Api.getSystemConfigs(selectedEnvironment);
       setConfigs(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('[Config] Failed to fetch from API:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load system configuration');
       toast.error('Failed to load system configuration');
       setConfigs([]);
+      setUnsavedChanges({});
     } finally {
       setLoading(false);
     }
@@ -172,10 +168,14 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   const handleViewHistory = async (config: ConfigItem) => {
     setHistoryConfig(config);
     setShowHistoryModal(true);
+    setHistoryLoadError(null);
     try {
       const data = await Api.getSystemConfigVersions(config.id);
       setVersions((data as any)?.versions || []);
     } catch (error) {
+      setHistoryLoadError(
+        error instanceof Error ? error.message : 'Failed to load configuration version history'
+      );
       setVersions([]);
     }
   };
@@ -253,6 +253,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         <div className="flex items-center gap-2">
           <button
             onClick={handleExportConfig}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 rounded-lg transition-colors"
           >
             <Download className="w-4 h-4" />
@@ -260,6 +261,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
           </button>
           <button
             onClick={() => setShowAddModal(true)}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -274,6 +276,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
           <button
             key={env}
             onClick={() => setSelectedEnvironment(env)}
+            disabled={loading}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               selectedEnvironment === env
                 ? env === 'production'
@@ -301,6 +304,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             placeholder="Search configurations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            disabled={!!loadError}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500"
           />
         </div>
@@ -309,6 +313,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
+              disabled={!!loadError}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 selectedCategory === cat.id
                   ? 'bg-primary-600 text-white'
@@ -322,36 +327,46 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       </div>
 
       {/* Config Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Total Configs</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {configs.length}
+      {loadError ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+          <DegradedState title="Configuration overview unavailable" description={loadError} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Total Configs</div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              {configs.length}
+            </div>
+          </div>
+          <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Sensitive</div>
+            <div className="text-2xl font-bold text-amber-400">
+              {configs.filter((c) => c.is_sensitive).length}
+            </div>
+          </div>
+          <div className="p-4 bg-primary-600/10 rounded-xl border border-primary-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Categories</div>
+            <div className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+              {new Set(configs.map((c) => c.category)).size}
+            </div>
+          </div>
+          <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Unsaved Changes</div>
+            <div className="text-2xl font-bold text-purple-400">
+              {Object.keys(unsavedChanges).length}
+            </div>
           </div>
         </div>
-        <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Sensitive</div>
-          <div className="text-2xl font-bold text-amber-400">
-            {configs.filter((c) => c.is_sensitive).length}
-          </div>
-        </div>
-        <div className="p-4 bg-primary-600/10 rounded-xl border border-primary-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Categories</div>
-          <div className="text-2xl font-bold text-primary-700 dark:text-primary-300">
-            {new Set(configs.map((c) => c.category)).size}
-          </div>
-        </div>
-        <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Unsaved Changes</div>
-          <div className="text-2xl font-bold text-purple-400">
-            {Object.keys(unsavedChanges).length}
-          </div>
-        </div>
-      </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+        </div>
+      ) : loadError ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+          <DegradedState title="System configuration unavailable" description={loadError} />
         </div>
       ) : (
         <div className="space-y-4">
@@ -434,10 +449,13 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
         <ConfigHistoryModal
           config={historyConfig}
           versions={versions}
+          loadError={historyLoadError}
           onRollback={handleRollback}
           onClose={() => {
             setShowHistoryModal(false);
             setHistoryConfig(null);
+            setHistoryLoadError(null);
+            setVersions([]);
           }}
         />
       )}
@@ -810,9 +828,10 @@ const ConfigAddModal: React.FC<{
 const ConfigHistoryModal: React.FC<{
   config: ConfigItem;
   versions: ConfigVersion[];
+  loadError?: string | null;
   onRollback: (version: ConfigVersion) => void;
   onClose: () => void;
-}> = ({ config, versions, onRollback, onClose }) => (
+}> = ({ config, versions, loadError, onRollback, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
@@ -828,7 +847,9 @@ const ConfigHistoryModal: React.FC<{
         </button>
       </div>
 
-      {versions.length === 0 ? (
+      {loadError ? (
+        <DegradedState title="Version history unavailable" description={loadError} />
+      ) : versions.length === 0 ? (
         <div className="text-center py-8 text-slate-400 dark:text-slate-500">
           <History className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No version history available</p>

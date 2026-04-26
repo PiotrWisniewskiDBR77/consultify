@@ -26,6 +26,7 @@ import logger from '../../utils/Logger.js';
 import { inferChatTaskPurpose, normalizePurposeKey } from './aiTaskCatalog.js';
 import { llmService } from './llmService.js';
 import modelRouter from './modelRouter.js';
+import { isQaAiMode } from './qaAiRuntime.js';
 
 // Lazy load AIContextBuilder to avoid circular dependencies
 let _AIContextBuilder: any = null;
@@ -345,6 +346,7 @@ export class AIPipeline {
             const endpoint = (cfg as any)?.endpoint;
 
             const isConfigured =
+              isQaAiMode() ||
               providerId.toLowerCase() === 'ollama' ||
               (typeof apiKey === 'string' && apiKey.trim().length > 0);
             if (!isConfigured) {

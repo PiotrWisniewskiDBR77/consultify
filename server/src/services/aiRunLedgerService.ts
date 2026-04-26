@@ -42,6 +42,9 @@ interface RecordEventInput {
 
 let schemaReady: Promise<void> | null = null;
 
+const ACTION_CENTER_SORT_EXPR =
+  'COALESCE(CAST(l.updated_at AS TEXT), CAST(a.created_at AS TEXT))';
+
 function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (raw == null) return fallback;
   if (typeof raw === 'object') return raw as T;
@@ -369,7 +372,7 @@ export async function listActionCenter(params: {
      FROM ai_actions a
      LEFT JOIN ai_run_ledger l ON l.action_id = a.id
      WHERE ${filters.join(' AND ')}
-     ORDER BY COALESCE(l.updated_at, a.created_at) DESC
+     ORDER BY ${ACTION_CENTER_SORT_EXPR} DESC
      LIMIT ?`,
     values
   );

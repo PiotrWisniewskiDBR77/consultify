@@ -8,19 +8,15 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  AlertTriangle,
   Briefcase,
   Building2,
   Check,
-  ChevronDown,
-  ChevronRight,
   Crown,
   Edit,
   Eye,
   FolderKanban,
   Info,
   Key,
-  Lock,
   Plus,
   RefreshCw,
   Shield,
@@ -33,9 +29,9 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
-import { CustomRole, RolePermission, UserRole } from '../../types';
 
 // ============================================
 // ACCOUNT TYPES (Organization Level)
@@ -249,14 +245,10 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState<'account' | 'project'>('project');
-  const [customProjectRoles, setCustomProjectRoles] = useState<any[]>([]);
+  const [customProjectRoles] = useState<any[]>([]);
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingRole, setEditingRole] = useState<any | null>(null);
-  const [expandedCategories, setExpandedCategories] = useState<string[]>([
-    'View Access',
-    'Tasks & Work',
-  ]);
 
   // Form state for custom project roles
   const [formData, setFormData] = useState({
@@ -266,7 +258,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
     permissions: [] as string[],
   });
 
-  const [saving, setSaving] = useState(false);
+  const saving = false;
 
   useEffect(() => {
     // Simulate loading
@@ -302,42 +294,11 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
       return;
     }
 
-    setSaving(true);
-    try {
-      // API call would go here
-      toast.success(editingRole ? 'Project role updated' : 'Project role created');
-      setShowCreateModal(false);
-
-      if (!editingRole) {
-        const newRole = {
-          id: `custom-${Date.now()}`,
-          name: formData.name,
-          description: formData.description,
-          level: formData.level,
-          defaultPermissions: formData.permissions,
-          isSystem: false,
-          color: 'cyan',
-        };
-        setCustomProjectRoles((prev) => [...prev, newRole]);
-      } else {
-        setCustomProjectRoles((prev) =>
-          prev.map((r) =>
-            r.id === editingRole.id
-              ? { ...r, ...formData, defaultPermissions: formData.permissions }
-              : r
-          )
-        );
-      }
-    } catch (error) {
-      toast.error('Failed to save role');
-    }
-    setSaving(false);
+    toast.error('Custom project roles are read-only until persistence is connected');
   };
 
-  const handleDeleteRole = (roleId: string) => {
-    if (!confirm('Are you sure you want to delete this custom role?')) return;
-    setCustomProjectRoles((prev) => prev.filter((r) => r.id !== roleId));
-    toast.success('Role deleted');
+  const handleDeleteRole = (_roleId: string) => {
+    toast.error('Custom project roles are read-only until persistence is connected');
   };
 
   const togglePermission = (permId: string) => {
@@ -347,12 +308,6 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
         ? prev.permissions.filter((p) => p !== permId)
         : [...prev.permissions, permId],
     }));
-  };
-
-  const toggleCategory = (category: string) => {
-    setExpandedCategories((prev) =>
-      prev.includes(category) ? prev.filter((c) => c !== category) : [...prev, category]
-    );
   };
 
   const getColorClasses = (color: string) => {
@@ -548,12 +503,18 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
             </div>
             <button
               onClick={openCreateModal}
-              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium whitespace-nowrap"
+              disabled
+              className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Plus size={18} />
               Create Custom Role
             </button>
           </div>
+
+          <ReadOnlyState
+            title="Custom project roles are read-only"
+            description="Standard project roles are available for reference, but custom role persistence is not connected yet."
+          />
 
           {/* Project Roles by Level */}
           {[0, 1, 2, 3, 4].map((level) => {
@@ -621,6 +582,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   e.stopPropagation();
                                   openEditModal(role);
                                 }}
+                                disabled
                                 className="p-1.5 hover:bg-slate-100 dark:hover:bg-navy-700 rounded text-slate-400 hover:text-slate-600 dark:text-slate-400"
                               >
                                 <Edit size={14} />
@@ -630,6 +592,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                                   e.stopPropagation();
                                   handleDeleteRole(role.id);
                                 }}
+                                disabled
                                 className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-slate-400 dark:text-slate-500 hover:text-red-600"
                               >
                                 <Trash2 size={14} />
@@ -657,6 +620,7 @@ export const RolesPermissionsView: React.FC<RolesPermissionsViewProps> = ({ clas
                     onClick={() =>
                       openEditModal(allProjectRoles.find((r) => r.id === selectedRole))
                     }
+                    disabled
                     className="text-xs text-violet-600 hover:text-violet-500 font-medium"
                   >
                     Edit Permissions

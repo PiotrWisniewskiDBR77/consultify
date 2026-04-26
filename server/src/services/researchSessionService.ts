@@ -3,6 +3,11 @@ import { v4 as uuidv4 } from 'uuid';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
 import { conductDeepResearch, type DeepResearchOutput } from './ai/deepResearchService.js';
+import {
+  buildQaResearchChatResponse,
+  buildQaWebSearchResults,
+  isQaAiMode,
+} from './ai/qaAiRuntime.js';
 import { createWave5Artifact } from './wave5ArtifactRuntimeService.js';
 
 export type ResearchSessionStatus =
@@ -65,6 +70,23 @@ function normalizeSources(input?: Array<'web' | 'attachment' | 'product' | 'org'
 async function createDefaultResearchDependencies(params: {
   organizationId: string;
 }): Promise<NonNullable<Parameters<typeof conductDeepResearch>[2]>> {
+  if (isQaAiMode()) {
+    return {
+      webSearchService: {
+        search: async (query: string) => buildQaWebSearchResults(query),
+      },
+      llmClient: {
+        chat: {
+          completions: {
+            create: async (request: any) => ({
+              choices: [{ message: { content: buildQaResearchChatResponse(request) } }],
+            }),
+          },
+        },
+      },
+    };
+  }
+
   const [{ RuntimeWebSearchService }, modelRouterModule, llmServiceModule] = await Promise.all([
     import('./ai/runtimeWebSearchService.js'),
     import('./ai/modelRouter.js'),

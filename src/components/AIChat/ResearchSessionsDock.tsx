@@ -61,18 +61,19 @@ export const ResearchSessionsDock: React.FC = () => {
   const [allowedSources, setAllowedSources] = React.useState<
     Array<'web' | 'attachment' | 'product' | 'org'>
   >(['web', 'attachment', 'product', 'org']);
+  const selectedSessionId = selected?.sessionId || null;
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
+  const load = React.useCallback(async (options?: { silent?: boolean }) => {
+    if (!options?.silent) setLoading(true);
     setError(null);
     try {
       const res = await Api.listResearchSessions({ limit: 50 });
       const next = Array.isArray(res?.sessions) ? res.sessions : [];
       setSessions(next);
-      if (!selected && next.length > 0) setSelected(next[0]);
-      if (selected) {
+      if (!selectedSessionId && next.length > 0) setSelected(next[0]);
+      if (selectedSessionId) {
         const fresh = next.find(
-          (session: ResearchSessionView) => session.sessionId === selected.sessionId
+          (session: ResearchSessionView) => session.sessionId === selectedSessionId
         );
         if (fresh) setSelected(fresh);
       }
@@ -81,7 +82,7 @@ export const ResearchSessionsDock: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selected]);
+  }, [selectedSessionId]);
 
   React.useEffect(() => {
     load();
@@ -91,7 +92,7 @@ export const ResearchSessionsDock: React.FC = () => {
     const hasRunning = sessions.some((session) => session.status === 'running');
     if (!hasRunning) return undefined;
     const timer = window.setInterval(() => {
-      load();
+      load({ silent: true });
     }, 5000);
     return () => window.clearInterval(timer);
   }, [load, sessions]);
@@ -99,7 +100,7 @@ export const ResearchSessionsDock: React.FC = () => {
   const refreshSelected = async (sessionId: string) => {
     const res = await Api.getResearchSession(sessionId);
     if (res?.session) setSelected(res.session);
-    await load();
+    await load({ silent: true });
   };
 
   const withBusy = async (sessionId: string, action: () => Promise<void>) => {
@@ -141,7 +142,7 @@ export const ResearchSessionsDock: React.FC = () => {
       setMission('');
       setScope('');
       setQuestions('');
-      await load();
+      await load({ silent: true });
     } catch (err: any) {
       setError(err?.message || 'Failed to create research session');
     } finally {
@@ -160,7 +161,8 @@ export const ResearchSessionsDock: React.FC = () => {
 
   const approve = async (sessionId: string) => {
     await withBusy(sessionId, async () => {
-      await Api.approveResearchSession(sessionId);
+      const res = await Api.approveResearchSession(sessionId);
+      if (res?.session) setSelected(res.session);
       await refreshSelected(sessionId);
     });
   };
@@ -273,7 +275,7 @@ export const ResearchSessionsDock: React.FC = () => {
                 Start, pause, resume and retry research. Running jobs auto-refresh every 5 seconds.
               </p>
             </div>
-            <button type="button" onClick={load} className="text-xs rounded-md border px-3 py-1.5">
+            <button type="button" onClick={() => load()} className="text-xs rounded-md border px-3 py-1.5">
               Refresh
             </button>
           </div>

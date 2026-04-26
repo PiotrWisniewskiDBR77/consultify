@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -121,6 +122,9 @@ export const ComplianceCenterView: React.FC = () => {
   const [dsarRequests, setDsarRequests] = useState<DSAR[]>([]);
   const [audits, setAudits] = useState<Audit[]>([]);
   const [frameworksLoadError, setFrameworksLoadError] = useState<string | null>(null);
+  const [dsarLoadError, setDsarLoadError] = useState<string | null>(null);
+  const [auditsLoadError, setAuditsLoadError] = useState<string | null>(null);
+  const [processingRecordsLoadError, setProcessingRecordsLoadError] = useState<string | null>(null);
   const [selectedFramework, setSelectedFramework] = useState<string | null>(null);
   const [selectedOrg, setSelectedOrg] = useState<string>('all');
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
@@ -257,6 +261,9 @@ export const ComplianceCenterView: React.FC = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     setFrameworksLoadError(null);
+    setDsarLoadError(null);
+    setAuditsLoadError(null);
+    setProcessingRecordsLoadError(null);
     try {
       const [frameworksResult, orgsResult] = await Promise.all([
         // Use non-/api path so `Api.get` prefixes API_URL (works with/without proxy).
@@ -298,7 +305,8 @@ export const ComplianceCenterView: React.FC = () => {
         // Backend may return array directly
         const requests = Array.isArray(dsarResult) ? dsarResult : dsarResult?.requests;
         setDsarRequests(Array.isArray(requests) ? requests : []);
-      } catch {
+      } catch (error: any) {
+        setDsarLoadError(error?.message || 'Failed to load data subject requests');
         setDsarRequests([]);
       }
 
@@ -307,7 +315,8 @@ export const ComplianceCenterView: React.FC = () => {
         const auditsResult = await Api.get('/superadmin/compliance/audits');
         const list = Array.isArray(auditsResult) ? auditsResult : auditsResult?.audits;
         setAudits(Array.isArray(list) ? list : []);
-      } catch {
+      } catch (error: any) {
+        setAuditsLoadError(error?.message || 'Failed to load compliance audits');
         setAudits([]);
       }
 
@@ -316,7 +325,8 @@ export const ComplianceCenterView: React.FC = () => {
         const prResult = await Api.get('/superadmin/compliance/processing-records');
         const recs = Array.isArray(prResult) ? prResult : prResult?.records;
         setProcessingRecords(Array.isArray(recs) ? recs : []);
-      } catch {
+      } catch (error: any) {
+        setProcessingRecordsLoadError(error?.message || 'Failed to load processing records');
         setProcessingRecords([]);
       }
     } catch (error) {
@@ -914,94 +924,100 @@ export const ComplianceCenterView: React.FC = () => {
       </div>
 
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Requester
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Type
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Status
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Received
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Due Date
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {dsarRequests.map((dsar) => (
-              <tr key={dsar.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                <td className="px-6 py-4">
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    {dsar.requesterEmail}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
-                    {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] ||
-                      dsar.requestType}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      dsar.status === 'completed'
-                        ? 'bg-emerald-500/10 text-emerald-600'
-                        : dsar.status === 'in_progress'
-                          ? 'bg-blue-500/10 text-blue-600'
-                          : dsar.status === 'pending'
-                            ? 'bg-amber-500/10 text-amber-600'
-                            : 'bg-red-500/10 text-red-600'
-                    }`}
-                  >
-                    {dsar.status.replace('_', ' ')}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                  {new Date(dsar.receivedAt).toLocaleDateString()}
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`text-sm ${
-                      new Date(dsar.dueDate) < new Date() && dsar.status !== 'completed'
-                        ? 'text-red-600 font-medium'
-                        : 'text-slate-500 dark:text-slate-400'
-                    }`}
-                  >
-                    {new Date(dsar.dueDate).toLocaleDateString()}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleViewDsar(dsar)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-                  >
-                    <Eye size={16} className="text-slate-400 dark:text-slate-500" />
-                  </button>
-                </td>
+        {dsarLoadError ? (
+          <div className="p-6">
+            <DegradedState title="DSAR requests unavailable" description={dsarLoadError} />
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Requester
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Type
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Status
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Received
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Due Date
+                </th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Actions
+                </th>
               </tr>
-            ))}
-            {dsarRequests.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
-                  <Users size={40} className="mx-auto mb-3 text-slate-300" />
-                  <p className="text-slate-500 dark:text-slate-400 font-medium">
-                    No data subject requests
-                  </p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              {dsarRequests.map((dsar) => (
+                <tr key={dsar.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                  <td className="px-6 py-4">
+                    <span className="font-medium text-slate-900 dark:text-white">
+                      {dsar.requesterEmail}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-600">
+                      {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] ||
+                        dsar.requestType}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                        dsar.status === 'completed'
+                          ? 'bg-emerald-500/10 text-emerald-600'
+                          : dsar.status === 'in_progress'
+                            ? 'bg-blue-500/10 text-blue-600'
+                            : dsar.status === 'pending'
+                              ? 'bg-amber-500/10 text-amber-600'
+                              : 'bg-red-500/10 text-red-600'
+                      }`}
+                    >
+                      {dsar.status.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                    {new Date(dsar.receivedAt).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`text-sm ${
+                        new Date(dsar.dueDate) < new Date() && dsar.status !== 'completed'
+                          ? 'text-red-600 font-medium'
+                          : 'text-slate-500 dark:text-slate-400'
+                      }`}
+                    >
+                      {new Date(dsar.dueDate).toLocaleDateString()}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      onClick={() => handleViewDsar(dsar)}
+                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
+                    >
+                      <Eye size={16} className="text-slate-400 dark:text-slate-500" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {dsarRequests.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-12 text-center">
+                    <Users size={40} className="mx-auto mb-3 text-slate-300" />
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">
+                      No data subject requests
+                    </p>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
@@ -1018,58 +1034,64 @@ export const ComplianceCenterView: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {audits.map((audit) => (
-          <div
-            key={audit.id}
-            className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h4 className="font-semibold text-slate-900 dark:text-white">{audit.name}</h4>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {audit.auditType} audit
-                </p>
-              </div>
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                  audit.status === 'completed'
-                    ? 'bg-emerald-500/10 text-emerald-600'
-                    : audit.status === 'in_progress'
-                      ? 'bg-blue-500/10 text-blue-600'
-                      : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
-                }`}
-              >
-                {audit.status.replace('_', ' ')}
-              </span>
-            </div>
-            <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-4">
-              <span className="flex items-center gap-1">
-                <Calendar size={14} />
-                {new Date(audit.plannedStart).toLocaleDateString()} -{' '}
-                {new Date(audit.plannedEnd).toLocaleDateString()}
-              </span>
-            </div>
-            {audit.findingsCount > 0 && (
-              <div className="p-3 bg-red-50 dark:bg-red-500/10 rounded-lg flex items-center gap-2">
-                <AlertTriangle size={16} className="text-red-500" />
-                <span className="text-sm text-red-700 dark:text-red-400">
-                  {audit.findingsCount} findings
+      {auditsLoadError ? (
+        <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
+          <DegradedState title="Compliance audits unavailable" description={auditsLoadError} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {audits.map((audit) => (
+            <div
+              key={audit.id}
+              className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700"
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div>
+                  <h4 className="font-semibold text-slate-900 dark:text-white">{audit.name}</h4>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {audit.auditType} audit
+                  </p>
+                </div>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    audit.status === 'completed'
+                      ? 'bg-emerald-500/10 text-emerald-600'
+                      : audit.status === 'in_progress'
+                        ? 'bg-blue-500/10 text-blue-600'
+                        : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  {audit.status.replace('_', ' ')}
                 </span>
               </div>
-            )}
-          </div>
-        ))}
-        {audits.length === 0 && (
-          <div className="col-span-2 text-center py-12 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
-            <FileCheck size={40} className="mx-auto mb-3 text-slate-300" />
-            <p className="text-slate-500 dark:text-slate-400 font-medium">No audits scheduled</p>
-            <p className="text-sm text-slate-400 dark:text-slate-500">
-              Schedule your first compliance audit
-            </p>
-          </div>
-        )}
-      </div>
+              <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-4">
+                <span className="flex items-center gap-1">
+                  <Calendar size={14} />
+                  {new Date(audit.plannedStart).toLocaleDateString()} -{' '}
+                  {new Date(audit.plannedEnd).toLocaleDateString()}
+                </span>
+              </div>
+              {audit.findingsCount > 0 && (
+                <div className="p-3 bg-red-50 dark:bg-red-500/10 rounded-lg flex items-center gap-2">
+                  <AlertTriangle size={16} className="text-red-500" />
+                  <span className="text-sm text-red-700 dark:text-red-400">
+                    {audit.findingsCount} findings
+                  </span>
+                </div>
+              )}
+            </div>
+          ))}
+          {audits.length === 0 && (
+            <div className="col-span-2 text-center py-12 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+              <FileCheck size={40} className="mx-auto mb-3 text-slate-300" />
+              <p className="text-slate-500 dark:text-slate-400 font-medium">No audits scheduled</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500">
+                Schedule your first compliance audit
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -1100,7 +1122,14 @@ export const ComplianceCenterView: React.FC = () => {
       </div>
 
       <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        {processingRecords.length > 0 ? (
+        {processingRecordsLoadError ? (
+          <div className="p-6">
+            <DegradedState
+              title="Processing records unavailable"
+              description={processingRecordsLoadError}
+            />
+          </div>
+        ) : processingRecords.length > 0 ? (
           <table className="w-full">
             <thead>
               <tr className="border-b border-slate-200 dark:border-navy-700">

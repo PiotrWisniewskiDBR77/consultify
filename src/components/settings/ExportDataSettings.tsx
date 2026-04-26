@@ -32,6 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { DegradedState } from '../Admin/AdminState';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Checkbox } from '../ui/checkbox';
@@ -72,6 +73,7 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
   const [loading, setLoading] = useState(true);
   const [requesting, setRequesting] = useState(false);
   const [exportRequests, setExportRequests] = useState<ExportRequest[]>([]);
+  const [historyLoadError, setHistoryLoadError] = useState<string | null>(null);
   const [showExportDialog, setShowExportDialog] = useState(false);
   const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>('json');
   const [includeOptions, setIncludeOptions] = useState({
@@ -87,25 +89,19 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
     const fetchExports = async () => {
       setLoading(true);
       try {
-        // In production, this would call the actual API
-        // GET /api/settings/export-history
-
-        // Simulated data
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        setExportRequests([
-          // {
-          //     id: '1',
-          //     status: 'ready',
-          //     requestedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-          //     completedAt: new Date(Date.now() - 86400000 * 2 + 3600000).toISOString(),
-          //     expiresAt: new Date(Date.now() + 86400000 * 5).toISOString(),
-          //     downloadUrl: '#',
-          //     format: 'JSON',
-          //     size: '2.4 MB',
-          // },
-        ]);
+        setHistoryLoadError(null);
+        const data = await Api.get('/settings/export-history');
+        const requests = Array.isArray(data?.requests) ? data.requests : data;
+        if (!Array.isArray(requests)) {
+          throw new Error('Export history response was invalid');
+        }
+        setExportRequests(requests);
       } catch (error) {
         console.error('Failed to fetch export history:', error);
+        setExportRequests([]);
+        setHistoryLoadError(
+          error instanceof Error ? error.message : 'Failed to load export history'
+        );
       } finally {
         setLoading(false);
       }
@@ -251,7 +247,9 @@ export const ExportDataSettings: React.FC<ExportDataSettingsProps> = ({ currentU
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {exportRequests.length === 0 ? (
+          {historyLoadError ? (
+            <DegradedState title="Export history unavailable" description={historyLoadError} />
+          ) : exportRequests.length === 0 ? (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
               <p>{t('settings.export.noHistory', 'No export requests yet')}</p>

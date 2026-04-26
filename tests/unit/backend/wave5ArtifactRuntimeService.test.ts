@@ -399,6 +399,7 @@ describe('Wave 5 artifact runtime', () => {
     const chat = readFileSync('src/components/AIChat/UnifiedChatPanel.tsx', 'utf8');
     const artifactStore = readFileSync('src/store/useArtifactsStore.ts', 'utf8');
     const streamHook = readFileSync('src/hooks/useAIStream.ts', 'utf8');
+    const menu = readFileSync('src/components/navigation/Sidebar/menuConfig.ts', 'utf8');
 
     expect(routes).toContain('/wave5/:artifactId/mutations');
     expect(routes).toContain('/wave5/fill-template');
@@ -410,6 +411,8 @@ describe('Wave 5 artifact runtime', () => {
     expect(api).toContain('commitWave5ArtifactMutation');
     expect(api).toContain('generateWave5StructuredArtifact');
     expect(appRoutes).toContain('path={ROUTES.AI_OS.ARTIFACTS}');
+    expect(menu).toContain('AI_OS_ARTIFACTS');
+    expect(menu).toContain('AI_OS_RESEARCH');
     expect(panel).toContain('Create mutation proposal');
     expect(panel).toContain('commitMutation');
     expect(panel).toContain('Missing fields return questions');

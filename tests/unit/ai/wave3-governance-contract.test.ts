@@ -22,6 +22,15 @@ describe('Wave 3 AI actions governance contract', () => {
     expect(migration).toContain('ai_run_events');
   });
 
+  it('keeps Action Center sorting portable across Postgres timestamp and ledger text dates', () => {
+    const service = read('server/src/services/aiRunLedgerService.ts');
+
+    expect(service).toContain(
+      'COALESCE(CAST(l.updated_at AS TEXT), CAST(a.created_at AS TEXT))'
+    );
+    expect(service).not.toContain('ORDER BY COALESCE(l.updated_at, a.created_at) DESC');
+  });
+
   it('keeps approve and execute as separate user-visible operations', () => {
     const store = read('src/store/useAIActionsStore.ts');
     const proposalMessage = read('src/components/AIChat/ExecutionProposalMessage.tsx');

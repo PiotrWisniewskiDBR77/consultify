@@ -467,7 +467,15 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel />);
 
     expect(screen.getByText('Skip to chat input')).toHaveClass('sr-only');
-    expect(screen.getByText('Talk to Teresa')).toBeInTheDocument();
+    expect(screen.getByText('Teresa')).toBeInTheDocument();
+    expect(screen.getByText('Good morning')).toBeInTheDocument();
+    expect(screen.getByText('Analiza rynku')).toBeInTheDocument();
+    expect(screen.getByText('Analiza finansowa')).toBeInTheDocument();
+    expect(screen.getByText('Klasyczny consulting')).toBeInTheDocument();
+    expect(screen.getByText('Transformacja cyfrowa')).toBeInTheDocument();
+    expect(screen.getByText('Daily brief')).toBeInTheDocument();
+    expect(screen.getByText('Quick savings')).toBeInTheDocument();
+    expect(screen.getAllByAltText('Consultify').length).toBeGreaterThan(0);
     expect(screen.getByTestId('chat-new-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
   });

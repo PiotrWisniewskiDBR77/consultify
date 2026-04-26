@@ -17,7 +17,7 @@ import { Api } from '../../services/api';
 import { User, UserRole } from '../../types';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { isSuperAdminRole } from '../../utils/roleGuards';
-import { UnavailableState } from '../Admin/AdminState';
+import { DegradedState, UnavailableState } from '../Admin/AdminState';
 import { UserAssignmentsPanel } from '../Admin/UserAssignmentsPanel';
 
 export interface UserManagementCoreProps {
@@ -766,6 +766,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={!!loadError}
               className="pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none w-full md:w-64"
             />
           </div>
@@ -774,6 +775,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               <select
                 value={selectedOrganizationId}
                 onChange={(e) => onSelectedOrganizationChange?.(e.target.value)}
+                disabled={!!loadError}
                 className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[220px]"
               >
                 <option value="">All organizations</option>
@@ -786,6 +788,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               <select
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
+                disabled={!!loadError}
                 className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[160px]"
               >
                 <option value="">All roles</option>
@@ -798,6 +801,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               <select
                 value={selectedStatus}
                 onChange={(e) => setSelectedStatus(e.target.value)}
+                disabled={!!loadError}
                 className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:border-purple-500 outline-none min-w-[160px]"
               >
                 <option value="">All statuses</option>
@@ -822,6 +826,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           {showInvite && mode === 'platform' && (
             <button
               onClick={() => setShowInviteModal(true)}
+              disabled={!!loadError}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors text-sm font-medium"
             >
               <UserPlus size={16} /> Invite User
@@ -829,7 +834,7 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
           )}
           <button
             onClick={openAddModal}
-            disabled={!canCreateUsersDirectly}
+            disabled={!canCreateUsersDirectly || !!loadError}
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20"
           >
             <Plus size={16} /> Add User
@@ -886,6 +891,12 @@ export const UserManagementCore: React.FC<UserManagementCoreProps> = ({
               <tr>
                 <td colSpan={mode === 'platform' ? 6 : 5} className="px-6 py-12 text-center">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                </td>
+              </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={mode === 'platform' ? 6 : 5} className="px-6 py-6">
+                  <DegradedState title="Users unavailable" description={loadError} />
                 </td>
               </tr>
             ) : filteredUsers.length === 0 ? (

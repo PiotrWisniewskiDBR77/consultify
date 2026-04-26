@@ -38,6 +38,9 @@ export interface Wave8AgentDefinition {
   costClass: 'low' | 'medium' | 'high';
   riskLevel: Wave8AgentRisk;
   examples: string[];
+  editable?: boolean;
+  source?: 'code' | 'database';
+  updatedBy?: string | null;
 }
 
 export interface LaunchWave8AgentInput {
@@ -285,8 +288,34 @@ const AGENT_DEFINITIONS: Wave8AgentDefinition[] = [
   },
 ];
 
-function getDefinition(agentId: string): Wave8AgentDefinition | null {
-  return AGENT_DEFINITIONS.find((agent) => agent.agentId === agentId) || null;
+function mapDefinitionRow(row: any): Wave8AgentDefinition | null {
+  if (!row) return null;
+  return {
+    agentId: row.agent_id,
+    name: row.name,
+    role: row.role,
+    purpose: row.purpose,
+    persona: row.persona,
+    allowedTools: safeJsonParse(row.allowed_tools_json, []),
+    blockedTools: safeJsonParse(row.blocked_tools_json, []),
+    sourceScope: safeJsonParse(row.source_scope_json, []),
+    outputSchema: safeJsonParse(row.output_schema_json, {}),
+    approvalPolicy: row.approval_policy,
+    costClass: row.cost_class,
+    riskLevel: row.risk_level,
+    examples: safeJsonParse(row.examples_json, []),
+    editable: Boolean(row.editable),
+    source: 'database',
+    updatedBy: row.updated_by || null,
+  };
+}
+
+async function getDefinition(
+  agentId: string,
+  organizationId?: string | null
+): Promise<Wave8AgentDefinition | null> {
+  const definitions = await listWave8AgentDefinitions({ organizationId });
+  return definitions.find((agent) => agent.agentId === agentId) || null;
 }
 
 function mapRun(row: any): any {
@@ -313,6 +342,28 @@ function mapRun(row: any): any {
 export async function ensureWave8AgentRuntimeSchema(): Promise<void> {
   if (schemaReady) return schemaReady;
   schemaReady = (async () => {
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS wave8_agent_definitions (
+        agent_id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        name TEXT NOT NULL,
+        role TEXT NOT NULL,
+        purpose TEXT NOT NULL,
+        persona TEXT NOT NULL,
+        allowed_tools_json TEXT NOT NULL DEFAULT '[]',
+        blocked_tools_json TEXT NOT NULL DEFAULT '[]',
+        source_scope_json TEXT NOT NULL DEFAULT '[]',
+        output_schema_json TEXT NOT NULL DEFAULT '{}',
+        approval_policy TEXT NOT NULL,
+        cost_class TEXT NOT NULL,
+        risk_level TEXT NOT NULL,
+        examples_json TEXT NOT NULL DEFAULT '[]',
+        editable INTEGER NOT NULL DEFAULT 1,
+        updated_by TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     await dbRun(`
       CREATE TABLE IF NOT EXISTS wave8_agent_runs (
         run_id TEXT PRIMARY KEY,
@@ -361,6 +412,9 @@ export async function ensureWave8AgentRuntimeSchema(): Promise<void> {
       `ALTER TABLE wave8_agent_schedules ADD COLUMN scheduler_mode TEXT DEFAULT 'manual_process_due_endpoint'`
     ).catch(() => undefined);
     await dbRun(
+      `CREATE INDEX IF NOT EXISTS idx_wave8_agent_definitions_org ON wave8_agent_definitions(organization_id, role)`
+    );
+    await dbRun(
       `CREATE INDEX IF NOT EXISTS idx_wave8_agent_runs_org ON wave8_agent_runs(organization_id, created_at)`
     );
     await dbRun(
@@ -376,8 +430,87 @@ export async function ensureWave8AgentRuntimeSchema(): Promise<void> {
   return schemaReady;
 }
 
-export async function listWave8AgentDefinitions(): Promise<Wave8AgentDefinition[]> {
-  return AGENT_DEFINITIONS;
+export async function listWave8AgentDefinitions(params?: {
+  organizationId?: string | null;
+}): Promise<Wave8AgentDefinition[]> {
+  await ensureWave8AgentRuntimeSchema();
+  const base = AGENT_DEFINITIONS.map((agent) => ({
+    ...agent,
+    editable: true,
+    source: 'code' as const,
+    updatedBy: null,
+  }));
+  try {
+    const rows = await dbAll(
+      `SELECT * FROM wave8_agent_definitions
+       WHERE organization_id IS NULL OR organization_id = ?
+       ORDER BY organization_id, name ASC`,
+      [params?.organizationId || null]
+    );
+    const overrides = (rows || []).map(mapDefinitionRow).filter(Boolean) as Wave8AgentDefinition[];
+    const byId = new Map(base.map((agent) => [agent.agentId, agent]));
+    for (const override of overrides) byId.set(override.agentId, override);
+    return Array.from(byId.values());
+  } catch {
+    return base;
+  }
+}
+
+export async function upsertWave8AgentDefinition(input: {
+  organizationId?: string | null;
+  userId: string;
+  definition: Wave8AgentDefinition;
+}): Promise<Wave8AgentDefinition> {
+  await ensureWave8AgentRuntimeSchema();
+  const definition = input.definition;
+  await dbRun(
+    `INSERT INTO wave8_agent_definitions (
+      agent_id, organization_id, name, role, purpose, persona, allowed_tools_json,
+      blocked_tools_json, source_scope_json, output_schema_json, approval_policy,
+      cost_class, risk_level, examples_json, editable, updated_by, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(agent_id) DO UPDATE SET
+      name = excluded.name,
+      role = excluded.role,
+      purpose = excluded.purpose,
+      persona = excluded.persona,
+      allowed_tools_json = excluded.allowed_tools_json,
+      blocked_tools_json = excluded.blocked_tools_json,
+      source_scope_json = excluded.source_scope_json,
+      output_schema_json = excluded.output_schema_json,
+      approval_policy = excluded.approval_policy,
+      cost_class = excluded.cost_class,
+      risk_level = excluded.risk_level,
+      examples_json = excluded.examples_json,
+      editable = excluded.editable,
+      updated_by = excluded.updated_by,
+      updated_at = excluded.updated_at`,
+    [
+      definition.agentId,
+      input.organizationId || null,
+      definition.name,
+      definition.role,
+      definition.purpose,
+      definition.persona,
+      safeJsonStringify(definition.allowedTools),
+      safeJsonStringify(definition.blockedTools),
+      safeJsonStringify(definition.sourceScope),
+      safeJsonStringify(definition.outputSchema),
+      definition.approvalPolicy,
+      definition.costClass,
+      definition.riskLevel,
+      safeJsonStringify(definition.examples),
+      1,
+      input.userId,
+      nowIso(),
+    ]
+  );
+  return {
+    ...definition,
+    editable: true,
+    source: 'database',
+    updatedBy: input.userId,
+  };
 }
 
 function validateToolScope(definition: Wave8AgentDefinition, requestedTools: string[]): any {
@@ -578,7 +711,7 @@ function validateOutputSchema(definition: Wave8AgentDefinition, output: any): bo
 
 export async function launchWave8Agent(input: LaunchWave8AgentInput): Promise<any> {
   await ensureWave8AgentRuntimeSchema();
-  const definition = getDefinition(input.agentId);
+  const definition = await getDefinition(input.agentId, input.organizationId);
   if (!definition) throw new Error(`Unknown Wave 8 agent: ${input.agentId}`);
   const requestedTools = input.requestedTools || [];
   const toolDecision = validateToolScope(definition, requestedTools);
@@ -701,7 +834,8 @@ export async function executeWave8AgentTool(input: {
   aiRunId?: string | null;
   budgetApproved?: boolean;
 }): Promise<any> {
-  const definition = getDefinition(input.agentId);
+  await ensureWave8AgentRuntimeSchema();
+  const definition = await getDefinition(input.agentId, input.organizationId);
   if (!definition) throw new Error(`Unknown Wave 8 agent: ${input.agentId}`);
   const toolDecision = validateToolScope(definition, [input.toolName]);
   if (!toolDecision.allowed) {

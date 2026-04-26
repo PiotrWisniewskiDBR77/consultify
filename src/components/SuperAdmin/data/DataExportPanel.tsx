@@ -20,7 +20,6 @@ import {
   Loader2,
   Plus,
   RefreshCw,
-  Search,
   Trash2,
   User,
   XCircle,
@@ -29,6 +28,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { ReadOnlyState } from '../../Admin/AdminState';
 
 interface ExportRequest {
   id: string;
@@ -66,6 +66,9 @@ const DATA_TYPES = [
   { id: 'billing', label: 'Billing', description: 'Invoices and subscriptions' },
 ];
 
+const dataExportWorkflowUnavailableReason =
+  'SuperAdmin data exports are disabled until this panel is reconciled with the audited bulk-export workflow that requires confirmation and audit evidence.';
+
 export const DataExportPanel: React.FC = () => {
   const [requests, setRequests] = useState<ExportRequest[]>([]);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -82,54 +85,31 @@ export const DataExportPanel: React.FC = () => {
     includeData: DATA_TYPES.map((d) => d.id),
     excludeData: [],
   });
-  const [creating, setCreating] = useState(false);
+  const creating = false;
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (filterOrgId) params.append('organizationId', filterOrgId);
-      if (filterStatus) params.append('status', filterStatus);
-
-      const [requestsResult, orgsResult] = await Promise.all([
-        Api.get(`/data-export/requests?${params.toString()}`),
-        Api.getOrganizations(),
-      ]);
-      setRequests(requestsResult.requests || []);
+      const orgsResult = await Api.getOrganizations().catch(() => []);
       setOrganizations(orgsResult || []);
+      setRequests([]);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
-  }, [filterOrgId, filterStatus]);
+  }, []);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const handleCreateExport = async () => {
-    setCreating(true);
-    try {
-      await Api.post('/data-export/requests', formData);
-      toast.success('Export request created');
-      setShowCreateModal(false);
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create export request');
-    } finally {
-      setCreating(false);
-    }
+    toast.error(dataExportWorkflowUnavailableReason);
   };
 
-  const handleCancelRequest = async (requestId: string) => {
-    try {
-      await Api.delete(`/data-export/requests/${requestId}`);
-      toast.success('Export request canceled');
-      fetchData();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to cancel request');
-    }
+  const handleCancelRequest = async (_requestId: string) => {
+    toast.error(dataExportWorkflowUnavailableReason);
   };
 
   const formatFileSize = (bytes?: number) => {
@@ -197,6 +177,8 @@ export const DataExportPanel: React.FC = () => {
           <select
             value={filterOrgId}
             onChange={(e) => setFilterOrgId(e.target.value)}
+            disabled
+            title={dataExportWorkflowUnavailableReason}
             className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
           >
             <option value="">All Organizations</option>
@@ -210,6 +192,8 @@ export const DataExportPanel: React.FC = () => {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
+            disabled
+            title={dataExportWorkflowUnavailableReason}
             className="px-4 py-2.5 bg-slate-800 border border-white/10 rounded-lg text-white focus:border-violet-500/50 outline-none"
           >
             <option value="">All Status</option>
@@ -231,8 +215,9 @@ export const DataExportPanel: React.FC = () => {
             />
           </button>
           <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-colors"
+            disabled
+            title={dataExportWorkflowUnavailableReason}
+            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 rounded-lg text-white font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={18} />
             Request Export
@@ -246,9 +231,11 @@ export const DataExportPanel: React.FC = () => {
           <Loader2 size={32} className="animate-spin text-violet-500" />
         </div>
       ) : requests.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-slate-400 dark:text-slate-500">
-          <FileArchive size={48} className="mb-4 opacity-50" />
-          <p>No export requests found</p>
+        <div className="py-6">
+          <ReadOnlyState
+            title="Data export workflow unavailable"
+            description={dataExportWorkflowUnavailableReason}
+          />
         </div>
       ) : (
         <div className="space-y-4">
@@ -305,20 +292,22 @@ export const DataExportPanel: React.FC = () => {
 
                 <div className="flex items-center gap-2">
                   {request.status === 'completed' && request.file_url && (
-                    <a
-                      href={request.file_url}
-                      download
-                      className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-lg text-sm transition-colors"
+                    <button
+                      type="button"
+                      disabled
+                      title={dataExportWorkflowUnavailableReason}
+                      className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 text-emerald-400 rounded-lg text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Download size={16} />
                       Download
-                    </a>
+                    </button>
                   )}
                   {['pending', 'processing'].includes(request.status) && (
                     <button
                       onClick={() => handleCancelRequest(request.id)}
-                      className="p-2 hover:bg-red-500/10 text-red-400 rounded-lg transition-colors"
-                      title="Cancel"
+                      disabled
+                      className="p-2 text-red-400 rounded-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+                      title={dataExportWorkflowUnavailableReason}
                     >
                       <Trash2 size={16} />
                     </button>

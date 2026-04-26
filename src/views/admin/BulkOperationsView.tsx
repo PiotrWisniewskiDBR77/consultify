@@ -31,6 +31,7 @@ import {
 import React, { useCallback, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -66,9 +67,11 @@ export const BulkOperationsView: React.FC = () => {
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [importRequestError, setImportRequestError] = useState<string | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [usersLoadError, setUsersLoadError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Mass email
@@ -133,6 +136,7 @@ export const BulkOperationsView: React.FC = () => {
   const handleStartImport = async () => {
     setImporting(true);
     setImportStep('importing');
+    setImportRequestError(null);
 
     try {
       const mappedData = csvData.map((row) => {
@@ -148,12 +152,8 @@ export const BulkOperationsView: React.FC = () => {
       setImportStep('complete');
     } catch (error) {
       console.error('Import failed:', error);
-      setImportResult({
-        total: csvData.length,
-        success: 0,
-        failed: csvData.length,
-        errors: [{ row: 0, email: '', error: 'Import failed' }],
-      });
+      setImportResult(null);
+      setImportRequestError(error instanceof Error ? error.message : 'Import request failed');
       setImportStep('complete');
     } finally {
       setImporting(false);
@@ -166,6 +166,7 @@ export const BulkOperationsView: React.FC = () => {
     setCsvHeaders([]);
     setColumnMapping({});
     setImportResult(null);
+    setImportRequestError(null);
     setImportStep('upload');
   };
 
@@ -182,10 +183,13 @@ export const BulkOperationsView: React.FC = () => {
   const fetchUsers = useCallback(async () => {
     setLoadingUsers(true);
     try {
+      setUsersLoadError(null);
       const result = await Api.get('/api/admin/users');
       setUsers(result.users || []);
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      setUsers([]);
+      setUsersLoadError(error instanceof Error ? error.message : 'Failed to load users');
     } finally {
       setLoadingUsers(false);
     }
@@ -215,6 +219,7 @@ export const BulkOperationsView: React.FC = () => {
       fetchUsers();
     } catch (error) {
       console.error('Failed to update roles:', error);
+      toast.error('Failed to update user roles');
     }
   };
 
@@ -515,6 +520,10 @@ export const BulkOperationsView: React.FC = () => {
       )}
 
       {/* Complete Step */}
+      {importStep === 'complete' && importRequestError && (
+        <DegradedState title="User import unavailable" description={importRequestError} />
+      )}
+
       {importStep === 'complete' && importResult && (
         <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
           <div className="text-center mb-6">
@@ -631,6 +640,7 @@ export const BulkOperationsView: React.FC = () => {
                   type="checkbox"
                   checked={selectedUsers.length === users.length && users.length > 0}
                   onChange={selectAllUsers}
+                  disabled={!!usersLoadError}
                   className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-violet-600"
                 />
               </th>
@@ -695,7 +705,14 @@ export const BulkOperationsView: React.FC = () => {
                 </td>
               </tr>
             ))}
-            {users.length === 0 && !loadingUsers && (
+            {usersLoadError && !loadingUsers && (
+              <tr>
+                <td colSpan={4} className="px-6 py-6">
+                  <DegradedState title="Users unavailable" description={usersLoadError} />
+                </td>
+              </tr>
+            )}
+            {!usersLoadError && users.length === 0 && !loadingUsers && (
               <tr>
                 <td colSpan={4} className="px-6 py-12 text-center">
                   <Users size={40} className="mx-auto mb-3 text-slate-300" />

@@ -201,7 +201,14 @@ async function ensureAdminGovernanceTables() {
 
 function hasCapability(owned: string[], required: string[]) {
   if (owned.includes('*') || owned.includes('admin:*')) return true;
-  return required.some((capability) => owned.includes(capability));
+  return required.some((capability) => {
+    if (owned.includes(capability)) return true;
+    if (capability.endsWith(':read')) {
+      const scope = capability.slice(0, -':read'.length);
+      return owned.includes(`${scope}:write`);
+    }
+    return false;
+  });
 }
 
 async function readAdminRoleAssignments(orgId: string): Promise<AdminRoleAssignment[]> {
@@ -1595,9 +1602,28 @@ router.post(
 router.get(
   '/overview',
   asyncHandler(async (req: AuthRequest, res) => {
-    const actor = await getAdminActor(req, res, ['people:read', 'security:read', 'billing:read']);
+    const actor = await getAdminActor(req, res);
     if (!actor) return;
-    const { orgId } = actor;
+    const { orgId, capabilities } = actor;
+    const canReadPeople = hasCapability(capabilities, ['people:read']);
+    const canReadBilling = hasCapability(capabilities, ['billing:read']);
+    const canReadSecurity = hasCapability(capabilities, ['security:read']);
+    const canReadAi = hasCapability(capabilities, ['ai:read', 'ai:governance', 'ai:operations']);
+    const canReadAudit = hasCapability(capabilities, ['audit:read']);
+    const sectionErrors: Record<string, string> = {};
+
+    if (!canReadPeople) {
+      sectionErrors.people = 'People overview requires people:read capability.';
+      sectionErrors.ownership = 'Ownership transfer overview requires people:read capability.';
+    }
+    if (!canReadBilling)
+      sectionErrors.billing = 'Billing overview requires billing:read capability.';
+    if (!canReadSecurity) {
+      sectionErrors.security = 'Security overview requires security:read capability.';
+      sectionErrors.collaboration = 'Collaboration overview requires security:read capability.';
+    }
+    if (!canReadAi) sectionErrors.ai = 'AI overview requires AI admin capability.';
+    if (!canReadAudit) sectionErrors.audit = 'Audit overview requires audit:read capability.';
 
     const [
       memberRows,
@@ -1608,21 +1634,25 @@ router.get(
       collaboration,
       auditStats,
     ] = await Promise.all([
-      dbAll<{ role?: string; total?: number }>(
-        `SELECT role, COUNT(*) as total FROM organization_members WHERE organization_id = ? GROUP BY role`,
-        [orgId],
-        { fallback: true }
-      ),
-      dbGet<{ total?: number }>(
-        `SELECT COUNT(*) as total FROM ownership_transfer_requests WHERE organization_id = ? AND status = 'pending'`,
-        [orgId],
-        { fallback: true }
-      ),
-      readBillingSummary(orgId),
-      readAiSummary(orgId),
-      readSecuritySettings(orgId),
-      readCollaborationControls(orgId),
-      readAuditStatsForOrg(orgId),
+      canReadPeople
+        ? dbAll<{ role?: string; total?: number }>(
+            `SELECT role, COUNT(*) as total FROM organization_members WHERE organization_id = ? GROUP BY role`,
+            [orgId],
+            { fallback: true }
+          )
+        : Promise.resolve([]),
+      canReadPeople
+        ? dbGet<{ total?: number }>(
+            `SELECT COUNT(*) as total FROM ownership_transfer_requests WHERE organization_id = ? AND status = 'pending'`,
+            [orgId],
+            { fallback: true }
+          )
+        : Promise.resolve(null),
+      canReadBilling ? readBillingSummary(orgId) : Promise.resolve(null),
+      canReadAi ? readAiSummary(orgId) : Promise.resolve(null),
+      canReadSecurity ? readSecuritySettings(orgId) : Promise.resolve(null),
+      canReadSecurity ? readCollaborationControls(orgId) : Promise.resolve(null),
+      canReadAudit ? readAuditStatsForOrg(orgId) : Promise.resolve(null),
     ]);
 
     const membersByRole = Object.fromEntries(
@@ -1631,10 +1661,13 @@ router.get(
 
     return res.json({
       organizationId: orgId,
+      sectionErrors,
       overview: {
         membersByRole,
-        totalMembers: Object.values(membersByRole).reduce((sum, value) => sum + Number(value), 0),
-        pendingOwnershipTransfers: Number(ownershipTransfers?.total || 0),
+        totalMembers: canReadPeople
+          ? Object.values(membersByRole).reduce((sum, value) => sum + Number(value), 0)
+          : null,
+        pendingOwnershipTransfers: canReadPeople ? Number(ownershipTransfers?.total || 0) : null,
         securityPolicy,
         collaboration,
         billing: billingSummary,

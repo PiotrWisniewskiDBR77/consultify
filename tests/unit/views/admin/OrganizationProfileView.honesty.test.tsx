@@ -1,0 +1,78 @@
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { OrganizationProfileView } from '@/views/admin/OrganizationProfileView';
+
+vi.mock('@/store/useAppStore', () => ({
+  useAppStore: () => ({
+    currentOrganization: { id: 'org-1', name: 'Acme' },
+  }),
+}));
+
+vi.mock('react-hot-toast', () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+  },
+}));
+
+describe('OrganizationProfileView honest UI', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('does not render failed profile loads as editable seeded defaults', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: false,
+        status: 500,
+      })
+    );
+
+    render(<OrganizationProfileView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Organization profile unavailable')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Company Details')).not.toBeInTheDocument();
+    expect(screen.queryByText('Technology')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
+  });
+
+  it('marks favicon upload read-only when profile data loads', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({
+          exists: true,
+          profile: {
+            description: 'Loaded profile',
+            industry: 'Consulting',
+            companySize: '11-50',
+          },
+        }),
+      })
+    );
+
+    render(<OrganizationProfileView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Company Details')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Branding/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText('Favicon upload is read-only')).toBeInTheDocument();
+    });
+  });
+});

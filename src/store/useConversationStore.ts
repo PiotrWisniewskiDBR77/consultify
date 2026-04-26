@@ -45,6 +45,12 @@ const _inflightFetchConversationById: Record<string, Promise<void>> = {};
 const _lastFetchConversationAt: Record<string, number> = {};
 const _conversationMessagesCache: Record<string, ConversationMessage[]> = {};
 
+function isChatRootPath(): boolean {
+  if (typeof window === 'undefined') return false;
+  const normalized = window.location.pathname.replace(/\/+$/, '') || '/';
+  return normalized === '/chat';
+}
+
 function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -683,7 +689,18 @@ export const useConversationStore = create<ConversationState>()(
             }
 
             const messages = (result?.messages || []).map(mapApiMessage);
-            _conversationMessagesCache[id] = messages;
+            const existingActiveMessages = get().activeMessages.filter(
+              (message) => message.conversationId === id
+            );
+            const shouldKeepLocalMessages =
+              messages.length === 0 &&
+              existingActiveMessages.some(
+                (message) =>
+                  String(message.id || '').startsWith('local-') ||
+                  Date.now() - new Date(message.createdAt).getTime() < 30_000
+              );
+            const nextMessages = shouldKeepLocalMessages ? existingActiveMessages : messages;
+            _conversationMessagesCache[id] = nextMessages;
             set((state) => {
               const fromApiRaw = result?.language;
               const fromApiBase = fromApiRaw ? String(fromApiRaw).split('-')[0] : null;
@@ -693,7 +710,7 @@ export const useConversationStore = create<ConversationState>()(
                 (fromApi as any) || existing || state.draftChatLanguage || getAppLanguageFallback();
               return {
                 activeConversationId: id,
-                activeMessages: messages,
+                activeMessages: nextMessages,
                 isLoading: false,
                 draftChatLanguage: resolved,
                 chatLanguageByConversationId: {
@@ -1549,13 +1566,32 @@ export const useConversationStore = create<ConversationState>()(
         draftChatLanguage: state.draftChatLanguage,
         chatLanguageByConversationId: state.chatLanguageByConversationId,
       }),
-      onRehydrate: () => {
+      merge: (persistedState: any, currentState) => {
+        const persisted = persistedState?.state || persistedState || {};
+        if (!isChatRootPath()) return { ...currentState, ...persisted };
+
+        return {
+          ...currentState,
+          ...persisted,
+          activeConversationId: null,
+          activeMessages: [],
+          _activeConversationState: null,
+          _activeConversationStateMessage: null,
+          isLoading: false,
+        };
+      },
+      onRehydrateStorage: () => {
         // When store rehydrates, we need to fetch messages for active conversation
         return (state) => {
           // Migration: Reset isSidebarOpen to false to prevent blocking main content
           // This fixes an issue where the chat history sidebar was blocking clicks
           if (state) {
             state.isSidebarOpen = false;
+          }
+
+          if (state && isChatRootPath()) {
+            state.clearActiveChat();
+            return;
           }
 
           if (state?.activeConversationId) {

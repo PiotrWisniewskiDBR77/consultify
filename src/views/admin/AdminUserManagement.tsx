@@ -4,7 +4,6 @@ import {
   CheckCircle,
   Crown,
   Edit,
-  MoreVertical,
   Plus,
   RefreshCw,
   Search,
@@ -16,11 +15,13 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useUserCan } from '../../hooks/useUserCan';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { User, UserRole } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { isSuperAdminRole } from '../../utils/roleGuards';
 
 interface ExtendedUser extends User {
@@ -39,6 +40,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
   const [userPlans, setUserPlans] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Filter States
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -51,9 +53,6 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
   const [transferTarget, setTransferTarget] = useState<string>('');
   const [transferReason, setTransferReason] = useState('');
   const [transferring, setTransferring] = useState(false);
-
-  // Action Menu State
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -71,12 +70,16 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const data = await Api.getUsers();
       // Api.getUsers returns data.users || data (if data is array)
       setUsers(Array.isArray(data) ? data : (data as any).users || []);
     } catch (e) {
       console.error(e);
-      toast.error('Failed to load users');
+      setUsers([]);
+      const message = normalizeApiErrorMessage(e, 'Failed to load users');
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -221,7 +224,6 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
       licensePlanId: user.licensePlanId || '',
     });
     setShowAddUserModal(true);
-    setOpenMenuId(null);
   };
 
   const openAddModal = () => {
@@ -292,6 +294,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               placeholder="Search users..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={!!loadError}
               className="pl-10 pr-4 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white focus:border-purple-500 outline-none w-64"
             />
           </div>
@@ -300,6 +303,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
+            disabled={!!loadError}
             className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-purple-500 outline-none"
           >
             <option value="all">All Account Types</option>
@@ -312,6 +316,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
+            disabled={!!loadError}
             className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-navy-900 dark:text-white text-sm focus:border-purple-500 outline-none"
           >
             <option value="all">All Status</option>
@@ -325,6 +330,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           {currentUserIsOwner && (
             <button
               onClick={() => setShowTransferModal(true)}
+              disabled={!!loadError}
               className="flex items-center gap-2 px-4 py-2 bg-amber-600/20 hover:bg-amber-600/30 text-amber-400 border border-amber-500/30 rounded-lg transition-colors text-sm font-medium"
             >
               <ArrowRightLeft size={16} /> Transfer Ownership
@@ -332,6 +338,7 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
           )}
           <button
             onClick={openAddModal}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors text-sm font-medium shadow-lg shadow-purple-900/20"
           >
             <Plus size={16} /> Add User
@@ -356,6 +363,12 @@ export const AdminUserManagement: React.FC<AdminUserManagementProps> = ({ initia
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center">
                   <RefreshCw className="w-6 h-6 animate-spin text-purple-500 mx-auto" />
+                </td>
+              </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={5} className="px-6 py-6">
+                  <DegradedState title="Users unavailable" description={loadError} />
                 </td>
               </tr>
             ) : filteredUsers.length === 0 ? (

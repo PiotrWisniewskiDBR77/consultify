@@ -27,6 +27,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { DegradedState } from '../../Admin/AdminState';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface PersonalAnalyticsModuleProps {
@@ -61,6 +62,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter' | 'year'>('week');
   const [stats, setStats] = useState<ProductivityStats | null>(null);
   const [dailyActivity, setDailyActivity] = useState<DailyActivity[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -69,34 +71,21 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
   const loadData = async () => {
     try {
       setLoading(true);
-      // Mock data
-      setStats({
-        tasksCompleted: 45,
-        tasksCompletedChange: 12,
-        hoursLogged: 38.5,
-        hoursLoggedChange: -5,
-        productivityScore: 87,
-        productivityChange: 8,
-        focusTime: 24,
-        focusTimeChange: 15,
-      });
-
-      // Generate mock activity data
-      const days =
-        timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : timeRange === 'quarter' ? 90 : 365;
-      const activity: DailyActivity[] = [];
-      for (let i = 0; i < days; i++) {
-        const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
-        activity.push({
-          date: date.toISOString(),
-          tasks: Math.floor(Math.random() * 10),
-          hours: Math.random() * 8,
-          score: Math.floor(Math.random() * 40) + 60,
-        });
-      }
-      setDailyActivity(activity.reverse());
+      setLoadError(
+        t(
+          'settings.personalAnalytics.unavailableDescription',
+          'Personal productivity analytics are not connected to a persisted analytics source yet.'
+        )
+      );
+      setStats(null);
+      setDailyActivity([]);
     } catch (error) {
       console.error('Error loading analytics:', error);
+      setLoadError(
+        error instanceof Error
+          ? error.message
+          : t('settings.personalAnalytics.loadError', 'Failed to load personal analytics')
+      );
     } finally {
       setLoading(false);
     }
@@ -190,6 +179,7 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value as any)}
+            disabled={!!loadError}
             className="px-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
           >
             <option value="week">This Week</option>
@@ -197,15 +187,25 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
             <option value="quarter">This Quarter</option>
             <option value="year">This Year</option>
           </select>
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors">
+          <button
+            disabled={!!loadError}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors disabled:opacity-50"
+          >
             <Download size={16} />
             Export
           </button>
         </div>
       </div>
 
+      {loadError && (
+        <DegradedState
+          title={t('settings.personalAnalytics.unavailableTitle', 'Personal analytics unavailable')}
+          description={loadError}
+        />
+      )}
+
       {/* Stats Grid */}
-      {stats && (
+      {!loadError && stats && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <StatCard
             label="Tasks Completed"
@@ -239,26 +239,28 @@ export const PersonalAnalyticsModule: React.FC<PersonalAnalyticsModuleProps> = (
       )}
 
       {/* Activity Heatmap */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-          <Calendar size={20} className="text-emerald-500" />
-          Activity Heatmap
-        </h3>
-        <div className="overflow-x-auto">
-          <ActivityHeatmap data={dailyActivity} />
-        </div>
-        <div className="flex items-center gap-2 mt-4 text-xs text-slate-500 dark:text-slate-400">
-          <span>Less</span>
-          <div className="flex gap-1">
-            <div className="w-3 h-3 rounded-sm bg-slate-100 dark:bg-slate-700" />
-            <div className="w-3 h-3 rounded-sm bg-emerald-200" />
-            <div className="w-3 h-3 rounded-sm bg-emerald-300" />
-            <div className="w-3 h-3 rounded-sm bg-emerald-400" />
-            <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+      {!loadError && (
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+            <Calendar size={20} className="text-emerald-500" />
+            Activity Heatmap
+          </h3>
+          <div className="overflow-x-auto">
+            <ActivityHeatmap data={dailyActivity} />
           </div>
-          <span>More</span>
+          <div className="flex items-center gap-2 mt-4 text-xs text-slate-500 dark:text-slate-400">
+            <span>Less</span>
+            <div className="flex gap-1">
+              <div className="w-3 h-3 rounded-sm bg-slate-100 dark:bg-slate-700" />
+              <div className="w-3 h-3 rounded-sm bg-emerald-200" />
+              <div className="w-3 h-3 rounded-sm bg-emerald-300" />
+              <div className="w-3 h-3 rounded-sm bg-emerald-400" />
+              <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+            </div>
+            <span>More</span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Weekly Breakdown */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">

@@ -12824,6 +12824,14 @@ export const Api = {
     return handleResponse(res, 'Failed to load Wave 8 agent catalog');
   },
 
+  upsertWave8AgentDefinition: async (definition: Record<string, unknown>) => {
+    const res = await fetchWithRetry(`${API_URL}/ai-agents/definitions`, {
+      method: 'POST',
+      body: JSON.stringify({ definition }),
+    });
+    return handleResponse(res, 'Failed to save Wave 8 agent definition');
+  },
+
   launchWave8Agent: async (payload: {
     agentId: string;
     goal: string;

@@ -30,6 +30,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface PersonalAutomationSettingsProps {
@@ -147,6 +148,8 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
   const [activeTab, setActiveTab] = useState<'rules' | 'templates' | 'logs'>('rules');
   const [editingRule, setEditingRule] = useState<AutomationRule | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [rulesLoadError, setRulesLoadError] = useState<string | null>(null);
+  const [logsLoadError, setLogsLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -176,22 +179,29 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
   const loadData = async () => {
     try {
       setLoading(true);
-      const [rulesRes, logsRes] = await Promise.all([
-        Api.get('/api/user/automations').catch(() => ({ data: [] })),
-        Api.get('/api/user/automations/logs').catch(() => ({ data: [] })),
+      setRulesLoadError(null);
+      setLogsLoadError(null);
+      const [rulesRes, logsRes] = await Promise.allSettled([
+        Api.get('/api/user/automations'),
+        Api.get('/api/user/automations/logs'),
       ]);
 
-      // Set empty state if API fails
-      if (rulesRes.data && rulesRes.data.length > 0) {
-        setRules(rulesRes.data);
+      if (rulesRes.status === 'fulfilled') {
+        const rulesData = Array.isArray(rulesRes.value?.data)
+          ? rulesRes.value.data
+          : rulesRes.value;
+        setRules(Array.isArray(rulesData) ? rulesData : []);
       } else {
         setRules([]);
+        setRulesLoadError('Failed to load automations');
       }
 
-      if (logsRes.data && logsRes.data.length > 0) {
-        setLogs(logsRes.data);
+      if (logsRes.status === 'fulfilled') {
+        const logsData = Array.isArray(logsRes.value?.data) ? logsRes.value.data : logsRes.value;
+        setLogs(Array.isArray(logsData) ? logsData : []);
       } else {
         setLogs([]);
+        setLogsLoadError('Failed to load automation history');
       }
     } catch (error) {
       console.error('Error loading automations:', error);
@@ -231,17 +241,12 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
   };
 
   const createFromTemplate = (template: AutomationTemplate) => {
-    const newRule: AutomationRule = {
-      id: `rule_${Date.now()}`,
-      name: getTemplateName(template),
-      description: getTemplateDescription(template),
-      enabled: false,
-      trigger: template.trigger,
-      actions: template.actions,
-      runCount: 0,
-    };
-    setEditingRule(newRule);
-    setShowCreateModal(true);
+    toast.error(
+      t(
+        'settings.personalAutomation.templateReadOnly',
+        'Automation template creation is read-only until persistence is connected'
+      )
+    );
   };
 
   if (loading) {
@@ -268,8 +273,8 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
           </p>
         </div>
         <button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors"
+          disabled
+          className="flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={16} />
           {t('settings.personalAutomation.createAutomation', 'Create Automation')}
@@ -279,14 +284,16 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">{rules.length}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white">
+            {rulesLoadError ? '--' : rules.length}
+          </p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {t('settings.personalAutomation.stats.active', 'Active Automations')}
           </p>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-slate-900 dark:text-white">
-            {rules.reduce((sum, r) => sum + r.runCount, 0)}
+            {rulesLoadError ? '--' : rules.reduce((sum, r) => sum + r.runCount, 0)}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {t('settings.personalAutomation.stats.totalRuns', 'Total Runs')}
@@ -294,7 +301,13 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-green-600">
-            {logs.filter((l) => l.status === 'success').length}
+            {logsLoadError
+              ? '--'
+              : logs.filter(
+                  (l) =>
+                    l.status === 'success' &&
+                    Date.now() - new Date(l.timestamp).getTime() < 24 * 60 * 60 * 1000
+                ).length}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {t('settings.personalAutomation.stats.successful24h', 'Successful (24h)')}
@@ -338,6 +351,9 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
       {/* Rules Tab */}
       {activeTab === 'rules' && (
         <div className="space-y-4">
+          {rulesLoadError && (
+            <DegradedState title="Automations unavailable" description={rulesLoadError} />
+          )}
           {rules.map((rule) => (
             <div
               key={rule.id}
@@ -400,14 +416,11 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
             </div>
           ))}
 
-          {rules.length === 0 && (
+          {!rulesLoadError && rules.length === 0 && (
             <div className="text-center py-12 text-slate-500 dark:text-slate-400">
               <Zap size={48} className="mx-auto mb-4 opacity-30" />
               <p>{t('settings.personalAutomation.empty', 'No automations yet')}</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
-                className="mt-2 text-amber-600 hover:underline"
-              >
+              <button disabled className="mt-2 text-amber-600 hover:underline">
                 {t('settings.personalAutomation.createFirst', 'Create your first automation')}
               </button>
             </div>
@@ -417,58 +430,71 @@ export const PersonalAutomationSettings: React.FC<PersonalAutomationSettingsProp
 
       {/* Templates Tab */}
       {activeTab === 'templates' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {templates.map((template) => (
-            <div
-              key={template.id}
-              className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div>
-                  <span className="text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">
-                    {getTemplateCategory(template.category)}
-                  </span>
-                  <h4 className="font-semibold text-slate-900 dark:text-white mt-2">
-                    {getTemplateName(template)}
-                  </h4>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {getTemplateDescription(template)}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => createFromTemplate(template)}
-                className="w-full mt-3 py-2 px-4 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 text-sm font-medium transition-colors"
+        <div className="space-y-4">
+          <ReadOnlyState
+            title="Automation templates are read-only"
+            description="Templates are static examples until automation creation is connected to backend persistence."
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {templates.map((template) => (
+              <div
+                key={template.id}
+                className="p-4 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl"
               >
-                {t('settings.personalAutomation.useTemplate', 'Use Template')}
-              </button>
-            </div>
-          ))}
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <span className="text-xs bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded">
+                      {getTemplateCategory(template.category)}
+                    </span>
+                    <h4 className="font-semibold text-slate-900 dark:text-white mt-2">
+                      {getTemplateName(template)}
+                    </h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {getTemplateDescription(template)}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => createFromTemplate(template)}
+                  disabled
+                  className="w-full mt-3 py-2 px-4 border border-amber-500 text-amber-600 rounded-lg hover:bg-amber-50 dark:hover:bg-amber-500/10 text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {t('settings.personalAutomation.useTemplate', 'Use Template')}
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Logs Tab */}
       {activeTab === 'logs' && (
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          {logsLoadError && (
+            <div className="p-4">
+              <DegradedState title="Automation history unavailable" description={logsLoadError} />
+            </div>
+          )}
           <div className="divide-y divide-slate-100 dark:divide-white/5">
-            {logs.map((log) => (
-              <div key={log.id} className="px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {log.status === 'success' ? (
-                    <CheckCircle size={18} className="text-green-500" />
-                  ) : (
-                    <AlertCircle size={18} className="text-red-500" />
-                  )}
-                  <div>
-                    <p className="font-medium text-slate-900 dark:text-white">{log.ruleName}</p>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">{log.details}</p>
+            {!logsLoadError &&
+              logs.map((log) => (
+                <div key={log.id} className="px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    {log.status === 'success' ? (
+                      <CheckCircle size={18} className="text-green-500" />
+                    ) : (
+                      <AlertCircle size={18} className="text-red-500" />
+                    )}
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-white">{log.ruleName}</p>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">{log.details}</p>
+                    </div>
                   </div>
+                  <span className="text-sm text-slate-400 dark:text-slate-500">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </span>
                 </div>
-                <span className="text-sm text-slate-400 dark:text-slate-500">
-                  {new Date(log.timestamp).toLocaleString()}
-                </span>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}

@@ -35,6 +35,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import Api from '../../services/api';
 import { User } from '../../types';
+import { DegradedState } from '../Admin/AdminState';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Badge } from '../ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -114,28 +115,8 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
   ]);
 
   // Feature flags state
-  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([
-    {
-      key: 'ENABLE_ANALYTICS',
-      value: true,
-      type: 'boolean',
-      description: 'Enable analytics tracking',
-    },
-    {
-      key: 'MAX_UPLOAD_SIZE_MB',
-      value: 50,
-      type: 'number',
-      description: 'Maximum file upload size',
-    },
-    { key: 'API_VERSION', value: 'v2', type: 'string', description: 'Current API version' },
-    {
-      key: 'ENABLE_WEBSOCKETS',
-      value: true,
-      type: 'boolean',
-      description: 'Enable real-time updates',
-    },
-    { key: 'DEBUG_MODE', value: false, type: 'boolean', description: 'Enable debug mode' },
-  ]);
+  const [featureFlags, setFeatureFlags] = useState<FeatureFlag[]>([]);
+  const [featureFlagsLoadError, setFeatureFlagsLoadError] = useState<string | null>(null);
 
   // Debug info
   const debugInfo = {
@@ -175,6 +156,29 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
     }
   }, [applyPersistedSettings]);
 
+  const refreshFeatureFlags = useCallback(async () => {
+    setFeatureFlagsLoadError(null);
+    const response = await Api.getFeatureFlags();
+    const flags = Array.isArray(response) ? response : response?.flags;
+    if (!Array.isArray(flags)) {
+      throw new Error('Feature flags response was invalid');
+    }
+    setFeatureFlags(
+      flags.map((flag: any) => ({
+        key: flag.key || flag.name,
+        value: flag.value ?? flag.enabled,
+        type:
+          flag.type ||
+          (typeof (flag.value ?? flag.enabled) === 'number'
+            ? 'number'
+            : typeof (flag.value ?? flag.enabled) === 'string'
+              ? 'string'
+              : 'boolean'),
+        description: flag.description,
+      }))
+    );
+  }, []);
+
   const getBetaFeatureName = (feature: BetaFeature) =>
     t(`settings.beta.features.${feature.id}.name`, feature.name);
 
@@ -188,13 +192,27 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        await refreshDeveloperSettings();
+        const [developerResult, flagsResult] = await Promise.allSettled([
+          refreshDeveloperSettings(),
+          refreshFeatureFlags(),
+        ]);
+        if (developerResult.status === 'rejected') {
+          throw developerResult.reason;
+        }
+        if (flagsResult.status === 'rejected') {
+          setFeatureFlags([]);
+          setFeatureFlagsLoadError(
+            flagsResult.reason instanceof Error
+              ? flagsResult.reason.message
+              : 'Failed to load feature flags'
+          );
+        }
       } catch (e) {
         console.error('Failed to load developer settings:', e);
       }
     };
     loadSettings();
-  }, [refreshDeveloperSettings]);
+  }, [refreshDeveloperSettings, refreshFeatureFlags]);
 
   // Save settings to backend API
   const saveSettings = useCallback(async () => {
@@ -560,48 +578,66 @@ export const DeveloperSettings: React.FC<DeveloperSettingsProps> = ({
                 <CardTitle className="text-base">
                   {t('settings.flags.current', 'Current Configuration')}
                 </CardTitle>
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    refreshFeatureFlags().catch((error) => {
+                      setFeatureFlags([]);
+                      setFeatureFlagsLoadError(
+                        error instanceof Error ? error.message : 'Failed to load feature flags'
+                      );
+                    })
+                  }
+                >
                   <RefreshCw className="w-4 h-4 mr-2" />
                   {t('common.refresh', 'Refresh')}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {featureFlags.map((flag) => (
-                  <div
-                    key={flag.key}
-                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
-                  >
-                    <div>
-                      <code className="text-sm font-mono text-violet-600 dark:text-violet-400">
-                        {flag.key}
-                      </code>
-                      {flag.description && (
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                          {getFeatureFlagDescription(flag)}
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="font-mono">
-                        {flag.type}
-                      </Badge>
-                      {flag.type === 'boolean' ? (
-                        flag.value ? (
-                          <ToggleRight className="w-5 h-5 text-emerald-500" />
+              {featureFlagsLoadError ? (
+                <DegradedState
+                  title="Feature flags unavailable"
+                  description={featureFlagsLoadError}
+                />
+              ) : (
+                <div className="space-y-3">
+                  {featureFlags.map((flag) => (
+                    <div
+                      key={flag.key}
+                      className="flex items-center justify-between p-3 bg-slate-50 dark:bg-navy-800/50 rounded-lg"
+                    >
+                      <div>
+                        <code className="text-sm font-mono text-violet-600 dark:text-violet-400">
+                          {flag.key}
+                        </code>
+                        {flag.description && (
+                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            {getFeatureFlagDescription(flag)}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="font-mono">
+                          {flag.type}
+                        </Badge>
+                        {flag.type === 'boolean' ? (
+                          flag.value ? (
+                            <ToggleRight className="w-5 h-5 text-emerald-500" />
+                          ) : (
+                            <ToggleLeft className="w-5 h-5 text-slate-400 dark:text-slate-500" />
+                          )
                         ) : (
-                          <ToggleLeft className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-                        )
-                      ) : (
-                        <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
-                          {String(flag.value)}
-                        </span>
-                      )}
+                          <span className="text-sm font-mono text-slate-600 dark:text-slate-400">
+                            {String(flag.value)}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

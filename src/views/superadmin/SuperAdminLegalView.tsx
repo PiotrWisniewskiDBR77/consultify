@@ -14,6 +14,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 import { LegalDocType, LegalDocument } from '../../types';
 
@@ -32,6 +33,7 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
   const { t } = useTranslation();
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showPublishForm, setShowPublishForm] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -50,12 +52,13 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
 
   const fetchDocuments = async () => {
     setLoading(true);
+    setLoadError(null);
     setError(null);
     try {
       const data = await Api.getSuperAdminLegalDocs();
       setDocuments(data);
     } catch (err: any) {
-      setError(err.message);
+      setLoadError(err.message || 'Failed to load legal documents');
     } finally {
       setLoading(false);
     }
@@ -283,101 +286,109 @@ export const SuperAdminLegalView: React.FC<SuperAdminLegalViewProps> = () => {
 
       {/* Documents Table */}
       <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-lg">
-        <table className="w-full">
-          <thead className="bg-slate-50 dark:bg-navy-800">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                Type
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                Title
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                Version
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                Effective
-              </th>
-              <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                Status
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-            {documents.map((doc) => (
-              <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                <td className="px-4 py-3">
-                  <span className="text-sm font-medium text-slate-900 dark:text-white">
-                    {doc.doc_type}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  {doc.title}
-                </td>
-                <td className="px-4 py-3">
-                  <code className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
-                    {doc.version}
-                  </code>
-                </td>
-                <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
-                  {formatDate(doc.effective_from)}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {doc.is_active ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
-                      <Check size={12} />
-                      Active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
-                      Inactive
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => viewDocument(doc.id)}
-                      className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800/40"
-                      title="View"
-                    >
-                      <Eye size={16} className="text-slate-500 dark:text-slate-400" />
-                    </button>
-                    {!doc.is_active && (
-                      <button
-                        onClick={() => toggleActive(doc.id, true)}
-                        className="p-1.5 rounded hover:bg-green-100 dark:hover:bg-green-900/30"
-                        title="Activate"
-                      >
-                        <Check size={16} className="text-green-600" />
-                      </button>
-                    )}
-                    {doc.is_active && (
-                      <button
-                        onClick={() => toggleActive(doc.id, false)}
-                        className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30"
-                        title="Deactivate"
-                      >
-                        <X size={16} className="text-red-600" />
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {documents.length === 0 && (
-          <div className="p-8 text-center text-slate-500 dark:text-slate-400">
-            {t(
-              'superadmin.legal.noDocuments',
-              'No legal documents found. Click "Publish New Version" to add one.'
-            )}
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Legal documents unavailable" description={loadError} />
           </div>
+        ) : (
+          <>
+            <table className="w-full">
+              <thead className="bg-slate-50 dark:bg-navy-800">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                    Type
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                    Title
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                    Version
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                    Effective
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-slate-500 dark:text-slate-400 uppercase">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                {documents.map((doc) => (
+                  <tr key={doc.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                    <td className="px-4 py-3">
+                      <span className="text-sm font-medium text-slate-900 dark:text-white">
+                        {doc.doc_type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                      {doc.title}
+                    </td>
+                    <td className="px-4 py-3">
+                      <code className="text-xs bg-slate-100 dark:bg-slate-700 px-2 py-1 rounded">
+                        {doc.version}
+                      </code>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400">
+                      {formatDate(doc.effective_from)}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {doc.is_active ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400">
+                          <Check size={12} />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => viewDocument(doc.id)}
+                          className="p-1.5 rounded hover:bg-slate-100 dark:hover:bg-navy-800/40"
+                          title="View"
+                        >
+                          <Eye size={16} className="text-slate-500 dark:text-slate-400" />
+                        </button>
+                        {!doc.is_active && (
+                          <button
+                            onClick={() => toggleActive(doc.id, true)}
+                            className="p-1.5 rounded hover:bg-green-100 dark:hover:bg-green-900/30"
+                            title="Activate"
+                          >
+                            <Check size={16} className="text-green-600" />
+                          </button>
+                        )}
+                        {doc.is_active && (
+                          <button
+                            onClick={() => toggleActive(doc.id, false)}
+                            className="p-1.5 rounded hover:bg-red-100 dark:hover:bg-red-900/30"
+                            title="Deactivate"
+                          >
+                            <X size={16} className="text-red-600" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            {documents.length === 0 && (
+              <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+                {t(
+                  'superadmin.legal.noDocuments',
+                  'No legal documents found. Click "Publish New Version" to add one.'
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
 

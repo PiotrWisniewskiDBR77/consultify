@@ -22,6 +22,7 @@ export const ConversationRouteSync: React.FC = () => {
   const isLoading = useConversationStore((s) => s.isLoading);
   const setActiveConversation = useConversationStore((s) => s.setActiveConversation);
   const fetchConversation = useConversationStore((s) => s.fetchConversation);
+  const clearActiveChat = useConversationStore((s) => s.clearActiveChat);
 
   // Guard to prevent Store→URL sync from firing right after URL→Store sync
   const syncingFromUrl = useRef(false);
@@ -30,6 +31,14 @@ export const ConversationRouteSync: React.FC = () => {
   // URL → Store sync
   useEffect(() => {
     if (!conversationId) {
+      if (activeConversationId) {
+        syncingFromUrl.current = true;
+        clearActiveChat();
+        const timer = setTimeout(() => {
+          syncingFromUrl.current = false;
+        }, 100);
+        return () => clearTimeout(timer);
+      }
       return;
     }
 
@@ -60,6 +69,7 @@ export const ConversationRouteSync: React.FC = () => {
     isLoading,
     fetchConversation,
     setActiveConversation,
+    clearActiveChat,
   ]);
 
   // Store → URL sync (only when user changes conversation via UI, not from URL sync)

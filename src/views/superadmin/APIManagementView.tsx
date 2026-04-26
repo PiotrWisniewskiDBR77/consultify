@@ -12,32 +12,23 @@
 
 import {
   Activity,
-  AlertTriangle,
   BarChart3,
   Building2,
   CheckCircle2,
-  ChevronRight,
   Clock,
   Copy,
-  Eye,
-  EyeOff,
-  Globe,
   KeyRound,
   Loader2,
-  Lock,
   Plus,
   RefreshCw,
   Server,
-  Settings,
-  Shield,
   Trash2,
-  User,
   Webhook,
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
 
+import { ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -68,29 +59,6 @@ interface CreateKeyModalProps {
   organizations: { id: string; name: string }[];
 }
 
-const AVAILABLE_SCOPES = {
-  'read:users': 'Read user information',
-  'write:users': 'Create/update users',
-  'delete:users': 'Delete users',
-  'read:organizations': 'Read organization data',
-  'write:organizations': 'Update organization settings',
-  'read:projects': 'Read projects',
-  'write:projects': 'Create/update projects',
-  'read:assessments': 'Read assessments',
-  'write:assessments': 'Create/update assessments',
-  'read:initiatives': 'Read initiatives',
-  'write:initiatives': 'Create/update initiatives',
-  'read:tasks': 'Read tasks',
-  'write:tasks': 'Create/update tasks',
-  'read:reports': 'Read reports',
-  'export:reports': 'Export reports to PDF/Excel',
-  'use:ai': 'Use AI features',
-  'read:ai_usage': 'Read AI usage statistics',
-  'admin:billing': 'Access billing data',
-  'admin:audit': 'Access audit logs',
-  'manage:webhooks': 'Create/manage webhooks',
-};
-
 const SCOPE_GROUPS = {
   Users: ['read:users', 'write:users', 'delete:users'],
   Organizations: ['read:organizations', 'write:organizations'],
@@ -102,6 +70,9 @@ const SCOPE_GROUPS = {
   AI: ['use:ai', 'read:ai_usage'],
   Admin: ['admin:billing', 'admin:audit', 'manage:webhooks'],
 };
+
+const webhookWorkflowUnavailableReason =
+  'Webhook management is disabled until the superadmin webhook routes are reconciled with one audited backend workflow.';
 
 const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   isOpen,
@@ -353,19 +324,6 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   );
 };
 
-interface WebhookItem {
-  id: string;
-  name: string;
-  url: string;
-  events_json?: string;
-  events?: string[];
-  is_active?: boolean;
-  secret?: string;
-  created_at?: string;
-  last_triggered_at?: string;
-  failure_count?: number;
-}
-
 type TabType = 'keys' | 'usage' | 'webhooks';
 
 export const APIManagementView: React.FC = () => {
@@ -379,20 +337,8 @@ export const APIManagementView: React.FC = () => {
     key: string;
     name: string;
   } | null>(null);
-  const [showKey, setShowKey] = useState<string | null>(null);
   const [selectedKeyForUsage, setSelectedKeyForUsage] = useState<string | null>(null);
   const [usageData, setUsageData] = useState<any>(null);
-
-  const [webhooks, setWebhooks] = useState<WebhookItem[]>([]);
-  const [webhooksLoading, setWebhooksLoading] = useState(false);
-  const [showCreateWebhook, setShowCreateWebhook] = useState(false);
-  const [webhookForm, setWebhookForm] = useState({
-    name: '',
-    url: '',
-    events: '' as string,
-    secret: '',
-  });
-  const [creatingWebhook, setCreatingWebhook] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -782,74 +728,6 @@ export const APIManagementView: React.FC = () => {
     </div>
   );
 
-  const fetchWebhooks = useCallback(async () => {
-    setWebhooksLoading(true);
-    try {
-      const result = await Api.get('/api/superadmin/webhooks');
-      const raw = Array.isArray(result) ? result : (result as any)?.webhooks || [];
-      setWebhooks(
-        raw.map((w: any) => ({
-          ...w,
-          events: w.events || (w.events_json ? JSON.parse(w.events_json) : []),
-          is_active: w.is_active !== false && w.is_active !== 0,
-        }))
-      );
-    } catch {
-      setWebhooks([]);
-    } finally {
-      setWebhooksLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (activeTab === 'webhooks' && webhooks.length === 0 && !webhooksLoading) {
-      fetchWebhooks();
-    }
-  }, [activeTab]);
-
-  const handleCreateWebhook = async () => {
-    if (!webhookForm.name || !webhookForm.url) return;
-    setCreatingWebhook(true);
-    try {
-      const events = webhookForm.events
-        .split(',')
-        .map((e) => e.trim())
-        .filter(Boolean);
-      await Api.post('/api/superadmin/webhooks', {
-        name: webhookForm.name,
-        url: webhookForm.url,
-        events,
-        secret: webhookForm.secret || undefined,
-      });
-      setShowCreateWebhook(false);
-      setWebhookForm({ name: '', url: '', events: '', secret: '' });
-      fetchWebhooks();
-    } catch (error) {
-      console.error('Failed to create webhook:', error);
-    } finally {
-      setCreatingWebhook(false);
-    }
-  };
-
-  const handleDeleteWebhook = async (id: string) => {
-    if (!confirm('Delete this webhook? This cannot be undone.')) return;
-    try {
-      await Api.delete(`/api/superadmin/webhooks/${id}`);
-      fetchWebhooks();
-    } catch (error) {
-      console.error('Failed to delete webhook:', error);
-    }
-  };
-
-  const handleTestWebhook = async (id: string) => {
-    try {
-      await Api.post(`/api/superadmin/webhooks/${id}/test`, {});
-      toast.success('Test event sent');
-    } catch {
-      toast.error('Test failed');
-    }
-  };
-
   const renderWebhooksTab = () => (
     <div className="space-y-6">
       <div className="bg-white dark:bg-navy-800 rounded-xl p-6 border border-slate-200 dark:border-navy-700">
@@ -861,169 +739,20 @@ export const APIManagementView: React.FC = () => {
             </p>
           </div>
           <button
-            onClick={() => setShowCreateWebhook(true)}
-            className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+            disabled
+            title={webhookWorkflowUnavailableReason}
+            className="px-4 py-2 bg-violet-600 text-white rounded-lg font-medium flex items-center gap-2 opacity-50 cursor-not-allowed"
           >
             <Plus size={16} />
             Add Webhook
           </button>
         </div>
 
-        {webhooksLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 size={24} className="animate-spin text-violet-500" />
-          </div>
-        ) : webhooks.length === 0 ? (
-          <div className="text-center py-12 text-slate-500 dark:text-slate-400">
-            <Webhook size={40} className="mx-auto mb-3 opacity-30" />
-            <p className="font-medium">No webhooks configured</p>
-            <p className="text-sm">Create webhooks to receive real-time notifications</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {webhooks.map((wh) => (
-              <div
-                key={wh.id}
-                className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-900 rounded-lg border border-slate-200 dark:border-navy-700"
-              >
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-900 dark:text-white">{wh.name}</span>
-                    <span
-                      className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                        wh.is_active
-                          ? 'bg-emerald-500/10 text-emerald-600'
-                          : 'bg-slate-500/10 text-slate-500'
-                      }`}
-                    >
-                      {wh.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400 font-mono truncate mt-0.5">
-                    {wh.url}
-                  </div>
-                  {wh.events && wh.events.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mt-1.5">
-                      {(wh.events as string[]).slice(0, 4).map((ev) => (
-                        <span
-                          key={ev}
-                          className="px-1.5 py-0.5 rounded text-[10px] bg-violet-500/10 text-violet-600 dark:text-violet-400"
-                        >
-                          {ev}
-                        </span>
-                      ))}
-                      {(wh.events as string[]).length > 4 && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-500">
-                          +{(wh.events as string[]).length - 4} more
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 ml-4">
-                  <button
-                    onClick={() => handleTestWebhook(wh.id)}
-                    className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                    title="Send test event"
-                  >
-                    <Activity size={16} className="text-slate-400" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteWebhook(wh.id)}
-                    className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                    title="Delete webhook"
-                  >
-                    <Trash2 size={16} className="text-red-400" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <ReadOnlyState
+          title="Webhook management unavailable"
+          description={webhookWorkflowUnavailableReason}
+        />
       </div>
-
-      {showCreateWebhook && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-navy-800 rounded-xl shadow-2xl max-w-lg w-full">
-            <div className="p-6 border-b border-slate-200 dark:border-navy-700">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white">Create Webhook</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                Configure an endpoint to receive event notifications
-              </p>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  value={webhookForm.name}
-                  onChange={(e) => setWebhookForm({ ...webhookForm, name: e.target.value })}
-                  placeholder="My Webhook"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Endpoint URL *
-                </label>
-                <input
-                  type="url"
-                  value={webhookForm.url}
-                  onChange={(e) => setWebhookForm({ ...webhookForm, url: e.target.value })}
-                  placeholder="https://example.com/webhook"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Events (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={webhookForm.events}
-                  onChange={(e) => setWebhookForm({ ...webhookForm, events: e.target.value })}
-                  placeholder="user.created, subscription.updated, invoice.paid"
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Signing Secret (optional)
-                </label>
-                <input
-                  type="text"
-                  value={webhookForm.secret}
-                  onChange={(e) => setWebhookForm({ ...webhookForm, secret: e.target.value })}
-                  placeholder="whsec_..."
-                  className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white font-mono text-sm"
-                />
-              </div>
-            </div>
-            <div className="p-6 border-t border-slate-200 dark:border-navy-700 flex justify-end gap-3">
-              <button
-                onClick={() => setShowCreateWebhook(false)}
-                className="px-4 py-2.5 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleCreateWebhook}
-                disabled={creatingWebhook || !webhookForm.name || !webhookForm.url}
-                className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg font-medium flex items-center gap-2"
-              >
-                {creatingWebhook ? (
-                  <Loader2 size={18} className="animate-spin" />
-                ) : (
-                  <Webhook size={18} />
-                )}
-                Create Webhook
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 

@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
 
@@ -53,6 +54,7 @@ const ApprovalWorkflowsView: React.FC = () => {
   const [workflows, setWorkflows] = useState<ApprovalWorkflow[]>([]);
   const [requests, setRequests] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'workflows' | 'requests'>('workflows');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -72,6 +74,7 @@ const ApprovalWorkflowsView: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       setError(null);
       const [workflowsData, requestsData] = await Promise.all([
         Api.getApprovalWorkflows(),
@@ -80,7 +83,7 @@ const ApprovalWorkflowsView: React.FC = () => {
       setWorkflows(workflowsData);
       setRequests(requestsData);
     } catch (err: any) {
-      setError(err.message || 'Failed to load data');
+      setLoadError(err.message || 'Failed to load approval workflows');
     } finally {
       setLoading(false);
     }
@@ -301,188 +304,206 @@ const ApprovalWorkflowsView: React.FC = () => {
       {/* Workflows Tab */}
       {activeTab === 'workflows' && (
         <CardWithHeader title="Workflows" subtitle={`${workflows.length} workflows configured`}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Name
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Resource Type
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Approvers
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Created
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {workflows.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                      No workflows configured
-                    </td>
+          {loadError ? (
+            <div className="p-6">
+              <DegradedState title="Approval workflows unavailable" description={loadError} />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Name
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Resource Type
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Approvers
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Created
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Actions
+                    </th>
                   </tr>
-                ) : (
-                  workflows.map((workflow) => (
-                    <tr
-                      key={workflow.id}
-                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    >
-                      <td className="py-3 px-4">
-                        <div>
-                          <p className="font-medium">{workflow.name}</p>
-                          <p className="text-sm text-slate-400 dark:text-slate-500">
-                            {workflow.description}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className="px-2 py-1 bg-slate-700 rounded text-xs">
-                          {workflow.resource_type}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-1">
-                          <Users className="w-4 h-4 text-slate-400 dark:text-slate-500" />
-                          <span className="text-sm">
-                            {workflow.approvers?.length || 0} approvers
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        {workflow.isActive ? (
-                          <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
-                            Active
-                          </span>
-                        ) : (
-                          <span className="px-2 py-1 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 rounded text-xs">
-                            Inactive
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-sm text-slate-300">
-                        {new Date(workflow.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => handleDeleteWorkflow(workflow.id)}
-                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                </thead>
+                <tbody>
+                  {workflows.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="text-center py-8 text-slate-600 dark:text-slate-400"
+                      >
+                        No workflows configured
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    workflows.map((workflow) => (
+                      <tr
+                        key={workflow.id}
+                        className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      >
+                        <td className="py-3 px-4">
+                          <div>
+                            <p className="font-medium">{workflow.name}</p>
+                            <p className="text-sm text-slate-400 dark:text-slate-500">
+                              {workflow.description}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="px-2 py-1 bg-slate-700 rounded text-xs">
+                            {workflow.resource_type}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-1">
+                            <Users className="w-4 h-4 text-slate-400 dark:text-slate-500" />
+                            <span className="text-sm">
+                              {workflow.approvers?.length || 0} approvers
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          {workflow.isActive ? (
+                            <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs">
+                              Active
+                            </span>
+                          ) : (
+                            <span className="px-2 py-1 bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300 rounded text-xs">
+                              Inactive
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-slate-300">
+                          {new Date(workflow.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleDeleteWorkflow(workflow.id)}
+                              className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardWithHeader>
       )}
 
       {/* Requests Tab */}
       {activeTab === 'requests' && (
         <CardWithHeader title="Approval Requests" subtitle={`${requests.length} requests`}>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Workflow
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Requester
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Resource
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Status
-                  </th>
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Created
-                  </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {requests.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                      No approval requests
-                    </td>
+          {loadError ? (
+            <div className="p-6">
+              <DegradedState title="Approval requests unavailable" description={loadError} />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Workflow
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Requester
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Resource
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Status
+                    </th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Created
+                    </th>
+                    <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                      Actions
+                    </th>
                   </tr>
-                ) : (
-                  requests.map((request) => (
-                    <tr
-                      key={request.id}
-                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                    >
-                      <td className="py-3 px-4">
-                        <p className="font-medium">{request.workflow_name}</p>
-                      </td>
-                      <td className="py-3 px-4 text-sm">{request.requester_email}</td>
-                      <td className="py-3 px-4">
-                        <div>
-                          <span className="px-2 py-1 bg-slate-700 rounded text-xs">
-                            {request.resource_type}
-                          </span>
-                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate max-w-[150px]">
-                            {request.resource_id}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">{getStatusBadge(request.status)}</td>
-                      <td className="py-3 px-4 text-sm text-slate-300">
-                        {new Date(request.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        {request.status === 'pending' && (
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleApprove(request.id)}
-                              disabled={actionLoading === request.id}
-                              className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors disabled:opacity-50"
-                              title="Approve"
-                            >
-                              {actionLoading === request.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Check className="w-4 h-4" />
-                              )}
-                            </button>
-                            <button
-                              onClick={() => handleReject(request.id)}
-                              disabled={actionLoading === request.id}
-                              className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
-                              title="Reject"
-                            >
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
+                </thead>
+                <tbody>
+                  {requests.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        className="text-center py-8 text-slate-600 dark:text-slate-400"
+                      >
+                        No approval requests
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                  ) : (
+                    requests.map((request) => (
+                      <tr
+                        key={request.id}
+                        className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      >
+                        <td className="py-3 px-4">
+                          <p className="font-medium">{request.workflow_name}</p>
+                        </td>
+                        <td className="py-3 px-4 text-sm">{request.requester_email}</td>
+                        <td className="py-3 px-4">
+                          <div>
+                            <span className="px-2 py-1 bg-slate-700 rounded text-xs">
+                              {request.resource_type}
+                            </span>
+                            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 truncate max-w-[150px]">
+                              {request.resource_id}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="py-3 px-4">{getStatusBadge(request.status)}</td>
+                        <td className="py-3 px-4 text-sm text-slate-300">
+                          {new Date(request.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          {request.status === 'pending' && (
+                            <div className="flex items-center justify-end gap-2">
+                              <button
+                                onClick={() => handleApprove(request.id)}
+                                disabled={actionLoading === request.id}
+                                className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                title="Approve"
+                              >
+                                {actionLoading === request.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Check className="w-4 h-4" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleReject(request.id)}
+                                disabled={actionLoading === request.id}
+                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                title="Reject"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardWithHeader>
       )}
 

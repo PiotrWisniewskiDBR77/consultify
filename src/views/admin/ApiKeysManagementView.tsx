@@ -15,21 +15,18 @@ import {
   AlertTriangle,
   Calendar,
   Check,
-  Clock,
   Copy,
-  Eye,
-  EyeOff,
   Key,
   Plus,
   RefreshCw,
   Shield,
   Trash2,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -71,7 +68,7 @@ interface ApiKeysManagementViewProps {
 
 export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const { currentOrganization, currentUser } = useAppStore();
+  const { currentOrganization } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
@@ -80,6 +77,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
   const [newKeyValue, setNewKeyValue] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Form state
   const [newKeyForm, setNewKeyForm] = useState({
@@ -92,6 +90,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
   const loadApiKeys = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const data = await Api.get('/api/api-keys');
       // Map the response to match expected format
       setApiKeys(
@@ -114,6 +113,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
       console.error('Failed to load API keys:', error);
       toast.error(error.message || 'Failed to load API keys');
       setApiKeys([]);
+      setLoadError(error.message || 'Failed to load API keys');
     }
     setLoading(false);
   }, [currentOrganization?.id]);
@@ -157,12 +157,12 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         expiresAt,
       });
 
-      const plainTextKey = data.plainTextKey || data.key?.apiKey;
+      const plainTextKey = data.plainTextKey || data.apiKey || data.key?.apiKey || data.key?.key;
       if (plainTextKey && data.key) {
         setNewKeyValue(plainTextKey); // The full key is only returned once!
         setShowCreateModal(false);
         setShowNewKeyModal(true);
-        loadApiKeys();
+        await loadApiKeys();
         setNewKeyForm({ name: '', description: '', permissions: [], expiresIn: '90' });
         toast.success('API key created successfully');
       } else {
@@ -184,7 +184,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
 
       if (data.success !== false) {
         toast.success('API key revoked');
-        loadApiKeys();
+        await loadApiKeys();
       } else {
         toast.error(data.error || 'Failed to revoke API key');
       }
@@ -271,12 +271,15 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
+          disabled={!!loadError}
           className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
         >
           <Plus size={18} />
           Create API Key
         </button>
       </div>
+
+      {loadError && <DegradedState title="API keys unavailable" description={loadError} />}
 
       {/* Security Notice */}
       <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">
@@ -293,7 +296,11 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
       </div>
 
       {/* API Keys List */}
-      {apiKeys.length === 0 ? (
+      {loadError ? (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <DegradedState title="API key list unavailable" description={loadError} />
+        </div>
+      ) : apiKeys.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <Key className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No API Keys</h3>
@@ -302,6 +309,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
+            disabled={!!loadError}
             className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
           >
             Create API Key
@@ -396,6 +404,7 @@ export const ApiKeysManagementView: React.FC<ApiKeysManagementViewProps> = ({ cl
                   {!key.revokedAt && (
                     <button
                       onClick={() => handleRevokeKey(key.id)}
+                      disabled={!!loadError}
                       className="p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg text-slate-500 dark:text-slate-400 hover:text-red-600"
                       title="Revoke key"
                     >

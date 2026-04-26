@@ -1,27 +1,9 @@
-import {
-  ArrowLeft,
-  Brain,
-  Building2,
-  FileText,
-  LayoutDashboard,
-  Shield,
-  Users,
-  Wallet,
-  Webhook,
-} from 'lucide-react';
+import { ArrowLeft, Users } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '../../utils/cn';
 
-export type AdminSettingsSection =
-  | 'overview'
-  | 'people'
-  | 'security'
-  | 'billing'
-  | 'ai'
-  | 'integrations'
-  | 'audit'
-  | 'operations';
+export type AdminSettingsSection = 'people';
 
 interface AdminSettingsSidebarProps {
   activeSection: AdminSettingsSection;
@@ -37,52 +19,10 @@ const NAV_ITEMS: Array<{
   icon: React.ElementType;
 }> = [
   {
-    id: 'overview',
-    label: 'Overview',
-    description: 'Enterprise tenant posture and command center summary',
-    icon: LayoutDashboard,
-  },
-  {
     id: 'people',
-    label: 'People & Access',
-    description: 'Membership, roles, ownership, and access operations',
+    label: 'Team & Access',
+    description: 'Members, roles, ownership, and team invite codes',
     icon: Users,
-  },
-  {
-    id: 'security',
-    label: 'Security & Identity',
-    description: 'MFA, SSO, API access, collaboration, delegated IAM',
-    icon: Shield,
-  },
-  {
-    id: 'billing',
-    label: 'Billing & FinOps',
-    description: 'Subscriptions, limits, usage, cost posture',
-    icon: Wallet,
-  },
-  {
-    id: 'ai',
-    label: 'AI Governance',
-    description: 'AI policy, model posture, operations, token economy',
-    icon: Brain,
-  },
-  {
-    id: 'integrations',
-    label: 'Integrations & Sync',
-    description: 'Connector health, ownership, remediation',
-    icon: Webhook,
-  },
-  {
-    id: 'audit',
-    label: 'Audit Log',
-    description: 'Audit, risk visibility, and admin evidence trail',
-    icon: FileText,
-  },
-  {
-    id: 'operations',
-    label: 'Organization Ops',
-    description: 'Domains, branding, competencies, tenant operations',
-    icon: Building2,
   },
 ];
 
@@ -109,9 +49,9 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             Back
           </button>
         )}
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Enterprise Admin</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Team Admin</h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Unified tenant-admin shell for people, security, billing, AI, integrations, and risk.
+          Manage the team, member roles, ownership, and invite access.
         </p>
       </div>
 

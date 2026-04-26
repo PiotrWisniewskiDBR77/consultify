@@ -21,12 +21,16 @@
 import {
   Bot,
   Briefcase,
+  Calculator,
+  CheckCircle2,
   History,
   MessageSquare,
   Plus,
+  Search,
   Sparkles,
   Volume2,
   VolumeX,
+  Wrench,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -79,6 +83,7 @@ import { detectDocumentIntent, detectPresentationIntent } from './documentIntent
 import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
+import { OutputToolSelector } from './OutputToolSelector';
 import { PendingActionsIndicator } from './PendingActionsIndicator';
 import { PrivateModeDetails } from './PrivateModeDetails';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
@@ -3445,10 +3450,13 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // ========================================================================
   // Render
   // ========================================================================
+  const isRehydratingConversation =
+    displayMessages.length === 0 && activeConversationId && isConversationLoading;
+  const isWelcomeEmptyState = displayMessages.length === 0 && !isRehydratingConversation;
 
   return (
     <div
-      className={`flex flex-col h-full bg-slate-50 dark:bg-navy-950 ${
+      className={`relative flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-navy-950 ${
         isPrivateMode
           ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
           : 'ring-1 ring-transparent'
@@ -3629,7 +3637,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         ref={messagesContainerRef}
         className={`flex-1 overflow-y-auto ${isCompact ? 'p-3 space-y-3' : 'p-4 space-y-4'}`}
       >
-        {displayMessages.length === 0 && activeConversationId && isConversationLoading ? (
+        {isRehydratingConversation ? (
           /* Loading state — conversation selected but messages still loading */
           <div className="flex flex-col items-center justify-center h-full text-center py-12">
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin mb-3" />
@@ -3639,24 +3647,220 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               {t('aiChat.loadingConversation', 'Loading conversation…')}
             </p>
           </div>
-        ) : displayMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center py-12">
-            <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-4">
-              <MessageSquare size={24} className="text-primary-500" />
+        ) : isWelcomeEmptyState ? (
+          <div className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center">
+            <div className="mb-3 inline-flex items-center rounded-full border border-primary-200/70 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:border-primary-800/60 dark:bg-primary-900/20 dark:text-primary-300">
+              Teresa
             </div>
             <h3
-              className={`${isCompact ? 'text-sm' : 'text-base'} font-medium text-navy-900 dark:text-white mb-1`}
+              className={`${isCompact ? 'text-2xl' : 'text-4xl md:text-5xl'} font-semibold text-navy-900 dark:text-white`}
             >
-              {t('aiChat.teresaWelcome', 'Talk to Teresa')}
+              {t('aiChat.welcomeHeadline', 'Good morning')}
+              {currentUser?.firstName && (
+                <span className="text-primary-600 dark:text-primary-400">
+                  , {currentUser.firstName}
+                </span>
+              )}
             </h3>
             <p
-              className={`${isCompact ? 'text-xs' : 'text-sm'} text-slate-500 dark:text-slate-400 max-w-xs`}
+              className={`${isCompact ? 'text-sm' : 'text-lg'} mt-4 max-w-2xl text-slate-500 dark:text-slate-400`}
             >
               {t(
                 'aiChat.teresaWelcomeSubtitle',
                 'Work through decisions, notes, and next steps with your internal AI partner'
               )}
             </p>
+
+            <div id="chat-input" className="mt-8 w-full max-w-5xl text-left">
+              {!!lastError && !isStreaming && (
+                <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-900/20">
+                  <div className="text-xs text-amber-800 dark:text-amber-200">
+                    {t('aiChat.streamError', 'Last request failed. You can retry.')}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => retryLastStream()}
+                      className="rounded-md bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700"
+                    >
+                      {t('common.tryAgain', 'Try again')}
+                    </button>
+                    <button
+                      onClick={() => clearLastError()}
+                      className="rounded-md bg-slate-50 px-3 py-1 text-xs font-medium text-amber-800 hover:bg-slate-100 dark:bg-white/10 dark:text-amber-200 dark:hover:bg-white/15"
+                    >
+                      {t('common.dismiss', 'Dismiss')}
+                    </button>
+                  </div>
+                </div>
+              )}
+              <OutputToolSelector />
+              <EnhancedChatInput
+                onSend={handleSendMessage}
+                onStopGenerating={() => {
+                  const hadPartial = abortStream();
+                  setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
+                  setTimeout(() => setAbortFeedback(null), 3000);
+                }}
+                onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
+                teresaVoiceStatus={teresaVoice.voiceStatus}
+                teresaVoiceAvailable={teresaVoice.voiceAvailable}
+                teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
+                teresaVoiceMuted={teresaVoice.isMuted}
+                onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
+                isStreaming={isStreaming}
+                disabled={isDisabled}
+                placeholder={t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')}
+                voiceModeEnabled={voiceModeEnabled}
+                onVoiceModeChange={setVoiceModeEnabled}
+                chatLanguage={chatLanguage}
+                voiceState={voiceState}
+                startVoiceListening={startListening}
+                stopVoiceListening={stopListening}
+              />
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+              {[
+                {
+                  label: t('aiChat.quickClicks.brief.label', 'Daily brief'),
+                  prompt: t(
+                    'aiChat.quickClicks.brief.prompt',
+                    'Give me a short daily brief: priorities, risks, decisions, and next best actions.'
+                  ),
+                },
+                {
+                  label: t('aiChat.quickClicks.savings.label', 'Quick savings'),
+                  prompt: t(
+                    'aiChat.quickClicks.savings.prompt',
+                    'Find quick savings opportunities without reducing quality. Ask me for missing context first.'
+                  ),
+                },
+                {
+                  label: t('aiChat.quickClicks.newProduct.label', 'Product idea'),
+                  prompt: t(
+                    'aiChat.quickClicks.newProduct.prompt',
+                    'Help me shape a new product idea with market, ROI, risks, and first implementation steps.'
+                  ),
+                },
+                {
+                  label: t('aiChat.quickClicks.planReview.label', 'Plan review'),
+                  prompt: t(
+                    'aiChat.quickClicks.planReview.prompt',
+                    'Review my plan like a senior consultant: find gaps, risks, assumptions, and next actions.'
+                  ),
+                },
+              ].map((item) => (
+                <button
+                  key={item.label}
+                  type="button"
+                  onClick={() => handleSendMessage(item.prompt)}
+                  className="rounded-full border border-slate-200/70 bg-white/60 px-3 py-1 text-[11px] font-medium text-slate-500 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700 dark:border-white/10 dark:bg-white/[0.03] dark:text-slate-400 dark:hover:border-primary-700/60 dark:hover:bg-primary-900/20 dark:hover:text-primary-300"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="mt-6 grid w-full max-w-2xl grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                {
+                  icon: Search,
+                  label: t('aiChat.homeCards.market.label', 'Analiza rynku'),
+                  desc: t(
+                    'aiChat.homeCards.market.desc',
+                    'Research a market, competitors, and positioning'
+                  ),
+                  prompt: t(
+                    'aiChat.homeCards.market.kickoff',
+                    'Chcę zrobić analizę rynku. Opisz proszę, jakie pytania musisz mi zadać, żeby dobrze zdefiniować: branżę, segment, kraj, klientów, konkurencję i przewagę. Zacznij od 5 pytań.'
+                  ),
+                  color: 'text-violet-500',
+                  bg: 'bg-violet-50 dark:bg-violet-900/20',
+                },
+                {
+                  icon: Calculator,
+                  label: t('aiChat.homeCards.finance.label', 'Analiza finansowa'),
+                  desc: t('aiChat.homeCards.finance.desc', 'Analyze ROI, budgets, and scenarios'),
+                  prompt: t(
+                    'aiChat.homeCards.finance.kickoff',
+                    'Chcę zrobić analizę finansową. Jakie dane mamy przeanalizować (budżet, koszty, przychody, ROI, CAPEX/OPEX)? Zadaj mi 5 pytań, a potem zaproponuj strukturę analizy.'
+                  ),
+                  color: 'text-emerald-500',
+                  bg: 'bg-emerald-50 dark:bg-emerald-900/20',
+                },
+                {
+                  icon: Wrench,
+                  label: t('aiChat.homeCards.consulting.label', 'Klasyczny consulting'),
+                  desc: t('aiChat.homeCards.consulting.desc', 'Use classic frameworks and tools'),
+                  prompt: t(
+                    'aiChat.homeCards.consulting.kickoff',
+                    'Chcę użyć klasycznych narzędzi consultingowych. Jaki problem rozwiązujemy i w jakim kontekście? Zadaj mi 5 pytań, a potem zaproponuj 2–3 najlepsze ramy (np. SWOT, 5 Forces, Ansoff, Value Chain).'
+                  ),
+                  color: 'text-amber-500',
+                  bg: 'bg-amber-50 dark:bg-amber-900/20',
+                },
+                {
+                  icon: CheckCircle2,
+                  label: t('aiChat.homeCards.digital.label', 'Transformacja cyfrowa'),
+                  desc: t(
+                    'aiChat.homeCards.digital.desc',
+                    'Run licensed diagnostics and assessments'
+                  ),
+                  prompt: t(
+                    'aiChat.homeCards.digital.kickoff',
+                    'Chcę ocenić gotowość do transformacji cyfrowej. Jakie obszary mamy ocenić i jakie są kryteria? Zadaj mi 5 pytań i zaproponuj szybki plan diagnozy.'
+                  ),
+                  color: 'text-blue-500',
+                  bg: 'bg-blue-50 dark:bg-blue-900/20',
+                },
+              ].map((cap) => (
+                <button
+                  key={cap.label}
+                  type="button"
+                  onClick={() => handleSendMessage(cap.prompt)}
+                  className="group flex flex-col items-start gap-1.5 rounded-lg border border-slate-200/60 bg-white/60 p-2.5 text-left transition-all duration-200 hover:border-slate-300 hover:bg-white dark:border-white/5 dark:bg-white/[0.02] dark:hover:border-white/10 dark:hover:bg-white/5"
+                >
+                  <div className={`rounded-md p-1.5 ${cap.bg}`}>
+                    <cap.icon size={15} className={cap.color} />
+                  </div>
+                  <div>
+                    <div className="text-[11px] font-semibold text-navy-900 transition-colors group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400">
+                      {cap.label}
+                    </div>
+                    <div className="mt-0.5 text-[9px] leading-tight text-slate-400 dark:text-slate-500">
+                      {cap.desc}
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-4 flex items-center justify-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-600">
+              <Sparkles size={11} />
+              {t(
+                'aiChat.onboarding.hint',
+                'Tip: Try voice mode, attach files, or enable Deep Thinking for multi-step analysis'
+              )}
+            </p>
+
+            <div className="mt-12 flex flex-col items-center gap-1 pointer-events-none select-none">
+              <img
+                src="/assets/logos/logo-dark.svg?v=20260319"
+                alt="Consultify"
+                className="hidden h-20 w-auto opacity-100 drop-shadow-[0_18px_40px_rgba(0,0,0,0.35)] dark:block sm:h-24 md:h-28"
+                draggable={false}
+              />
+              <img
+                src="/assets/logos/logo-light.svg?v=20260319"
+                alt="Consultify"
+                className="h-20 w-auto opacity-35 dark:hidden sm:h-24 md:h-28"
+                draggable={false}
+              />
+              <p className="-mt-0.5 text-center text-[11px] uppercase tracking-[0.25em] text-slate-400 dark:text-slate-600">
+                <span className="text-primary-600 dark:text-primary-400">DBR77</span>{' '}
+                <span>Industrial Intelligence</span>
+              </p>
+            </div>
           </div>
         ) : (
           <>
@@ -3776,82 +3980,84 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       </div>
 
       {/* Input Area */}
-      <div
-        id="chat-input"
-        className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-950`}
-      >
-        {!!lastError && !isStreaming && (
-          <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
-            <div className="text-xs text-amber-800 dark:text-amber-200">
-              {t('aiChat.streamError', 'Last request failed. You can retry.')}
+      {!isWelcomeEmptyState && (
+        <div
+          id="chat-input"
+          className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-950`}
+        >
+          {!!lastError && !isStreaming && (
+            <div className="mb-2 flex items-center justify-between gap-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50 dark:bg-amber-900/20 px-3 py-2">
+              <div className="text-xs text-amber-800 dark:text-amber-200">
+                {t('aiChat.streamError', 'Last request failed. You can retry.')}
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => retryLastStream()}
+                  className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
+                >
+                  {t('common.tryAgain', 'Try again')}
+                </button>
+                <button
+                  onClick={() => clearLastError()}
+                  className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
+                >
+                  {t('common.dismiss', 'Dismiss')}
+                </button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => retryLastStream()}
-                className="px-3 py-1 rounded-md text-xs font-medium bg-amber-600 hover:bg-amber-700 text-white"
-              >
-                {t('common.tryAgain', 'Try again')}
-              </button>
-              <button
-                onClick={() => clearLastError()}
-                className="px-3 py-1 rounded-md text-xs font-medium bg-slate-50 dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 text-amber-800 dark:text-amber-200"
-              >
-                {t('common.dismiss', 'Dismiss')}
-              </button>
+          )}
+          {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
+            <div className="flex flex-wrap gap-1.5 px-3 pb-2">
+              {quickPrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  onClick={() => handleSendMessage(prompt)}
+                  className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
+                >
+                  {prompt}
+                </button>
+              ))}
             </div>
-          </div>
-        )}
-        {quickPrompts && quickPrompts.length > 0 && messages.length === 0 && !isStreaming && (
-          <div className="flex flex-wrap gap-1.5 px-3 pb-2">
-            {quickPrompts.map((prompt) => (
-              <button
-                key={prompt}
-                onClick={() => handleSendMessage(prompt)}
-                className="px-2.5 py-1 text-[11px] font-medium rounded-full border border-slate-200 dark:border-navy-600 bg-white dark:bg-navy-800 text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-700 hover:text-purple-700 dark:hover:text-purple-300 transition-all"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-        )}
-        <EnhancedChatInput
-          onSend={handleSendMessage}
-          onStopGenerating={() => {
-            const hadPartial = abortStream();
-            setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
-            setTimeout(() => setAbortFeedback(null), 3000);
-          }}
-          onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
-          teresaVoiceStatus={teresaVoice.voiceStatus}
-          teresaVoiceAvailable={teresaVoice.voiceAvailable}
-          teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
-          teresaVoiceMuted={teresaVoice.isMuted}
-          onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
-          isStreaming={isStreaming}
-          disabled={isDisabled}
-          placeholder={
-            workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
-              ? t('aiChat.teresaContextPlaceholder', {
-                  defaultValue: 'How can Teresa help with {{context}}?',
-                  context: workspaceContext.entityName,
-                })
-              : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
-          }
-          voiceModeEnabled={voiceModeEnabled}
-          onVoiceModeChange={setVoiceModeEnabled}
-          chatLanguage={chatLanguage}
-          voiceState={voiceState}
-          startVoiceListening={startListening}
-          stopVoiceListening={stopListening}
-        />
-        {chatSuggestions.length > 0 && (
-          <ChatSmartSuggestions
-            suggestions={chatSuggestions}
-            onSuggestionClick={handleSuggestionClick}
-            className="pt-2"
+          )}
+          <EnhancedChatInput
+            onSend={handleSendMessage}
+            onStopGenerating={() => {
+              const hadPartial = abortStream();
+              setAbortFeedback(hadPartial ? 'partial' : 'cancelled');
+              setTimeout(() => setAbortFeedback(null), 3000);
+            }}
+            onTeresaVoiceToggle={teresaVoice.handleVoiceToggle}
+            teresaVoiceStatus={teresaVoice.voiceStatus}
+            teresaVoiceAvailable={teresaVoice.voiceAvailable}
+            teresaVoiceUnavailableReason={teresaVoice.voiceUnavailableReason}
+            teresaVoiceMuted={teresaVoice.isMuted}
+            onTeresaVoiceMuteToggle={teresaVoice.toggleMute}
+            isStreaming={isStreaming}
+            disabled={isDisabled}
+            placeholder={
+              workspaceContext && workspaceContext.type !== 'empty' && workspaceContext.entityName
+                ? t('aiChat.teresaContextPlaceholder', {
+                    defaultValue: 'How can Teresa help with {{context}}?',
+                    context: workspaceContext.entityName,
+                  })
+                : t('aiChat.teresaPlaceholder', 'Ask Teresa about your work...')
+            }
+            voiceModeEnabled={voiceModeEnabled}
+            onVoiceModeChange={setVoiceModeEnabled}
+            chatLanguage={chatLanguage}
+            voiceState={voiceState}
+            startVoiceListening={startListening}
+            stopVoiceListening={stopListening}
           />
-        )}
-      </div>
+          {chatSuggestions.length > 0 && (
+            <ChatSmartSuggestions
+              suggestions={chatSuggestions}
+              onSuggestionClick={handleSuggestionClick}
+              className="pt-2"
+            />
+          )}
+        </div>
+      )}
 
       {/* Sliding History Panel */}
       <ChatSlidingPanel

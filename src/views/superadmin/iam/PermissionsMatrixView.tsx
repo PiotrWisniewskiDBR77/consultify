@@ -20,6 +20,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
 
@@ -48,6 +49,7 @@ const PermissionsMatrixView: React.FC = () => {
   const [matrix, setMatrix] = useState<PermissionMatrix | null>(null);
   const [stats, setStats] = useState<PermissionsStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPermission, setEditingPermission] = useState<Permission | null>(null);
@@ -64,6 +66,7 @@ const PermissionsMatrixView: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       setError(null);
       const [permsData, matrixData, statsData] = await Promise.all([
         Api.getAdminPermissions(),
@@ -74,7 +77,10 @@ const PermissionsMatrixView: React.FC = () => {
       setMatrix(matrixData as any);
       setStats(statsData as any);
     } catch (err: any) {
-      setError(err.message || 'Failed to load permissions');
+      setLoadError(err.message || 'Failed to load permissions');
+      setPermissions([]);
+      setMatrix(null);
+      setStats(null);
     } finally {
       setLoading(false);
     }
@@ -194,63 +200,69 @@ const PermissionsMatrixView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <Key className="w-5 h-5 text-indigo-500" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Permissions</p>
-              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                {stats?.totalPermissions || permissions.length}
-              </p>
-            </div>
-          </div>
+      {loadError ? (
+        <Card variant="bordered" className="p-6">
+          <DegradedState title="Permissions unavailable" description={loadError} />
         </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500/10 rounded-lg">
+                <Key className="w-5 h-5 text-indigo-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Total Permissions</p>
+                <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  {stats?.totalPermissions || permissions.length}
+                </p>
+              </div>
+            </div>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-violet-500/10 rounded-lg">
-              <Key className="w-5 h-5 text-violet-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-violet-500/10 rounded-lg">
+                <Key className="w-5 h-5 text-violet-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">System Permissions</p>
+                <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  {stats?.systemPermissions || 0}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">System Permissions</p>
-              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                {stats?.systemPermissions || 0}
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg">
-              <BarChart3 className="w-5 h-5 text-amber-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 rounded-lg">
+                <BarChart3 className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Categories</p>
+                <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  {Object.keys(stats?.categoryBreakdown || matrix?.categories || {}).length}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Categories</p>
-              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                {Object.keys(stats?.categoryBreakdown || matrix?.categories || {}).length}
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 rounded-lg">
-              <Key className="w-5 h-5 text-emerald-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <Key className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Roles</p>
+                <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
+                  {matrix?.roles?.length || 0}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Roles</p>
-              <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">
-                {matrix?.roles?.length || 0}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
@@ -281,6 +293,7 @@ const PermissionsMatrixView: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCopyModal(true)}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 hover:bg-violet-700 rounded-lg transition-colors"
           >
             <Copy className="w-4 h-4" />
@@ -288,6 +301,7 @@ const PermissionsMatrixView: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -297,96 +311,104 @@ const PermissionsMatrixView: React.FC = () => {
       </div>
 
       {/* Permissions Matrix */}
-      {matrix && matrix.categories && Object.keys(matrix.categories).length > 0 && (
-        <CardWithHeader title="Permissions Matrix" subtitle="Role-based permissions overview">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-700">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                    Permission
-                  </th>
-                  {(matrix.roles || []).map((role) => {
-                    const roleName = typeof role === 'string' ? role : role.name;
-                    return (
-                      <th
-                        key={roleName}
-                        className="text-center py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400"
-                      >
-                        <div>
-                          <span>{roleName}</span>
-                          {stats?.roleAssignments?.[roleName] !== undefined && (
-                            <span className="block text-xs text-slate-500 dark:text-slate-400">
-                              ({stats.roleAssignments[roleName]} perms)
-                            </span>
-                          )}
-                        </div>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(matrix.categories || {}).map(([category, perms]) => (
-                  <React.Fragment key={category}>
-                    <tr className="bg-slate-50 dark:bg-slate-800/50">
-                      <td
-                        colSpan={matrix.roles.length + 1}
-                        className="py-2 px-4 text-sm font-medium text-indigo-700 dark:text-indigo-300 uppercase"
-                      >
-                        {category}
-                      </td>
-                    </tr>
-                    {perms.map((perm) => (
-                      <tr
-                        key={perm.key}
-                        className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30"
-                      >
-                        <td className="py-2 px-4">
+      {loadError ? (
+        <Card variant="bordered" className="p-6">
+          <DegradedState title="Permissions matrix unavailable" description={loadError} />
+        </Card>
+      ) : (
+        matrix &&
+        matrix.categories &&
+        Object.keys(matrix.categories).length > 0 && (
+          <CardWithHeader title="Permissions Matrix" subtitle="Role-based permissions overview">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 dark:border-slate-700">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+                      Permission
+                    </th>
+                    {(matrix.roles || []).map((role) => {
+                      const roleName = typeof role === 'string' ? role : role.name;
+                      return (
+                        <th
+                          key={roleName}
+                          className="text-center py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400"
+                        >
                           <div>
-                            <p className="text-sm font-mono">{perm.key}</p>
-                            <p className="text-xs text-slate-600 dark:text-slate-400">
-                              {perm.description}
-                            </p>
+                            <span>{roleName}</span>
+                            {stats?.roleAssignments?.[roleName] !== undefined && (
+                              <span className="block text-xs text-slate-500 dark:text-slate-400">
+                                ({stats.roleAssignments[roleName]} perms)
+                              </span>
+                            )}
                           </div>
+                        </th>
+                      );
+                    })}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(matrix.categories || {}).map(([category, perms]) => (
+                    <React.Fragment key={category}>
+                      <tr className="bg-slate-50 dark:bg-slate-800/50">
+                        <td
+                          colSpan={matrix.roles.length + 1}
+                          className="py-2 px-4 text-sm font-medium text-indigo-700 dark:text-indigo-300 uppercase"
+                        >
+                          {category}
                         </td>
-                        {matrix.roles.map((role) => {
-                          const roleName = typeof role === 'string' ? role : role.name;
-                          const isEnabled = matrix.matrix[roleName]?.[perm.key];
-                          const toggleKey = `${roleName}-${perm.key}`;
-                          return (
-                            <td key={toggleKey} className="text-center py-2 px-4">
-                              <button
-                                onClick={() =>
-                                  handleTogglePermission(roleName, perm.key, isEnabled)
-                                }
-                                disabled={toggling === toggleKey}
-                                className={`p-1 rounded-lg transition-all ${
-                                  isEnabled
-                                    ? 'bg-emerald-500/20 hover:bg-emerald-500/30'
-                                    : 'bg-slate-700/50 hover:bg-slate-700'
-                                }`}
-                                title={`${isEnabled ? 'Revoke' : 'Grant'} ${perm.key} for ${roleName}`}
-                              >
-                                {toggling === toggleKey ? (
-                                  <Loader2 className="w-4 h-4 animate-spin text-slate-500 dark:text-slate-400 mx-auto" />
-                                ) : isEnabled ? (
-                                  <Check className="w-4 h-4 text-emerald-400 mx-auto" />
-                                ) : (
-                                  <X className="w-4 h-4 text-slate-600 dark:text-slate-400 mx-auto" />
-                                )}
-                              </button>
-                            </td>
-                          );
-                        })}
                       </tr>
-                    ))}
-                  </React.Fragment>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardWithHeader>
+                      {perms.map((perm) => (
+                        <tr
+                          key={perm.key}
+                          className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/30"
+                        >
+                          <td className="py-2 px-4">
+                            <div>
+                              <p className="text-sm font-mono">{perm.key}</p>
+                              <p className="text-xs text-slate-600 dark:text-slate-400">
+                                {perm.description}
+                              </p>
+                            </div>
+                          </td>
+                          {matrix.roles.map((role) => {
+                            const roleName = typeof role === 'string' ? role : role.name;
+                            const isEnabled = matrix.matrix[roleName]?.[perm.key];
+                            const toggleKey = `${roleName}-${perm.key}`;
+                            return (
+                              <td key={toggleKey} className="text-center py-2 px-4">
+                                <button
+                                  onClick={() =>
+                                    handleTogglePermission(roleName, perm.key, isEnabled)
+                                  }
+                                  disabled={toggling === toggleKey}
+                                  className={`p-1 rounded-lg transition-all ${
+                                    isEnabled
+                                      ? 'bg-emerald-500/20 hover:bg-emerald-500/30'
+                                      : 'bg-slate-700/50 hover:bg-slate-700'
+                                  }`}
+                                  title={`${isEnabled ? 'Revoke' : 'Grant'} ${perm.key} for ${roleName}`}
+                                >
+                                  {toggling === toggleKey ? (
+                                    <Loader2 className="w-4 h-4 animate-spin text-slate-500 dark:text-slate-400 mx-auto" />
+                                  ) : isEnabled ? (
+                                    <Check className="w-4 h-4 text-emerald-400 mx-auto" />
+                                  ) : (
+                                    <X className="w-4 h-4 text-slate-600 dark:text-slate-400 mx-auto" />
+                                  )}
+                                </button>
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardWithHeader>
+        )
       )}
 
       {/* Permissions List */}
@@ -394,74 +416,80 @@ const PermissionsMatrixView: React.FC = () => {
         title="All Permissions"
         subtitle={`${permissions.length} permissions defined`}
       >
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                  Key
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                  Description
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                  Category
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {permissions.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                    No permissions defined
-                  </td>
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Permission definitions unavailable" description={loadError} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Key
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Description
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Category
+                  </th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-600 dark:text-slate-400">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                permissions.map((perm) => (
-                  <tr
-                    key={perm.key}
-                    className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                  >
-                    <td className="py-3 px-4">
-                      <span className="font-mono text-sm bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
-                        {perm.key}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
-                      {perm.description}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded text-xs">
-                        {perm.category}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openEditModal(perm)}
-                          className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(perm.key)}
-                          className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {permissions.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center py-8 text-slate-600 dark:text-slate-400">
+                      No permissions defined
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  permissions.map((perm) => (
+                    <tr
+                      key={perm.key}
+                      className="border-b border-slate-200 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    >
+                      <td className="py-3 px-4">
+                        <span className="font-mono text-sm bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
+                          {perm.key}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-sm text-slate-700 dark:text-slate-300">
+                        {perm.description}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded text-xs">
+                          {perm.category}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openEditModal(perm)}
+                            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(perm.key)}
+                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardWithHeader>
 
       {/* Create/Edit Modal */}

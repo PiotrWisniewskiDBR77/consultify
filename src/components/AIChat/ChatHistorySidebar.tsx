@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 
 import { useAppStore } from '../../store/useAppStore';
 import {
@@ -360,6 +361,7 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   className = '',
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   // App store - for sidebar position awareness
   const { isSidebarCollapsed } = useAppStore();
@@ -526,10 +528,11 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
   // Handle select conversation
   const handleSelectConversation = useCallback(
     (id: string) => {
+      navigate(`/chat/${id}`, { replace: false });
       setActiveConversation(id);
       if (window.innerWidth < 1024) toggleSidebar();
     },
-    [setActiveConversation, toggleSidebar]
+    [navigate, setActiveConversation, toggleSidebar]
   );
 
   // Handle create folder with scope

@@ -16,6 +16,8 @@ type Wave8Agent = {
   costClass: string;
   riskLevel: string;
   examples: string[];
+  editable?: boolean;
+  source?: string;
 };
 
 export const Wave8AgentCatalogPanel: React.FC = () => {
@@ -28,6 +30,13 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
     'Prepare a weekly status review with risks and next actions.'
   );
   const [requestedTools, setRequestedTools] = React.useState('search_knowledge_base');
+  const [toolName, setToolName] = React.useState('search_knowledge_base');
+  const [toolInput, setToolInput] = React.useState('{"query":"strategy"}');
+  const [toolAiRunId, setToolAiRunId] = React.useState('');
+  const [toolBudgetApproved, setToolBudgetApproved] = React.useState(false);
+  const [definitionPurpose, setDefinitionPurpose] = React.useState('');
+  const [definitionAllowedTools, setDefinitionAllowedTools] = React.useState('');
+  const [definitionBlockedTools, setDefinitionBlockedTools] = React.useState('');
   const [approvalAiRunId, setApprovalAiRunId] = React.useState('');
   const [approvalBudget, setApprovalBudget] = React.useState(false);
   const [evalRunEnabled, setEvalRunEnabled] = React.useState(false);
@@ -73,6 +82,13 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  React.useEffect(() => {
+    if (!selectedAgent) return;
+    setDefinitionPurpose(selectedAgent.purpose || '');
+    setDefinitionAllowedTools((selectedAgent.allowedTools || []).join(', '));
+    setDefinitionBlockedTools((selectedAgent.blockedTools || []).join(', '));
+  }, [selectedAgent]);
 
   const launch = async () => {
     setLoading(true);
@@ -124,6 +140,66 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
       await load();
     } catch (err: any) {
       setMessage(err?.message || 'Agent launch failed');
+      await load();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const executeTool = async () => {
+    setLoading(true);
+    setMessage(null);
+    try {
+      let parsedToolInput: Record<string, unknown> = {};
+      try {
+        parsedToolInput = toolInput.trim() ? JSON.parse(toolInput) : {};
+      } catch {
+        setMessage('Tool input must be valid JSON.');
+        return;
+      }
+
+      const res = await Api.executeWave8AgentTool({
+        agentId: selectedAgentId,
+        toolName,
+        toolInput: parsedToolInput,
+        aiRunId: toolAiRunId || null,
+        budgetApproved: toolBudgetApproved,
+      });
+      setMessage(
+        res?.allowed
+          ? `Agent tool executed under scope: ${toolName}.`
+          : `Agent tool blocked: ${res?.error || res?.reason || 'policy'}`
+      );
+      await load();
+    } catch (err: any) {
+      setMessage(err?.message || 'Agent tool execution failed');
+      await load();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveDefinition = async () => {
+    if (!selectedAgent) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      await Api.upsertWave8AgentDefinition({
+        ...selectedAgent,
+        purpose: definitionPurpose,
+        allowedTools: definitionAllowedTools
+          .split(',')
+          .map((tool) => tool.trim())
+          .filter(Boolean),
+        blockedTools: definitionBlockedTools
+          .split(',')
+          .map((tool) => tool.trim())
+          .filter(Boolean),
+      });
+      setMessage('AgentDefinition saved to the Wave 8 database-backed catalog.');
+      await load();
+    } catch (err: any) {
+      setMessage(err?.message || 'Agent definition save failed');
       await load();
     } finally {
       setLoading(false);
@@ -270,10 +346,59 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
             </button>
           </div>
 
+          <h2 className="mt-6 flex items-center gap-2 font-semibold">
+            <ShieldCheck size={18} /> Governed Tool Execution
+          </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            Uses `/api/ai-agents/tool` to verify allowed tools, AIRun requirements and budget gates
+            before execution.
+          </p>
+          <div className="mt-4 space-y-3">
+            <input
+              value={toolName}
+              onChange={(event) => setToolName(event.target.value)}
+              placeholder="Tool name"
+              className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+            />
+            <textarea
+              value={toolInput}
+              onChange={(event) => setToolInput(event.target.value)}
+              rows={3}
+              placeholder='{"query":"strategy"}'
+              className="w-full rounded-md border px-3 py-2 font-mono text-xs dark:border-navy-700 dark:bg-navy-950"
+            />
+            <input
+              value={toolAiRunId}
+              onChange={(event) => setToolAiRunId(event.target.value)}
+              placeholder="Approved AIRun id when required"
+              className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+            />
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={toolBudgetApproved}
+                onChange={(event) => setToolBudgetApproved(event.target.checked)}
+              />
+              Budget gate approved for high-cost/governance tools
+            </label>
+            <button
+              type="button"
+              onClick={executeTool}
+              disabled={loading || !selectedAgent || !toolName.trim()}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              <ShieldCheck size={16} /> Execute scoped tool
+            </button>
+          </div>
+
           {selectedAgent && (
             <div className="mt-6 rounded-lg border p-3 text-sm dark:border-navy-700">
               <div className="font-medium">{selectedAgent.name}</div>
               <p className="mt-1 text-slate-500">{selectedAgent.purpose}</p>
+              <div className="mt-2 text-xs text-slate-500">
+                Definition source: {selectedAgent.source || 'code'}; editable:{' '}
+                {selectedAgent.editable === false ? 'no' : 'yes'}
+              </div>
               <div className="mt-3 text-xs text-slate-500">Persona: {selectedAgent.persona}</div>
               <div className="mt-2 text-xs text-slate-500">
                 Allowed tools: {selectedAgent.allowedTools.join(', ')}
@@ -281,6 +406,43 @@ export const Wave8AgentCatalogPanel: React.FC = () => {
               <div className="mt-2 text-xs text-slate-500">
                 Output schema: {selectedAgent.outputSchema?.type} /{' '}
                 {(selectedAgent.outputSchema?.required || []).join(', ')}
+              </div>
+            </div>
+          )}
+
+          {selectedAgent && (
+            <div className="mt-4 rounded-lg border p-3 text-sm dark:border-navy-700">
+              <div className="font-medium">Admin-editable AgentDefinition</div>
+              <p className="mt-1 text-xs text-slate-500">
+                Saves an organization override through `/api/ai-agents/definitions`.
+              </p>
+              <div className="mt-3 space-y-3">
+                <textarea
+                  value={definitionPurpose}
+                  onChange={(event) => setDefinitionPurpose(event.target.value)}
+                  rows={2}
+                  className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+                />
+                <input
+                  value={definitionAllowedTools}
+                  onChange={(event) => setDefinitionAllowedTools(event.target.value)}
+                  placeholder="Allowed tools"
+                  className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+                />
+                <input
+                  value={definitionBlockedTools}
+                  onChange={(event) => setDefinitionBlockedTools(event.target.value)}
+                  placeholder="Blocked tools"
+                  className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
+                />
+                <button
+                  type="button"
+                  onClick={saveDefinition}
+                  disabled={loading}
+                  className="w-full rounded-md border px-3 py-2 text-sm font-medium disabled:opacity-50 dark:border-navy-700"
+                >
+                  Save AgentDefinition override
+                </button>
               </div>
             </div>
           )}

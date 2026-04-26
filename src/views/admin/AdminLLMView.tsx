@@ -31,6 +31,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import type { LLMProviderConfig } from '../../types';
@@ -87,6 +88,7 @@ export const AdminLLMView: React.FC = () => {
   // Providers State
   const [providers, setProviders] = useState<LLMProviderConfig[]>([]);
   const [loading, setLoading] = useState(true);
+  const [providerLoadError, setProviderLoadError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showInactive, setShowInactive] = useState(false);
@@ -94,12 +96,14 @@ export const AdminLLMView: React.FC = () => {
   // Health Status State (new)
   const [llmStatus, setLLMStatus] = useState<LLMStatus | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(false);
+  const [statusLoadError, setStatusLoadError] = useState<string | null>(null);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [refreshingHealth, setRefreshingHealth] = useState(false);
 
   // Prompts State
   const [activeTab, setActiveTab] = useState<'providers' | 'prompts' | 'health'>('providers');
   const [prompts, setPrompts] = useState<any[]>([]);
+  const [promptsLoadError, setPromptsLoadError] = useState<string | null>(null);
   const [editingPrompt, setEditingPrompt] = useState<any | null>(null);
 
   const [form, setForm] = useState<Partial<LLMProviderConfig>>({
@@ -114,18 +118,23 @@ export const AdminLLMView: React.FC = () => {
   });
   const [logs, setLogs] = useState<any[]>([]);
   const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsLoadError, setAnalyticsLoadError] = useState<string | null>(null);
 
   // Load LLM status (new)
   const loadLLMStatus = useCallback(async () => {
     setLoadingStatus(true);
     try {
+      setStatusLoadError(null);
       const response = await Api.get('/api/llm/status');
       const data = response?.data ?? response;
-      if (data.success) {
-        setLLMStatus(data);
+      if (!data.success) {
+        throw new Error(data.error || 'LLM status unavailable');
       }
+      setLLMStatus(data);
     } catch (e) {
       console.error('Failed to load LLM status:', e);
+      setLLMStatus(null);
+      setStatusLoadError(e instanceof Error ? e.message : 'Failed to load LLM status');
     }
     setLoadingStatus(false);
   }, []);
@@ -133,18 +142,24 @@ export const AdminLLMView: React.FC = () => {
   useEffect(() => {
     const initLLMData = async () => {
       try {
+        setProviderLoadError(null);
         const data = await Api.getLLMProviders(true);
         setProviders(data as any);
         setLoading(false);
       } catch (err) {
         toast.error('Failed to load providers');
+        setProviders([]);
+        setProviderLoadError(err instanceof Error ? err.message : 'Failed to load providers');
         setLoading(false);
       }
       try {
+        setPromptsLoadError(null);
         const promptsData = await Api.aiGetSystemPrompts();
         setPrompts(promptsData);
       } catch (e) {
         console.error(e);
+        setPrompts([]);
+        setPromptsLoadError(e instanceof Error ? e.message : 'Failed to load prompts');
       }
       // Load LLM status
       loadLLMStatus();
@@ -154,12 +169,16 @@ export const AdminLLMView: React.FC = () => {
 
   const loadAnalytics = useCallback(async () => {
     try {
+      setAnalyticsLoadError(null);
       const [stats, recentLogs] = await Promise.all([Api.getLLMAnalytics(7), Api.getLLMLogs(50)]);
       setAnalytics(stats);
       setLogs(recentLogs.logs || []);
     } catch (error) {
       console.error('Failed to load analytics', error);
       toast.error('Failed to load analytics data');
+      setAnalytics(null);
+      setLogs([]);
+      setAnalyticsLoadError(error instanceof Error ? error.message : 'Failed to load analytics');
     }
   }, []);
 
@@ -171,21 +190,27 @@ export const AdminLLMView: React.FC = () => {
 
   const loadProviders = async () => {
     try {
+      setProviderLoadError(null);
       const data = await Api.getLLMProviders(true);
       setProviders(data as any);
       setLoading(false);
     } catch (err) {
       toast.error('Failed to load providers');
+      setProviders([]);
+      setProviderLoadError(err instanceof Error ? err.message : 'Failed to load providers');
       setLoading(false);
     }
   };
 
   const loadPrompts = async () => {
     try {
+      setPromptsLoadError(null);
       const data = await Api.aiGetSystemPrompts();
       setPrompts(data);
     } catch (e) {
       console.error(e);
+      setPrompts([]);
+      setPromptsLoadError(e instanceof Error ? e.message : 'Failed to load prompts');
     }
   };
 
@@ -369,379 +394,443 @@ export const AdminLLMView: React.FC = () => {
         </button>
       </div>
 
+      {activeTab === 'providers' && (
+        <div className="space-y-4">
+          {providerLoadError ? (
+            <DegradedState title="LLM providers unavailable" description={providerLoadError} />
+          ) : loading ? (
+            <div className="flex items-center justify-center py-12">
+              <RefreshCw className="h-6 w-6 animate-spin text-slate-400" />
+            </div>
+          ) : (
+            <>
+              <ReadOnlyState
+                title="LLM provider configuration is read-only"
+                description="Provider management actions are not shown until the persistence and audit workflow is fully connected."
+              />
+              <div className="rounded-xl border border-white/10 bg-navy-900/50 p-4">
+                <p className="text-sm text-slate-300">
+                  Loaded providers:{' '}
+                  <span className="font-semibold text-white">{providers.length}</span>
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'prompts' && (
+        <div className="space-y-4">
+          {promptsLoadError ? (
+            <DegradedState title="System prompts unavailable" description={promptsLoadError} />
+          ) : (
+            <>
+              <ReadOnlyState
+                title="System prompts are read-only"
+                description="Prompt editing is hidden until user attribution, persistence, and audit metadata are wired."
+              />
+              <div className="rounded-xl border border-white/10 bg-navy-900/50 p-4">
+                <p className="text-sm text-slate-300">
+                  Loaded prompts: <span className="font-semibold text-white">{prompts.length}</span>
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
       {/* TAB 2: HEALTH DASHBOARD */}
       {activeTab === 'health' && (
         <div className="animate-in fade-in duration-300 space-y-6">
           {/* KPI Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
-              <div className="flex justify-between items-start mb-2">
-                <div className="p-2 bg-blue-500/20 rounded-lg">
-                  <Activity size={20} className="text-blue-400" />
+          {analyticsLoadError ? (
+            <DegradedState title="LLM analytics unavailable" description={analyticsLoadError} />
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="p-2 bg-blue-500/20 rounded-lg">
+                      <Activity size={20} className="text-blue-400" />
+                    </div>
+                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                      LAST 7 DAYS
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {analytics?.total_requests?.toLocaleString() || 0}
+                  </div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500">Total Requests</div>
                 </div>
-                <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                  LAST 7 DAYS
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {analytics?.total_requests?.toLocaleString() || 0}
-              </div>
-              <div className="text-xs text-slate-400 dark:text-slate-500">Total Requests</div>
-            </div>
 
-            <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
-              <div className="flex justify-between items-start mb-2">
-                <div className="p-2 bg-emerald-500/20 rounded-lg">
-                  <Zap size={20} className="text-emerald-400" />
+                <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="p-2 bg-emerald-500/20 rounded-lg">
+                      <Zap size={20} className="text-emerald-400" />
+                    </div>
+                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                      AVG LATENCY
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {analytics?.avg_latency || 0}ms
+                  </div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500">Response Time</div>
                 </div>
-                <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                  AVG LATENCY
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {analytics?.avg_latency || 0}ms
-              </div>
-              <div className="text-xs text-slate-400 dark:text-slate-500">Response Time</div>
-            </div>
 
-            <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
-              <div className="flex justify-between items-start mb-2">
-                <div className="p-2 bg-amber-500/20 rounded-lg">
-                  <Coins size={20} className="text-amber-400" />
+                <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="p-2 bg-amber-500/20 rounded-lg">
+                      <Coins size={20} className="text-amber-400" />
+                    </div>
+                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                      EST. COST
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white mb-1">
+                    ${(analytics?.total_cost || 0).toFixed(4)}
+                  </div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500">Total Spend</div>
                 </div>
-                <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                  EST. COST
-                </span>
-              </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                ${(analytics?.total_cost || 0).toFixed(4)}
-              </div>
-              <div className="text-xs text-slate-400 dark:text-slate-500">Total Spend</div>
-            </div>
 
-            <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
-              <div className="flex justify-between items-start mb-2">
-                <div
-                  className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-red-500/20' : 'bg-purple-500/20'}`}
-                >
-                  <AlertTriangle
-                    size={20}
-                    className={analytics?.error_rate > 0.05 ? 'text-red-400' : 'text-purple-400'}
-                  />
+                <div className="p-4 bg-navy-900/50 border border-white/10 rounded-xl">
+                  <div className="flex justify-between items-start mb-2">
+                    <div
+                      className={`p-2 rounded-lg ${analytics?.error_rate > 0.05 ? 'bg-red-500/20' : 'bg-purple-500/20'}`}
+                    >
+                      <AlertTriangle
+                        size={20}
+                        className={
+                          analytics?.error_rate > 0.05 ? 'text-red-400' : 'text-purple-400'
+                        }
+                      />
+                    </div>
+                    <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
+                      ERROR RATE
+                    </span>
+                  </div>
+                  <div className="text-2xl font-bold text-white mb-1">
+                    {(analytics?.error_rate * 100).toFixed(1)}%
+                  </div>
+                  <div className="text-xs text-slate-400 dark:text-slate-500">
+                    {analytics?.error_count} Failed Requests
+                  </div>
                 </div>
-                <span className="text-xs font-mono text-slate-500 dark:text-slate-400">
-                  ERROR RATE
-                </span>
               </div>
-              <div className="text-2xl font-bold text-white mb-1">
-                {(analytics?.error_rate * 100).toFixed(1)}%
-              </div>
-              <div className="text-xs text-slate-400 dark:text-slate-500">
-                {analytics?.error_count} Failed Requests
-              </div>
-            </div>
-          </div>
 
-          {/* Logs Table */}
-          <div className="bg-navy-900/50 border border-white/10 rounded-xl overflow-hidden">
-            <div className="p-4 border-b border-white/10 flex justify-between items-center">
-              <h3 className="font-semibold text-white flex items-center gap-2">
-                <Terminal size={18} className="text-slate-400 dark:text-slate-500" />
-                Recent Interactions
-              </h3>
-              <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">
-                View All Logs
-              </button>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-black/20 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3">Time</th>
-                    <th className="px-4 py-3">Provider / Model</th>
-                    <th className="px-4 py-3">Latency</th>
-                    <th className="px-4 py-3">Cost</th>
-                    <th className="px-4 py-3">Details</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5">
-                  {logs.map((log: any) => (
-                    <tr key={log.id} className="hover:bg-white/5 transition-colors text-sm">
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
-                            log.status === 'success'
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                              : 'bg-red-500/10 text-red-400 border-red-500/20'
-                          }`}
-                        >
-                          {log.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
-                        {new Date(log.timestamp).toLocaleTimeString()}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <span className="text-white font-medium">{log.provider}</span>
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {log.model}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-slate-300 font-mono text-xs">
-                        {log.latency_ms}ms
-                      </td>
-                      <td className="px-4 py-3 text-slate-300 font-mono text-xs">
-                        ${(log.cost || 0).toFixed(6)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {log.error_message ? (
-                          <span
-                            className="text-red-400 text-xs truncate max-w-[200px] block"
-                            title={log.error_message}
+              {/* Logs Table */}
+              <div className="bg-navy-900/50 border border-white/10 rounded-xl overflow-hidden">
+                <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                  <h3 className="font-semibold text-white flex items-center gap-2">
+                    <Terminal size={18} className="text-slate-400 dark:text-slate-500" />
+                    Recent Interactions
+                  </h3>
+                  <button className="text-xs text-blue-400 hover:text-blue-300 font-medium">
+                    View All Logs
+                  </button>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-black/20 text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Time</th>
+                        <th className="px-4 py-3">Provider / Model</th>
+                        <th className="px-4 py-3">Latency</th>
+                        <th className="px-4 py-3">Cost</th>
+                        <th className="px-4 py-3">Details</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {logs.map((log: any) => (
+                        <tr key={log.id} className="hover:bg-white/5 transition-colors text-sm">
+                          <td className="px-4 py-3">
+                            <span
+                              className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${
+                                log.status === 'success'
+                                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                  : 'bg-red-500/10 text-red-400 border-red-500/20'
+                              }`}
+                            >
+                              {log.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-slate-400 dark:text-slate-500 font-mono text-xs">
+                            {new Date(log.timestamp).toLocaleTimeString()}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex flex-col">
+                              <span className="text-white font-medium">{log.provider}</span>
+                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {log.model}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-slate-300 font-mono text-xs">
+                            {log.latency_ms}ms
+                          </td>
+                          <td className="px-4 py-3 text-slate-300 font-mono text-xs">
+                            ${(log.cost || 0).toFixed(6)}
+                          </td>
+                          <td className="px-4 py-3">
+                            {log.error_message ? (
+                              <span
+                                className="text-red-400 text-xs truncate max-w-[200px] block"
+                                title={log.error_message}
+                              >
+                                {log.error_message}
+                              </span>
+                            ) : (
+                              <span className="text-slate-600 dark:text-slate-400 text-xs italic">
+                                Success
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {logs.length === 0 && (
+                        <tr>
+                          <td
+                            colSpan={6}
+                            className="px-4 py-8 text-center text-slate-500 dark:text-slate-400 italic"
                           >
-                            {log.error_message}
-                          </span>
-                        ) : (
-                          <span className="text-slate-600 dark:text-slate-400 text-xs italic">
-                            Success
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                  {logs.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-8 text-center text-slate-500 dark:text-slate-400 italic"
-                      >
-                        No logs found in the last 7 days.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                            No logs found in the last 7 days.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
-      <div className="space-y-6">
-        {/* Health Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-gradient-to-br from-green-900/30 to-navy-900 border border-green-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle size={18} className="text-green-400" />
-              <span className="text-xs uppercase tracking-wider text-green-400">Healthy</span>
-            </div>
-            <p className="text-3xl font-bold text-white">{llmStatus?.summary.healthy || 0}</p>
-          </div>
-          <div className="bg-gradient-to-br from-yellow-900/30 to-navy-900 border border-yellow-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle size={18} className="text-yellow-400" />
-              <span className="text-xs uppercase tracking-wider text-yellow-400">Degraded</span>
-            </div>
-            <p className="text-3xl font-bold text-white">{llmStatus?.summary.degraded || 0}</p>
-          </div>
-          <div className="bg-gradient-to-br from-red-900/30 to-navy-900 border border-red-500/20 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <XCircle size={18} className="text-red-400" />
-              <span className="text-xs uppercase tracking-wider text-red-400">Unhealthy</span>
-            </div>
-            <p className="text-3xl font-bold text-white">{llmStatus?.summary.unhealthy || 0}</p>
-          </div>
-          <div className="bg-gradient-to-br from-slate-800/50 to-navy-900 border border-white/10 rounded-xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Server size={18} className="text-slate-400 dark:text-slate-500" />
-              <span className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500">
-                Total
-              </span>
-            </div>
-            <p className="text-3xl font-bold text-white">
-              {llmStatus?.summary.configured || 0}
-              <span className="text-sm text-slate-500 dark:text-slate-400">
-                /{llmStatus?.summary.total || 0}
-              </span>
-            </p>
-          </div>
-        </div>
-
-        {/* Actions Bar */}
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            {llmStatus?.defaultProvider && (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-400 dark:text-slate-500">Default:</span>
-                <span className="text-white font-medium">{llmStatus.defaultProvider.name}</span>
-                <span className="text-slate-500 dark:text-slate-400">
-                  ({llmStatus.defaultProvider.model})
-                </span>
-              </div>
-            )}
-            {llmStatus?.startupValidation && (
-              <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-                <Clock size={12} />
-                Last check: {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}(
-                {llmStatus.startupValidation.duration}ms)
-              </div>
-            )}
-          </div>
-          <button
-            onClick={refreshAllHealth}
-            disabled={refreshingHealth}
-            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            <RefreshCw size={16} className={refreshingHealth ? 'animate-spin' : ''} />
-            {refreshingHealth ? 'Refreshing...' : 'Refresh All'}
-          </button>
-        </div>
-
-        {/* Critical Errors */}
-        {llmStatus?.startupValidation?.criticalErrors &&
-          llmStatus.startupValidation.criticalErrors.length > 0 && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-              <h3 className="text-red-400 font-semibold flex items-center gap-2 mb-2">
-                <AlertTriangle size={16} />
-                Critical Errors
-              </h3>
-              <ul className="space-y-1">
-                {llmStatus.startupValidation.criticalErrors.map((err, i) => (
-                  <li key={i} className="text-red-300 text-sm">
-                    • {err}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-        {/* Provider Health Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {llmStatus?.providers.map((p) => (
-            <div
-              key={p.id || p.provider}
-              className={`border rounded-xl p-4 transition-all ${getStatusClass(p.healthStatus)}`}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h4 className="font-semibold text-white">{p.name || p.provider}</h4>
-                  <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">{p.model}</p>
+      {activeTab === 'health' &&
+        (statusLoadError ? (
+          <DegradedState title="LLM health status unavailable" description={statusLoadError} />
+        ) : (
+          <div className="space-y-6">
+            {/* Health Summary Cards */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-green-900/30 to-navy-900 border border-green-500/20 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle size={18} className="text-green-400" />
+                  <span className="text-xs uppercase tracking-wider text-green-400">Healthy</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(p.healthStatus)}
-                  <span className="text-xs capitalize">{p.healthStatus}</span>
+                <p className="text-3xl font-bold text-white">{llmStatus?.summary.healthy || 0}</p>
+              </div>
+              <div className="bg-gradient-to-br from-yellow-900/30 to-navy-900 border border-yellow-500/20 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <AlertTriangle size={18} className="text-yellow-400" />
+                  <span className="text-xs uppercase tracking-wider text-yellow-400">Degraded</span>
                 </div>
+                <p className="text-3xl font-bold text-white">{llmStatus?.summary.degraded || 0}</p>
               </div>
-
-              <div className="flex flex-wrap gap-1 mb-3">
-                <span
-                  className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400 dark:text-slate-500'}`}
-                >
-                  {p.isDefault ? '★ Default' : p.tier}
-                </span>
-                {p.supportsVision && (
-                  <span className="px-2 py-0.5 rounded text-xs bg-blue-500/20 text-blue-300">
-                    Vision
-                  </span>
-                )}
-                {p.supportsTools && (
-                  <span className="px-2 py-0.5 rounded text-xs bg-cyan-500/20 text-cyan-300">
-                    Tools
-                  </span>
-                )}
-                {!p.isConfigured && (
-                  <span className="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-300">
-                    No API Key
-                  </span>
-                )}
+              <div className="bg-gradient-to-br from-red-900/30 to-navy-900 border border-red-500/20 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <XCircle size={18} className="text-red-400" />
+                  <span className="text-xs uppercase tracking-wider text-red-400">Unhealthy</span>
+                </div>
+                <p className="text-3xl font-bold text-white">{llmStatus?.summary.unhealthy || 0}</p>
               </div>
-
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-slate-500 dark:text-slate-400">
-                  Priority: {p.priority} | ${p.costPer1k}/1k
-                </span>
-                <button
-                  onClick={() => testSingleProvider(p.provider)}
-                  disabled={testingProvider === p.provider || !p.isConfigured}
-                  className="text-xs px-2 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 disabled:opacity-50 rounded flex items-center gap-1 transition-colors"
-                >
-                  {testingProvider === p.provider ? (
-                    <RefreshCw size={12} className="animate-spin" />
-                  ) : (
-                    <Wifi size={12} />
-                  )}
-                  Test
-                </button>
+              <div className="bg-gradient-to-br from-slate-800/50 to-navy-900 border border-white/10 rounded-xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Server size={18} className="text-slate-400 dark:text-slate-500" />
+                  <span className="text-xs uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                    Total
+                  </span>
+                </div>
+                <p className="text-3xl font-bold text-white">
+                  {llmStatus?.summary.configured || 0}
+                  <span className="text-sm text-slate-500 dark:text-slate-400">
+                    /{llmStatus?.summary.total || 0}
+                  </span>
+                </p>
               </div>
+            </div>
 
-              {/* Circuit Breaker Status */}
-              {llmStatus.circuitBreakers[p.provider] && (
-                <div className="mt-2 pt-2 border-t border-white/5">
-                  <div className="flex items-center gap-2 text-xs">
-                    <Zap
-                      size={10}
-                      className={
-                        llmStatus.circuitBreakers[p.provider].state === 'CLOSED'
-                          ? 'text-green-400'
-                          : llmStatus.circuitBreakers[p.provider].state === 'OPEN'
-                            ? 'text-red-400'
-                            : 'text-yellow-400'
-                      }
-                    />
-                    <span className="text-slate-400 dark:text-slate-500">
-                      Circuit: {llmStatus.circuitBreakers[p.provider].state}
+            {/* Actions Bar */}
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-4">
+                {llmStatus?.defaultProvider && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-slate-400 dark:text-slate-500">Default:</span>
+                    <span className="text-white font-medium">{llmStatus.defaultProvider.name}</span>
+                    <span className="text-slate-500 dark:text-slate-400">
+                      ({llmStatus.defaultProvider.model})
                     </span>
-                    {llmStatus.circuitBreakers[p.provider].failures > 0 && (
-                      <span className="text-red-400">
-                        ({llmStatus.circuitBreakers[p.provider].failures} failures)
+                  </div>
+                )}
+                {llmStatus?.startupValidation && (
+                  <div className="flex items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                    <Clock size={12} />
+                    Last check:{' '}
+                    {new Date(llmStatus.startupValidation.timestamp).toLocaleTimeString()}(
+                    {llmStatus.startupValidation.duration}ms)
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={refreshAllHealth}
+                disabled={refreshingHealth}
+                className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <RefreshCw size={16} className={refreshingHealth ? 'animate-spin' : ''} />
+                {refreshingHealth ? 'Refreshing...' : 'Refresh All'}
+              </button>
+            </div>
+
+            {/* Critical Errors */}
+            {llmStatus?.startupValidation?.criticalErrors &&
+              llmStatus.startupValidation.criticalErrors.length > 0 && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                  <h3 className="text-red-400 font-semibold flex items-center gap-2 mb-2">
+                    <AlertTriangle size={16} />
+                    Critical Errors
+                  </h3>
+                  <ul className="space-y-1">
+                    {llmStatus.startupValidation.criticalErrors.map((err, i) => (
+                      <li key={i} className="text-red-300 text-sm">
+                        • {err}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+            {/* Provider Health Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {llmStatus?.providers.map((p) => (
+                <div
+                  key={p.id || p.provider}
+                  className={`border rounded-xl p-4 transition-all ${getStatusClass(p.healthStatus)}`}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div>
+                      <h4 className="font-semibold text-white">{p.name || p.provider}</h4>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 font-mono">
+                        {p.model}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(p.healthStatus)}
+                      <span className="text-xs capitalize">{p.healthStatus}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    <span
+                      className={`px-2 py-0.5 rounded text-xs ${p.isDefault ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700/50 text-slate-400 dark:text-slate-500'}`}
+                    >
+                      {p.isDefault ? '★ Default' : p.tier}
+                    </span>
+                    {p.supportsVision && (
+                      <span className="px-2 py-0.5 rounded text-xs bg-blue-500/20 text-blue-300">
+                        Vision
+                      </span>
+                    )}
+                    {p.supportsTools && (
+                      <span className="px-2 py-0.5 rounded text-xs bg-cyan-500/20 text-cyan-300">
+                        Tools
+                      </span>
+                    )}
+                    {!p.isConfigured && (
+                      <span className="px-2 py-0.5 rounded text-xs bg-orange-500/20 text-orange-300">
+                        No API Key
                       </span>
                     )}
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
 
-        {/* Fallback Chains */}
-        {llmStatus?.fallbackChains && (
-          <div className="bg-navy-900 border border-white/5 rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <ArrowRight size={18} className="text-purple-400" />
-              Fallback Chains
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {Object.entries(llmStatus.fallbackChains).map(([tier, chain]) => (
-                <div key={tier} className="bg-navy-950/50 rounded-lg p-3">
-                  <span className="text-xs uppercase tracking-wider text-purple-400 mb-2 block">
-                    {tier}
-                  </span>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {(chain as string[]).map((provider, idx) => (
-                      <React.Fragment key={provider}>
-                        {idx > 0 && (
-                          <ArrowRight size={12} className="text-slate-600 dark:text-slate-400" />
-                        )}
-                        <span
-                          className={`text-sm px-2 py-0.5 rounded ${
-                            llmStatus.providers.find((p) => p.provider === provider)
-                              ?.healthStatus === 'healthy'
-                              ? 'bg-green-500/20 text-green-300'
-                              : 'bg-slate-700/50 text-slate-400 dark:text-slate-500'
-                          }`}
-                        >
-                          {provider}
-                        </span>
-                      </React.Fragment>
-                    ))}
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      Priority: {p.priority} | ${p.costPer1k}/1k
+                    </span>
+                    <button
+                      onClick={() => testSingleProvider(p.provider)}
+                      disabled={testingProvider === p.provider || !p.isConfigured}
+                      className="text-xs px-2 py-1 bg-slate-50/30 dark:bg-navy-950/20 hover:bg-slate-100 dark:hover:bg-navy-800/40 disabled:opacity-50 rounded flex items-center gap-1 transition-colors"
+                    >
+                      {testingProvider === p.provider ? (
+                        <RefreshCw size={12} className="animate-spin" />
+                      ) : (
+                        <Wifi size={12} />
+                      )}
+                      Test
+                    </button>
                   </div>
+
+                  {/* Circuit Breaker Status */}
+                  {llmStatus.circuitBreakers[p.provider] && (
+                    <div className="mt-2 pt-2 border-t border-white/5">
+                      <div className="flex items-center gap-2 text-xs">
+                        <Zap
+                          size={10}
+                          className={
+                            llmStatus.circuitBreakers[p.provider].state === 'CLOSED'
+                              ? 'text-green-400'
+                              : llmStatus.circuitBreakers[p.provider].state === 'OPEN'
+                                ? 'text-red-400'
+                                : 'text-yellow-400'
+                          }
+                        />
+                        <span className="text-slate-400 dark:text-slate-500">
+                          Circuit: {llmStatus.circuitBreakers[p.provider].state}
+                        </span>
+                        {llmStatus.circuitBreakers[p.provider].failures > 0 && (
+                          <span className="text-red-400">
+                            ({llmStatus.circuitBreakers[p.provider].failures} failures)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
+
+            {/* Fallback Chains */}
+            {llmStatus?.fallbackChains && (
+              <div className="bg-navy-900 border border-white/5 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                  <ArrowRight size={18} className="text-purple-400" />
+                  Fallback Chains
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(llmStatus.fallbackChains).map(([tier, chain]) => (
+                    <div key={tier} className="bg-navy-950/50 rounded-lg p-3">
+                      <span className="text-xs uppercase tracking-wider text-purple-400 mb-2 block">
+                        {tier}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {(chain as string[]).map((provider, idx) => (
+                          <React.Fragment key={provider}>
+                            {idx > 0 && (
+                              <ArrowRight
+                                size={12}
+                                className="text-slate-600 dark:text-slate-400"
+                              />
+                            )}
+                            <span
+                              className={`text-sm px-2 py-0.5 rounded ${
+                                llmStatus.providers.find((p) => p.provider === provider)
+                                  ?.healthStatus === 'healthy'
+                                  ? 'bg-green-500/20 text-green-300'
+                                  : 'bg-slate-700/50 text-slate-400 dark:text-slate-500'
+                              }`}
+                            >
+                              {provider}
+                            </span>
+                          </React.Fragment>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+        ))}
     </div>
   );
 };

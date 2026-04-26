@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
 const postureTone = (value: number, warningThreshold: number, criticalThreshold: number) => {
@@ -26,13 +27,13 @@ export const GlobalSecurityPostureView: React.FC = () => {
     systemHealth: null,
     operatorOverview: null,
   });
-  const [notice, setNotice] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        setNotice(null);
+        setLoadError(null);
         const [systemHealth, operatorOverview] = await Promise.all([
           Api.getSystemHealth(),
           Api.getSuperAdminOperatorOverview(),
@@ -45,7 +46,12 @@ export const GlobalSecurityPostureView: React.FC = () => {
       } catch (error) {
         if (cancelled) return;
         console.error('[GlobalSecurityPostureView] Failed to load posture data', error);
-        setNotice('Global security posture data is temporarily unavailable.');
+        setLoadError(
+          error instanceof Error
+            ? error.message
+            : 'Global security posture data is temporarily unavailable.'
+        );
+        setData({ systemHealth: null, operatorOverview: null });
       }
     })();
     return () => {
@@ -76,12 +82,6 @@ export const GlobalSecurityPostureView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {notice && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
-          {notice}
-        </div>
-      )}
-
       <div>
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
           Global Security Posture
@@ -92,130 +92,142 @@ export const GlobalSecurityPostureView: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-            <UserCog className="h-4 w-4 text-indigo-500" />
-            Privileged sessions
-          </div>
-          <div
-            className={`mt-2 text-2xl font-semibold ${postureTone(posture.activePrivilegedSessions, 10, 20)}`}
-          >
-            {posture.activePrivilegedSessions}
-          </div>
-          <div className="mt-2 text-xs text-slate-500">
-            Active admin sessions that can reach P33.
-          </div>
+      {loadError ? (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-navy-700 dark:bg-navy-900">
+          <DegradedState title="Global security posture unavailable" description={loadError} />
         </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-            <ShieldAlert className="h-4 w-4 text-rose-500" />
-            Audit debt
-          </div>
-          <div
-            className={`mt-2 text-2xl font-semibold ${postureTone(posture.unresolvedAudit, 5, 15)}`}
-          >
-            {posture.unresolvedAudit}
-          </div>
-          <div className="mt-2 text-xs text-slate-500">
-            Unresolved privileged actions awaiting review.
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            Critical incidents
-          </div>
-          <div
-            className={`mt-2 text-2xl font-semibold ${postureTone(posture.criticalIncidents, 1, 3)}`}
-          >
-            {posture.criticalIncidents}
-          </div>
-          <div className="mt-2 text-xs text-slate-500">
-            Open high-severity or critical security incidents.
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
-            <Shield className="h-4 w-4 text-emerald-500" />
-            Platform health
-          </div>
-          <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
-            {data.systemHealth?.status || 'unknown'}
-          </div>
-          <div className="mt-2 text-xs text-slate-500">
-            Overall control plane status from the system health monitor.
-          </div>
-        </div>
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Security controls
-          </h3>
-          <div className="mt-4 grid gap-3">
-            {[
-              {
-                icon: <Fingerprint className="h-4 w-4 text-sky-500" />,
-                label: 'MFA posture',
-                value: posture.mfaRequired ? 'Platform policy enforced' : 'Review policy coverage',
-              },
-              {
-                icon: <KeyRound className="h-4 w-4 text-violet-500" />,
-                label: 'SSO posture',
-                value: posture.ssoRequired ? 'Platform policy enforced' : 'Review policy coverage',
-              },
-              {
-                icon: <ShieldCheck className="h-4 w-4 text-emerald-500" />,
-                label: 'Security event volume',
-                value: `${Number(data.operatorOverview?.events?.today || 0)} today`,
-              },
-              {
-                icon: <Clock3 className="h-4 w-4 text-amber-500" />,
-                label: 'Break-glass readiness',
-                value: `${posture.breakGlassActive} break-glass / ${posture.jitActive} JIT sessions active.`,
-              },
-            ].map((item) => (
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
+                <UserCog className="h-4 w-4 text-indigo-500" />
+                Privileged sessions
+              </div>
               <div
-                key={item.label}
-                className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-navy-700 dark:bg-navy-950/40"
+                className={`mt-2 text-2xl font-semibold ${postureTone(posture.activePrivilegedSessions, 10, 20)}`}
               >
-                {item.icon}
-                <div>
-                  <div className="text-sm font-medium text-slate-900 dark:text-white">
-                    {item.label}
+                {posture.activePrivilegedSessions}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                Active admin sessions that can reach P33.
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
+                <ShieldAlert className="h-4 w-4 text-rose-500" />
+                Audit debt
+              </div>
+              <div
+                className={`mt-2 text-2xl font-semibold ${postureTone(posture.unresolvedAudit, 5, 15)}`}
+              >
+                {posture.unresolvedAudit}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                Unresolved privileged actions awaiting review.
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                Critical incidents
+              </div>
+              <div
+                className={`mt-2 text-2xl font-semibold ${postureTone(posture.criticalIncidents, 1, 3)}`}
+              >
+                {posture.criticalIncidents}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                Open high-severity or critical security incidents.
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-navy-700 dark:bg-navy-900">
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-slate-500">
+                <Shield className="h-4 w-4 text-emerald-500" />
+                Platform health
+              </div>
+              <div className="mt-2 text-2xl font-semibold text-slate-900 dark:text-white">
+                {data.systemHealth?.status || 'unknown'}
+              </div>
+              <div className="mt-2 text-xs text-slate-500">
+                Overall control plane status from the system health monitor.
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Security controls
+              </h3>
+              <div className="mt-4 grid gap-3">
+                {[
+                  {
+                    icon: <Fingerprint className="h-4 w-4 text-sky-500" />,
+                    label: 'MFA posture',
+                    value: posture.mfaRequired
+                      ? 'Platform policy enforced'
+                      : 'Review policy coverage',
+                  },
+                  {
+                    icon: <KeyRound className="h-4 w-4 text-violet-500" />,
+                    label: 'SSO posture',
+                    value: posture.ssoRequired
+                      ? 'Platform policy enforced'
+                      : 'Review policy coverage',
+                  },
+                  {
+                    icon: <ShieldCheck className="h-4 w-4 text-emerald-500" />,
+                    label: 'Security event volume',
+                    value: `${Number(data.operatorOverview?.events?.today || 0)} today`,
+                  },
+                  {
+                    icon: <Clock3 className="h-4 w-4 text-amber-500" />,
+                    label: 'Break-glass readiness',
+                    value: `${posture.breakGlassActive} break-glass / ${posture.jitActive} JIT sessions active.`,
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.label}
+                    className="flex items-start gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-3 dark:border-navy-700 dark:bg-navy-950/40"
+                  >
+                    {item.icon}
+                    <div>
+                      <div className="text-sm font-medium text-slate-900 dark:text-white">
+                        {item.label}
+                      </div>
+                      <div className="text-sm text-slate-500 dark:text-slate-400">{item.value}</div>
+                    </div>
                   </div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">{item.value}</div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
+                Evidence checklist
+              </h3>
+              <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
+                <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
+                  Privileged activity is visible through admin session stats, audit counts, and
+                  incident views.
+                </div>
+                <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
+                  MFA and SSO controls are separated from billing and support operations through
+                  capability-based auth.
+                </div>
+                <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
+                  Security failures remain fail-closed: unresolved audit debt and critical incidents
+                  stay visible in the operator shell.
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-navy-700 dark:bg-navy-900">
-          <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
-            Evidence checklist
-          </h3>
-          <div className="mt-4 space-y-3 text-sm text-slate-600 dark:text-slate-300">
-            <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-              Privileged activity is visible through admin session stats, audit counts, and incident
-              views.
-            </div>
-            <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-              MFA and SSO controls are separated from billing and support operations through
-              capability-based auth.
-            </div>
-            <div className="rounded-lg bg-slate-50 px-3 py-3 dark:bg-navy-950/40">
-              Security failures remain fail-closed: unresolved audit debt and critical incidents
-              stay visible in the operator shell.
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

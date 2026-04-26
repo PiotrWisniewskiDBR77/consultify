@@ -67,6 +67,18 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
           viewId: AppView.AI_OS_ACTION_CENTER,
         },
         {
+          id: 'AI_OS_RESEARCH',
+          label: t('sidebar.aiResearch', 'Research Sessions'),
+          icon: React.createElement(BookOpen, { size: 16 }),
+          viewId: AppView.AI_OS_RESEARCH,
+        },
+        {
+          id: 'AI_OS_ARTIFACTS',
+          label: t('sidebar.aiArtifacts', 'Artifacts'),
+          icon: React.createElement(FileText, { size: 16 }),
+          viewId: AppView.AI_OS_ARTIFACTS,
+        },
+        {
           id: 'AI_OS_MEMORY',
           label: t('sidebar.aiMemory', 'Memory & Scope'),
           icon: React.createElement(Database, { size: 16 }),

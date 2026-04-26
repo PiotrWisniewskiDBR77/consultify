@@ -3,11 +3,8 @@ import {
   Building2,
   Check,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
   Clock,
   Copy,
-  DollarSign,
   Edit2,
   Eye,
   Key,
@@ -15,7 +12,6 @@ import {
   RefreshCw,
   Search,
   Trash2,
-  TrendingUp,
   Users,
   X,
   XCircle,
@@ -23,6 +19,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { Organization } from '../../types';
@@ -65,6 +62,11 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   const [searchTerm, setSearchTerm] = useState('');
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [nonBlockingLoadErrors, setNonBlockingLoadErrors] = useState<string[]>([]);
+  const [loadErrors, setLoadErrors] = useState<{
+    organizations: string | null;
+    requests: string | null;
+    codes: string | null;
+  }>({ organizations: null, requests: null, codes: null });
 
   // Modal States
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
@@ -91,6 +93,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   const fetchData = useCallback(async () => {
     setLoading(true);
     setNonBlockingLoadErrors([]);
+    setLoadErrors({ organizations: null, requests: null, codes: null });
     try {
       const [orgsRes, reqsRes, codesRes] = await Promise.allSettled([
         Api.getOrganizations(),
@@ -102,26 +105,42 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       setOrganizations(orgsRes.value);
 
       const errors: string[] = [];
+      const nextLoadErrors: {
+        organizations: string | null;
+        requests: string | null;
+        codes: string | null;
+      } = { organizations: null, requests: null, codes: null };
       if (reqsRes.status === 'fulfilled') {
         setRequests(reqsRes.value);
       } else {
         setRequests([]);
-        errors.push('Access requests failed to load.');
+        nextLoadErrors.requests = 'Access requests failed to load.';
+        errors.push(nextLoadErrors.requests);
       }
 
       if (codesRes.status === 'fulfilled') {
         setCodes(codesRes.value);
       } else {
         setCodes([]);
-        errors.push('Access codes failed to load.');
+        nextLoadErrors.codes = 'Access codes failed to load.';
+        errors.push(nextLoadErrors.codes);
       }
 
+      setLoadErrors(nextLoadErrors);
       if (errors.length) {
         setNonBlockingLoadErrors(errors);
         toast.error(errors.join(' '));
       }
     } catch (err) {
       console.error(err);
+      setOrganizations([]);
+      setRequests([]);
+      setCodes([]);
+      setLoadErrors({
+        organizations: normalizeApiErrorMessage(err, 'Organizations failed to load.'),
+        requests: 'Access requests are unavailable because organizations failed to load.',
+        codes: 'Access codes are unavailable because organizations failed to load.',
+      });
       toast.error(normalizeApiErrorMessage(err, 'Failed to load data'));
     } finally {
       setLoading(false);
@@ -399,6 +418,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                 placeholder="Search organizations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                disabled={!!loadErrors.organizations}
                 className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-blue-500 outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500"
               />
             </div>
@@ -423,6 +443,15 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   <tr>
                     <td colSpan={7} className="p-8 text-center text-slate-500 dark:text-slate-400">
                       Loading...
+                    </td>
+                  </tr>
+                ) : loadErrors.organizations ? (
+                  <tr>
+                    <td colSpan={7} className="p-6">
+                      <DegradedState
+                        title="Organizations unavailable"
+                        description={loadErrors.organizations}
+                      />
                     </td>
                   </tr>
                 ) : filteredOrgs.length === 0 ? (
@@ -617,6 +646,15 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     Loading...
                   </td>
                 </tr>
+              ) : loadErrors.requests ? (
+                <tr>
+                  <td colSpan={5} className="p-6">
+                    <DegradedState
+                      title="Access requests unavailable"
+                      description={loadErrors.requests}
+                    />
+                  </td>
+                </tr>
               ) : requests.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -695,6 +733,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
           <div className="flex justify-end">
             <button
               onClick={() => setShowCodeModal(true)}
+              disabled={!!loadErrors.codes}
               className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
             >
               <Plus size={16} /> Generate New Code
@@ -718,6 +757,15 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                   <tr>
                     <td colSpan={6} className="p-8 text-center text-slate-500 dark:text-slate-400">
                       Loading...
+                    </td>
+                  </tr>
+                ) : loadErrors.codes ? (
+                  <tr>
+                    <td colSpan={6} className="p-6">
+                      <DegradedState
+                        title="Access codes unavailable"
+                        description={loadErrors.codes}
+                      />
                     </td>
                   </tr>
                 ) : codes.length === 0 ? (

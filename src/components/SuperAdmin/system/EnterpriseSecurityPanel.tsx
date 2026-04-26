@@ -11,33 +11,19 @@
  */
 
 import {
-  Activity,
-  AlertCircle,
   AlertTriangle,
   Building,
   CheckCircle,
-  ChevronRight,
-  Clock,
-  Download,
-  Edit,
-  ExternalLink,
-  Eye,
-  EyeOff,
   FileCheck,
-  Filter,
   Globe,
-  Key,
   Laptop,
   Loader2,
-  Lock,
   Monitor,
   Plus,
   RefreshCw,
-  Search,
   Shield,
   Smartphone,
   Trash2,
-  Unlock,
   Users,
   XCircle,
 } from 'lucide-react';
@@ -45,6 +31,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 
 interface SecurityEvent {
   id: string;
@@ -152,6 +139,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     'events' | 'sessions' | 'ip-rules' | 'policies' | 'compliance'
   >('events');
   const [loading, setLoading] = useState(true);
+  const [loadErrors, setLoadErrors] = useState<Record<string, string | null>>({});
 
   // Events state
   const [events, setEvents] = useState<SecurityEvent[]>([]);
@@ -163,7 +151,6 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
   // IP Rules state
   const [ipRules, setIPRules] = useState<IPRule[]>([]);
-  const [showAddIPRule, setShowAddIPRule] = useState(false);
 
   // Policies state
   const [policies, setPolicies] = useState<SecurityPolicy[]>([]);
@@ -173,38 +160,55 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
   const fetchSecurityEvents = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, events: null }));
       const data = await Api.getSecurityEvents(eventFilters);
       setEvents(Array.isArray(data?.events) ? data.events : []);
       const stats = await Api.getSecurityEventStats();
       setEventStats(stats);
     } catch (error) {
       console.error('Failed to fetch security events:', error);
+      setLoadErrors((prev) => ({
+        ...prev,
+        events: error instanceof Error ? error.message : 'Failed to fetch security events',
+      }));
+      setEvents([]);
+      setEventStats(null);
     }
   }, [eventFilters]);
 
   const fetchSessions = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, sessions: null }));
       const response = await Api.getSuperAdminActiveSessions();
       setSessions((response.sessions || []) as Session[]);
     } catch (error) {
       console.error('Failed to fetch sessions:', error);
-      // Use empty array - real data will come from backend when available
+      setLoadErrors((prev) => ({
+        ...prev,
+        sessions: error instanceof Error ? error.message : 'Failed to fetch sessions',
+      }));
       setSessions([]);
     }
   }, []);
 
   const fetchIPRules = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, ipRules: null }));
       const data = await Api.getIPAccessRules();
       setIPRules(data);
     } catch (error) {
       console.error('Failed to fetch IP rules:', error);
+      setLoadErrors((prev) => ({
+        ...prev,
+        ipRules: error instanceof Error ? error.message : 'Failed to fetch IP rules',
+      }));
       setIPRules([]);
     }
   }, []);
 
   const fetchPolicies = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, policies: null }));
       const data = await Api.getSecurityPolicies();
       // Transform backend response to component format if needed
       const policiesData = data.policies || (Array.isArray(data) ? data : [data]);
@@ -226,12 +230,17 @@ export const EnterpriseSecurityPanel: React.FC = () => {
       );
     } catch (error) {
       console.error('Failed to fetch policies:', error);
+      setLoadErrors((prev) => ({
+        ...prev,
+        policies: error instanceof Error ? error.message : 'Failed to fetch security policies',
+      }));
       setPolicies([]);
     }
   }, []);
 
   const fetchCompliance = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, compliance: null }));
       const data = await Api.getComplianceFrameworks();
       // Transform backend compliance_frameworks to component format
       const frameworksData = data.frameworks || data || [];
@@ -255,6 +264,11 @@ export const EnterpriseSecurityPanel: React.FC = () => {
       );
     } catch (error) {
       console.error('Failed to fetch compliance frameworks:', error);
+      setLoadErrors((prev) => ({
+        ...prev,
+        compliance:
+          error instanceof Error ? error.message : 'Failed to fetch compliance frameworks',
+      }));
       setFrameworks([]);
     }
   }, []);
@@ -424,37 +438,46 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           {activeTab === 'events' && (
             <div className="space-y-4">
               {/* Stats */}
-              {eventStats && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                    <div className="text-sm text-slate-600 dark:text-slate-400">Total Events</div>
-                    <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                      {eventStats.total || 0}
-                    </div>
-                  </div>
-                  <div
-                    className={`p-4 rounded-xl ${SEVERITY_CONFIG.CRITICAL.bg} ${SEVERITY_CONFIG.CRITICAL.border}`}
-                  >
-                    <div className="text-sm text-slate-600 dark:text-slate-400">Critical</div>
-                    <div className={`text-2xl font-semibold ${SEVERITY_CONFIG.CRITICAL.text}`}>
-                      {eventStats.critical || 0}
-                    </div>
-                  </div>
-                  <div
-                    className={`p-4 rounded-xl ${SEVERITY_CONFIG.HIGH.bg} ${SEVERITY_CONFIG.HIGH.border}`}
-                  >
-                    <div className="text-sm text-slate-600 dark:text-slate-400">High</div>
-                    <div className={`text-2xl font-semibold ${SEVERITY_CONFIG.HIGH.text}`}>
-                      {eventStats.high || 0}
-                    </div>
-                  </div>
-                  <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-                    <div className="text-sm text-slate-600 dark:text-slate-400">Unresolved</div>
-                    <div className="text-2xl font-semibold text-amber-700 dark:text-amber-400">
-                      {eventStats.unresolved || 0}
-                    </div>
-                  </div>
+              {loadErrors.events ? (
+                <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                  <DegradedState
+                    title="Security events unavailable"
+                    description={loadErrors.events}
+                  />
                 </div>
+              ) : (
+                eventStats && (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                      <div className="text-sm text-slate-600 dark:text-slate-400">Total Events</div>
+                      <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                        {eventStats.total || 0}
+                      </div>
+                    </div>
+                    <div
+                      className={`p-4 rounded-xl ${SEVERITY_CONFIG.CRITICAL.bg} ${SEVERITY_CONFIG.CRITICAL.border}`}
+                    >
+                      <div className="text-sm text-slate-600 dark:text-slate-400">Critical</div>
+                      <div className={`text-2xl font-semibold ${SEVERITY_CONFIG.CRITICAL.text}`}>
+                        {eventStats.critical || 0}
+                      </div>
+                    </div>
+                    <div
+                      className={`p-4 rounded-xl ${SEVERITY_CONFIG.HIGH.bg} ${SEVERITY_CONFIG.HIGH.border}`}
+                    >
+                      <div className="text-sm text-slate-600 dark:text-slate-400">High</div>
+                      <div className={`text-2xl font-semibold ${SEVERITY_CONFIG.HIGH.text}`}>
+                        {eventStats.high || 0}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
+                      <div className="text-sm text-slate-600 dark:text-slate-400">Unresolved</div>
+                      <div className="text-2xl font-semibold text-amber-700 dark:text-amber-400">
+                        {eventStats.unresolved || 0}
+                      </div>
+                    </div>
+                  </div>
+                )
               )}
 
               {/* Filters */}
@@ -462,6 +485,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <select
                   value={eventFilters.severity}
                   onChange={(e) => setEventFilters({ ...eventFilters, severity: e.target.value })}
+                  disabled={!!loadErrors.events}
                   className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 >
                   <option value="">All Severities</option>
@@ -474,6 +498,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <select
                   value={eventFilters.eventType}
                   onChange={(e) => setEventFilters({ ...eventFilters, eventType: e.target.value })}
+                  disabled={!!loadErrors.events}
                   className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 >
                   <option value="">All Event Types</option>
@@ -486,6 +511,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <select
                   value={eventFilters.resolved}
                   onChange={(e) => setEventFilters({ ...eventFilters, resolved: e.target.value })}
+                  disabled={!!loadErrors.events}
                   className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 text-sm"
                 >
                   <option value="">All Status</option>
@@ -496,7 +522,14 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
               {/* Events List */}
               <div className="space-y-2">
-                {safeEvents.length === 0 ? (
+                {loadErrors.events ? (
+                  <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <DegradedState
+                      title="Security event list unavailable"
+                      description={loadErrors.events}
+                    />
+                  </div>
+                ) : safeEvents.length === 0 ? (
                   <div className="text-center py-12 text-slate-600 dark:text-slate-400">
                     <Shield className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No security events found</p>
@@ -565,13 +598,24 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
                   Active Sessions
                 </h3>
-                <button className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors">
+                <button
+                  disabled
+                  title="Bulk session termination requires an audited backend workflow"
+                  className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   Terminate All
                 </button>
               </div>
 
               <div className="space-y-2">
-                {safeSessions.length === 0 ? (
+                {loadErrors.sessions ? (
+                  <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <DegradedState
+                      title="Active session list unavailable"
+                      description={loadErrors.sessions}
+                    />
+                  </div>
+                ) : safeSessions.length === 0 ? (
                   <div className="text-center py-12 text-slate-600 dark:text-slate-400">
                     <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No active sessions</p>
@@ -649,8 +693,9 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                   IP Access Rules
                 </h3>
                 <button
-                  onClick={() => setShowAddIPRule(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+                  disabled
+                  title="IP rule creation requires an audited backend workflow"
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Add Rule
@@ -673,7 +718,14 @@ export const EnterpriseSecurityPanel: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-                {safeIpRules.length === 0 ? (
+                {loadErrors.ipRules ? (
+                  <div className="p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <DegradedState
+                      title="IP access rules unavailable"
+                      description={loadErrors.ipRules}
+                    />
+                  </div>
+                ) : safeIpRules.length === 0 ? (
                   <div className="text-center py-12 text-slate-600 dark:text-slate-400">
                     <Globe className="w-12 h-12 mx-auto mb-4 opacity-50" />
                     <p>No IP rules configured</p>
@@ -755,41 +807,50 @@ export const EnterpriseSecurityPanel: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {safePolicies.map((policy) => (
-                  <div
-                    key={policy.id}
-                    className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-medium text-slate-900 dark:text-slate-100">
-                            {policy.name}
-                          </span>
-                          <span className="px-2 py-0.5 text-xs bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300 rounded">
-                            {policy.category}
-                          </span>
-                        </div>
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {policy.description}
-                        </p>
-                        <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                          Last updated: {new Date(policy.last_updated).toLocaleDateString()}
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleTogglePolicy(policy.id, !policy.enabled)}
-                        className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
-                          policy.enabled
-                            ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
-                            : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400'
-                        }`}
-                      >
-                        {policy.enabled ? 'Enabled' : 'Disabled'}
-                      </button>
-                    </div>
+                {loadErrors.policies ? (
+                  <div className="md:col-span-2 p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <DegradedState
+                      title="Security policies unavailable"
+                      description={loadErrors.policies}
+                    />
                   </div>
-                ))}
+                ) : (
+                  safePolicies.map((policy) => (
+                    <div
+                      key={policy.id}
+                      className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-navy-900/20 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium text-slate-900 dark:text-slate-100">
+                              {policy.name}
+                            </span>
+                            <span className="px-2 py-0.5 text-xs bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300 rounded">
+                              {policy.category}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            {policy.description}
+                          </p>
+                          <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">
+                            Last updated: {new Date(policy.last_updated).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleTogglePolicy(policy.id, !policy.enabled)}
+                          className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+                            policy.enabled
+                              ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
+                              : 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-400'
+                          }`}
+                        >
+                          {policy.enabled ? 'Enabled' : 'Disabled'}
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -801,56 +862,69 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
                   Compliance Frameworks
                 </h3>
-                <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors">
+                <button
+                  disabled
+                  title="Compliance assessment execution requires an audited backend workflow"
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   <RefreshCw className="w-4 h-4" />
                   Run Assessment
                 </button>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {safeFrameworks.map((framework) => {
-                  const statusColors = getComplianceColor(framework.status);
-                  const compliancePercent =
-                    (framework.controls_compliant / framework.controls_total) * 100;
-                  return (
-                    <div
-                      key={framework.id}
-                      className={`p-4 rounded-xl ${statusColors.bg} ${statusColors.border} border`}
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium text-slate-900 dark:text-slate-100">
-                          {framework.name}
-                        </h4>
-                        <span
-                          className={`px-2 py-0.5 text-xs rounded ${statusColors.bg} ${statusColors.text}`}
-                        >
-                          {framework.status.replace('_', ' ').toUpperCase()}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
-                        {framework.description}
-                      </p>
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-slate-600 dark:text-slate-400">Controls</span>
-                          <span className={statusColors.text}>
-                            {framework.controls_compliant}/{framework.controls_total}
+                {loadErrors.compliance ? (
+                  <div className="md:col-span-3 p-6 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <DegradedState
+                      title="Compliance frameworks unavailable"
+                      description={loadErrors.compliance}
+                    />
+                  </div>
+                ) : (
+                  safeFrameworks.map((framework) => {
+                    const statusColors = getComplianceColor(framework.status);
+                    const compliancePercent =
+                      (framework.controls_compliant / framework.controls_total) * 100;
+                    return (
+                      <div
+                        key={framework.id}
+                        className={`p-4 rounded-xl ${statusColors.bg} ${statusColors.border} border`}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="font-medium text-slate-900 dark:text-slate-100">
+                            {framework.name}
+                          </h4>
+                          <span
+                            className={`px-2 py-0.5 text-xs rounded ${statusColors.bg} ${statusColors.text}`}
+                          >
+                            {framework.status.replace('_', ' ').toUpperCase()}
                           </span>
                         </div>
-                        <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full ${statusColors.color} rounded-full transition-all`}
-                            style={{ width: `${compliancePercent}%` }}
-                          />
-                        </div>
-                        <div className="text-xs text-slate-600 dark:text-slate-400">
-                          Last assessment:{' '}
-                          {new Date(framework.last_assessment).toLocaleDateString()}
+                        <p className="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                          {framework.description}
+                        </p>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-slate-600 dark:text-slate-400">Controls</span>
+                            <span className={statusColors.text}>
+                              {framework.controls_compliant}/{framework.controls_total}
+                            </span>
+                          </div>
+                          <div className="h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full ${statusColors.color} rounded-full transition-all`}
+                              style={{ width: `${compliancePercent}%` }}
+                            />
+                          </div>
+                          <div className="text-xs text-slate-600 dark:text-slate-400">
+                            Last assessment:{' '}
+                            {new Date(framework.last_assessment).toLocaleDateString()}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </div>
 
               <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
@@ -861,14 +935,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                 <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
                   Forward security events to your SIEM solution for centralized monitoring.
                 </p>
-                <div className="flex items-center gap-4">
-                  <button className="px-4 py-2 bg-secondary-600 hover:bg-secondary-700 text-white text-sm rounded-lg transition-colors">
-                    Configure SIEM
-                  </button>
-                  <span className="text-sm text-slate-600 dark:text-slate-400">
-                    Supported: Splunk, Datadog, Elastic, AWS CloudWatch
-                  </span>
-                </div>
+                <ReadOnlyState
+                  title="SIEM configuration workflow unavailable"
+                  description="The UI describes SIEM forwarding, but there is no audited SuperAdmin SIEM configuration workflow wired here yet."
+                />
               </div>
             </div>
           )}

@@ -14,25 +14,17 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   BarChart3,
-  Calendar,
   ChevronDown,
-  ChevronRight,
   Clock,
-  Cpu,
   Database,
   Download,
   FileText,
-  Filter,
   Globe,
-  LineChart,
   Loader2,
   Mail,
-  PieChart,
   Plus,
   RefreshCw,
   Settings,
-  TrendingDown,
-  TrendingUp,
   Users,
   X,
   Zap,
@@ -41,6 +33,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 
 interface MetricCard {
   id: string;
@@ -96,12 +89,15 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
   const [apiChartData, setApiChartData] = useState<ChartData | null>(null);
   const [aiChartData, setAiChartData] = useState<ChartData | null>(null);
   const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [scheduledLoadError, setScheduledLoadError] = useState<string | null>(null);
   const [showCreateReport, setShowCreateReport] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const analyticsData = await Api.getSystemAnalytics(timeRange);
 
       // Transform to metrics with real data
@@ -154,15 +150,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           ],
         });
       } else {
-        // Fallback to generated labels if no data
-        const labels = generateTimeLabels(timeRange);
-        setApiChartData({
-          labels,
-          datasets: [
-            { label: 'Requests', data: labels.map(() => 0), color: '#06b6d4' },
-            { label: 'Errors', data: labels.map(() => 0), color: '#ef4444' },
-          ],
-        });
+        setApiChartData(null);
       }
 
       if (analyticsData.charts?.ai?.labels?.length > 0) {
@@ -174,41 +162,24 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           ],
         });
       } else {
-        const labels = generateTimeLabels(timeRange);
-        setAiChartData({
-          labels,
-          datasets: [
-            { label: 'Tokens (K)', data: labels.map(() => 0), color: '#8b5cf6' },
-            { label: 'Requests', data: labels.map(() => 0), color: '#10b981' },
-          ],
-        });
+        setAiChartData(null);
       }
+      setLoading(false);
+      return true;
     } catch (error) {
       console.error('Failed to fetch analytics:', error);
-      // Set empty state on error
+      setLoadError(error instanceof Error ? error.message : 'Failed to fetch analytics');
       setMetrics([]);
-
-      const labels = generateTimeLabels(timeRange);
-      setApiChartData({
-        labels,
-        datasets: [
-          { label: 'Requests', data: labels.map(() => 0), color: '#06b6d4' },
-          { label: 'Errors', data: labels.map(() => 0), color: '#ef4444' },
-        ],
-      });
-      setAiChartData({
-        labels,
-        datasets: [
-          { label: 'Tokens (K)', data: labels.map(() => 0), color: '#8b5cf6' },
-          { label: 'Requests', data: labels.map(() => 0), color: '#10b981' },
-        ],
-      });
+      setApiChartData(null);
+      setAiChartData(null);
+      setLoading(false);
+      return false;
     }
-    setLoading(false);
   }, [timeRange]);
 
   const fetchScheduledReports = useCallback(async () => {
     try {
+      setScheduledLoadError(null);
       const reports = await Api.getAnalyticsReports();
       setScheduledReports(
         reports
@@ -229,6 +200,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
       );
     } catch (error) {
       console.error('Failed to fetch scheduled reports:', error);
+      setScheduledLoadError(
+        error instanceof Error ? error.message : 'Failed to load scheduled reports'
+      );
+      setScheduledReports([]);
       toast.error('Failed to load scheduled reports');
     }
   }, []);
@@ -240,12 +215,18 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchAnalytics();
+    const ok = await fetchAnalytics();
     setRefreshing(false);
-    toast.success('Analytics refreshed');
+    if (ok) {
+      toast.success('Analytics refreshed');
+    }
   };
 
   const handleExport = (format: 'pdf' | 'csv' | 'xlsx') => {
+    if (loadError || metrics.length === 0) {
+      toast.error('Analytics data is unavailable');
+      return;
+    }
     const payload = {
       exportedAt: new Date().toISOString(),
       timeRange,
@@ -271,36 +252,6 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
     link.click();
     URL.revokeObjectURL(url);
     toast.success(`Report exported as ${filename}`);
-  };
-
-  const generateTimeLabels = (range: string): string[] => {
-    const now = new Date();
-    switch (range) {
-      case '24h':
-        return Array.from({ length: 24 }, (_, i) => {
-          const d = new Date(now);
-          d.setHours(d.getHours() - (23 - i));
-          return d.toLocaleTimeString('en', { hour: '2-digit' });
-        });
-      case '7d':
-        return Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(now);
-          d.setDate(d.getDate() - (6 - i));
-          return d.toLocaleDateString('en', { weekday: 'short' });
-        });
-      case '30d':
-        return Array.from({ length: 30 }, (_, i) => {
-          const d = new Date(now);
-          d.setDate(d.getDate() - (29 - i));
-          return d.toLocaleDateString('en', { day: 'numeric', month: 'short' });
-        });
-      default:
-        return Array.from({ length: 12 }, (_, i) => {
-          const d = new Date(now);
-          d.setMonth(d.getMonth() - (11 - i));
-          return d.toLocaleDateString('en', { month: 'short' });
-        });
-    }
   };
 
   // Note: All analytics data comes from real API endpoints
@@ -375,210 +326,165 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
           {/* Dashboard Tab */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
-              {/* Metric Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {metrics.map((metric) => {
-                  const Icon = metric.icon;
-                  const isPositive = metric.change >= 0;
-                  return (
-                    <div
-                      key={metric.id}
-                      className={`p-4 bg-${metric.color}-500/10 rounded-xl border border-${metric.color}-500/30`}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <Icon className={`w-5 h-5 text-${metric.color}-400`} />
+              {loadError ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState title="Analytics dashboard unavailable" description={loadError} />
+                </div>
+              ) : (
+                <>
+                  {/* Metric Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {metrics.map((metric) => {
+                      const Icon = metric.icon;
+                      const isPositive = metric.change >= 0;
+                      return (
                         <div
-                          className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}
+                          key={metric.id}
+                          className={`p-4 bg-${metric.color}-500/10 rounded-xl border border-${metric.color}-500/30`}
                         >
-                          {isPositive ? (
-                            <ArrowUpRight className="w-3 h-3" />
-                          ) : (
-                            <ArrowDownRight className="w-3 h-3" />
-                          )}
-                          {Math.abs(metric.change)}%
-                        </div>
-                      </div>
-                      <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                        {metric.value}
-                      </div>
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        {metric.title}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* API Chart */}
-                <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                      <Globe className="w-5 h-5 text-primary-500 dark:text-primary-400" />
-                      API Traffic
-                    </h3>
-                    <button
-                      onClick={() => handleExport('csv')}
-                      className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
-                    >
-                      <Download className="w-3 h-3" />
-                      Export
-                    </button>
-                  </div>
-                  {apiChartData && <SimpleBarChart data={apiChartData} />}
-                </div>
-
-                {/* AI Chart */}
-                <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                      <Zap className="w-5 h-5 text-purple-400" />
-                      AI Usage
-                    </h3>
-                    <button
-                      onClick={() => handleExport('csv')}
-                      className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
-                    >
-                      <Download className="w-3 h-3" />
-                      Export
-                    </button>
-                  </div>
-                  {aiChartData && <SimpleBarChart data={aiChartData} />}
-                </div>
-              </div>
-
-              {/* Performance Breakdown */}
-              <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-4 flex items-center gap-2">
-                  <Activity className="w-5 h-5 text-emerald-400" />
-                  Performance Breakdown
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div>
-                    <div className="text-sm text-slate-400 dark:text-slate-500 mb-2">
-                      Response Time Distribution
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { label: '< 100ms', value: 65, color: 'bg-emerald-500' },
-                        { label: '100-500ms', value: 25, color: 'bg-amber-500' },
-                        { label: '> 500ms', value: 10, color: 'bg-red-500' },
-                      ].map((item) => (
-                        <div key={item.label} className="flex items-center gap-2">
-                          <span className="text-xs text-slate-500 dark:text-slate-400 w-20">
-                            {item.label}
-                          </span>
-                          <div className="flex-1 h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div className="flex items-center justify-between mb-2">
+                            <Icon className={`w-5 h-5 text-${metric.color}-400`} />
                             <div
-                              className={`h-full ${item.color}`}
-                              style={{ width: `${item.value}%` }}
-                            />
+                              className={`flex items-center text-xs ${isPositive ? 'text-emerald-400' : 'text-red-400'}`}
+                            >
+                              {isPositive ? (
+                                <ArrowUpRight className="w-3 h-3" />
+                              ) : (
+                                <ArrowDownRight className="w-3 h-3" />
+                              )}
+                              {Math.abs(metric.change)}%
+                            </div>
                           </div>
-                          <span className="text-xs text-slate-900 dark:text-white w-10 text-right">
-                            {item.value}%
-                          </span>
+                          <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                            {metric.value}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {metric.title}
+                          </div>
                         </div>
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                  <div>
-                    <div className="text-sm text-slate-400 dark:text-slate-500 mb-2">
-                      Top Endpoints
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { endpoint: '/api/projects', calls: 12453 },
-                        { endpoint: '/api/auth/me', calls: 8932 },
-                        { endpoint: '/api/initiatives', calls: 6721 },
-                        { endpoint: '/api/ai/analyze', calls: 4512 },
-                      ].map((item) => (
-                        <div
-                          key={item.endpoint}
-                          className="flex items-center justify-between text-sm"
+
+                  {/* Charts */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* API Chart */}
+                    <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          <Globe className="w-5 h-5 text-primary-500 dark:text-primary-400" />
+                          API Traffic
+                        </h3>
+                        <button
+                          onClick={() => handleExport('csv')}
+                          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
                         >
-                          <code className="text-cyan-400 text-xs">{item.endpoint}</code>
-                          <span className="text-slate-400 dark:text-slate-500">
-                            {item.calls.toLocaleString()}
-                          </span>
-                        </div>
-                      ))}
+                          <Download className="w-3 h-3" />
+                          Export
+                        </button>
+                      </div>
+                      {apiChartData ? (
+                        <SimpleBarChart data={apiChartData} />
+                      ) : (
+                        <ReadOnlyState
+                          title="API traffic chart unavailable"
+                          description="The analytics endpoint did not return API chart data for this period."
+                        />
+                      )}
+                    </div>
+
+                    {/* AI Chart */}
+                    <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-purple-400" />
+                          AI Usage
+                        </h3>
+                        <button
+                          onClick={() => handleExport('csv')}
+                          className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 flex items-center gap-1"
+                        >
+                          <Download className="w-3 h-3" />
+                          Export
+                        </button>
+                      </div>
+                      {aiChartData ? (
+                        <SimpleBarChart data={aiChartData} />
+                      ) : (
+                        <ReadOnlyState
+                          title="AI usage chart unavailable"
+                          description="The analytics endpoint did not return AI chart data for this period."
+                        />
+                      )}
                     </div>
                   </div>
-                  <div>
-                    <div className="text-sm text-slate-400 dark:text-slate-500 mb-2">
-                      Error Rate by Type
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { type: '4xx Client', count: 234, color: 'text-amber-400' },
-                        { type: '5xx Server', count: 12, color: 'text-red-400' },
-                        { type: 'Timeout', count: 8, color: 'text-orange-400' },
-                      ].map((item) => (
-                        <div key={item.type} className="flex items-center justify-between text-sm">
-                          <span className={item.color}>{item.type}</span>
-                          <span className="text-slate-400 dark:text-slate-500">{item.count}</span>
-                        </div>
-                      ))}
-                    </div>
+
+                  {/* Performance Breakdown */}
+                  <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <ReadOnlyState
+                      title="Performance breakdown unavailable"
+                      description="Endpoint-level latency, top endpoints, and error-type distribution require backend analytics fields that are not provided to this panel yet."
+                    />
                   </div>
-                </div>
-              </div>
+                </>
+              )}
             </div>
           )}
 
           {/* Generate Report Tab */}
           {activeTab === 'reports' && (
             <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {REPORT_TYPES.map((report) => {
-                  const Icon = report.icon;
-                  return (
-                    <div
-                      key={report.id}
-                      className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary-500/50 transition-colors cursor-pointer"
-                      onClick={() => handleExport('pdf')}
-                    >
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary-600/10 flex items-center justify-center">
-                          <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              {loadError ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState title="Report generation unavailable" description={loadError} />
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {REPORT_TYPES.map((report) => {
+                      const Icon = report.icon;
+                      return (
+                        <div
+                          key={report.id}
+                          className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10 hover:border-primary-500/50 transition-colors cursor-pointer"
+                          onClick={() => handleExport('pdf')}
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 rounded-lg bg-primary-600/10 flex items-center justify-center">
+                              <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                            </div>
+                            <h3 className="font-medium text-slate-900 dark:text-slate-100">
+                              {report.label}
+                            </h3>
+                          </div>
+                          <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
+                            Generate a comprehensive {report.label.toLowerCase()} report for the
+                            selected time period.
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button className="px-3 py-1.5 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
+                              PDF
+                            </button>
+                            <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
+                              CSV
+                            </button>
+                            <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
+                              Excel
+                            </button>
+                          </div>
                         </div>
-                        <h3 className="font-medium text-slate-900 dark:text-slate-100">
-                          {report.label}
-                        </h3>
-                      </div>
-                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                        Generate a comprehensive {report.label.toLowerCase()} report for the
-                        selected time period.
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <button className="px-3 py-1.5 text-xs bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
-                          PDF
-                        </button>
-                        <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
-                          CSV
-                        </button>
-                        <button className="px-3 py-1.5 text-xs bg-slate-50/50 dark:bg-navy-950/30 hover:bg-white/20 text-slate-900 dark:text-white rounded-lg">
-                          Excel
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                      );
+                    })}
+                  </div>
 
-              <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-                <h3 className="font-medium text-slate-900 dark:text-slate-100 mb-4">
-                  Custom Report Builder
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-                  Create custom reports by selecting metrics, filters, and visualization options.
-                </p>
-                <button className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
-                  <Plus className="w-4 h-4" />
-                  Create Custom Report
-                </button>
-              </div>
+                  <div className="p-6 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+                    <ReadOnlyState
+                      title="Custom report builder unavailable"
+                      description="The export buttons can download the currently loaded analytics snapshot, but the custom report builder workflow is not wired to an audited backend yet."
+                    />
+                  </div>
+                </>
+              )}
             </div>
           )}
 
@@ -590,15 +496,23 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                   Scheduled Reports
                 </h3>
                 <button
-                  onClick={() => setShowCreateReport(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+                  disabled
+                  title="Scheduled report creation requires an audited backend workflow"
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-4 h-4" />
                   Schedule Report
                 </button>
               </div>
 
-              {scheduledReports.length === 0 ? (
+              {scheduledLoadError ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState
+                    title="Scheduled reports unavailable"
+                    description={scheduledLoadError}
+                  />
+                </div>
+              ) : scheduledReports.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">
                   <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No scheduled reports</p>

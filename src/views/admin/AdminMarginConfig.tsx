@@ -27,7 +27,8 @@ export const AdminMarginConfig = () => {
       if (Array.isArray(data)) {
         setMargins(data);
       } else {
-        setMargins([]); // Graceful fallback
+        setMargins([]);
+        setError('Margin configuration response was invalid.');
       }
     } catch (err: any) {
       console.error('Failed to load margins:', err);

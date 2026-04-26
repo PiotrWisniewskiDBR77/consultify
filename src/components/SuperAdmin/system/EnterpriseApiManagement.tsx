@@ -11,30 +11,22 @@
 
 import {
   Activity,
-  AlertTriangle,
   BarChart3,
   Check,
-  ChevronDown,
   ChevronRight,
-  Clock,
   Code,
   Copy,
   Edit,
   ExternalLink,
-  Eye,
-  EyeOff,
   FileText,
-  Filter,
   Globe,
   Key,
   Loader2,
   Lock,
   Plus,
-  RefreshCw,
   Search,
   Shield,
   Trash2,
-  Unlock,
   X,
   Zap,
 } from 'lucide-react';
@@ -42,6 +34,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { DegradedState } from '../../Admin/AdminState';
 
 interface ApiKey {
   id: string;
@@ -154,6 +147,8 @@ export const EnterpriseApiManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'keys' | 'usage' | 'docs'>('keys');
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [usageLoadError, setUsageLoadError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
   const [selectedKeyUsage, setSelectedKeyUsage] = useState<{
@@ -167,10 +162,13 @@ export const EnterpriseApiManagement: React.FC = () => {
   const fetchApiKeys = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const data = await Api.getApiKeys();
       setApiKeys(data);
     } catch (error) {
       console.error('Failed to fetch API keys:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load API keys');
+      setApiKeys([]);
       toast.error('Failed to load API keys');
     } finally {
       setLoading(false);
@@ -214,10 +212,13 @@ export const EnterpriseApiManagement: React.FC = () => {
 
   const handleViewUsage = async (key: ApiKey) => {
     try {
+      setUsageLoadError(null);
       const usage = await Api.getApiKeyUsage(key.id);
       setSelectedKeyUsage({ key, usage: usage as any });
     } catch (error) {
       console.error('Failed to fetch usage:', error);
+      setUsageLoadError(error instanceof Error ? error.message : 'Failed to load usage data');
+      setSelectedKeyUsage(null);
       toast.error('Failed to load usage data');
     }
   };
@@ -246,7 +247,8 @@ export const EnterpriseApiManagement: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+          disabled={!!loadError}
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           Create API Key
@@ -327,6 +329,7 @@ export const EnterpriseApiManagement: React.FC = () => {
               placeholder="Search API keys..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={!!loadError}
               className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>
@@ -335,6 +338,10 @@ export const EnterpriseApiManagement: React.FC = () => {
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
+            </div>
+          ) : loadError ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+              <DegradedState title="API keys unavailable" description={loadError} />
             </div>
           ) : filteredKeys.length === 0 ? (
             <div className="text-center py-12 text-slate-400 dark:text-slate-500">
@@ -457,7 +464,18 @@ export const EnterpriseApiManagement: React.FC = () => {
       {/* Usage Analytics Tab */}
       {activeTab === 'usage' && (
         <div className="space-y-6">
-          {selectedKeyUsage ? (
+          {loadError ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+              <DegradedState
+                title="API key usage unavailable"
+                description="API key usage cannot be inspected because the API key list did not load."
+              />
+            </div>
+          ) : usageLoadError ? (
+            <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+              <DegradedState title="API key usage unavailable" description={usageLoadError} />
+            </div>
+          ) : selectedKeyUsage ? (
             <>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

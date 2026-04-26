@@ -1,6 +1,8 @@
 import { AlertTriangle, EyeOff, Lock, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { ADMIN_UI_COPY } from '../../utils/adminUiCopy';
+
 export type AdminStateKind = 'unavailable' | 'readOnly' | 'degraded' | 'hidden';
 
 export interface AdminStateProps {
@@ -18,29 +20,29 @@ const config: Record<
 > = {
   unavailable: {
     icon: Wrench,
-    title: 'Feature unavailable',
-    description: 'This area is not wired to a reliable backend yet.',
+    title: ADMIN_UI_COPY.unavailable.title,
+    description: ADMIN_UI_COPY.unavailable.description,
     classes:
       'border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-100',
   },
   readOnly: {
     icon: Lock,
-    title: 'Read-only',
-    description: 'You can review this data, but changes are disabled for now.',
+    title: ADMIN_UI_COPY.readOnly.title,
+    description: ADMIN_UI_COPY.readOnly.description,
     classes:
       'border-slate-200 bg-slate-50 text-slate-700 dark:border-navy-700 dark:bg-navy-900 dark:text-slate-200',
   },
   degraded: {
     icon: AlertTriangle,
-    title: 'Limited data',
-    description: 'Some metrics may be incomplete because one or more sources are unavailable.',
+    title: ADMIN_UI_COPY.degraded.title,
+    description: ADMIN_UI_COPY.degraded.description,
     classes:
       'border-orange-200 bg-orange-50 text-orange-900 dark:border-orange-500/30 dark:bg-orange-500/10 dark:text-orange-100',
   },
   hidden: {
     icon: EyeOff,
-    title: 'Hidden until ready',
-    description: 'This action is intentionally hidden until the implementation is complete.',
+    title: ADMIN_UI_COPY.hidden.title,
+    description: ADMIN_UI_COPY.hidden.description,
     classes:
       'border-slate-200 bg-white text-slate-600 dark:border-navy-700 dark:bg-navy-950 dark:text-slate-300',
   },

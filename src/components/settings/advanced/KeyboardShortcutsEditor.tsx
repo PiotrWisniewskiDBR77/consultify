@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { DegradedState } from '../../Admin/AdminState';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface KeyboardShortcutsEditorProps {
@@ -37,6 +38,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [recordingKeys, setRecordingKeys] = useState<string[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const categories = ['navigation', 'editing', 'views', 'actions', 'ai', 'system'];
 
@@ -47,101 +49,17 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
   const loadData = async () => {
     try {
       setLoading(true);
-      // Sample shortcuts data
-      setShortcuts([
-        {
-          id: '1',
-          action: 'go_home',
-          category: 'navigation',
-          description: 'Go to Dashboard',
-          keys: ['Cmd', 'H'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '2',
-          action: 'go_inbox',
-          category: 'navigation',
-          description: 'Go to Inbox',
-          keys: ['G', 'I'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '3',
-          action: 'go_projects',
-          category: 'navigation',
-          description: 'Go to Projects',
-          keys: ['G', 'P'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '4',
-          action: 'new_task',
-          category: 'actions',
-          description: 'Create New Task',
-          keys: ['N', 'T'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '5',
-          action: 'new_project',
-          category: 'actions',
-          description: 'Create New Project',
-          keys: ['N', 'P'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '6',
-          action: 'search',
-          category: 'system',
-          description: 'Open Search',
-          keys: ['Cmd', 'K'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '7',
-          action: 'command_palette',
-          category: 'system',
-          description: 'Command Palette',
-          keys: ['Cmd', 'Shift', 'P'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '8',
-          action: 'ai_assist',
-          category: 'ai',
-          description: 'Open AI Assistant',
-          keys: ['Cmd', 'J'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '9',
-          action: 'save',
-          category: 'editing',
-          description: 'Save Current',
-          keys: ['Cmd', 'S'],
-          isCustom: false,
-          isConflicting: false,
-        },
-        {
-          id: '10',
-          action: 'toggle_sidebar',
-          category: 'views',
-          description: 'Toggle Sidebar',
-          keys: ['Cmd', 'B'],
-          isCustom: false,
-          isConflicting: false,
-        },
-      ]);
+      setLoadError(null);
+      const data = await Api.get('/api/user/keyboard-shortcuts');
+      const loadedShortcuts = data?.shortcuts;
+      if (!Array.isArray(loadedShortcuts)) {
+        throw new Error('Keyboard shortcut response was invalid');
+      }
+      setShortcuts(loadedShortcuts);
     } catch (error) {
       console.error('Error loading shortcuts:', error);
+      setShortcuts([]);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load keyboard shortcuts');
     } finally {
       setLoading(false);
     }
@@ -203,8 +121,12 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
   };
 
   const resetShortcut = (id: string) => {
-    // Reset to default would require default data
-    toast.success(t('settings.shortcuts.editor.resetToDefault', 'Reset to default'));
+    toast.error(
+      t(
+        'settings.shortcuts.editor.resetUnavailable',
+        'Shortcut reset is unavailable until default bindings are loaded from the server'
+      )
+    );
   };
 
   const resetAllShortcuts = () => {
@@ -214,7 +136,6 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
       )
     ) {
       loadData();
-      toast.success(t('settings.shortcuts.editor.allReset', 'All shortcuts reset'));
     }
   };
 
@@ -272,6 +193,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         <div className="flex items-center gap-2">
           <button
             onClick={resetAllShortcuts}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-3 py-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-800 rounded-lg"
           >
             <RotateCcw size={16} />
@@ -279,7 +201,7 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
           </button>
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !!loadError}
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg disabled:opacity-50"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -288,150 +210,158 @@ export const KeyboardShortcutsEditor: React.FC<KeyboardShortcutsEditorProps> = (
         </div>
       </div>
 
+      {loadError && (
+        <DegradedState title="Keyboard shortcuts unavailable" description={loadError} />
+      )}
+
       {/* Search & Filter */}
-      <div className="flex gap-4">
-        <div className="flex-1 relative">
-          <Search
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Filter size={16} className="text-slate-400 dark:text-slate-500" />
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
-          >
-            <option value="all">
-              {t('settings.shortcuts.editor.allCategories', 'All Categories')}
-            </option>
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {getCategoryLabel(cat)}
+      {!loadError && (
+        <div className="flex gap-4">
+          <div className="flex-1 relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={t('settings.shortcuts.search', 'Search shortcuts...')}
+              className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg focus:ring-2 focus:ring-purple-500"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Filter size={16} className="text-slate-400 dark:text-slate-500" />
+            <select
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="px-3 py-2 bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg"
+            >
+              <option value="all">
+                {t('settings.shortcuts.editor.allCategories', 'All Categories')}
               </option>
-            ))}
-          </select>
+              {categories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {getCategoryLabel(cat)}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Shortcuts List */}
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
-        <div className="grid grid-cols-[2fr,1fr,auto] gap-4 p-3 bg-slate-50 dark:bg-navy-950 border-b border-slate-200 dark:border-navy-700 text-sm font-medium text-slate-500 dark:text-slate-400">
-          <span>{t('settings.shortcuts.editor.actionHeader', 'Action')}</span>
-          <span>{t('settings.shortcuts.editor.shortcutHeader', 'Shortcut')}</span>
-          <span className="w-24 text-center">
-            {t('settings.shortcuts.editor.actionsHeader', 'Actions')}
-          </span>
-        </div>
+      {!loadError && (
+        <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl overflow-hidden">
+          <div className="grid grid-cols-[2fr,1fr,auto] gap-4 p-3 bg-slate-50 dark:bg-navy-950 border-b border-slate-200 dark:border-navy-700 text-sm font-medium text-slate-500 dark:text-slate-400">
+            <span>{t('settings.shortcuts.editor.actionHeader', 'Action')}</span>
+            <span>{t('settings.shortcuts.editor.shortcutHeader', 'Shortcut')}</span>
+            <span className="w-24 text-center">
+              {t('settings.shortcuts.editor.actionsHeader', 'Actions')}
+            </span>
+          </div>
 
-        <div className="divide-y divide-slate-200 dark:divide-white/10">
-          {filteredShortcuts.map((shortcut) => (
-            <div
-              key={shortcut.id}
-              className={`grid grid-cols-[2fr,1fr,auto] gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-navy-950 ${shortcut.isConflicting ? 'bg-red-50 dark:bg-red-500/10' : ''}`}
-            >
-              <div>
-                <p className="font-medium text-slate-900 dark:text-white">
-                  {getShortcutDescription(shortcut)}
-                </p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
-                    {getCategoryLabel(shortcut.category)}
-                  </span>
-                  {shortcut.isCustom && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
-                      {t('settings.shortcuts.editor.custom', 'Custom')}
+          <div className="divide-y divide-slate-200 dark:divide-white/10">
+            {filteredShortcuts.map((shortcut) => (
+              <div
+                key={shortcut.id}
+                className={`grid grid-cols-[2fr,1fr,auto] gap-4 p-4 items-center hover:bg-slate-50 dark:hover:bg-navy-950 ${shortcut.isConflicting ? 'bg-red-50 dark:bg-red-500/10' : ''}`}
+              >
+                <div>
+                  <p className="font-medium text-slate-900 dark:text-white">
+                    {getShortcutDescription(shortcut)}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400">
+                      {getCategoryLabel(shortcut.category)}
                     </span>
+                    {shortcut.isCustom && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400">
+                        {t('settings.shortcuts.editor.custom', 'Custom')}
+                      </span>
+                    )}
+                    {shortcut.isConflicting && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+                        {t('settings.shortcuts.editor.conflict', 'Conflict')}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  {editingId === shortcut.id ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        {recordingKeys.length > 0 ? (
+                          recordingKeys.map((key, i) => (
+                            <kbd
+                              key={i}
+                              className="px-2 py-1 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded text-sm font-mono border border-purple-200 dark:border-purple-500/30"
+                            >
+                              {key}
+                            </kbd>
+                          ))
+                        ) : (
+                          <span className="text-slate-400 dark:text-slate-500 text-sm animate-pulse">
+                            {t('settings.shortcuts.pressKeysPlaceholder', 'Press keys...')}
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => saveShortcut(shortcut.id)}
+                        className="p-1 text-green-600 hover:bg-green-100 rounded"
+                      >
+                        <Save size={14} />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingId(null);
+                          setRecordingKeys([]);
+                        }}
+                        className="p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1">
+                      {shortcut.keys.map((key, i) => (
+                        <kbd
+                          key={i}
+                          className="px-2 py-1 bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded text-sm font-mono"
+                        >
+                          {key}
+                        </kbd>
+                      ))}
+                    </div>
                   )}
-                  {shortcut.isConflicting && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
-                      {t('settings.shortcuts.editor.conflict', 'Conflict')}
-                    </span>
+                </div>
+
+                <div className="flex items-center gap-1 w-24 justify-center">
+                  {editingId !== shortcut.id && (
+                    <>
+                      <button
+                        onClick={() => setEditingId(shortcut.id)}
+                        className="p-2 text-slate-400 dark:text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg text-sm"
+                      >
+                        {t('common.edit', 'Edit')}
+                      </button>
+                      {shortcut.isCustom && (
+                        <button
+                          onClick={() => resetShortcut(shortcut.id)}
+                          className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-800 rounded-lg"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
-
-              <div>
-                {editingId === shortcut.id ? (
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1">
-                      {recordingKeys.length > 0 ? (
-                        recordingKeys.map((key, i) => (
-                          <kbd
-                            key={i}
-                            className="px-2 py-1 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded text-sm font-mono border border-purple-200 dark:border-purple-500/30"
-                          >
-                            {key}
-                          </kbd>
-                        ))
-                      ) : (
-                        <span className="text-slate-400 dark:text-slate-500 text-sm animate-pulse">
-                          {t('settings.shortcuts.pressKeysPlaceholder', 'Press keys...')}
-                        </span>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => saveShortcut(shortcut.id)}
-                      className="p-1 text-green-600 hover:bg-green-100 rounded"
-                    >
-                      <Save size={14} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingId(null);
-                        setRecordingKeys([]);
-                      }}
-                      className="p-1 text-slate-400 dark:text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800/30 rounded"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex gap-1">
-                    {shortcut.keys.map((key, i) => (
-                      <kbd
-                        key={i}
-                        className="px-2 py-1 bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-400 rounded text-sm font-mono"
-                      >
-                        {key}
-                      </kbd>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1 w-24 justify-center">
-                {editingId !== shortcut.id && (
-                  <>
-                    <button
-                      onClick={() => setEditingId(shortcut.id)}
-                      className="p-2 text-slate-400 dark:text-slate-500 hover:text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-lg text-sm"
-                    >
-                      {t('common.edit', 'Edit')}
-                    </button>
-                    {shortcut.isCustom && (
-                      <button
-                        onClick={() => resetShortcut(shortcut.id)}
-                        className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-navy-800/30 dark:hover:bg-navy-800 rounded-lg"
-                      >
-                        <RotateCcw size={14} />
-                      </button>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Help */}
       <div className="bg-purple-50 dark:bg-purple-500/10 border border-purple-200 dark:border-purple-500/20 rounded-xl p-4">

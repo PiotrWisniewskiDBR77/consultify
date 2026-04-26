@@ -12,29 +12,15 @@
 import {
   Activity,
   AlertTriangle,
-  Calendar,
-  Check,
   CheckCircle,
-  ChevronDown,
-  ChevronRight,
   Clock,
-  Copy,
-  Database,
-  Edit,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  FileText,
   Globe,
   Link,
   Loader2,
   Lock,
-  MessageSquare,
-  Pause,
   Play,
   Plus,
   RefreshCw,
-  RotateCcw,
   Search,
   Settings,
   Trash2,
@@ -42,12 +28,12 @@ import {
   Webhook,
   X,
   XCircle,
-  Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { DegradedState } from '../../Admin/AdminState';
 
 interface Integration {
   id: string;
@@ -247,30 +233,40 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
   const [connectorCatalog, setConnectorCatalog] = useState<ConnectorType[]>(CONNECTOR_CATALOG);
   const [catalogNotice, setCatalogNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAddIntegration, setShowAddIntegration] = useState(false);
   const [showAddWebhook, setShowAddWebhook] = useState(false);
-  const [selectedIntegration, setSelectedIntegration] = useState<Integration | null>(null);
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook | null>(null);
   const [deliveries, setDeliveries] = useState<WebhookDelivery[]>([]);
+  const [loadErrors, setLoadErrors] = useState<Record<string, string | null>>({});
+  const [deliveryLoadError, setDeliveryLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
 
   const fetchIntegrations = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, integrations: null }));
       const data = await Api.getSystemIntegrations();
       setIntegrations(data.integrations || []);
     } catch (error) {
       console.error('Failed to fetch integrations:', error);
+      setLoadErrors((prev) => ({
+        ...prev,
+        integrations: error instanceof Error ? error.message : 'Failed to fetch integrations',
+      }));
       setIntegrations([]);
     }
   }, []);
 
   const fetchWebhooks = useCallback(async () => {
     try {
+      setLoadErrors((prev) => ({ ...prev, webhooks: null }));
       const data = await Api.getSystemWebhooks();
       setWebhooks(data.webhooks || []);
     } catch (error) {
       console.error('Failed to fetch webhooks:', error);
+      setLoadErrors((prev) => ({
+        ...prev,
+        webhooks: error instanceof Error ? error.message : 'Failed to fetch webhooks',
+      }));
       setWebhooks([]);
     }
   }, []);
@@ -343,10 +339,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
 
   const handleViewDeliveries = async (webhook: Webhook) => {
     setSelectedWebhook(webhook);
+    setDeliveryLoadError(null);
     try {
       const data = await Api.getSystemWebhookDeliveries(webhook.id);
       setDeliveries(data);
     } catch (error) {
+      setDeliveryLoadError(
+        error instanceof Error ? error.message : 'Failed to fetch webhook deliveries'
+      );
       setDeliveries([]);
     }
   };
@@ -377,32 +377,43 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Connected</div>
-          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            {integrations.filter((i) => i.status === 'connected').length}
+      {loadErrors.integrations || loadErrors.webhooks ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+          <DegradedState
+            title="Integration overview unavailable"
+            description={
+              loadErrors.integrations || loadErrors.webhooks || 'Failed to fetch integrations'
+            }
+          />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Connected</div>
+            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              {integrations.filter((i) => i.status === 'connected').length}
+            </div>
+          </div>
+          <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Active Webhooks</div>
+            <div className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
+              {webhooks.filter((w) => w.is_active).length}
+            </div>
+          </div>
+          <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Errors</div>
+            <div className="text-2xl font-semibold text-red-700 dark:text-red-400">
+              {integrations.filter((i) => i.status === 'error').length}
+            </div>
+          </div>
+          <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Available</div>
+            <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              {connectorCatalog.filter((c) => c.status === 'available').length}
+            </div>
           </div>
         </div>
-        <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Active Webhooks</div>
-          <div className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400">
-            {webhooks.filter((w) => w.is_active).length}
-          </div>
-        </div>
-        <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/30">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Errors</div>
-          <div className="text-2xl font-semibold text-red-700 dark:text-red-400">
-            {integrations.filter((i) => i.status === 'error').length}
-          </div>
-        </div>
-        <div className="p-4 bg-slate-50/30 dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-600 dark:text-slate-400">Available</div>
-          <div className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-            {connectorCatalog.filter((c) => c.status === 'available').length}
-          </div>
-        </div>
-      </div>
+      )}
 
       {catalogNotice && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
@@ -413,8 +424,18 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
         {[
-          { id: 'integrations', label: 'Connected', icon: Link, count: integrations.length },
-          { id: 'webhooks', label: 'Webhooks', icon: Webhook, count: webhooks.length },
+          {
+            id: 'integrations',
+            label: 'Connected',
+            icon: Link,
+            count: loadErrors.integrations ? '!' : integrations.length,
+          },
+          {
+            id: 'webhooks',
+            label: 'Webhooks',
+            icon: Webhook,
+            count: loadErrors.webhooks ? '!' : webhooks.length,
+          },
           { id: 'catalog', label: 'Catalog', icon: Globe, count: connectorCatalog.length },
         ].map(({ id, label, icon: Icon, count }) => (
           <button
@@ -457,7 +478,14 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                 </button>
               </div>
 
-              {integrations.length === 0 ? (
+              {loadErrors.integrations ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState
+                    title="Connected integrations unavailable"
+                    description={loadErrors.integrations}
+                  />
+                </div>
+              ) : integrations.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">
                   <Link className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No integrations connected</p>
@@ -522,9 +550,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                               <RefreshCw className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                             </button>
                             <button
-                              onClick={() => setSelectedIntegration(integration)}
+                              disabled
                               className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                              title="Settings"
+                              title="Integration settings editing requires an audited configuration workflow"
                             >
                               <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                             </button>
@@ -552,6 +580,7 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                 <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">Webhooks</h3>
                 <button
                   onClick={() => setShowAddWebhook(true)}
+                  disabled={!!loadErrors.webhooks}
                   className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
                 >
                   <Plus className="w-4 h-4" />
@@ -559,7 +588,11 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
                 </button>
               </div>
 
-              {webhooks.length === 0 ? (
+              {loadErrors.webhooks ? (
+                <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+                  <DegradedState title="Webhooks unavailable" description={loadErrors.webhooks} />
+                </div>
+              ) : webhooks.length === 0 ? (
                 <div className="text-center py-12 text-slate-400 dark:text-slate-500">
                   <Webhook className="w-12 h-12 mx-auto mb-4 opacity-50" />
                   <p>No webhooks configured</p>
@@ -769,7 +802,9 @@ export const EnterpriseIntegrationsHub: React.FC = () => {
           onClose={() => {
             setSelectedWebhook(null);
             setDeliveries([]);
+            setDeliveryLoadError(null);
           }}
+          loadError={deliveryLoadError}
         />
       )}
     </div>
@@ -914,8 +949,9 @@ const WebhookModal: React.FC<{
 const DeliveriesModal: React.FC<{
   webhook: Webhook;
   deliveries: WebhookDelivery[];
+  loadError?: string | null;
   onClose: () => void;
-}> = ({ webhook, deliveries, onClose }) => (
+}> = ({ webhook, deliveries, loadError, onClose }) => (
   <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
     <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto">
       <div className="flex items-center justify-between mb-6">
@@ -931,7 +967,9 @@ const DeliveriesModal: React.FC<{
         </button>
       </div>
 
-      {deliveries.length === 0 ? (
+      {loadError ? (
+        <DegradedState title="Webhook deliveries unavailable" description={loadError} />
+      ) : deliveries.length === 0 ? (
         <div className="text-center py-8 text-slate-400 dark:text-slate-500">
           <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
           <p>No deliveries yet</p>

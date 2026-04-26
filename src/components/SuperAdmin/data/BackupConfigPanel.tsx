@@ -9,13 +9,10 @@
  */
 
 import {
-  AlertTriangle,
   Building2,
-  Calendar,
   CheckCircle2,
   Clock,
   Database,
-  HardDrive,
   History,
   Loader2,
   Play,
@@ -28,6 +25,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { ReadOnlyState } from '../../Admin/AdminState';
 
 interface BackupConfig {
   id?: string;
@@ -56,15 +54,18 @@ interface Organization {
   name: string;
 }
 
+const backupConfigWorkflowUnavailableReason =
+  'Backup configuration is disabled here until this legacy data-export backup panel is reconciled with the audited SuperAdmin backup schedule workflow.';
+
 export const BackupConfigPanel: React.FC = () => {
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
   const [config, setConfig] = useState<BackupConfig | null>(null);
   const [history, setHistory] = useState<BackupHistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [triggering, setTriggering] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
+  const saving = false;
+  const triggering = false;
+  const [, setHasChanges] = useState(false);
 
   const fetchOrganizations = useCallback(async () => {
     try {
@@ -83,12 +84,8 @@ export const BackupConfigPanel: React.FC = () => {
 
     setLoading(true);
     try {
-      const [configResult, historyResult] = await Promise.all([
-        Api.get(`/data-export/backup-config?organizationId=${selectedOrgId}`),
-        Api.get(`/data-export/backup-history?organizationId=${selectedOrgId}`),
-      ]);
-      setConfig(configResult.config);
-      setHistory(historyResult.history || []);
+      setConfig(null);
+      setHistory([]);
       setHasChanges(false);
     } catch (error) {
       console.error('Failed to fetch backup config:', error);
@@ -108,37 +105,11 @@ export const BackupConfigPanel: React.FC = () => {
   }, [selectedOrgId, fetchConfig]);
 
   const handleSave = async () => {
-    if (!config) return;
-
-    setSaving(true);
-    try {
-      await Api.put(`/data-export/backup-config?organizationId=${selectedOrgId}`, {
-        enabled: config.enabled,
-        frequency: config.frequency,
-        retentionDays: config.retention_days,
-        includeAttachments: config.include_attachments,
-        includeAuditLogs: config.include_audit_logs,
-      });
-      toast.success('Backup configuration saved');
-      setHasChanges(false);
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to save configuration');
-    } finally {
-      setSaving(false);
-    }
+    toast.error(backupConfigWorkflowUnavailableReason);
   };
 
   const handleTriggerBackup = async () => {
-    setTriggering(true);
-    try {
-      await Api.post('/data-export/backup-config/trigger', { organizationId: selectedOrgId });
-      toast.success('Backup triggered');
-      fetchConfig();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to trigger backup');
-    } finally {
-      setTriggering(false);
-    }
+    toast.error(backupConfigWorkflowUnavailableReason);
   };
 
   const updateConfig = (field: keyof BackupConfig, value: any) => {
@@ -162,7 +133,6 @@ export const BackupConfigPanel: React.FC = () => {
   const getNextBackupTime = () => {
     if (!config?.enabled) return 'Disabled';
 
-    const now = new Date();
     const nextBackup = new Date();
 
     switch (config.frequency) {
@@ -217,16 +187,18 @@ export const BackupConfigPanel: React.FC = () => {
           </button>
           <button
             onClick={handleTriggerBackup}
-            disabled={triggering || !config?.enabled}
-            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+            disabled
+            title={backupConfigWorkflowUnavailableReason}
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
           >
             {triggering ? <Loader2 size={18} className="animate-spin" /> : <Play size={18} />}
             Run Backup Now
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || !hasChanges}
-            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
+            disabled
+            title={backupConfigWorkflowUnavailableReason}
+            className="flex items-center gap-2 px-4 py-2.5 bg-violet-600 hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50 rounded-lg text-white font-medium transition-colors"
           >
             {saving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
             Save Changes
@@ -242,6 +214,13 @@ export const BackupConfigPanel: React.FC = () => {
       ) : loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 size={32} className="animate-spin text-violet-500" />
+        </div>
+      ) : !config ? (
+        <div className="py-6">
+          <ReadOnlyState
+            title="Backup configuration workflow unavailable"
+            description={backupConfigWorkflowUnavailableReason}
+          />
         </div>
       ) : (
         config && (

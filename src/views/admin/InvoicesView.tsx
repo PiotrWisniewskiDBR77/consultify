@@ -11,14 +11,11 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
-  Calendar,
   Check,
   Clock,
   Download,
-  ExternalLink,
   Eye,
   FileText,
-  Filter,
   RefreshCw,
   Search,
   X,
@@ -27,6 +24,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
 
@@ -60,6 +58,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
 
   const [loading, setLoading] = useState(true);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('all');
@@ -68,32 +67,33 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
 
   const loadInvoices = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await fetch(`/api/billing/invoices`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        // Transform backend format to frontend format
-        const invoices = (data.invoices || []).map((inv: any) => ({
-          id: inv.id,
-          number: inv.invoice_number || inv.number || `INV-${inv.id.slice(0, 8)}`,
-          date: inv.invoice_date || inv.created_at || inv.date,
-          dueDate: inv.due_date || inv.dueDate,
-          amount: inv.total || inv.amount || 0,
-          currency: inv.currency || 'USD',
-          status: inv.status || 'pending',
-          description: inv.description || `Invoice #${inv.invoice_number || inv.id.slice(0, 8)}`,
-          pdfUrl: inv.pdf_url || inv.pdfUrl,
-          items: inv.items || [],
-        }));
-        setInvoices(invoices);
-      } else {
-        setInvoices([]);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      const data = await res.json();
+      // Transform backend format to frontend format
+      const invoices = (data.invoices || []).map((inv: any) => ({
+        id: inv.id,
+        number: inv.invoice_number || inv.number || `INV-${inv.id.slice(0, 8)}`,
+        date: inv.invoice_date || inv.created_at || inv.date,
+        dueDate: inv.due_date || inv.dueDate,
+        amount: inv.total || inv.amount || 0,
+        currency: inv.currency || 'USD',
+        status: inv.status || 'pending',
+        description: inv.description || `Invoice #${inv.invoice_number || inv.id.slice(0, 8)}`,
+        pdfUrl: inv.pdf_url || inv.pdfUrl,
+        items: inv.items || [],
+      }));
+      setInvoices(invoices);
     } catch (error) {
       console.error('Failed to load invoices:', error);
       setInvoices([]);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load invoices');
     }
     setLoading(false);
   }, []);
@@ -110,16 +110,17 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
 
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${invoice.number}.pdf`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        toast.success('Invoice downloaded');
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${invoice.number}.pdf`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success('Invoice downloaded');
     } catch (error) {
       console.error('Failed to download invoice:', error);
       toast.error('Failed to download invoice');
@@ -217,13 +218,17 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             {t('admin.billing.invoicesDesc', 'View and download your billing history')}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-sm text-slate-500 dark:text-slate-400">Total Paid (All Time)</p>
-          <p className="text-2xl font-bold text-slate-900 dark:text-white">
-            {formatCurrency(totalPaid, 'USD')}
-          </p>
-        </div>
+        {!loadError && (
+          <div className="text-right">
+            <p className="text-sm text-slate-500 dark:text-slate-400">Total Paid (All Time)</p>
+            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+              {formatCurrency(totalPaid, 'USD')}
+            </p>
+          </div>
+        )}
       </div>
+
+      {loadError && <DegradedState title="Invoices unavailable" description={loadError} />}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
@@ -237,12 +242,14 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search invoices..."
+            disabled={!!loadError}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
+          disabled={!!loadError}
           className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
         >
           <option value="all">All Status</option>
@@ -253,6 +260,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
+          disabled={!!loadError}
           className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
         >
           <option value="all">All Time</option>
@@ -262,7 +270,11 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({ className = '' }) =>
       </div>
 
       {/* Invoices List */}
-      {filteredInvoices.length === 0 ? (
+      {loadError ? (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <DegradedState title="Billing history unavailable" description={loadError} />
+        </div>
+      ) : filteredInvoices.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <FileText className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Invoices</h3>

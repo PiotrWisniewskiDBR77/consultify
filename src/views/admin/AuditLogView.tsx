@@ -9,8 +9,6 @@
  */
 
 import {
-  AlertTriangle,
-  Calendar,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -18,23 +16,20 @@ import {
   Edit,
   Eye,
   FileText,
-  Filter,
   History,
-  Key,
   LogIn,
   LogOut,
   Plus,
   RefreshCw,
   Search,
-  Settings,
   Shield,
   Trash2,
-  User,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -71,10 +66,12 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
   const [dateRange, setDateRange] = useState('7d');
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const params = new URLSearchParams();
       if (actionFilter !== 'all') params.append('action', actionFilter);
       if (resourceFilter !== 'all') params.append('resource', resourceFilter);
@@ -88,6 +85,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       toast.error('Failed to load audit logs');
       // Set empty state instead of mock data
       setLogs([]);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load audit logs');
     }
     setLoading(false);
   }, [currentOrganization, actionFilter, resourceFilter, dateRange]);
@@ -112,18 +110,19 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
         }
       );
 
-      if (res.ok) {
-        const blob = await res.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `audit-log-${new Date().toISOString().split('T')[0]}.csv`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        toast.success('Audit log exported');
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
-    } catch (error) {
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-log-${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
       toast.success('Audit log exported');
+    } catch (error) {
+      toast.error('Audit log export failed');
     }
     setExporting(false);
   };
@@ -231,13 +230,15 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
         </div>
         <button
           onClick={handleExport}
-          disabled={exporting}
+          disabled={exporting || !!loadError}
           className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium disabled:opacity-50"
         >
           {exporting ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />}
           Export CSV
         </button>
       </div>
+
+      {loadError && <DegradedState title="Audit logs unavailable" description={loadError} />}
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4">
@@ -251,12 +252,14 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search logs..."
+            disabled={!!loadError}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg"
           />
         </div>
         <select
           value={actionFilter}
           onChange={(e) => setActionFilter(e.target.value)}
+          disabled={!!loadError}
           className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg"
         >
           <option value="all">All Actions</option>
@@ -270,6 +273,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
         <select
           value={resourceFilter}
           onChange={(e) => setResourceFilter(e.target.value)}
+          disabled={!!loadError}
           className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg"
         >
           <option value="all">All Resources</option>
@@ -283,6 +287,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
         <select
           value={dateRange}
           onChange={(e) => setDateRange(e.target.value)}
+          disabled={!!loadError}
           className="px-3 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg"
         >
           <option value="1d">Last 24 hours</option>
@@ -293,7 +298,11 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       </div>
 
       {/* Logs List */}
-      {filteredLogs.length === 0 ? (
+      {loadError ? (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <DegradedState title="Audit activity unavailable" description={loadError} />
+        </div>
+      ) : filteredLogs.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <History className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Activity Found</h3>

@@ -47,6 +47,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../../lib/utils';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { DegradedState } from '../../Admin/AdminState';
 import { MFASetup } from '../../Profile/MFASetup';
 import { SettingsDivider, SettingsSection } from '../shared';
 
@@ -98,9 +99,11 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
   // Sessions state
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [sessionsLoadError, setSessionsLoadError] = useState<string | null>(null);
 
   // Login history state
   const [loginHistory, setLoginHistory] = useState<LoginEvent[]>([]);
+  const [loginHistoryLoadError, setLoginHistoryLoadError] = useState<string | null>(null);
 
   // Recovery state
   const [recoveryEmail, setRecoveryEmail] = useState('');
@@ -109,6 +112,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
   const [editingRecovery, setEditingRecovery] = useState<'email' | 'phone' | null>(null);
   const [editValue, setEditValue] = useState('');
   const [savingRecovery, setSavingRecovery] = useState(false);
+  const [recoveryLoadError, setRecoveryLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadAllData();
@@ -117,19 +121,35 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
   const loadAllData = async () => {
     setLoading(true);
     try {
-      const [sessionsRes, historyRes, recoveryRes] = await Promise.all([
-        Api.getActiveSessions().catch(() => ({ sessions: [] })),
-        Api.getLoginHistory().catch(() => []),
-        Api.get('/settings/recovery').catch(() => null),
+      setSessionsLoadError(null);
+      setLoginHistoryLoadError(null);
+      setRecoveryLoadError(null);
+      const [sessionsRes, historyRes, recoveryRes] = await Promise.allSettled([
+        Api.getActiveSessions(),
+        Api.getLoginHistory(),
+        Api.get('/settings/recovery'),
       ]);
 
-      setSessions((sessionsRes as any)?.sessions || []);
-      setLoginHistory(Array.isArray(historyRes) ? historyRes.slice(0, 10) : []);
+      if (sessionsRes.status === 'fulfilled') {
+        setSessions((sessionsRes.value as any)?.sessions || []);
+      } else {
+        setSessions([]);
+        setSessionsLoadError('Failed to load active sessions');
+      }
 
-      if (recoveryRes) {
-        setRecoveryEmail(recoveryRes.recoveryEmail || '');
-        setRecoveryPhone(recoveryRes.recoveryPhone || '');
-        setBackupCodesCount(recoveryRes.backupCodesCount || 0);
+      if (historyRes.status === 'fulfilled') {
+        setLoginHistory(Array.isArray(historyRes.value) ? historyRes.value.slice(0, 10) : []);
+      } else {
+        setLoginHistory([]);
+        setLoginHistoryLoadError('Failed to load login history');
+      }
+
+      if (recoveryRes.status === 'fulfilled' && recoveryRes.value) {
+        setRecoveryEmail(recoveryRes.value.recoveryEmail || '');
+        setRecoveryPhone(recoveryRes.value.recoveryPhone || '');
+        setBackupCodesCount(recoveryRes.value.backupCodesCount || 0);
+      } else if (recoveryRes.status === 'rejected') {
+        setRecoveryLoadError('Failed to load recovery options');
       }
     } catch (error) {
       console.error('Failed to load auth data:', error);
@@ -213,7 +233,10 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     try {
       const response = await Api.getActiveSessions();
       setSessions((response as any)?.sessions || []);
+      setSessionsLoadError(null);
     } catch (_error) {
+      setSessions([]);
+      setSessionsLoadError('Failed to load active sessions');
       toast.error(t('settings.security.sessionsError', 'Failed to load sessions'));
     } finally {
       setLoadingSessions(false);
@@ -230,15 +253,13 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
         editingRecovery === 'email' ? { recoveryEmail: editValue } : { recoveryPhone: editValue };
 
       await Api.put('/settings/recovery', updates);
-      const persisted = await Api.get('/settings/recovery').catch(() => null);
-      if (persisted) {
-        setRecoveryEmail(persisted.recoveryEmail || '');
-        setRecoveryPhone(persisted.recoveryPhone || '');
-        setBackupCodesCount(persisted.backupCodesCount || 0);
-      } else {
-        if (editingRecovery === 'email') setRecoveryEmail(editValue);
-        else setRecoveryPhone(editValue);
+      const persisted = await Api.get('/settings/recovery');
+      if (!persisted) {
+        throw new Error('Recovery options were saved but could not be reloaded');
       }
+      setRecoveryEmail(persisted.recoveryEmail || '');
+      setRecoveryPhone(persisted.recoveryPhone || '');
+      setBackupCodesCount(persisted.backupCodesCount || 0);
       toast.success(t('settings.recovery.saved', 'Recovery option updated'));
       setEditingRecovery(null);
       setEditValue('');
@@ -568,7 +589,11 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
               );
             })}
 
-            {sessions.length === 0 && (
+            {sessionsLoadError && (
+              <DegradedState title="Active sessions unavailable" description={sessionsLoadError} />
+            )}
+
+            {!sessionsLoadError && sessions.length === 0 && (
               <div className="flex flex-col items-center justify-center py-6 text-center">
                 <Monitor size={20} className="text-slate-600 mb-2" />
                 <p className="text-xs text-slate-500">
@@ -588,7 +613,9 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             {t('settings.authAccess.loginHistorySection', 'Login History')}
           </h4>
 
-          {loginHistory.length > 0 ? (
+          {loginHistoryLoadError ? (
+            <DegradedState title="Login history unavailable" description={loginHistoryLoadError} />
+          ) : loginHistory.length > 0 ? (
             <div className="space-y-1.5">
               {loginHistory.map((event) => (
                 <div
@@ -630,6 +657,9 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
           </h4>
 
           <div className="space-y-3">
+            {recoveryLoadError && (
+              <DegradedState title="Recovery options unavailable" description={recoveryLoadError} />
+            )}
             {/* Recovery Email */}
             <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
               <div className="flex items-center justify-between">

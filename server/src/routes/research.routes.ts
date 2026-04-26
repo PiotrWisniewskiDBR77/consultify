@@ -121,7 +121,7 @@ router.get(
 router.post(
   '/sessions/:sessionId/approve',
   asyncHandler(async (req: Request, res: Response) => {
-    const session = await transitionResearchSession({
+    const approved = await transitionResearchSession({
       sessionId: String(req.params.sessionId),
       organizationId: getOrgId(req),
       actorUserId: getUserId(req),
@@ -129,7 +129,12 @@ router.post(
       eventType: 'approved',
       details: { explicitApproval: true },
     });
-    return res.json({ success: true, session });
+    const session = await beginResearchSessionInBackground({
+      sessionId: approved.sessionId,
+      organizationId: getOrgId(req),
+      actorUserId: getUserId(req),
+    });
+    return res.status(202).json({ success: true, session, background: true });
   })
 );
 

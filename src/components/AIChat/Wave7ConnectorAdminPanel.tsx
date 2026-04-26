@@ -26,6 +26,7 @@ type Wave7Connector = {
 export const Wave7ConnectorAdminPanel: React.FC = () => {
   const [catalog, setCatalog] = React.useState<any[]>([]);
   const [connectors, setConnectors] = React.useState<Wave7Connector[]>([]);
+  const [health, setHealth] = React.useState<any | null>(null);
   const [runs, setRuns] = React.useState<any[]>([]);
   const [provider, setProvider] = React.useState('google_drive');
   const [status, setStatus] = React.useState<'connected' | 'disconnected' | 'stale' | 'failed'>(
@@ -46,9 +47,10 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
     setLoading(true);
     setMessage(null);
     try {
-      const [catalogRes, connectorsRes, runsRes] = await Promise.all([
+      const [catalogRes, connectorsRes, healthRes, runsRes] = await Promise.all([
         Api.getWave7ConnectorCatalog(),
         Api.listWave7Connectors(),
+        Api.getWave7ConnectorHealth(),
         Api.listWave7ConnectorRuns(),
       ]);
       setCatalog(Array.isArray(catalogRes?.catalog) ? catalogRes.catalog : []);
@@ -56,6 +58,7 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
         ? connectorsRes.connectors
         : [];
       setConnectors(nextConnectors);
+      setHealth(healthRes?.health || null);
       setRuns(Array.isArray(runsRes?.runs) ? runsRes.runs : []);
       if (!selectedConnectorId && nextConnectors.length > 0) {
         setSelectedConnectorId(nextConnectors[0].connectorId);
@@ -401,6 +404,27 @@ export const Wave7ConnectorAdminPanel: React.FC = () => {
         <section className="space-y-4">
           <div className="rounded-xl border bg-white p-4 shadow-sm dark:border-navy-700 dark:bg-navy-900">
             <h2 className="font-semibold">Connector Health</h2>
+            <div className="mt-3 grid gap-2 text-xs sm:grid-cols-4">
+              {[
+                ['Total', health?.total ?? connectors.length],
+                ['Connected', health?.connected ?? 0],
+                ['Stale', health?.stale ?? 0],
+                ['Failed', health?.failed ?? 0],
+              ].map(([label, value]) => (
+                <div
+                  key={label}
+                  className="rounded-md border bg-slate-50 p-2 dark:border-navy-700 dark:bg-navy-950"
+                >
+                  <div className="text-slate-500">{label}</div>
+                  <div className="mt-1 text-lg font-semibold">{value}</div>
+                </div>
+              ))}
+            </div>
+            {health && (
+              <div className="mt-2 text-xs text-slate-500">
+                Health API source: `/api/ai-connectors/health`; organization {health.organizationId}
+              </div>
+            )}
             <div className="mt-3 grid gap-3 md:grid-cols-2">
               {connectors.map((connector) => (
                 <div

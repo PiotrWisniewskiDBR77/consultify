@@ -505,6 +505,10 @@ describe('Wave 6 context and controlled learning runtime', () => {
     const streamHook = readFileSync('src/hooks/useAIStream.ts', 'utf8');
     const appRoutes = readFileSync('src/routes/AppRoutes.tsx', 'utf8');
     const aiRoutes = readFileSync('server/src/routes/ai.routes.ts', 'utf8');
+    const migration = readFileSync(
+      'server/migrations/20260425_wave6_context_learning.sql',
+      'utf8'
+    );
     const legacyMemoryController = readFileSync(
       'server/src/controllers/ai/AIMemoryController.ts',
       'utf8'
@@ -526,6 +530,10 @@ describe('Wave 6 context and controlled learning runtime', () => {
     expect(aiRoutes).toContain('memory_candidate');
     expect(aiRoutes).toContain('buildWave6UserWorkProfilePrompt');
     expect(aiRoutes).toContain("assistantScope === 'teresa_tenant'");
+    expect(migration).toContain('wave6_context_snapshots');
+    expect(migration).toContain('wave6_context_ledger');
+    expect(migration).toContain('wave6_memory_candidates');
+    expect(migration).toContain('wave6_memory_stewardship_decisions');
     expect(legacyMemoryController).toContain('MEMORY_REQUIRES_STEWARDSHIP');
     expect(legacyMemoryController).toContain('MEMORY_WRITE_DISABLED');
     expect(legacyMemoryController).toContain('canReadMemory');

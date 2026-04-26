@@ -5,7 +5,6 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   AlertCircle,
-  ArrowRight,
   Building2,
   Calendar,
   Check,
@@ -19,7 +18,6 @@ import {
   MapPin,
   Package,
   RefreshCw,
-  Sparkles,
   TrendingUp,
   User as UserIcon,
   Users,
@@ -30,9 +28,10 @@ import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import { BillingAddress, Invoice, OrganizationOwnership, User } from '../../types';
+import { BillingAddress, Invoice, OrganizationOwnership } from '../../types';
 
 interface SubscriptionPlan {
   id: string;
@@ -94,6 +93,11 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
   const [loading, setLoading] = useState(true);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [billingLoadError, setBillingLoadError] = useState<string | null>(null);
+  const [usageLoadError, setUsageLoadError] = useState<string | null>(null);
+  const [invoicesLoadError, setInvoicesLoadError] = useState<string | null>(null);
+  const [plansLoadError, setPlansLoadError] = useState<string | null>(null);
+  const [addonsLoadError, setAddonsLoadError] = useState<string | null>(null);
 
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingForm, setBillingForm] = useState<Partial<OrganizationOwnership>>({});
@@ -123,20 +127,26 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
   const loadUsageData = async () => {
     try {
+      setUsageLoadError(null);
       const data = await Api.getUsage();
       setUsageData(data.structuredUsage || null);
     } catch (error) {
       console.error('Failed to load usage data:', error);
+      setUsageData(null);
+      setUsageLoadError(error instanceof Error ? error.message : 'Failed to load usage data');
     }
   };
 
   const fetchInvoices = async () => {
     setLoadingInvoices(true);
     try {
+      setInvoicesLoadError(null);
       const data = await Api.getInvoices();
       setInvoices(data);
     } catch (error) {
       console.error('Failed to fetch invoices:', error);
+      setInvoices([]);
+      setInvoicesLoadError(error instanceof Error ? error.message : 'Failed to load invoices');
     } finally {
       setLoadingInvoices(false);
     }
@@ -160,15 +170,19 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
   const loadAvailablePlans = async () => {
     setLoadingPlans(true);
     try {
+      setPlansLoadError(null);
       const res = await fetch('/api/billing/plans', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setAvailablePlans(data.plans || []);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      const data = await res.json();
+      setAvailablePlans(data.plans || []);
     } catch (error) {
       console.error('Failed to load plans:', error);
+      setAvailablePlans([]);
+      setPlansLoadError(error instanceof Error ? error.message : 'Failed to load plans');
     } finally {
       setLoadingPlans(false);
     }
@@ -176,15 +190,19 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
   const loadAddons = async () => {
     try {
+      setAddonsLoadError(null);
       const res = await fetch('/api/billing/addons', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setAddons(data.addons || []);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+      const data = await res.json();
+      setAddons(data.addons || []);
     } catch (error) {
       console.error('Failed to load addons:', error);
+      setAddons([]);
+      setAddonsLoadError(error instanceof Error ? error.message : 'Failed to load add-ons');
     }
   };
 
@@ -272,11 +290,14 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
   const fetchBillingData = async () => {
     setLoading(true);
     try {
-      // Get real billing data
-      const billingData = await Api.getCurrentBilling().catch(() => null);
+      setBillingLoadError(null);
+      const [billingResult, seatResult] = await Promise.allSettled([
+        Api.getCurrentBilling(),
+        Api.getSeatConfiguration(),
+      ]);
 
-      // Get real seat configuration
-      const seatConfig = await Api.getSeatConfiguration().catch(() => null);
+      const billingData = billingResult.status === 'fulfilled' ? billingResult.value : null;
+      const seatConfig = seatResult.status === 'fulfilled' ? seatResult.value : null;
 
       if (billingData || seatConfig) {
         setBilling({
@@ -288,28 +309,15 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
           maxUsers: seatConfig?.total_seats_available || 0,
         });
       } else {
-        // No billing data available - set empty state
-        setBilling({
-          plan: 'No Plan',
-          status: 'inactive',
-          nextBilling: '--',
-          amount: 0,
-          users: 0,
-          maxUsers: 0,
-        });
+        throw new Error('Failed to load billing summary');
       }
     } catch (error) {
       console.error('Failed to fetch billing data:', error);
       toast.error('Failed to load billing information');
-      // Set empty state on error instead of mock data
-      setBilling({
-        plan: 'Error Loading',
-        status: 'unknown',
-        nextBilling: '--',
-        amount: 0,
-        users: 0,
-        maxUsers: 0,
-      });
+      setBilling(null);
+      setBillingLoadError(
+        error instanceof Error ? error.message : 'Failed to load billing summary'
+      );
     } finally {
       setLoading(false);
     }
@@ -361,6 +369,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         <div className="flex items-center gap-3">
           <button
             onClick={openAddonsModal}
+            disabled={!!billingLoadError}
             className="admin-btn admin-btn-subtle flex items-center gap-2"
           >
             <Package size={14} />
@@ -368,6 +377,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
           </button>
           <button
             onClick={openPlanModal}
+            disabled={!!billingLoadError}
             className="admin-btn admin-btn-accent flex items-center gap-2"
           >
             <Crown size={14} />
@@ -376,45 +386,51 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         </div>
       </div>
 
+      {billingLoadError && (
+        <DegradedState title="Billing summary unavailable" description={billingLoadError} />
+      )}
+
       {/* Current Plan - Clean minimal */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="admin-metric">
-          <div className="flex items-center gap-2">
-            <CreditCard size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="admin-metric-label">
-              {t('admin.billing.currentPlan', 'Current Plan')}
-            </span>
+      {!billingLoadError && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="admin-metric">
+            <div className="flex items-center gap-2">
+              <CreditCard size={14} className="text-slate-500 dark:text-slate-400" />
+              <span className="admin-metric-label">
+                {t('admin.billing.currentPlan', 'Current Plan')}
+              </span>
+            </div>
+            <p className="admin-metric-value">{billing?.plan}</p>
+            <p className="admin-metric-subtitle">${billing?.amount}/month</p>
           </div>
-          <p className="admin-metric-value">{billing?.plan}</p>
-          <p className="admin-metric-subtitle">${billing?.amount}/month</p>
-        </div>
 
-        <div className="admin-metric">
-          <div className="flex items-center gap-2">
-            <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="admin-metric-label">
-              {t('admin.billing.nextBilling', 'Next Billing')}
-            </span>
+          <div className="admin-metric">
+            <div className="flex items-center gap-2">
+              <Calendar size={14} className="text-slate-500 dark:text-slate-400" />
+              <span className="admin-metric-label">
+                {t('admin.billing.nextBilling', 'Next Billing')}
+              </span>
+            </div>
+            <p className="admin-metric-value">{billing?.nextBilling}</p>
           </div>
-          <p className="admin-metric-value">{billing?.nextBilling}</p>
-        </div>
 
-        <div className="admin-metric">
-          <div className="flex items-center gap-2">
-            <Users size={14} className="text-slate-500 dark:text-slate-400" />
-            <span className="admin-metric-label">{t('admin.billing.seats', 'Seats Used')}</span>
-          </div>
-          <p className="admin-metric-value">
-            {billing?.users} / {billing?.maxUsers}
-          </p>
-          <div className="w-full bg-white/5 rounded-full h-1.5 mt-2">
-            <div
-              className="bg-[var(--admin-accent)] rounded-full h-1.5"
-              style={{ width: `${((billing?.users || 0) / (billing?.maxUsers || 1)) * 100}%` }}
-            />
+          <div className="admin-metric">
+            <div className="flex items-center gap-2">
+              <Users size={14} className="text-slate-500 dark:text-slate-400" />
+              <span className="admin-metric-label">{t('admin.billing.seats', 'Seats Used')}</span>
+            </div>
+            <p className="admin-metric-value">
+              {billing?.users} / {billing?.maxUsers}
+            </p>
+            <div className="w-full bg-white/5 rounded-full h-1.5 mt-2">
+              <div
+                className="bg-[var(--admin-accent)] rounded-full h-1.5"
+                style={{ width: `${((billing?.users || 0) / (billing?.maxUsers || 1)) * 100}%` }}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Usage & Invoices - Clean minimal */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -424,48 +440,52 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
             <TrendingUp size={14} className="text-slate-500 dark:text-slate-400" />
             {t('admin.billing.usage', 'Current Usage')}
           </h3>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm mb-1.5">
-                <span className="text-slate-500 dark:text-slate-400">AI Tokens</span>
-                <span className="text-slate-300">
-                  {usageData?.tokens
-                    ? `${usageData.tokens.used.toLocaleString()} / ${usageData.tokens.limit.toLocaleString()}`
-                    : '--'}
-                </span>
+          {usageLoadError ? (
+            <DegradedState title="Usage unavailable" description={usageLoadError} />
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-sm mb-1.5">
+                  <span className="text-slate-500 dark:text-slate-400">AI Tokens</span>
+                  <span className="text-slate-300">
+                    {usageData?.tokens
+                      ? `${usageData.tokens.used.toLocaleString()} / ${usageData.tokens.limit.toLocaleString()}`
+                      : '--'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
+                  <div
+                    className="bg-slate-400 rounded-full h-1.5 transition-all duration-500"
+                    style={{
+                      width: usageData?.tokens
+                        ? `${Math.min(100, (usageData.tokens.used / usageData.tokens.limit) * 100)}%`
+                        : '0%',
+                    }}
+                  />
+                </div>
               </div>
-              <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
-                <div
-                  className="bg-slate-400 rounded-full h-1.5 transition-all duration-500"
-                  style={{
-                    width: usageData?.tokens
-                      ? `${Math.min(100, (usageData.tokens.used / usageData.tokens.limit) * 100)}%`
-                      : '0%',
-                  }}
-                />
+              <div>
+                <div className="flex justify-between text-sm mb-1.5">
+                  <span className="text-slate-500 dark:text-slate-400">Storage</span>
+                  <span className="text-slate-300">
+                    {usageData?.storage
+                      ? `${usageData.storage.used_gb} GB / ${usageData.storage.limit_gb} GB`
+                      : '--'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
+                  <div
+                    className="bg-slate-50 dark:bg-navy-800/300 rounded-full h-1.5 transition-all duration-500"
+                    style={{
+                      width: usageData?.storage
+                        ? `${Math.min(100, (usageData.storage.used_gb / usageData.storage.limit_gb) * 100)}%`
+                        : '0%',
+                    }}
+                  />
+                </div>
               </div>
             </div>
-            <div>
-              <div className="flex justify-between text-sm mb-1.5">
-                <span className="text-slate-500 dark:text-slate-400">Storage</span>
-                <span className="text-slate-300">
-                  {usageData?.storage
-                    ? `${usageData.storage.used_gb} GB / ${usageData.storage.limit_gb} GB`
-                    : '--'}
-                </span>
-              </div>
-              <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
-                <div
-                  className="bg-slate-50 dark:bg-navy-800/300 rounded-full h-1.5 transition-all duration-500"
-                  style={{
-                    width: usageData?.storage
-                      ? `${Math.min(100, (usageData.storage.used_gb / usageData.storage.limit_gb) * 100)}%`
-                      : '0%',
-                  }}
-                />
-              </div>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Recent Invoices */}
@@ -479,6 +499,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               <div className="flex items-center justify-center py-8">
                 <RefreshCw className="w-5 h-5 text-slate-500 dark:text-slate-400 animate-spin" />
               </div>
+            ) : invoicesLoadError ? (
+              <DegradedState title="Invoices unavailable" description={invoicesLoadError} />
             ) : invoices.length === 0 ? (
               <div className="text-center py-8 text-slate-600 dark:text-slate-400 text-sm">
                 {t('admin.billing.noInvoices', 'No invoices found')}
@@ -649,6 +671,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                   <div className="flex items-center justify-center py-12">
                     <RefreshCw className="w-6 h-6 text-slate-500 dark:text-slate-400 animate-spin" />
                   </div>
+                ) : plansLoadError ? (
+                  <DegradedState title="Plans unavailable" description={plansLoadError} />
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {availablePlans.map((plan) => (
@@ -796,54 +820,58 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               <div className="p-6 overflow-y-auto">
                 {!selectedAddon ? (
                   <div className="space-y-3">
-                    {addons.map((addon) => (
-                      <div
-                        key={addon.id}
-                        onClick={() => setSelectedAddon(addon)}
-                        className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-[var(--admin-accent)] cursor-pointer transition-all flex items-center justify-between group"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                              addon.type === 'tokens'
-                                ? 'bg-purple-100 dark:bg-purple-900/30'
-                                : addon.type === 'storage'
-                                  ? 'bg-blue-100 dark:bg-blue-900/30'
-                                  : 'bg-green-100 dark:bg-green-900/30'
-                            }`}
-                          >
-                            {addon.type === 'tokens' ? (
-                              <Zap size={18} className="text-purple-600 dark:text-purple-400" />
-                            ) : addon.type === 'storage' ? (
-                              <Building2 size={18} className="text-blue-600 dark:text-blue-400" />
-                            ) : (
-                              <Users size={18} className="text-green-600 dark:text-green-400" />
-                            )}
+                    {addonsLoadError && (
+                      <DegradedState title="Add-ons unavailable" description={addonsLoadError} />
+                    )}
+                    {!addonsLoadError &&
+                      addons.map((addon) => (
+                        <div
+                          key={addon.id}
+                          onClick={() => setSelectedAddon(addon)}
+                          className="p-4 rounded-xl border border-slate-200 dark:border-navy-700 hover:border-[var(--admin-accent)] cursor-pointer transition-all flex items-center justify-between group"
+                        >
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                addon.type === 'tokens'
+                                  ? 'bg-purple-100 dark:bg-purple-900/30'
+                                  : addon.type === 'storage'
+                                    ? 'bg-blue-100 dark:bg-blue-900/30'
+                                    : 'bg-green-100 dark:bg-green-900/30'
+                              }`}
+                            >
+                              {addon.type === 'tokens' ? (
+                                <Zap size={18} className="text-purple-600 dark:text-purple-400" />
+                              ) : addon.type === 'storage' ? (
+                                <Building2 size={18} className="text-blue-600 dark:text-blue-400" />
+                              ) : (
+                                <Users size={18} className="text-green-600 dark:text-green-400" />
+                              )}
+                            </div>
+                            <div>
+                              <h4 className="font-medium text-navy-900 dark:text-white">
+                                {addon.name}
+                              </h4>
+                              <p className="text-sm text-slate-500 dark:text-slate-400">
+                                {addon.description}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <h4 className="font-medium text-navy-900 dark:text-white">
-                              {addon.name}
-                            </h4>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">
-                              {addon.description}
+                          <div className="text-right">
+                            <p className="font-semibold text-navy-900 dark:text-white">
+                              ${addon.price}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {addon.recurring ? '/month' : 'one-time'}
                             </p>
                           </div>
+                          <ChevronRight
+                            size={16}
+                            className="text-slate-400 dark:text-slate-500 group-hover:text-[var(--admin-accent)] transition-colors"
+                          />
                         </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-navy-900 dark:text-white">
-                            ${addon.price}
-                          </p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            {addon.recurring ? '/month' : 'one-time'}
-                          </p>
-                        </div>
-                        <ChevronRight
-                          size={16}
-                          className="text-slate-400 dark:text-slate-500 group-hover:text-[var(--admin-accent)] transition-colors"
-                        />
-                      </div>
-                    ))}
-                    {addons.length === 0 && (
+                      ))}
+                    {!addonsLoadError && addons.length === 0 && (
                       <p className="text-center py-8 text-slate-500 dark:text-slate-400">
                         No add-ons available
                       </p>

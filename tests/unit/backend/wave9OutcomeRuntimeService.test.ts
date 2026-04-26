@@ -769,6 +769,10 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
     const panel = readFileSync('src/components/AIChat/Wave9OutcomeAIOpsPanel.tsx', 'utf8');
     const appRoutes = readFileSync('src/routes/AppRoutes.tsx', 'utf8');
     const migration = readFileSync('server/migrations/20260425_wave9_outcome_runtime.sql', 'utf8');
+    const hub = readFileSync('src/components/AIChat/AIOSHub.tsx', 'utf8');
+    const gateReport = readFileSync('src/components/AIChat/AIOSWave0GateReport.tsx', 'utf8');
+    const v10Workspace = readFileSync('src/components/v10/V10TeresaRuntimeWorkspace.tsx', 'utf8');
+    const v10Hook = readFileSync('src/hooks/v10/useV10TeresaRuntime.ts', 'utf8');
 
     expect(gateway).toContain('/api/ai-outcomes');
     expect(routes).toContain('/acceptance');
@@ -782,6 +786,12 @@ describe('Wave 9 outcome, AI Ops and final acceptance runtime', () => {
     expect(panel).toContain('Wave 9 Outcome & AI Ops');
     expect(panel).toContain('Record golden eval PASS');
     expect(panel).toContain('Simulate provider unavailable');
+    expect(hub).toContain('AIOSWave0GateReport');
+    expect(hub).toContain('V10TeresaRuntimeWorkspace');
+    expect(gateReport).toContain('Wave 0 Gate Report');
+    expect(gateReport).toContain('Runtime truth table');
+    expect(v10Workspace).toContain('V10 Frontend Runtime');
+    expect(v10Hook).toContain('/api/v10/teresa/voice-config');
     expect(appRoutes).toContain('path={ROUTES.AI_OS.OUTCOMES}');
     expect(migration).toContain('wave9_acceptance_decisions');
     expect(migration).toContain('wave9_acceptance_runs');

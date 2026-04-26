@@ -595,9 +595,12 @@ describe('Wave 7 connector runtime', () => {
     expect(routes).toContain('/disconnect');
     expect(routes).toContain('/link');
     expect(api).toContain('executeWave7ConnectorTool');
+    expect(api).toContain('getWave7ConnectorHealth');
     expect(api).toContain('linkWave7Connector');
     expect(api).toContain('reindexWave7Connector');
     expect(panel).toContain('ConnectorRun Audit');
+    expect(panel).toContain('Api.getWave7ConnectorHealth');
+    expect(panel).toContain('/api/ai-connectors/health');
     expect(panel).toContain('Write (requires AIRun)');
     expect(panel).toContain('Real Source Binding');
     expect(panel).toContain('OAuth Session Lifecycle');

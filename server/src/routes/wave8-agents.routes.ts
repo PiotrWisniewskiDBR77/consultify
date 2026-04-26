@@ -9,6 +9,7 @@ import {
   listWave8AgentRuns,
   listWave8AgentSchedules,
   processDueWave8AgentSchedules,
+  upsertWave8AgentDefinition,
 } from '../services/wave8AgentRuntimeService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -26,9 +27,24 @@ function getAuthContext(req: AuthRequest): { userId: string; organizationId: str
 router.get(
   '/catalog',
   verifyToken,
-  asyncHandler(async (_req: AuthRequest, res: Response) => {
-    const agents = await listWave8AgentDefinitions();
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getAuthContext(req);
+    const agents = await listWave8AgentDefinitions({ organizationId });
     return res.json({ success: true, agents });
+  })
+);
+
+router.post(
+  '/definitions',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const definition = await upsertWave8AgentDefinition({
+      organizationId,
+      userId,
+      definition: req.body.definition && typeof req.body.definition === 'object' ? req.body.definition : req.body,
+    });
+    return res.status(201).json({ success: true, definition });
   })
 );
 

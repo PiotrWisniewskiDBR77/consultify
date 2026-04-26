@@ -16,6 +16,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
 
 interface AuditEvent {
@@ -36,6 +37,7 @@ const AuditEventsViewer: React.FC = () => {
   const [events, setEvents] = useState<AuditEvent[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [offset, setOffset] = useState(0);
 
   const [resourceType, setResourceType] = useState('');
@@ -46,6 +48,7 @@ const AuditEventsViewer: React.FC = () => {
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const res = await Api.getAuditEvents({
         resourceType: resourceType || undefined,
         actorId: actorId || undefined,
@@ -57,7 +60,11 @@ const AuditEventsViewer: React.FC = () => {
       setEvents(res?.data || []);
       setTotal(res?.total || 0);
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to load audit events');
+      const message = err?.message || 'Failed to load audit events';
+      setLoadError(message);
+      setEvents([]);
+      setTotal(0);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -101,6 +108,7 @@ const AuditEventsViewer: React.FC = () => {
               setOffset(0);
             }}
             placeholder="Resource type"
+            disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none w-32"
           />
         </div>
@@ -113,6 +121,7 @@ const AuditEventsViewer: React.FC = () => {
               setOffset(0);
             }}
             placeholder="Actor ID"
+            disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none w-32"
           />
         </div>
@@ -125,6 +134,7 @@ const AuditEventsViewer: React.FC = () => {
               setFromDate(e.target.value);
               setOffset(0);
             }}
+            disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none"
           />
           <span className="text-xs text-slate-400">to</span>
@@ -135,11 +145,12 @@ const AuditEventsViewer: React.FC = () => {
               setToDate(e.target.value);
               setOffset(0);
             }}
+            disabled={!!loadError}
             className="h-7 px-2 rounded-md text-xs bg-white dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60 text-slate-800 dark:text-slate-200 outline-none"
           />
         </div>
         <span className="text-[10px] text-slate-400 ml-auto">
-          {total} event{total !== 1 ? 's' : ''}
+          {loadError ? 'Events unavailable' : `${total} event${total !== 1 ? 's' : ''}`}
         </span>
       </div>
 
@@ -156,7 +167,13 @@ const AuditEventsViewer: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {loading && events.length === 0 ? (
+            {loadError ? (
+              <tr>
+                <td colSpan={5} className="py-8">
+                  <DegradedState title="Audit events unavailable" description={loadError} />
+                </td>
+              </tr>
+            ) : loading && events.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center py-12 text-slate-400">
                   <Loader2 size={20} className="animate-spin mx-auto mb-2" />

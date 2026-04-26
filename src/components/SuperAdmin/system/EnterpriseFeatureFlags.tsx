@@ -12,38 +12,30 @@
 
 import {
   Beaker,
-  Building,
   Check,
   ChevronDown,
   ChevronRight,
   Code,
-  Copy,
   Edit,
   Eye,
-  Filter,
   Flag,
-  Globe,
-  Hash,
   History,
   Loader2,
-  Mail,
   Percent,
   Plus,
   RefreshCw,
   Search,
-  Settings,
   Target,
   ToggleLeft,
   ToggleRight,
   Trash2,
-  User,
-  Users,
   X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { DegradedState } from '../../Admin/AdminState';
 
 interface FeatureFlag {
   id: string;
@@ -103,6 +95,7 @@ const ENVIRONMENTS = ['development', 'staging', 'production'];
 export const EnterpriseFeatureFlags: React.FC = () => {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterEnvironment, setFilterEnvironment] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
@@ -121,8 +114,11 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       }
       const data = await Api.getFeatureFlags(filters);
       setFlags(data);
+      setLoadError(null);
     } catch (error) {
       console.error('Failed to fetch feature flags:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load feature flags');
+      setFlags([]);
       toast.error('Failed to load feature flags');
     } finally {
       setLoading(false);
@@ -298,6 +294,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
+          disabled={!!loadError}
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
         >
           <Plus size={16} />
@@ -306,38 +303,44 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Total Flags</div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
-            {flags.length}
+      {loadError ? (
+        <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+          <DegradedState title="Feature flag overview unavailable" description={loadError} />
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+            <div className="text-sm text-slate-400 dark:text-slate-500">Total Flags</div>
+            <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+              {flags.length}
+            </div>
+          </div>
+          <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
+            <div className="text-sm text-slate-400 dark:text-slate-500">Enabled</div>
+            <div className="text-2xl font-bold text-emerald-400">
+              {flags.filter((f) => f.enabled).length}
+            </div>
+          </div>
+          <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
+            <div className="text-sm text-slate-400 dark:text-slate-500">Rollouts</div>
+            <div className="text-2xl font-bold text-blue-400">
+              {flags.filter((f) => f.flag_type === 'percentage').length}
+            </div>
+          </div>
+          <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
+            <div className="text-sm text-slate-400 dark:text-slate-500">A/B Tests</div>
+            <div className="text-2xl font-bold text-amber-400">
+              {flags.filter((f) => f.flag_type === 'ab_test').length}
+            </div>
+          </div>
+          <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
+            <div className="text-sm text-slate-400 dark:text-slate-500">Production</div>
+            <div className="text-2xl font-bold text-purple-400">
+              {flags.filter((f) => f.environment === 'production' && f.enabled).length}
+            </div>
           </div>
         </div>
-        <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Enabled</div>
-          <div className="text-2xl font-bold text-emerald-400">
-            {flags.filter((f) => f.enabled).length}
-          </div>
-        </div>
-        <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Rollouts</div>
-          <div className="text-2xl font-bold text-blue-400">
-            {flags.filter((f) => f.flag_type === 'percentage').length}
-          </div>
-        </div>
-        <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">A/B Tests</div>
-          <div className="text-2xl font-bold text-amber-400">
-            {flags.filter((f) => f.flag_type === 'ab_test').length}
-          </div>
-        </div>
-        <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
-          <div className="text-sm text-slate-400 dark:text-slate-500">Production</div>
-          <div className="text-2xl font-bold text-purple-400">
-            {flags.filter((f) => f.environment === 'production' && f.enabled).length}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Filters */}
       <div className="flex items-center gap-4 flex-wrap">
@@ -351,12 +354,14 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             placeholder="Search flags..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            disabled={!!loadError}
             className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500"
           />
         </div>
         <select
           value={filterEnvironment}
           onChange={(e) => setFilterEnvironment(e.target.value)}
+          disabled={!!loadError}
           className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="all">All Environments</option>
@@ -369,6 +374,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         <select
           value={filterType}
           onChange={(e) => setFilterType(e.target.value)}
+          disabled={!!loadError}
           className="px-4 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="all">All Types</option>
@@ -380,6 +386,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
         </select>
         <button
           onClick={fetchFlags}
+          disabled={loading}
           className="p-2 bg-white dark:bg-navy-950/20 hover:bg-slate-50 dark:hover:bg-navy-800/40 border border-slate-200 dark:border-white/10 rounded-lg"
         >
           <RefreshCw className="w-4 h-4 text-slate-400 dark:text-slate-500" />
@@ -387,62 +394,70 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       </div>
 
       {/* Test Context Panel */}
-      <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
-        <div className="flex items-center gap-2 mb-3">
-          <Eye className="w-4 h-4 text-cyan-400" />
-          <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
-            Test Evaluation Context
-          </span>
+      {!loadError && (
+        <div className="p-4 bg-white dark:bg-navy-950/20 rounded-xl border border-slate-200 dark:border-white/10">
+          <div className="flex items-center gap-2 mb-3">
+            <Eye className="w-4 h-4 text-cyan-400" />
+            <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+              Test Evaluation Context
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                User ID
+              </label>
+              <input
+                type="text"
+                value={testContext.userId}
+                onChange={(e) => setTestContext({ ...testContext, userId: e.target.value })}
+                className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
+                placeholder="user-123"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Email</label>
+              <input
+                type="text"
+                value={testContext.email}
+                onChange={(e) => setTestContext({ ...testContext, email: e.target.value })}
+                className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
+                placeholder="user@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
+                Organization ID
+              </label>
+              <input
+                type="text"
+                value={testContext.orgId}
+                onChange={(e) => setTestContext({ ...testContext, orgId: e.target.value })}
+                className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
+                placeholder="org-abc"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Role</label>
+              <input
+                type="text"
+                value={testContext.role}
+                onChange={(e) => setTestContext({ ...testContext, role: e.target.value })}
+                className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
+                placeholder="admin"
+              />
+            </div>
+          </div>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">User ID</label>
-            <input
-              type="text"
-              value={testContext.userId}
-              onChange={(e) => setTestContext({ ...testContext, userId: e.target.value })}
-              className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
-              placeholder="user-123"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Email</label>
-            <input
-              type="text"
-              value={testContext.email}
-              onChange={(e) => setTestContext({ ...testContext, email: e.target.value })}
-              className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
-              placeholder="user@example.com"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">
-              Organization ID
-            </label>
-            <input
-              type="text"
-              value={testContext.orgId}
-              onChange={(e) => setTestContext({ ...testContext, orgId: e.target.value })}
-              className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
-              placeholder="org-abc"
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-slate-500 dark:text-slate-400 mb-1">Role</label>
-            <input
-              type="text"
-              value={testContext.role}
-              onChange={(e) => setTestContext({ ...testContext, role: e.target.value })}
-              className="w-full px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded text-sm text-slate-900 dark:text-slate-100"
-              placeholder="admin"
-            />
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Flags List */}
       <div className="space-y-2">
-        {filteredFlags.length === 0 ? (
+        {loadError ? (
+          <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
+            <DegradedState title="Feature flags unavailable" description={loadError} />
+          </div>
+        ) : filteredFlags.length === 0 ? (
           <div className="text-center py-12 text-slate-400 dark:text-slate-500">
             <Flag size={48} className="mx-auto mb-4 opacity-50" />
             <p>No feature flags found</p>
@@ -478,6 +493,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                               e.stopPropagation();
                               handleCopyKey(flag.flag_key);
                             }}
+                            aria-label={`Copy flag key for ${flag.name}`}
                             className="flex items-center gap-1 px-2 py-0.5 text-xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded hover:bg-slate-200 dark:hover:bg-slate-700"
                           >
                             <Code className="w-3 h-3" />
@@ -515,6 +531,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                           e.stopPropagation();
                           handleToggle(flag);
                         }}
+                        aria-label={`${flag.enabled ? 'Disable' : 'Enable'} ${flag.name}`}
                         className={`p-2 rounded-lg transition-colors ${
                           flag.enabled
                             ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
@@ -529,6 +546,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                           setEditingFlag(flag);
                           setShowCreateModal(true);
                         }}
+                        aria-label={`Edit ${flag.name}`}
                         className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
                       >
                         <Edit size={16} />
@@ -538,6 +556,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                           e.stopPropagation();
                           setSelectedFlagHistory(flag.id);
                         }}
+                        aria-label={`View history for ${flag.name}`}
                         className="p-2 rounded-lg bg-slate-700 text-slate-300 hover:bg-slate-600 transition-colors"
                       >
                         <History size={16} />
@@ -547,6 +566,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                           e.stopPropagation();
                           handleDelete(flag.id);
                         }}
+                        aria-label={`Delete ${flag.name}`}
                         className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors"
                       >
                         <Trash2 size={16} />
@@ -927,6 +947,7 @@ const FlagHistoryModal: React.FC<{
 }> = ({ flagId, onClose }) => {
   const [history, setHistory] = useState<FlagHistory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchHistory = async () => {
@@ -934,7 +955,10 @@ const FlagHistoryModal: React.FC<{
       try {
         const data = await Api.getFeatureFlagHistory(flagId);
         setHistory(data);
+        setLoadError(null);
       } catch (error) {
+        setLoadError(error instanceof Error ? error.message : 'Failed to load flag history');
+        setHistory([]);
         toast.error('Failed to load flag history');
       } finally {
         setLoading(false);
@@ -960,6 +984,8 @@ const FlagHistoryModal: React.FC<{
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-8 h-8 text-slate-400 dark:text-slate-500 animate-spin" />
           </div>
+        ) : loadError ? (
+          <DegradedState title="Feature flag history unavailable" description={loadError} />
         ) : (
           <div className="space-y-2">
             {history.length === 0 ? (

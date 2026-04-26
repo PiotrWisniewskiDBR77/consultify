@@ -18,6 +18,13 @@ type Wave6AssistantScope = 'anna_public' | 'teresa_tenant';
 type Wave6MemoryScope = 'public_product' | 'tenant' | 'org' | 'user' | 'project';
 type Wave6SnapshotScope = 'org' | 'project' | 'user';
 
+const MEMORY_KEY_OPTIONS = [
+  { value: 'communication_style', label: 'Communication style' },
+  { value: 'working_preferences', label: 'Working preferences' },
+  { value: 'project_context', label: 'Project context' },
+  { value: 'decision_criteria', label: 'Decision criteria' },
+] as const;
+
 export const Wave6ContextLearningPanel: React.FC = () => {
   const [panel, setPanel] = React.useState<any>(null);
   const [projectId, setProjectId] = React.useState('');
@@ -114,7 +121,24 @@ export const Wave6ContextLearningPanel: React.FC = () => {
       if (res?.blocked) {
         setMessage(`Memory blocked: ${res.reason}`);
       } else {
-        setMessage('Memory candidate created and waiting for stewardship approval.');
+        const candidate = res?.candidate;
+        setMemoryValue('');
+        await load();
+        if (candidate?.candidateId) {
+          setPanel((prev: any) => ({
+            ...(prev || {}),
+            memories: [
+              candidate,
+              ...(Array.isArray(prev?.memories)
+                ? prev.memories.filter(
+                    (memory: Wave6Memory) => memory.candidateId !== candidate.candidateId
+                  )
+                : []),
+            ],
+          }));
+        }
+        setMessage('Memory candidate created and visible in the stewardship queue below.');
+        return;
       }
       setMemoryValue('');
       await load();
@@ -219,6 +243,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
             <Brain size={18} /> Memory Candidate
           </h2>
           <div className="mt-4 space-y-3">
+            <label className="block text-xs font-medium text-slate-500">Assistant scope</label>
             <select
               value={assistantScope}
               onChange={(event) => {
@@ -235,6 +260,7 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               <option value="teresa_tenant">Teresa tenant memory</option>
               <option value="anna_public">Anna public product memory</option>
             </select>
+            <label className="block text-xs font-medium text-slate-500">Memory scope</label>
             <select
               value={memoryScope}
               onChange={(event) => setMemoryScope(event.target.value as Wave6MemoryScope)}
@@ -246,16 +272,23 @@ export const Wave6ContextLearningPanel: React.FC = () => {
               <option value="tenant">Tenant</option>
               <option value="public_product">Public product</option>
             </select>
-            <input
+            <label className="block text-xs font-medium text-slate-500">Memory key</label>
+            <select
               value={memoryKey}
               onChange={(event) => setMemoryKey(event.target.value)}
-              placeholder="memory_key"
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
-            />
+            >
+              {MEMORY_KEY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+            <label className="block text-xs font-medium text-slate-500">Memory value</label>
             <textarea
               value={memoryValue}
               onChange={(event) => setMemoryValue(event.target.value)}
-              placeholder="What should AI remember?"
+              placeholder="What should AI remember? Example: I prefer concise implementation notes with verification steps."
               rows={4}
               className="w-full rounded-md border px-3 py-2 text-sm dark:border-navy-700 dark:bg-navy-950"
             />

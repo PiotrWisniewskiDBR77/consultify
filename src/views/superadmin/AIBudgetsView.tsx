@@ -23,6 +23,7 @@ import {
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { api } from '../../services/api';
 
 interface Budget {
@@ -152,6 +153,11 @@ const AIBudgetsView: React.FC = () => {
     } catch (error: any) {
       console.error('[AI Budgets] Fetch error:', error);
       setLoadError(error?.message || 'Failed to load AI budgets');
+      setBudgets([]);
+      setAlerts([]);
+      setUsageStats(null);
+      setModelCosts({});
+      setModelPermissions([]);
       toast.error(error?.message || 'Failed to load AI budgets');
     } finally {
       setLoading(false);
@@ -1022,6 +1028,10 @@ const AIBudgetsView: React.FC = () => {
       {loading ? (
         <div className="flex items-center justify-center py-12">
           <RefreshCw className="animate-spin text-violet-500" size={32} />
+        </div>
+      ) : loadError ? (
+        <div className="bg-white dark:bg-gray-800/50 border border-slate-200 dark:border-gray-700 rounded-xl p-6">
+          <DegradedState title="AI budget controls unavailable" description={loadError} />
         </div>
       ) : (
         <>

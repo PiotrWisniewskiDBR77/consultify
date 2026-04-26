@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 type Row = Record<string, any>;
 
 const db = vi.hoisted(() => ({
+  definitions: new Map<string, Row>(),
   runs: new Map<string, Row>(),
   schedules: new Map<string, Row>(),
   notifications: new Map<string, Row>(),
@@ -34,6 +35,47 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       normalized.startsWith('ALTER TABLE')
     ) {
       return { changes: 0 };
+    }
+    if (normalized.startsWith('INSERT INTO wave8_agent_definitions')) {
+      const [
+        agentId,
+        organizationId,
+        name,
+        role,
+        purpose,
+        persona,
+        allowedToolsJson,
+        blockedToolsJson,
+        sourceScopeJson,
+        outputSchemaJson,
+        approvalPolicy,
+        costClass,
+        riskLevel,
+        examplesJson,
+        editable,
+        updatedBy,
+        updatedAt,
+      ] = params;
+      db.definitions.set(agentId, {
+        agent_id: agentId,
+        organization_id: organizationId,
+        name,
+        role,
+        purpose,
+        persona,
+        allowed_tools_json: allowedToolsJson,
+        blocked_tools_json: blockedToolsJson,
+        source_scope_json: sourceScopeJson,
+        output_schema_json: outputSchemaJson,
+        approval_policy: approvalPolicy,
+        cost_class: costClass,
+        risk_level: riskLevel,
+        examples_json: examplesJson,
+        editable,
+        updated_by: updatedBy,
+        updated_at: updatedAt,
+      });
+      return { changes: 1 };
     }
     if (normalized.startsWith('INSERT INTO wave8_agent_runs')) {
       const [
@@ -133,6 +175,11 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
   },
   all: async (sql: string, params: any[] = []) => {
     const normalized = sql.replace(/\s+/g, ' ').trim();
+    if (normalized.includes('FROM wave8_agent_definitions')) {
+      return Array.from(db.definitions.values()).filter(
+        (row) => row.organization_id == null || row.organization_id === params[0]
+      );
+    }
     if (normalized.includes('FROM wave8_agent_runs')) {
       return Array.from(db.runs.values()).filter((row) => row.organization_id === params[0]);
     }
@@ -156,6 +203,7 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
 
 describe('Wave 8 agent runtime', () => {
   beforeEach(() => {
+    db.definitions.clear();
     db.runs.clear();
     db.schedules.clear();
     db.notifications.clear();
@@ -185,6 +233,38 @@ describe('Wave 8 agent runtime', () => {
       ])
     );
     expect(agents.every((agent) => agent.outputSchema && agent.allowedTools.length > 0)).toBe(true);
+  });
+
+  it('stores admin-editable AgentDefinition overrides in the Wave 8 database catalog', async () => {
+    const { listWave8AgentDefinitions, upsertWave8AgentDefinition } =
+      await import('../../../server/src/services/wave8AgentRuntimeService.js');
+
+    const saved = await upsertWave8AgentDefinition({
+      organizationId: 'org-1',
+      userId: 'admin-1',
+      definition: {
+        agentId: 'research-agent',
+        name: 'Research Agent',
+        role: 'research',
+        purpose: 'Edited org-specific research purpose.',
+        persona: 'Evidence-first researcher.',
+        allowedTools: ['search_knowledge_base'],
+        blockedTools: ['search_web'],
+        sourceScope: ['knowledge_base'],
+        outputSchema: { type: 'research_brief', required: ['summary'] },
+        approvalPolicy: 'tool_scope',
+        costClass: 'low',
+        riskLevel: 'medium',
+        examples: ['Org-specific research'],
+      },
+    });
+
+    expect(saved.source).toBe('database');
+    expect(saved.updatedBy).toBe('admin-1');
+    const agents = await listWave8AgentDefinitions({ organizationId: 'org-1' });
+    const research = agents.find((agent) => agent.agentId === 'research-agent');
+    expect(research?.purpose).toBe('Edited org-specific research purpose.');
+    expect(research?.allowedTools).toEqual(['search_knowledge_base']);
   });
 
   it('blocks tool misuse and swarm without approval and budget gate', async () => {
@@ -433,16 +513,25 @@ describe('Wave 8 agent runtime', () => {
     expect(gateway).toContain('/api/ai-agents');
     expect(routes).toContain('/catalog');
     expect(routes).toContain('/launch');
+    expect(routes).toContain('/definitions');
     expect(routes).toContain('/schedules');
     expect(routes).toContain('/notifications');
     expect(routes).toContain('/process-due');
     expect(api).toContain('launchWave8Agent');
+    expect(api).toContain('upsertWave8AgentDefinition');
+    expect(api).toContain('executeWave8AgentTool');
     expect(api).toContain('processDueWave8AgentSchedules');
     expect(panel).toContain('Wave 8 Agent Catalog');
+    expect(panel).toContain('Admin-editable AgentDefinition');
+    expect(panel).toContain('Save AgentDefinition override');
+    expect(panel).toContain('Governed Tool Execution');
+    expect(panel).toContain('Api.executeWave8AgentTool');
+    expect(panel).toContain('/api/ai-agents/tool');
     expect(panel).toContain('Swarm mode');
     expect(panel).toContain('Notifications');
     expect(appRoutes).toContain('path={ROUTES.AI_OS.AGENTS}');
     expect(migration).toContain('wave8_agent_runs');
+    expect(migration).toContain('wave8_agent_definitions');
     expect(migration).toContain('wave8_agent_schedules');
     expect(migration).toContain('wave8_agent_notifications');
   });

@@ -28,6 +28,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import {
   AuditLogViewer,
   ProactivitySelector,
@@ -153,6 +154,7 @@ export const OrgAISettingsView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<OrgAISettings | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -169,13 +171,18 @@ export const OrgAISettingsView: React.FC = () => {
 
     setLoading(true);
     try {
+      setLoadError(null);
       const data = await AdminApi.getOrganizationAISettings(currentOrganization.id);
       setSettings(
         normalizeOrgAISettings(currentOrganization.id, (data as Partial<OrgAISettings>) || null)
       );
+      setHasChanges(false);
     } catch (error) {
       console.error('Failed to load settings:', error);
-      toast.error(getReadableErrorMessage(error, 'Failed to load organization AI settings'));
+      const message = getReadableErrorMessage(error, 'Failed to load organization AI settings');
+      setSettings(null);
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -191,11 +198,17 @@ export const OrgAISettingsView: React.FC = () => {
 
     setSaving(true);
     try {
-      const updated = await AdminApi.updateOrganizationAISettings(
+      await AdminApi.updateOrganizationAISettings(
         currentOrganization.id,
         settings as unknown as Record<string, unknown>
       );
-      setSettings(updated as OrgAISettings);
+      const persisted = await AdminApi.getOrganizationAISettings(currentOrganization.id);
+      setSettings(
+        normalizeOrgAISettings(
+          currentOrganization.id,
+          (persisted as Partial<OrgAISettings>) || null
+        )
+      );
       setHasChanges(false);
       toast.success('Organization AI settings saved');
     } catch (error) {
@@ -244,6 +257,14 @@ export const OrgAISettingsView: React.FC = () => {
   }
 
   if (!settings && !loading) {
+    if (loadError) {
+      return (
+        <div className="h-full bg-navy-950 p-8">
+          <DegradedState title="Organization AI settings unavailable" description={loadError} />
+        </div>
+      );
+    }
+
     return (
       <div className="h-full flex flex-col items-center justify-center bg-navy-950 p-8 text-center">
         <div className="w-16 h-16 rounded-full bg-slate-800 flex items-center justify-center mb-4">

@@ -21,6 +21,7 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
 
@@ -80,6 +81,7 @@ const SecurityIncidentsView: React.FC = () => {
   const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
   const [stats, setStats] = useState<IncidentStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     severity: '',
@@ -106,6 +108,7 @@ const SecurityIncidentsView: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       setError(null);
 
       const params: any = {};
@@ -121,8 +124,11 @@ const SecurityIncidentsView: React.FC = () => {
       setIncidents(incidentsData);
       setStats(statsData as any);
     } catch (err: any) {
-      setError(err.message || 'Failed to load security incidents');
-      toast.error(err.message || 'Failed to load security incidents');
+      const message = err.message || 'Failed to load security incidents';
+      setLoadError(message);
+      setIncidents([]);
+      setStats(null);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -269,67 +275,73 @@ const SecurityIncidentsView: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <Shield className="w-5 h-5 text-indigo-500" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Total Incidents</p>
-              <p className="text-xl font-semibold">{stats?.totalIncidents || 0}</p>
-            </div>
-          </div>
+      {loadError ? (
+        <Card variant="bordered" className="p-6">
+          <DegradedState title="Security incidents unavailable" description={loadError} />
         </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500/10 rounded-lg">
+                <Shield className="w-5 h-5 text-indigo-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Total Incidents</p>
+                <p className="text-xl font-semibold">{stats?.totalIncidents || 0}</p>
+              </div>
+            </div>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-500/10 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Open</p>
+                <p className="text-xl font-semibold">{stats?.byStatus.open || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Open</p>
-              <p className="text-xl font-semibold">{stats?.byStatus.open || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-600/10 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-600" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-600/10 rounded-lg">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
+                <p className="text-xl font-semibold">{stats?.bySeverity.critical || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Critical</p>
-              <p className="text-xl font-semibold">{stats?.bySeverity.critical || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-500/10 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-orange-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-orange-500/10 rounded-lg">
+                <AlertTriangle className="w-5 h-5 text-orange-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">High</p>
+                <p className="text-xl font-semibold">{stats?.bySeverity.high || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">High</p>
-              <p className="text-xl font-semibold">{stats?.bySeverity.high || 0}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-emerald-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <CheckCircle className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-600 dark:text-slate-400">Resolved</p>
+                <p className="text-xl font-semibold">{stats?.byStatus.resolved || 0}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-600 dark:text-slate-400">Resolved</p>
-              <p className="text-xl font-semibold">{stats?.byStatus.resolved || 0}</p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
@@ -352,6 +364,7 @@ const SecurityIncidentsView: React.FC = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
+            disabled={!!loadError}
             className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
               showFilters
                 ? 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300'
@@ -371,6 +384,7 @@ const SecurityIncidentsView: React.FC = () => {
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
+            disabled={!!loadError}
             className="flex items-center gap-2 px-3 py-2 text-sm bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
           >
             <Plus className="w-4 h-4" />
@@ -390,6 +404,7 @@ const SecurityIncidentsView: React.FC = () => {
               <select
                 value={filters.severity}
                 onChange={(e) => setFilters({ ...filters, severity: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Severities</option>
@@ -407,6 +422,7 @@ const SecurityIncidentsView: React.FC = () => {
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Statuses</option>
@@ -424,6 +440,7 @@ const SecurityIncidentsView: React.FC = () => {
               <select
                 value={filters.incidentType}
                 onChange={(e) => setFilters({ ...filters, incidentType: e.target.value })}
+                disabled={!!loadError}
                 className="w-full px-3 py-2 bg-white border border-slate-200 text-slate-900 rounded-lg text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
               >
                 <option value="">All Types</option>
@@ -440,92 +457,98 @@ const SecurityIncidentsView: React.FC = () => {
 
       {/* Incidents Table */}
       <CardWithHeader title="Incidents" subtitle={`${incidents.length} incidents`}>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-200 dark:border-slate-700">
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Type
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Description
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Severity
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Status
-                </th>
-                <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Detected
-                </th>
-                <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {incidents.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
-                    No security incidents found
-                  </td>
+        {loadError ? (
+          <div className="p-6">
+            <DegradedState title="Security incident list unavailable" description={loadError} />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-slate-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Type
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Description
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Severity
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Status
+                  </th>
+                  <th className="text-left py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Detected
+                  </th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-slate-700 dark:text-slate-400">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                incidents.map((incident) => (
-                  <tr
-                    key={incident.id}
-                    className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
-                  >
-                    <td className="py-3 px-4">
-                      <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
-                        {getIncidentTypeLabel(incident.incidentType)}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4">
-                      <p className="text-sm max-w-xs truncate">{incident.description}</p>
-                    </td>
-                    <td className="py-3 px-4">{getSeverityBadge(incident.severity)}</td>
-                    <td className="py-3 px-4">{getStatusBadge(incident.status)}</td>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-1 text-sm text-slate-300">
-                        <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
-                        {new Date(incident.detectedAt).toLocaleString()}
-                      </div>
-                    </td>
-                    <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setShowDetailModal(incident)}
-                          className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        {incident.status !== 'resolved' && incident.status !== 'closed' && (
-                          <button
-                            onClick={() => setShowResolveModal(incident.id)}
-                            className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
-                            title="Resolve"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleDelete(incident.id)}
-                          className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {incidents.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-slate-600 dark:text-slate-400">
+                      No security incidents found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  incidents.map((incident) => (
+                    <tr
+                      key={incident.id}
+                      className="border-b border-slate-200/60 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+                    >
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 bg-slate-700 rounded text-xs font-mono">
+                          {getIncidentTypeLabel(incident.incidentType)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <p className="text-sm max-w-xs truncate">{incident.description}</p>
+                      </td>
+                      <td className="py-3 px-4">{getSeverityBadge(incident.severity)}</td>
+                      <td className="py-3 px-4">{getStatusBadge(incident.status)}</td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1 text-sm text-slate-300">
+                          <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
+                          {new Date(incident.detectedAt).toLocaleString()}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setShowDetailModal(incident)}
+                            className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {incident.status !== 'resolved' && incident.status !== 'closed' && (
+                            <button
+                              onClick={() => setShowResolveModal(incident.id)}
+                              className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                              title="Resolve"
+                            >
+                              <Check className="w-4 h-4" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleDelete(incident.id)}
+                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </CardWithHeader>
 
       {/* Create Incident Modal */}

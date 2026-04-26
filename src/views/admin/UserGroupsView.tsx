@@ -22,20 +22,18 @@ import {
   Edit,
   FolderKanban,
   Info,
-  Palette,
   Plus,
   RefreshCw,
   Search,
-  Shield,
   Trash2,
   Users,
   UsersRound,
-  X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
@@ -119,6 +117,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -145,25 +144,27 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
   const loadData = async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       // Load teams from correct endpoint
       const teamsRes = await fetch('/api/teams', {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (teamsRes.ok) {
-        const data = await teamsRes.json();
-        // Transform teams data to groups format
-        const transformedGroups = data.map((team: any) => ({
-          id: team.id,
-          name: team.name,
-          description: team.description,
-          color: team.color || 'violet',
-          leaderId: team.leadId,
-          memberIds: team.members?.map((m: any) => m.userId || m.user?.id) || [],
-          permissions: team.permissions || [],
-          createdAt: team.createdAt,
-        }));
-        setGroups(transformedGroups);
+      if (!teamsRes.ok) {
+        throw new Error(`HTTP ${teamsRes.status}`);
       }
+      const data = await teamsRes.json();
+      // Transform teams data to groups format
+      const transformedGroups = data.map((team: any) => ({
+        id: team.id,
+        name: team.name,
+        description: team.description,
+        color: team.color || 'violet',
+        leaderId: team.leadId,
+        memberIds: team.members?.map((m: any) => m.userId || m.user?.id) || [],
+        permissions: team.permissions || [],
+        createdAt: team.createdAt,
+      }));
+      setGroups(transformedGroups);
 
       // Load users for member selection
       const usersData = await Api.getUsers();
@@ -174,6 +175,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
       // Set empty state instead of mock data
       setGroups([]);
       setUsers([]);
+      setLoadError(error instanceof Error ? error.message : 'Failed to load teams');
     }
     setLoading(false);
   };
@@ -288,13 +290,14 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
     try {
       if (isMember) {
         // Remove member
-        await fetch(`/api/teams/${selectedGroupForMembers.id}/members/${userId}`, {
+        const res = await fetch(`/api/teams/${selectedGroupForMembers.id}/members/${userId}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
       } else {
         // Add member
-        await fetch(`/api/teams/${selectedGroupForMembers.id}/members`, {
+        const res = await fetch(`/api/teams/${selectedGroupForMembers.id}/members`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -302,10 +305,12 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
           },
           body: JSON.stringify({ userId, role: 'member' }),
         });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
       }
     } catch (error) {
       console.error('Failed to update team member:', error);
-      // Continue with local update
+      toast.error('Failed to update team member');
+      return;
     }
 
     // Update local state
@@ -361,18 +366,6 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
     return GROUP_COLORS.find((c) => c.id === colorId) || GROUP_COLORS[0];
   };
 
-  const getMemberNames = (memberIds: string[]) => {
-    return (
-      memberIds
-        .map((id: string) => {
-          const user = users.find((u) => u.id === id);
-          return user ? `${user.firstName} ${user.lastName}` : 'Unknown';
-        })
-        .slice(0, 3)
-        .join(', ') + (memberIds.length > 3 ? ` +${memberIds.length - 3} more` : '')
-    );
-  };
-
   const filteredGroups = groups.filter(
     (g: any) =>
       g.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -404,12 +397,15 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
         </div>
         <button
           onClick={openCreateModal}
+          disabled={!!loadError}
           className="flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
         >
           <Plus size={18} />
           Create Team
         </button>
       </div>
+
+      {loadError && <DegradedState title="Teams unavailable" description={loadError} />}
 
       {/* Info Banner - How teams work */}
       <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-start gap-3">
@@ -438,12 +434,17 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search teams..."
+          disabled={!!loadError}
           className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white"
         />
       </div>
 
       {/* Teams List */}
-      {filteredGroups.length === 0 ? (
+      {loadError ? (
+        <div className="p-6 bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
+          <DegradedState title="Team list unavailable" description={loadError} />
+        </div>
+      ) : filteredGroups.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700">
           <UsersRound className="w-12 h-12 text-slate-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">No Teams</h3>
@@ -452,6 +453,7 @@ export const UserGroupsView: React.FC<UserGroupsViewProps> = ({ className = '' }
           </p>
           <button
             onClick={openCreateModal}
+            disabled={!!loadError}
             className="px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg font-medium"
           >
             Create Team

@@ -31,6 +31,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { Project, User } from '../../types';
+import { ReadOnlyState } from '../Admin/AdminState';
 
 interface NotificationRule {
   id: string;
@@ -91,6 +92,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
   const [newKeyword, setNewKeyword] = useState('');
   const [showAddRule, setShowAddRule] = useState(false);
   const [newRuleProjectId, setNewRuleProjectId] = useState('');
+  const isReadOnly = true;
 
   useEffect(() => {
     fetchData();
@@ -155,16 +157,12 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
   };
 
   const handleSave = async () => {
-    try {
-      setSaving(true);
-      // API call would go here to save rules, digest settings, keywords
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
-      toast.success(t('settings.notifications.rulesSaved', 'Notification rules saved'));
-    } catch (error) {
-      toast.error(t('settings.notifications.saveError', 'Failed to save rules'));
-    } finally {
-      setSaving(false);
-    }
+    toast.error(
+      t(
+        'settings.notifications.readOnlySave',
+        'Notification rules are read-only until persistence is connected'
+      )
+    );
   };
 
   if (loading) {
@@ -191,6 +189,14 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
         </p>
       </div>
 
+      <ReadOnlyState
+        title={t('settings.notifications.readOnlyTitle', 'Notification rules are read-only')}
+        description={t(
+          'settings.notifications.readOnlyDescription',
+          'Project notification rules, digests, keywords, and VIP contacts are visible only until their persistence API is connected.'
+        )}
+      />
+
       {/* Per-Project Rules */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
@@ -200,6 +206,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           </h4>
           <button
             onClick={() => setShowAddRule(true)}
+            disabled={isReadOnly}
             className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:underline"
           >
             <Plus className="w-4 h-4" />
@@ -227,6 +234,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               {rule.id !== 'global' && (
                 <button
                   onClick={() => handleDeleteRule(rule.id)}
+                  disabled={isReadOnly}
                   className="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -244,6 +252,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                   <button
                     key={type}
                     onClick={() => handleUpdateRule(rule.id, { rule_type: type })}
+                    disabled={isReadOnly}
                     className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
                       rule.rule_type === type
                         ? 'bg-purple-600 text-white'
@@ -269,6 +278,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                     <input
                       type="checkbox"
                       checked={rule[option.key as keyof NotificationRule] as boolean}
+                      disabled={isReadOnly}
                       onChange={(e) =>
                         handleUpdateRule(rule.id, { [option.key]: e.target.checked })
                       }
@@ -291,6 +301,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 </label>
                 <select
                   value={rule.priority_filter}
+                  disabled={isReadOnly}
                   onChange={(e) =>
                     handleUpdateRule(rule.id, { priority_filter: e.target.value as any })
                   }
@@ -370,6 +381,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
           </div>
           <button
             onClick={() => setDigestSettings((prev) => ({ ...prev, enabled: !prev.enabled }))}
+            disabled={isReadOnly}
             className={`w-12 h-6 rounded-full transition-colors ${
               digestSettings.enabled ? 'bg-purple-600' : 'bg-slate-300 dark:bg-slate-600'
             }`}
@@ -390,6 +402,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               </label>
               <select
                 value={digestSettings.frequency}
+                disabled={isReadOnly}
                 onChange={(e) =>
                   setDigestSettings((prev) => ({ ...prev, frequency: e.target.value as any }))
                 }
@@ -409,6 +422,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
                 <input
                   type="time"
                   value={digestSettings.preferred_time}
+                  disabled={isReadOnly}
                   onChange={(e) =>
                     setDigestSettings((prev) => ({ ...prev, preferred_time: e.target.value }))
                   }
@@ -461,11 +475,12 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
               onChange={(e) => setNewKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAddKeyword()}
               placeholder="Add keyword..."
+              disabled={isReadOnly}
               className="px-3 py-1 border border-slate-200 dark:border-navy-700 rounded-full text-sm bg-white dark:bg-navy-950 text-slate-900 dark:text-white w-32"
             />
             <button
               onClick={handleAddKeyword}
-              disabled={!newKeyword.trim()}
+              disabled={isReadOnly || !newKeyword.trim()}
               className="p-1 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-500/10 rounded-full disabled:opacity-50"
             >
               <Plus className="w-4 h-4" />
@@ -505,7 +520,7 @@ export const NotificationRulesBuilder: React.FC<NotificationRulesBuilderProps> =
       <div className="flex justify-end pt-4">
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || isReadOnly}
           className="flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-xl font-medium transition-colors disabled:opacity-50"
         >
           {saving ? (

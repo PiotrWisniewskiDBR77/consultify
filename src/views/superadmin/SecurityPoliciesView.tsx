@@ -12,7 +12,6 @@
  */
 
 import {
-  AlertTriangle,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -20,10 +19,8 @@ import {
   Database,
   Globe,
   Info,
-  Key,
   Loader2,
   Lock,
-  MapPin,
   Plus,
   RefreshCw,
   Save,
@@ -32,11 +29,10 @@ import {
   ShieldCheck,
   Smartphone,
   Trash2,
-  Users,
-  XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 
@@ -106,11 +102,12 @@ export const SecurityPoliciesView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('global');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [dataGovLoadError, setDataGovLoadError] = useState<string | null>(null);
   const [globalPolicy, setGlobalPolicy] = useState<SecurityPolicy | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null);
   const [selectedPolicy, setSelectedPolicy] = useState<SecurityPolicy | null>(null);
-  const [lockouts, setLockouts] = useState<any[]>([]);
 
   // IP input states
   const [newAllowlistIP, setNewAllowlistIP] = useState('');
@@ -129,6 +126,8 @@ export const SecurityPoliciesView: React.FC = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
+    setDataGovLoadError(null);
     try {
       const globalResult = await Api.get('/security-policies/defaults');
       setGlobalPolicy(globalResult.policy);
@@ -148,18 +147,24 @@ export const SecurityPoliciesView: React.FC = () => {
       }));
       setOrganizations(orgsWithPolicy);
 
-      setLockouts([]);
-
       // V4-ENT-04: Data governance (org policies)
       try {
         const { policies } = await Api.getOrgPolicies();
         setDataGovPolicies(policies || []);
       } catch (error) {
         console.warn('[SecurityPoliciesView] Failed to fetch org data governance policies', error);
+        setDataGovLoadError(
+          error instanceof Error ? error.message : 'Failed to fetch org data governance policies'
+        );
         setDataGovPolicies([]);
       }
     } catch (error) {
       console.error('Failed to fetch security data:', error);
+      setLoadError(error instanceof Error ? error.message : 'Failed to fetch security policies');
+      setGlobalPolicy(null);
+      setOrganizations([]);
+      setOrgPoliciesMap(new Map());
+      setDataGovPolicies([]);
     } finally {
       setLoading(false);
     }
@@ -199,15 +204,6 @@ export const SecurityPoliciesView: React.FC = () => {
       console.error('Failed to apply preset:', error);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleUnlockAccount = async (email: string) => {
-    try {
-      await Api.post('/security-policies/unlock-account', { email });
-      await fetchData();
-    } catch (error) {
-      console.error('Failed to unlock account:', error);
     }
   };
 
@@ -798,43 +794,52 @@ export const SecurityPoliciesView: React.FC = () => {
         </div>
       </div>
 
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Organization
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Retention (days)
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Legal Hold
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Residency Region
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {organizations.map((org) => {
-              const policy = dataGovPolicies.find((p) => p.organization_id === org.id);
-              return (
-                <DataGovRow
-                  key={org.id}
-                  org={org}
-                  policy={policy ?? null}
-                  saving={saving}
-                  onSave={handleSaveDataGovPolicy}
-                />
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+      {dataGovLoadError ? (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+          <DegradedState
+            title="Data governance policies unavailable"
+            description={dataGovLoadError}
+          />
+        </div>
+      ) : (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-200 dark:border-navy-700">
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Organization
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Retention (days)
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Legal Hold
+                </th>
+                <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Residency Region
+                </th>
+                <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+              {organizations.map((org) => {
+                const policy = dataGovPolicies.find((p) => p.organization_id === org.id);
+                return (
+                  <DataGovRow
+                    key={org.id}
+                    org={org}
+                    policy={policy ?? null}
+                    saving={saving}
+                    onSave={handleSaveDataGovPolicy}
+                  />
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 
@@ -954,77 +959,11 @@ export const SecurityPoliciesView: React.FC = () => {
 
   const renderLockoutsTab = () => (
     <div className="space-y-6">
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                User
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Reason
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                IP Address
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Locked At
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Expires
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {lockouts.map((lockout) => (
-              <tr key={lockout.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                <td className="px-6 py-4">
-                  <span className="font-medium text-slate-900 dark:text-white">
-                    {lockout.user_email}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="px-2 py-1 rounded text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400">
-                    {lockout.reason}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400 font-mono">
-                  {lockout.ip_address}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                  {new Date(lockout.locked_at).toLocaleString()}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                  {lockout.expires_at
-                    ? new Date(lockout.expires_at).toLocaleString()
-                    : 'Manual unlock required'}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <button
-                    onClick={() => handleUnlockAccount(lockout.user_email)}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
-                  >
-                    Unlock
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {lockouts.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
-                  <div className="text-slate-500 dark:text-slate-400">
-                    <Lock size={40} className="mx-auto mb-3 opacity-30" />
-                    <p className="font-medium">No locked accounts</p>
-                    <p className="text-sm">All accounts are accessible</p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+        <ReadOnlyState
+          title="Account lockout list unavailable"
+          description="The unlock endpoint exists, but this view does not currently load an audited account-lockout list. Showing 'No locked accounts' here would be misleading."
+        />
       </div>
     </div>
   );
@@ -1089,6 +1028,10 @@ export const SecurityPoliciesView: React.FC = () => {
       {loading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 size={32} className="animate-spin text-violet-500" />
+        </div>
+      ) : loadError ? (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+          <DegradedState title="Security policies unavailable" description={loadError} />
         </div>
       ) : (
         <>

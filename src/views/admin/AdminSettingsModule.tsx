@@ -1,19 +1,12 @@
-import { Menu, MoveRight, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { AdminAIControlCenterPanel } from '../../components/Admin/AdminAIControlCenterPanel';
-import { AdminAuditLogPanel } from '../../components/Admin/AdminAuditLogPanel';
-import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
-import { AdminEnterpriseOverviewPanel } from '../../components/Admin/AdminEnterpriseOverviewPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
-import { AdminOrganizationOperationsPanel } from '../../components/Admin/AdminOrganizationOperationsPanel';
-import { AdminSecurityIdentityPanel } from '../../components/Admin/AdminSecurityIdentityPanel';
 import {
   AdminSettingsSection,
   AdminSettingsSidebar,
 } from '../../components/Admin/AdminSettingsSidebar';
-import { UnifiedSyncHub } from '../../components/Admin/UnifiedSyncHub';
 import { Button } from '../../components/ui/primitives/Button';
 import { ScrollArea } from '../../components/ui/scroll-area';
 import { cn } from '../../lib/utils';
@@ -26,106 +19,41 @@ interface AdminSettingsModuleProps {
   currentUser: User;
 }
 
-const PRIMARY_SECTIONS: AdminSettingsSection[] = [
-  'overview',
-  'people',
-  'security',
-  'billing',
-  'ai',
-  'integrations',
-  'audit',
-  'operations',
-];
-
-const LEGACY_HANDOFFS: Record<
-  string,
-  { title: string; description: string; targetPath: string; targetLabel: string }
-> = {
-  organization: {
-    title: 'Deep organization profile stays available outside Admin',
-    description:
-      'P32 now owns tenant operations, but the business profile workspace remains available for deeper organizational context editing.',
-    targetPath: ROUTES.ORGANIZATION.PROFILE,
-    targetLabel: 'Open Organization profile',
-  },
-  feedback: {
-    title: 'Feedback is outside the tenant admin command center',
-    description:
-      'Operational tenant administration is handled in P32, while feedback remains a separate product workflow.',
-    targetPath: ROUTES.ADMIN.OVERVIEW,
-    targetLabel: 'Open Admin overview',
-  },
-};
+const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people'];
 
 const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
-  overview: {
-    title: 'Overview',
-    subtitle:
-      'Enterprise command center for tenant posture across people, security, billing, AI, and risk.',
-  },
   people: {
-    title: 'People & Access',
-    subtitle:
-      'Membership operations, role changes, ownership transfer, and tenant access governance.',
-  },
-  security: {
-    title: 'Security & Identity',
-    subtitle:
-      'Tenant-level MFA, SSO, collaboration controls, API access, and delegated IAM posture.',
-  },
-  billing: {
-    title: 'Billing, Limits & FinOps',
-    subtitle: 'Plans, commercial posture, quota usage, and spend controls for the tenant.',
-  },
-  ai: {
-    title: 'AI Governance & Operations',
-    subtitle: 'Model policy, AI settings, health posture, and token economy in one place.',
-  },
-  integrations: {
-    title: 'Integrations & Sync',
-    subtitle: 'Connector health, remediation, and ownership-aware sync operations.',
-  },
-  audit: {
-    title: 'Audit, Compliance & Risk',
-    subtitle: 'Admin events, risk visibility, and evidence posture for high-risk actions.',
-  },
-  operations: {
-    title: 'Organization Operations',
-    subtitle: 'Domains, branding, competencies, and tenant operational surfaces managed from P32.',
+    title: 'Team & Access',
+    subtitle: 'Membership operations, role changes, ownership transfer, and team invite codes.',
   },
 };
 
 const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
+  overview: 'people',
   members: 'people',
   team: 'people',
   users: 'people',
-  workspace: 'operations',
-  organization: 'operations',
-  branding: 'operations',
-  domains: 'operations',
-  competencies: 'operations',
-  governance: 'security',
-  collaboration: 'security',
-  api: 'security',
-  billing: 'billing',
-  payment: 'billing',
-  tax: 'billing',
-  alerts: 'billing',
-  ai: 'ai',
-  llm: 'ai',
-  'token-management': 'ai',
-  'sync-hub': 'integrations',
-  compliance: 'audit',
+  people: 'people',
+  access: 'people',
+  security: 'people',
+  billing: 'people',
+  ai: 'people',
+  integrations: 'people',
+  audit: 'people',
+  operations: 'people',
+  workspace: 'people',
+  organization: 'people',
+  feedback: 'people',
 };
 
 function resolveAdminState(
   pathname: string,
   search: string,
   initialTab?: AdminSettingsSection
-): { section: AdminSettingsSection; legacyKey?: string } {
+): { section: AdminSettingsSection } {
   const pathSegment = pathname.replace(/^\/admin\/?/, '').split('/')[0];
   const tabParam = new URLSearchParams(search).get('tab') || '';
-  const candidate = pathSegment || tabParam || initialTab || 'members';
+  const candidate = pathSegment || tabParam || initialTab || 'people';
 
   if (PRIMARY_SECTIONS.includes(candidate as AdminSettingsSection)) {
     return { section: candidate as AdminSettingsSection };
@@ -135,35 +63,8 @@ function resolveAdminState(
     return { section: SECTION_ALIASES[candidate] };
   }
 
-  if (candidate && LEGACY_HANDOFFS[candidate]) {
-    return { section: 'overview', legacyKey: candidate };
-  }
-
-  return { section: initialTab && PRIMARY_SECTIONS.includes(initialTab) ? initialTab : 'overview' };
+  return { section: initialTab && PRIMARY_SECTIONS.includes(initialTab) ? initialTab : 'people' };
 }
-
-const LegacyAdminHandoffPanel: React.FC<{
-  title: string;
-  description: string;
-  targetPath: string;
-  targetLabel: string;
-}> = ({ title, description, targetPath, targetLabel }) => {
-  const navigate = useNavigate();
-
-  return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-white/5">
-      <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h3>
-      <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">{description}</p>
-      <button
-        onClick={() => navigate(targetPath)}
-        className="mt-5 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white"
-      >
-        {targetLabel}
-        <MoveRight className="h-4 w-4" />
-      </button>
-    </div>
-  );
-};
 
 export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   initialTab,
@@ -193,29 +94,11 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
   }, [navigate, setCurrentView]);
 
   const content = useMemo(() => {
-    if (resolvedState.legacyKey) {
-      return <LegacyAdminHandoffPanel {...LEGACY_HANDOFFS[resolvedState.legacyKey]} />;
-    }
-
     switch (resolvedState.section) {
-      case 'overview':
-        return <AdminEnterpriseOverviewPanel />;
       case 'people':
         return <AdminMembersRolesPanel />;
-      case 'security':
-        return <AdminSecurityIdentityPanel />;
-      case 'billing':
-        return <AdminBillingFinOpsPanel />;
-      case 'ai':
-        return <AdminAIControlCenterPanel />;
-      case 'integrations':
-        return <UnifiedSyncHub />;
-      case 'audit':
-        return <AdminAuditLogPanel />;
-      case 'operations':
-        return <AdminOrganizationOperationsPanel />;
       default:
-        return null;
+        return <AdminMembersRolesPanel />;
     }
   }, [resolvedState]);
 
@@ -258,14 +141,10 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
 
         <ScrollArea className="flex-1">
           <div className="space-y-4 p-3 lg:p-4">
-            {!resolvedState.legacyKey && (
-              <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
-                <h1 className="text-xl font-semibold text-slate-900 dark:text-white">
-                  {meta.title}
-                </h1>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{meta.subtitle}</p>
-              </div>
-            )}
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
+              <h1 className="text-xl font-semibold text-slate-900 dark:text-white">{meta.title}</h1>
+              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{meta.subtitle}</p>
+            </div>
             {content}
           </div>
         </ScrollArea>

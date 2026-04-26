@@ -8,35 +8,33 @@
  * - Trusted devices
  */
 
-import {
-  AlertTriangle,
-  Check,
-  Copy,
-  Key,
-  Loader2,
-  Mail,
-  Phone,
-  RefreshCw,
-  Shield,
-  Smartphone,
-  Trash2,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Check, Copy, Key, Mail, Phone, Shield, Smartphone, Trash2 } from 'lucide-react';
+import React from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '../../services/api';
 import { User } from '../../types';
+import { ReadOnlyState } from '../Admin/AdminState';
 
-interface RecoverySettings {
-  backup_email: string | null;
-  backup_email_verified: boolean;
-  phone_number: string | null;
-  phone_verified: boolean;
-  recovery_codes_generated: boolean;
-  recovery_codes_remaining: number;
-  trusted_devices: TrustedDevice[];
-}
+const recoveryUnavailableReason =
+  'Recovery email, phone, backup codes, and trusted device changes are read-only until the recovery backend is connected.';
+
+const trustedDevices: TrustedDevice[] = [
+  {
+    id: '1',
+    name: 'Chrome on MacOS',
+    browser: 'Chrome 120',
+    last_used: '2 hours ago',
+    is_current: true,
+  },
+  {
+    id: '2',
+    name: 'Safari on iPhone',
+    browser: 'Safari 17',
+    last_used: '1 day ago',
+    is_current: false,
+  },
+];
 
 interface TrustedDevice {
   id: string;
@@ -51,116 +49,12 @@ interface AccountRecoverySettingsProps {
 }
 
 export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = ({
-  currentUser,
+  currentUser: _currentUser,
 }) => {
   const { t } = useTranslation();
-  const [loading, setLoading] = useState(false);
-  const [backupEmail, setBackupEmail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [showRecoveryCodes, setShowRecoveryCodes] = useState(false);
-  const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
-  const [generatingCodes, setGeneratingCodes] = useState(false);
-  const [trustedDevices, setTrustedDevices] = useState<TrustedDevice[]>([
-    {
-      id: '1',
-      name: 'Chrome on MacOS',
-      browser: 'Chrome 120',
-      last_used: '2 hours ago',
-      is_current: true,
-    },
-    {
-      id: '2',
-      name: 'Safari on iPhone',
-      browser: 'Safari 17',
-      last_used: '1 day ago',
-      is_current: false,
-    },
-  ]);
-  const [verifyingEmail, setVerifyingEmail] = useState(false);
-  const [verifyingPhone, setVerifyingPhone] = useState(false);
 
-  const handleSaveBackupEmail = async () => {
-    if (!backupEmail || backupEmail === currentUser.email) {
-      toast.error(t('settings.recovery.differentEmail', 'Please use a different email address'));
-      return;
-    }
-
-    try {
-      setVerifyingEmail(true);
-      // API call would go here
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
-      toast.success(t('settings.recovery.emailSaved', 'Verification email sent'));
-    } catch (error) {
-      toast.error(t('settings.recovery.emailError', 'Failed to save backup email'));
-    } finally {
-      setVerifyingEmail(false);
-    }
-  };
-
-  const handleSavePhone = async () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
-      toast.error(t('settings.recovery.validPhone', 'Please enter a valid phone number'));
-      return;
-    }
-
-    try {
-      setVerifyingPhone(true);
-      // API call would go here
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
-      toast.success(t('settings.recovery.phoneSaved', 'Verification code sent'));
-    } catch (error) {
-      toast.error(t('settings.recovery.phoneError', 'Failed to save phone number'));
-    } finally {
-      setVerifyingPhone(false);
-    }
-  };
-
-  const handleGenerateRecoveryCodes = async () => {
-    try {
-      setGeneratingCodes(true);
-      // API call would go here
-      await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulated
-      const codes = [
-        'XXXX-XXXX-XXXX',
-        'YYYY-YYYY-YYYY',
-        'ZZZZ-ZZZZ-ZZZZ',
-        'AAAA-AAAA-AAAA',
-        'BBBB-BBBB-BBBB',
-        'CCCC-CCCC-CCCC',
-        'DDDD-DDDD-DDDD',
-        'EEEE-EEEE-EEEE',
-      ].map(() => {
-        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-        let code = '';
-        for (let i = 0; i < 12; i++) {
-          if (i > 0 && i % 4 === 0) code += '-';
-          code += chars[Math.floor(Math.random() * chars.length)];
-        }
-        return code;
-      });
-      setRecoveryCodes(codes);
-      setShowRecoveryCodes(true);
-      toast.success(t('settings.recovery.codesGenerated', 'Recovery codes generated'));
-    } catch (error) {
-      toast.error(t('settings.recovery.codesError', 'Failed to generate codes'));
-    } finally {
-      setGeneratingCodes(false);
-    }
-  };
-
-  const handleCopyCodes = () => {
-    navigator.clipboard.writeText(recoveryCodes.join('\n'));
-    toast.success(t('settings.recovery.codesCopied', 'Recovery codes copied to clipboard'));
-  };
-
-  const handleRemoveTrustedDevice = async (deviceId: string) => {
-    try {
-      // API call would go here
-      setTrustedDevices((prev) => prev.filter((d) => d.id !== deviceId));
-      toast.success(t('settings.recovery.deviceRemoved', 'Device removed'));
-    } catch (error) {
-      toast.error(t('settings.recovery.deviceRemoveError', 'Failed to remove device'));
-    }
+  const showUnavailableNotice = () => {
+    toast.error(t('settings.recovery.unavailable', recoveryUnavailableReason));
   };
 
   return (
@@ -178,6 +72,11 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
           )}
         </p>
       </div>
+
+      <ReadOnlyState
+        title={t('settings.recovery.readOnlyTitle', 'Recovery options unavailable')}
+        description={t('settings.recovery.readOnlyDescription', recoveryUnavailableReason)}
+      />
 
       {/* Backup Email */}
       <div className="p-4 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-navy-700 space-y-4">
@@ -201,21 +100,18 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
         <div className="flex gap-2">
           <input
             type="email"
-            value={backupEmail}
-            onChange={(e) => setBackupEmail(e.target.value)}
+            value=""
+            disabled
             placeholder={t('settings.recovery.enterBackupEmail', 'Enter backup email address')}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 placeholder-slate-400 disabled:cursor-not-allowed"
           />
           <button
-            onClick={handleSaveBackupEmail}
-            disabled={verifyingEmail || !backupEmail}
+            onClick={showUnavailableNotice}
+            disabled
+            title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
             className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
           >
-            {verifyingEmail ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Check className="w-4 h-4" />
-            )}
+            <Check className="w-4 h-4" />
             {t('common.verify', 'Verify')}
           </button>
         </div>
@@ -240,21 +136,18 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
         <div className="flex gap-2">
           <input
             type="tel"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
+            value=""
+            disabled
             placeholder={t('settings.recovery.enterPhone', '+1 (555) 123-4567')}
-            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-white dark:bg-navy-950 text-slate-900 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-purple-500"
+            className="flex-1 px-4 py-2.5 rounded-lg border border-slate-200 dark:border-navy-700 bg-slate-50 dark:bg-navy-950 text-slate-500 dark:text-slate-400 placeholder-slate-400 disabled:cursor-not-allowed"
           />
           <button
-            onClick={handleSavePhone}
-            disabled={verifyingPhone || !phoneNumber}
+            onClick={showUnavailableNotice}
+            disabled
+            title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
             className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium disabled:opacity-50 flex items-center gap-2"
           >
-            {verifyingPhone ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Check className="w-4 h-4" />
-            )}
+            <Check className="w-4 h-4" />
             {t('common.verify', 'Verify')}
           </button>
         </div>
@@ -280,54 +173,25 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
             </div>
           </div>
           <button
-            onClick={handleGenerateRecoveryCodes}
-            disabled={generatingCodes}
+            onClick={showUnavailableNotice}
+            disabled
+            title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
             className="px-4 py-2 bg-amber-100 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 rounded-lg font-medium hover:bg-amber-200 dark:hover:bg-amber-500/30 disabled:opacity-50 flex items-center gap-2"
           >
-            {generatingCodes ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
+            <Key className="w-4 h-4" />
             {t('settings.recovery.generateCodes', 'Generate New Codes')}
           </button>
         </div>
 
-        {showRecoveryCodes && recoveryCodes.length > 0 && (
-          <div className="mt-4 p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                {t('settings.recovery.saveThese', 'Save these codes in a secure place')}
-              </p>
-              <button
-                onClick={handleCopyCodes}
-                className="flex items-center gap-1 text-sm text-purple-600 dark:text-purple-400 hover:underline"
-              >
-                <Copy className="w-4 h-4" />
-                {t('common.copy', 'Copy')}
-              </button>
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              {recoveryCodes.map((code, index) => (
-                <code
-                  key={index}
-                  className="px-3 py-2 bg-white dark:bg-white/5 rounded text-sm font-mono text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-navy-700"
-                >
-                  {code}
-                </code>
-              ))}
-            </div>
-            <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-500/10 rounded-lg border border-amber-200 dark:border-amber-500/20">
-              <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5" />
-              <p className="text-sm text-amber-700 dark:text-amber-300">
-                {t(
-                  'settings.recovery.codesWarning',
-                  'Each code can only be used once. Store them securely and do not share them.'
-                )}
-              </p>
-            </div>
+        <div className="mt-4 p-4 bg-slate-50 dark:bg-navy-950 rounded-lg">
+          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <Copy className="w-4 h-4" />
+            {t(
+              'settings.recovery.codesUnavailable',
+              'Recovery codes are not generated in the browser. Connect the recovery backend before enabling this action.'
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Trusted Devices */}
@@ -373,8 +237,9 @@ export const AccountRecoverySettings: React.FC<AccountRecoverySettingsProps> = (
               </div>
               {!device.is_current && (
                 <button
-                  onClick={() => handleRemoveTrustedDevice(device.id)}
-                  className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg"
+                  disabled
+                  title={t('settings.recovery.unavailable', recoveryUnavailableReason)}
+                  className="p-2 text-slate-300 dark:text-slate-600 rounded-lg disabled:cursor-not-allowed"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
