@@ -15,7 +15,6 @@ import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
 import { ChatV9FlagsResetHandler } from './components/Admin/ChatV9FlagsResetHandler';
 import { PiiHeuristicToast } from './components/AIChat/PiiHeuristicToast';
 import { VoiceLegendShortcut } from './components/AIChat/VoiceLegendShortcut';
-import { BackToChatShortcut } from './components/navigation/BackToChatShortcut';
 import { RouterSync } from './components/RouterSync';
 import { ImpersonationBanner } from './components/shared/ImpersonationBanner';
 import { LoadingScreen } from './components/ui/LoadingScreen';
@@ -242,12 +241,6 @@ function AppContent() {
           the overlay listens to. Returns null for non-admins and for
           sessions with zero overrides — no chrome by default. */}
       <ChatV9FlagsIndicator />
-      {/* Chat V9 / NAV NAV-M1.1 — headless Alt+Shift+C shortcut that
-          triggers the same `returnToFullChat()` action. Shares the
-          same view / conversation gates as the button, plus a
-          focus-in-editable-element guard so it never hijacks typing.
-          Kill-switch: flag OFF detaches the listener entirely. */}
-      <BackToChatShortcut />
       {/* Chat V9 / VOICE VM3.1 — global Alt+Shift+V opens the voice-
           modes legend popover from anywhere. Headless; dispatches a
           `chat-v9-voice-legend:open` CustomEvent that the mounted
