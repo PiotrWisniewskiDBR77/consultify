@@ -4,17 +4,110 @@
  */
 
 import { MessageSquare, Plus } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+
+type SupportTicketRow = {
+  id: string;
+  ticket_number?: string;
+  subject?: string;
+  description?: string;
+  priority?: string;
+  status?: string;
+  created_at?: string | null;
+};
+
+type SupportTicketCommentRow = {
+  id: string;
+  isInternal?: boolean;
+  created_at?: string | null;
+  comment_text?: string;
+  commentText?: string;
+};
+
+const formatSupportDate = (value?: string | null, fallback = 'Unknown date') => {
+  if (!value) return fallback;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const getCreatedTicketId = (value: unknown) => {
+  if (!isRecord(value)) return '';
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const ticket = isRecord(value.ticket) ? value.ticket : null;
+  return String(
+    value.id ||
+      ticket?.id ||
+      data?.id ||
+      (isRecord(data?.ticket) ? data.ticket.id : '') ||
+      nestedData?.id ||
+      (isRecord(nestedData?.ticket) ? nestedData.ticket.id : '') ||
+      ''
+  );
+};
+
+const getCreatedCommentId = (value: unknown) => {
+  if (!isRecord(value)) return '';
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const comment = isRecord(value.comment) ? value.comment : null;
+  return String(
+    value.id ||
+      comment?.id ||
+      data?.id ||
+      (isRecord(data?.comment) ? data.comment.id : '') ||
+      nestedData?.id ||
+      (isRecord(nestedData?.comment) ? nestedData.comment.id : '') ||
+      ''
+  );
+};
 
 export const SupportTicketsView: React.FC = () => {
-  const [tickets, setTickets] = useState<any[]>([]);
+  const [tickets, setTickets] = useState<SupportTicketRow[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState<any | null>(null);
-  const [ticketComments, setTicketComments] = useState<any[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicketRow | null>(null);
+  const [ticketComments, setTicketComments] = useState<SupportTicketCommentRow[]>([]);
   const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentsLoadError, setCommentsLoadError] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState('');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [filters, setFilters] = useState({
@@ -24,6 +117,7 @@ export const SupportTicketsView: React.FC = () => {
   });
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [newTicket, setNewTicket] = useState({
     organizationId: '',
@@ -34,9 +128,31 @@ export const SupportTicketsView: React.FC = () => {
     category: '',
   });
 
-  useEffect(() => {
-    fetchTickets();
+  const fetchTickets = useCallback(async (): Promise<SupportTicketRow[] | null> => {
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await Api.getSupportTickets(filters);
+      if (!hasListShape(data, ['tickets', 'items'])) {
+        throw new Error('Support tickets response was not a list');
+      }
+      const normalized = getListPayload<SupportTicketRow>(data, ['tickets', 'items']);
+      setTickets(normalized);
+      return normalized;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch tickets');
+      setTickets([]);
+      setLoadError(message);
+      toast.error(message);
+      return null;
+    } finally {
+      setLoading(false);
+    }
   }, [filters]);
+
+  useEffect(() => {
+    void fetchTickets();
+  }, [fetchTickets]);
 
   useEffect(() => {
     if (!showDetailsModal || !selectedTicket?.id) {
@@ -47,11 +163,17 @@ export const SupportTicketsView: React.FC = () => {
 
     const loadComments = async () => {
       setCommentsLoading(true);
+      setCommentsLoadError(null);
       try {
         const comments = await Api.getSupportTicketComments(selectedTicket.id);
-        setTicketComments(Array.isArray(comments) ? comments : []);
-      } catch (err: any) {
-        toast.error(err?.message || 'Failed to load ticket comments');
+        if (!hasListShape(comments, ['comments', 'items'])) {
+          throw new Error('Ticket comments response was not a list');
+        }
+        setTicketComments(getListPayload<SupportTicketCommentRow>(comments, ['comments', 'items']));
+      } catch (err: unknown) {
+        const message = normalizeApiErrorMessage(err, 'Failed to load ticket comments');
+        toast.error(message);
+        setCommentsLoadError(message);
         setTicketComments([]);
       } finally {
         setCommentsLoading(false);
@@ -61,20 +183,6 @@ export const SupportTicketsView: React.FC = () => {
     void loadComments();
   }, [selectedTicket?.id, showDetailsModal]);
 
-  const fetchTickets = async () => {
-    setLoading(true);
-    setLoadError(null);
-    try {
-      const data = await Api.getSupportTickets(filters);
-      setTickets(data);
-    } catch (err: any) {
-      setLoadError(err?.message || 'Failed to fetch tickets');
-      toast.error(err?.message || 'Failed to fetch tickets');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCreateTicket = async () => {
     if (!newTicket.subject || !newTicket.description) {
       toast.error('Please fill in all required fields');
@@ -82,7 +190,18 @@ export const SupportTicketsView: React.FC = () => {
     }
     try {
       setCreating(true);
-      await Api.createSupportTicket(newTicket);
+      setActionError(null);
+      const result = await Api.createSupportTicket(newTicket);
+      const createdId = getCreatedTicketId(result);
+      const refreshed = await fetchTickets();
+      if (
+        !refreshed?.some(
+          (ticket) =>
+            (createdId && ticket.id === createdId) || ticket.subject === newTicket.subject.trim()
+        )
+      ) {
+        throw new Error('Support ticket creation was not confirmed by the server');
+      }
       toast.success('Ticket created');
       setShowCreateModal(false);
       setNewTicket({
@@ -93,9 +212,10 @@ export const SupportTicketsView: React.FC = () => {
         priority: 'medium',
         category: '',
       });
-      await fetchTickets();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create ticket');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to create ticket');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setCreating(false);
     }
@@ -108,15 +228,38 @@ export const SupportTicketsView: React.FC = () => {
     }
 
     try {
+      setActionError(null);
       const comment = await Api.addSupportTicketComment(selectedTicket.id, {
         commentText: commentDraft.trim(),
         isInternal: false,
       });
-      setTicketComments((current) => [...current, comment]);
+      const comments = await Api.getSupportTicketComments(selectedTicket.id);
+      if (!hasListShape(comments, ['comments', 'items'])) {
+        throw new Error('Ticket comments response was not a list');
+      }
+      const normalizedComments = getListPayload<SupportTicketCommentRow>(comments, [
+        'comments',
+        'items',
+      ]);
+      const createdCommentId = getCreatedCommentId(comment);
+      const expectedText = commentDraft.trim();
+      if (
+        !normalizedComments.some(
+          (item: SupportTicketCommentRow) =>
+            (createdCommentId && item.id === createdCommentId) ||
+            item.comment_text === expectedText ||
+            item.commentText === expectedText
+        )
+      ) {
+        throw new Error('Support ticket reply was not confirmed by the server');
+      }
+      setTicketComments(normalizedComments);
       setCommentDraft('');
       toast.success('Reply added');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to add reply');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to add reply');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -159,6 +302,7 @@ export const SupportTicketsView: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
+          disabled={Boolean(loadError)}
           className="px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white rounded-lg flex items-center gap-2"
         >
           <Plus size={18} />
@@ -166,9 +310,14 @@ export const SupportTicketsView: React.FC = () => {
         </button>
       </div>
 
-      {loadError && (
-        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
-          {loadError}
+      {loadError && <DegradedState title="Support tickets unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+        >
+          {actionError}
         </div>
       )}
 
@@ -198,7 +347,7 @@ export const SupportTicketsView: React.FC = () => {
 
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : (
+      ) : loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
@@ -242,20 +391,20 @@ export const SupportTicketsView: React.FC = () => {
                     <td className="px-6 py-4 text-slate-900 dark:text-white">{ticket.subject}</td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${getPriorityColor(ticket.priority)}`}
+                        className={`px-2 py-1 rounded text-xs ${getPriorityColor(ticket.priority || 'unknown')}`}
                       >
-                        {ticket.priority}
+                        {ticket.priority || 'unknown'}
                       </span>
                     </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded text-xs ${getStatusColor(ticket.status)}`}
+                        className={`px-2 py-1 rounded text-xs ${getStatusColor(ticket.status || 'unknown')}`}
                       >
-                        {ticket.status}
+                        {ticket.status || 'unknown'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {new Date(ticket.created_at).toLocaleDateString()}
+                      {formatSupportDate(ticket.created_at)}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <button
@@ -422,11 +571,7 @@ export const SupportTicketsView: React.FC = () => {
                   >
                     <div className="flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
                       <span>{comment.isInternal ? 'Internal note' : 'Reply'}</span>
-                      <span>
-                        {comment.created_at
-                          ? new Date(comment.created_at).toLocaleString()
-                          : 'Just now'}
-                      </span>
+                      <span>{formatSupportDate(comment.created_at, 'Just now')}</span>
                     </div>
                     <div className="mt-2 text-sm text-slate-900 dark:text-white whitespace-pre-wrap">
                       {comment.comment_text || comment.commentText}
@@ -435,7 +580,7 @@ export const SupportTicketsView: React.FC = () => {
                 ))
               ) : (
                 <div className="text-sm text-slate-500 dark:text-slate-400">
-                  No replies yet. Add the first response below.
+                  {commentsLoadError || 'No replies yet. Add the first response below.'}
                 </div>
               )}
 

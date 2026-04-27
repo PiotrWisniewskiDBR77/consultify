@@ -32,7 +32,7 @@ describe('EnterpriseBackupPanel', () => {
       expect(screen.getByText('Backup service unavailable')).toBeInTheDocument();
     });
 
-    expect(screen.getByText('Backup service not configured')).toBeInTheDocument();
+    expect(screen.getAllByText('Backup service not configured').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: /Create Backup/i })).toBeDisabled();
     expect(Api.getBackups).toHaveBeenCalled();
   });

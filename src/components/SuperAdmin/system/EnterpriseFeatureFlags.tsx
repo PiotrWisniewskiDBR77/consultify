@@ -35,6 +35,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 
 interface FeatureFlag {
@@ -66,17 +67,30 @@ interface Variant {
   id: string;
   name: string;
   weight: number;
-  value: any;
+  value: unknown;
 }
 
 interface FlagHistory {
   id: string;
   change_type: string;
-  old_value: any;
-  new_value: any;
+  old_value: unknown;
+  new_value: unknown;
   changed_by: string;
   changed_at: string;
 }
+
+type FeatureFlagFormData = Pick<
+  FeatureFlag,
+  | 'flag_key'
+  | 'name'
+  | 'description'
+  | 'enabled'
+  | 'flag_type'
+  | 'rollout_percentage'
+  | 'environment'
+  | 'targeting_rules'
+  | 'variants'
+>;
 
 const FLAG_TYPE_CONFIG = {
   boolean: {
@@ -91,6 +105,47 @@ const FLAG_TYPE_CONFIG = {
 };
 
 const ENVIRONMENTS = ['development', 'staging', 'production'];
+const fallbackFlagTypeConfig = {
+  icon: Flag,
+  color: 'text-slate-400',
+  bg: 'bg-slate-500/20',
+  label: 'Unknown',
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const normalizeFeatureFlags = (payload: unknown): FeatureFlag[] => {
+  if (Array.isArray(payload)) return payload as FeatureFlag[];
+  if (isRecord(payload)) {
+    if (Array.isArray(payload.flags)) return payload.flags as FeatureFlag[];
+    if (Array.isArray(payload.featureFlags)) return payload.featureFlags as FeatureFlag[];
+    if (Array.isArray(payload.data)) return payload.data as FeatureFlag[];
+  }
+  throw new Error('Feature flags response was not a list');
+};
+
+const getCreatedFeatureFlagId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const flag = isRecord(result.flag) ? result.flag : null;
+  return String(
+    result.id || flag?.id || data?.id || (isRecord(data?.flag) ? data.flag.id : '') || ''
+  );
+};
+
+const flagMatchesSave = (flag: FeatureFlag, expected: FeatureFlagFormData, id?: string) =>
+  (!id || flag.id === id) &&
+  flag.flag_key === expected.flag_key &&
+  flag.name === expected.name &&
+  flag.environment === expected.environment &&
+  flag.flag_type === expected.flag_type &&
+  flag.enabled === expected.enabled;
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+};
 
 export const EnterpriseFeatureFlags: React.FC = () => {
   const [flags, setFlags] = useState<FeatureFlag[]>([]);
@@ -104,22 +159,26 @@ export const EnterpriseFeatureFlags: React.FC = () => {
   const [selectedFlagHistory, setSelectedFlagHistory] = useState<string | null>(null);
   const [expandedFlag, setExpandedFlag] = useState<string | null>(null);
   const [testContext, setTestContext] = useState({ userId: '', email: '', orgId: '', role: '' });
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const fetchFlags = useCallback(async () => {
     setLoading(true);
     try {
-      const filters: any = {};
+      const filters: { environment?: string } = {};
       if (filterEnvironment !== 'all') {
         filters.environment = filterEnvironment;
       }
       const data = await Api.getFeatureFlags(filters);
-      setFlags(data);
+      const normalized = normalizeFeatureFlags(data);
+      setFlags(normalized);
       setLoadError(null);
+      return normalized;
     } catch (error) {
-      console.error('Failed to fetch feature flags:', error);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load feature flags');
+      const message = normalizeApiErrorMessage(error, 'Failed to load feature flags');
+      setLoadError(message);
       setFlags([]);
-      toast.error('Failed to load feature flags');
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -130,25 +189,67 @@ export const EnterpriseFeatureFlags: React.FC = () => {
   }, [fetchFlags]);
 
   const handleToggle = async (flag: FeatureFlag) => {
+    setActionError(null);
     try {
-      await Api.toggleFeatureFlag(flag.id, !flag.enabled);
-      toast.success(`Feature flag ${!flag.enabled ? 'enabled' : 'disabled'}`);
-      fetchFlags();
+      const expectedEnabled = !flag.enabled;
+      await Api.toggleFeatureFlag(flag.id, expectedEnabled);
+      const refreshed = await fetchFlags();
+      if (
+        !refreshed?.some(
+          (refreshedFlag) =>
+            refreshedFlag.id === flag.id && refreshedFlag.enabled === expectedEnabled
+        )
+      ) {
+        throw new Error('Feature flag toggle was not confirmed by the server');
+      }
+      toast.success(`Feature flag ${expectedEnabled ? 'enabled' : 'disabled'}`);
     } catch (error) {
-      toast.error('Failed to toggle feature flag');
+      const message = normalizeApiErrorMessage(error, 'Failed to toggle feature flag');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this feature flag?')) return;
 
+    setActionError(null);
     try {
       await Api.deleteFeatureFlag(id);
+      const refreshed = await fetchFlags();
+      if (!refreshed || refreshed.some((flag) => flag.id === id)) {
+        throw new Error('Feature flag deletion was not confirmed by the server');
+      }
       toast.success('Feature flag deleted');
-      fetchFlags();
     } catch (error) {
-      toast.error('Failed to delete feature flag');
+      const message = normalizeApiErrorMessage(error, 'Failed to delete feature flag');
+      setActionError(message);
+      toast.error(message);
     }
+  };
+
+  const handleSaved = async (
+    expected: FeatureFlagFormData,
+    flag?: FeatureFlag | null,
+    savedId?: string
+  ) => {
+    setActionError(null);
+    if (!flag && !savedId) {
+      const message = 'Feature flag creation response was incomplete';
+      setActionError(message);
+      throw new Error(message);
+    }
+    const refreshed = await fetchFlags();
+    const expectedId = flag?.id || savedId;
+    if (!refreshed?.some((refreshedFlag) => flagMatchesSave(refreshedFlag, expected, expectedId))) {
+      const message = flag
+        ? 'Feature flag update was not confirmed by the server'
+        : 'Feature flag creation was not confirmed by the server';
+      setActionError(message);
+      throw new Error(message);
+    }
+    setShowCreateModal(false);
+    setEditingFlag(null);
   };
 
   const handleCopyKey = (key: string) => {
@@ -303,6 +404,15 @@ export const EnterpriseFeatureFlags: React.FC = () => {
       </div>
 
       {/* Stats */}
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
+
       {loadError ? (
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
           <DegradedState title="Feature flag overview unavailable" description={loadError} />
@@ -464,7 +574,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
           </div>
         ) : (
           filteredFlags.map((flag) => {
-            const typeConfig = FLAG_TYPE_CONFIG[flag.flag_type];
+            const typeConfig = FLAG_TYPE_CONFIG[flag.flag_type] || fallbackFlagTypeConfig;
             const TypeIcon = typeConfig.icon;
             const isExpanded = expandedFlag === flag.id;
             const evaluation = evaluateFlag(flag);
@@ -694,13 +804,13 @@ export const EnterpriseFeatureFlags: React.FC = () => {
                         <div>
                           <span className="text-slate-500 dark:text-slate-400">Created</span>
                           <div className="text-slate-700 dark:text-slate-300">
-                            {new Date(flag.created_at).toLocaleDateString()}
+                            {formatDate(flag.created_at)}
                           </div>
                         </div>
                         <div>
                           <span className="text-slate-500 dark:text-slate-400">Updated</span>
                           <div className="text-slate-700 dark:text-slate-300">
-                            {new Date(flag.updated_at).toLocaleDateString()}
+                            {formatDate(flag.updated_at)}
                           </div>
                         </div>
                         {flag.organization_id && (
@@ -729,11 +839,7 @@ export const EnterpriseFeatureFlags: React.FC = () => {
             setShowCreateModal(false);
             setEditingFlag(null);
           }}
-          onSave={() => {
-            fetchFlags();
-            setShowCreateModal(false);
-            setEditingFlag(null);
-          }}
+          onSave={handleSaved}
         />
       )}
 
@@ -752,7 +858,11 @@ export const EnterpriseFeatureFlags: React.FC = () => {
 const FeatureFlagModal: React.FC<{
   flag?: FeatureFlag | null;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (
+    expected: FeatureFlagFormData,
+    flag?: FeatureFlag | null,
+    savedId?: string
+  ) => Promise<void>;
 }> = ({ flag, onClose, onSave }) => {
   const [formData, setFormData] = useState({
     flag_key: flag?.flag_key || '',
@@ -769,22 +879,27 @@ const FeatureFlagModal: React.FC<{
     ],
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSaveError(null);
 
     try {
+      let savedId = flag?.id;
       if (flag) {
         await Api.updateFeatureFlag(flag.id, formData);
-        toast.success('Feature flag updated');
       } else {
-        await Api.createFeatureFlag(formData);
-        toast.success('Feature flag created');
+        const result = await Api.createFeatureFlag(formData);
+        savedId = getCreatedFeatureFlagId(result);
       }
-      onSave();
+      await onSave(formData, flag, savedId);
+      toast.success(flag ? 'Feature flag updated' : 'Feature flag created');
     } catch (error) {
-      toast.error('Failed to save feature flag');
+      const message = normalizeApiErrorMessage(error, 'Failed to save feature flag');
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -806,6 +921,15 @@ const FeatureFlagModal: React.FC<{
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {saveError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-300"
+            >
+              {saveError}
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
@@ -832,6 +956,7 @@ const FeatureFlagModal: React.FC<{
               <input
                 type="text"
                 required
+                aria-label="Flag Name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
@@ -858,7 +983,12 @@ const FeatureFlagModal: React.FC<{
               </label>
               <select
                 value={formData.flag_type}
-                onChange={(e) => setFormData({ ...formData, flag_type: e.target.value as any })}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    flag_type: e.target.value as FeatureFlag['flag_type'],
+                  })
+                }
                 className="w-full px-3 py-2 bg-white dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100"
               >
                 {Object.entries(FLAG_TYPE_CONFIG).map(([key, config]) => (

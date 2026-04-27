@@ -34,10 +34,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 
 interface ApiKey {
   id: string;
+  organizationId?: string;
+  organizationName?: string;
   name: string;
   description?: string;
   key_prefix: string;
@@ -53,6 +56,88 @@ interface ApiKey {
   revoked_at?: string;
   created_at: string;
 }
+
+interface OrganizationOption {
+  id: string;
+  name: string;
+}
+
+type ApiKeyFormData = {
+  organizationId: string;
+  name: string;
+  description: string;
+  key_type: ApiKey['key_type'];
+  scopes: string[];
+  rate_limit_per_minute: number;
+  rate_limit_per_day: number;
+  allowed_ips: string[];
+  expires_at: string | null;
+};
+
+type UnknownRecord = Record<string, unknown>;
+
+const isRecord = (value: unknown): value is UnknownRecord =>
+  typeof value === 'object' && value !== null;
+
+const getString = (record: UnknownRecord, keys: string[], fallback = '') => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'string' && value.trim()) return value;
+  }
+  return fallback;
+};
+
+const getNumber = (record: UnknownRecord, keys: string[], fallback: number) => {
+  for (const key of keys) {
+    const value = record[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return fallback;
+};
+
+const getStringArray = (record: UnknownRecord, keys: string[]) => {
+  for (const key of keys) {
+    const value = record[key];
+    if (Array.isArray(value))
+      return value.filter((item): item is string => typeof item === 'string');
+  }
+  return [];
+};
+
+const normalizeApiKeyList = (payload: unknown) => {
+  if (Array.isArray(payload)) return payload;
+  if (isRecord(payload)) {
+    if (Array.isArray(payload.keys)) return payload.keys;
+    if (Array.isArray(payload.apiKeys)) return payload.apiKeys;
+    if (Array.isArray(payload.data)) return payload.data;
+    if (isRecord(payload.data)) {
+      const data = payload.data;
+      if (Array.isArray(data.keys)) return data.keys;
+      if (Array.isArray(data.apiKeys)) return data.apiKeys;
+    }
+  }
+  throw new Error('API keys response was not a list');
+};
+
+const getCreatedApiKeyId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const key = isRecord(result.key) ? result.key : null;
+  return String(result.id || key?.id || data?.id || (isRecord(data?.key) ? data.key.id : '') || '');
+};
+
+const getCreatedPlaintextKey = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  return (
+    getString(result, ['key', 'plaintextKey', 'apiKey']) ||
+    (data ? getString(data, ['key', 'plaintextKey', 'apiKey']) : '')
+  );
+};
 
 interface ApiKeyUsage {
   usage: Array<{
@@ -146,8 +231,10 @@ const KEY_TYPE_CONFIG = {
 export const EnterpriseApiManagement: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'keys' | 'usage' | 'docs'>('keys');
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [organizations, setOrganizations] = useState<OrganizationOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [organizationsLoadError, setOrganizationsLoadError] = useState<string | null>(null);
   const [usageLoadError, setUsageLoadError] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingKey, setEditingKey] = useState<ApiKey | null>(null);
@@ -158,41 +245,166 @@ export const EnterpriseApiManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [newKeyVisible, setNewKeyVisible] = useState<{ id: string; key: string } | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const normalizeApiKey = (raw: unknown): ApiKey => {
+    const record = isRecord(raw) ? raw : {};
+    const keyType = getString(record, ['key_type', 'keyType'], 'org') as ApiKey['key_type'];
+
+    return {
+      id: getString(record, ['id']),
+      organizationId: getString(record, ['organizationId', 'organization_id']),
+      organizationName: getString(record, ['organizationName', 'organization_name']),
+      name: getString(record, ['name'], 'Unnamed API key'),
+      description: getString(record, ['description']),
+      key_prefix: getString(record, ['key_prefix', 'keyPrefix']),
+      key_type: keyType === 'user' || keyType === 'service' ? keyType : 'org',
+      scopes: getStringArray(record, ['scopes']),
+      rate_limit_per_minute: getNumber(record, ['rate_limit_per_minute', 'rateLimitPerMinute'], 60),
+      rate_limit_per_day: getNumber(record, ['rate_limit_per_day', 'rateLimitPerDay'], 10000),
+      allowed_ips: getStringArray(record, ['allowed_ips', 'allowedIps']),
+      last_used_at: getString(record, ['last_used_at', 'lastUsedAt']),
+      usage_count: getNumber(record, ['usage_count', 'usageCount'], 0),
+      expires_at: getString(record, ['expires_at', 'expiresAt']),
+      is_active:
+        record.is_active === undefined
+          ? Boolean(record.isActive ?? true)
+          : Boolean(record.is_active),
+      revoked_at: getString(record, ['revoked_at', 'revokedAt']),
+      created_at: getString(record, ['created_at', 'createdAt']),
+    };
+  };
+
+  const normalizeUsage = (raw: unknown): ApiKeyUsage => {
+    const record = isRecord(raw) ? raw : {};
+    const usageRows = Array.isArray(record.usage)
+      ? record.usage
+      : Array.isArray(record.daily)
+        ? record.daily
+        : [];
+    const totals = isRecord(record.totals) ? record.totals : {};
+
+    return {
+      usage: usageRows.map((day) => {
+        const dayRecord = isRecord(day) ? day : {};
+        const requests = getNumber(dayRecord, ['requests'], 0);
+        const errors = getNumber(dayRecord, ['failed', 'errors'], 0);
+        return {
+          date: getString(dayRecord, ['date']),
+          requests,
+          successful: Math.max(0, requests - errors),
+          failed: errors,
+          avg_response_time: getNumber(dayRecord, ['avg_response_time'], 0),
+        };
+      }),
+      totals: {
+        total_requests: getNumber(totals, ['total_requests'], 0),
+        avg_response_time: getNumber(totals, ['avg_response_time'], 0),
+        total_errors: getNumber(totals, ['total_errors'], 0),
+      },
+      endpoints: (Array.isArray(record.endpoints) ? record.endpoints : []).map((endpoint) => {
+        const endpointRecord = isRecord(endpoint) ? endpoint : {};
+        return {
+          endpoint: getString(endpointRecord, ['endpoint']),
+          method: getString(endpointRecord, ['method'], 'GET'),
+          count: getNumber(endpointRecord, ['count', 'requests'], 0),
+        };
+      }),
+    };
+  };
+
+  const formatDate = (value?: string) => {
+    if (!value) return 'Never';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  };
 
   const fetchApiKeys = useCallback(async () => {
     setLoading(true);
     try {
       setLoadError(null);
-      const data = await Api.getApiKeys();
-      setApiKeys(data);
-    } catch (error) {
-      console.error('Failed to fetch API keys:', error);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load API keys');
+      const data = await Api.get('/superadmin/api-keys');
+      const normalized = normalizeApiKeyList(data).map(normalizeApiKey);
+      setApiKeys(normalized);
+      return normalized;
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load API keys'));
       setApiKeys([]);
-      toast.error('Failed to load API keys');
+      toast.error(normalizeApiErrorMessage(error, 'Failed to load API keys'));
+      return null;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    fetchApiKeys();
-  }, [fetchApiKeys]);
-
-  const handleCreateKey = async (formData: any) => {
+  const fetchOrganizations = useCallback(async () => {
     try {
+      setOrganizationsLoadError(null);
+      const data = await Api.getOrganizations();
+      const dataRecord: UnknownRecord = isRecord(data) ? data : {};
+      const list = Array.isArray(data) ? data : dataRecord.organizations;
+      setOrganizations(
+        (Array.isArray(list) ? list : [])
+          .map((org) => {
+            const orgRecord = isRecord(org) ? org : {};
+            return {
+              id: getString(orgRecord, ['id']),
+              name: getString(orgRecord, ['name', 'id']),
+            };
+          })
+          .filter((org) => org.id)
+      );
+    } catch (error: unknown) {
+      setOrganizations([]);
+      setOrganizationsLoadError(
+        normalizeApiErrorMessage(error, 'Organizations are required to create API keys')
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchApiKeys();
+    void fetchOrganizations();
+  }, [fetchApiKeys, fetchOrganizations]);
+
+  const handleCreateKey = async (formData: ApiKeyFormData) => {
+    try {
+      setActionError(null);
       if (editingKey) {
-        await (Api as any).updateApiKey(editingKey.id, formData);
+        toast.error(
+          'API key editing is read-only until the superadmin update workflow is connected'
+        );
+        return;
       } else {
-        await (Api as any).createUserApiKey(formData.name, formData.scopes);
+        const result = await Api.post('/superadmin/api-keys', {
+          organizationId: formData.organizationId,
+          name: formData.name,
+          description: formData.description,
+          keyType: formData.key_type,
+          scopes: formData.scopes,
+          rateLimitPerMinute: formData.rate_limit_per_minute,
+          rateLimitPerDay: formData.rate_limit_per_day,
+          allowedIps: formData.allowed_ips,
+          expiresAt: formData.expires_at,
+        });
+        const createdId = getCreatedApiKeyId(result);
+        const plaintextKey = getCreatedPlaintextKey(result);
+        if (!createdId || !plaintextKey) {
+          throw new Error('API key creation response was incomplete');
+        }
+        const refreshed = await fetchApiKeys();
+        if (!refreshed?.some((key) => key.id === createdId)) {
+          throw new Error('API key creation was not confirmed by the server');
+        }
+        setNewKeyVisible({ id: createdId, key: plaintextKey });
       }
       toast.success('API key saved successfully');
       setShowCreateModal(false);
       setEditingKey(null);
-      fetchApiKeys();
-    } catch (error) {
-      console.error('Failed to save API key:', error);
-      toast.error('Failed to save API key');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to save API key');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -201,25 +413,33 @@ export const EnterpriseApiManagement: React.FC = () => {
       return;
 
     try {
-      await (Api as any).revokeApiKey(id);
+      setActionError(null);
+      await Api.delete(`/superadmin/api-keys/${id}`);
+      const refreshed = await fetchApiKeys();
+      if (
+        !refreshed ||
+        refreshed.some((key) => key.id === id && !key.revoked_at && key.is_active)
+      ) {
+        throw new Error('API key revoke was not confirmed by the server');
+      }
       toast.success('API key revoked');
-      fetchApiKeys();
-    } catch (error) {
-      console.error('Failed to revoke API key:', error);
-      toast.error('Failed to revoke API key');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to revoke API key');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleViewUsage = async (key: ApiKey) => {
     try {
       setUsageLoadError(null);
-      const usage = await Api.getApiKeyUsage(key.id);
-      setSelectedKeyUsage({ key, usage: usage as any });
-    } catch (error) {
-      console.error('Failed to fetch usage:', error);
-      setUsageLoadError(error instanceof Error ? error.message : 'Failed to load usage data');
+      const usage = await Api.get(`/superadmin/api-keys/${key.id}/usage`);
+      setSelectedKeyUsage({ key, usage: normalizeUsage(usage) });
+      setActiveTab('usage');
+    } catch (error: unknown) {
+      setUsageLoadError(normalizeApiErrorMessage(error, 'Failed to load usage data'));
       setSelectedKeyUsage(null);
-      toast.error('Failed to load usage data');
+      toast.error(normalizeApiErrorMessage(error, 'Failed to load usage data'));
     }
   };
 
@@ -247,13 +467,23 @@ export const EnterpriseApiManagement: React.FC = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          disabled={!!loadError}
+          disabled={!!loadError || !!organizationsLoadError || organizations.length === 0}
+          title={loadError || organizationsLoadError || undefined}
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4" />
           Create API Key
         </button>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* New Key Alert */}
       {newKeyVisible && (
@@ -302,7 +532,7 @@ export const EnterpriseApiManagement: React.FC = () => {
         ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id as 'keys' | 'usage' | 'docs')}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
                 ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-purple-500'
@@ -393,15 +623,20 @@ export const EnterpriseApiManagement: React.FC = () => {
                         <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                           <span>{key.scopes.length} scopes</span>
                           <span>•</span>
+                          {key.organizationName && (
+                            <>
+                              <span>•</span>
+                              <span>{key.organizationName}</span>
+                            </>
+                          )}
+                          <span>•</span>
                           <span>{key.rate_limit_per_minute}/min</span>
                           <span>•</span>
                           <span>{key.usage_count.toLocaleString()} requests</span>
                           {key.last_used_at && (
                             <>
                               <span>•</span>
-                              <span>
-                                Last used: {new Date(key.last_used_at).toLocaleDateString()}
-                              </span>
+                              <span>Last used: {formatDate(key.last_used_at)}</span>
                             </>
                           )}
                         </div>
@@ -418,9 +653,9 @@ export const EnterpriseApiManagement: React.FC = () => {
                             <BarChart3 className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                           </button>
                           <button
-                            onClick={() => setEditingKey(key)}
-                            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                            title="Edit"
+                            disabled
+                            className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                            title="API key editing requires an audited superadmin update workflow."
                           >
                             <Edit className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                           </button>
@@ -541,13 +776,11 @@ export const EnterpriseApiManagement: React.FC = () => {
                         <div
                           className="w-full bg-gradient-to-t from-purple-500 to-purple-400 rounded-t-sm"
                           style={{
-                            height: `${Math.max(5, (day.requests / Math.max(...selectedKeyUsage.usage.usage.map((d) => d.requests))) * 100)}%`,
+                            height: `${Math.max(5, (day.requests / Math.max(1, ...selectedKeyUsage.usage.usage.map((d) => d.requests))) * 100)}%`,
                           }}
                         />
                         <div className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-                          {new Date(day.date).toLocaleDateString('en-US', {
-                            weekday: 'short',
-                          })}
+                          {formatDate(day.date)}
                         </div>
                       </div>
                     ))
@@ -737,6 +970,7 @@ export const EnterpriseApiManagement: React.FC = () => {
           }}
           onSave={handleCreateKey}
           availableScopes={AVAILABLE_SCOPES}
+          organizations={organizations}
         />
       )}
     </div>
@@ -747,10 +981,12 @@ export const EnterpriseApiManagement: React.FC = () => {
 const ApiKeyModal: React.FC<{
   editKey?: ApiKey | null;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: ApiKeyFormData) => void;
   availableScopes: Scope[];
-}> = ({ editKey, onClose, onSave, availableScopes }) => {
+  organizations: OrganizationOption[];
+}> = ({ editKey, onClose, onSave, availableScopes, organizations }) => {
   const [formData, setFormData] = useState({
+    organizationId: editKey?.organizationId || organizations[0]?.id || '',
     name: editKey?.name || '',
     description: editKey?.description || '',
     key_type: editKey?.key_type || 'org',
@@ -813,6 +1049,23 @@ const ApiKeyModal: React.FC<{
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Organization *</label>
+            <select
+              required
+              value={formData.organizationId}
+              disabled={!!editKey}
+              onChange={(e) => setFormData({ ...formData, organizationId: e.target.value })}
+              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
+            >
+              {organizations.map((org) => (
+                <option key={org.id} value={org.id}>
+                  {org.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium text-slate-300 mb-1">Name *</label>
             <input
               type="text"
@@ -840,7 +1093,9 @@ const ApiKeyModal: React.FC<{
               <label className="block text-sm font-medium text-slate-300 mb-1">Key Type</label>
               <select
                 value={formData.key_type}
-                onChange={(e) => setFormData({ ...formData, key_type: e.target.value as any })}
+                onChange={(e) =>
+                  setFormData({ ...formData, key_type: e.target.value as ApiKey['key_type'] })
+                }
                 className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-white/10 rounded-lg text-white"
               >
                 <option value="org">Organization</option>

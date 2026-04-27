@@ -38,6 +38,7 @@ import {
 } from '../utils/cookieAuth.js';
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { isForcedSuperAdminEmail, resolveAuthEffectiveRole } from '../utils/platformRoles.js';
 import {
   ChangePasswordRequestSchema,
   ForgotPasswordRequestSchema,
@@ -415,13 +416,15 @@ router.get(
 
       // Permanent role fix for selected internal accounts.
       // Ensure DB is updated so future tokens stay consistent.
-      if (
+      const isForcedPlatformSuperAdmin =
+        isForcedSuperAdminEmail(user.email) ||
         FORCED_SUPERADMIN_EMAILS.has(
           String(user.email || '')
             .trim()
             .toLowerCase()
-        )
-      ) {
+        );
+
+      if (isForcedPlatformSuperAdmin) {
         if (user.role !== 'SUPERADMIN') {
           try {
             await dbRun(`UPDATE users SET role = ? WHERE id = ?`, ['SUPERADMIN', user.id]);
@@ -434,7 +437,7 @@ router.get(
 
       // Resolve effective role: prefer organization_members.role for the
       // user's current org so that switch-organization is not silently undone.
-      let effectiveRole = user.role;
+      let membershipRole: string | null = null;
       if (user.organization_id) {
         try {
           const orgMembership = await dbGet<{ role: string }>(
@@ -443,12 +446,18 @@ router.get(
             [user.id, user.organization_id]
           );
           if (orgMembership?.role) {
-            effectiveRole = orgMembership.role;
+            membershipRole = orgMembership.role;
           }
         } catch {
           // If table/column missing, fall back to users.role
         }
       }
+
+      const effectiveRole = resolveAuthEffectiveRole({
+        email: user.email,
+        userRole: user.role,
+        membershipRole,
+      });
 
       // Check if effective role changed vs JWT - if so, generate new token
       let newToken: string | null = null;
@@ -637,11 +646,17 @@ router.post(
       await dbRun('UPDATE users SET organization_id = ? WHERE id = ?', [organizationId, userId]);
 
       const deviceInfo = (req.get('user-agent') || 'Unknown Device').substring(0, 200);
+      const effectiveRole = resolveAuthEffectiveRole({
+        email: req.user!.email || '',
+        userRole: req.user!.role,
+        membershipRole: membership.role,
+      });
+
       const tokenPair = await refreshTokenService.generateTokenPair(
         {
           id: userId,
           email: req.user!.email || '',
-          role: membership.role,
+          role: effectiveRole,
           organization_id: organizationId,
           isDemo,
         },

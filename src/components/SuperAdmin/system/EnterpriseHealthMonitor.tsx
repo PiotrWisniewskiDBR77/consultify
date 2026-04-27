@@ -35,6 +35,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 
 interface ServiceHealth {
@@ -68,7 +69,7 @@ interface AlertConfig {
 }
 
 interface HealthData {
-  api: { status: string; responseTime: number; version: string };
+  api: { status: string; responseTime: number; version: string; errorRatePercent?: number };
   database: { status: string; responseTime: number; type: string; connections?: number };
   ai: { status: string; providers: { openai: boolean; anthropic: boolean; groq: boolean } };
   system: {
@@ -101,12 +102,112 @@ type HealthMetricsPayload = {
   timestamp?: string;
 };
 
+type ViewId = 'overview' | 'services' | 'metrics' | 'alerts';
+
 const STATUS_CONFIG = {
   healthy: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
   degraded: { color: 'bg-amber-500', text: 'text-amber-400', icon: AlertTriangle },
   down: { color: 'bg-red-500', text: 'text-red-400', icon: XCircle },
   unknown: { color: 'bg-slate-500', text: 'text-slate-400 dark:text-slate-500', icon: Activity },
 };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const unwrapRecord = (value: unknown) => {
+  if (isRecord(value) && isRecord(value.data)) return value.data;
+  return isRecord(value) ? value : {};
+};
+
+const asText = (value: unknown, fallback = 'Unknown') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const formatTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown time' : date.toLocaleTimeString();
+};
+
+const formatDateTime = (value?: string) => {
+  if (!value) return 'Never';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+const normalizeOperator = (value: unknown): AlertConfig['operator'] => {
+  if (value === 'lt' || value === 'eq') return value;
+  return 'gt';
+};
+
+type AlertDraft = {
+  name: string;
+  metric: string;
+  threshold: number;
+  operator: AlertConfig['operator'];
+  channels: string[];
+};
+
+const initialAlertState: AlertDraft = {
+  name: '',
+  metric: 'cpu_usage',
+  threshold: 90,
+  operator: 'gt',
+  channels: [],
+};
+
+const normalizeAlerts = (payload: unknown): AlertConfig[] => {
+  const candidate = isRecord(payload) && 'data' in payload ? payload.data : payload;
+  const list = Array.isArray(candidate)
+    ? candidate
+    : isRecord(candidate)
+      ? candidate.alerts || candidate.items || candidate.data
+      : null;
+  if (!Array.isArray(list)) {
+    throw new Error('Alert configuration response was not a list');
+  }
+  return list.filter(isRecord).map((alert) => ({
+    id: asText(alert.id, ''),
+    name: asText(alert.name),
+    metric: asText(alert.metric),
+    threshold: safeNumber(alert.threshold),
+    operator: normalizeOperator(alert.operator),
+    enabled: alert.enabled === true || alert.enabled === 'true' || alert.enabled === 1,
+    channels: Array.isArray(alert.channels) ? alert.channels.map((channel) => String(channel)) : [],
+  }));
+};
+
+const getCreatedAlertId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const alert = isRecord(result.alert) ? result.alert : null;
+  return String(
+    result.id || alert?.id || data?.id || (isRecord(data?.alert) ? data.alert.id : '') || ''
+  );
+};
+
+const alertMatchesCreate = (alert: AlertConfig, expected: AlertDraft, expectedId: string) =>
+  alert.id === expectedId &&
+  alert.name === expected.name &&
+  alert.metric === expected.metric &&
+  alert.operator === expected.operator &&
+  alert.threshold === expected.threshold;
+
+const healthTabs: {
+  id: ViewId;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { id: 'overview', label: 'Overview', icon: Activity },
+  { id: 'services', label: 'Services', icon: Server },
+  { id: 'metrics', label: 'Metrics', icon: BarChart3 },
+  { id: 'alerts', label: 'Alerts', icon: Bell },
+];
 
 export const EnterpriseHealthMonitor: React.FC = () => {
   const [health, setHealth] = useState<HealthData | null>(null);
@@ -117,18 +218,11 @@ export const EnterpriseHealthMonitor: React.FC = () => {
   const [healthLoadError, setHealthLoadError] = useState<string | null>(null);
   const [alertsLoadError, setAlertsLoadError] = useState<string | null>(null);
   const [showCreateAlert, setShowCreateAlert] = useState(false);
-  const [newAlert, setNewAlert] = useState({
-    name: '',
-    metric: 'cpu_usage',
-    threshold: 90,
-    operator: 'gt' as 'gt' | 'lt' | 'eq',
-    channels: [] as string[],
-  });
+  const [newAlert, setNewAlert] = useState(initialAlertState);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeView, setActiveView] = useState<'overview' | 'services' | 'metrics' | 'alerts'>(
-    'overview'
-  );
+  const [activeView, setActiveView] = useState<ViewId>('overview');
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   const fetchHealth = useCallback(async () => {
@@ -140,14 +234,17 @@ export const EnterpriseHealthMonitor: React.FC = () => {
         Api.get('/system-health/metrics'),
       ]);
 
-      setHealth(data as any);
-      const servicesData: HealthServicesPayload =
-        (servicesPayload as any)?.data ?? (servicesPayload as any);
-      const metricsData: HealthMetricsPayload =
-        (metricsPayload as any)?.data ?? (metricsPayload as any);
+      const healthData = isRecord(data) ? data : {};
+      setHealth(data as HealthData);
+      const servicesData = unwrapRecord(servicesPayload) as unknown as HealthServicesPayload;
+      const metricsData = unwrapRecord(metricsPayload) as unknown as HealthMetricsPayload;
       setAppMetrics(metricsData);
+      const apiHealth = isRecord(healthData.api) ? healthData.api : {};
+      const databaseHealth = isRecord(healthData.database) ? healthData.database : {};
+      const systemHealth = isRecord(healthData.system) ? healthData.system : null;
+      const systemMemory = systemHealth && isRecord(systemHealth.memory) ? systemHealth.memory : {};
 
-      const ts = (data as any)?.timestamp || new Date().toISOString();
+      const ts = asText(healthData.timestamp, new Date().toISOString());
       const serviceList: ServiceHealth[] = [
         {
           name: 'API Server',
@@ -157,7 +254,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               : servicesData?.api?.status === 'down'
                 ? 'down'
                 : 'unknown',
-          latency: servicesData?.api?.responseTime ?? (data as any)?.api?.responseTime ?? 0,
+          latency: safeNumber(servicesData?.api?.responseTime ?? apiHealth.responseTime),
           lastCheck: ts,
           dependencies: ['Database'],
         },
@@ -169,7 +266,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
               : servicesData?.database?.status === 'down'
                 ? 'down'
                 : 'unknown',
-          latency: servicesData?.database?.latency ?? (data as any)?.database?.responseTime ?? 0,
+          latency: safeNumber(servicesData?.database?.latency ?? databaseHealth.responseTime),
           lastCheck: ts,
           dependencies: [],
         },
@@ -201,9 +298,10 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       setServices(serviceList);
 
       // System metrics
-      if (data.system) {
-        const cpuCores = Number((data as any)?.system?.cpus || 0) || 0;
-        const load1 = Number((data as any)?.system?.loadAvg?.[0] || 0) || 0;
+      if (systemHealth) {
+        const loadAvg = Array.isArray(systemHealth.loadAvg) ? systemHealth.loadAvg : [];
+        const cpuCores = safeNumber(systemHealth.cpus);
+        const load1 = safeNumber(loadAvg[0]);
         const cpuUsageApprox =
           cpuCores > 0
             ? Math.min(100, Math.max(0, (load1 / cpuCores) * 100))
@@ -214,11 +312,11 @@ export const EnterpriseHealthMonitor: React.FC = () => {
             cores: cpuCores,
           },
           memory: {
-            used: data.system.memory.used,
-            total: data.system.memory.total,
+            used: safeNumber(systemMemory.used),
+            total: safeNumber(systemMemory.total),
             percent:
-              data.system.memory.percent ||
-              (data.system.memory.used / data.system.memory.total) * 100,
+              safeNumber(systemMemory.percent) ||
+              (safeNumber(systemMemory.used) / safeNumber(systemMemory.total, 1)) * 100,
           },
           disk: null,
           network: null,
@@ -226,13 +324,13 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       }
       return true;
     } catch (error) {
-      console.error('Failed to fetch health:', error);
-      setHealthLoadError(error instanceof Error ? error.message : 'Failed to fetch system health');
+      const message = normalizeApiErrorMessage(error, 'Failed to fetch system health');
+      setHealthLoadError(message);
       setHealth(null);
       setServices([]);
       setMetrics(null);
       setAppMetrics(null);
-      toast.error('Failed to fetch system health');
+      toast.error(message);
       return false;
     }
   }, []);
@@ -241,11 +339,14 @@ export const EnterpriseHealthMonitor: React.FC = () => {
     try {
       setAlertsLoadError(null);
       const resp = await Api.get('/superadmin/system-health/alerts');
-      const data = resp?.data ?? resp;
-      setAlerts(Array.isArray(data) ? data : []);
+      const normalized = normalizeAlerts(resp);
+      setAlerts(normalized);
+      return normalized;
     } catch (error) {
-      setAlertsLoadError(error instanceof Error ? error.message : 'Failed to load alert settings');
+      const message = normalizeApiErrorMessage(error, 'Failed to load alert settings');
+      setAlertsLoadError(message);
       setAlerts([]);
+      return null;
     }
   }, []);
 
@@ -255,33 +356,57 @@ export const EnterpriseHealthMonitor: React.FC = () => {
       return;
     }
     try {
-      await Api.post('/superadmin/system-health/alerts', newAlert);
+      setActionError(null);
+      const expected = { ...newAlert };
+      const result = await Api.post('/superadmin/system-health/alerts', expected);
+      const createdId = getCreatedAlertId(result);
+      if (!createdId) {
+        throw new Error('Alert creation response was incomplete');
+      }
+      const refreshed = await fetchAlerts();
+      if (!refreshed?.some((alert) => alertMatchesCreate(alert, expected, createdId))) {
+        throw new Error('Alert creation was not confirmed by the server');
+      }
       toast.success('Alert created');
       setShowCreateAlert(false);
-      setNewAlert({ name: '', metric: 'cpu_usage', threshold: 90, operator: 'gt', channels: [] });
-      fetchAlerts();
-    } catch {
-      toast.error('Failed to create alert');
+      setNewAlert(initialAlertState);
+    } catch (error) {
+      const message = normalizeApiErrorMessage(error, 'Failed to create alert');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleToggleAlert = async (alert: AlertConfig) => {
     try {
+      setActionError(null);
+      const expectedEnabled = !alert.enabled;
       await Api.put(`/superadmin/system-health/alerts/${alert.id}/toggle`, {});
-      fetchAlerts();
-    } catch {
-      toast.error('Failed to toggle alert');
+      const refreshed = await fetchAlerts();
+      if (!refreshed?.some((item) => item.id === alert.id && item.enabled === expectedEnabled)) {
+        throw new Error('Alert toggle was not confirmed by the server');
+      }
+    } catch (error) {
+      const message = normalizeApiErrorMessage(error, 'Failed to toggle alert');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleDeleteAlert = async (id: string) => {
     if (!confirm('Delete this alert?')) return;
     try {
+      setActionError(null);
       await Api.delete(`/superadmin/system-health/alerts/${id}`);
+      const refreshed = await fetchAlerts();
+      if (!refreshed || refreshed.some((alert) => alert.id === id)) {
+        throw new Error('Alert deletion was not confirmed by the server');
+      }
       toast.success('Alert deleted');
-      fetchAlerts();
-    } catch {
-      toast.error('Failed to delete alert');
+    } catch (error) {
+      const message = normalizeApiErrorMessage(error, 'Failed to delete alert');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -378,15 +503,10 @@ export const EnterpriseHealthMonitor: React.FC = () => {
 
       {/* View Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
-        {[
-          { id: 'overview', label: 'Overview', icon: Activity },
-          { id: 'services', label: 'Services', icon: Server },
-          { id: 'metrics', label: 'Metrics', icon: BarChart3 },
-          { id: 'alerts', label: 'Alerts', icon: Bell },
-        ].map(({ id, label, icon: Icon }) => (
+        {healthTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveView(id as any)}
+            onClick={() => setActiveView(id)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeView === id
                 ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
@@ -398,6 +518,15 @@ export const EnterpriseHealthMonitor: React.FC = () => {
           </button>
         ))}
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Overview View */}
       {activeView === 'overview' && (
@@ -506,7 +635,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-slate-400 dark:text-slate-500">Load Average (1m)</span>
                       <span className="text-slate-900 dark:text-slate-100 font-medium">
-                        {(health?.system?.loadAvg?.[0] || 0).toFixed(2)}
+                        {safeNumber(health?.system?.loadAvg?.[0]).toFixed(2)}
                       </span>
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-xs">
@@ -517,7 +646,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                         >
                           <div className="text-slate-500 dark:text-slate-400">{label}</div>
                           <div className="text-slate-900 dark:text-slate-100 font-medium mt-1">
-                            {(health?.system?.loadAvg?.[i] || 0).toFixed(2)}
+                            {safeNumber(health?.system?.loadAvg?.[i]).toFixed(2)}
                           </div>
                         </div>
                       ))}
@@ -608,9 +737,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                           <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
                             <span>Latency: {service.latency}ms</span>
                             <span>•</span>
-                            <span>
-                              Last check: {new Date(service.lastCheck).toLocaleTimeString()}
-                            </span>
+                            <span>Last check: {formatTime(service.lastCheck)}</span>
                           </div>
                         </div>
                       </div>
@@ -672,10 +799,9 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   },
                   {
                     label: 'Error Rate',
-                    value:
-                      typeof (health as any)?.api?.errorRatePercent === 'number'
-                        ? `${Number((health as any).api.errorRatePercent).toFixed(2)}%`
-                        : '—',
+                    value: Number.isFinite(Number(health?.api?.errorRatePercent))
+                      ? `${Number(health?.api?.errorRatePercent).toFixed(2)}%`
+                      : '—',
                     trend: 'stable',
                     icon: AlertTriangle,
                   },
@@ -847,6 +973,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggleAlert(alert)}
+                      aria-label={`${alert.enabled ? 'Disable' : 'Enable'} alert ${alert.name}`}
                       className={`px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors ${
                         alert.enabled
                           ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
@@ -857,6 +984,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDeleteAlert(alert.id)}
+                      aria-label={`Delete alert ${alert.name}`}
                       className="p-1 text-slate-400 hover:text-red-400 transition-colors"
                       title="Delete alert"
                     >
@@ -885,9 +1013,7 @@ export const EnterpriseHealthMonitor: React.FC = () => {
 
       {/* Footer */}
       <div className="pt-4 border-t border-slate-200 dark:border-white/10 text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-        <span>
-          Last updated: {health?.timestamp ? new Date(health.timestamp).toLocaleString() : 'Never'}
-        </span>
+        <span>Last updated: {formatDateTime(health?.timestamp)}</span>
         <span>Data retention: 30 days</span>
       </div>
     </div>

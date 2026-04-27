@@ -19,10 +19,53 @@ vi.mock('@/services/api', () => ({
   },
 }));
 
+const securityEvent = {
+  id: 'event-1',
+  event_type: 'LOGIN_FAILED',
+  severity: 'HIGH',
+  resolved: false,
+  created_at: 'not-a-date',
+  details: {},
+};
+
+const session = {
+  id: 'session-1',
+  user_id: 'user-1',
+  user_email: 'user@example.com',
+  device_type: 'desktop',
+  browser: 'Chrome',
+  ip_address: '10.0.0.1',
+  location: 'Warsaw',
+  created_at: 'not-a-date',
+  last_activity: 'not-a-date',
+  is_current: false,
+};
+
+const ipRule = {
+  id: 'rule-1',
+  ip_pattern: '10.0.0.0/24',
+  rule_type: 'allow',
+  description: 'Office',
+  created_at: 'not-a-date',
+  created_by: 'admin',
+  enabled: true,
+};
+
+const policy = {
+  id: 'policy-1',
+  name: 'Password Policy',
+  description: 'Password rules',
+  category: 'Security',
+  settings: {},
+  enabled: true,
+  last_updated: 'not-a-date',
+};
+
 describe('EnterpriseSecurityPanel honest UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.stubGlobal('confirm', vi.fn(() => true));
 
     vi.mocked(Api.getSecurityEvents).mockRejectedValue(new Error('Security events backend down'));
     vi.mocked(Api.getSecurityEventStats).mockResolvedValue({
@@ -39,6 +82,10 @@ describe('EnterpriseSecurityPanel honest UI', () => {
     vi.mocked(Api.getComplianceFrameworks).mockRejectedValue(
       new Error('Compliance backend down')
     );
+    vi.mocked(Api.resolveSecurityEvent).mockResolvedValue({ success: true });
+    vi.mocked(Api.terminateSession).mockResolvedValue({ success: true });
+    vi.mocked(Api.updateIPRule).mockResolvedValue({ success: true });
+    vi.mocked(Api.updateSecurityPolicy).mockResolvedValue({ success: true });
   });
 
   afterEach(() => {
@@ -105,5 +152,80 @@ describe('EnterpriseSecurityPanel honest UI', () => {
 
     expect(screen.getByRole('button', { name: /Run Assessment/i })).toBeDisabled();
     expect(screen.getByText('SIEM configuration workflow unavailable')).toBeInTheDocument();
+  });
+
+  it('does not claim security event resolution when read-back remains unresolved', async () => {
+    vi.mocked(Api.getSecurityEvents).mockResolvedValue({ events: [securityEvent] });
+
+    render(<EnterpriseSecurityPanel />);
+
+    await screen.findByRole('button', { name: /Resolve security event event-1/i });
+    expect(screen.getByText('Unknown date')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Resolve security event event-1/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Security event resolution was not confirmed by the server'
+      );
+    });
+  });
+
+  it('does not claim session termination when read-back remains stale', async () => {
+    vi.mocked(Api.getSecurityEvents).mockResolvedValue({ events: [] });
+    vi.mocked(Api.getSuperAdminActiveSessions).mockResolvedValue({ sessions: [session] });
+
+    render(<EnterpriseSecurityPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: /Sessions/i }));
+    await screen.findByText('user@example.com');
+    fireEvent.click(screen.getByRole('button', { name: /Terminate session session-1/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Session termination was not confirmed by the server'
+      );
+    });
+  });
+
+  it('does not claim IP rule or policy toggles when read-back remains stale', async () => {
+    vi.mocked(Api.getSecurityEvents).mockResolvedValue({ events: [] });
+    vi.mocked(Api.getIPAccessRules).mockResolvedValue({ rules: [ipRule] });
+    vi.mocked(Api.getSecurityPolicies).mockResolvedValue({ policies: [policy] });
+
+    render(<EnterpriseSecurityPanel />);
+
+    fireEvent.click(screen.getByRole('button', { name: /IP Rules/i }));
+    await screen.findByText('10.0.0.0/24');
+    fireEvent.click(screen.getByRole('button', { name: /Disable IP rule 10\.0\.0\.0\/24/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'IP rule update was not confirmed by the server'
+      );
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Policies/i }));
+    await screen.findByText('Password Policy');
+    fireEvent.click(screen.getByRole('button', { name: /Disable policy Password Policy/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Policy update was not confirmed by the server'
+      );
+    });
+  });
+
+  it('accepts wrapped security event payloads and renders malformed fields safely', async () => {
+    vi.mocked(Api.getSecurityEvents).mockResolvedValue({
+      data: {
+        events: [{ ...securityEvent, event_type: 123, severity: 'unexpected' }],
+      },
+    });
+
+    render(<EnterpriseSecurityPanel />);
+
+    expect(await screen.findByText('123')).toBeInTheDocument();
+    expect(screen.getAllByText('LOW').length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Invalid Date/i)).not.toBeInTheDocument();
   });
 });

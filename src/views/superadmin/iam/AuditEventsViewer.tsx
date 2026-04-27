@@ -18,6 +18,7 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface AuditEvent {
   id: string;
@@ -32,6 +33,57 @@ interface AuditEvent {
 }
 
 const PAGE_SIZE = 50;
+
+function formatDateTime(value?: string | null): string {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown date';
+  return date.toLocaleString();
+}
+
+function safeNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function asText(value: unknown, fallback = '—'): string {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const normalizeAuditEventsResponse = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  const events = Array.isArray(payload)
+    ? payload
+    : isRecord(payload) && Array.isArray(payload.events)
+      ? payload.events
+      : isRecord(payload) && Array.isArray(payload.items)
+        ? payload.items
+        : isRecord(payload) && Array.isArray(payload.data)
+          ? payload.data
+          : null;
+  if (!Array.isArray(events)) {
+    throw new Error('Audit events response was not a list');
+  }
+  const totalSource = isRecord(payload)
+    ? payload.total
+    : isRecord(value)
+      ? value.total
+      : events.length;
+  return {
+    events: events as AuditEvent[],
+    total: Math.max(0, safeNumber(totalSource, events.length)),
+  };
+};
 
 const AuditEventsViewer: React.FC = () => {
   const [events, setEvents] = useState<AuditEvent[]>([]);
@@ -57,10 +109,11 @@ const AuditEventsViewer: React.FC = () => {
         limit: PAGE_SIZE,
         offset,
       });
-      setEvents(res?.data || []);
-      setTotal(res?.total || 0);
-    } catch (err: any) {
-      const message = err?.message || 'Failed to load audit events';
+      const normalized = normalizeAuditEventsResponse(res);
+      setEvents(normalized.events);
+      setTotal(normalized.total);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load audit events');
       setLoadError(message);
       setEvents([]);
       setTotal(0);
@@ -194,28 +247,30 @@ const AuditEventsViewer: React.FC = () => {
                   className="border-b border-slate-100 dark:border-navy-800 hover:bg-slate-50/50 dark:hover:bg-navy-900/30 transition-colors"
                 >
                   <td className="px-3 py-2 text-slate-500 whitespace-nowrap">
-                    {new Date(ev.created_at).toLocaleString()}
+                    {formatDateTime(ev.created_at)}
                   </td>
                   <td className="px-3 py-2">
                     <span className="px-1.5 py-0.5 rounded-md bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 font-medium">
-                      {ev.action}
+                      {asText(ev.action)}
                     </span>
                   </td>
                   <td className="px-3 py-2 text-slate-700 dark:text-slate-300">
-                    <span className="font-medium">{ev.resource_type}</span>
+                    <span className="font-medium">{asText(ev.resource_type)}</span>
                     {ev.resource_id && (
                       <span className="text-slate-400 ml-1 font-mono text-[10px]">
-                        {ev.resource_id.slice(0, 12)}
+                        {asText(ev.resource_id).slice(0, 12)}
                       </span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-slate-600 dark:text-slate-400">
                     {ev.actor_type && (
                       <span className="text-[10px] uppercase font-bold text-slate-400 mr-1">
-                        {ev.actor_type}
+                        {asText(ev.actor_type)}
                       </span>
                     )}
-                    <span className="font-mono text-[10px]">{ev.actor_id?.slice(0, 12)}</span>
+                    <span className="font-mono text-[10px]">
+                      {asText(ev.actor_id).slice(0, 12)}
+                    </span>
                   </td>
                   <td className="px-3 py-2 text-slate-400 max-w-[200px] truncate">
                     {ev.metadata ? JSON.stringify(ev.metadata).slice(0, 80) : '—'}

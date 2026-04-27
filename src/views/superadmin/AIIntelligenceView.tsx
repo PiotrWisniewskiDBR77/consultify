@@ -35,11 +35,13 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { PromptAssistantPanel } from '../../components/Admin/PromptAssistantPanel';
 import { PromptBlockBuilder } from '../../components/Admin/PromptBlockBuilder';
 import { PromptTestBench } from '../../components/Admin/PromptTestBench';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 type AIIntelligenceTab = 'overview' | 'prompts' | 'blocks' | 'testing' | 'assistant' | 'learning';
 
@@ -54,6 +56,7 @@ interface SystemStats {
 export const AIIntelligenceView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AIIntelligenceTab>('overview');
   const [loading, setLoading] = useState(true);
+  const [statsLoadError, setStatsLoadError] = useState<string | null>(null);
   const [stats, setStats] = useState<SystemStats>({
     totalPrompts: 0,
     activeBlocks: 0,
@@ -64,11 +67,21 @@ export const AIIntelligenceView: React.FC = () => {
 
   const loadStats = async () => {
     setLoading(true);
+    setStatsLoadError(null);
     try {
       const data = await Api.getPromptAssistantStats();
       if (data) setStats(data);
-    } catch (err) {
-      console.error('Failed to load AI stats:', err);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load AI stats');
+      setStatsLoadError(message);
+      setStats({
+        totalPrompts: 0,
+        activeBlocks: 0,
+        feedbackItems: 0,
+        avgRating: 0,
+        languagesCovered: 0,
+      });
+      toast.error(message);
     }
     setLoading(false);
   };
@@ -137,38 +150,47 @@ export const AIIntelligenceView: React.FC = () => {
         {activeTab === 'overview' && (
           <div className="p-8 overflow-y-auto h-full">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-              <StatCard
-                icon={FileText}
-                label="Prompt Templates"
-                value={stats.totalPrompts.toString()}
-                color="text-cyan-400"
-              />
-              <StatCard
-                icon={Blocks}
-                label="Active Blocks"
-                value={stats.activeBlocks.toString()}
-                color="text-purple-400"
-              />
-              <StatCard
-                icon={Languages}
-                label="Languages"
-                value={stats.languagesCovered.toString()}
-                color="text-emerald-400"
-              />
-              <StatCard
-                icon={MessageSquare}
-                label="Feedback Items"
-                value={stats.feedbackItems.toString()}
-                color="text-amber-400"
-              />
-              <StatCard
-                icon={Sparkles}
-                label="Avg Rating"
-                value={stats.avgRating.toFixed(1)}
-                color="text-pink-400"
-              />
-            </div>
+            {statsLoadError ? (
+              <div className="mb-8">
+                <DegradedState
+                  title="AI intelligence stats unavailable"
+                  description={statsLoadError}
+                />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                <StatCard
+                  icon={FileText}
+                  label="Prompt Templates"
+                  value={loading ? '...' : stats.totalPrompts.toString()}
+                  color="text-cyan-400"
+                />
+                <StatCard
+                  icon={Blocks}
+                  label="Active Blocks"
+                  value={loading ? '...' : stats.activeBlocks.toString()}
+                  color="text-purple-400"
+                />
+                <StatCard
+                  icon={Languages}
+                  label="Languages"
+                  value={loading ? '...' : stats.languagesCovered.toString()}
+                  color="text-emerald-400"
+                />
+                <StatCard
+                  icon={MessageSquare}
+                  label="Feedback Items"
+                  value={loading ? '...' : stats.feedbackItems.toString()}
+                  color="text-amber-400"
+                />
+                <StatCard
+                  icon={Sparkles}
+                  label="Avg Rating"
+                  value={loading ? '...' : stats.avgRating.toFixed(1)}
+                  color="text-pink-400"
+                />
+              </div>
+            )}
 
             {/* Core Capabilities */}
             <div className="mb-8">
@@ -365,15 +387,20 @@ const QuickAction: React.FC<{ icon: any; label: string; onClick: () => void }> =
 const PromptTemplateManager: React.FC = () => {
   const [templates, setTemplates] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   const loadTemplates = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await Api.getPromptAssistantTemplates();
       setTemplates((data as any)?.templates || []);
-    } catch (err) {
-      console.error('Failed to load templates:', err);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load templates');
+      setLoadError(message);
+      setTemplates([]);
+      toast.error(message);
     }
     setLoading(false);
   };
@@ -411,21 +438,35 @@ const PromptTemplateManager: React.FC = () => {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search templates..."
+              disabled={!!loadError}
               className="w-64 bg-white dark:bg-navy-950 border border-slate-200 dark:border-white/10 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500"
             />
           </div>
-          <button className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors">
+          <button
+            disabled
+            title="Template creation is managed through the canonical Prompts Library workflow."
+            className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+          >
             <FileText size={16} />
             New Template
           </button>
         </div>
       </div>
 
+      <ReadOnlyState
+        title="Prompt template mutations use Prompts Library"
+        description="This builder view is read-only for templates until create/edit/test actions are wired to the canonical prompt registry workflow."
+      />
+
       {/* Templates Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {loading ? (
           <div className="col-span-2 text-center py-12 text-slate-500 dark:text-slate-400">
             Loading templates...
+          </div>
+        ) : loadError ? (
+          <div className="col-span-2">
+            <DegradedState title="Prompt templates unavailable" description={loadError} />
           </div>
         ) : displayTemplates.length === 0 ? (
           <div className="col-span-2 text-center py-12 text-slate-500 dark:text-slate-400">
@@ -450,10 +491,18 @@ const PromptTemplateManager: React.FC = () => {
                 {template.description}
               </p>
               <div className="flex gap-2">
-                <button className="flex-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-300 rounded text-xs">
+                <button
+                  disabled
+                  title="Edit this prompt in Prompts Library."
+                  className="flex-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-navy-950 dark:hover:bg-navy-800 text-slate-800 dark:text-slate-300 rounded text-xs disabled:opacity-50"
+                >
                   Edit
                 </button>
-                <button className="flex-1 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded text-xs">
+                <button
+                  disabled
+                  title="Template testing is unavailable here until it is wired to the canonical prompt registry."
+                  className="flex-1 px-3 py-1.5 bg-purple-600/20 hover:bg-purple-600/30 text-purple-300 rounded text-xs disabled:opacity-50"
+                >
                   Test
                 </button>
               </div>

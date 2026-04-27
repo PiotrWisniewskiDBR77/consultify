@@ -10,17 +10,7 @@
  * - Time format (12h/24h)
  */
 
-import {
-  Calendar,
-  Check,
-  Clock,
-  DollarSign,
-  Globe,
-  Hash,
-  Loader2,
-  Ruler,
-  Save,
-} from 'lucide-react';
+import { Calendar, Check, Clock, DollarSign, Globe, Loader2, Ruler, Save } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
@@ -28,6 +18,8 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { SettingsApi } from '../../services/api/settings.api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
 
 interface RegionalSettingsProps {
@@ -61,6 +53,9 @@ const DEFAULT_PREFERENCES: RegionalPreferences = {
   timeFormat: '24h',
   firstDayOfWeek: 'monday',
 };
+
+const preferencesMatch = (left: RegionalPreferences, right: RegionalPreferences) =>
+  JSON.stringify(left) === JSON.stringify(right);
 
 // Currency options with symbols
 const CURRENCIES = [
@@ -108,6 +103,7 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
     useState<OrganizationRegionalDefaults | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const timezones = Intl.supportedValuesOf('timeZone');
 
@@ -127,25 +123,14 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
 
   const loadPreferences = async () => {
     try {
+      setLoadError(null);
       const data = await SettingsApi.getRegionalPreferences();
-      if (data?.preferences) {
-        setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
-      } else {
-        // Load from user object for backwards compatibility
-        setPreferences({
-          ...DEFAULT_PREFERENCES,
-          timezone: currentUser.timezone || DEFAULT_PREFERENCES.timezone,
-          units: currentUser.units || DEFAULT_PREFERENCES.units,
-        });
+      if (!data?.preferences) {
+        throw new Error('Regional preferences were not returned by the server');
       }
-    } catch (error) {
-      console.error('Failed to load regional preferences:', error);
-      // Fallback to user object
-      setPreferences({
-        ...DEFAULT_PREFERENCES,
-        timezone: currentUser.timezone || DEFAULT_PREFERENCES.timezone,
-        units: currentUser.units || DEFAULT_PREFERENCES.units,
-      });
+      setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load regional preferences'));
     } finally {
       setLoading(false);
     }
@@ -156,16 +141,24 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
     try {
       await SettingsApi.updateRegionalPreferences(preferences);
       const data = await SettingsApi.getRegionalPreferences();
+      if (!data?.preferences) {
+        throw new Error('Regional preferences save was not confirmed by the server');
+      }
       const persisted = { ...DEFAULT_PREFERENCES, ...data.preferences } as RegionalPreferences;
+      if (!preferencesMatch(persisted, preferences)) {
+        throw new Error('Regional preferences were not confirmed by the server');
+      }
       setPreferences(persisted);
       // Also update user object for backwards compatibility
-      await onUpdateUser({
+      onUpdateUser({
         timezone: persisted.timezone,
         units: persisted.units,
       });
       toast.success(t('settings.regional.saved', 'Regional preferences saved'));
-    } catch (error) {
-      toast.error(t('settings.regional.error', 'Failed to save preferences'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(error, t('settings.regional.error', 'Failed to save preferences'))
+      );
     } finally {
       setSaving(false);
     }
@@ -220,6 +213,27 @@ export const RegionalSettings: React.FC<RegionalSettingsProps> = ({
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={32} className="animate-spin text-blue-600" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <InfoButton cardId="settings-regional" position="top-right" />
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+            <Globe size={28} className="text-blue-500" />
+            {t('settings.regional.title', 'Regional Settings')}
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            {t(
+              'settings.regional.description',
+              'Configure your locale, timezone, and format preferences'
+            )}
+          </p>
+        </div>
+        <DegradedState title="Regional preferences unavailable" description={loadError} />
       </div>
     );
   }

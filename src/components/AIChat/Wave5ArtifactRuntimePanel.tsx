@@ -53,6 +53,11 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
   const [generationPrompt, setGenerationPrompt] = React.useState('');
   const [message, setMessage] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const selectedRef = React.useRef<Wave5Artifact | null>(null);
+
+  React.useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -64,19 +69,26 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
       if (Array.isArray(schemaRes?.artifactTypes)) setArtifactTypes(schemaRes.artifactTypes);
       const next = Array.isArray(listRes?.artifacts) ? listRes.artifacts : [];
       setArtifacts(next);
-      if (!selected && next.length > 0) setSelected(next[0]);
-      if (selected) {
+      const selectedArtifact = selectedRef.current;
+      if (!selectedArtifact && next.length > 0) {
+        const detail = await Api.getWave5Artifact(next[0].artifactId);
+        setSelected(detail?.artifact || next[0]);
+      }
+      if (selectedArtifact) {
         const fresh = next.find(
-          (artifact: Wave5Artifact) => artifact.artifactId === selected.artifactId
+          (artifact: Wave5Artifact) => artifact.artifactId === selectedArtifact.artifactId
         );
-        if (fresh) setSelected(fresh);
+        if (fresh) {
+          const detail = await Api.getWave5Artifact(fresh.artifactId);
+          setSelected(detail?.artifact || fresh);
+        }
       }
     } catch (err: any) {
       setMessage(err?.message || 'Failed to load artifacts');
     } finally {
       setLoading(false);
     }
-  }, [selected]);
+  }, []);
 
   React.useEffect(() => {
     load();
@@ -84,8 +96,12 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
 
   const refreshSelected = async (artifactId: string) => {
     const res = await Api.getWave5Artifact(artifactId);
-    if (res?.artifact) setSelected(res.artifact);
-    await load();
+    if (res?.artifact) {
+      setSelected(res.artifact);
+      setArtifacts((prev) =>
+        prev.map((artifact) => (artifact.artifactId === artifactId ? res.artifact : artifact))
+      );
+    }
   };
 
   const createArtifact = async () => {
@@ -125,6 +141,22 @@ export const Wave5ArtifactRuntimePanel: React.FC = () => {
         mutationType: 'content_update',
       });
       if (res?.success === false) throw new Error(res?.error || 'Mutation failed');
+      if (res?.mutation) {
+        setSelected((prev) =>
+          prev && prev.artifactId === selected.artifactId
+            ? {
+                ...prev,
+                status: 'proposed',
+                mutations: [
+                  res.mutation,
+                  ...(prev.mutations || []).filter(
+                    (mutation) => mutation.mutationId !== res.mutation.mutationId
+                  ),
+                ],
+              }
+            : prev
+        );
+      }
       setProposedContent('');
       await refreshSelected(selected.artifactId);
     } catch (err: any) {

@@ -77,4 +77,49 @@ describe('EnterpriseAnalyticsPanel honest UI', () => {
     expect(screen.queryByText('/api/projects')).not.toBeInTheDocument();
     expect(screen.queryByText('< 100ms')).not.toBeInTheDocument();
   });
+
+  it('marks scheduled report creation as read-only when reports can load', async () => {
+    vi.mocked(Api.getSystemAnalytics).mockResolvedValue({
+      metrics: {},
+      charts: {},
+    });
+    vi.mocked(Api.getAnalyticsReports).mockResolvedValue([]);
+
+    render(<EnterpriseAnalyticsPanel />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Scheduled Reports/i }));
+
+    expect(screen.getByRole('button', { name: /Schedule Report/i })).toBeDisabled();
+    expect(screen.getByText('Scheduled report creation unavailable')).toBeInTheDocument();
+    expect(screen.queryByText('Schedule Report', { selector: 'h3' })).not.toBeInTheDocument();
+  });
+
+  it('accepts wrapped scheduled report payloads and renders malformed dates safely', async () => {
+    vi.mocked(Api.getSystemAnalytics).mockResolvedValue({
+      metrics: {},
+      charts: {},
+    });
+    vi.mocked(Api.getAnalyticsReports).mockResolvedValue({
+      reports: [
+        {
+          id: 'report-1',
+          name: 123,
+          type: null,
+          schedule: { frequency: 'daily' },
+          recipients: ['admin@example.com', 42],
+          nextRun: 'not-a-date',
+          status: 'active',
+        },
+      ],
+    });
+
+    render(<EnterpriseAnalyticsPanel />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Scheduled Reports/i }));
+
+    expect(await screen.findByText('123')).toBeInTheDocument();
+    expect(screen.getByText('2 recipients')).toBeInTheDocument();
+    expect(screen.getByText('Next: Unknown date')).toBeInTheDocument();
+    expect(screen.queryByText(/Invalid Date/i)).not.toBeInTheDocument();
+  });
 });

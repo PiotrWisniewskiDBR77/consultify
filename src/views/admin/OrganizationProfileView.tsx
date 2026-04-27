@@ -30,7 +30,7 @@ import {
   Upload,
   Users,
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -38,6 +38,7 @@ import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState'
 import { InfoButton } from '../../components/shared/InfoButton';
 import { useAppStore } from '../../store/useAppStore';
 import { CompanySize, OrganizationProfile } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 // Industry options
 const INDUSTRIES = [
@@ -110,6 +111,49 @@ interface OrganizationProfileViewProps {
   className?: string;
 }
 
+type DateFormat = NonNullable<OrganizationProfile['dateFormat']>;
+type TimeFormat = NonNullable<OrganizationProfile['timeFormat']>;
+
+const DEFAULT_PROFILE: Partial<OrganizationProfile> = {
+  description: '',
+  industry: 'Technology',
+  companySize: '51-200',
+  website: '',
+  logoUrl: '',
+  faviconUrl: '',
+  brandColor: '#8B5CF6',
+  accentColor: '#10B981',
+  customDomain: '',
+  customDomainVerified: false,
+  defaultTimezone: 'Europe/Warsaw',
+  defaultLanguage: 'en',
+  dateFormat: 'DD/MM/YYYY',
+  timeFormat: '24h',
+  currency: 'USD',
+  linkedinUrl: '',
+  twitterUrl: '',
+};
+
+const normalizeProfileResponse = (
+  data: unknown,
+  fallback: Partial<OrganizationProfile>
+): Partial<OrganizationProfile> => {
+  const profileData = data as { exists?: boolean; profile?: Partial<OrganizationProfile> };
+  if (profileData.exists && profileData.profile) {
+    return { ...fallback, ...profileData.profile };
+  }
+  return fallback;
+};
+
+const profilesMatch = (
+  actual: Partial<OrganizationProfile>,
+  expected: Partial<OrganizationProfile>
+) =>
+  Object.entries(expected).every(([key, value]) => {
+    const actualValue = actual[key as keyof OrganizationProfile];
+    return actualValue === value;
+  });
+
 export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = ({
   className = '',
 }) => {
@@ -121,64 +165,52 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'branding' | 'regional' | 'domain'>(
     'profile'
   );
   const [verifyingDomain, setVerifyingDomain] = useState(false);
 
-  const [profile, setProfile] = useState<Partial<OrganizationProfile>>({
-    description: '',
-    industry: 'Technology',
-    companySize: '51-200',
-    website: '',
-    logoUrl: '',
-    faviconUrl: '',
-    brandColor: '#8B5CF6',
-    accentColor: '#10B981',
-    customDomain: '',
-    customDomainVerified: false,
-    defaultTimezone: 'Europe/Warsaw',
-    defaultLanguage: 'en',
-    dateFormat: 'DD/MM/YYYY',
-    timeFormat: '24h',
-    currency: 'USD',
-    linkedinUrl: '',
-    twitterUrl: '',
-  });
+  const [profile, setProfile] = useState<Partial<OrganizationProfile>>(DEFAULT_PROFILE);
+
+  const loadProfile = useCallback(
+    async (showLoader = true, fallbackProfile = DEFAULT_PROFILE) => {
+      if (showLoader) setLoading(true);
+      try {
+        setLoadError(null);
+        const res = await fetch(`/api/organization-profiles/${currentOrganization?.id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}`);
+        }
+        const data = await res.json();
+        const snapshot = normalizeProfileResponse(data, fallbackProfile);
+        setProfile(snapshot);
+        return snapshot;
+      } catch (error: unknown) {
+        setLoadError(normalizeApiErrorMessage(error, 'Failed to load organization profile'));
+        return null;
+      } finally {
+        if (showLoader) setLoading(false);
+      }
+    },
+    [currentOrganization?.id]
+  );
 
   useEffect(() => {
     if (currentOrganization?.id) {
       loadProfile();
     }
-  }, [currentOrganization?.id]);
-
-  const loadProfile = async () => {
-    setLoading(true);
-    try {
-      setLoadError(null);
-      const res = await fetch(`/api/organization-profiles/${currentOrganization?.id}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      const data = await res.json();
-      // API returns { exists, profile, completeness }
-      if (data.exists && data.profile) {
-        setProfile((prev) => ({ ...prev, ...data.profile }));
-      }
-    } catch (error) {
-      console.error('Failed to load profile:', error);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load organization profile');
-    }
-    setLoading(false);
-  };
+  }, [currentOrganization?.id, loadProfile]);
 
   const handleSave = async () => {
     if (!currentOrganization?.id) return;
     setSaving(true);
+    setSaveError(null);
     try {
+      const expectedProfile = profile;
       const res = await fetch(`/api/organization-profiles/${currentOrganization.id}`, {
         method: 'PUT',
         headers: {
@@ -188,16 +220,25 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
         body: JSON.stringify(profile),
       });
 
-      if (res.ok) {
-        toast.success(t('admin.org.profileSaved', 'Organization profile saved'));
-        setHasChanges(false);
-      } else {
+      if (!res.ok) {
         throw new Error('Save failed');
       }
-    } catch (error) {
-      toast.error(t('admin.org.saveError', 'Failed to save profile'));
+      const persistedProfile = await loadProfile(false, expectedProfile);
+      if (!persistedProfile || !profilesMatch(persistedProfile, expectedProfile)) {
+        throw new Error('Organization profile save was not confirmed by the server');
+      }
+      toast.success(t('admin.org.profileSaved', 'Organization profile saved'));
+      setHasChanges(false);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('admin.org.saveError', 'Failed to save profile')
+      );
+      setSaveError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const updateProfile = <K extends keyof OrganizationProfile>(
@@ -242,7 +283,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
         throw new Error(`HTTP ${res.status}`);
       }
     } catch (error) {
-      toast.error('Failed to upload logo');
+      toast.error(normalizeApiErrorMessage(error, 'Failed to upload logo'));
     }
   };
 
@@ -271,7 +312,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
         throw new Error(`HTTP ${res.status}`);
       }
     } catch (error) {
-      toast.error('Failed to verify domain');
+      toast.error(normalizeApiErrorMessage(error, 'Failed to verify domain'));
     }
     setVerifyingDomain(false);
   };
@@ -328,6 +369,15 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
 
       {loadError && (
         <DegradedState title="Organization profile unavailable" description={loadError} />
+      )}
+
+      {saveError && (
+        <div
+          role="alert"
+          className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+        >
+          {saveError}
+        </div>
       )}
 
       {/* Tabs */}
@@ -726,7 +776,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     </label>
                     <select
                       value={profile.dateFormat || 'DD/MM/YYYY'}
-                      onChange={(e) => updateProfile('dateFormat', e.target.value as any)}
+                      onChange={(e) => updateProfile('dateFormat', e.target.value as DateFormat)}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
                     >
                       <option value="DD/MM/YYYY">DD/MM/YYYY (31/12/2025)</option>
@@ -741,7 +791,7 @@ export const OrganizationProfileView: React.FC<OrganizationProfileViewProps> = (
                     </label>
                     <select
                       value={profile.timeFormat || '24h'}
-                      onChange={(e) => updateProfile('timeFormat', e.target.value as any)}
+                      onChange={(e) => updateProfile('timeFormat', e.target.value as TimeFormat)}
                       className="w-full px-3 py-2 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-600 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-violet-500"
                     >
                       <option value="24h">24-hour (14:30)</option>

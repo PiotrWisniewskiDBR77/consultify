@@ -1740,35 +1740,65 @@ const getApiKeys = catchAsync(async (req, res, next) => {
             LEFT JOIN organizations o ON k.organization_id = o.id
             ORDER BY k.created_at DESC
         `;
+    const fallbackQuery = `
+            SELECT
+                k.id,
+                k.organization_id as organizationId,
+                NULL as organizationName,
+                k.user_id as userId,
+                k.name as name,
+                k.description as description,
+                k.key_prefix as keyPrefix,
+                k.key_type as keyType,
+                k.scopes as scopes,
+                k.allowed_ips as allowedIps,
+                k.is_active as isActive,
+                k.usage_count as usageCount,
+                k.last_used_at as lastUsedAt,
+                k.created_at as createdAt,
+                k.expires_at as expiresAt,
+                k.rate_limit_per_minute as rateLimitPerMinute,
+                k.rate_limit_per_day as rateLimitPerDay
+            FROM api_keys k
+            ORDER BY k.created_at DESC
+        `;
     const keys = await new Promise((resolve, reject) => {
+      const parseRows = (rows: any[]) => {
+        const parsedRows = (rows || []).map((row) => ({
+          ...row,
+          isActive: !!row.isActive,
+          scopes:
+            typeof row.scopes === 'string'
+              ? (() => {
+                  try {
+                    return JSON.parse(row.scopes);
+                  } catch {
+                    return [];
+                  }
+                })()
+              : row.scopes || [],
+          allowedIps:
+            typeof row.allowedIps === 'string'
+              ? (() => {
+                  try {
+                    return JSON.parse(row.allowedIps);
+                  } catch {
+                    return [];
+                  }
+                })()
+              : row.allowedIps || [],
+        }));
+        resolve(parsedRows);
+      };
+
       db.all(query, [], (err, rows) => {
-        if (err) reject(err);
-        else {
-          const parsedRows = (rows || []).map((row) => ({
-            ...row,
-            isActive: !!row.isActive,
-            scopes:
-              typeof row.scopes === 'string'
-                ? (() => {
-                    try {
-                      return JSON.parse(row.scopes);
-                    } catch {
-                      return [];
-                    }
-                  })()
-                : row.scopes || [],
-            allowedIps:
-              typeof row.allowedIps === 'string'
-                ? (() => {
-                    try {
-                      return JSON.parse(row.allowedIps);
-                    } catch {
-                      return [];
-                    }
-                  })()
-                : row.allowedIps || [],
-          }));
-          resolve(parsedRows);
+        if (err) {
+          db.all(fallbackQuery, [], (fallbackErr, fallbackRows) => {
+            if (fallbackErr) reject(fallbackErr);
+            else parseRows(fallbackRows || []);
+          });
+        } else {
+          parseRows(rows || []);
         }
       });
     });
@@ -2467,6 +2497,30 @@ const getDsarRequests = catchAsync(async (req, res, next) => {
 const getComplianceAudits = catchAsync(async (req, res, next) => {
   try {
     const db = deps.db;
+    const hasTable = await tableExists('compliance_audits');
+    if (!hasTable) {
+      await new Promise<void>((resolve, reject) => {
+        db.run(
+          `CREATE TABLE IF NOT EXISTS compliance_audits (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            framework_id TEXT,
+            audit_type TEXT DEFAULT 'internal',
+            status TEXT DEFAULT 'planned',
+            planned_start TEXT,
+            planned_end TEXT,
+            scope TEXT,
+            auditor TEXT,
+            findings_count INTEGER DEFAULT 0,
+            notes TEXT,
+            created_at TEXT DEFAULT (datetime('now'))
+          )`,
+          [],
+          (err: any) => (err ? reject(err) : resolve())
+        );
+      });
+    }
+
     const audits = await new Promise<any[]>((resolve, reject) => {
       db.all(
         'SELECT * FROM compliance_audits ORDER BY planned_start DESC LIMIT 50',
@@ -2475,6 +2529,15 @@ const getComplianceAudits = catchAsync(async (req, res, next) => {
           if (err) {
             if (err.message?.includes('no such table')) {
               resolve([]);
+            } else if (err.message?.includes('planned_start')) {
+              db.all(
+                'SELECT * FROM compliance_audits LIMIT 50',
+                [],
+                (fallbackErr: any, fallbackRows: any[]) => {
+                  if (fallbackErr) reject(fallbackErr);
+                  else resolve(fallbackRows || []);
+                }
+              );
             } else {
               reject(err);
             }
@@ -2810,6 +2873,27 @@ const createProcessingRecord = catchAsync(async (req, res, next) => {
  * Get all processing records
  */
 const getProcessingRecords = catchAsync(async (req, res, next) => {
+  const hasTable = await tableExists('processing_records');
+  if (!hasTable) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS processing_records (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          purpose TEXT,
+          data_categories TEXT,
+          legal_basis TEXT,
+          retention_period TEXT,
+          status TEXT DEFAULT 'active',
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+
   const records = await new Promise<any[]>((resolve, reject) => {
     deps.db.all(
       `SELECT * FROM processing_records ORDER BY created_at DESC LIMIT 100`,
@@ -4431,7 +4515,54 @@ const getPermissionsStats = catchAsync(async (req, res, next) => {
 });
 
 // Approval Workflows
+const ensureApprovalWorkflowTables = async () => {
+  const hasWorkflows = await tableExists('admin_approval_workflows');
+  if (!hasWorkflows) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS admin_approval_workflows (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT,
+          resource_type TEXT,
+          trigger_conditions_json TEXT DEFAULT '{}',
+          approvers_json TEXT DEFAULT '[]',
+          created_by TEXT,
+          is_active INTEGER DEFAULT 1,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+
+  const hasRequests = await tableExists('admin_approval_requests');
+  if (!hasRequests) {
+    await new Promise<void>((resolve, reject) => {
+      deps.db.run(
+        `CREATE TABLE IF NOT EXISTS admin_approval_requests (
+          id TEXT PRIMARY KEY,
+          workflow_id TEXT,
+          requester_id TEXT,
+          status TEXT DEFAULT 'pending',
+          approvers_json TEXT DEFAULT '[]',
+          request_data_json TEXT DEFAULT '{}',
+          completed_at TEXT,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )`,
+        [],
+        (err: any) => (err ? reject(err) : resolve())
+      );
+    });
+  }
+};
+
 const getApprovalWorkflows = catchAsync(async (req, res, next) => {
+  await ensureApprovalWorkflowTables();
+
   const { resourceType, isActive } = req.query;
 
   let sql = 'SELECT * FROM admin_approval_workflows WHERE 1=1';
@@ -4460,6 +4591,8 @@ const getApprovalWorkflows = catchAsync(async (req, res, next) => {
 });
 
 const createApprovalWorkflow = catchAsync(async (req, res, next) => {
+  await ensureApprovalWorkflowTables();
+
   const { name, description, resourceType, triggerConditions, approvers } = req.body;
   const id = deps.uuid.v4();
 
@@ -4481,6 +4614,8 @@ const createApprovalWorkflow = catchAsync(async (req, res, next) => {
 });
 
 const updateApprovalWorkflow = catchAsync(async (req, res, next) => {
+  await ensureApprovalWorkflowTables();
+
   const { id } = req.params;
   const { name, description, triggerConditions, approvers, isActive } = req.body;
 
@@ -4501,12 +4636,16 @@ const updateApprovalWorkflow = catchAsync(async (req, res, next) => {
 });
 
 const deleteApprovalWorkflow = catchAsync(async (req, res, next) => {
+  await ensureApprovalWorkflowTables();
+
   const { id } = req.params;
   await deps.db.run('DELETE FROM admin_approval_workflows WHERE id = ?', [id]);
   res.json({ message: 'Workflow deleted' });
 });
 
 const getApprovalRequests = catchAsync(async (req, res, next) => {
+  await ensureApprovalWorkflowTables();
+
   const { status, workflowId, requesterId } = req.query;
 
   let sql = `
@@ -4544,6 +4683,8 @@ const getApprovalRequests = catchAsync(async (req, res, next) => {
 });
 
 const approveRequest = catchAsync(async (req, res, next) => {
+  await ensureApprovalWorkflowTables();
+
   const { id } = req.params;
   const { notes } = req.body;
 
@@ -4557,6 +4698,8 @@ const approveRequest = catchAsync(async (req, res, next) => {
 });
 
 const rejectRequest = catchAsync(async (req, res, next) => {
+  await ensureApprovalWorkflowTables();
+
   const { id } = req.params;
   const { reason } = req.body;
 

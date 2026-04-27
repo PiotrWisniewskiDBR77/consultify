@@ -1241,6 +1241,7 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        <Route path="/ai/*" element={<Navigate to={ROUTES.AI_OS.ROOT} replace />} />
 
         {/* AI Chat with Conversation ID - deep link to specific conversation */}
         <Route

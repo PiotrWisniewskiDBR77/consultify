@@ -398,12 +398,7 @@ export const AIChatWelcomeView: React.FC = () => {
   });
 
   // Action handler for AI-initiated actions
-  const {
-    executeAction,
-    confirmAction,
-    pendingActions,
-    isExecuting: isActionExecuting,
-  } = useActionHandler();
+  const { executeAction, isExecuting: isActionExecuting } = useActionHandler();
 
   // Local state
   const [citationsCollapsed, setCitationsCollapsed] = useState(false);
@@ -660,26 +655,6 @@ export const AIChatWelcomeView: React.FC = () => {
       return result;
     },
     [executeAction, addMessage]
-  );
-
-  // Handle pending action confirmation
-  const handleConfirmPendingAction = useCallback(
-    async (actionId: string, confirmed: boolean) => {
-      const result = await confirmAction(actionId, confirmed);
-
-      if (result.status === 'success') {
-        const convId = activeConversationIdRef.current;
-        if (convId) {
-          void addMessage({
-            conversationId: convId,
-            role: 'ai',
-            content: confirmed ? '✅ Akcja wykonana pomyślnie.' : '❌ Akcja anulowana.',
-            messageType: 'text',
-          });
-        }
-      }
-    },
-    [confirmAction, addMessage]
   );
 
   const handleTeresaProposalUpdated = useCallback(
@@ -1973,40 +1948,6 @@ When citing knowledge base articles, always reference them by article_id (slug).
               <div ref={messagesEndRef} />
             </div>
           </div>
-
-          {/* Pending Actions Banner */}
-          {pendingActions.length > 0 && (
-            <div className="shrink-0 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-t border-yellow-200 dark:border-yellow-800">
-              <div className="max-w-5xl mx-auto">
-                {pendingActions.map((pa) => {
-                  const message =
-                    typeof pa.payload?.message === 'string'
-                      ? pa.payload.message
-                      : t('aiChat.pendingAction', 'Action requires confirmation');
-
-                  return (
-                    <div key={pa.id} className="flex items-center justify-between text-sm">
-                      <span className="text-yellow-800 dark:text-yellow-200">🔔 {message}</span>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleConfirmPendingAction(pa.id, true)}
-                          className="px-3 py-1 bg-green-500 text-white rounded-md text-xs hover:bg-green-600"
-                        >
-                          Potwierdź
-                        </button>
-                        <button
-                          onClick={() => handleConfirmPendingAction(pa.id, false)}
-                          className="px-3 py-1 bg-red-500 text-white rounded-md text-xs hover:bg-red-600"
-                        >
-                          Anuluj
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* Continuous Voice Mode Indicator */}
           {continuousVoiceMode && (

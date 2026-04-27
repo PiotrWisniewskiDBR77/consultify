@@ -84,7 +84,6 @@ import { EnhancedChatInput } from './EnhancedChatInput';
 import { MessageRenderer } from './MessageRenderer';
 // import { OrganizationMemoryPanel } from './OrganizationMemoryPanel'; // removed — panel disabled
 import { OutputToolSelector } from './OutputToolSelector';
-import { PendingActionsIndicator } from './PendingActionsIndicator';
 import { PrivateModeDetails } from './PrivateModeDetails';
 import { detectExceleIntent, detectTableIntent } from './tableIntentDetector';
 import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './teresaRuntimeCopy';
@@ -776,6 +775,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     policyDecision,
     policyNotices,
     memoryCandidate,
+    teresaProposal,
     researchProgress,
     researchVisibility,
     deepThinkingState,
@@ -1283,6 +1283,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             policyDecision,
             policyNotices,
             memoryCandidate,
+            ...(teresaProposal ? { proposal: teresaProposal } : {}),
           },
         },
       ];
@@ -1301,6 +1302,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
     policyDecision,
     policyNotices,
     memoryCandidate,
+    teresaProposal,
   ]);
 
   useEffect(() => {
@@ -3453,6 +3455,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isRehydratingConversation =
     displayMessages.length === 0 && activeConversationId && isConversationLoading;
   const isWelcomeEmptyState = displayMessages.length === 0 && !isRehydratingConversation;
+  const showFullWelcomeEmptyState = isWelcomeEmptyState && !isCompact;
+  const showCompactEmptyState = isWelcomeEmptyState && isCompact;
 
   return (
     <div
@@ -3610,17 +3614,6 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         </div>
       </div>
 
-      {/* Pending Actions Indicator - Inline visibility for AI actions */}
-      <div className={`${isCompact ? 'px-2 pt-2' : 'px-3 pt-3'}`}>
-        <PendingActionsIndicator
-          projectId={workspaceContext?.projectId}
-          compact={isCompact}
-          onViewAll={onNavigateToActions}
-          onActionDecided={() => {}}
-          maxPreview={isCompact ? 2 : 3}
-        />
-      </div>
-
       {/* Context Badge - shows what AI "sees" */}
       <div className={`${isCompact ? 'px-2' : 'px-3'}`}>
         <ContextBadge
@@ -3647,8 +3640,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               {t('aiChat.loadingConversation', 'Loading conversation…')}
             </p>
           </div>
-        ) : isWelcomeEmptyState ? (
-          <div className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center">
+        ) : showFullWelcomeEmptyState ? (
+          <div
+            data-testid="chat-full-welcome"
+            className="flex min-h-full flex-col items-center justify-center px-4 py-12 text-center"
+          >
             <div className="mb-3 inline-flex items-center rounded-full border border-primary-200/70 bg-primary-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-700 dark:border-primary-800/60 dark:bg-primary-900/20 dark:text-primary-300">
               Teresa
             </div>
@@ -3862,6 +3858,23 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </p>
             </div>
           </div>
+        ) : showCompactEmptyState ? (
+          <div
+            data-testid="chat-compact-empty-state"
+            className="flex min-h-full flex-col justify-end px-2 py-3"
+          >
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-left">
+              <div className="inline-flex items-center rounded-full border border-primary-500/30 bg-primary-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary-300">
+                Teresa
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-slate-400">
+                {t(
+                  'aiChat.sidebarEmptyHint',
+                  'Ask Teresa from this side panel when you need quick context or next-step help.'
+                )}
+              </p>
+            </div>
+          </div>
         ) : (
           <>
             {/* Conversation state banners (§2.3.5 — deep-link + degraded posture) */}
@@ -3980,7 +3993,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       </div>
 
       {/* Input Area */}
-      {!isWelcomeEmptyState && (
+      {!showFullWelcomeEmptyState && (
         <div
           id="chat-input"
           className={`${isCompact ? 'p-2' : 'p-3'} border-t border-slate-200 dark:border-navy-800 bg-slate-50 dark:bg-navy-950`}

@@ -7,14 +7,16 @@
  * @version 3.0
  */
 
-import { Accessibility, ALargeSmall, Eye, Keyboard, Loader2, Volume2 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { ALargeSmall, Eye, Keyboard, Volume2 } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { SettingsButtonGroup, SettingsDivider, SettingsSection, SettingsToggle } from './shared';
 
 interface AccessibilitySettingsProps {
@@ -117,94 +119,107 @@ const COLOR_BLIND_OPTIONS = [
   },
 ];
 
-export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
-  currentUser,
-  onUpdateUser,
-}) => {
+const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
+  const root = document.documentElement;
+
+  const fontSizeMap = { small: '14px', medium: '16px', large: '18px', 'extra-large': '20px' };
+  root.style.setProperty('--base-font-size', fontSizeMap[prefs.fontSize]);
+
+  root.classList.toggle('high-contrast', prefs.highContrastMode);
+  root.classList.toggle('reduce-motion', prefs.reduceMotion);
+  root.classList.toggle('underline-links', prefs.underlineLinks);
+
+  root.classList.remove(
+    'colorblind-protanopia',
+    'colorblind-deuteranopia',
+    'colorblind-tritanopia'
+  );
+  if (prefs.colorBlindMode !== 'none') {
+    root.classList.add(`colorblind-${prefs.colorBlindMode}`);
+  }
+
+  const lineHeightMap = { default: '1.5', relaxed: '1.75', loose: '2' };
+  root.style.setProperty('--line-height-base', lineHeightMap[prefs.lineHeight]);
+
+  const letterSpacingMap = { default: '0', wide: '0.025em', wider: '0.05em' };
+  root.style.setProperty('--letter-spacing-base', letterSpacingMap[prefs.letterSpacing]);
+
+  const fontFamilyMap: Record<string, string> = {
+    system: 'system-ui, -apple-system, sans-serif',
+    inter: 'Inter, sans-serif',
+    roboto: 'Roboto, sans-serif',
+    'open-sans': '"Open Sans", sans-serif',
+    lato: 'Lato, sans-serif',
+    dyslexic: 'OpenDyslexic, sans-serif',
+    mono: 'ui-monospace, monospace',
+  };
+  root.style.setProperty(
+    '--font-family-base',
+    fontFamilyMap[prefs.fontFamily] || fontFamilyMap['system']
+  );
+};
+
+export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({ currentUser }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<AccessibilityPreferences>(DEFAULT_PREFERENCES);
   const [original, setOriginal] = useState<AccessibilityPreferences>(DEFAULT_PREFERENCES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(original);
 
-  useEffect(() => {
-    loadPreferences();
-  }, [currentUser.id]);
-
-  const loadPreferences = async () => {
+  const loadPreferences = useCallback(async () => {
     try {
+      setLoading(true);
+      setLoadError(null);
       const data = await Api.getAccessibilitySettings();
-      if (data.preferences) {
-        const merged = { ...DEFAULT_PREFERENCES, ...data.preferences };
-        setPreferences(merged);
-        setOriginal(merged);
-        applyAccessibilityPreferences(merged);
+      if (!data?.preferences) {
+        throw new Error('Accessibility settings response was missing preferences');
       }
-    } catch (error) {
-      console.error('Failed to load accessibility preferences:', error);
+      const merged = { ...DEFAULT_PREFERENCES, ...data.preferences };
+      setPreferences(merged);
+      setOriginal(merged);
+      applyAccessibilityPreferences(merged);
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load accessibility preferences'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadPreferences();
+  }, [currentUser.id, loadPreferences]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Api.updateAccessibilitySettings(preferences);
       const data = await Api.getAccessibilitySettings();
-      const next = { ...DEFAULT_PREFERENCES, ...(data.preferences ?? preferences) };
+      if (!data?.preferences) {
+        throw new Error('Accessibility preferences save was not confirmed by the server');
+      }
+      const next = { ...DEFAULT_PREFERENCES, ...data.preferences };
+      if (JSON.stringify(next) !== JSON.stringify(preferences)) {
+        throw new Error('Accessibility preferences save was not confirmed by the server');
+      }
       setPreferences(next);
       setOriginal(next);
       applyAccessibilityPreferences(next);
       toast.success(t('settings.accessibility.saved', 'Accessibility preferences saved'));
-    } catch (error) {
-      console.error('Failed to save accessibility preferences:', error);
-      toast.error(t('settings.accessibility.error', 'Failed to save preferences'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.accessibility.error', 'Failed to save preferences')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
-  };
-
-  const applyAccessibilityPreferences = (prefs: AccessibilityPreferences) => {
-    const root = document.documentElement;
-
-    const fontSizeMap = { small: '14px', medium: '16px', large: '18px', 'extra-large': '20px' };
-    root.style.setProperty('--base-font-size', fontSizeMap[prefs.fontSize]);
-
-    root.classList.toggle('high-contrast', prefs.highContrastMode);
-    root.classList.toggle('reduce-motion', prefs.reduceMotion);
-    root.classList.toggle('underline-links', prefs.underlineLinks);
-
-    root.classList.remove(
-      'colorblind-protanopia',
-      'colorblind-deuteranopia',
-      'colorblind-tritanopia'
-    );
-    if (prefs.colorBlindMode !== 'none') {
-      root.classList.add(`colorblind-${prefs.colorBlindMode}`);
-    }
-
-    const lineHeightMap = { default: '1.5', relaxed: '1.75', loose: '2' };
-    root.style.setProperty('--line-height-base', lineHeightMap[prefs.lineHeight]);
-
-    const letterSpacingMap = { default: '0', wide: '0.025em', wider: '0.05em' };
-    root.style.setProperty('--letter-spacing-base', letterSpacingMap[prefs.letterSpacing]);
-
-    const fontFamilyMap: Record<string, string> = {
-      system: 'system-ui, -apple-system, sans-serif',
-      inter: 'Inter, sans-serif',
-      roboto: 'Roboto, sans-serif',
-      'open-sans': '"Open Sans", sans-serif',
-      lato: 'Lato, sans-serif',
-      dyslexic: 'OpenDyslexic, sans-serif',
-      mono: 'ui-monospace, monospace',
-    };
-    root.style.setProperty(
-      '--font-family-base',
-      fontFamilyMap[prefs.fontFamily] || fontFamilyMap['system']
-    );
   };
 
   const update = <K extends keyof AccessibilityPreferences>(
@@ -225,8 +240,25 @@ export const AccessibilitySettings: React.FC<AccessibilitySettingsProps> = ({
     },
   ];
 
+  if (loadError) {
+    return (
+      <div className="space-y-6">
+        <DegradedState title="Accessibility preferences unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* ── Section 1: Typography ── */}
       <SettingsSection
         icon={ALargeSmall}

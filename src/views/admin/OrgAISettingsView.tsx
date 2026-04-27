@@ -9,8 +9,6 @@ import { motion } from 'framer-motion';
 import {
   AlertTriangle,
   Brain,
-  ChevronRight,
-  Cpu,
   DollarSign,
   Eye,
   FileCode,
@@ -25,7 +23,7 @@ import {
   Users,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
@@ -39,7 +37,8 @@ import {
 import { InfoButton } from '../../components/shared/InfoButton';
 import { AdminApi } from '../../services/api/admin.api';
 import { useAppStore } from '../../store/useAppStore';
-import { LLMProvider, OrgAISettings } from '../../types';
+import { AIPolicyLevel, AIRole, OrgAISettings } from '../../types/domain/ai';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 // Policy level configurations
 const POLICY_LEVELS = [
@@ -83,7 +82,7 @@ const AI_ROLES = [
   { id: 'PMO_MANAGER', title: 'PMO Manager', description: 'Manages project methodology' },
   { id: 'EXECUTOR', title: 'Executor', description: 'Executes approved actions' },
   { id: 'EDUCATOR', title: 'Educator', description: 'Teaches and explains concepts' },
-];
+] satisfies Array<{ id: AIRole; title: string; description: string }>;
 
 type SettingsTab = 'policy' | 'limits' | 'features' | 'audit';
 
@@ -95,9 +94,9 @@ const normalizeOrgAISettings = (
   policyLevel: raw?.policyLevel || 'ADVISORY',
   maxPolicyLevel: raw?.maxPolicyLevel || 'AUTOPILOT',
   defaultProactivityMode: raw?.defaultProactivityMode || 'REACTIVE',
-  activeRoles: Array.isArray(raw?.activeRoles) ? raw!.activeRoles : ['ADVISOR'],
+  activeRoles: Array.isArray(raw?.activeRoles) ? raw.activeRoles : ['ADVISOR'],
   defaultRole: raw?.defaultRole || 'ADVISOR',
-  enabledModelIds: Array.isArray(raw?.enabledModelIds) ? raw!.enabledModelIds : [],
+  enabledModelIds: Array.isArray(raw?.enabledModelIds) ? raw.enabledModelIds : [],
   maxAICallsPerDay: typeof raw?.maxAICallsPerDay === 'number' ? raw.maxAICallsPerDay : 0,
   maxTokensPerMonth: typeof raw?.maxTokensPerMonth === 'number' ? raw.maxTokensPerMonth : 0,
   monthlyBudgetUSD: typeof raw?.monthlyBudgetUSD === 'number' ? raw.monthlyBudgetUSD : 0,
@@ -111,7 +110,7 @@ const normalizeOrgAISettings = (
   autoTierEnabled: raw?.autoTierEnabled,
   autoTierDirection: raw?.autoTierDirection,
   autoTierThreshold: raw?.autoTierThreshold,
-  systemPrompts: Array.isArray(raw?.systemPrompts) ? raw!.systemPrompts : [],
+  systemPrompts: Array.isArray(raw?.systemPrompts) ? raw.systemPrompts : [],
   defaultSystemPromptId: raw?.defaultSystemPromptId,
   auditAllRequests: Boolean(raw?.auditAllRequests),
   auditPolicyChanges: Boolean(raw?.auditPolicyChanges),
@@ -120,16 +119,38 @@ const normalizeOrgAISettings = (
   updatedBy: raw?.updatedBy || null,
 });
 
-const getReadableErrorMessage = (error: unknown, fallback: string): string => {
-  if (error instanceof Error && error.message.trim()) return error.message;
-  if (typeof error === 'string' && error.trim()) return error;
-  if (error && typeof error === 'object') {
-    const candidate = error as { message?: unknown; error?: unknown; code?: unknown };
-    for (const value of [candidate.message, candidate.error, candidate.code]) {
-      if (typeof value === 'string' && value.trim()) return value;
-    }
-  }
-  return fallback;
+const unorderedStringArraysMatch = (left: string[], right: string[]) => {
+  if (left.length !== right.length) return false;
+  const normalizedLeft = [...left].sort();
+  const normalizedRight = [...right].sort();
+  return normalizedLeft.every((value, index) => value === normalizedRight[index]);
+};
+
+const orgAISettingsMatch = (persisted: OrgAISettings, expected: OrgAISettings): boolean => {
+  return (
+    persisted.policyLevel === expected.policyLevel &&
+    persisted.maxPolicyLevel === expected.maxPolicyLevel &&
+    persisted.defaultProactivityMode === expected.defaultProactivityMode &&
+    persisted.defaultRole === expected.defaultRole &&
+    unorderedStringArraysMatch(persisted.activeRoles, expected.activeRoles) &&
+    unorderedStringArraysMatch(persisted.enabledModelIds, expected.enabledModelIds) &&
+    persisted.maxAICallsPerDay === expected.maxAICallsPerDay &&
+    persisted.maxTokensPerMonth === expected.maxTokensPerMonth &&
+    persisted.monthlyBudgetUSD === expected.monthlyBudgetUSD &&
+    persisted.hardLimitUSD === expected.hardLimitUSD &&
+    persisted.freezeOnLimit === expected.freezeOnLimit &&
+    persisted.webSearchEnabled === expected.webSearchEnabled &&
+    persisted.artifactsEnabled === expected.artifactsEnabled &&
+    persisted.thinkingStepsEnabled === expected.thinkingStepsEnabled &&
+    persisted.focusModesEnabled === expected.focusModesEnabled &&
+    persisted.voiceEnabled === expected.voiceEnabled &&
+    persisted.autoTierEnabled === expected.autoTierEnabled &&
+    persisted.autoTierDirection === expected.autoTierDirection &&
+    persisted.autoTierThreshold === expected.autoTierThreshold &&
+    persisted.defaultSystemPromptId === expected.defaultSystemPromptId &&
+    persisted.auditAllRequests === expected.auditAllRequests &&
+    persisted.auditPolicyChanges === expected.auditPolicyChanges
+  );
 };
 
 const validateOrgAISettings = (settings: OrgAISettings): string | null => {
@@ -155,16 +176,12 @@ export const OrgAISettingsView: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<OrgAISettings | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
+  const organizationId = currentOrganization?.id;
 
-  useEffect(() => {
-    if (currentOrganization?.id) {
-      loadSettings();
-    }
-  }, [currentOrganization?.id]);
-
-  const loadSettings = async () => {
-    if (!currentOrganization?.id) {
+  const loadSettings = useCallback(async () => {
+    if (!organizationId) {
       setLoading(false);
       return;
     }
@@ -172,21 +189,22 @@ export const OrgAISettingsView: React.FC = () => {
     setLoading(true);
     try {
       setLoadError(null);
-      const data = await AdminApi.getOrganizationAISettings(currentOrganization.id);
-      setSettings(
-        normalizeOrgAISettings(currentOrganization.id, (data as Partial<OrgAISettings>) || null)
-      );
+      const data = await AdminApi.getOrganizationAISettings(organizationId);
+      setSettings(normalizeOrgAISettings(organizationId, (data as Partial<OrgAISettings>) || null));
       setHasChanges(false);
     } catch (error) {
-      console.error('Failed to load settings:', error);
-      const message = getReadableErrorMessage(error, 'Failed to load organization AI settings');
+      const message = normalizeApiErrorMessage(error, 'Failed to load organization AI settings');
       setSettings(null);
       setLoadError(message);
       toast.error(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, [organizationId]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
   const saveSettings = async () => {
     if (!settings || !currentOrganization?.id) return;
@@ -198,21 +216,28 @@ export const OrgAISettingsView: React.FC = () => {
 
     setSaving(true);
     try {
+      setSaveError(null);
+      const expected = settings;
       await AdminApi.updateOrganizationAISettings(
         currentOrganization.id,
-        settings as unknown as Record<string, unknown>
+        expected as unknown as Record<string, unknown>
       );
       const persisted = await AdminApi.getOrganizationAISettings(currentOrganization.id);
-      setSettings(
-        normalizeOrgAISettings(
-          currentOrganization.id,
-          (persisted as Partial<OrgAISettings>) || null
-        )
+      const persistedSettings = normalizeOrgAISettings(
+        currentOrganization.id,
+        (persisted as Partial<OrgAISettings>) || null
       );
+      if (!orgAISettingsMatch(persistedSettings, expected)) {
+        throw new Error('Organization AI settings save was not confirmed by the server');
+      }
+
+      setSettings(persistedSettings);
       setHasChanges(false);
       toast.success('Organization AI settings saved');
     } catch (error) {
-      toast.error(getReadableErrorMessage(error, 'Failed to save organization AI settings'));
+      const message = normalizeApiErrorMessage(error, 'Failed to save organization AI settings');
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -220,24 +245,27 @@ export const OrgAISettingsView: React.FC = () => {
 
   const updateSetting = <K extends keyof OrgAISettings>(key: K, value: OrgAISettings[K]) => {
     setSettings((prev) => (prev ? { ...prev, [key]: value } : null));
+    setSaveError(null);
     setHasChanges(true);
   };
 
   const toggleRole = (roleId: string) => {
     if (!settings) return;
     const currentRoles = settings.activeRoles;
-    if (currentRoles.includes(roleId as any) && currentRoles.length === 1) {
+    const nextRole = roleId as AIRole;
+    if (currentRoles.includes(nextRole) && currentRoles.length === 1) {
       toast.error('At least one AI role must remain active.');
       return;
     }
-    const newRoles = currentRoles.includes(roleId as any)
-      ? currentRoles.filter((r) => r !== roleId)
-      : [...currentRoles, roleId as any];
+    const newRoles = currentRoles.includes(nextRole)
+      ? currentRoles.filter((r) => r !== nextRole)
+      : [...currentRoles, nextRole];
     setSettings((prev) => {
       if (!prev) return prev;
       const nextDefaultRole = newRoles.includes(prev.defaultRole) ? prev.defaultRole : newRoles[0];
       return { ...prev, activeRoles: newRoles, defaultRole: nextDefaultRole };
     });
+    setSaveError(null);
     setHasChanges(true);
   };
 
@@ -359,6 +387,15 @@ export const OrgAISettingsView: React.FC = () => {
         ))}
       </div>
 
+      {saveError && (
+        <div
+          role="alert"
+          className="mx-8 mt-4 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-200"
+        >
+          {saveError}
+        </div>
+      )}
+
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-8">
         <div className="max-w-4xl mx-auto space-y-6">
@@ -385,7 +422,9 @@ export const OrgAISettingsView: React.FC = () => {
                     return (
                       <motion.button
                         key={level.id}
-                        onClick={() => !isDisabled && updateSetting('policyLevel', level.id as any)}
+                        onClick={() =>
+                          !isDisabled && updateSetting('policyLevel', level.id as AIPolicyLevel)
+                        }
                         disabled={isDisabled}
                         className={`
                                                     relative p-4 rounded-xl text-left transition-all
@@ -444,7 +483,7 @@ export const OrgAISettingsView: React.FC = () => {
                       className={`
                                                 flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors
                                                 ${
-                                                  settings.activeRoles.includes(role.id as any)
+                                                  settings.activeRoles.includes(role.id)
                                                     ? 'bg-violet-500/10 border border-violet-500/30'
                                                     : 'bg-slate-800/30 border border-slate-700/50 hover:border-slate-600'
                                                 }
@@ -452,7 +491,7 @@ export const OrgAISettingsView: React.FC = () => {
                     >
                       <input
                         type="checkbox"
-                        checked={settings.activeRoles.includes(role.id as any)}
+                        checked={settings.activeRoles.includes(role.id)}
                         onChange={() => toggleRole(role.id)}
                         className="w-4 h-4 rounded border-slate-600 text-violet-500 focus:ring-violet-500 bg-slate-700"
                       />
@@ -472,10 +511,10 @@ export const OrgAISettingsView: React.FC = () => {
                   </label>
                   <select
                     value={settings.defaultRole}
-                    onChange={(e) => updateSetting('defaultRole', e.target.value as any)}
+                    onChange={(e) => updateSetting('defaultRole', e.target.value as AIRole)}
                     className="w-full bg-slate-800/50 border border-slate-700 rounded-lg p-2 text-white focus:border-violet-500 outline-none"
                   >
-                    {AI_ROLES.filter((r) => settings.activeRoles.includes(r.id as any)).map((r) => (
+                    {AI_ROLES.filter((r) => settings.activeRoles.includes(r.id)).map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.title}
                       </option>

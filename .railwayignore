@@ -14,7 +14,7 @@
 
 # Blog content (heavy assets, not needed for API)
 /Blogs/
-Blogs 2.zip
+*.zip
 /Logo consultinity/
 
 # Large knowledge/doc corpora (keep uploads small)
@@ -46,24 +46,34 @@ Blogs 2.zip
 # Tests & artifacts (not required at runtime)
 /tests/
 /playwright-report/
-/test-results/
+/test-results*/
+/test-screenshots/
 /coverage/
 /screenshots/
 /evidence/
 /exports/
 /odpowiedzi/
+/public/videos/
+/public/videos/**
 
 # Local uploads / exports (not required for build)
 /uploads/
-server/exports/
-server/logs/
-server/backups/
-server/*.db
-server/*.db-journal
-server/*.db-wal
-server/*.db-shm
-server/*.sqlite
-server/*.sqlite-*
+/server/exports/
+/server/exports/**
+/server/logs/
+/server/logs/**
+/server/uploads/
+/server/uploads/**
+/server/backups/
+/server/backups/**
+/server/migrations-archive/
+/server/migrations-archive/**
+/server/*.db
+/server/*.db-journal
+/server/*.db-wal
+/server/*.db-shm
+/server/*.sqlite
+/server/*.sqlite-*
 
 # Build outputs
 /dist/

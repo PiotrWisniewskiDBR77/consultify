@@ -8,28 +8,27 @@ import {
   AlertTriangle,
   Check,
   Clock,
-  Edit2,
   GitBranch,
   Loader2,
-  Play,
   Plus,
   RefreshCw,
   Trash2,
   Users,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface ApprovalWorkflow {
   id: string;
   name: string;
   description: string;
   resource_type: string;
-  triggerConditions: any;
+  triggerConditions: Record<string, unknown>;
   approvers: string[];
   isActive: boolean;
   created_at: string;
@@ -45,10 +44,65 @@ interface ApprovalRequest {
   requester_email: string;
   status: string;
   current_step: number;
-  approvers: any[];
-  requestData: any;
+  approvers: Array<Record<string, unknown> | string>;
+  requestData: Record<string, unknown>;
   created_at: string;
 }
+
+interface ApprovalSnapshot {
+  workflows: ApprovalWorkflow[];
+  requests: ApprovalRequest[];
+}
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const getCreatedWorkflowId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const workflow = isRecord(result.workflow) ? result.workflow : null;
+  return String(
+    result.id ||
+      workflow?.id ||
+      data?.id ||
+      (isRecord(data?.workflow) ? data.workflow.id : '') ||
+      nestedData?.id ||
+      (isRecord(nestedData?.workflow) ? nestedData.workflow.id : '') ||
+      ''
+  );
+};
 
 const ApprovalWorkflowsView: React.FC = () => {
   const [workflows, setWorkflows] = useState<ApprovalWorkflow[]>([]);
@@ -67,11 +121,7 @@ const ApprovalWorkflowsView: React.FC = () => {
     approvers: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async (): Promise<ApprovalSnapshot | null> => {
     try {
       setLoading(true);
       setLoadError(null);
@@ -80,19 +130,38 @@ const ApprovalWorkflowsView: React.FC = () => {
         Api.getApprovalWorkflows(),
         Api.getApprovalRequests(),
       ]);
-      setWorkflows(workflowsData);
-      setRequests(requestsData);
-    } catch (err: any) {
-      setLoadError(err.message || 'Failed to load approval workflows');
+      if (!hasListShape(workflowsData, ['workflows', 'items'])) {
+        throw new Error('Approval workflows response was not a list');
+      }
+      if (!hasListShape(requestsData, ['requests', 'items'])) {
+        throw new Error('Approval requests response was not a list');
+      }
+      const snapshot = {
+        workflows: getListPayload<ApprovalWorkflow>(workflowsData, ['workflows', 'items']),
+        requests: getListPayload<ApprovalRequest>(requestsData, ['requests', 'items']),
+      };
+      setWorkflows(snapshot.workflows);
+      setRequests(snapshot.requests);
+      return snapshot;
+    } catch (err: unknown) {
+      setWorkflows([]);
+      setRequests([]);
+      setLoadError(normalizeApiErrorMessage(err, 'Failed to load approval workflows'));
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
   const handleCreate = async () => {
     try {
       setSaving(true);
-      await Api.createApprovalWorkflow({
+      setError(null);
+      const result = await Api.createApprovalWorkflow({
         name: formData.name,
         description: formData.description,
         resourceType: formData.resourceType,
@@ -102,11 +171,18 @@ const ApprovalWorkflowsView: React.FC = () => {
           .filter(Boolean),
         triggerConditions: {},
       });
-      await loadData();
+      const createdId = getCreatedWorkflowId(result);
+      if (!createdId) {
+        throw new Error('Approval workflow creation response was incomplete');
+      }
+      const refreshed = await loadData();
+      if (!refreshed?.workflows.some((workflow) => workflow.id === createdId)) {
+        throw new Error('Approval workflow creation was not confirmed by the server');
+      }
       setShowCreateModal(false);
       setFormData({ name: '', description: '', resourceType: 'organization', approvers: '' });
-    } catch (err: any) {
-      setError(err.message || 'Failed to create workflow');
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to create workflow'));
     } finally {
       setSaving(false);
     }
@@ -115,22 +191,38 @@ const ApprovalWorkflowsView: React.FC = () => {
   const handleDeleteWorkflow = async (id: string) => {
     if (!confirm('Are you sure you want to delete this workflow?')) return;
     try {
+      setError(null);
       await Api.deleteApprovalWorkflow(id);
-      setWorkflows((prev) => prev.filter((w) => w.id !== id));
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete workflow');
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.workflows.some((workflow) => workflow.id === id)) {
+        throw new Error('Approval workflow deletion was not confirmed by the server');
+      }
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to delete workflow'));
     }
+  };
+
+  const isRequestDecisionConfirmed = (
+    snapshot: ApprovalSnapshot | null,
+    requestId: string,
+    expectedStatus: 'approved' | 'rejected'
+  ) => {
+    if (!snapshot) return false;
+    const request = snapshot.requests.find((candidate) => candidate.id === requestId);
+    return !request || request.status === expectedStatus;
   };
 
   const handleApprove = async (requestId: string) => {
     try {
       setActionLoading(requestId);
+      setError(null);
       await Api.approveRequest(requestId);
-      setRequests((prev) =>
-        prev.map((r) => (r.id === requestId ? { ...r, status: 'approved' } : r))
-      );
-    } catch (err: any) {
-      setError(err.message || 'Failed to approve request');
+      const refreshed = await loadData();
+      if (!isRequestDecisionConfirmed(refreshed, requestId, 'approved')) {
+        throw new Error('Approval request approval was not confirmed by the server');
+      }
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to approve request'));
     } finally {
       setActionLoading(null);
     }
@@ -139,15 +231,22 @@ const ApprovalWorkflowsView: React.FC = () => {
   const handleReject = async (requestId: string) => {
     try {
       setActionLoading(requestId);
+      setError(null);
       await Api.rejectRequest(requestId);
-      setRequests((prev) =>
-        prev.map((r) => (r.id === requestId ? { ...r, status: 'rejected' } : r))
-      );
-    } catch (err: any) {
-      setError(err.message || 'Failed to reject request');
+      const refreshed = await loadData();
+      if (!isRequestDecisionConfirmed(refreshed, requestId, 'rejected')) {
+        throw new Error('Approval request rejection was not confirmed by the server');
+      }
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to reject request'));
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const formatDate = (value: string) => {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
   };
 
   const getStatusBadge = (status: string) => {
@@ -179,71 +278,70 @@ const ApprovalWorkflowsView: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-500/10 rounded-lg">
-              <GitBranch className="w-5 h-5 text-indigo-500" />
+      {!loadError && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-indigo-500/10 rounded-lg">
+                <GitBranch className="w-5 h-5 text-indigo-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-400 dark:text-slate-500">Workflows</p>
+                <p className="text-xl font-semibold">{workflows.length}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Workflows</p>
-              <p className="text-xl font-semibold">{workflows.length}</p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500/10 rounded-lg">
-              <Clock className="w-5 h-5 text-amber-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-500/10 rounded-lg">
+                <Clock className="w-5 h-5 text-amber-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-400 dark:text-slate-500">Pending Requests</p>
+                <p className="text-xl font-semibold">
+                  {requests.filter((r) => r.status === 'pending').length}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Pending Requests</p>
-              <p className="text-xl font-semibold">
-                {requests.filter((r) => r.status === 'pending').length}
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-500/10 rounded-lg">
-              <Check className="w-5 h-5 text-emerald-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                <Check className="w-5 h-5 text-emerald-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-400 dark:text-slate-500">Approved</p>
+                <p className="text-xl font-semibold">
+                  {requests.filter((r) => r.status === 'approved').length}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Approved</p>
-              <p className="text-xl font-semibold">
-                {requests.filter((r) => r.status === 'approved').length}
-              </p>
-            </div>
-          </div>
-        </Card>
+          </Card>
 
-        <Card variant="bordered" className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-500/10 rounded-lg">
-              <X className="w-5 h-5 text-red-500" />
+          <Card variant="bordered" className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-red-500/10 rounded-lg">
+                <X className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <p className="text-sm text-slate-400 dark:text-slate-500">Rejected</p>
+                <p className="text-xl font-semibold">
+                  {requests.filter((r) => r.status === 'rejected').length}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-slate-400 dark:text-slate-500">Rejected</p>
-              <p className="text-xl font-semibold">
-                {requests.filter((r) => r.status === 'rejected').length}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       {/* Error Alert */}
       {error && (
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+          <div role="alert" className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
+            <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -292,6 +390,7 @@ const ApprovalWorkflowsView: React.FC = () => {
           {activeTab === 'workflows' && (
             <button
               onClick={() => setShowCreateModal(true)}
+              disabled={!!loadError}
               className="flex items-center gap-2 px-3 py-2 text-sm bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -382,13 +481,14 @@ const ApprovalWorkflowsView: React.FC = () => {
                           )}
                         </td>
                         <td className="py-3 px-4 text-sm text-slate-300">
-                          {new Date(workflow.created_at).toLocaleDateString()}
+                          {formatDate(workflow.created_at)}
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleDeleteWorkflow(workflow.id)}
                               className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+                              aria-label={`Delete approval workflow ${workflow.name}`}
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -469,7 +569,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                         </td>
                         <td className="py-3 px-4">{getStatusBadge(request.status)}</td>
                         <td className="py-3 px-4 text-sm text-slate-300">
-                          {new Date(request.created_at).toLocaleDateString()}
+                          {formatDate(request.created_at)}
                         </td>
                         <td className="py-3 px-4 text-right">
                           {request.status === 'pending' && (
@@ -478,6 +578,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                                 onClick={() => handleApprove(request.id)}
                                 disabled={actionLoading === request.id}
                                 className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                aria-label={`Approve request ${request.id}`}
                                 title="Approve"
                               >
                                 {actionLoading === request.id ? (
@@ -490,6 +591,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                                 onClick={() => handleReject(request.id)}
                                 disabled={actionLoading === request.id}
                                 className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                aria-label={`Reject request ${request.id}`}
                                 title="Reject"
                               >
                                 <X className="w-4 h-4" />

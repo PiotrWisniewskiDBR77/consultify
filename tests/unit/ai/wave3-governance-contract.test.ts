@@ -68,6 +68,8 @@ describe('Wave 3 AI actions governance contract', () => {
     expect(actionCenter).toContain('Run Ledger');
     expect(actionCenter).toContain('ledgerWarning');
     expect(actionCenter).toContain("Api.getAIRunLedger({ scope: 'mine', limit: 100 })");
+    expect(actionCenter).toContain("Api.getAIActionCenter({ scope: 'org', limit: 100 })");
+    expect(actionCenter).toContain("Api.getAIRunLedger({ scope: 'org', limit: 100 })");
   });
 
   it('forces mutating actions through approval before execution', () => {
@@ -80,6 +82,31 @@ describe('Wave 3 AI actions governance contract', () => {
     expect(executor).toContain("eventType: 'proposal_approved'");
     expect(executor).toContain("eventType: 'execution_started'");
     expect(executor).toContain("eventType: 'execution_failed'");
+  });
+
+  it('blocks explicit approval-bypass mutation prompts before model generation', () => {
+    const routes = read('server/src/routes/ai.routes.ts');
+
+    expect(routes).toContain('isGovernedMutationApprovalBypassRequest');
+    expect(routes).toContain('Every workspace mutation must go through a proposal');
+    expect(routes).toContain('await maybeEmitTeresaProposal(governedReply)');
+    expect(routes).toContain("actionSurface: 'governed_execution'");
+  });
+
+  it('mirrors Teresa proposal lifecycle into AIRun Action Center', () => {
+    const teresa = read('server/src/services/v8/teresaCopilotService.ts');
+    const routes = read('server/src/routes/ai.routes.ts');
+
+    expect(teresa).toContain('mirrorTeresaProposalToAIRun');
+    expect(teresa).toContain('ensureAIActionMirrorSchema');
+    expect(teresa).toContain('repairTeresaAIRunMirrorsForActionCenter');
+    expect(teresa).toContain('TERESA_HANDOFF_');
+    expect(teresa).toContain('INSERT INTO ai_actions');
+    expect(teresa).toContain('{ fallback: false }');
+    expect(teresa).toContain("eventType: 'proposal_pending_review'");
+    expect(teresa).toContain("eventType: 'execution_succeeded'");
+    expect(teresa).toContain('noSilentExecution: true');
+    expect(routes).toContain('repairTeresaAIRunMirrorsForActionCenter');
   });
 
   it('records explicit rollback status in AIRun audit output', () => {

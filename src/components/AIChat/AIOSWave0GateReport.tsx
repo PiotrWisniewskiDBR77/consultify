@@ -63,4 +63,3 @@ export const AIOSWave0GateReport: React.FC = () => {
 };
 
 export default AIOSWave0GateReport;
-

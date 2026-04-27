@@ -40,6 +40,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 
 interface AuditLog {
@@ -136,6 +137,7 @@ export const EnterpriseAuditLog: React.FC = () => {
   const [activeView, setActiveView] = useState<'logs' | 'analytics'>('logs');
   const [showFilters, setShowFilters] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const [filters, setFilters] = useState<FilterState>({
     search: '',
@@ -248,6 +250,7 @@ export const EnterpriseAuditLog: React.FC = () => {
 
   const handleExport = async (format: 'csv' | 'json') => {
     setExporting(true);
+    setActionError(null);
     try {
       const queryFilters: any = {};
       if (filters.search) queryFilters.search = filters.search;
@@ -257,7 +260,10 @@ export const EnterpriseAuditLog: React.FC = () => {
       if (filters.startDate) queryFilters.startDate = filters.startDate;
       if (filters.endDate) queryFilters.endDate = filters.endDate;
 
-      const data = (await (Api as any).exportAuditLogs(queryFilters, format)) || [];
+      const data = await Api.exportAuditLogs(queryFilters, format);
+      if (data === null || data === undefined) {
+        throw new Error('Audit log export response was empty');
+      }
 
       // Create download
       const blob = new Blob([format === 'json' ? JSON.stringify(data, null, 2) : data], {
@@ -274,8 +280,9 @@ export const EnterpriseAuditLog: React.FC = () => {
 
       toast.success(`Exported ${format.toUpperCase()} successfully`);
     } catch (error) {
-      console.error('Failed to export:', error);
-      toast.error('Failed to export audit logs');
+      const message = normalizeApiErrorMessage(error, 'Failed to export audit logs');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setExporting(false);
     }
@@ -411,6 +418,15 @@ export const EnterpriseAuditLog: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Stats Cards */}
       {loadError ? (

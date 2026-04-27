@@ -10,14 +10,9 @@ vi.mock('@/components/shared/InfoButton', () => ({
 
 vi.mock('@/services/api', () => ({
   Api: {
-    getAuditLogs: vi.fn(),
+    getTenantAdminAuditLogs: vi.fn(),
+    exportTenantAdminAuditLogs: vi.fn(),
   },
-}));
-
-vi.mock('@/store/useAppStore', () => ({
-  useAppStore: () => ({
-    currentOrganization: { id: 'org-1' },
-  }),
 }));
 
 vi.mock('react-hot-toast', () => ({
@@ -31,7 +26,7 @@ describe('AuditLogView honest UI', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    vi.mocked(Api.getAuditLogs).mockRejectedValue(new Error('Audit API down'));
+    vi.mocked(Api.getTenantAdminAuditLogs).mockRejectedValue(new Error('Audit API down'));
   });
 
   afterEach(() => {
@@ -52,5 +47,68 @@ describe('AuditLogView honest UI', () => {
     screen.getAllByRole('combobox').forEach((combobox) => {
       expect(combobox).toBeDisabled();
     });
+  });
+
+  it('loads tenant admin audit logs through the P32 audit endpoint', async () => {
+    vi.mocked(Api.getTenantAdminAuditLogs).mockResolvedValue({
+      logs: [
+        {
+          id: 'log-1',
+          admin_id: 'admin-1',
+          action_type: 'update_security_policy',
+          metadata_json: JSON.stringify({
+            orgId: 'org-1',
+            adminName: 'Admin User',
+            adminEmail: 'admin@example.com',
+            resource: 'Security',
+            resourceName: 'MFA policy',
+          }),
+          ip_address: '127.0.0.1',
+          created_at: '2026-04-26T10:00:00.000Z',
+        },
+      ],
+      total: 1,
+    });
+
+    render(<AuditLogView />);
+
+    await waitFor(() => {
+      expect(Api.getTenantAdminAuditLogs).toHaveBeenCalledWith(
+        expect.objectContaining({ limit: 100, offset: 0 })
+      );
+    });
+    expect(screen.getByText('Admin User')).toBeInTheDocument();
+    expect(screen.getByText('SECURITY')).toBeInTheDocument();
+    expect(screen.getByText(/MFA policy/)).toBeInTheDocument();
+    expect(screen.queryByText('Audit logs unavailable')).not.toBeInTheDocument();
+  });
+
+  it('renders invalid audit timestamps as unknown dates instead of Invalid Date', async () => {
+    vi.mocked(Api.getTenantAdminAuditLogs).mockResolvedValue({
+      logs: [
+        {
+          id: 'log-invalid-date',
+          admin_id: 'admin-1',
+          action_type: 'export_audit_logs',
+          metadata_json: JSON.stringify({
+            adminName: 'Admin User',
+            adminEmail: 'admin@example.com',
+            resource: 'Audit',
+            resourceName: 'CSV export',
+          }),
+          ip_address: '127.0.0.1',
+          created_at: 'not-a-date',
+        },
+      ],
+      total: 1,
+    });
+
+    render(<AuditLogView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Unknown date')).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText('Invalid Date')).not.toBeInTheDocument();
   });
 });

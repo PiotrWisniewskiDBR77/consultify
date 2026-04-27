@@ -6488,7 +6488,7 @@ export const Api = {
 
   // Get user license plans
   getUserPlans: async (): Promise<any[]> => {
-    const res = await fetch(`${API_URL}/billing/user-plans`, {
+    const res = await fetch(`${API_URL}/billing/admin/user-plans`, {
       headers: getHeaders(),
     });
     const json = await res.json();

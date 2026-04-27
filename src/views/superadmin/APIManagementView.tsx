@@ -27,10 +27,12 @@ import {
   XCircle,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
 
-import { ReadOnlyState } from '../../components/Admin/AdminState';
+import { DegradedState, ReadOnlyState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface APIKey {
   id: string;
@@ -52,10 +54,43 @@ interface APIKey {
   createdAt: string;
 }
 
+interface APIManagementSnapshot {
+  keys: APIKey[];
+  organizations: { id: string; name: string }[];
+  keysLoaded: boolean;
+}
+
+type RawAPIKey = Partial<APIKey> & {
+  key_prefix?: string;
+  key_type?: APIKey['keyType'];
+  allowed_ips?: string[];
+  usage_count?: number | string;
+  rate_limit_per_minute?: number | string;
+  rate_limit_per_day?: number | string;
+  last_used_at?: string;
+  expires_at?: string;
+  created_at?: string;
+};
+
+type ExpirationOption = 'never' | '30d' | '90d' | '1y';
+
+interface UsageData {
+  totals?: {
+    total_requests?: number;
+    avg_response_time?: number;
+    total_errors?: number;
+  };
+  endpoints?: Array<{
+    method: string;
+    endpoint: string;
+    count: number;
+  }>;
+}
+
 interface CreateKeyModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreated: (key: { id: string; key: string; name: string }) => void;
+  onCreated: (key: { id: string; key: string; name: string }) => Promise<void>;
   organizations: { id: string; name: string }[];
 }
 
@@ -74,6 +109,105 @@ const SCOPE_GROUPS = {
 const webhookWorkflowUnavailableReason =
   'Webhook management is disabled until the superadmin webhook routes are reconciled with one audited backend workflow.';
 
+function formatDate(value?: string | null): string {
+  if (!value) return 'n/a';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'n/a';
+  return date.toLocaleDateString();
+}
+
+function safeNumber(value: unknown, fallback = 0): number {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+function formatInteger(value: unknown): string {
+  return Math.round(safeNumber(value)).toLocaleString();
+}
+
+function parseScopes(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(String);
+  if (typeof value !== 'string') return [];
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizeApiKeys(rawKeys: RawAPIKey[]): APIKey[] {
+  return rawKeys.map((k) => ({
+    ...k,
+    keyPrefix: k.keyPrefix || k.key_prefix || '',
+    keyType: k.keyType || k.key_type || 'org',
+    scopes: parseScopes(k.scopes),
+    allowedIps: Array.isArray(k.allowedIps) ? k.allowedIps : k.allowed_ips || [],
+    usageCount: Number(k.usageCount ?? k.usage_count) || 0,
+    rateLimitPerMinute: Number(k.rateLimitPerMinute ?? k.rate_limit_per_minute) || 60,
+    rateLimitPerDay: Number(k.rateLimitPerDay ?? k.rate_limit_per_day) || 10000,
+    lastUsedAt: k.lastUsedAt || k.last_used_at,
+    expiresAt: k.expiresAt || k.expires_at,
+    createdAt: k.createdAt || k.created_at,
+    isActive: k.isActive === true || k.isActive === 1 || k.isActive === '1',
+  }));
+}
+
+function keyMatchesCreate(key: APIKey, expected: { id?: string; name: string }) {
+  return !!expected.id && key.id === expected.id;
+}
+
+function normalizeCreatedKeyPayload(result: unknown) {
+  const payload = getObjectPayload(result);
+  return {
+    id: isRecord(payload) ? String(payload.id || '') : '',
+    key: isRecord(payload) ? String(payload.key || '') : '',
+    name: isRecord(payload) ? String(payload.name || '') : '',
+  };
+}
+
 const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   isOpen,
   onClose,
@@ -87,7 +221,7 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
   const [selectedScopes, setSelectedScopes] = useState<string[]>([]);
   const [rateLimitPerMinute, setRateLimitPerMinute] = useState(60);
   const [rateLimitPerDay, setRateLimitPerDay] = useState(10000);
-  const [expiresIn, setExpiresIn] = useState<'never' | '30d' | '90d' | '1y'>('never');
+  const [expiresIn, setExpiresIn] = useState<ExpirationOption>('never');
   const [creating, setCreating] = useState(false);
 
   const toggleScope = (scope: string) => {
@@ -128,9 +262,14 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
         expiresAt,
       });
 
-      onCreated(result);
+      const createdKey = normalizeCreatedKeyPayload(result);
+      if (!createdKey.id || !createdKey.key || !createdKey.name) {
+        throw new Error('API key creation response was incomplete');
+      }
+      await onCreated(createdKey);
+      toast.success('API key created');
     } catch (error) {
-      console.error('Failed to create API key:', error);
+      toast.error(normalizeApiErrorMessage(error, 'Failed to create API key'));
     } finally {
       setCreating(false);
     }
@@ -291,7 +430,7 @@ const CreateKeyModal: React.FC<CreateKeyModalProps> = ({
               </label>
               <select
                 value={expiresIn}
-                onChange={(e) => setExpiresIn(e.target.value as any)}
+                onChange={(e) => setExpiresIn(e.target.value as ExpirationOption)}
                 className="w-full px-4 py-2.5 bg-slate-50 dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
               >
                 <option value="never">Never expires</option>
@@ -332,41 +471,74 @@ export const APIManagementView: React.FC = () => {
   const [apiKeys, setApiKeys] = useState<APIKey[]>([]);
   const [organizations, setOrganizations] = useState<{ id: string; name: string }[]>([]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [organizationsLoadError, setOrganizationsLoadError] = useState<string | null>(null);
+  const [usageLoadError, setUsageLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [newlyCreatedKey, setNewlyCreatedKey] = useState<{
     id: string;
     key: string;
     name: string;
   } | null>(null);
   const [selectedKeyForUsage, setSelectedKeyForUsage] = useState<string | null>(null);
-  const [usageData, setUsageData] = useState<any>(null);
+  const [usageData, setUsageData] = useState<UsageData | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
+    setOrganizationsLoadError(null);
+    setActionError(null);
+    let keys: APIKey[] = [];
+    let organizationsSnapshot: { id: string; name: string }[] = [];
+    let keysLoaded = false;
     try {
-      const [keysResult, orgsResult] = await Promise.all([
+      const [keysResult, orgsResult] = await Promise.allSettled([
         Api.get('/api/superadmin/api-keys'),
         Api.getOrganizations(),
       ]);
 
-      const rawKeys = Array.isArray(keysResult) ? keysResult : keysResult?.keys || [];
-      const keys = rawKeys.map((k: any) => ({
-        ...k,
-        keyType: k.keyType || 'org',
-        scopes: Array.isArray(k.scopes)
-          ? k.scopes
-          : typeof k.scopes === 'string'
-            ? JSON.parse(k.scopes || '[]')
-            : [],
-        allowedIps: Array.isArray(k.allowedIps) ? k.allowedIps : [],
-        usageCount: Number(k.usageCount) || 0,
-        rateLimitPerMinute: Number(k.rateLimitPerMinute) || 60,
-        rateLimitPerDay: Number(k.rateLimitPerDay) || 10000,
-        isActive: k.isActive === true || k.isActive === 1 || k.isActive === '1',
-      }));
-      setApiKeys(keys);
-      setOrganizations(orgsResult);
+      if (keysResult.status === 'fulfilled') {
+        if (!hasListShape(keysResult.value, ['keys', 'items'])) {
+          setApiKeys([]);
+          setLoadError('API keys response was not a list');
+        } else {
+          const rawKeys = getListPayload<RawAPIKey>(keysResult.value, ['keys', 'items']);
+          keys = normalizeApiKeys(rawKeys);
+          keysLoaded = true;
+          setApiKeys(keys);
+        }
+      } else {
+        setApiKeys([]);
+        setLoadError(normalizeApiErrorMessage(keysResult.reason, 'Failed to fetch API keys'));
+      }
+
+      if (orgsResult.status === 'fulfilled') {
+        if (!hasListShape(orgsResult.value, ['organizations', 'items'])) {
+          setOrganizations([]);
+          setOrganizationsLoadError('Organizations response was not a list');
+        } else {
+          organizationsSnapshot = getListPayload<{ id: string; name: string }>(orgsResult.value, [
+            'organizations',
+            'items',
+          ]);
+          setOrganizations(organizationsSnapshot);
+        }
+      } else {
+        setOrganizations([]);
+        setOrganizationsLoadError(
+          normalizeApiErrorMessage(orgsResult.reason, 'Failed to fetch organizations')
+        );
+      }
+      return {
+        keys,
+        organizations: organizationsSnapshot,
+        keysLoaded,
+      } satisfies APIManagementSnapshot;
     } catch (error) {
-      console.error('Failed to fetch API keys:', error);
+      setApiKeys([]);
+      setOrganizations([]);
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to fetch API keys'));
+      return null;
     } finally {
       setLoading(false);
     }
@@ -376,10 +548,19 @@ export const APIManagementView: React.FC = () => {
     fetchData();
   }, [fetchData]);
 
-  const handleKeyCreated = (key: { id: string; key: string; name: string }) => {
+  const handleKeyCreated = async (key: { id: string; key: string; name: string }) => {
+    setActionError(null);
+    const refreshed = await fetchData();
+    if (
+      !refreshed?.keysLoaded ||
+      !refreshed.keys.some((refreshedKey) => keyMatchesCreate(refreshedKey, key))
+    ) {
+      const message = 'API key creation was not confirmed by the server';
+      setActionError(message);
+      throw new Error(message);
+    }
     setNewlyCreatedKey(key);
     setShowCreateModal(false);
-    fetchData();
   };
 
   const handleRevokeKey = async (keyId: string) => {
@@ -388,19 +569,31 @@ export const APIManagementView: React.FC = () => {
 
     try {
       await Api.delete(`/api/superadmin/api-keys/${keyId}`);
-      fetchData();
+      const refreshed = await fetchData();
+      if (
+        !refreshed ||
+        !refreshed.keysLoaded ||
+        refreshed.keys.some((key) => key.id === keyId && key.isActive)
+      ) {
+        throw new Error('API key revoke was not confirmed by the server');
+      }
+      toast.success('API key revoked');
     } catch (error) {
-      console.error('Failed to revoke key:', error);
+      const message = normalizeApiErrorMessage(error, 'Failed to revoke key');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleViewUsage = async (keyId: string) => {
     setSelectedKeyForUsage(keyId);
+    setUsageData(null);
+    setUsageLoadError(null);
     try {
       const result = await Api.get(`/api/superadmin/api-keys/${keyId}/usage`);
       setUsageData(result);
     } catch (error) {
-      console.error('Failed to fetch usage:', error);
+      setUsageLoadError(normalizeApiErrorMessage(error, 'Failed to fetch API key usage'));
     }
   };
 
@@ -452,201 +645,233 @@ export const APIManagementView: React.FC = () => {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
-              <KeyRound className="text-violet-500" size={20} />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">{stats.total}</div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">Total Keys</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <CheckCircle2 className="text-emerald-500" size={20} />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                {stats.active}
-              </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">Active</div>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <Activity className="text-blue-500" size={20} />
-            </div>
-            <div>
-              <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                {stats.totalUsage.toLocaleString()}
-              </div>
-              <div className="text-sm text-slate-500 dark:text-slate-400">Total API Calls</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end">
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
         >
-          <Plus size={18} />
-          Create API Key
-        </button>
-      </div>
+          {actionError}
+        </div>
+      )}
 
-      {/* Keys Table */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Key
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Organization
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Scopes
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Usage
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-white/10">
-            {apiKeys.map((key) => (
-              <tr key={key.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
-                <td className="px-6 py-4">
-                  <div>
-                    <div className="font-medium text-slate-900 dark:text-white">{key.name}</div>
-                    <div className="flex items-center gap-2 mt-1">
-                      <code className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                        {key.keyPrefix}...
-                      </code>
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
-                          key.keyType === 'org'
-                            ? 'bg-violet-500/10 text-violet-600'
-                            : key.keyType === 'service'
-                              ? 'bg-blue-500/10 text-blue-600'
-                              : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
-                        }`}
-                      >
-                        {(key.keyType || 'org').toUpperCase()}
-                      </span>
-                    </div>
+      {/* Stats */}
+      {loadError ? (
+        <DegradedState title="API keys unavailable" description={loadError} />
+      ) : (
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-violet-500/10 flex items-center justify-center">
+                  <KeyRound className="text-violet-500" size={20} />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {stats.total}
                   </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
-                    {key.organizationName ||
-                      organizations.find((o) => o.id === key.organizationId)?.name ||
-                      'Unknown'}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex flex-wrap gap-1 max-w-xs">
-                    {key.scopes.slice(0, 3).map((scope) => (
-                      <span
-                        key={scope}
-                        className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400"
-                      >
-                        {scope}
-                      </span>
-                    ))}
-                    {key.scopes.length > 3 && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
-                        +{key.scopes.length - 3} more
-                      </span>
-                    )}
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Total Keys</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                  <CheckCircle2 className="text-emerald-500" size={20} />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {stats.active}
                   </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="text-sm">
-                    <div className="font-medium text-slate-900 dark:text-white">
-                      {key.usageCount.toLocaleString()}
-                    </div>
-                    {key.lastUsedAt && (
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        Last: {new Date(key.lastUsedAt).toLocaleDateString()}
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Active</div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Activity className="text-blue-500" size={20} />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                    {stats.totalUsage.toLocaleString()}
+                  </div>
+                  <div className="text-sm text-slate-500 dark:text-slate-400">Total API Calls</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              disabled={!!loadError || !!organizationsLoadError || organizations.length === 0}
+              title={
+                loadError ||
+                organizationsLoadError ||
+                (organizations.length === 0
+                  ? 'No organizations available for API key creation'
+                  : 'Create API Key')
+              }
+              className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium flex items-center gap-2"
+            >
+              <Plus size={18} />
+              Create API Key
+            </button>
+          </div>
+          {organizationsLoadError && (
+            <DegradedState title="Organizations unavailable" description={organizationsLoadError} />
+          )}
+
+          {/* Keys Table */}
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-navy-700">
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Key
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Organization
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Scopes
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Usage
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-white/10">
+                {apiKeys.map((key) => (
+                  <tr key={key.id} className="hover:bg-slate-50 dark:hover:bg-navy-800/20">
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white">{key.name}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <code className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                            {key.keyPrefix}...
+                          </code>
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                              key.keyType === 'org'
+                                ? 'bg-violet-500/10 text-violet-600'
+                                : key.keyType === 'service'
+                                  ? 'bg-blue-500/10 text-blue-600'
+                                  : 'bg-slate-500/10 text-slate-600 dark:text-slate-400'
+                            }`}
+                          >
+                            {(key.keyType || 'org').toUpperCase()}
+                          </span>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  {key.isActive ? (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600">
-                      <CheckCircle2 size={12} />
-                      Active
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600">
-                      <XCircle size={12} />
-                      Revoked
-                    </span>
-                  )}
-                  {key.expiresAt &&
-                    new Date(key.expiresAt) < new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 ml-1">
-                        <Clock size={12} />
-                        Expiring soon
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {key.organizationName ||
+                          organizations.find((o) => o.id === key.organizationId)?.name ||
+                          'Unknown'}
                       </span>
-                    )}
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => handleViewUsage(key.id)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
-                      title="View Usage"
-                    >
-                      <BarChart3 size={16} className="text-slate-400 dark:text-slate-500" />
-                    </button>
-                    {key.isActive && (
-                      <button
-                        onClick={() => handleRevokeKey(key.id)}
-                        className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
-                        title="Revoke Key"
-                      >
-                        <Trash2 size={16} className="text-red-400" />
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {apiKeys.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-6 py-12 text-center">
-                  <div className="text-slate-500 dark:text-slate-400">
-                    <KeyRound size={40} className="mx-auto mb-3 opacity-30" />
-                    <p className="font-medium">No API keys created yet</p>
-                    <p className="text-sm">
-                      Create your first API key to enable programmatic access
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex flex-wrap gap-1 max-w-xs">
+                        {key.scopes.slice(0, 3).map((scope) => (
+                          <span
+                            key={scope}
+                            className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400"
+                          >
+                            {scope}
+                          </span>
+                        ))}
+                        {key.scopes.length > 3 && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-navy-700 text-slate-600 dark:text-slate-400">
+                            +{key.scopes.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm">
+                        <div className="font-medium text-slate-900 dark:text-white">
+                          {key.usageCount.toLocaleString()}
+                        </div>
+                        {key.lastUsedAt && (
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            Last: {formatDate(key.lastUsedAt)}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      {key.isActive ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600">
+                          <CheckCircle2 size={12} />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600">
+                          <XCircle size={12} />
+                          Revoked
+                        </span>
+                      )}
+                      {key.expiresAt &&
+                        !Number.isNaN(new Date(key.expiresAt).getTime()) &&
+                        new Date(key.expiresAt) <
+                          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 ml-1">
+                            <Clock size={12} />
+                            Expiring soon
+                          </span>
+                        )}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleViewUsage(key.id)}
+                          aria-label={`View usage for API key ${key.id}`}
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg transition-colors"
+                          title="View Usage"
+                        >
+                          <BarChart3 size={16} className="text-slate-400 dark:text-slate-500" />
+                        </button>
+                        {key.isActive && (
+                          <button
+                            onClick={() => handleRevokeKey(key.id)}
+                            aria-label={`Revoke API key ${key.id}`}
+                            className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="Revoke Key"
+                          >
+                            <Trash2 size={16} className="text-red-400" />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {apiKeys.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="text-slate-500 dark:text-slate-400">
+                        <KeyRound size={40} className="mx-auto mb-3 opacity-30" />
+                        <p className="font-medium">No API keys created yet</p>
+                        <p className="text-sm">
+                          Create your first API key to enable programmatic access
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -657,13 +882,17 @@ export const APIManagementView: React.FC = () => {
           API Usage Analytics
         </h3>
 
-        {selectedKeyForUsage && usageData ? (
+        {loadError ? (
+          <DegradedState title="API key usage unavailable" description={loadError} />
+        ) : usageLoadError ? (
+          <DegradedState title="API key usage unavailable" description={usageLoadError} />
+        ) : selectedKeyForUsage && usageData ? (
           <div className="space-y-6">
             {/* Summary */}
             <div className="grid grid-cols-3 gap-4">
               <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-lg">
                 <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {usageData.totals?.total_requests?.toLocaleString() || 0}
+                  {formatInteger(usageData.totals?.total_requests)}
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">
                   Total Requests (30 days)
@@ -671,13 +900,13 @@ export const APIManagementView: React.FC = () => {
               </div>
               <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-lg">
                 <div className="text-2xl font-bold text-slate-900 dark:text-white">
-                  {Math.round(usageData.totals?.avg_response_time || 0)}ms
+                  {formatInteger(usageData.totals?.avg_response_time)}ms
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">Avg Response Time</div>
               </div>
               <div className="p-4 bg-slate-50 dark:bg-navy-900 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">
-                  {usageData.totals?.total_errors || 0}
+                  {formatInteger(usageData.totals?.total_errors)}
                 </div>
                 <div className="text-sm text-slate-500 dark:text-slate-400">Errors</div>
               </div>
@@ -687,7 +916,7 @@ export const APIManagementView: React.FC = () => {
             <div>
               <h4 className="font-medium text-slate-900 dark:text-white mb-3">Top Endpoints</h4>
               <div className="space-y-2">
-                {usageData.endpoints?.map((ep: any, idx: number) => (
+                {usageData.endpoints?.map((ep, idx) => (
                   <div
                     key={idx}
                     className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-navy-700"
@@ -711,7 +940,7 @@ export const APIManagementView: React.FC = () => {
                       </span>
                     </div>
                     <span className="text-sm font-medium text-slate-900 dark:text-white">
-                      {ep.count}
+                      {formatInteger(ep.count)}
                     </span>
                   </div>
                 ))}

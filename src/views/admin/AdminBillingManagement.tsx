@@ -32,6 +32,7 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
 import { BillingAddress, Invoice, OrganizationOwnership } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface SubscriptionPlan {
   id: string;
@@ -76,6 +77,41 @@ interface BillingData {
   maxUsers: number;
 }
 
+interface UsageData {
+  tokens?: {
+    used?: number;
+    limit?: number;
+  };
+  storage?: {
+    used_gb?: number;
+    limit_gb?: number;
+  };
+}
+
+const formatUsagePair = (used?: number, limit?: number) =>
+  typeof used === 'number' && typeof limit === 'number'
+    ? `${used.toLocaleString()} / ${limit.toLocaleString()}`
+    : '--';
+
+const usagePercent = (used?: number, limit?: number) =>
+  typeof used === 'number' && typeof limit === 'number' && limit > 0
+    ? `${Math.min(100, (used / limit) * 100)}%`
+    : '0%';
+
+const billingInfoMatches = (
+  actual: OrganizationOwnership | null,
+  expected: Partial<OrganizationOwnership>
+) =>
+  Boolean(actual) &&
+  actual?.billingName === expected.billingName &&
+  actual?.billingEmail === expected.billingEmail &&
+  actual?.taxId === expected.taxId &&
+  actual?.vatNumber === expected.vatNumber &&
+  actual?.billingAddress?.line1 === expected.billingAddress?.line1 &&
+  actual?.billingAddress?.city === expected.billingAddress?.city &&
+  actual?.billingAddress?.postalCode === expected.billingAddress?.postalCode &&
+  actual?.billingAddress?.country === expected.billingAddress?.country;
+
 interface AdminBillingManagementProps {
   className?: string;
 }
@@ -101,6 +137,7 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
   const [showBillingModal, setShowBillingModal] = useState(false);
   const [billingForm, setBillingForm] = useState<Partial<OrganizationOwnership>>({});
+  const [billingActionError, setBillingActionError] = useState<string | null>(null);
 
   // Plan comparison states
   const [showPlanModal, setShowPlanModal] = useState(false);
@@ -116,24 +153,25 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
   const [selectedAddon, setSelectedAddon] = useState<AddOn | null>(null);
   const [addonQuantity, setAddonQuantity] = useState(1);
   const [purchasingAddon, setPurchasingAddon] = useState(false);
-  const [usageData, setUsageData] = useState<any>(null);
+  const [usageData, setUsageData] = useState<UsageData | null>(null);
 
   useEffect(() => {
     fetchBillingData();
     fetchInvoices();
     fetchOwnershipData();
     loadUsageData();
+    // These loaders are stable enough for the initial mount path; later refreshes are explicit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadUsageData = async () => {
     try {
       setUsageLoadError(null);
       const data = await Api.getUsage();
-      setUsageData(data.structuredUsage || null);
-    } catch (error) {
-      console.error('Failed to load usage data:', error);
+      setUsageData((data.structuredUsage || null) as UsageData | null);
+    } catch (error: unknown) {
       setUsageData(null);
-      setUsageLoadError(error instanceof Error ? error.message : 'Failed to load usage data');
+      setUsageLoadError(normalizeApiErrorMessage(error, 'Failed to load usage data'));
     }
   };
 
@@ -143,10 +181,9 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       setInvoicesLoadError(null);
       const data = await Api.getInvoices();
       setInvoices(data);
-    } catch (error) {
-      console.error('Failed to fetch invoices:', error);
+    } catch (error: unknown) {
       setInvoices([]);
-      setInvoicesLoadError(error instanceof Error ? error.message : 'Failed to load invoices');
+      setInvoicesLoadError(normalizeApiErrorMessage(error, 'Failed to load invoices'));
     } finally {
       setLoadingInvoices(false);
     }
@@ -157,13 +194,16 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       const res = await fetch(`/api/organizations/${currentOrganization?.id}/ownership`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      if (res.ok) {
-        const data = await res.json();
-        setOwnership(data.ownership);
-        setBillingForm(data.ownership || {});
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
-    } catch (error) {
-      console.error('Failed to fetch ownership data:', error);
+      const data = await res.json();
+      const nextOwnership = (data.ownership || null) as OrganizationOwnership | null;
+      setOwnership(nextOwnership);
+      setBillingForm(nextOwnership || {});
+      return nextOwnership;
+    } catch {
+      return null;
     }
   };
 
@@ -179,10 +219,9 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       }
       const data = await res.json();
       setAvailablePlans(data.plans || []);
-    } catch (error) {
-      console.error('Failed to load plans:', error);
+    } catch (error: unknown) {
       setAvailablePlans([]);
-      setPlansLoadError(error instanceof Error ? error.message : 'Failed to load plans');
+      setPlansLoadError(normalizeApiErrorMessage(error, 'Failed to load plans'));
     } finally {
       setLoadingPlans(false);
     }
@@ -199,10 +238,9 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       }
       const data = await res.json();
       setAddons(data.addons || []);
-    } catch (error) {
-      console.error('Failed to load addons:', error);
+    } catch (error: unknown) {
       setAddons([]);
-      setAddonsLoadError(error instanceof Error ? error.message : 'Failed to load add-ons');
+      setAddonsLoadError(normalizeApiErrorMessage(error, 'Failed to load add-ons'));
     }
   };
 
@@ -216,8 +254,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         const data = await res.json();
         setPlanComparison(data);
       }
-    } catch (error) {
-      console.error('Failed to load plan comparison:', error);
+    } catch {
+      setPlanComparison(null);
     }
   };
 
@@ -241,8 +279,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         const error = await res.json();
         toast.error(error.message || 'Failed to change plan');
       }
-    } catch (error) {
-      toast.error('Failed to change plan');
+    } catch (error: unknown) {
+      toast.error(normalizeApiErrorMessage(error, 'Failed to change plan'));
     } finally {
       setChangingPlan(false);
     }
@@ -270,8 +308,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         const error = await res.json();
         toast.error(error.message || 'Failed to purchase add-on');
       }
-    } catch (error) {
-      toast.error('Failed to purchase add-on');
+    } catch (error: unknown) {
+      toast.error(normalizeApiErrorMessage(error, 'Failed to purchase add-on'));
     } finally {
       setPurchasingAddon(false);
     }
@@ -311,13 +349,10 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
       } else {
         throw new Error('Failed to load billing summary');
       }
-    } catch (error) {
-      console.error('Failed to fetch billing data:', error);
+    } catch (error: unknown) {
       toast.error('Failed to load billing information');
       setBilling(null);
-      setBillingLoadError(
-        error instanceof Error ? error.message : 'Failed to load billing summary'
-      );
+      setBillingLoadError(normalizeApiErrorMessage(error, 'Failed to load billing summary'));
     } finally {
       setLoading(false);
     }
@@ -325,7 +360,9 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
 
   const handleSaveBillingInfo = async () => {
     setSaving(true);
+    setBillingActionError(null);
     try {
+      const expectedBilling = billingForm;
       const res = await fetch(`/api/organizations/${currentOrganization?.id}/billing-info`, {
         method: 'PUT',
         headers: {
@@ -335,15 +372,25 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
         body: JSON.stringify(billingForm),
       });
 
-      if (res.ok) {
-        toast.success(t('admin.billing.infoUpdated', 'Billing information updated'));
-        setShowBillingModal(false);
-        fetchOwnershipData();
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
-    } catch (error) {
-      toast.error(t('admin.billing.updateError', 'Failed to update billing information'));
+      const persistedOwnership = await fetchOwnershipData();
+      if (!billingInfoMatches(persistedOwnership, expectedBilling)) {
+        throw new Error('Billing information update was not confirmed by the server');
+      }
+      toast.success(t('admin.billing.infoUpdated', 'Billing information updated'));
+      setShowBillingModal(false);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('admin.billing.updateError', 'Failed to update billing information')
+      );
+      setBillingActionError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   if (loading) {
@@ -448,18 +495,14 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                 <div className="flex justify-between text-sm mb-1.5">
                   <span className="text-slate-500 dark:text-slate-400">AI Tokens</span>
                   <span className="text-slate-300">
-                    {usageData?.tokens
-                      ? `${usageData.tokens.used.toLocaleString()} / ${usageData.tokens.limit.toLocaleString()}`
-                      : '--'}
+                    {formatUsagePair(usageData?.tokens?.used, usageData?.tokens?.limit)}
                   </span>
                 </div>
                 <div className="w-full bg-slate-100 dark:bg-white/5 rounded-full h-1.5">
                   <div
                     className="bg-slate-400 rounded-full h-1.5 transition-all duration-500"
                     style={{
-                      width: usageData?.tokens
-                        ? `${Math.min(100, (usageData.tokens.used / usageData.tokens.limit) * 100)}%`
-                        : '0%',
+                      width: usagePercent(usageData?.tokens?.used, usageData?.tokens?.limit),
                     }}
                   />
                 </div>
@@ -468,7 +511,8 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                 <div className="flex justify-between text-sm mb-1.5">
                   <span className="text-slate-500 dark:text-slate-400">Storage</span>
                   <span className="text-slate-300">
-                    {usageData?.storage
+                    {typeof usageData?.storage?.used_gb === 'number' &&
+                    typeof usageData?.storage?.limit_gb === 'number'
                       ? `${usageData.storage.used_gb} GB / ${usageData.storage.limit_gb} GB`
                       : '--'}
                   </span>
@@ -477,9 +521,10 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
                   <div
                     className="bg-slate-50 dark:bg-navy-800/300 rounded-full h-1.5 transition-all duration-500"
                     style={{
-                      width: usageData?.storage
-                        ? `${Math.min(100, (usageData.storage.used_gb / usageData.storage.limit_gb) * 100)}%`
-                        : '0%',
+                      width: usagePercent(
+                        usageData?.storage?.used_gb,
+                        usageData?.storage?.limit_gb
+                      ),
                     }}
                   />
                 </div>
@@ -993,6 +1038,15 @@ export const AdminBillingManagement: React.FC<AdminBillingManagementProps> = ({
               </div>
 
               <div className="p-6 space-y-6 overflow-y-auto">
+                {billingActionError && (
+                  <div
+                    role="alert"
+                    className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm"
+                  >
+                    {billingActionError}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-slate-400 dark:text-slate-500 mb-1.5">

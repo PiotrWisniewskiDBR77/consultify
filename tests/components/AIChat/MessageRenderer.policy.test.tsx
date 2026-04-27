@@ -88,6 +88,40 @@ function buildProps(overrides?: Partial<MessageRendererProps>): MessageRendererP
 }
 
 describe('MessageRenderer policy UX (P34-B)', () => {
+  it('renders persisted execution proposals using messageType', () => {
+    const onProposalApprove = vi.fn();
+    const msg = {
+      id: 'm-ai-proposal',
+      role: 'ai',
+      content: 'Create the initiative after review.',
+      timestamp: new Date(),
+      messageType: 'execution_proposal',
+      metadata: {
+        executionProposal: {
+          proposalId: 'proposal-123',
+          lifecycleState: 'pending_review',
+          planSummary: 'Create the initiative after review.',
+        },
+      },
+    } as any;
+
+    render(
+      <MessageRenderer
+        {...buildProps({
+          msg,
+          displayMessages: [msg],
+          onProposalApprove,
+          onProposalReject: vi.fn(),
+          onProposalExecute: vi.fn(),
+        })}
+      />
+    );
+
+    expect(screen.getByTestId('execution-proposal-message')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /approve/i }));
+    expect(onProposalApprove).toHaveBeenCalledWith('proposal-123', msg);
+  });
+
   it('renders refusal callout with next steps when policyDecision.allowed=false', () => {
     const msg = {
       id: 'm-ai-deny',

@@ -319,7 +319,9 @@ export function PortfolioItemsPhase({
           <input
             value={title}
             onChange={(event) => setTitle(event.target.value)}
-            placeholder={isPolish ? 'Nazwa inicjatywy / produktu...' : 'Initiative / product name...'}
+            placeholder={
+              isPolish ? 'Nazwa inicjatywy / produktu...' : 'Initiative / product name...'
+            }
             className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm dark:border-navy-700 dark:bg-navy-900"
           />
           <input
@@ -340,8 +342,18 @@ export function PortfolioItemsPhase({
         </div>
         <div className="mt-3 grid gap-3 md:grid-cols-3">
           {[
-            ['marketGrowth', isPolish ? 'Wzrost rynku' : 'Market growth', marketGrowth, setMarketGrowth],
-            ['marketShare', isPolish ? 'Udział / pozycja' : 'Share / position', marketShare, setMarketShare],
+            [
+              'marketGrowth',
+              isPolish ? 'Wzrost rynku' : 'Market growth',
+              marketGrowth,
+              setMarketGrowth,
+            ],
+            [
+              'marketShare',
+              isPolish ? 'Udział / pozycja' : 'Share / position',
+              marketShare,
+              setMarketShare,
+            ],
             [
               'investmentLevel',
               isPolish ? 'Poziom inwestycji' : 'Investment level',
@@ -353,7 +365,9 @@ export function PortfolioItemsPhase({
               {label as string}
               <select
                 value={value as number}
-                onChange={(event) => (setter as (value: number) => void)(Number(event.target.value))}
+                onChange={(event) =>
+                  (setter as (value: number) => void)(Number(event.target.value))
+                }
                 className="mt-1 h-9 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
               >
                 {[1, 2, 3, 4, 5].map((score) => (
@@ -418,34 +432,36 @@ export function PortfolioItemsPhase({
                       {item.description}
                     </p>
                     <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                      {(['marketGrowth', 'marketShare', 'investmentLevel'] as const).map((field) => (
-                        <label key={field} className="text-xs font-medium text-slate-500">
-                          {field === 'marketGrowth'
-                            ? isPolish
-                              ? 'Wzrost'
-                              : 'Growth'
-                            : field === 'marketShare'
+                      {(['marketGrowth', 'marketShare', 'investmentLevel'] as const).map(
+                        (field) => (
+                          <label key={field} className="text-xs font-medium text-slate-500">
+                            {field === 'marketGrowth'
                               ? isPolish
-                                ? 'Udział'
-                                : 'Share'
-                              : isPolish
-                                ? 'Inwestycje'
-                                : 'Investment'}
-                          <select
-                            value={item[field]}
-                            onChange={(event) =>
-                              updateItem(item.id, { [field]: Number(event.target.value) })
-                            }
-                            className="mt-1 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
-                          >
-                            {[1, 2, 3, 4, 5].map((score) => (
-                              <option key={score} value={score}>
-                                {score}/5
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                      ))}
+                                ? 'Wzrost'
+                                : 'Growth'
+                              : field === 'marketShare'
+                                ? isPolish
+                                  ? 'Udział'
+                                  : 'Share'
+                                : isPolish
+                                  ? 'Inwestycje'
+                                  : 'Investment'}
+                            <select
+                              value={item[field]}
+                              onChange={(event) =>
+                                updateItem(item.id, { [field]: Number(event.target.value) })
+                              }
+                              className="mt-1 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
+                            >
+                              {[1, 2, 3, 4, 5].map((score) => (
+                                <option key={score} value={score}>
+                                  {score}/5
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )
+                      )}
                     </div>
                     {item.rationale && (
                       <div className="mt-3 rounded-lg bg-white p-2 text-xs text-slate-600 dark:bg-navy-950 dark:text-slate-300">

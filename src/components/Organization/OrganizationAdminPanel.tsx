@@ -22,8 +22,19 @@ import { useTranslation } from 'react-i18next';
 import { Api } from '../../services/api';
 import { trackFunnelEvent } from '../../services/funnelAnalytics';
 import { useAppStore } from '../../store/useAppStore';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { CompetencyCatalog } from './CompetencyCatalog';
 import type { OrganizationSection } from './OrganizationSidebar';
+
+type ApprovedDomainRow = {
+  id?: string;
+  domain?: string;
+};
+
+type OrganizationDomainSnapshot = {
+  customDomain: string;
+  customDomainVerified: boolean;
+};
 
 interface OrganizationAdminPanelProps {
   section: OrganizationSection;
@@ -399,9 +410,43 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   );
   const [customDomainDraft, setCustomDomainDraft] = useState(orgData?.custom_domain || '');
   const [savingCustomDomain, setSavingCustomDomain] = useState(false);
-  const [approvedDomains, setApprovedDomains] = useState<any[]>([]);
+  const [approvedDomains, setApprovedDomains] = useState<ApprovedDomainRow[]>([]);
   const [newApprovedDomain, setNewApprovedDomain] = useState('');
   const [savingDomain, setSavingDomain] = useState(false);
+  const [domainActionError, setDomainActionError] = useState<string | null>(null);
+
+  const normalizeApprovedDomains = (rows: unknown): ApprovedDomainRow[] =>
+    Array.isArray(rows)
+      ? rows.reduce<ApprovedDomainRow[]>((acc, row) => {
+          if (!row || typeof row !== 'object') return acc;
+          const candidate = row as { id?: unknown; domain?: unknown };
+          const normalized = {
+            id: candidate.id ? String(candidate.id) : undefined,
+            domain: candidate.domain ? String(candidate.domain).trim().toLowerCase() : undefined,
+          };
+          if (normalized.domain) acc.push(normalized);
+          return acc;
+        }, [])
+      : [];
+
+  const loadOrganizationDomainSnapshot =
+    useCallback(async (): Promise<OrganizationDomainSnapshot | null> => {
+      if (!orgData?.id) return null;
+      const orgs = await Api.getUserOrganizations();
+      const org = Array.isArray(orgs)
+        ? orgs.find((candidate) => {
+            if (!candidate || typeof candidate !== 'object') return false;
+            return String((candidate as { id?: unknown }).id) === String(orgData.id);
+          })
+        : null;
+      if (!org) return null;
+      return {
+        customDomain: String(org.custom_domain || org.customDomain || '')
+          .trim()
+          .toLowerCase(),
+        customDomainVerified: Boolean(org.domain_verified || org.customDomainVerified),
+      };
+    }, [orgData?.id]);
 
   useEffect(() => {
     setCustomDomain(orgData?.custom_domain || '');
@@ -409,13 +454,19 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
     setCustomDomainVerified(Boolean(orgData?.domain_verified));
   }, [orgData?.custom_domain, orgData?.domain_verified]);
 
-  const loadApprovedDomains = useCallback(async () => {
-    if (!orgData?.id) return;
+  const loadApprovedDomains = useCallback(async (): Promise<ApprovedDomainRow[]> => {
+    if (!orgData?.id) return [];
     try {
       const rows = await Api.get(`/organizations/${orgData.id}/approved-domains`);
-      setApprovedDomains(Array.isArray(rows) ? rows : []);
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to load approved domains');
+      const normalizedRows = normalizeApprovedDomains(rows);
+      setApprovedDomains(normalizedRows);
+      return normalizedRows;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load approved domains');
+      setApprovedDomains([]);
+      setDomainActionError(message);
+      toast.error(message);
+      return [];
     }
   }, [orgData?.id]);
 
@@ -431,15 +482,22 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
     }
     try {
       setSavingDomain(true);
+      setDomainActionError(null);
+      const expectedDomain = newApprovedDomain.trim().toLowerCase();
       await Api.post(`/organizations/${orgData.id}/approved-domains`, {
-        domain: newApprovedDomain.trim(),
+        domain: expectedDomain,
         autoJoin: true,
       });
+      const refreshedDomains = await loadApprovedDomains();
+      if (!refreshedDomains.some((domain) => domain.domain === expectedDomain)) {
+        throw new Error('Approved email domain was not confirmed by the server');
+      }
       setNewApprovedDomain('');
       toast.success('Approved domain added');
-      await loadApprovedDomains();
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to add approved domain');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to add approved domain');
+      setDomainActionError(message);
+      toast.error(message);
     } finally {
       setSavingDomain(false);
     }
@@ -448,11 +506,18 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
   const handleRemoveApprovedDomain = async (domainId: string) => {
     if (!orgData?.id) return;
     try {
+      setDomainActionError(null);
+      const target = approvedDomains.find((domain) => domain.id === domainId);
       await Api.delete(`/organizations/${orgData.id}/approved-domains/${domainId}`);
+      const refreshedDomains = await loadApprovedDomains();
+      if (target?.domain && refreshedDomains.some((domain) => domain.domain === target.domain)) {
+        throw new Error('Approved email domain removal was not confirmed by the server');
+      }
       toast.success('Approved domain removed');
-      await loadApprovedDomains();
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to remove approved domain');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to remove approved domain');
+      setDomainActionError(message);
+      toast.error(message);
     }
   };
 
@@ -465,16 +530,23 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
     }
     try {
       setSavingCustomDomain(true);
+      setDomainActionError(null);
       await Api.patch(`/branding/${orgData.id}`, {
         customDomain: nextDomain,
         customDomainVerified: false,
         customDomainSslStatus: 'pending',
       });
+      const persisted = await loadOrganizationDomainSnapshot();
+      if (!persisted || persisted.customDomain !== nextDomain) {
+        throw new Error('Custom domain save was not confirmed by the server');
+      }
       setCustomDomain(nextDomain);
-      setCustomDomainVerified(false);
+      setCustomDomainVerified(persisted.customDomainVerified);
       toast.success('Custom domain saved. Verify DNS before using it in production.');
-    } catch (error: any) {
-      toast.error(error?.message || 'Failed to save custom domain');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to save custom domain');
+      setDomainActionError(message);
+      toast.error(message);
     } finally {
       setSavingCustomDomain(false);
     }
@@ -482,6 +554,14 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {domainActionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {domainActionError}
+        </div>
+      )}
       <div className="rounded-xl border border-slate-200/60 dark:border-navy-700/60 bg-white dark:bg-navy-900/40 p-5">
         <div className="flex items-start gap-3">
           <Globe size={18} className="text-slate-400 mt-0.5" strokeWidth={1.5} />
@@ -572,7 +652,7 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
         </div>
         <div className="flex flex-wrap gap-2">
           {approvedDomains.length > 0 ? (
-            approvedDomains.map((d: any) => (
+            approvedDomains.map((d) => (
               <span
                 key={d.id || d.domain}
                 className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm bg-slate-100 dark:bg-navy-800 text-slate-700 dark:text-slate-300"
@@ -580,7 +660,11 @@ const DomainsSection: React.FC<{ orgData: any }> = ({ orgData }) => {
                 @{d.domain}
                 <button
                   type="button"
-                  onClick={() => void handleRemoveApprovedDomain(d.id)}
+                  onClick={() => {
+                    if (d.id) void handleRemoveApprovedDomain(d.id);
+                  }}
+                  disabled={!d.id}
+                  title={!d.id ? 'Cannot remove a domain without a server id' : undefined}
                   className="text-slate-400 hover:text-red-500"
                 >
                   <Trash2 size={12} />

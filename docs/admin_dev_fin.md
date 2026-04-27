@@ -5396,7 +5396,7 @@ Wynik:
 
 ```text
 Test Files: 1 passed
-Tests: 3 passed
+Tests: 4 passed
 ```
 
 Lint:
@@ -6136,6 +6136,9274 @@ npx eslint src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx
 
 Wynik: TypeScript check przeszedl bez bledow. ESLint dla komponentu ma 0 bledow; pozostaja istniejace ostrzezenia legacy (`any`, `console`, unused caught error names).
 
+### 23BB. Finalne domkniecie macierzy 20I, audit trail i global gate
+
+Zakres: domkniecie listy brakow z koncowej checklisty dla `settings`, tenant `admin` i `superadmin` bez AI jako funkcjonalnosci produktowej. Ten gate obejmuje cala macierz z `20I`, dowod audit trail dla krytycznych mutacji, decyzje P1/P2, legacy warnings oraz globalny przeglad obecnego duzego worktree.
+
+Wdrozone korekty blokujace gate:
+
+- `server/src/routes/billing/billing.routes.ts`: `/api/billing/admin/usage` zwraca teraz liczbowe `totalTokensThisMonth` i `activeOrganizations`, nawet gdy driver DB oddaje agregaty jako stringi.
+- `server/src/routes/billing/billing.routes.ts`: schema-missing w billing rozpoznaje takze `no such column`, zeby zdegradowane/niepelne tabele testowe i srodowiskowe nie udawaly bledow biznesowych.
+- `server/src/routes/billing/billing.routes.ts`: `/api/billing/admin/plans` nie zalezy od opcjonalnej kolumny `sort_order`; sortuje stabilnie po `price_monthly`.
+- `server/src/routes/billing/billing.routes.ts`: `/api/billing/subscription` czyta `organization_billing` przez `SELECT *` i preferuje wiersz z `subscription_plan_id`, co utrzymuje kompatybilnosc ze starszym schematem bez kolumn `billing_rail`/`contract_status`.
+- `tests/integration/routes/billing.routes.l3.test.ts` i `tests/integration/routes/billing.routes.full.l3.test.ts`: oczekiwania testowe dopasowano do aktualnego kontraktu `not_configured` oraz `201 Created` dla tworzenia faktury.
+
+Finalna smoke matrix `20I`:
+
+- SuperAdmin: route smoke obejmuje login/session bootstrap oraz trasy `/superadmin/overview`, `/superadmin/customers`, `/superadmin/ai-platform`, `/superadmin/system`, `/superadmin/content`, `/superadmin/security`, `/superadmin/revenue`, `/superadmin/analytics`; unit/integration proof obejmuje org CRUD/status/read-back, access requests, access codes, users, API keys/webhooks/backup/DSAR/legal/approvals/audit timeline.
+- Tenant Admin: route smoke obejmuje `/admin/overview`, `/admin/people`, `/admin/security`, `/admin/billing`, `/admin/ai`, `/admin/integrations`, `/admin/audit`, `/admin/operations`; integration proof obejmuje izolacje tenantowa, people/access code, security, audit i billing.
+- Settings: route smoke obejmuje aktywna powierzchnie settings od profilu i billing po API keys, privacy, history, tenant defaults i module preferences; Vitest honesty obejmuje read-back persistence i stale-readback protection dla profilu/regional/security/API/webhooks/billing/privacy/history.
+- Billing: integration proof obejmuje faktury, plany, tax settings/rates, budget/spending alerts, usage, webhook events, subscription CRUD i fallbacki schema-missing.
+- Governance / compliance / ops: proof obejmuje API key create/revoke, webhooks, backup create/restore, DSAR create/read-back, legal publish, approval workflows i audit/event timeline.
+
+Audit trail proof dla krytycznych mutacji:
+
+- `user/org changes`: `server/src/routes/__tests__/adminP32.routes.test.ts`, `tests/integration/routes/settings-admin-superadmin.p31-33.test.ts`, `tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx`, `tests/unit/components/shared/UserManagementCore.honesty.test.tsx`.
+- `billing/security/settings`: `tests/integration/routes/billing.routes.l3.test.ts`, `tests/integration/routes/billing.routes.full.l3.test.ts`, `tests/unit/views/admin/AdminBillingManagement.honesty.test.tsx`, `tests/unit/views/admin/AdminSecuritySettings.honesty.test.tsx`, settings honesty tests.
+- `API key revoke/create`: `tests/unit/backend/services/ApiKeyService.test.ts`, `tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx`, `tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx`, `tests/unit/components/settings/APIAccessSettings.honesty.test.tsx`.
+- `approval/DSAR/legal publish`: `tests/unit/backend/services/approvalPatternService.test.ts`, `tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx`, `tests/unit/backend/services/gdprComplianceService.test.ts`, `tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx`, `tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx`.
+- `backup/restore/DR actions`: `tests/unit/backend/backupService.test.js`, `tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx`, `tests/unit/components/SuperAdmin/EnterpriseBackupPanel.test.tsx`.
+- `audit timeline/read proof`: `tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx`, `tests/unit/views/admin/AuditLogView.honesty.test.tsx`, `tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx`, `tests/unit/components/SuperAdmin/EnterpriseAuditLog.honesty.test.tsx`, `tests/unit/backend/services/adminAuditService.test.js`, `tests/unit/backend/services/auditLogService.test.ts`.
+
+Decyzje P1/P2:
+
+- Funkcje P0 z aktywna powierzchnia administracyjna zostaja albo realnie podpiete z read-back/audit proof, albo zablokowane jako unavailable/read-only. Nie zostawiamy aktywnych przyciskow sukcesu bez potwierdzonego backendu.
+- P1 dotyczace operacyjnej konfiguracji, gdzie istnieje backend i test proof, sa traktowane jako wdrozone w tym gate: billing, security/settings, API keys/webhooks, access codes/requests, audit views.
+- P1/P2 bez pelnego backendu lub bez audytowanego workflow pozostaja formalnie zdegradowane jako `read-only`, `disabled` albo `unavailable` z powodem. Dotyczy to m.in. czesci raportowania/schedulerow, czesci konfiguracji integracji i miejsc, gdzie panel prezentuje posture/evidence zamiast realnej mutacji.
+- P2 UX cleanup i placeholder cleanup nie blokuje finalizacji, jesli UI jest uczciwie oznaczony jako no-data/unavailable/read-only i nie pokazuje falszywego sukcesu.
+
+Legacy warnings:
+
+- Globalny `npm run lint -- --fix` przeszedl i usunal autofixowalne bledy Prettiera/import sort.
+- Po autofixie `npm run lint` przeszedl bez bledow.
+- Legacy debt typu `any`, `console`, brak dokumentacji `InfoButton`, pojedyncze noisy stderr w testach oraz dlugie pliki pozostaja formalnie zaakceptowane jako techniczny dlug nieblokujacy finalizacji, o ile `eslint --quiet`, `type-check`, targeted tests i e2e sa zielone.
+
+Finalny global gate:
+
+```text
+npm run type-check
+npm run lint
+git diff --check
+npm run test:e2e:readiness
+npm run test:e2e:tier0
+npx vitest run server/src/routes/__tests__/adminP32.routes.test.ts tests/integration/routes/settings-admin-superadmin.p31-33.test.ts tests/integration/routes/adminP32.overview.test.ts tests/integration/routes/billing.routes.l3.test.ts tests/integration/routes/billing.routes.full.l3.test.ts tests/unit/backend/services/ApiKeyService.test.ts tests/unit/backend/services/webhookService.test.ts tests/unit/backend/backupService.test.js tests/unit/backend/services/gdprComplianceService.test.ts tests/unit/backend/services/approvalPatternService.test.ts tests/unit/backend/services/adminAuditService.test.js tests/unit/backend/services/auditLogService.test.ts tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx tests/unit/views/admin/AuditLogView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2 --no-file-parallelism
+npx vitest run tests/unit/views/admin tests/unit/views/superadmin tests/unit/components/settings tests/unit/components/Admin tests/unit/components/SuperAdmin --maxWorkers=1 --maxConcurrency=2 --no-file-parallelism
+```
+
+Potwierdzone wyniki:
+
+```text
+npm run type-check: PASS
+npm run lint -- --fix: PASS
+npm run lint: PASS
+git diff --check: PASS
+npm run test:e2e:readiness: 3 passed, 0 failed
+npm run test:e2e:tier0: 47 passed, 0 failed
+audit/mutation proof suite: 20 test files passed, 221 tests passed
+billing.routes.l3.test.ts: 12 passed
+billing.routes.full.l3.test.ts: 19 passed
+```
+
+Status wiekszego Vitest honesty:
+
+```text
+npx vitest run tests/unit/views/admin tests/unit/views/superadmin tests/unit/components/settings tests/unit/components/Admin tests/unit/components/SuperAdmin --maxWorkers=1 --maxConcurrency=2 --no-file-parallelism
+```
+
+Wynik po odczycie finalnej stopki:
+
+```text
+Test Files: 167 passed
+Tests: 597 passed
+```
+
+Przeglad duzego diffu:
+
+- duzy zakres zmian jest oczekiwany, bo globalny `eslint --fix` sformatowal wiele plikow po poprzednich sweepach;
+- runtime-risk changes sa ograniczone do potwierdzonych poprawek billing i wczesniejszych normalizatorow/read-back;
+- brak zmian whitespace wedlug `git diff --check`;
+- nie wykryto przypadkowego odwracania zmian uzytkownika.
+
+Wniosek: lista finalizacji dla `20I` jest domknieta w sensie operacyjnym dla aktywnej powierzchni admin/settings/superadmin non-AI. Pozostale P1/P2 bez audytowanego backendu sa formalnie zdegradowane do read-only/unavailable i nie powinny byc traktowane jako gotowe funkcje produkcyjne.
+
+### 23AD. Koncowy gate admin/settings/superadmin non-AI
+
+Zakres: koncowy gate dla programu honest UI w obszarach `settings`, tenant `admin` i `superadmin` bez AI jako funkcjonalnosci produktowej. W trakcie gate'u wykryto blokery TypeScript po lokalnych normalizatorach payloadow (`value.data` jako `unknown`, enumy w kilku normalizatorach, pojedyncze handlery `onClick` i renderowanie surowego `unknown`).
+
+Naprawione:
+
+- lokalne `hasListShape` przepisano na jawne `data`/`nestedData`, z zachowaniem tej samej walidacji runtime dla zagniezdzonych odpowiedzi API;
+- listy promptow i wersji maja jawny typ `unknown[]` przed mapowaniem;
+- enumy w normalizatorach providerow, dokumentow RAG i strategii sa zawężane do typow komponentow;
+- `SCIMProvisioningView` zapisuje wygenerowany token jako `string | null`;
+- `SuperAdminOrgDetailsModal` normalizuje billing/usage/invoices do typu `BillingDetails` i nie renderuje surowych `unknown`;
+- `CustomerHealthView` nie renderuje surowego `unknown` dla churn risk;
+- targetowane pliki poprawiono Prettier/ESLint po technicznym refaktorze helperow.
+
+Gate:
+
+```text
+npm run type-check
+npx vitest run tests/unit/components/settings/*.honesty.test.tsx tests/unit/views/admin/*.honesty.test.tsx tests/unit/views/superadmin/*.honesty.test.tsx tests/unit/components/SuperAdmin/*.honesty.test.tsx tests/unit/components/Organization/*.honesty.test.tsx tests/unit/components/shared/*.honesty.test.tsx --exclude "**/AI*.honesty.test.tsx" --exclude "**/*AI*.honesty.test.tsx" --exclude "**/*LLM*.honesty.test.tsx" --exclude "**/*ModelRegistry*.honesty.test.tsx" --exclude "**/*ModelTiers*.honesty.test.tsx" --exclude "**/*RoutingRules*.honesty.test.tsx" --exclude "**/*PurposeAssignments*.honesty.test.tsx" --exclude "**/*OrgAIPolicy*.honesty.test.tsx" --exclude "**/*AIGovernance*.honesty.test.tsx" --exclude "**/*PolicyEnforcement*.honesty.test.tsx" --exclude "**/*PricingRegistry*.honesty.test.tsx" --exclude "**/*PerformanceMetricsTab*.honesty.test.tsx" --exclude "**/*MarketInboxTab*.honesty.test.tsx" --maxWorkers=1 --maxConcurrency=2
+npx eslint --quiet <type-check-fix files>
+git diff --check
+npm run test:e2e:readiness
+```
+
+Wynik potwierdzony:
+
+```text
+npm run type-check: passed
+non-AI honesty regression: Test Files 121 passed, Tests 425 passed
+targeted ESLint: passed
+git diff --check: passed
+IDE lints for last touched files: no linter errors
+```
+
+Status `test:e2e:readiness`: uruchomiony dla `admin-settings-superadmin-readiness.spec.ts`, ale proces zostal recznie przeniesiony w tlo przed wynikiem; nie oznaczam go jako passed bez potwierdzonego finalnego outputu.
+
+### 23TH. Follow-up SuperAdmin Organization Details billing numeric honesty
+
+Kontynuacja sweepu `SuperAdminOrgDetailsModal` objela billing tab. Modal mial juz read-back dla general info i degraded state dla awarii billing details, ale usage/invoices nadal formatowaly liczby bez walidacji. Niepoprawne payloady mogly renderowac `NaN`, `Infinity` albo wywolac blad runtime przy `toFixed` na stringu.
+
+Wdrozone:
+
+- dodano lokalne helpery `safeNumber`, `formatMoney`, `formatInteger` i `getUsagePercent`;
+- monthly cost, token usage, token limit, overage, estimated cost i invoice amount przechodza przez bezpieczne formatowanie;
+- procent uzycia tokenow jest ograniczony do zakresu `0..100` i nie dzieli przez niepoprawny limit;
+- niepoprawne daty billing/invoice dalej pokazuja `Unknown date`;
+- dodano regresje dla invalid billing numbers, dat i procentow.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminOrgDetailsModal.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminOrgDetailsModal.tsx tests/unit/views/superadmin/SuperAdminOrgDetailsModal.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: `git diff --check` i ReadLints sa czyste. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `SuperAdminOrgDetailsModal` (`unused imports`, `any`, hook deps).
+
+### 23TI. Follow-up SuperAdmin Access Control / Permissions Matrix read-back hardening
+
+Kolejny sweep objal `AccessControlTab` w AI Platform Security. Sam tab jest wrapperem na DB-backed `PermissionsMatrixView`, wiec poprawka zostala wykonana w `PermissionsMatrixView`, uzywanym takze przez SuperAdmin IAM/Security.
+
+Problem:
+
+- toggle permission aktualizowal lokalny stan i pokazywal success bez swiezego read-backu;
+- `loadData()` po refetchu po mutacji polykal bledy, wiec create/update/delete/copy mogly zamykac modale mimo braku potwierdzenia;
+- bledy mutacji mogly przechodzic jako surowe komunikaty zamiast przez wspolny normalizer.
+
+Wdrozone:
+
+- `loadData()` zwraca teraz snapshot albo `null`, wiec mutacje moga odroznic potwierdzony read-back od awarii;
+- toggle permission wymaga, aby swieza matrix zawierala oczekiwany stan roli/uprawnienia;
+- create/update/delete wymagaja potwierdzenia w swiezej liscie permissions;
+- copy permissions nie zamyka modala bez udanego read-backu;
+- dodano `aria-label` dla toggle buttons i normalizacje bledow przez `normalizeApiErrorMessage`;
+- usunieto lokalny optimistic update, ktory mogl pokazywac stan nieistniejacy na backendzie.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/PermissionsMatrixView.tsx tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAN. Follow-up Superadmin API Management deep wrapper and key-list honesty
+
+Kolejny sweep objal `APIManagementView`.
+
+Problem:
+
+- API keys i organizations wspieraly plaski payload i jeden poziom `data`, ale nie `data.data`;
+- create response nie odwijal deep wrappera;
+- malformed API key payload mogl wygladac jak pusta lista i zerowe key metrics.
+
+Wdrozone:
+
+- dodano `getObjectPayload` z obsluga `data.data`;
+- `getListPayload` akceptuje deep wrappery;
+- `hasListShape` wymaga realnej tablicy w payloadzie lub wrapperze;
+- `normalizeCreatedKeyPayload` korzysta ze wspolnego object unwrap;
+- malformed API key payload pokazuje degraded state zamiast pustej listy;
+- webhooks pozostaja jawnie read-only do czasu uzgodnienia backend workflow.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 11 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/APIManagementView.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie ma bledow; pozostaje istniejace ostrzezenie `@typescript-eslint/ban-ts-comment` dla legacy `@ts-nocheck` w `APIManagementView.tsx`.
+
+### 23UAAO. Follow-up Superadmin LLM Management deep wrapper and provider-list honesty
+
+Kolejny sweep objal `LLMManagementView`.
+
+Problem:
+
+- provider list, usage, costs i health wspieraly plaski payload i jeden poziom `data`, ale nie `data.data`;
+- malformed provider wrapper mogl wygladac jak pusta lista providerow;
+- provider create/clone/update/delete read-backi powinny nadal dzialac na znormalizowanym payloadzie.
+
+Wdrozone:
+
+- `getObjectPayload` akceptuje `data.data`;
+- `getListPayload` akceptuje deep wrappery;
+- dodano strict `hasListShape` dla provider list;
+- malformed provider payload pokazuje degraded state zamiast "No providers configured";
+- create/clone/update/delete provider gates nadal wymagaja read-backu potwierdzajacego stan.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/LLMManagementView.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie ma bledow; pozostaja istniejace ostrzezenia legacy `any`/`console` w `LLMManagementView.tsx`.
+
+### 23UAAP. Follow-up Superadmin Compliance Center deep wrapper and malformed-list honesty
+
+Kolejny sweep objal `ComplianceCenterView`.
+
+Problem:
+
+- compliance frameworks, DSAR, audits, processing records i organizacje wspieraly tylko plaski payload albo jeden poziom `data`;
+- malformed sekcje list mogly zostac pokazane jako puste zdrowe stany;
+- create odpowiedzi byly unwrappowane tylko plytko.
+
+Wdrozone:
+
+- `getObjectPayload` akceptuje `data.data`;
+- `getListPayload` akceptuje deep wrappery;
+- dodano strict `hasListShape` dla frameworks, DSAR, audits i processing records;
+- malformed list payload pokazuje degraded state per sekcja zamiast pustego healthy UI;
+- create DSAR/audit/processing-record nadal wymaga read-backu potwierdzajacego utworzony rekord.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/ComplianceCenterView.tsx tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie ma bledow; pozostaja istniejace ostrzezenia legacy `@ts-nocheck`, `any`, `console` i unused const w `ComplianceCenterView.tsx`.
+
+### 23UAAQ. Follow-up Superadmin Legal deep wrapper and active-status honesty
+
+Kolejny sweep objal `SuperAdminLegalView`.
+
+Problem:
+
+- lista dokumentow legal i publish/view payloady wspieraly tylko plaski payload albo jeden poziom `data`;
+- malformed legal document payload mogl zostac pokazany jako pusty healthy stan;
+- `is_active: "false"` bylo traktowane jak aktywne przez `Boolean(...)`.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- dodano `getObjectPayload` i strict `hasListShape`;
+- publish response i document details sa unwrappowane przez wspolny deep helper;
+- aktywnosc dokumentu jest normalizowana przez `toBool`;
+- malformed legal list pokazuje degraded state zamiast pustej listy.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 9 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminLegalView.tsx tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABU. Follow-up AI Platform Executive control plane payload validation
+
+Ostatni sweep AI Platform objal `Executive/AIUseCaseControlPlane`.
+
+Problem:
+
+- overview bylo ustawiane bez normalizacji i bez catch dla hard source;
+- awaria `getLLMUseCaseOverview` mogla renderowac zerowe KPI (`Use cases`, `Healthy`, spend) jako pozornie zdrowy stan;
+- malformed overview bez `summary` lub `useCases` moglo wpasc w puste listy i `0`;
+- `getAIOperatorOps` jest zrodlem soft, ale nadal moglo wniesc niestabilne ksztalty do UI.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload` i normalizatory `normalizeOverview`, `normalizeUseCase`, `normalizePurpose`, `normalizeOperatorOps`;
+- overview jest hard source i wymaga `summary` oraz listy `useCases`;
+- load failure i malformed overview pokazuja `AI use case control plane unavailable` zamiast zerowych KPI;
+- operator ops zostaje soft source: awaria lub malformed payload nie blokuje glownych danych, tylko ukrywa sekcje operator readiness;
+- loading initial nie pokazuje juz zerowych KPI przed odczytem overview.
+- dodatkowo utwardzono headerowy internet signal w `AIPlatformModule`: malformed governance policy pokazuje `Internet: UNKNOWN`, nie `Internet: OFF`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIUseCaseControlPlane.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+npx vitest run tests/components/SuperAdmin/AIPlatformModule.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Executive/AIUseCaseControlPlane.tsx tests/unit/views/superadmin/AIUseCaseControlPlane.honesty.test.tsx --no-warn-ignored
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/AIPlatformModule.tsx tests/components/SuperAdmin/AIPlatformModule.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABT. Follow-up AI Platform Prompts Library payload and mutation honesty
+
+Development sweep objal `PromptsLibraryTab`, czyli wrapper `PromptManagementUI`.
+
+Problem:
+
+- lista promptow byla czytana plytko (`response.data ?? response`) i dopuszczala false-empty przy malformed payload;
+- historia wersji mogla zniknac po awarii jako pusta sekcja bez jawnego bledu;
+- zapis i delete pokazywaly sukces po samej odpowiedzi mutacji, bez potwierdzenia odswiezonym stanem;
+- `New Prompt` otwieral formularz, ktorego `Save` nie mial podlaczonego create workflow.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload` oraz normalizatory `normalizePromptList` i `normalizeVersionList`;
+- malformed prompt/version payload przechodzi w jawny degraded/action error zamiast zdrowego pustego stanu;
+- update i delete wymagaja read-back po `fetchPrompts()`;
+- stale read-back po update pokazuje `Prompt save refresh returned stale prompt data`;
+- delete wymaga nieobecnosci usunietego ID po refreshu;
+- niepodlaczony create workflow pokazuje jawny alert zamiast no-op formularza.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/PromptManagementUI.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/Admin/PromptManagementUI.tsx tests/unit/components/Admin/PromptManagementUI.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABS. Follow-up AI Platform Model Registry payload validation
+
+Development sweep objal `ModelRegistryTab`.
+
+Problem:
+
+- panel skladal widok z trzech zrodel (`getLLMProviders`, `getLLMHealthDetailed`, `getLLMControlUsage`) bez konsekwentnego deep unwrap;
+- malformed providers/health/usage payload mogl wygladac jak zdrowy pusty model registry;
+- awaria hard source mogla zostawic metryki/listy sugerujace poprawny stan.
+
+Wdrozone:
+
+- dodano `getObjectPayload`, `normalizeProviders`, `normalizeHealthProviders` i `normalizeUsageByProvider`;
+- wszystkie trzy zrodla sa walidowane przed budowa model listy;
+- malformed provider payload pokazuje `Model registry unavailable` zamiast `Total Models`/pustej listy;
+- deep wrapped payloady `data.data.*` renderuja poprawne nazwy modeli, health i usage.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ModelRegistryTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Development/ModelRegistryTab.tsx tests/unit/views/superadmin/ModelRegistryTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABR. Follow-up AI Platform Security wrapper verification
+
+Security sweep domknal wrappery `APIKeysTab`, `AccessControlTab` i `AuditLogsTab`.
+
+Status:
+
+- `APIKeysTab` uzywa `APIManagementView`, ktory ma read-back confirmation dla create/revoke i malformed payload guards;
+- `AccessControlTab` uzywa `PermissionsMatrixView`, ktory ma stale read-back guards dla toggle/copy;
+- `AuditLogsTab` uzywa `AdminAuditLogsView`, ktory ma safe dates, read-back confirmation dla resolve i export guard;
+- wrappery nie wymagaly zmian.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 3 passed
+Tests: 23 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/APIManagementView.tsx src/views/superadmin/iam/PermissionsMatrixView.tsx src/views/superadmin/iam/AdminAuditLogsView.tsx src/views/superadmin/AIPlatformModule/Security/APIKeysTab.tsx src/views/superadmin/AIPlatformModule/Security/AccessControlTab.tsx src/views/superadmin/AIPlatformModule/Security/AuditLogsTab.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: focused test i `git diff --check` sa czyste; ESLint nie ma bledow, pozostaje istniejacy warning `@ts-nocheck` w `APIManagementView`.
+
+### 23UABN. Follow-up AI Platform Usage Analytics source validation
+
+Kolejny Analytics sweep objal `UsageAnalyticsTab` przez `UsageAnalyticsDashboard`.
+
+Problem:
+
+- analytics/logs/costs byly czytane bez deep unwrap;
+- malformed `logs` mogly byc traktowane jak pusta zdrowa lista;
+- brak wymaganych pol analytics/costs mogl tworzyc zerowe usage KPI i puste wykresy.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeUsageAnalytics`, `normalizeUsageLogs`, `normalizeUsageCosts`;
+- wszystkie trzy zrodla sa traktowane jako hard sources;
+- malformed logs/cost/analytics payload przechodzi w `DegradedState`;
+- deep wrapped usage payloady renderuja sie poprawnie.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/Admin/AI/UsageAnalyticsDashboard.tsx tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint i `git diff --check` sa czyste; ReadLints nie pokazal bledow.
+
+### 23UABO. Follow-up AI Platform Custom Reports verification
+
+Analytics sweep domknal `CustomReportsTab`, ktory opakowuje `SavedReportsView`.
+
+Status:
+
+- `SavedReportsView` ma juz deep wrapper/list shape guards dla reports i executions;
+- create/delete/execute/schedule maja read-back confirmation;
+- stale read-back zostawia modal lub pokazuje `role="alert"`;
+- malformed reports payload przechodzi w `DegradedState`;
+- wrapper `CustomReportsTab` nie wymagal zmian.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SavedReportsView.honesty.test.tsx tests/unit/views/superadmin/CustomReportsTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/analytics/SavedReportsView.tsx src/views/superadmin/AIPlatformModule/Analytics/CustomReportsTab.tsx tests/unit/views/superadmin/SavedReportsView.honesty.test.tsx tests/unit/views/superadmin/CustomReportsTab.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: focused test, ESLint i `git diff --check` sa czyste.
+
+### 23UABQ. Follow-up AI Platform Compliance payload validation
+
+Kolejny Security sweep objal `ComplianceTab`.
+
+Problem:
+
+- load failure tylko toastowal i mogl zostawic pusty dashboard;
+- governance health i providers byly czytane z plaskich payloadow;
+- malformed providers mogly wygladac jak brak providerow;
+- score mogl przejsc w `NaN%` przy pustej liscie checkow.
+
+Wdrozone:
+
+- dodano `DegradedState` dla load failure;
+- dodano deep `getObjectPayload`;
+- dodano `normalizeGovernanceHealth` i `normalizeProviderNames`;
+- malformed governance/providers payload blokuje dashboard zamiast renderowac falszywe zera;
+- score ma guard dla pustej listy checkow.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ComplianceTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Security/ComplianceTab.tsx tests/unit/views/superadmin/ComplianceTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABP. Follow-up AI Platform Policy Plane verification
+
+Kolejny sweep objal `PolicyEnforcementTab`.
+
+Status:
+
+- panel ma juz deep `getObjectPayload`;
+- `rows` sa wymagane jako lista;
+- stringowe drift values sa normalizowane;
+- malformed enforcement payload przechodzi w `DegradedState`;
+- UI nie pokazuje "unknown state" ani "zero drift" przy failu telemetry.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PolicyEnforcementTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx tests/unit/views/superadmin/PolicyEnforcementTab.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: focused test, ESLint i `git diff --check` sa czyste.
+
+### 23UABJ. Follow-up AI Platform LLM Observatory payload validation
+
+Analytics sweep rozpoczal sie od `LLMObservatoryTab`.
+
+Problem:
+
+- payload byl czytany przez `response.data || response`, bez deep unwrap;
+- malformed listy `timeline`, `providers`, `models`, `errorCategories`, `incidents` mogly byc traktowane jak puste zdrowe stany;
+- niekompletny `summary` mogl prowadzic do zerowych historycznych metryk.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeObservatoryPayload` i `normalizeSummary`;
+- wymagane sa kompletne `summary` oraz wszystkie listy observability payloadu;
+- pola liczbowe, tekstowe i boolean sa normalizowane przed renderem;
+- malformed observatory payload przechodzi w `DegradedState`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Analytics/LLMObservatoryTab.tsx tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint i `git diff --check` sa czyste; ReadLints nie pokazal bledow.
+
+### 23UABM. Follow-up AI Platform Cost Analytics payload validation
+
+Kolejny Analytics sweep objal `CostAnalyticsTab` przez `AICostDashboard`.
+
+Problem:
+
+- cost payload byl renderowany surowo;
+- malformed hard cost data mogly prowadzic do zerowych kosztow i pustych providerow;
+- FinOps overview byl soft source, ale rowniez wymagal bezpiecznego unwrap/normalizacji.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeCostData` z wymogiem `totalCost` i `byProvider`;
+- dodano `normalizeFinOpsOverview` jako opcjonalny soft payload;
+- malformed cost payload przechodzi w `DegradedState`;
+- deep wrapped cost i FinOps payloady renderuja sie poprawnie.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/AICostDashboard.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/Admin/AICostDashboard.tsx tests/unit/components/Admin/AICostDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABL. Follow-up AI Platform Performance Metrics source validation
+
+Kolejny Analytics sweep objal `PerformanceMetricsTab`.
+
+Problem:
+
+- hard sources `metrics` i `trends` byly rozpakowywane tylko z plaskich `data`;
+- malformed hard metrics mogly tworzyc zerowe KPI;
+- soft sources providers/health mogly cicho zamieniac sie w puste listy i pokazywac "no alerts".
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeCurrentMetrics`, `normalizeTrends`, `normalizeProviderRows`, `normalizeHealthPayload`;
+- hard source shape error przechodzi w `DegradedState`;
+- malformed/unavailable soft source pokazuje degraded subsection bez falszywego "No active alerts";
+- provider rows i health alerts sa normalizowane przed renderem.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PerformanceMetricsTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Analytics/PerformanceMetricsTab.tsx tests/unit/views/superadmin/PerformanceMetricsTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint i `git diff --check` sa czyste; ReadLints nie pokazal bledow.
+
+### 23UABK. Follow-up AI Platform Pricing Registry snapshot confirmation
+
+Kolejny Analytics sweep objal `PricingRegistryTab`.
+
+Problem:
+
+- snapshot list byl czytany tylko z plaskiego payloadu;
+- malformed `snapshots` mogl wygladac jak pusty registry;
+- create snapshot pokazywal sukces po samym mutation call, bez potwierdzenia po refetchu.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeSnapshots` z wymaganiem listy i podstawowych pol row;
+- malformed snapshots payload przechodzi w `DegradedState`;
+- create snapshot potwierdza po reloadzie nowy `id` albo wzrost liczby row;
+- stale read-back trafia do widocznego `role="alert"` i `toast.error`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PricingRegistryTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Analytics/PricingRegistryTab.tsx tests/unit/views/superadmin/PricingRegistryTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint i `git diff --check` sa czyste; ReadLints nie pokazal bledow.
+
+### 23UABI. Follow-up AI Platform runtime panel payload validation
+
+Sweep Operations domknal tez dwa runtime panele renderowane bez osobnych plikow w `Operations/`: `AICoreRuntimePanel` i `PromptOsRuntimeSummaryPanel`.
+
+Problem:
+
+- panele ufaly surowym V8 payloadom;
+- malformed tools/runtime summary mogly wygladac jak pusty katalog albo zerowe liczniki;
+- deep wrapped `data.data.*` payloady nie byly obslugiwane konsekwentnie.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload` w obu panelach;
+- `PromptOsRuntimeSummaryPanel` wymaga kompletnego runtime summary i listy `purposeFamiliesSupported`;
+- `AICoreRuntimePanel` wymaga kompletnego environment payloadu i listy tools;
+- tool policy, audit trail i provenance sa normalizowane przed renderem;
+- malformed runtime/tool payload przechodzi w `DegradedState` zamiast pustego zdrowego UI.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/Admin/AI/AICoreRuntimePanel.tsx src/components/Admin/AI/PromptOsRuntimeSummaryPanel.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABG. Follow-up AI Platform SLA and Performance source validation
+
+Kolejny sweep objal `SLAManagementTab`/`SLADashboard` oraz `PerformanceDashboardTab`/`AIPerformanceDashboard`.
+
+Problem:
+
+- analytics/logs/costs byly czytane tylko z plaskich payloadow;
+- malformed `logs` mogly byc traktowane jak pusta lista;
+- brak krytycznych pol analytics/costs mogl tworzyc syntetyczne zera w KPI;
+- w dashboardach metryk oznacza to false-compliant / false-zero UI.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload` w obu panelach;
+- SLA wymaga kompletnego analytics payloadu i listy `logs`;
+- Performance wymaga kompletnego analytics payloadu, listy `logs` i kompletnego costs payloadu;
+- malformed source payload przechodzi w `DegradedState` zamiast renderowac KPI;
+- usunieto dotkniete legacy warningi ESLint w tych plikach.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/Admin/SLADashboard.tsx src/components/Admin/AIPerformanceDashboard.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint i `git diff --check` sa czyste; ReadLints nie pokazal bledow.
+
+### 23UABH. Follow-up AI Platform Market Inbox read-back confirmation
+
+Kolejny sweep objal `MarketInboxTab`, ostatni realny panel w Operations.
+
+Problem:
+
+- inbox byl czytany tylko z plaskiego payloadu;
+- malformed `inbox` mogl byc renderowany jak pusty zdrowy stan;
+- sync/approve/apply pokazywaly sukces po samym mutation call, bez potwierdzenia stanu po refetchu;
+- stale read-back po approve/apply mogl ukrywac brak zmiany po stronie serwera.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeInboxRows` z wymaganiem listy i kompletnych row fields;
+- malformed inbox payload przechodzi w `DegradedState`;
+- sync pokazuje sukces dopiero po udanym reloadzie;
+- approve/apply po reloadzie potwierdzaja znikniecie elementu z aktualnego filtra albo oczekiwany status;
+- stale read-back trafia do widocznego `role="alert"` i `toast.error`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Operations/MarketInboxTab.tsx tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABF. Follow-up AI Platform Mission Control deep wrapper and false-zero guard
+
+Kolejny sweep objal `MissionControlTab` przez `AIMissionControl`.
+
+Problem:
+
+- mission status byl czytany z plaskiego `response.data`;
+- malformed `providers` mogl byc pokazany jako brak aktywnych providerow;
+- malformed/incomplete metrics mogly wygladac jak zdrowe zera;
+- wynik capability testu byl zapisywany surowo, bez deep unwrap i normalizacji statusu.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeSystemStatus` z wymogiem listy `providers` i obiektu `metrics`;
+- dodano `normalizeCapabilityResult` dla deep wrapped wynikow diagnostyki;
+- malformed mission status przechodzi w `DegradedState` i blokuje Run Test;
+- capability diagnostics nadal wymuszaja pelny refetch statusu po tescie.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/AIMissionControl.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/Admin/AIMissionControl.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABD. Follow-up AI Platform Knowledge Base candidate inbox deep wrapper and approve honesty
+
+Kolejny sweep objal `KnowledgeBaseTab` przez domyslny `AdminKnowledgeView` candidate inbox.
+
+Problem:
+
+- knowledge candidates byly czytane tylko jako plaskie tablice;
+- malformed candidate payload mogl wygladac jak pusta zdrowa skrzynka;
+- approve/reject usuwal element lokalnie i pokazywal success bez potwierdzajacego read-backu;
+- wrapper `KnowledgeBaseTab` sam nie mial logiki, wiec poprawka musiala wejsc do `AdminKnowledgeView`.
+
+Wdrozone:
+
+- dodano deep `getListPayload` i strict `hasListShape` dla candidate payloadow;
+- dodano `normalizeCandidateList`;
+- malformed candidate payload przechodzi w `DegradedState`;
+- approve/reject wymaga read-backu i potwierdzenia, ze item zniknal z aktualnej listy;
+- stale read-back pokazuje blad akcji zamiast success toast.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/KnowledgeBaseTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/admin/AdminKnowledgeView.tsx src/views/superadmin/AIPlatformModule/Knowledge/KnowledgeBaseTab.tsx tests/unit/views/superadmin/KnowledgeBaseTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie ma bledow; pozostaja istniejace legacy warningi `any`, `console` i `exhaustive-deps` w szerokim `AdminKnowledgeView`.
+
+### 23UABE. Follow-up AI Platform Health Monitoring deep wrapper and false-healthy guard
+
+Kolejny sweep objal `HealthMonitoringTab` przez `LLMHealthPanel`.
+
+Problem:
+
+- health payload byl czytany tylko z plaskiego response body;
+- malformed `providers` mogl prowadzic do pustych/zerowych metryk zamiast bledu;
+- summary/provider fields nie byly normalizowane, co zwiekszalo ryzyko false-healthy UI.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeProviders`, `normalizeSummary` i `normalizeAlerts`;
+- malformed provider/summary payload przechodzi w `DegradedState`;
+- deep wrapped health payloady sa akceptowane bez utraty danych;
+- provider test dalej wymusza pelny refetch, bez lokalnego patchowania statusu.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/Admin/LLMHealthPanel.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABC. Follow-up AI Platform Documents RAG deep wrapper and upload/update read-back honesty
+
+Kolejny sweep objal `DocumentsRAGTab`.
+
+Problem:
+
+- knowledge documents byly czytane tylko jako plaska tablica;
+- malformed response mogl wygladac jak pusta zdrowa lista dokumentow;
+- upload/update pokazywaly success przed potwierdzajacym read-backiem;
+- metadata dokumentow, visibility, sensitivity i liczby chunkow nie byly normalizowane.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`, `getListPayload` i strict `hasListShape`;
+- dodano `normalizeDocuments`;
+- malformed document payload przechodzi w `DegradedState`;
+- upload wymaga read-backu z potwierdzonym dokumentem;
+- update wymaga read-backu z potwierdzona metadata/visibility/sensitivity.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/DocumentsRAGTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Knowledge/DocumentsRAGTab.tsx tests/unit/views/superadmin/DocumentsRAGTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABB. Follow-up AI Platform Strategic Directions deep wrapper and strategy read-back honesty
+
+Kolejny sweep objal `StrategicDirectionsTab`.
+
+Problem:
+
+- strategy list byla czytana tylko jako plaska tablica;
+- malformed response mogl wygladac jak pusta zdrowa lista strategic directions;
+- create/update/toggle pokazywaly success przed potwierdzajacym read-backiem;
+- pola tekstowe, booleany, priority i metryki nie byly normalizowane.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`, `getListPayload` i strict `hasListShape`;
+- dodano `normalizeStrategies`;
+- malformed strategy payload przechodzi w `DegradedState`;
+- create/update/toggle wymagaja read-backu z potwierdzonym stanem;
+- stale read-back pokazuje blad akcji zamiast success toast.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/StrategicDirectionsTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Knowledge/StrategicDirectionsTab.tsx tests/unit/views/superadmin/StrategicDirectionsTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UABA. Follow-up AI Platform Model Tiers deep wrapper and tier assignment read-back honesty
+
+Kolejny sweep objal `ModelTiersTab` przez realny komponent `ModelTierAssignments`.
+
+Problem:
+
+- tier assignments i provider list byly czytane tylko z plaskich `fetch().json()`;
+- malformed tier assignments mogly wygladac jak puste zdrowe tiery;
+- add/remove assignment wykonywaly optimistic update i success po samym endpoint response;
+- stale read-back mogl zostawic UI w falszywym stanie.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`, `getListPayload` i strict `hasListShape`;
+- dodano `normalizeAssignments` i `normalizeProviders`;
+- malformed assignments/providers przechodza w `DegradedState`;
+- add/remove assignment wymagaja read-backu z potwierdzonym stanem;
+- stale remove pokazuje blad akcji zamiast success toast.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ModelTiersTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/ModelTierAssignments.tsx src/views/superadmin/AIPlatformModule/Configuration/ModelTiersTab.tsx tests/unit/views/superadmin/ModelTiersTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UAAW. Follow-up AI Platform Org AI Policy deep wrapper and save confirmation honesty
+
+Kolejny sweep objal `OrgAIPolicyTab`.
+
+Problem:
+
+- organization list, org policy i policy history byly czytane tylko z plaskich payloadow;
+- malformed organization/history payload mogl wygladac jak pusty selector albo "No policy revisions yet";
+- save pokazywal success przed read-backiem;
+- invalid policy JSON z API mogl zostac cicho zastapiony `{}`.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`, `getListPayload` i strict `hasListShape`;
+- dodano `normalizeOrganizations`, `normalizeHistory` i `extractPolicySnapshot`;
+- malformed organization/history/policy payloady sa jawnie degradowane;
+- save wymaga read-backu z potwierdzona zawartoscia zapisanej polityki;
+- rollback wymaga udanego read-backu przed success toast.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie ma bledow; pozostaja istniejace ostrzezenia legacy `react-hooks/exhaustive-deps` i `any` w `OrgAIPolicyTab.tsx`.
+
+### 23UAAX. Follow-up AI Platform Purpose Assignments deep wrapper and assignment read-back honesty
+
+Kolejny sweep objal `PurposeAssignmentsTab`.
+
+Problem:
+
+- purposes, providers i assignments byly czytane tylko z plaskich payloadow;
+- malformed assignments mogly wygladac jak pusta zdrowa lista;
+- success toasty dla upsert/add/preset/delete byly wyswietlane przed potwierdzajacym read-backiem;
+- pola tekstowe i booleany w payloadach nie byly normalizowane.
+
+Wdrozone:
+
+- dodano deep `getListPayload` i strict `hasListShape`;
+- dodano `normalizePurposes`, `normalizeProviders`, `normalizeAssignments`;
+- malformed purpose/provider/assignment payloady przechodza w degraded state;
+- add/preset/delete wymagaja read-backu z potwierdzonym assignment state;
+- remove nie pokazuje success, jesli usuwany assignment nadal wraca z API.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Configuration/PurposeAssignmentsTab.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie ma bledow; pozostaja istniejace ostrzezenia legacy `any` w `PurposeAssignmentsTab.tsx`.
+
+### 23UAAY. Follow-up AI Platform Routing Rules deep wrapper and mutation confirmation honesty
+
+Kolejny sweep objal `RoutingRulesTab`.
+
+Problem:
+
+- tier assignments, providers i routing rules byly czytane z plaskich payloadow;
+- malformed routing rules mogly wygladac jak zdrowa pusta lista;
+- create/update/toggle/delete pokazywaly success przed read-backiem;
+- bool/string fields w rule payloadach nie byly normalizowane.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`, `getListPayload` i strict `hasListShape`;
+- dodano normalizacje routing rules/providers/tier assignments;
+- malformed rules/provider/assignment payloady przechodza w degraded state;
+- create/update/toggle/delete wymagaja read-backu z potwierdzonym stanem reguly;
+- stale read-back pokazuje blad akcji zamiast success toast.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie ma bledow; pozostaja istniejace ostrzezenia legacy `any` w `RoutingRulesTab.tsx`.
+
+### 23UAAZ. Follow-up AI Platform Global Settings deep wrapper and settings read-back honesty
+
+Kolejny sweep objal `GlobalSettingsTab` przez realny komponent `SuperAdminAISettings`.
+
+Problem:
+
+- global AI settings i provider list byly czytane z plaskich `fetch().json()`;
+- malformed settings mogly konczyc jako ogolne "Failed to load settings" bez konkretnego zdegradowanego stanu;
+- save pokazywal success po samym PUT bez potwierdzajacego read-backu;
+- stringowe booleany/liczby/listy nie byly normalizowane.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`, `getListPayload` i strict `hasListShape`;
+- dodano `normalizeSettings` i `normalizeProviders`;
+- malformed settings/providers przechodza w `DegradedState`;
+- save wykonuje read-back i porownuje zapisane pola przed success toast;
+- stale read-back pokazuje blad akcji zamiast false-success.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/GlobalSettingsTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/SuperAdminAISettings.tsx src/views/superadmin/AIPlatformModule/Configuration/GlobalSettingsTab.tsx tests/unit/views/superadmin/GlobalSettingsTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UAAV. Follow-up AI Platform Governance deep wrapper and save read-back honesty
+
+Kolejny sweep objal `AIGovernanceTab`.
+
+Problem:
+
+- context policy, internet/audit policy i health report byly czytane tylko z plytkiego `data`;
+- malformed governance payload mogl przejsc jako puste albo nieedytowalne sekcje bez jasnego bledu;
+- save pokazywal success po `loadAll()` nawet gdy read-back byl niedostepny;
+- stringowe booleany w policy mogly falszowac stan checkboxow.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano `normalizeContextPolicy`, `normalizePolicySummary` i `normalizeSanityReport`;
+- stringowe booleany sa normalizowane przez `toBool`;
+- malformed context/policy/health payloady przechodza do degraded state;
+- save wymaga read-backu, a brak potwierdzenia nie pokazuje success toast.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIGovernanceTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Configuration/AIGovernanceTab.tsx tests/unit/views/superadmin/AIGovernanceTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UAAU. Follow-up AI Platform Policy Enforcement deep wrapper and drift honesty
+
+Kolejny sweep objal `PolicyEnforcementTab`.
+
+Problem:
+
+- enforcement payload byl czytany tylko jako plaski obiekt;
+- brak `rows` mogl zostac pokazany jako "No enforcement data available";
+- stringowe `drift: "false"` byloby truthy i moglo wywolac falszywy drift/severity.
+
+Wdrozone:
+
+- dodano deep `getObjectPayload`;
+- dodano strict `hasRowsShape` i `normalizeRows`;
+- malformed enforcement payload pokazuje degraded state;
+- `drift` jest normalizowany przez `toBool`;
+- tekstowe pola wiersza sa renderowane przez `asText`, bez `[object Object]`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PolicyEnforcementTab.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx tests/unit/views/superadmin/PolicyEnforcementTab.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UAAT. Follow-up Superadmin Overview deep wrapper and false-zero honesty
+
+Kolejny sweep objal `OverviewModule`.
+
+Problem:
+
+- organizations i dashboard payloady akceptowaly tylko plaski ksztalt;
+- malformed organization payload mogl zostac pomylony z realnym zerowym overview;
+- dashboard wrapper `data.data` nie byl odczytywany.
+
+Wdrozone:
+
+- dodano `getObjectPayload`, `getListPayload` i strict `hasListShape`;
+- organizations sa liczone po znormalizowanej liscie z wrapperow;
+- dashboard akceptuje `data.data`;
+- malformed organization list pokazuje degraded state zamiast zerowych metryk.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/OverviewModule.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/OverviewModule.tsx tests/unit/views/superadmin/OverviewModule.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UAAS. Follow-up Superadmin Org Details modal deep wrapper and billing honesty
+
+Kolejny sweep objal `SuperAdminOrgDetailsModal`.
+
+Problem:
+
+- organization read-back po zapisie i billing details wspieraly tylko plaski payload albo jeden poziom `data`;
+- `hasListShape` bylo zbyt luzne i akceptowalo dowolne `data`;
+- malformed billing object mogl zostac potraktowany jako zdrowy payload bez realnych danych billing/usage/invoices.
+
+Wdrozone:
+
+- `getListPayload` i `getObjectPayload` akceptuja `data.data`;
+- `hasListShape` wymaga realnej tablicy w payloadzie lub wrapperach;
+- dodano `hasBillingShape`, ktory wymaga znanych billing/usage/invoices pol;
+- malformed billing payload pokazuje degraded state zamiast "No billing details available";
+- update organization nadal wymaga read-backu z potwierdzonym plan/status/discount.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminOrgDetailsModal.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminOrgDetailsModal.tsx tests/unit/views/superadmin/SuperAdminOrgDetailsModal.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UAAR. Follow-up Superadmin Storage Detail modal deep wrapper and file-list honesty
+
+Kolejny sweep objal `SuperAdminStorageDetailModal`.
+
+Problem:
+
+- file list wspieral tylko plaski payload albo jeden poziom `data`;
+- `hasListShape` bylo zbyt luzne i akceptowalo dowolne `data`;
+- malformed file field mogl wypchnac nieczytelny tekst albo rozbic render;
+- delete flow musial nadal wymagac read-backu potwierdzajacego brak pliku.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- `hasListShape` wymaga realnej tablicy w payloadzie albo wrapperach;
+- dodano `asText` i `normalizeFile` dla bezpiecznego renderu nazwy/sciezki pliku;
+- malformed file payload pokazuje degraded state zamiast pustego storage;
+- delete read-back nadal blokuje success i `onUpdate`, jesli usuniety path wciaz wraca z API.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminStorageDetailModal.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminStorageDetailModal.tsx tests/unit/views/superadmin/SuperAdminStorageDetailModal.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint, `git diff --check` i ReadLints sa czyste.
+
+### 23UAAM. Follow-up Superadmin AI Budgets deep wrapper and list-shape honesty
+
+Kolejny sweep objal `AIBudgetsView`.
+
+Problem:
+
+- budgets/alerts/model permissions wspieraly plaski payload i jeden poziom `data`, ale nie `data.data`;
+- stats/model-costs byly odczytywane przez sztywne `data.data`;
+- malformed budgets payload mogl wygladac jak pusta konfiguracja i zerowy spend.
+
+Wdrozone:
+
+- dodano `getObjectPayload` z obsluga `data.data`;
+- `getListPayload` akceptuje deep wrappery;
+- dodano strict `hasListShape` dla budgets, alerts i model permissions;
+- stats i model costs uzywaja wspolnego object unwrap;
+- malformed budgets payload pokazuje degraded state zamiast pustych budzetow/zerowych metryk;
+- istniejace create/update/delete budget, alert acknowledge/dismiss i model permission gates nadal wymagaja read-backu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 11 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIBudgetsView.tsx tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAL. Follow-up Superadmin Tenant Command Center deep wrapper honesty
+
+Kolejny sweep objal `TenantCommandCenterView`.
+
+Problem:
+
+- overview i detail payloady wspieraly plaski payload i jeden poziom `data`, ale nie `data.data`;
+- `hasListShape` uznawal samo pole `data` za liste, co moglo dac false-zero tenant metrics przy malformed wrapperze;
+- malformed org/policy payload powinien blokowac overview, a nie renderowac puste metryki.
+
+Wdrozone:
+
+- `getObjectPayload` akceptuje `data.data`;
+- `getListPayload` akceptuje `data.data` dla organizations i policies;
+- `hasListShape` wymaga realnej tablicy w payloadzie lub wrapperze;
+- malformed organization payload pokazuje `Tenant command center unavailable` zamiast zerowych kart;
+- detail billing/resource telemetry nadal degraduje osobno bez ukrywania overview.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/TenantCommandCenterView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/TenantCommandCenterView.tsx tests/unit/views/superadmin/TenantCommandCenterView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAK. Follow-up Superadmin Organizations deep wrapper and strict list-shape honesty
+
+Kolejny sweep objal `OrganizationsView`.
+
+Problem:
+
+- organizations/access requests/access codes wspieraly plaski payload i jeden poziom `data`, ale nie `data.data`;
+- `hasListShape` uznawal samo pole `data` za liste, przez co malformed wrapper mogl dac false-empty;
+- access request status nie byl normalizowany przed filtrami i approve/reject read-backiem.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- `hasListShape` wymaga realnej tablicy (`data`, named key albo nested named key), a nie samego wrappera;
+- access request payload normalizuje status do lowercase;
+- malformed organization payload pokazuje degraded state zamiast pustej tabeli;
+- istniejace org update/delete, access request approve/reject i access code mutation gates nadal wymagaja read-backu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/OrganizationsView.tsx tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAJ. Follow-up Superadmin SCIM provisioning list-shape and enablement honesty
+
+Kolejny sweep objal `SCIMProvisioningView`.
+
+Problem:
+
+- tokens/mappings/logs/conflicts mogly przy malformed payloadzie wygladac jak puste sekcje;
+- enable SCIM i manual sync nie wymuszaly potwierdzonego read-backu;
+- token/mapping read-backi byly dobre, ale opieraly sie na niewalidowanych listach.
+
+Wdrozone:
+
+- `SCIMDataSnapshot` zawiera teraz `serviceProvider`;
+- dodano `hasListShape` dla list SCIM po `unwrapApiPayload`;
+- `fetchData` rzuca jawne bledy dla malformed tokens, mappings, sync logs i conflicts;
+- enable SCIM wymaga read-backu z aktywnym service providerem;
+- trigger sync wymaga dostepnego read-backu po mutacji;
+- istniejace token/mapping/conflict gates nadal wymagaja potwierdzonego stanu po odswiezeniu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 11 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SCIMProvisioningView.tsx tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAI. Follow-up Superadmin Access Requests deep wrapper and status honesty
+
+Kolejny sweep objal `SuperAdminAccessRequestsView`.
+
+Problem:
+
+- access request list wspieral plaska liste i jeden poziom `data`, ale nie `data.data`;
+- status z API w innym casing'u mogl zlamac approve/reject read-back;
+- malformed payload powinien byc degraded, a nie pusta kolejka.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- `hasListShape` rozpoznaje list-shape takze w `data.*`;
+- dodano `normalizeRequest`, ktory normalizuje status do lowercase;
+- approve/reject read-back korzysta ze znormalizowanych statusow;
+- malformed payload pokazuje degraded state zamiast "No pending requests";
+- dialogi renderuja dane osoby przez safe `asText`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminAccessRequestsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminAccessRequestsView.tsx tests/unit/views/superadmin/SuperAdminAccessRequestsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAH. Follow-up Superadmin Saved Reports wrapper and mutation honesty
+
+Kolejny sweep objal `SavedReportsView`.
+
+Problem:
+
+- reports/executions byly czytane jako plaskie tablice;
+- malformed reports payload mogl wygladac jak pusta lista;
+- create nie priorytetyzowal ID z odpowiedzi;
+- delete mogl przejsc przy niedostepnym read-backu;
+- execute ustawial wynik przed potwierdzeniem odswiezonej historii wykonania.
+
+Wdrozone:
+
+- dodano `getObjectPayload`, `getListPayload`, `hasListShape`, `getCreatedReportId`, `getCreatedExecutionId`;
+- reports i executions akceptuja wrappery `data`, `data.data`, `reports`, `executions`, `items`;
+- malformed reports payload pokazuje degraded state zamiast pustej listy;
+- create uzywa ID z odpowiedzi, gdy backend je zwroci, z fallbackiem do name/type;
+- delete wymaga dostepnego read-backu bez usuwanego raportu;
+- execute wymaga dostepnego read-backu historii, a przy zwroconym execution ID potwierdza jego obecnosc przed pokazaniem wyniku.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SavedReportsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/analytics/SavedReportsView.tsx tests/unit/views/superadmin/SavedReportsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAG. Follow-up Superadmin Admin Audit Logs text/status honesty
+
+Kolejny sweep objal `AdminAuditLogsView`.
+
+Problem:
+
+- czesc pol tekstowych audit loga byla renderowana bez safe display;
+- status z API w innym casing'u (np. `RESOLVED`) mogl byc traktowany jako unresolved;
+- malformed pola admin/action/resource/IP mogly prowadzic do nieuczciwego lub niestabilnego renderu.
+
+Wdrozone:
+
+- dodano `asText` i `normalizeLog`;
+- `normalizeLogs` mapuje kazdy payload logow przez normalizacje;
+- status jest normalizowany do lowercase przed renderem i read-backiem resolve;
+- admin/action/resource/IP maja fallbacki bez renderowania obiektow;
+- resolve i export zachowuja dotychczasowe read-back/error gates.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AdminAuditLogsView.tsx tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAF. Follow-up Superadmin Security Events boolean honesty
+
+Kolejny sweep objal `SecurityEventsView`.
+
+Problem:
+
+- `resolved` z API jako string (np. `"false"`) byl truthy w JS i mogl renderowac zdarzenie jako resolved;
+- ta sama nieznormalizowana wartosc mogla oslabic read-back po resolve.
+
+Wdrozone:
+
+- dodano `toBool` i `normalizeEvent`;
+- wszystkie event list payloady (`array`, `events`, `items`, `data`, `data.data`) sa mapowane przez normalizacje eventu;
+- `resolved: "false"` renderuje status `Open` i zachowuje przycisk resolve;
+- resolve nadal wymaga read-backu z eventem oznaczonym jako resolved albo znikajacym z aktualnego widoku.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/SecurityEventsView.tsx tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAE. Follow-up Superadmin Password Policy malformed policy honesty
+
+Kolejny sweep objal `PasswordPolicyView`.
+
+Problem:
+
+- policy payload bez zadnych pol polityki byl normalizowany do domyslnych wartosci i pokazywal edytowalny formularz;
+- malformed organization name mogl trafic do selecta bez safe fallbacku.
+
+Wdrozone:
+
+- dodano `POLICY_KEYS` i `hasPolicyShape`;
+- `getPolicyPayload` akceptuje tylko realny policy payload lub wrapper z realnym policy payloadem;
+- malformed policy payload pokazuje degraded state zamiast edytowalnych defaultow;
+- nazwy organizacji sa renderowane przez safe `asText`;
+- save nadal wymaga read-backu zgodnego ze stanem formularza.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/PasswordPolicyView.tsx tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAD. Follow-up Superadmin Audit Events deep wrapper and malformed payload honesty
+
+Kolejny sweep objal `AuditEventsViewer`.
+
+Problem:
+
+- audit events wspieraly plaski payload i jeden poziom `data`, ale nie `data.data`;
+- malformed audit payload byl traktowany jak pusta lista, co dawalo false-empty audit trail;
+- nested total powinien byc liczony bez `NaN`.
+
+Wdrozone:
+
+- dodano `getObjectPayload` z obsluga `data.data`;
+- `normalizeAuditEventsResponse` akceptuje tablice, `events`, `items`, `data` oraz deep wrappery;
+- malformed audit payload rzuca jawny blad i pokazuje degraded state;
+- total nadal ma safe fallback do liczby eventow.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AuditEventsViewer.tsx tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAC. Follow-up Superadmin Admin Sessions deep wrapper and malformed payload honesty
+
+Kolejny sweep objal `AdminSessionsView`.
+
+Problem:
+
+- sessions/stats wspieraly plaskie payloady i jeden poziom wrappera, ale nie `data.data`;
+- malformed sessions payload mogl wygladac jak pusta lista aktywnych sesji;
+- revoke i bulk revoke powinny nadal wymagac read-backu.
+
+Wdrozone:
+
+- dodano `getObjectPayload` i `hasListShape`;
+- `normalizeSessions` akceptuje `data.data.sessions/items` i rzuca jawny blad dla malformed payloadu;
+- `normalizeStats` akceptuje plaski obiekt, `data` i `data.data`;
+- revoke session i revoke all nadal wymagaja read-backu potwierdzajacego nowy stan;
+- malformed sessions payload pokazuje degraded state zamiast "No active sessions found".
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AdminSessionsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AdminSessionsView.tsx tests/unit/views/superadmin/AdminSessionsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAB. Follow-up Superadmin MFA deep wrapper honesty
+
+Kolejny sweep objal `MFAView`.
+
+Problem:
+
+- users/MFA methods wspieraly plaskie listy i jeden poziom wrappera, ale nie `data.data`;
+- malformed methods payload powinien byc jawny, a nie renderowany jako pusta lista metod.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- `hasListShape` rozpoznaje list-shape takze w `data.*`;
+- users/methods akceptuja wrappery `data`, `data.data`, `users`, `methods`, `items`;
+- malformed methods payload pokazuje degraded state zamiast "No MFA methods configured";
+- widok pozostaje read-only, bez udawania reset/disable flow.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/MFAView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/MFAView.tsx tests/unit/views/superadmin/MFAView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23UAAA. Follow-up Superadmin IP Whitelist deep wrapper and add read-back honesty
+
+Kolejny sweep objal `IPWhitelistView`.
+
+Problem:
+
+- organizations/whitelist wspieraly plaskie listy i jeden poziom wrappera, ale nie `data.data`;
+- add response nie wyciagal `data.data.ipWhitelist.id`;
+- malformed whitelist payload powinien byc jawny, a nie renderowany jako pusta lista.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- `hasListShape` rozpoznaje list-shape takze w `data.*`;
+- `getCreatedIPWhitelistId` akceptuje `data.data.id` i `data.data.ipWhitelist.id`;
+- add/remove nadal wymagaja read-backu potwierdzajacego nowy stan;
+- malformed whitelist payload pokazuje degraded state zamiast "No IP addresses whitelisted".
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/IPWhitelistView.tsx tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZZ. Follow-up Superadmin Device Management deep wrapper honesty
+
+Kolejny sweep objal `DeviceManagementView`.
+
+Problem:
+
+- users/devices wspieraly plaskie listy i jeden poziom wrappera, ale nie `data.data`;
+- malformed device payload powinien byc jawny, a nie renderowany jako pusta inventory.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- `hasListShape` rozpoznaje list-shape takze w `data.*`;
+- users/devices akceptuja wrappery `data`, `data.data`, `users`, `devices`, `items`;
+- malformed device payload pokazuje degraded state zamiast "No devices found";
+- read-only blocking pozostaje jawnie oznaczone jako niedostepne.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/DeviceManagementView.tsx tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZY. Follow-up Superadmin Contract Management wrapper payload and deletion read-back honesty
+
+Kolejny sweep objal `ContractManagementView`.
+
+Problem:
+
+- contracts/renewals i stats akceptowaly glownie plaskie payloady;
+- create contract potwierdzal glownie po polach biznesowych, mimo ze backend moze zwrocic id w wrapperze;
+- delete contract nie traktowal niedostepnego read-backu jako blad;
+- malformed values mogly pokazac `NaN` albo `bad-*` w wartosciach i renewalach.
+
+Wdrozone:
+
+- dodano `getListPayload`, `getObjectPayload`, `hasListShape`, `normalizeStats`, `normalizeContract`, `normalizeRenewal`, `safeNumber` i `getCreatedContractId`;
+- contracts/renewals akceptuja tablice oraz wrappery `data`, `data.data`, `contracts`, `renewals`, `items`;
+- stats akceptuja plaski obiekt, `data` i `data.data`;
+- create contract preferuje read-back po `id` z response, z fallbackiem do organizacji/typu/wartosci;
+- delete contract wymaga dostepnego read-backu bez usunietego `id`;
+- edit/delete buttons dostaly `aria-label` dla stabilnej obslugi i testow.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ContractManagementView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/customers/ContractManagementView.tsx tests/unit/views/superadmin/ContractManagementView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZX. Follow-up Superadmin Customer Lifecycle wrapper payload and deletion read-back honesty
+
+Kolejny sweep objal `CustomerLifecycleView`.
+
+Problem:
+
+- lifecycle stages/transitions i stats akceptowaly glownie plaskie payloady;
+- delete stage nie traktowal niedostepnego read-backu jako blad;
+- create stage potwierdzal glownie po nazwie, mimo ze backend moze zwrocic id w wrapperze;
+- stringowe/malformed statystyki mogly zafalszowac summary.
+
+Wdrozone:
+
+- dodano `getListPayload`, `getObjectPayload`, `hasListShape`, `normalizeStats`, `normalizeStage`, `safeNumber`, `toBool` i `getCreatedStageId`;
+- stages/transitions akceptuja tablice oraz wrappery `data`, `data.data`, `stages`, `transitions`, `items`;
+- stats akceptuja plaski obiekt, `data` i `data.data`;
+- create stage preferuje read-back po `id` z response, z fallbackiem do nazwy;
+- delete stage wymaga dostepnego read-backu bez usunietego `id`;
+- stage action buttons dostaly `aria-label` dla stabilnej obslugi i testow.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerLifecycleView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/customers/CustomerLifecycleView.tsx tests/unit/views/superadmin/CustomerLifecycleView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZW. Follow-up Superadmin Customer Success Playbooks wrapper payload and read-back honesty
+
+Kolejny sweep objal `CustomerSuccessPlaybooksView`.
+
+Problem:
+
+- playbooks/actions i stats akceptowaly glownie plaskie payloady;
+- create playbook potwierdzal glownie po nazwie, mimo ze backend moze zwrocic id w wrapperze;
+- stringowe/malformed `is_active` i statystyki mogly zafalszowac status albo summary;
+- malformed list payload powinien byc jawny, a nie renderowany jako pusty stan.
+
+Wdrozone:
+
+- dodano `getListPayload`, `getObjectPayload`, `hasListShape`, `normalizeStats`, `normalizePlaybook`, `safeNumber`, `toBool` i `getCreatedPlaybookId`;
+- playbooks/actions akceptuja tablice oraz wrappery `data`, `data.data`, `playbooks`, `actions`, `items`;
+- stats akceptuja plaski obiekt, `data` i `data.data`;
+- create playbook preferuje read-back po `id` z response, z fallbackiem do nazwy;
+- create/update/delete/execute nadal wymagaja read-backu potwierdzajacego nowy stan.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerSuccessPlaybooksView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/customers/CustomerSuccessPlaybooksView.tsx tests/unit/views/superadmin/CustomerSuccessPlaybooksView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZV. Follow-up Superadmin Customer Communication wrapper payload and send honesty
+
+Kolejny sweep objal `CustomerCommunicationView`.
+
+Problem:
+
+- communications i stats akceptowaly glownie plaskie payloady;
+- create communication wymagal `success` i plaskiego `id`;
+- malformed stats/open-rate fields mogly pokazac `NaN%`;
+- malformed communications payload powinien byc jawny, a nie renderowany jako pusta lista.
+
+Wdrozone:
+
+- dodano `getListPayload`, `getObjectPayload`, `hasListShape`, `normalizeStats`, `safeNumber` i `getCreatedCommunicationId`;
+- communications akceptuja tablice oraz wrappery `data`, `data.data`, `communications`, `messages`, `items`;
+- stats akceptuja plaski obiekt, `data` i `data.data`;
+- create/send flow akceptuje response z `id`, `communication.id`, `data.id`, `data.communication.id`, `data.data.id`, `data.data.communication.id`;
+- send nadal wymaga read-backu po konkretnym `id`, bez potwierdzania po subject;
+- open rate i stats renderuja tylko bezpieczne liczby.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerCommunicationView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/customers/CustomerCommunicationView.tsx tests/unit/views/superadmin/CustomerCommunicationView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZU. Follow-up Superadmin Customer Automation wrapper payload and counter honesty
+
+Kolejny sweep objal `CustomerAutomationView`.
+
+Problem:
+
+- automation rules i rule executions akceptowaly tylko plaskie tablice;
+- create/delete wymagaly `success`, mimo ze backend moze zwrocic rekord/id bez tej flagi;
+- stringowe/malformed `is_active` i `executions_count` mogly zafalszowac status albo summary.
+
+Wdrozone:
+
+- dodano `getListPayload`, `hasListShape`, `getCreatedRuleId`, `safeNumber`, `toBool` i `normalizeRule`;
+- rules/executions akceptuja tablice oraz wrappery `data`, `data.data`, `rules`, `automationRules`, `executions`, `items`;
+- create rule akceptuje response z `id`, `rule.id`, `data.id`, `data.rule.id`, `data.data.id`, `data.data.rule.id`;
+- create/toggle/delete nadal wymagaja read-backu potwierdzajacego nowy stan;
+- details button dostal `aria-label` dla stabilnej obslugi i testow;
+- malformed rule payload pokazuje degraded state zamiast pustej automatyzacji.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerAutomationView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/customers/CustomerAutomationView.tsx tests/unit/views/superadmin/CustomerAutomationView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZT. Follow-up Superadmin Customer Analytics wrapper payload honesty
+
+Kolejny sweep objal `CustomerAnalyticsView`.
+
+Problem:
+
+- usage by organization akceptowal tylko plaska tablice;
+- `data.data.items` i named wrappery mogly wygladac jak degraded state albo brak danych;
+- malformed analytics payload powinien byc jawny, a nie renderowany jako pusta tabela.
+
+Wdrozone:
+
+- dodano `getListPayload` i `hasListShape`;
+- analytics akceptuje tablice oraz wrappery `data`, `data.data`, `organizations`, `items`, `usage`;
+- istniejaca safe telemetry nadal usuwa `NaN` i `bad-*` z widoku;
+- malformed analytics payload pokazuje degraded state zamiast "No analytics data available yet".
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerAnalyticsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/customers/CustomerAnalyticsView.tsx tests/unit/views/superadmin/CustomerAnalyticsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZS. Follow-up Superadmin Customer Compliance wrapper payload and boolean honesty
+
+Kolejny sweep objal `CustomerComplianceView`.
+
+Problem:
+
+- compliance summary akceptowal glownie plaska liste albo `items`;
+- `data.data.items` i inne named wrappery mogly wygladac jak blad albo pusta tabela;
+- string `"false"` byl traktowany jak truthy, co moglo pokazac falszywy compliance pass.
+
+Wdrozone:
+
+- dodano `getListPayload` i `hasListShape`;
+- summary akceptuje tablice oraz wrappery `data`, `data.data`, `items`, `organizations`, `compliance`, `complianceItems`;
+- dodano `toBool`, ktory traktuje jako true tylko `true`, `"true"` i `1`;
+- malformed summary payload pokazuje degraded state zamiast pustej tabeli.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerComplianceView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/customers/CustomerComplianceView.tsx tests/unit/views/superadmin/CustomerComplianceView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZR. Follow-up Superadmin Customer Success Notes nested payload and create read-back honesty
+
+Kolejny sweep objal `CustomerSuccessNotesView`.
+
+Problem:
+
+- organizations i notes akceptowaly glownie plaskie listy;
+- create note wymagal `success`, mimo ze backend moze zwrocic utworzony rekord/id w wrapperze;
+- malformed notes payload mogl wygladac jak pusta lista notatek.
+
+Wdrozone:
+
+- dodano `getListPayload`, `hasListShape` i `getCreatedNoteId`;
+- organizations/notes akceptuja tablice oraz wrappery `data`, `data.data`, `organizations`, `notes`, `items`;
+- create note akceptuje response z `id`, `note.id`, `data.id`, `data.note.id`, `data.data.id`, `data.data.note.id`;
+- create nadal wymaga read-backu potwierdzajacego `id` albo tytul;
+- malformed notes payload pokazuje degraded state zamiast "No notes found".
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerSuccessNotesView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/support/CustomerSuccessNotesView.tsx tests/unit/views/superadmin/CustomerSuccessNotesView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZQ. Follow-up Superadmin Customer Health wrapper payload and safe telemetry honesty
+
+Kolejny sweep objal `CustomerHealthView`.
+
+Problem:
+
+- organizations i health payload akceptowaly glownie plaskie obiekty/listy;
+- `data.data.organizations` i `data.data.health`-style payloady mogly wygladac jak blad albo brak danych;
+- malformed numeric telemetry, np. `adoption_score=NaN`, mogla pokazac `NaN%`.
+
+Wdrozone:
+
+- dodano `getListPayload`, `getObjectPayload`, `hasListShape`, `asText` i `safeNumber`;
+- organizations akceptuja tablice oraz wrappery `data`, `data.data`, `organizations`, `items`;
+- health akceptuje plaski obiekt oraz `data`/`data.data`;
+- adoption score i open tickets renderuja tylko bezpieczne wartosci liczbowe;
+- malformed organizations payload pokazuje degraded state zamiast "No health data".
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerHealthView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/support/CustomerHealthView.tsx tests/unit/views/superadmin/CustomerHealthView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZP. Follow-up Superadmin Support Tickets nested payload and reply read-back honesty
+
+Kolejny sweep objal `SupportTicketsView`.
+
+Problem:
+
+- ticket list i comments list akceptowaly tylko plaskie tablice;
+- create ticket potwierdzal glownie po subject, mimo ze backend moze zwracac `id`;
+- malformed ticket payload mogl wygladac jak pusta tabela.
+
+Wdrozone:
+
+- dodano `getListPayload`, `hasListShape`, `getCreatedTicketId` i `getCreatedCommentId`;
+- tickets/comments akceptuja tablice oraz wrappery `data`, `data.data`, `tickets`, `comments`, `items`;
+- create ticket preferuje read-back po `id` z response, z fallbackiem do subject;
+- add reply preferuje read-back po comment `id`, z fallbackiem do tekstu komentarza;
+- malformed ticket/comment list payload pokazuje jawny blad zamiast pustej tabeli.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SupportTicketsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/support/SupportTicketsView.tsx tests/unit/views/superadmin/SupportTicketsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZO. Follow-up Superadmin DLP deep wrapper and malformed payload honesty
+
+Kolejny sweep objal `DLPView`.
+
+Problem:
+
+- policy/violation listy, stats i create response wspieraly plaskie payloady i jeden poziom wrappera, ale nie `data.data`;
+- malformed policy payload mogl wygladac jak pusta lista polityk;
+- create/toggle/delete/resolve read-backi powinny pozostac twarde dla braku potwierdzenia.
+
+Wdrozone:
+
+- dodano `getObjectPayload` z obsluga `data.data`;
+- `getListPayload` akceptuje `data.data.policies/violations/items`;
+- `normalizeStats` akceptuje plaski obiekt, `data` i `data.data`;
+- `getCreatedPolicyId` akceptuje `data.data.id` i `data.data.policy.id`;
+- `hasListShape` rozroznia prawdziwa pusta liste od malformed payloadu;
+- create/toggle/delete/resolve nadal wymagaja read-backu potwierdzajacego nowy stan.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/DLPView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 12 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/DLPView.tsx tests/unit/views/superadmin/DLPView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZN. Follow-up Superadmin Threat Intelligence deep wrapper and malformed payload honesty
+
+Kolejny sweep objal `ThreatIntelligenceView`.
+
+Problem:
+
+- threat list, stats i create response wspieraly plaskie payloady i jeden poziom wrappera, ale nie `data.data`;
+- malformed threat payload mogl wygladac jak pusta lista;
+- add/block/unblock/delete read-backi powinny pozostac twarde dla braku potwierdzenia.
+
+Wdrozone:
+
+- dodano `getObjectPayload` z obsluga `data.data`;
+- `getListPayload` akceptuje `data.data.threats/items`;
+- `normalizeStats` akceptuje plaski obiekt, `data` i `data.data`;
+- `getCreatedThreatId` akceptuje `data.data.id` i `data.data.threat.id`;
+- `hasListShape` rozroznia prawdziwa pusta liste od malformed payloadu;
+- add/block/unblock/delete nadal wymagaja read-backu potwierdzajacego nowy stan.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 10 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/ThreatIntelligenceView.tsx tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZM. Follow-up Superadmin Security Incidents deep wrapper and malformed payload honesty
+
+Kolejny sweep objal `SecurityIncidentsView`.
+
+Problem:
+
+- incidents list, stats i create response wspieraly plaskie payloady i jeden poziom wrappera, ale nie `data.data`;
+- malformed incident payload mogl wygladac jak pusta lista;
+- create/resolve/delete read-backi powinny pozostac twarde dla braku potwierdzenia.
+
+Wdrozone:
+
+- dodano `getObjectPayload` z obsluga `data.data`;
+- `getListPayload` akceptuje `data.data.incidents/items`;
+- `normalizeStats` akceptuje plaski obiekt, `data` i `data.data`;
+- `getCreatedIncidentId` akceptuje `data.data.id` i `data.data.incident.id`;
+- `hasListShape` rozroznia prawdziwa pusta liste od malformed payloadu;
+- create/resolve/delete nadal wymagaja read-backu potwierdzajacego nowy stan.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 11 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/SecurityIncidentsView.tsx tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZL. Follow-up Superadmin Permissions Matrix deep wrapper and malformed payload honesty
+
+Kolejny sweep objal `PermissionsMatrixView`.
+
+Problem:
+
+- permissions/matrix/stats akceptowaly plaski payload i jeden poziom `data`, ale nie `data.data`;
+- malformed permissions payload mogl zostac potraktowany jak pusta lista definicji;
+- matryca i statystyki powinny zachowac dotychczasowe read-backi toggle/copy/create/update/delete.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- dodano `getObjectPayload` dla matrix/stats z obsluga `data.data`;
+- `normalizePermissions` zachowuje jawny blad dla malformed payloadow bez list shape;
+- toggle/copy/create/update/delete nadal wymagaja read-backu potwierdzajacego nowy stan.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/PermissionsMatrixView.tsx tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZK. Follow-up Superadmin Approval Workflows deep wrapper and malformed payload honesty
+
+Kolejny sweep objal `ApprovalWorkflowsView`.
+
+Problem:
+
+- workflow/request listy wspieraly plaskie listy i jeden poziom wrapperow, ale nie `data.data.workflows/requests`;
+- create response nie wyciagal `data.data.workflow.id`;
+- malformed object payload mogl wygladac jak pusta lista workflowow zamiast jawny blad zrodla.
+
+Wdrozone:
+
+- `getListPayload` akceptuje `data.data`;
+- `getCreatedWorkflowId` akceptuje `data.data.id` i `data.data.workflow.id`;
+- dodano `hasListShape`, ktory odroznia prawdziwa pusta liste od malformed payloadu;
+- create/delete/approve/reject nadal wymagaja read-backu potwierdzajacego nowy stan.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/ApprovalWorkflowsView.tsx tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZJ. Follow-up Superadmin Admin Audit Logs deep wrapper honesty
+
+Kolejny sweep objal `AdminAuditLogsView`.
+
+Problem:
+
+- audit logs, stats i export akceptowaly glownie plaski payload albo jeden poziom `data`;
+- `data.data.logs`, `data.data.stats` i `data.data.url` mogly wygladac jak puste/malformed dane;
+- malformed logs payload mogl wczesniej degradowac do pustej listy zamiast jawnie pokazac blad zrodla.
+
+Wdrozone:
+
+- dodano `getObjectPayload` z obsluga `data.data`;
+- `normalizeLogs` akceptuje `logs`, `items`, tablice oraz `data.data`, a malformed payload traktuje jako blad;
+- `normalizeStats` i export URL akceptuja plaskie obiekty, `data` i `data.data`;
+- resolve audit log nadal wymaga read-backu z `status=resolved` albo znikniecia rekordu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AdminAuditLogsView.tsx tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZI. Follow-up Superadmin Security Events deep wrapper honesty
+
+Kolejny sweep objal `SecurityEventsView`.
+
+Problem:
+
+- event list wspieral plaskie listy i jeden poziom wrapperow, ale nie `data.data.events/items`;
+- przy takim payloadzie widok mogl wejsc w degraded state zamiast pokazac istniejace zdarzenia.
+
+Wdrozone:
+
+- dodano `isRecord`;
+- `normalizeEvents` sprawdza plaski payload, `data`, `items`, `events` oraz `data.data`;
+- resolve event nadal wymaga read-backu, ktory potwierdza `resolved=true` albo znikniecie eventu;
+- malformed fields nadal renderuja `Unknown date`, `Unknown event` i `unknown` bez `Invalid Date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/SecurityEventsView.tsx tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZG. Follow-up Superadmin LLM Management provider read-back honesty
+
+Kolejny sweep objal `LLMManagementView`.
+
+Problem:
+
+- provider list akceptowal glownie plaska tablice;
+- usage, costs i health mogly byc zwrocone jako `data.*`;
+- create/clone/update/delete provider pokazywaly sukces i zamykaly modal przed twardym potwierdzeniem odswiezonej listy;
+- delete mogl wygladac jak sukces nawet gdy read-back nadal zawieral usuwany provider.
+
+Wdrozone:
+
+- dodano `getListPayload`, `getObjectPayload` i `providerMatchesForm`;
+- providers akceptuja listy oraz wrappery `data`, `data.data`, `providers`, `items`;
+- usage, costs i health akceptuja plaski obiekt oraz `data`;
+- create/clone/update zamykaja modal i pokazuja sukces dopiero po read-backu potwierdzajacym oczekiwany provider;
+- tier update wymaga read-backu z nowym tierem;
+- delete wymaga dostepnego read-backu bez usunietego `id`;
+- bledy akcji sa widoczne jako `role="alert"` i nie sa mylone z pustym stanem.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/LLMManagementView.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie zglosil bledow; pozostaja historyczne warningi w `LLMManagementView.tsx` (`any`, `console`, unused caught error), niezwiazane z nowa logika.
+
+### 23TZZH. Follow-up Superadmin Password Policy deep wrapper read-back honesty
+
+Kolejny sweep objal `PasswordPolicyView`.
+
+Problem:
+
+- save flow mial read-back i nie pokazywal sukcesu przy stale policy, ale payload parser konczyl sie na jednym poziomie `data`;
+- `data.data.organizations` i `data.data.policy` mogly wygladac jak brak danych albo niepotwierdzony zapis.
+
+Wdrozone:
+
+- `getListPayload` akceptuje dodatkowo `data.data.*`;
+- `getPolicyPayload` akceptuje plaski policy, `policy`, `data`, `data.policy`, `data.data` i `data.data.policy`;
+- save nadal wymaga read-backu identycznej znormalizowanej polityki przed `toast.success`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/PasswordPolicyView.tsx tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZF. Follow-up Superadmin Tenant Command Center wrapper payload honesty
+
+Kolejny sweep objal read-only `TenantCommandCenterView`.
+
+Problem:
+
+- overview akceptowal glownie czysta liste organizacji, plaskie `policies` i plaski dashboard;
+- tenant details akceptowaly glownie plaskie billing/resource obiekty;
+- wrappery `data.organizations`, `data.policies`, `data.counts`, `data.budget` mogly wygladac jak blad albo degraded state.
+
+Wdrozone:
+
+- dodano `getListPayload`, `hasListShape` i `getObjectPayload`;
+- organizations akceptuja listy oraz wrappery `data`, `data.data`, `organizations`, `items`;
+- policies akceptuja listy oraz wrappery `data`, `data.data`, `policies`, `items`;
+- dashboard, billing details i resource telemetry akceptuja plaski obiekt oraz `data`;
+- safe numeric rendering nadal nie pokazuje `NaN`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/TenantCommandCenterView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/TenantCommandCenterView.tsx tests/unit/views/superadmin/TenantCommandCenterView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZD. Follow-up Superadmin Compliance Center nested payload and create response honesty
+
+Kolejny sweep objal `ComplianceCenterView`.
+
+Problem:
+
+- DSAR, audit i processing record create mialy read-back, ale fetchery akceptowaly glownie plaskie `requests`/`audits`/`records`;
+- frameworki, organizacje i status compliance nie obslugiwaly konsekwentnie wrapperow `data.*`;
+- create response akceptowal glownie plaskie `request`/`audit`/`record`, bez nested `data.request`;
+- DSAR detail view nie rozpakowywal `data`.
+
+Wdrozone:
+
+- dodano `getListPayload`, `getObjectPayload` i wrapper-safe `getRecordId`;
+- frameworks akceptuja listy oraz wrappery `data`, `data.data`, `frameworks`, `items`;
+- organizations akceptuja listy oraz wrappery `data`, `data.data`, `organizations`, `items`;
+- DSAR/audits/processing records akceptuja listy oraz wrappery `data`, `data.data`, `requests`, `dsarRequests`, `audits`, `records`, `processingRecords`, `items`;
+- compliance status akceptuje plaski payload, `status` i `data.status`;
+- DSAR detail akceptuje plaski obiekt oraz `data`;
+- create DSAR/audit/record nadal wymaga read-backu z tym samym `id`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/ComplianceCenterView.tsx tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie zglosil bledow; pozostaja historyczne warningi w `ComplianceCenterView.tsx` (`@ts-nocheck`, `any`, `console`), niezwiazane z nowa logika.
+
+### 23TZZE. Follow-up Superadmin SCIM provisioning nested payload and read-back honesty
+
+Kolejny sweep objal `SCIMProvisioningView`.
+
+Problem:
+
+- SCIM fetch zakladal glownie `response.data.data`;
+- named wrappery `data.tokens`, `data.groupMappings`, `data.logs`, `data.conflicts` mogly wygladac jak puste dane;
+- token create response akceptowal glownie `data.data`, bez `data.token`;
+- revoke token i delete mapping nie traktowaly niedostepnego read-backu jako blad;
+- conflict resolve robil lokalny optimistic update bez potwierdzenia od backendu.
+
+Wdrozone:
+
+- dodano `unwrapApiPayload`, `getListPayload` i `getObjectPayload`;
+- service provider akceptuje `data.data`, plaski obiekt i `serviceProvider`;
+- tokens, mappings, logs i conflicts akceptuja listy oraz named wrappery;
+- token create akceptuje `data.data` oraz `data.token`, nadal wymaga read-backu tokenu po `id/name`;
+- revoke token i delete mapping wymagaja dostepnego read-backu bez usuwanego `id`;
+- conflict resolve odswieza dane i wymaga potwierdzonej rezolucji albo znikniecia konfliktu;
+- action error pozostaje widoczny takze przy read-back load error.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 9 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SCIMProvisioningView.tsx tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZC. Follow-up Superadmin Legal nested payload and publish response honesty
+
+Kolejny sweep objal `SuperAdminLegalView`.
+
+Problem:
+
+- publish/toggle mialy read-back, ale lista dokumentow akceptowala glownie tablice oraz `data: []`;
+- response publish akceptowal glownie plaski `id`, `document.id` i `data.id`, bez `data.document.id`;
+- view document nie rozpakowywal `data`;
+- error banner nie mial `role="alert"`.
+
+Wdrozone:
+
+- dodano wrapper-safe ekstrakcje listy dokumentow;
+- legal docs akceptuja listy oraz wrappery `data`, `data.data`, `documents`, `docs`, `legalDocuments`, `items`;
+- publish response akceptuje `id`, `document.id`, `data.id` i `data.document.id`;
+- publish nadal wymaga read-backu tego samego `id`, `docType`, `version` i `title`;
+- active toggle nadal wymaga read-backu tego samego `id` z oczekiwanym active state;
+- view document akceptuje plaski obiekt oraz `data`;
+- error banner ma `role="alert"`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminLegalView.tsx tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZB. Follow-up Superadmin Storage Detail modal file payload and delete honesty
+
+Kolejny sweep objal `SuperAdminStorageDetailModal`.
+
+Problem:
+
+- file delete mial read-back, ale files load i read-back akceptowaly tylko czysta tablice;
+- wrappery `data.files`/`items` mogly wygladac jak blad albo pusty storage;
+- malformed size/name mogly pogorszyc rendering i wyszukiwanie;
+- delete action nie miala stabilnego `aria-label`.
+
+Wdrozone:
+
+- dodano `getListPayload` i `hasListShape`;
+- files akceptuja listy oraz wrappery `data`, `data.data`, `files`, `items`;
+- delete nadal wymaga read-backu bez tego samego `path`;
+- file name ma fallback z `path`;
+- malformed size renderuje `0 B`, a daty nadal nie pokazuja `Invalid Date`;
+- delete ma `aria-label` z path;
+- `loadFiles` przeniesiono do `useCallback`, usuwajac warning hook dependencies.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminStorageDetailModal.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminStorageDetailModal.tsx tests/unit/views/superadmin/SuperAdminStorageDetailModal.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZA. Follow-up Superadmin Organization Details modal read-back and billing payload honesty
+
+Kolejny sweep objal `SuperAdminOrgDetailsModal`.
+
+Problem:
+
+- save general info mial read-back, ale akceptowal tylko czysta liste organizacji;
+- billing details akceptowaly tylko plaski obiekt, bez wrappera `data`;
+- warningi ESLint w pliku zaciemnialy gate.
+
+Wdrozone:
+
+- dodano wrapper-safe ekstrakcje listy organizacji dla save read-backu;
+- save nadal wymaga znalezienia tego samego org `id` i zgodnosci `plan`, `status`, `discount_percent`;
+- billing details akceptuja plaski obiekt oraz `data`;
+- safe numeric/date rendering pozostaje bez `NaN`, `Infinity` i `Invalid Date`;
+- wyczyszczono warningi ESLint w zmienionym pliku.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminOrgDetailsModal.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminOrgDetailsModal.tsx tests/unit/views/superadmin/SuperAdminOrgDetailsModal.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZZ. Follow-up Superadmin Organizations wrapper payload and read-back honesty
+
+Kolejny sweep objal `OrganizationsView`.
+
+Problem:
+
+- delete/update org, approve/reject request oraz generate/deactivate access code mialy read-back, ale potwierdzenia akceptowaly tylko czyste tablice;
+- poczatkowy load organizacji, requests i codes nie obslugiwal wrapperow `data.*`;
+- wrapper payload mogl wygladac jak pusty stan albo degraded state mimo poprawnych danych;
+- w pliku zostawaly warningi ESLint (`console.error`, `any`).
+
+Wdrozone:
+
+- dodano `getListPayload`, `hasListShape` i dedykowane ekstraktory dla organizations, access requests i access codes;
+- initial load i wszystkie read-backi akceptuja listy oraz wrappery `data`, `data.data`, `organizations`, `requests`, `accessRequests`, `codes`, `accessCodes`, `items`;
+- delete/update org nadal wymagaja potwierdzenia po `id` i zgodnosci edytowanych pol;
+- approve/reject request nadal wymagaja statusu `approved`/`rejected` albo znikniecia requestu po read-backu;
+- generate/deactivate code nadal wymagaja obecnosci/braku konkretnego kodu po read-backu;
+- usunieto warningi ESLint w zmienionym pliku.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/OrganizationsView.tsx tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZY. Follow-up Superadmin Access Requests wrapper payload and labelled actions
+
+Kolejny sweep objal `SuperAdminAccessRequestsView`.
+
+Problem:
+
+- approve/reject mialy juz read-back, ale lista access requests akceptowala tylko czysta tablice;
+- wrappery `data.requests`/`accessRequests` mogly wygladac jak blad albo pusty pending queue;
+- przyciski approve/reject nie mialy stabilnych etykiet per request;
+- czesc pol tekstowych byla renderowana bez fallbackow.
+
+Wdrozone:
+
+- dodano `getListPayload`, `hasListShape` i `asText`;
+- access requests akceptuja listy oraz wrappery `data`, `data.data`, `requests`, `accessRequests`, `items`;
+- approve/reject dostaly stabilne `aria-label` z request `id`;
+- approve nadal wymaga statusu `approved` albo znikniecia requestu po read-backu;
+- reject nadal wymaga statusu `rejected` albo znikniecia requestu po read-backu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminAccessRequestsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminAccessRequestsView.tsx tests/unit/views/superadmin/SuperAdminAccessRequestsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZX. Follow-up Superadmin API Management nested payload and create response honesty
+
+Kolejny sweep objal `APIManagementView`.
+
+Problem:
+
+- create/revoke mialy juz read-back, ale lista API keys akceptowala glownie tablice albo plaski `keys`;
+- organizacje akceptowaly glownie czysta tablice;
+- create response wymagalo plaskiego `id/key/name`, bez `data.id`;
+- malformed `scopes` jako string JSON mogly rozwalic normalizacje.
+
+Wdrozone:
+
+- dodano `getListPayload` i `hasListShape`;
+- API keys akceptuja listy oraz wrappery `data`, `data.data`, `keys`, `items`;
+- organizations akceptuja listy oraz wrappery `data`, `data.data`, `organizations`, `items`;
+- create response akceptuje plaski obiekt oraz `data`;
+- create nadal wymaga read-backu z tym samym key `id`;
+- revoke nadal wymaga read-backu bez aktywnego key `id`;
+- revoke/view usage dostaly stabilne `aria-label`;
+- malformed scopes przechodza przez bezpieczny fallback.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 10 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/APIManagementView.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint nie zglosil bledow; zostaje istniejacy warning dla repo historycznego `@ts-nocheck` w `APIManagementView.tsx`.
+
+### 23TZW. Follow-up IAM Audit Events nested payload honesty
+
+Kolejny sweep objal read-only `AuditEventsViewer`.
+
+Problem:
+
+- widok rozumial glownie `data: []` oraz plaski `total`;
+- odpowiedz `data.events`/`data.items` albo `data.total` mogla wygladac jak pusta historia audytu;
+- malformed total mogl nadal wymagac jawnego fallbacku bez `NaN`.
+
+Wdrozone:
+
+- dodano `normalizeAuditEventsResponse`;
+- audit events akceptuja tablice, `data: []`, `events`, `items`, `data.events` i `data.items`;
+- total akceptuje plaski `total`, `data.total` albo fallback do dlugosci listy;
+- load failure nadal renderuje degraded state zamiast `No audit events found`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AuditEventsViewer.tsx tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZV. Follow-up IAM Admin Sessions wrapper payload and action accessibility honesty
+
+Kolejny sweep objal P1/P0 IAM `AdminSessionsView`.
+
+Problem:
+
+- revoke/revoke-all mialy juz read-back, ale sessions obslugiwaly tylko tablice oraz plaski `sessions`;
+- stats nie obslugiwaly wrappera `data`;
+- revoke session polegal na `title`, bez stabilnego `aria-label`.
+
+Wdrozone:
+
+- `normalizeSessions` akceptuje `sessions` oraz `data.sessions`;
+- `normalizeStats` akceptuje plaski obiekt oraz `data`;
+- revoke session ma stabilne `aria-label`;
+- single revoke nadal wymaga swiezego odczytu bez tego samego session `id`;
+- bulk revoke nadal wymaga pustej listy sesji po read-backu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AdminSessionsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AdminSessionsView.tsx tests/unit/views/superadmin/AdminSessionsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZU. Follow-up Superadmin Device Management read-only payload honesty
+
+Kolejny sweep objal read-only `DeviceManagementView` z obszaru Superadmin Security.
+
+Problem:
+
+- widok uczciwie oznaczal device blocking jako niedostepny, ale users akceptowaly glownie czysta tablice;
+- devices obslugiwaly plaskie `devices`/`items`/`data`, ale nie nested `data.devices`;
+- wrapper payload mogl wygladac jak blad albo pusty inventory.
+
+Wdrozone:
+
+- dodano `getListPayload` i `hasListShape`;
+- users akceptuja listy oraz wrappery `data`, `data.data`, `users`, `items`;
+- devices akceptuja listy oraz wrappery `data`, `data.data`, `devices`, `items`;
+- read-only device blocking pozostaje disabled z wyjasnieniem;
+- malformed dates/fields nadal renderuja bez `Invalid Date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/DeviceManagementView.tsx tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZT. Follow-up Superadmin MFA read-only payload honesty
+
+Kolejny sweep objal read-only `MFAView` z obszaru Superadmin Security.
+
+Problem:
+
+- widok nie ma mutacji, ale lista uzytkownikow akceptowala glownie czysta tablice;
+- lista MFA methods obslugiwala tylko plaskie `methods`/`items`, bez wrappera `data.methods`;
+- wrapper payload mogl wygladac jak blad albo pusty stan MFA.
+
+Wdrozone:
+
+- dodano `getListPayload` i `hasListShape`;
+- users akceptuja listy oraz wrappery `data`, `data.data`, `users`, `items`;
+- MFA methods akceptuja listy oraz wrappery `data`, `data.data`, `methods`, `items`;
+- safe fallbacki dla dat i malformed text pozostaja bez `Invalid Date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/MFAView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/MFAView.tsx tests/unit/views/superadmin/MFAView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZS. Follow-up Superadmin IP Whitelist wrapper payload and removal honesty
+
+Kolejny sweep objal `IPWhitelistView` z obszaru Superadmin Security.
+
+Problem:
+
+- add/remove mialy juz id-based read-back, ale organizacje i whitelist akceptowaly glownie czyste tablice;
+- wrappery `data.organizations` i `data.whitelist` mogly wygladac jak blad albo pusty stan;
+- remove nie mial osobnej regresji dla stale read-back, w ktorym ten sam IP dalej wraca z backendu.
+
+Wdrozone:
+
+- dodano `getListPayload` i `hasListShape`;
+- organizacje akceptuja listy oraz wrappery `data`, `data.data`, `organizations`, `items`;
+- whitelist akceptuje listy oraz wrappery `data`, `data.data`, `whitelist`, `ipWhitelist`, `items`;
+- remove nadal wymaga swiezego odczytu bez tego samego `id`;
+- dodano regresje dla nested payloadow i stale remove read-back.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/IPWhitelistView.tsx tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZR. Follow-up Superadmin Password Policy wrapper payload honesty
+
+Kolejny sweep objal `PasswordPolicyView` z obszaru Superadmin Security.
+
+Problem:
+
+- save mial juz read-back, ale lista organizacji akceptowala glownie czysta tablice;
+- policy response akceptowal glownie plaski obiekt z snake_case;
+- wrappery `data.organizations` i `data.policy` mogly wygladac jak blad albo default policy.
+
+Wdrozone:
+
+- organizacje akceptuja listy oraz wrappery `data`, `data.data`, `organizations`, `items`;
+- password policy akceptuje plaski obiekt, `policy`, `data` i `data.policy`;
+- save nadal wymaga read-backu identycznego z edytowanym modelem UI;
+- malformed numeric/bool fields nadal przechodza przez bezpieczne fallbacki.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/PasswordPolicyView.tsx tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZP. Follow-up IAM Admin Audit Logs wrapper payload and export honesty
+
+Kolejny sweep objal P1/P0 audit `AdminAuditLogsView`.
+
+Problem:
+
+- resolve i export mialy juz read-back/guard, ale lista audit logow obslugiwala tylko tablice oraz plaski `logs`;
+- stats nie obslugiwaly wrappera `data`;
+- export rozpoznawal tylko plaski `url` albo Blob, bez `data.url`;
+- resolve button polegal na `title`, bez stabilnego `aria-label`.
+
+Wdrozone:
+
+- `normalizeLogs` akceptuje `logs` oraz `data.logs`;
+- `normalizeStats` akceptuje plaski obiekt oraz `data`;
+- export akceptuje Blob, `url` oraz `data.url`, a brak download payloadu nadal przerywa akcje bledem;
+- resolve audit log ma stabilne `aria-label`;
+- malformed dates/stats/risk score nadal renderuja bez `Invalid Date` i `NaN`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AdminAuditLogsView.tsx tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste. Vitest/JSDOM wypisal informacyjnie `Not implemented: navigation to another Document` po kliknieciu linku eksportu; test przeszedl.
+
+### 23TZQ. Follow-up Superadmin Security Events nested payload honesty
+
+Kolejny sweep objal `SecurityEventsView` z obszaru Superadmin Security.
+
+Problem:
+
+- resolve mial juz read-back i `role="alert"`, ale lista eventow nie akceptowala zagniezdzonego wrappera `data.events` / `data.items`;
+- taki payload mogl wygladac jak blad ksztaltu odpowiedzi albo pusta lista, mimo ze backend zwrocil eventy.
+
+Wdrozone:
+
+- `normalizeEvents` akceptuje teraz tablice, `events`, `data`, `items`, `data.events` i `data.items`;
+- testy nadal pokrywaja stale read-back resolve, read-back unavailable, safe date fallback i malformed fields;
+- resolve pozostaje id-based i nie pokazuje sukcesu bez potwierdzenia.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/SecurityEventsView.tsx tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZO. Follow-up IAM Approval Workflows payload and alert honesty
+
+Kolejny sweep objal P1 governance `ApprovalWorkflowsView`.
+
+Problem:
+
+- create/delete/approve/reject mialy read-back, ale listy workflows/requests akceptowaly glownie czyste tablice;
+- create workflow rozpoznawal tylko `result.id`, bez `workflow.id`, `data.id` i `data.workflow.id`;
+- bledy akcji nie mialy stabilnego `role="alert"`;
+- stale create read-back mogl zostawic modal bez jednoznacznego alertu w testowalnym miejscu.
+
+Wdrozone:
+
+- `getListPayload` akceptuje listy oraz wrappery `data`, `data.data`, `workflows`, `requests`, `items`;
+- `getCreatedWorkflowId` obsluguje `id`, `workflow.id`, `data.id`, `data.workflow.id`;
+- create/delete/approve/reject czyszcza poprzedni blad przed akcja;
+- bledy akcji renderuja sie przez `role="alert"`;
+- read-back create/delete/approve/reject pozostaje twardy i id/status-based.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/ApprovalWorkflowsView.tsx tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZN. Follow-up IAM Permissions Matrix copy and payload honesty
+
+Kolejny sweep objal P1/P0 IAM `PermissionsMatrixView`.
+
+Problem:
+
+- toggle permission mial read-back, ale blad byl tylko toastem bez stabilnego alertu w widoku;
+- copy permissions potwierdzal jedynie, ze read-back sie udal, bez sprawdzenia czy target role ma faktycznie te same uprawnienia co source role;
+- permissions/matrix/stats akceptowaly zbyt waski ksztalt odpowiedzi;
+- edit/delete permissions polegaly na `title`, bez stabilnych `aria-label`.
+
+Wdrozone:
+
+- permissions akceptuja listy oraz wrappery `data`, `data.data`, `permissions`, `items`;
+- matrix i stats akceptuja wrapper `data`;
+- toggle i copy errors renderuja sie przez `role="alert"` oraz toast;
+- copy permissions wymaga read-backu, w ktorym target role ma te same wartosci dla wszystkich permission keys co source role;
+- edit/delete permission maja stabilne `aria-label`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/PermissionsMatrixView.tsx tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZM. Follow-up IAM Security Incidents read-back and wrapper payload honesty
+
+Kolejny sweep objal P1/P0 security `SecurityIncidentsView`.
+
+Problem:
+
+- create/resolve/delete mialy read-back, ale lista incidents akceptowala glownie czysta tablice;
+- create incident nie rozpoznawal `id` w zagniezdzonym `data.incident.id`;
+- resolve wymagal obecnosci incydentu ze statusem `resolved`/`closed`, wiec backend usuwajacy go z aktywnego widoku mogl zostac blednie potraktowany jako brak potwierdzenia;
+- przyciski details/resolve/delete polegaly na `title`, bez stabilnych `aria-label`.
+
+Wdrozone:
+
+- `getListPayload` akceptuje listy oraz wrappery `data`, `data.data`, `incidents`, `items`;
+- `getCreatedIncidentId` obsluguje `id`, `incident.id`, `data.id`, `data.incident.id`;
+- resolve jest potwierdzony, gdy swiezy odczyt nie zawiera juz aktywnego incydentu albo pokazuje go jako `resolved`/`closed`;
+- details/resolve/delete maja stabilne `aria-label`;
+- stale read-back nadal blokuje toast sukcesu i zostawia modal/rekord widoczny.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 9 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/SecurityIncidentsView.tsx tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZL. Follow-up IAM Threat Intelligence wrapper payload and action accessibility honesty
+
+Kolejny sweep objal P1/P0 security `ThreatIntelligenceView`.
+
+Problem:
+
+- add/block/unblock/delete mialy juz read-back, ale lista threats akceptowala glownie czysta tablice;
+- create threat nie rozpoznawal `id` w zagniezdzonym `data.threat.id`;
+- przyciski block/unblock/delete polegaly na `title`, bez stabilnych `aria-label`;
+- wrapper payload backendu mogl wygladac jak pusty threat feed.
+
+Wdrozone:
+
+- `getListPayload` akceptuje listy oraz wrappery `data`, `data.data`, `threats`, `items`;
+- `getCreatedThreatId` obsluguje `id`, `threat.id`, `data.id`, `data.threat.id`;
+- block/unblock/delete maja stabilne `aria-label`;
+- read-back add/block/unblock/delete pozostaje twardy i id-based;
+- malformed score/date fallbacks pozostaja bez `NaN` i `Invalid Date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/ThreatIntelligenceView.tsx tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZK. Follow-up IAM DLP wrapper payload and action accessibility honesty
+
+Kolejny sweep objal P1/P0 compliance/security `DLPView`.
+
+Problem:
+
+- create/toggle/delete/resolve mialy juz read-back, ale listy policies/violations akceptowaly glownie czyste tablice;
+- create policy nie rozpoznawal `id` w zagniezdzonym `data.policy.id`;
+- przyciski akcji polegaly na `title`, bez stabilnych `aria-label`;
+- wrapper payload backendu mogl wygladac jak pusta lista.
+
+Wdrozone:
+
+- `getListPayload` akceptuje listy oraz wrappery `data`, `data.data`, `policies`, `violations`, `items`;
+- `getCreatedPolicyId` obsluguje `id`, `policy.id`, `data.id`, `data.policy.id`;
+- toggle/delete policy i resolve violation maja stabilne `aria-label`;
+- read-back create/toggle/delete/resolve pozostaje twardy i id-based.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/DLPView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 10 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/DLPView.tsx tests/unit/views/superadmin/DLPView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZJ. Follow-up AI Budgets alert action read-back honesty
+
+Kolejny sweep objal P1/P0 cost-control `AIBudgetsView`.
+
+Problem:
+
+- budget create/update/delete i model permissions mialy juz read-back, ale alert acknowledge/dismiss byly lokalnym optimistic update;
+- alert acknowledge mogl zniknac z UI albo zmienic status bez potwierdzenia backendu;
+- alert dismiss mogl usunac alert z lokalnej listy bez read-backu;
+- listy budgets/alerts/model permissions byly zalezne od jednego ksztaltu `data.data`;
+- niepoprawna data alertu mogla renderowac `Invalid Date`, a procent `NaN`.
+
+Wdrozone:
+
+- `getListPayload` akceptuje czyste listy oraz wrappery `data`, `data.data`, `budgets`, `alerts`, `permissions`, `modelPermissions`;
+- acknowledge alert wymaga swiezego odczytu, w ktorym alert jest nieaktywny/acknowledged albo nie wraca w aktywnej liscie;
+- dismiss alert wymaga swiezego odczytu bez tego samego `id`;
+- brak potwierdzenia pokazuje stabilny `role="alert"`;
+- przyciski alertow dostaly `aria-label`;
+- daty alertow renderuja `Unknown date`, a procenty przechodza przez `safeNumber`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 10 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIBudgetsView.tsx tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZI. Follow-up Connector Ops Audit Log export honesty
+
+Kolejny sweep objal P1 Connector Ops `EnterpriseAuditLog`.
+
+Problem:
+
+- export audit logow zamienial pusta/niekompletna odpowiedz backendu na `[]`;
+- UI mogl pokazac sukces eksportu mimo braku realnego payloadu do pobrania;
+- blad eksportu byl tylko toastem, bez stabilnego alertu w widoku.
+
+Wdrozone:
+
+- export nie podmienia juz `null`/`undefined` na pusta liste;
+- brak payloadu z `Api.exportAuditLogs` przerywa akcje bledem `Audit log export response was empty`;
+- action error renderuje sie jako `role="alert"`;
+- komunikat bledu przechodzi przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseAuditLog.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseAuditLog.tsx tests/unit/components/SuperAdmin/EnterpriseAuditLog.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste; ESLint nie zglasza bledow, ale `EnterpriseAuditLog.tsx` ma istniejace ostrzezenia (`@ts-nocheck`, `any`, unused imports), ktore wymagaja osobnego typowania/refaktoru.
+
+### 23TZH. Follow-up Connector Ops Analytics scheduled report honesty
+
+Kolejny sweep objal P1 Connector Ops `EnterpriseAnalyticsPanel`.
+
+Problem:
+
+- scheduled report create byl tylko symulacja w UI i pokazywal sukces bez backendu;
+- scheduled reports payload nie obslugiwal wrapperow konsekwentnie;
+- bledy scheduled reports byly logowane i toastowane, ale bez wspolnej normalizacji;
+- nietypowe daty `nextRun` mogly renderowac `Invalid Date`;
+- tab switch uzywal `any`.
+
+Wdrozone:
+
+- schedule/create workflow jest jawnie read-only/unavailable, bez modala i bez fake sukcesu;
+- przycisk `Schedule Report` jest stale disabled z opisowym `title`;
+- `ReadOnlyState` komunikuje brak podpietego audited backend workflow;
+- scheduled reports akceptuja listy oraz wrappery `reports`, `items`, `data`;
+- pola scheduled report sa normalizowane do bezpiecznych stringow/list;
+- daty `next_run` renderuja `Unknown date` zamiast `Invalid Date`;
+- ESLint `any` w ikonach/tabach zostal usuniety.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseAnalyticsPanel.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseAnalyticsPanel.tsx tests/unit/components/SuperAdmin/EnterpriseAnalyticsPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZG. Follow-up Connector Ops Security Panel action read-back honesty
+
+Kolejny sweep objal P1 Connector Ops `EnterpriseSecurityPanel`.
+
+Problem:
+
+- resolve security event pokazywal sukces bez potwierdzenia, ze event zniknal albo jest resolved;
+- terminate session pokazywal sukces bez potwierdzenia, ze sesja zniknela z aktywnych;
+- toggle IP rule i security policy nie wymagaly read-backu oczekiwanego `enabled`;
+- payloady events/sessions/IP rules/policies byly obslugiwane nierowno;
+- nietypowe daty i pola mogly renderowac `Invalid Date` albo crashowac teksty;
+- action errors byly tylko toastem.
+
+Wdrozone:
+
+- events, sessions, IP rules i policies maja wrapper normalization oraz bezpieczne field fallbacki;
+- resolve wymaga swiezego odczytu bez nierozwiazanego eventu o tym samym `id`;
+- session terminate wymaga swiezego odczytu bez tej samej sesji;
+- IP rule toggle wymaga read-backu tej samej reguly z oczekiwanym `enabled`;
+- policy toggle wymaga read-backu tej samej polityki z oczekiwanym `enabled`;
+- daty renderuja `Unknown date` zamiast `Invalid Date`;
+- action error renderuje sie jako `role="alert"`;
+- przyciski akcji dostaly `aria-label`;
+- SIEM/compliance pozostaja jawnie read-only/degraded tam, gdzie backend workflow nie jest podpiety.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseSecurityPanel.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseSecurityPanel.tsx tests/unit/components/SuperAdmin/EnterpriseSecurityPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZF. Follow-up Connector Ops Health Monitor alert id read-back honesty
+
+Kolejny sweep objal P1 Connector Ops `EnterpriseHealthMonitor`.
+
+Problem:
+
+- create alert pokazywal sukces bez kompletnej odpowiedzi z `id`;
+- create/toggle/delete alertow odswiezaly liste, ale nie potwierdzaly konkretnego rekordu po read-backu;
+- delete mogl pokazac sukces, gdy read-back po usunieciu byl niedostepny;
+- alert payload obslugiwal glownie prosta liste;
+- nietypowe pola alertow i dat health mogly renderowac `Invalid Date`, `NaN` albo psuc widok;
+- action errors nie byly stabilnie widoczne w panelu.
+
+Wdrozone:
+
+- `normalizeAlerts` akceptuje listy oraz wrappery `data`, `alerts`, `items`;
+- alerty normalizuja `id`, `name`, `metric`, `threshold`, `operator`, `enabled`, `channels`;
+- create wymaga `id` z odpowiedzi (`id`, `alert.id`, `data.id`, `data.alert.id`);
+- create potwierdza konkretny `id` i pola alertu po swiezym odczycie;
+- toggle wymaga read-backu z oczekiwanym `enabled`;
+- delete wymaga udanego read-backu bez usuwanego `id`;
+- health/service daty i liczby sa formatowane bez `Invalid Date`/`NaN`;
+- action error renderuje sie jako `role="alert"`;
+- przyciski toggle/delete alertu dostaly `aria-label`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseHealthMonitor.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseHealthMonitor.tsx tests/unit/components/SuperAdmin/EnterpriseHealthMonitor.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZE. Follow-up Connector Ops Configuration id read-back and rollback honesty
+
+Kolejny sweep objal P1 Connector Ops `EnterpriseConfigurationPanel`.
+
+Problem:
+
+- create potwierdzal zapis po polach, ale nie wymagal `id` z odpowiedzi backendu;
+- delete mogl pokazac sukces, gdy read-back po usunieciu byl niedostepny;
+- rollback pokazywal sukces przed potwierdzeniem wartosci po swiezym odczycie;
+- lista konfiguracji akceptowala tylko czysta tablice, wiec wrapper payload mogl wygladac jak pusta lista;
+- nietypowe typy i pola konfiguracji mogly psuc render/search.
+
+Wdrozone:
+
+- `normalizeConfigs` akceptuje listy oraz wrappery `configs`, `items`, `data`;
+- pojedyncze configi sa normalizowane do bezpiecznych stringow/booleanow i znanego typu;
+- create wymaga `id` z odpowiedzi (`id`, `config.id`, `data.id`, `data.config.id`);
+- create potwierdza konkretny `id` po read-backu przed zamknieciem modala;
+- delete wymaga udanego read-backu bez usuwanego `id`;
+- rollback wymaga swiezego odczytu konfiguracji z docelowa wartoscia wersji;
+- historia wersji renderuje bezpieczne wartosci i daty.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseConfigurationPanel.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseConfigurationPanel.tsx tests/unit/components/SuperAdmin/EnterpriseConfigurationPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZD. Follow-up Connector Ops Feature Flags id read-back and payload honesty
+
+Kolejny sweep objal P1 Connector Ops `EnterpriseFeatureFlags`.
+
+Problem:
+
+- create/update/toggle/delete mialy read-back, ale create nie wymagal `id` z odpowiedzi backendu;
+- delete mogl pokazac sukces, gdy read-back po usunieciu byl niedostepny;
+- lista flag nie obslugiwala wrapperow payloadu;
+- nieznany `flag_type` mogl crashowac render przez brak konfiguracji typu;
+- historia i daty wymagaly bezpiecznego degraded/safe display.
+
+Wdrozone:
+
+- create wymaga `id` z odpowiedzi (`id`, `flag.id`, `data.id`, `data.flag.id`);
+- create/update potwierdzaja konkretny `id` oraz klucz/nazwe/environment/type/enabled po swiezym odczycie;
+- delete wymaga udanego read-backu oraz braku usuwanego `id`;
+- `normalizeFeatureFlags` akceptuje listy oraz wrappery `flags`, `featureFlags`, `data`;
+- nieznany typ flagi renderuje neutralny fallback `Unknown`;
+- modal pozostaje otwarty przy braku potwierdzenia.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseFeatureFlags.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseFeatureFlags.tsx tests/unit/components/SuperAdmin/EnterpriseFeatureFlags.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZC. Follow-up Connector Ops Enterprise API Management id read-back honesty
+
+Kolejny sweep objal P0 Connector Ops `EnterpriseApiManagement`.
+
+Problem:
+
+- create API key mogl pokazac sukces bez kompletnej odpowiedzi z `id` i plaintext key;
+- create nie potwierdzal konkretnego `id` po read-backu;
+- revoke odswiezal liste, ale nie wymagal potwierdzenia, ze klucz zniknal albo przestal byc aktywny;
+- API keys payload mogl przyjsc jako wrapper zamiast czystej listy;
+- action errors byly tylko toastem, bez stabilnego alertu w widoku.
+
+Wdrozone:
+
+- `normalizeApiKeyList` akceptuje listy oraz wrappery `keys`, `apiKeys`, `data`, `data.keys`, `data.apiKeys`;
+- create wymaga `id` oraz plaintext key (`key`, `plaintextKey`, `apiKey`, rowniez w `data`);
+- create potwierdza ten sam `id` po swiezym odczycie przed zamknieciem modala;
+- revoke wymaga read-backu bez aktywnego klucza o tym samym `id`;
+- action error renderuje sie jako `role="alert"`;
+- usage i daty pozostaja bezpiecznie normalizowane.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseApiManagement.tsx tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZB. Follow-up Connector Ops Backup Panel id read-back and payload honesty
+
+Kolejny sweep objal P0 Connector Ops `EnterpriseBackupPanel`.
+
+Problem:
+
+- backup create potwierdzal po `type/reason`, a nie po konkretnym `id` z odpowiedzi backendu;
+- create mogl wygladac jak sukces przy odpowiedzi bez `id`;
+- listy backupow i schedules nie walidowaly wrapperow payloadu;
+- malformed size/type/status/date mogly prowadzic do `NaN`, `Invalid Date` albo crasha;
+- schedule toggle wymagal utrzymania read-back bez optymistycznego przelaczenia.
+
+Wdrozone:
+
+- create backup wymaga `id` z odpowiedzi (`id`, `backup.id`, `data.id`, `data.backup.id`);
+- create potwierdza ten sam `id` po swiezym odczycie;
+- `normalizeBackups` i `normalizeSchedules` akceptuja listy oraz wrappery `backups/schedules/data/items`;
+- malformed size/date/type/status przechodza przez `safeNumber`, `formatBytes`, `formatDateTime` i fallback badge;
+- schedule toggle dalej wymaga read-backu z oczekiwanym `enabled`;
+- settings, destructive backup actions i DR test pozostaja jawnie read-only/unavailable.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 9 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZA. Follow-up Connector Ops Integrations Hub read-only mutations and read-back honesty
+
+Kolejny sweep objal P0 Connector Ops `EnterpriseIntegrationsHub`.
+
+Problem:
+
+- webhook create/test/delete byly wczesniej ryzykownym pozornym flow przy niespojnosci superadmin webhook routes;
+- sync/disconnect integracji odswiezaly dane, ale nie potwierdzaly stanu po read-backu;
+- malformed payloady integrations/webhooks/deliveries mogly wygladac jak empty state albo renderowac `Invalid Date`/surowe wartosci;
+- statystyki webhooks mogly renderowac niepoprawne liczniki.
+
+Wdrozone:
+
+- webhook mutations pozostaja jawnie `ReadOnlyState` do czasu jednego audytowanego backend workflow;
+- `fetchIntegrations`, `fetchWebhooks` i deliveries normalizuja liste albo wrappery `integrations/webhooks/deliveries/data/items`;
+- integration sync wymaga read-backu z tym samym providerem;
+- disconnect wymaga read-backu bez usuwanego integration `id`;
+- status, teksty, daty i liczniki przechodza przez `normalizeStatus`, `asText`, `formatDateTime`, `safeNumber`;
+- fallback katalogu connectorow nie loguje juz noise do konsoli.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseIntegrationsHub.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx tests/unit/components/SuperAdmin/EnterpriseIntegrationsHub.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TZ. Follow-up SuperAdmin Device Management inventory honesty
+
+Kolejny sweep objal Security `DeviceManagementView`, domykajac pozostala zakladke Security.
+
+Problem:
+
+- device inventory jest read-only, ale payload listy mogl przyjsc jako wrapper (`devices/items/data`) i zostac uznany za blad albo pusty stan;
+- malformed pola urzadzenia mogly renderowac niekontrolowane wartosci;
+- brak `device_id` mogl wczesniej prowadzic do problemow przy `substring`;
+- disabled block action nie mial stabilnej dostepnej nazwy.
+
+Wdrozone:
+
+- `normalizeDevices` akceptuje liste oraz wrappery `devices`, `items`, `data`, a inne ksztalty koncza sie degraded state;
+- pola tekstowe przechodza przez `asText`;
+- label urzadzenia przechodzi przez `getDeviceLabel`;
+- data ostatniego uzycia przechodzi przez `formatDeviceDate`;
+- disabled block button dostal `aria-label` z `device.id`;
+- banner jasno komunikuje read-only inventory zamiast sugerowac dzialajace blokowanie.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/DeviceManagementView.tsx tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TY. Follow-up SuperAdmin Security Events read-back and display honesty
+
+Kolejny sweep objal Security `SecurityEventsView`, domykajac podstawowy zestaw zakladek Security.
+
+Problem:
+
+- resolve sprawdzal stale read-back, ale mogl pokazac sukces, gdy read-back po akcji byl niedostepny;
+- malformed pola eventu (`event_type`, `severity`, IP, location) mogly renderowac niekontrolowane wartosci;
+- resolve button byl oparty glownie o `title`, bez stabilnej dostepnej nazwy.
+
+Wdrozone:
+
+- resolve wymaga udanego read-backu oraz braku nierozwiazanego eventu o tym samym `id`;
+- pola tekstowe przechodza przez `asText`;
+- daty przechodza przez `formatSecurityEventDate` i renderuja `Unknown date`;
+- przycisk resolve dostal `aria-label` z `event.id`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/SecurityEventsView.tsx tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TX. Follow-up SuperAdmin Password Policy read-back and numeric honesty
+
+Kolejny sweep objal Security `PasswordPolicyView`.
+
+Problem:
+
+- save mial read-back confirmation, ale normalizacja liczb nadal ufala typom z API;
+- malformed policy mogl wpisac w formularz `NaN` albo surowe niepoprawne wartosci;
+- booleany z backendu mogly przychodzic jako `1`, `true`, string albo null.
+
+Wdrozone:
+
+- `safeNumber` i `safeNullableNumber` normalizuja pola numeryczne do bezpiecznych defaultow;
+- `toBool` obsluguje boolean, `1`, `1` jako string i `true` jako string;
+- `maxAgeDays` zachowuje `null` dla braku expiracji zamiast renderowac falszywe zero;
+- save nadal wymaga read-backu i zgodnosci utrwalonej polityki z formularzem.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/PasswordPolicyView.tsx tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TW. Follow-up SuperAdmin MFA methods load and display honesty
+
+Kolejny sweep objal Security `MFAView`.
+
+Problem:
+
+- awaria pobierania metod MFA mogla byc mylona z pustym stanem, jesli UI wyswietlil empty list;
+- malformed payload metod MFA wymagal jednoznacznego degraded state;
+- nietypowe pola tekstowe (`email`, `method_type`) mogly renderowac sie niebezpiecznie albo crashowac przy `.toUpperCase()`;
+- niepoprawna data ostatniego uzycia mogla pokazac `Invalid Date`.
+
+Wdrozone:
+
+- users i MFA methods sa akceptowane tylko jako listy albo jawne `methods/items`;
+- awarie loadu renderuja `DegradedState` i ukrywaja empty state;
+- display email/metody przechodzi przez `asText`;
+- data ostatniego uzycia przechodzi przez `formatMfaDate` i pokazuje `Unknown date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/MFAView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/MFAView.tsx tests/unit/views/superadmin/MFAView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TV. Follow-up SuperAdmin IP Whitelist id read-back honesty
+
+Kolejny sweep objal Security `IPWhitelistView`, jako nastepny mutacyjny flow po Audit/Sessions.
+
+Problem:
+
+- add IP mial read-back, ale potwierdzal po adresie/range zamiast po konkretnym `id` z odpowiedzi;
+- add IP mogl zamknac modal mimo odpowiedzi create bez `id`;
+- remove IP mogl pokazac sukces, gdy read-back po delete nie byl dostepny;
+- przycisk usuwania nie mial dostepnej nazwy.
+
+Wdrozone:
+
+- create wymaga `id` z odpowiedzi (`id`, `ipWhitelist.id`, `data.id` albo `data.ipWhitelist.id`);
+- create potwierdza ten sam `id` po swiezym odczycie;
+- delete wymaga udanego read-backu oraz nieobecnosci usuwanego `id`;
+- modal add pozostaje otwarty przy braku potwierdzenia;
+- remove button dostal `aria-label` z adresem IP.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/security/IPWhitelistView.tsx tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TU. Follow-up SuperAdmin Admin Audit Logs read-back, export and stats honesty
+
+Kolejny sweep objal Security/Governance `AdminAuditLogsView`, kontynuujac P0 Audit/Sessions.
+
+Problem:
+
+- resolve wykonywal refetch, ale nie sprawdzal, czy konkretny audit log zostal potwierdzony jako `resolved` albo zniknal z unresolved list;
+- malformed stats i risk score mogly renderowac `NaN`;
+- export mogl pokazac sukces mimo odpowiedzi bez Blob/URL;
+- error akcji mial legacy fallback z `any`;
+- filtry dat istnialy w UI, ale nie byly przekazywane do requestu.
+
+Wdrozone:
+
+- `loadData` zwraca snapshot `{ logs, stats }` albo `null`;
+- resolve wymaga udanego read-backu i braku nierozwiazanego wpisu o tym samym `logId`;
+- logs i stats sa normalizowane przez `normalizeLogs`, `normalizeStats` i `safeNumber`;
+- risk badge uzywa bezpiecznej liczby;
+- export wymaga Blob albo URL, a brak pliku pokazuje action error zamiast sukcesu;
+- action error ma `role="alert"` i `normalizeApiErrorMessage`;
+- `fromDate` i `toDate` trafiaja do parametrow requestu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AdminAuditLogsView.tsx tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TT. Follow-up SuperAdmin AI Budgets id read-back and payload honesty
+
+Kolejny sweep objal Security/AI `AIBudgetsView`, wskazany w planie jako P0 dla AI Budgets i Model Access.
+
+Problem:
+
+- create budget i create model permission mialy read-back, ale potwierdzaly po polach formularza zamiast po konkretnym `id` z odpowiedzi;
+- delete budget i delete model permission mogly wygladac jak sukces, gdy read-back po mutacji nie byl dostepny;
+- malformed payloady list/stats/model-costs mogly renderowac `NaN` albo wywolac bledy `toFixed`;
+- action error byl widoczny tylko gdy ogolny load nie byl zdegradowany, wiec awaria read-backu mogla przykryc blad mutacji.
+
+Wdrozone:
+
+- create budget wymaga odpowiedzi z `id` (`id`, `budget.id` albo `data.id`) i potwierdza ten sam `id` po swiezym odczycie;
+- create model permission wymaga odpowiedzi z `id` (`id`, `permission.id` albo `data.id`) i potwierdza ten sam `id` po swiezym odczycie;
+- delete budget i delete model permission wymagaja udanego read-backu oraz nieobecnosci usuwanego rekordu;
+- listy budgets/alerts/model permissions sa ustawiane tylko z tablic;
+- usage stats i model costs przechodza przez `safeNumber`;
+- action error renderuje sie rowniez wtedy, gdy read-back zdegraduje caly widok.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/AIBudgetsView.tsx tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TS. Follow-up SuperAdmin Admin Sessions read-back and stats honesty
+
+Kolejny sweep objal Security/Governance `AdminSessionsView`, wskazany w planie jako P0 Audit/Sessions.
+
+Problem:
+
+- pojedyncze revoke usuwalo sesje lokalnie bez potwierdzenia swiezym odczytem;
+- revoke all wykonywal refetch, ale nie sprawdzal, czy lista sesji faktycznie jest pusta;
+- awaria read-backu mogla wygladac jak skuteczna akcja;
+- statystyki sesji i daty byly renderowane bez normalizacji;
+- blad akcji mial legacy fallback z `any`.
+
+Wdrozone:
+
+- `loadData` zwraca snapshot `{ sessions, stats }` albo `null`;
+- revoke session wymaga udanego read-backu i nieobecnosci konkretnego `sessionId`;
+- revoke all wymaga udanego read-backu i pustej listy aktywnych sesji;
+- sesje sa normalizowane z odpowiedzi tablicowej albo `{ sessions }`;
+- stats przechodza przez `normalizeStats` i `safeNumber`;
+- daty `createdAt` i `expiresAt` przechodza przez safe formatter i nie renderuja `Invalid Date`;
+- action error ma `role="alert"` i przechodzi przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AdminSessionsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AdminSessionsView.tsx tests/unit/views/superadmin/AdminSessionsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TR. Follow-up SuperAdmin DLP id read-back and stats honesty
+
+Kolejny sweep objal Security `DLPView`, domykajac incidents/threats/DLP P0 z planu.
+
+Problem:
+
+- create DLP policy potwierdzal zapis po nazwie/typie/enforcement, co moglo dopasowac inna polityke;
+- delete policy i resolve violation mogly wygladac jak sukces, gdy read-back po mutacji nie byl dostepny;
+- stats DLP byly renderowane bez normalizacji;
+- nieznana severity byla pokazywana jak `LOW`, co zanizalo ryzyko;
+- daty violations wymagaly safe formattera.
+
+Wdrozone:
+
+- create DLP policy wymaga odpowiedzi z `id` (`id`, `policy.id` albo `data.id`) i potwierdza ten sam `id` po swiezym odczycie;
+- delete policy wymaga udanego read-backu oraz nieobecnosci usuwanej polityki;
+- resolve violation wymaga udanego read-backu oraz nieobecnosci rozwiazanego naruszenia w unresolved list;
+- policies/violations sa ustawiane tylko z tablic;
+- stats przechodza przez `normalizeStats` i `safeNumber`;
+- nieznana severity renderuje neutralne `Unknown` zamiast mylacego `LOW`;
+- daty violations przechodza przez `formatDateTime`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/DLPView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 9 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/DLPView.tsx tests/unit/views/superadmin/DLPView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TQ. Follow-up SuperAdmin Threat Intelligence id read-back and stats honesty
+
+Kolejny sweep objal Security `ThreatIntelligenceView`, wskazany w planie jako incidents/threats/DLP P0.
+
+Problem:
+
+- add threat mial read-back, ale potwierdzal po typie/level/IP/domain zamiast po konkretnym `id` z odpowiedzi;
+- delete mogl wygladac jak sukces, gdy read-back po usunieciu nie byl dostepny;
+- statystyki threat feed i reputation score byly renderowane bez normalizacji;
+- nieznany `threatLevel` byl pokazywany jak `LOW`, co zanizalo ryzyko.
+
+Wdrozone:
+
+- add threat wymaga odpowiedzi z `id` (`id`, `threat.id` albo `data.id`) i potwierdza ten sam `id` po swiezym odczycie;
+- delete wymaga udanego read-backu oraz nieobecnosci usuwanego threat;
+- statystyki przechodza przez `normalizeStats` i `safeNumber`;
+- lista threats jest ustawiana tylko z tablicy;
+- reputation score w tabeli i reputation check przechodzi przez `safeNumber`;
+- nieznany threat level renderuje neutralne `Unknown` zamiast mylacego `LOW`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/ThreatIntelligenceView.tsx tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TP. Follow-up SuperAdmin Security Incidents id read-back and stats honesty
+
+Kolejny sweep objal Security `SecurityIncidentsView`, wskazany w planie jako incidents/threats/DLP P0.
+
+Problem:
+
+- create mial read-back, ale potwierdzal po typie/severity/opisie zamiast po konkretnym `id` z odpowiedzi;
+- delete mogl wygladac jak sukces, gdy read-back zwrocil `null` po awarii odczytu;
+- statystyki incydentow byly renderowane bez normalizacji, wiec malformed response mogl pokazac `NaN` albo wywolac blad;
+- daty w tabeli i modalu wymagalaly safe formattera, aby nie renderowac `Invalid Date`.
+
+Wdrozone:
+
+- create wymaga odpowiedzi z `id` (`id`, `incident.id` albo `data.id`) i potwierdza ten sam `id` po swiezym odczycie;
+- delete wymaga udanego read-backu oraz nieobecnosci usuwanego incydentu;
+- statystyki przechodza przez `normalizeStats` i `safeNumber`;
+- lista incydentow jest ustawiana tylko z tablicy;
+- daty `detectedAt` i `resolvedAt` przechodza przez `formatDateTime`;
+- dodano regresje dla brakujacego `id` po create, malformed stats i niedostepnego read-backu po delete.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/SecurityIncidentsView.tsx tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TO. Follow-up SuperAdmin Legal publish id read-back hardening
+
+Kolejny sweep objal Governance `SuperAdminLegalView`, wskazany w planie jako legal policies / publish lifecycle.
+
+Problem:
+
+- publish mial read-back, ale potwierdzal po `docType + version + title`, co moglo dopasowac starszy dokument o tych samych polach;
+- odpowiedz publish bez `id` mogla nadal przejsc do read-backu po polach formularza;
+- render statusu i typu dokumentu zakladal snake_case (`doc_type`, `is_active`) mimo ze API wspiera tez camelCase/status.
+
+Wdrozone:
+
+- publish wymaga teraz kompletnej odpowiedzi z `id`;
+- read-back publish potwierdza konkretny dokument po `id` oraz zgodnych `docType/version/title`;
+- render typu dokumentu uzywa wspolnego `getDocumentType`;
+- render aktywnosci i akcje Activate/Deactivate uzywaja `is_active`, `isActive` albo `status === active`;
+- dodano regresje dla odpowiedzi publish bez `id` oraz camelCase legal document status.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminLegalView.tsx tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TM. Follow-up SuperAdmin Compliance DSAR/Audit/Records read-back hardening
+
+Kolejny sweep objal Governance / Compliance `ComplianceCenterView`, wskazany w planie jako P0 dla DSAR, planowania audytow i processing records.
+
+Problem:
+
+- create DSAR, schedule audit i add processing record pokazywaly sukces oraz zamykaly modal po samym `POST` + ogolnym refetchu;
+- brakowalo potwierdzenia, ze konkretny nowy rekord pojawil sie w swiezej liscie;
+- awaria albo stale read-back mogly wygladac jak poprawny zapis;
+- testy sprawdzaly refetch, ale nie wymuszaly potwierdzenia identyfikatora rekordu.
+
+Wdrozone:
+
+- wydzielono sekcyjne read-back helpers: `fetchDsarRequests`, `fetchAudits`, `fetchProcessingRecords`;
+- create DSAR wymaga kompletnej odpowiedzi z `id` i obecnosci tego `id` po swiezym odczycie DSAR;
+- schedule audit wymaga `id` audytu i obecnosci po swiezym odczycie audits;
+- add processing record wymaga `id` rekordu i obecnosci po swiezym odczycie processing records;
+- modale pozostaja otwarte, gdy read-back nie potwierdzi zapisu;
+- dodano regresje dla DSAR create, ktory po read-backu nie pojawia sie na liscie.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/ComplianceCenterView.tsx tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `ComplianceCenterView` (`@ts-nocheck`, `any`, `console`, unused const).
+
+### 23TN. Follow-up SuperAdmin Audit Events response-shape honesty
+
+Kolejny sweep objal Governance/Security `AuditEventsViewer`, wskazany w planie jako P0 Audit Timeline.
+
+Problem:
+
+- widok mial juz degraded state dla awarii i safe formatter daty;
+- nadal ufal, ze `res.data` jest tablica, a `res.total` poprawna liczba;
+- niepoprawny ksztalt odpowiedzi mogl powodowac crash lub `NaN` w paginacji/liczniku;
+- pola actor/resource mogly przyjsc w nieoczekiwanym typie.
+
+Wdrozone:
+
+- `events` sa ustawiane tylko z `Array.isArray(res.data)`;
+- `total` przechodzi przez `safeNumber` i jest ograniczony do wartosci nieujemnych;
+- pola actor/action/resource przechodza przez `asText` przed renderem i `slice`;
+- dodano regresje dla malformed response shape (`data` jako obiekt, `total` jako string).
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/AuditEventsViewer.tsx tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TL. Follow-up SuperAdmin Approvals read-back hardening
+
+Kolejny sweep objal Governance/Security `ApprovalWorkflowsView`, wskazany w planie jako P0 approvals/workflowy.
+
+Problem:
+
+- widok mial juz refetch po create/delete/approve/reject, ale mutacje nie wymagaly potwierdzenia oczekiwanego stanu ze swiezego snapshotu;
+- create mogl zamknac modal po refetchu, nawet jesli nowy workflow nie pojawil sie na liscie;
+- approve/reject mogly wygladac na zakonczone, gdy request po read-backu nadal byl `pending`;
+- bledy i invalid dates byly juz czesciowo normalizowane, ale brakowalo testu stale decision read-back.
+
+Wdrozone:
+
+- `loadData()` zwraca teraz snapshot workflows/requests albo `null`;
+- create workflow wymaga kompletnej odpowiedzi z `id` i obecnosci workflowu w swiezej liscie;
+- delete workflow wymaga braku workflowu o danym `id` po read-backu;
+- approve/reject wymagaja, aby request zniknal z pending queue albo mial oczekiwany status `approved`/`rejected`;
+- dodano regresje dla approval decision, ktora po read-backu nadal pozostaje `pending`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/iam/ApprovalWorkflowsView.tsx tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23TJ. Follow-up SuperAdmin API Keys read-back and usage numeric honesty
+
+Kolejny sweep objal AI Platform Security `APIKeysTab`. Sam tab jest wrapperem na `APIManagementView`, wiec poprawka zostala wykonana w widoku API Management, uzywanym dla kluczy API i webhooks.
+
+Problem:
+
+- revoke klucza mogl uznac sukces, gdy refetch API keys zwrocil pusty snapshot po awarii listy;
+- create mial fallback potwierdzenia po nazwie, co moglo potwierdzic stary klucz o tej samej nazwie;
+- usage analytics moglo renderowac `NaNms` albo surowe niepoprawne wartosci z payloadu usage.
+
+Wdrozone:
+
+- snapshot `fetchData()` zawiera teraz `keysLoaded`, odrozniajac prawdziwie pusta liste od awarii read-backu;
+- create key wymaga kompletnej odpowiedzi `id/key/name` i potwierdzenia swiezym kluczem po `id`;
+- revoke key wymaga `keysLoaded=true` i braku aktywnego klucza o tym samym `id`;
+- usage totals i endpoint counts przechodza przez bezpieczne formatowanie liczb;
+- dodano regresje dla niedostepnego read-backu revoke oraz invalid usage metrics.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/views/superadmin/APIManagementView.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check` i ReadLints sa czyste. ESLint ma 0 bledow; pozostaje istniejace ostrzezenie legacy `@ts-nocheck` w `APIManagementView`.
+
+### 23TK. Follow-up SuperAdmin Backup invalid payload honesty
+
+Kolejny sweep objal `EnterpriseBackupPanel`, czyli P0 Backup / DR. Panel mial juz poprzednie hardeningi: degraded state dla awarii list, read-back po create backup, read-back po toggle schedule oraz read-only/disabled dla restore/download/delete/settings/DR workflow bez audytowanego backendu.
+
+Pozostale ryzyko:
+
+- niepoprawne `sizeBytes` moglo przejsc do `formatBytes()` i wyrenderowac `NaN` albo niepoprawna jednostke;
+- nieznany `type` lub `status` backupu mogl wywolac crash przy odczycie konfiguracji etykiety/ikony;
+- lista backupow mogla pokazac surowe `bad-size` zamiast bezpiecznego fallbacku.
+
+Wdrozone:
+
+- dodano `safeNumber` dla rozmiarow backupow;
+- `formatBytes()` przyjmuje teraz niepewny input i zwraca `0 Bytes` dla wartosci niepoprawnych lub niedodatnich;
+- suma storage uzywa bezpiecznego parsowania kazdego backupu;
+- nieznany typ backupu pokazuje `Unknown`, a nieznany status pokazuje `unknown` z neutralna ikona/kolorem;
+- dodano regresje dla invalid size/type/status.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+./node_modules/.bin/eslint src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, `git diff --check`, ESLint i ReadLints sa czyste.
+
+### 23AF. Przejecie pracy - read-after-write hardening
+
+Po przejeciu pracy wykonano sanity gate i maly hardening w aktywnej fali SuperAdmin Customers.
+
+Wdrozone:
+
+- usunieto trailing whitespace w `NotificationSettings.tsx`, ktory blokowal `git diff --check`;
+- `CustomerAutomationView` traktuje nieudany refetch po toggle/delete jako brak potwierdzenia mutacji;
+- toggle rule wymaga teraz swiezego odczytu z oczekiwanym stanem `is_active`;
+- delete rule wymaga teraz swiezego odczytu bez usunietej reguly;
+- `CustomerSuccessPlaybooksView` traktuje nieudany refetch po delete jako brak potwierdzenia mutacji;
+- dodano dostepne `aria-label` dla akcji toggle automation rule i delete success playbook, zeby testy mogly sprawdzac konkretna akcje bez zgadywania po ikonie;
+- dodano testy regresyjne dla stale/failed read-back po toggle automation rule i delete success playbook.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerAutomationView.honesty.test.tsx tests/unit/views/superadmin/CustomerSuccessPlaybooksView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=1
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+npx eslint src/views/superadmin/customers/CustomerAutomationView.tsx src/views/superadmin/customers/CustomerSuccessPlaybooksView.tsx tests/unit/views/superadmin/CustomerAutomationView.honesty.test.tsx tests/unit/views/superadmin/CustomerSuccessPlaybooksView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: `git diff --check`, focused ESLint i ReadLints sa czyste. Wczesniej uruchomione szerokie `type-check`/focused gate zostaly przeniesione w tlo przez IDE/uzytkownika, wiec ten wpis dokumentuje tylko gate, ktory zakonczyl sie w tej sesji.
+
+### 23TB. Follow-up SuperAdmin Customers `CustomerCommunicationView` read-back hardening
+
+Kontynuacja przejecia objela aktywna zakladke `CustomersModule -> Communication`, czyli `CustomerCommunicationView`. Poprzedni sweep mial juz stale read-back guard, ale nadal dopuszczal dwa ryzyka:
+
+- `createCommunication` bez `success + id` moglo przejsc dalej do odczytu;
+- read-back po wysylce akceptowal dopasowanie po `subject`, co moglo potwierdzic stary rekord o tym samym temacie.
+
+Wdrozone:
+
+- subject i content sa trimowane przed create;
+- create musi zwrocic `success` oraz `id`, inaczej modal zostaje otwarty i pokazuje blad;
+- send nie moze jawnie zwrocic `success: false`;
+- read-back po send wymaga rekordu z dokladnym `id` zwroconym przez create;
+- matching subject nie jest juz traktowany jako potwierdzenie wysylki;
+- dodano regresje dla create bez potwierdzenia oraz stale read-back po tym samym subject.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerCommunicationView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=1
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+npx eslint src/views/superadmin/customers/CustomerCommunicationView.tsx tests/unit/views/superadmin/CustomerCommunicationView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: `git diff --check`, focused ESLint i ReadLints sa czyste.
+
+### 23TC. Follow-up SuperAdmin Access Requests reject read-back
+
+Kontynuacja P0 access requests objela symetryczny gate dla odrzucania requestow.
+
+Wdrozone:
+
+- dodano regresje dla reject flow, w ktorej backend po `rejectAccessRequest` nadal zwraca request jako `pending`;
+- modal `Reject Access Request` pozostaje otwarty, jesli read-back nie potwierdzi statusu `rejected`;
+- UI pokazuje `Access request rejection was not confirmed by the server` zamiast success;
+- approval i rejection maja teraz pokrycie stale read-back w focused testach.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminAccessRequestsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=1
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+npx eslint src/views/superadmin/SuperAdminAccessRequestsView.tsx tests/unit/views/superadmin/SuperAdminAccessRequestsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: `git diff --check`, focused ESLint i ReadLints sa czyste.
+
+### 23TD. Gate Tenant Admin Security Identity risk tab
+
+Po hardeningu `AdminRiskSummaryPanel` sprawdzono jego integracje z `AdminSecurityIdentityPanel`.
+
+Wynik przegladu:
+
+- `?tab=risk` renderuje dedykowany risk summary tab;
+- tab jest ograniczony do znanych wartosci `TabId`, a nieznany `tab` wraca do `policy`;
+- nie bylo potrzeby zmiany kodu kontenera w tej paczce.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx tests/unit/components/Admin/AdminSecurityIdentityPanel.test.tsx --maxWorkers=1 --maxConcurrency=1
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+npx eslint src/components/Admin/AdminRiskSummaryPanel.tsx src/components/Admin/AdminSecurityIdentityPanel.tsx tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx tests/unit/components/Admin/AdminSecurityIdentityPanel.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: `git diff --check`, focused ESLint i ReadLints sa czyste.
+
+### 23TG. Follow-up Tenant Admin Risk Summary numeric/date honesty
+
+Kontynuacja sweepu objela nowy `AdminRiskSummaryPanel` uzywany w `AdminSecurityIdentityPanel`.
+
+Wdrozone:
+
+- metryki `totalLogs`, `unresolvedCount` i `highRiskCount` przechodza przez `safeNumber`;
+- niepoprawne wartosci liczbowe z risk summary nie renderuja `NaN`;
+- data startu incydentu przechodzi przez bezpieczny formatter;
+- niepoprawne `started_at` / `startedAt` pokazuje `Unknown time`;
+- dodano regresje dla invalid risk metrics i invalid incident date.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx --maxWorkers=1 --maxConcurrency=1
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+npx eslint src/components/Admin/AdminRiskSummaryPanel.tsx tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: `git diff --check`, focused ESLint i ReadLints sa czyste.
+
+### 23TE. Follow-up SuperAdmin Overview numeric honesty
+
+Kontynuacja sweepu objela `OverviewModule` i `SuperAdminDashboard`. Poprzedni sweep zabezpieczyl failed-load i signals degraded states, a ta paczka dopisala regresje dla niepoprawnych metryk liczbowych.
+
+Wdrozone:
+
+- dodano test, ktory sprawdza, ze niepoprawne wartosci `counts`, `ai`, `live`, `activity` i `organization.user_count` nie renderuja `NaN`, `NaNk` ani `$NaN`;
+- potwierdzono, ze dashboard pozostaje w stanie honest metrics fallback zamiast falszywych `NaN` w metric strip;
+- poprawiono asercje testu, aby nie polegala na pojedynczym wystapieniu copy `Organizations`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/OverviewModule.honesty.test.tsx --maxWorkers=1 --maxConcurrency=1
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+npx eslint src/views/superadmin/OverviewModule.tsx src/views/superadmin/SuperAdminDashboard.tsx tests/unit/views/superadmin/OverviewModule.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: `git diff --check`, focused ESLint i ReadLints sa czyste.
+
+### 23TF. Follow-up SuperAdmin Customers `CustomerAnalyticsView` numeric honesty
+
+Kontynuacja sweepu `CustomersModule -> Analytics/Compliance` domknela ryzyko renderowania `NaN` w analytics.
+
+Wdrozone:
+
+- `CustomerAnalyticsView` ma `safeNumber` dla `ai_calls`, `ai_calls_30d`, `user_count` i `health_score`;
+- niepoprawne wartosci liczbowe z backendu sa sprowadzane do bezpiecznego fallbacku zamiast trafiać do UI jako `NaN`;
+- invalid `health_score` pozostaje jako brak health score, a nie `NaN%`;
+- dodano regresje, ktora sprawdza, ze niepoprawne metryki organizacji nie renderuja `NaN` ani `NaN%`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerAnalyticsCompliance.honesty.test.tsx --maxWorkers=1 --maxConcurrency=1
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+git diff --check
+npx eslint src/views/superadmin/customers/CustomerAnalyticsView.tsx src/views/superadmin/customers/CustomerComplianceView.tsx tests/unit/views/superadmin/CustomerAnalyticsCompliance.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: `git diff --check`, focused ESLint i ReadLints sa czyste.
+
+### 23DL. Follow-up Tenant Admin Security `AdminSecuritySettings` read-back
+
+Follow-up objal brakujacy fragment po sweepie `23AR`: widok nie pokazywal juz edytowalnych defaultow przy awarii loadu, ale `Save Changes` nadal raportowal sukces po samym `PUT /api/security/admin-settings`. To zostawialo ryzyko dla password/security policy oraz IP whitelist: UI moglo pokazac `Security settings saved`, mimo ze refresh nadal zwracal stare wartosci.
+
+Wdrozone:
+
+- dodano `SecuritySettingsSnapshot` i `settingsMatch` dla porownania calej polityki po zapisie;
+- `fetchSettings` zwraca teraz snapshot i moze dzialac bez pelnego loadera dla read-after-write;
+- `handleSave` po `PUT` wykonuje swiezy `GET /api/security/admin-settings`;
+- success toast pojawia sie dopiero, gdy odczyt potwierdzi `mfaRequired`, `ssoEnabled`, `sessionTimeout`, `ipWhitelist`, `loginMaxAttempts` i `lockoutDuration`;
+- stale read-back pokazuje jawny `role="alert"` oraz toast error zamiast falszywego sukcesu;
+- `console.error` i `any` w sciezkach bledu zastapiono `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/admin/AdminSecuritySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/admin/AdminSecuritySettings.tsx tests/unit/views/admin/AdminSecuritySettings.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: ESLint dla zmienionego komponentu i testu ma 0 bledow. ReadLints dla obu plikow nie pokazuje diagnostyki.
+
+### 23DM. Status po sweepie Settings persistence `AvatarPhotoSettings`
+
+Kolejny sweep objal wskazane w macierzy Settings ryzyko `Avatar & Photo`: avatar mogl znikac po zmianie zakladki albo refreshu, a komponent nadal mial fallback lokalny po mutacji. Po `uploadAvatar` i `removeAvatar` wykonywal `getMe()`, ale gdy odczyt profilu nie potwierdzal zmiany, UI nadal mogl wywolac `onUpdateUser` z lokalnym `result.avatarUrl` albo `undefined` i pokazac sukces.
+
+Wdrozone:
+
+- upload zdjecia ma twardy read-after-write: sukces tylko, gdy `Api.getMe()` zwroci `avatarUrl` zgodny z odpowiedzia uploadu;
+- remove photo ma twardy read-after-write: sukces tylko, gdy `Api.getMe()` zwroci profil bez `avatarUrl`;
+- usunieto lokalny fallback, ktory mogl maskowac brak persystencji po refreshu;
+- stale read-back pokazuje jawny `role="alert"` i toast error, bez `toast.success` i bez `onUpdateUser`;
+- blad upload/remove przechodzi przez `normalizeApiErrorMessage`;
+- dodano stabilny `aria-label` dla dropzone uploadu oraz domknieto warning `react-hooks/exhaustive-deps` w dotknietym komponencie.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AvatarPhotoSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/AvatarPhotoSettings.tsx tests/unit/components/settings/AvatarPhotoSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23EB. Follow-up Settings webhooks `WebhooksSettings`
+
+Follow-up objal `WebhooksSettings`, czyli user settings webhook management. Widok mial dwa typowe problemy honest UI: awaria `GET /api/settings/webhooks` renderowala pusta liste bez jasnego degraded state, a `Create`/`Delete` pokazywaly sukces po samej mutacji i lokalnym update/refetch bez walidacji wyniku.
+
+Wdrozone:
+
+- failed load pokazuje `Webhooks unavailable` jako `DegradedState`;
+- `Add Webhook` jest disabled, gdy lista webhookow nie zaladowala sie poprawnie;
+- create webhook robi `POST`, potem obowiazkowy read-back listy;
+- success toast dla create pojawia sie tylko, gdy odswiezona lista zawiera webhook z oczekiwanym URL/events/name;
+- delete webhook robi `DELETE`, potem obowiazkowy read-back listy;
+- success toast dla delete pojawia sie tylko, gdy odswiezona lista nie zawiera usuwanego ID;
+- save advanced settings robi `PUT`, potem obowiazkowy read-back i porownuje `secret`, `retryConfig`, `filterRules`;
+- stale read-back pokazuje inline `role="alert"`;
+- bledy load/create/delete/save przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/WebhooksSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/WebhooksSettings.tsx tests/unit/components/settings/WebhooksSettings.honesty.test.tsx --no-warn-ignored --quiet
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint nie raportuje bledow, ReadLints dla zmienionych plikow nie pokazuje bledow. Pelny lint bez `--quiet` nadal pokazuje starsze warningi legacy w `WebhooksSettings.tsx` (`any`, hook deps, console).
+
+### 23EC. Follow-up Settings API access `APIAccessSettings`
+
+Follow-up objal `APIAccessSettings`, czyli lifecycle user API keys. Widok mial podobny problem jak webhooks: awaria `GET /api/settings/api-keys` wygladala jak pusta lista mozliwa do edycji, create dopisywal key lokalnie i pokazywal sekret/success bez potwierdzenia backendu, a delete usuwal key lokalnie przed read-backiem.
+
+Wdrozone:
+
+- failed load pokazuje `API keys unavailable` jako `DegradedState`;
+- `Create Key` jest disabled, gdy lista kluczy nie zaladowala sie poprawnie;
+- empty state `No API keys yet` nie renderuje sie po awarii loadu;
+- create key robi `POST`, potem obowiazkowy read-back `GET /api/settings/api-keys`;
+- sekret nowego klucza i success toast pokazuja sie tylko, gdy odswiezona lista zawiera ID albo prefix nowego klucza;
+- delete key robi `DELETE`, potem obowiazkowy read-back listy;
+- success toast dla delete pojawia sie tylko, gdy odswiezona lista nie zawiera usuwanego ID;
+- rotate key robi `POST`, potem obowiazkowy read-back listy i nie pokazuje nowego sekretu, jesli prefix/ID nie sa potwierdzone;
+- save settings robi `PUT`, potem obowiazkowy read-back i porownuje `rateLimit` oraz `permissions`;
+- stale read-back pokazuje inline `role="alert"`;
+- bledy load/create/delete przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/APIAccessSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/APIAccessSettings.tsx tests/unit/components/settings/APIAccessSettings.honesty.test.tsx --no-warn-ignored --quiet
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint nie raportuje bledow, ReadLints dla zmienionych plikow nie pokazuje bledow. Pelny lint bez `--quiet` nadal pokazuje starsze warningi legacy w `APIAccessSettings.tsx` (`any`, hook deps, console, unused imports).
+
+### 23ED. Follow-up Settings cloud data `CloudDataSettings`
+
+Follow-up objal `CloudDataSettings`, czyli user settings cloud storage sources. Widok maskowal awarie `GET /api/cloud/sources` jako pusta liste oraz pokazywal success toast po `connect`, `sync` i `disconnect` bez potwierdzenia odswiezonego stanu.
+
+Wdrozone:
+
+- failed load pokazuje `Cloud sources unavailable` jako `DegradedState`;
+- `Add source` jest disabled, gdy lista zrodel nie zaladowala sie poprawnie;
+- empty state `No cloud sources connected yet` nie renderuje sie po awarii loadu;
+- connect source robi `POST`, potem obowiazkowy read-back listy;
+- success toast dla connect pojawia sie tylko, gdy odswiezona lista zawiera oczekiwany provider/name;
+- sync source robi `POST`, potem obowiazkowy read-back i potwierdza, ze source nadal istnieje;
+- disconnect source robi `DELETE`, potem obowiazkowy read-back listy;
+- success toast dla disconnect pojawia sie tylko, gdy odswiezona lista nie zawiera usuwanego ID;
+- stale read-back pokazuje inline `role="alert"`;
+- bledy load/connect/sync/disconnect przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/CloudDataSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/CloudDataSettings.tsx tests/unit/components/settings/CloudDataSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FP. Follow-up SuperAdmin Customers `CustomerCommunicationView`
+
+Kolejny sweep objal aktywna zakladke `CustomersModule -> Communication`, czyli `CustomerCommunicationView`. Panel mial false-zero risk po failed loadzie, send bez potwierdzonego read-backu oraz ryzyko `Invalid Date` w liscie komunikacji.
+
+Wdrozone:
+
+- load komunikacji waliduje odpowiedz jako liste;
+- failed load pokazuje `Customer communications unavailable` przez `DegradedState`;
+- przy failed load nie renderuja sie zerowe stats, quick actions ani empty state;
+- `New Message` jest disabled przy niedostepnym zrodle danych;
+- send wykonuje read-after-write przez `getCommunications`;
+- przy stale read-back modal pozostaje otwarty i pokazuje inline `role="alert"`;
+- daty `sent_at` przechodza przez bezpieczny formatter i pokazuja `Unknown date`;
+- usunieto lokalne warningi ESLint oraz `any` z parsera recipients filter.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerCommunicationView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/customers/CustomerCommunicationView.tsx tests/unit/views/superadmin/CustomerCommunicationView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FQ. Follow-up SuperAdmin Customers `CustomerSuccessPlaybooksView`
+
+Kolejny sweep objal aktywna zakladke `CustomersModule -> Playbooks`, czyli `CustomerSuccessPlaybooksView`. Panel mial false-zero risk po failed loadzie, create/update/delete/execute bez potwierdzonego read-backu, ryzyko `Invalid Date` w execution history oraz bezposrednie parsowanie JSON dla triggerow i akcji.
+
+Wdrozone:
+
+- `fetchData` waliduje playbooki i akcje jako listy;
+- failed load pokazuje `Customer success playbooks unavailable` przez `DegradedState`;
+- przy failed load nie renderuja sie zerowe statystyki, lista playbookow ani empty state;
+- `New Playbook` jest disabled przy niedostepnym zrodle danych;
+- create/update/delete/execute wykonuja read-after-write przez `fetchData`;
+- stale read-back pokazuje inline `role="alert"` i nie zamyka modala create/execute;
+- trigger/actions JSON przechodza przez bezpieczne parsery zamiast renderowac surowy wyjatek;
+- daty execution history przechodza przez bezpieczny formatter i pokazuja `Unknown date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerSuccessPlaybooksView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test przechodzi, ReadLints dla zmienionych plikow nie pokazuje bledow. Pierwsza proba przez `npm test -- --run ...` uruchomila globalny wrapper i trafila na istniejace, niezalezne porazki w innych testach (`toolAiRegistry`, `helpTranslations`, billing validators, `roleGuards`, `toolAiActions`), wiec do walidacji tego batcha uzyto bezposredniego Vitesta.
+
+### 23FR. Follow-up SuperAdmin Overview `OverviewModule` i `SuperAdminDashboard`
+
+Kolejny sweep objal aktywna zakladke `Overview -> Dashboard`, czyli `OverviewModule` oraz `SuperAdminDashboard`. Panel mial false-zero risk: awaria `getSuperAdminDashboard` byla tylko logowana w konsoli, a UI moglo dalej pokazywac czesciowe metryki i zera. Dodatkowo awaria signals byla prezentowana jak `No active signals`, a bledny timestamp aktywnosci mogl renderowac nieuczciwy czas wzgledny.
+
+Wdrozone:
+
+- inicjalny load organizacji i dashboard stats jest walidowany atomowo;
+- awaria dashboardu pokazuje `Superadmin overview unavailable` przez `DegradedState`;
+- przy failed load nie renderuja sie metryki, quick dashboard ani puste activity feed;
+- stats uzywaja jawnych fallbackow liczbowych bez maskowania `0` przez `||`;
+- `Signals` ma osobny degraded state `Signals unavailable`;
+- awaria signals nie renderuje juz `No active signals`;
+- activity timestamps przechodza przez bezpieczny formatter i pokazuja `Unknown time`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/OverviewModule.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+./node_modules/.bin/eslint src/views/superadmin/OverviewModule.tsx src/views/superadmin/SuperAdminDashboard.tsx tests/unit/views/superadmin/OverviewModule.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow. TypeScript check po poprawce typowania dashboard response przeszedl bez bledow.
+
+### 23FS. Follow-up SuperAdmin Access Requests `SuperAdminAccessRequestsView`
+
+Kolejny sweep objal standalone widok `SuperAdminAccessRequestsView`, wskazany w READY-01 jako P0 dla access requests. Widok mial false-empty risk po failed loadzie, approve/reject zamykaly modal i pokazywaly success bez potwierdzenia statusu po read-backu, a `requested_at` mogl renderowac `Invalid Date`.
+
+Wdrozone:
+
+- `getAccessRequests` jest walidowane jako lista;
+- failed load pokazuje `Access requests unavailable` przez `DegradedState`;
+- przy failed load nie renderuje sie `No pending requests`;
+- filtry statusu sa blokowane przy niedostepnym zrodle danych;
+- approve/reject wykonuja read-after-write przez `getAccessRequests`;
+- stale read-back zostawia modal otwarty i pokazuje inline `role="alert"`;
+- read-back failure nie pokazuje success toasta;
+- `requested_at` przechodzi przez bezpieczny formatter i pokazuje `Unknown date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminAccessRequestsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminAccessRequestsView.tsx tests/unit/views/superadmin/SuperAdminAccessRequestsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow. TypeScript check przeszedl bez bledow.
+
+### 23FT. Follow-up SuperAdmin Organizations Access Codes
+
+Kolejny sweep domknal pozostala czesc access/onboarding oraz inline org update/delete w `OrganizationsView`: listy mialy juz degraded states, ale mutacje nadal mogly pokazac success po samym wywolaniu endpointu albo po niezweryfikowanym refetchu.
+
+Wdrozone:
+
+- approve/reject access request wykonuje read-after-write przez `getAccessRequests`;
+- stale read-back dla decyzji access request pokazuje inline `role="alert"`;
+- generate access code wykonuje read-after-write przez `getAccessCodes`;
+- custom code musi pojawic sie w swiezej liscie przed success toastem;
+- random code wymaga wzrostu liczby kodow w read-backu;
+- deactivate access code wymaga znikniecia kodu ze swiezej listy;
+- inline organization update wymaga potwierdzenia plan/status/discount w swiezej liscie;
+- organization delete wymaga znikniecia organizacji ze swiezej listy;
+- read-back failure nie zamyka modala generate code i nie pokazuje success toasta.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Dodatkowe gate:
+
+```text
+./node_modules/.bin/eslint src/views/superadmin/OrganizationsView.tsx tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test przechodzi. ESLint ma 0 bledow i 4 istniejace ostrzezenia legacy w `OrganizationsView` (`console`, `any`), bez nowych bledow. ReadLints dla zmienionych plikow nie pokazuje bledow.
+
+### 23FU. Follow-up SuperAdmin Organization Details Modal
+
+Kolejny sweep objal `SuperAdminOrgDetailsModal`, czyli szczegolowy modal organizacji wskazany w audycie jako miejsce false-success dla plan/status/discount. Modal zapisywal general info, pokazywal success i od razu wolal `onUpdate()`, bez potwierdzenia, ze swieza lista organizacji zawiera nowy stan. Billing tab po bledzie ladowania pokazywal `No billing details available`, co moglo wygladac jak prawdziwy brak danych.
+
+Wdrozone:
+
+- `Save Changes` wykonuje read-after-write przez `getOrganizations`;
+- plan/status/discount musza zgadzac sie w swiezej organizacji przed success toastem;
+- stale read-back pokazuje inline `role="alert"` i nie wywoluje `onUpdate`;
+- billing details waliduja odpowiedz jako obiekt;
+- awaria billing details pokazuje `Billing details unavailable` przez `DegradedState`;
+- created date, next invoice date i invoice dates przechodza przez bezpieczny formatter.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminOrgDetailsModal.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Dodatkowe gate:
+
+```text
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminOrgDetailsModal.tsx tests/unit/views/superadmin/SuperAdminOrgDetailsModal.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test przechodzi. ESLint ma 0 bledow i istniejace ostrzezenia legacy w `SuperAdminOrgDetailsModal` (`unused imports`, `any`, hook deps), bez nowych bledow. ReadLints dla zmienionych plikow nie pokazuje bledow. TypeScript check przeszedl bez bledow.
+
+### 23FV. Follow-up SuperAdmin Storage Detail Modal
+
+Kolejny sweep objal `SuperAdminStorageDetailModal`, czyli modal przegladania plikow organizacji z obszaru system/storage. Modal mial false-empty risk po awarii `adminGetOrgFiles`, delete pokazywal success bez potwierdzonego read-backu, a daty plikow byly renderowane bez walidacji.
+
+Wdrozone:
+
+- `adminGetOrgFiles` jest walidowane jako lista;
+- awaria listy plikow pokazuje `Organization files unavailable` przez `DegradedState`;
+- przy failed load nie renderuje sie `No files stored for this organization`;
+- search jest disabled, gdy lista plikow nie jest wiarygodnie zaladowana;
+- delete wykonuje read-after-write przez `adminGetOrgFiles`;
+- usuniety plik musi zniknac ze swiezej listy przed success toastem i `onUpdate`;
+- stale read-back pokazuje inline `role="alert"`;
+- daty plikow przechodza przez bezpieczny formatter i pokazuja `Unknown date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminStorageDetailModal.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+./node_modules/.bin/eslint src/views/superadmin/SuperAdminStorageDetailModal.tsx tests/unit/views/superadmin/SuperAdminStorageDetailModal.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test przechodzi. ESLint ma 0 bledow i 1 istniejace ostrzezenie hook deps w `SuperAdminStorageDetailModal`, bez nowych bledow. ReadLints dla zmienionych plikow nie pokazuje bledow.
+
+### 23FW. Follow-up SuperAdmin Customers `TenantCommandCenterView`
+
+Kolejny sweep objal `TenantCommandCenterView`, czyli zbiorczy widok tenant lifecycle, commercial state, quotas i governance. Widok mial false-zero/false-`n/a` risk: overview load akceptowal niepoprawne odpowiedzi jako puste tablice, a awaria szczegolow tenant billing/resources nadal zostawiala karty commercial/quota/checklist z `n/a` i `Partial`. Dodatkowo formatery liczb mogly przepuscic `NaN`.
+
+Wdrozone:
+
+- overview load waliduje organizacje jako liste, policies jako liste i dashboard jako obiekt;
+- awaria overview pokazuje `Tenant command center unavailable` przez `DegradedState`;
+- przy failed overview nie renderuja sie metryki tenantow ani focus queue;
+- detail load waliduje billing i resources jako obiekty;
+- awaria detail telemetry pokazuje `Tenant detail telemetry unavailable` przez `DegradedState`;
+- przy failed detail telemetry nie renderuja sie karty `Commercial governance`, `Quotas and budgets` ani checklist z pozornym `Partial`;
+- formatery liczb/walut odrzucaja `NaN` i nieskonczone wartosci.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/TenantCommandCenterView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+./node_modules/.bin/eslint src/views/superadmin/TenantCommandCenterView.tsx tests/unit/views/superadmin/TenantCommandCenterView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FX. Follow-up SuperAdmin IAM `PermissionsMatrixView`
+
+Po batchu Tenant Command Center globalny `npm run type-check` wskazal `PermissionsMatrixView`: odpowiedzi API byly rzutowane bezposrednio na pelne typy `PermissionMatrix` i `PermissionsStats`, mimo ze fallbacki nie zawieraly wymaganych pol (`categories`, `totalPermissions`, `roleAssignments`, `categoryBreakdown`). To bylo ryzyko nie tylko typow, ale tez honest UI: niepelny payload mogl zostac uznany za pelny model.
+
+Wdrozone:
+
+- dodano `normalizePermissions`, `normalizeMatrix` i `normalizeStats`;
+- `permissions` musi byc lista z wymaganymi polami `key`, `description`, `category`;
+- brak `categories` w matrix jest wyliczany z realnej listy permissions;
+- niepelne stats sa normalizowane do jawnego snapshotu zamiast rzutowania;
+- usunieto problem TypeScript bez `unknown`-cast shimow.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx --maxWorkers=1 --maxConcurrency=2
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+./node_modules/.bin/eslint src/views/superadmin/iam/PermissionsMatrixView.tsx tests/unit/views/superadmin/PermissionsMatrixView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: TypeScript check przeszedl bez bledow. Focused test, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+Batch analytics/compliance/automation:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerAnalyticsCompliance.honesty.test.tsx tests/unit/views/superadmin/CustomerAutomationView.honesty.test.tsx
+npx eslint <3 customer views + 2 honesty tests> --no-warn-ignored
+npm run type-check
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 6 passed
+```
+
+TypeScript check przeszedl bez bledow. ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FO. Follow-up SuperAdmin Customers `CustomerAutomationView`
+
+Kolejny sweep objal aktywna zakladke `CustomersModule -> Automation`, czyli `CustomerAutomationView`. Panel mial kilka honest UI ryzyk: failed load byl cichy i renderowal `No automation rules configured` z zerowymi KPI, create/delete/toggle robily refetch bez potwierdzenia, a daty ostatniego wykonania i execution history mogly renderowac `Invalid Date`.
+
+Wdrozone:
+
+- `fetchRules` waliduje odpowiedz jako liste;
+- failed load pokazuje `Automation rules unavailable` przez `DegradedState`;
+- przy failed load nie renderuja sie zera KPI ani empty state;
+- `New Rule` jest disabled przy niedostepnym zrodle danych;
+- create/delete/toggle wykonuja read-after-write przez `fetchRules`;
+- stale read-back pokazuje inline `role="alert"` albo error w modalu szczegolow;
+- execution history waliduje odpowiedz jako liste;
+- daty `last_executed_at` i `executed_at` przechodza przez bezpieczny formatter i pokazuja `Unknown date`;
+- usunieto lokalne warningi ESLint i zastapiono `any` w JSON helperze/kluczach execution.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerAutomationView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/customers/CustomerAutomationView.tsx tests/unit/views/superadmin/CustomerAutomationView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+Batch lifecycle/contracts:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerLifecycleView.honesty.test.tsx tests/unit/views/superadmin/ContractManagementView.honesty.test.tsx
+npx eslint <2 customer lifecycle/contracts views + 2 honesty tests> --no-warn-ignored
+npm run type-check
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 6 passed
+```
+
+TypeScript check przeszedl bez bledow. ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FN. Follow-up SuperAdmin Customers `CustomerAnalyticsView` i `CustomerComplianceView`
+
+Kolejny sweep objal dwie aktywne read-only zakladki `CustomersModule`: `Analytics` oraz `Compliance`. Oba panele mialy false-empty/false-zero risk: po awarii backendu renderowaly komunikat bledu, ale nadal pokazywaly zerowe KPI albo puste tabele, co moglo wygladac jak prawdziwy brak danych.
+
+Wdrozone:
+
+- `CustomerAnalyticsView` waliduje `getUsageByOrganization` jako liste;
+- failed analytics load pokazuje `Customer analytics unavailable` przez `DegradedState`;
+- przy failed analytics load nie renderuja sie zera KPI ani `No analytics data available yet`;
+- `CustomerComplianceView` waliduje summary jako liste;
+- failed compliance load pokazuje `Customer compliance unavailable` przez `DegradedState`;
+- przy failed compliance load nie renderuja sie zera summary ani empty table;
+- `last_audit_date` przechodzi przez bezpieczny formatter i pokazuje `Unknown date`;
+- bledy sa normalizowane przez `normalizeApiErrorMessage`;
+- lokalne warningi ESLint zostaly usuniete.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerAnalyticsCompliance.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/customers/CustomerAnalyticsView.tsx src/views/superadmin/customers/CustomerComplianceView.tsx tests/unit/views/superadmin/CustomerAnalyticsCompliance.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FM. Follow-up SuperAdmin Customers `ContractManagementView`
+
+Kolejny sweep objal aktywna zakladke `CustomersModule -> Contracts`, czyli `ContractManagementView`. Panel agreguje contracts, stats i upcoming renewals. Przed poprawka failed load mogl zostawic puste listy/metryki, mutacje `create/update/delete` pokazywaly success przed potwierdzonym refetchem, a daty kontraktow/renewals mogly renderowac `Invalid Date`.
+
+Wdrozone:
+
+- `fetchData` waliduje contracts i renewals jako listy oraz stats jako obiekt;
+- failed load czysci dane i pokazuje `Contract management unavailable` przez `DegradedState`;
+- przy failed load nie renderuje sie `No contracts found`, puste stats ani pusty detail panel;
+- filtr statusu i `New Contract` sa disabled przy niedostepnym zrodle danych;
+- create/update/delete contract wykonuja read-after-write przez pelny `fetchData`;
+- success toast pojawia sie dopiero po potwierdzeniu zmiany w odczytanych danych;
+- stale read-back pokazuje inline `role="alert"`;
+- daty przechodza przez bezpieczny formatter i pokazuja `Unknown date`;
+- `terms_json` jest parsowane przez bezpieczny helper, bez crasha na niepoprawnym JSON;
+- usunieto legacy warningi ESLint z martwych importow ikon.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ContractManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/customers/ContractManagementView.tsx tests/unit/views/superadmin/ContractManagementView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FL. Follow-up SuperAdmin Customers `CustomerLifecycleView`
+
+Kolejny sweep objal aktywna zakladke `CustomersModule -> Lifecycle`, czyli `CustomerLifecycleView`. Panel agreguje stages, transitions i stats. Przed poprawka failed load zostawial widoczne zera oraz empty states, a mutacje `create/update/delete/transition` pokazywaly success przed sprawdzeniem, czy refetch faktycznie zawiera zmiane. Daty transitions mogly renderowac `Invalid Date`.
+
+Wdrozone:
+
+- `fetchData` waliduje, ze stages i transitions sa listami;
+- failed load czysci dane i pokazuje `Customer lifecycle unavailable` przez `DegradedState`;
+- przy failed load nie renderuja sie zera KPI, `No lifecycle stages defined` ani `No transitions recorded yet`;
+- przy failed load akcje `Transition Customer` i `Add Stage` sa disabled;
+- `create stage`, `update stage`, `delete stage` i `transition` wykonuja read-after-write przez pelny `fetchData`;
+- success toast pojawia sie dopiero po potwierdzeniu zmiany w odczytanych danych;
+- stale read-back pokazuje inline `role="alert"`;
+- daty transitions przechodza przez bezpieczny formatter i pokazuja `Unknown date`;
+- usunieto legacy warningi ESLint z martwych importow ikon.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerLifecycleView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/customers/CustomerLifecycleView.tsx tests/unit/views/superadmin/CustomerLifecycleView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FK. Follow-up SuperAdmin Support `CustomerHealthView`
+
+Domknieta zostala trzecia aktywna zakladka `SupportModuleView`: `CustomerHealthView`. Przed poprawka awaria `getCustomerHealthCheck` byla celowo wyciszana i renderowana jak normalny brak danych: `No health data available. Health checks are calculated automatically.` To mieszalo prawdziwy empty state z niedostepnym API.
+
+Wdrozone:
+
+- dodano typy dla organizacji i health response;
+- load organizacji waliduje odpowiedz listowa;
+- load health wymaga realnego obiektu danych;
+- bledy przechodza przez `normalizeApiErrorMessage`;
+- failed load pokazuje `Customer health unavailable` przez `DegradedState`;
+- przy failed load nie renderuje sie komunikat `No health data available`;
+- zachowano zwykly empty state tylko dla sytuacji bez bledu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerHealthView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Batch support:
+
+```text
+npx vitest run tests/unit/views/superadmin/SupportTicketsView.honesty.test.tsx tests/unit/views/superadmin/CustomerSuccessNotesView.honesty.test.tsx tests/unit/views/superadmin/CustomerHealthView.honesty.test.tsx
+npx eslint <3 support views + 3 honesty tests> --no-warn-ignored
+```
+
+Wynik:
+
+```text
+Test Files: 3 passed
+Tests: 8 passed
+```
+
+ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FJ. Follow-up SuperAdmin Support `CustomerSuccessNotesView`
+
+Kolejny sweep objal aktywny panel `CustomerSuccessNotesView` w `SupportModuleView`. Ryzyka byly analogiczne do support tickets: failed load mogl wygladac jak `No notes found`, create note pokazywal sukces przed refetchem, a data notatki mogla renderowac `Invalid Date`.
+
+Wdrozone:
+
+- dodano typy dla organizacji i CS notes;
+- load organizacji i notatek waliduje odpowiedzi listowe;
+- bledy przechodza przez `normalizeApiErrorMessage`;
+- failed load pokazuje `Customer success notes unavailable` przez `DegradedState`;
+- przy failed load nie renderuje sie `No notes found`;
+- `Add Note` jest blokowane przy niedostepnym zrodle danych;
+- create note wykonuje read-after-write przez `getCustomerSuccessNotes`;
+- success toast pojawia sie dopiero, gdy nowy tytul jest widoczny w odczytanej liscie;
+- stale read-back pokazuje inline `role="alert"`;
+- data notatki przechodzi przez bezpieczny formatter i pokazuje `Unknown date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomerSuccessNotesView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/support/CustomerSuccessNotesView.tsx tests/unit/views/superadmin/CustomerSuccessNotesView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FH. Follow-up SuperAdmin Customer Security `DeviceManagementView` i `MFAView`
+
+Domknieta zostala pozostala read-only czesc aktywnego `SecurityModuleView`: `DeviceManagementView` oraz `MFAView`. Oba panele sa inventory/inspection UI, ale przed poprawka awaria listy uzytkownikow albo danych szczegolowych mogla wygladac jak prawdziwy pusty stan (`No devices found`, `No MFA methods configured`). Dodatkowo daty `last_seen_at` / `last_used_at` mogly renderowac `Invalid Date`.
+
+Wdrozone:
+
+- dodano typy dla uzytkownikow, urzadzen i metod MFA;
+- load uzytkownikow oraz danych szczegolowych waliduje odpowiedzi listowe;
+- bledy przechodza przez `normalizeApiErrorMessage`;
+- `DeviceManagementView` pokazuje `Device inventory unavailable` przez `DegradedState`;
+- `MFAView` pokazuje `MFA methods unavailable` przez `DegradedState`;
+- przy failed load nie renderuja sie false-empty stany;
+- daty urzadzen i metod MFA przechodza przez bezpieczne formatery i pokazuja `Unknown date`;
+- brak `device_id` nie powoduje juz ryzyka crasha przez `substring`.
+
+Testy:
+
+```text
+npx vitest run tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx
+npx vitest run tests/unit/views/superadmin/MFAView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 4 passed
+```
+
+Batch customer security:
+
+```text
+npx vitest run tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx tests/unit/views/superadmin/DeviceManagementView.honesty.test.tsx tests/unit/views/superadmin/MFAView.honesty.test.tsx
+npx eslint <5 customer security views + 5 honesty tests> --no-warn-ignored
+```
+
+Wynik:
+
+```text
+Test Files: 5 passed
+Tests: 10 passed
+```
+
+ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+Dodatkowy globalny gate:
+
+```text
+npm run type-check
+```
+
+Wynik: TypeScript check przeszedl bez bledow. W trakcie gate poprawiono fallback dla opcjonalnego `severity` w `SecurityEventsView`, zeby typy i UI mialy jawne `unknown` zamiast ryzyka `undefined`.
+
+### 23FI. Follow-up SuperAdmin Support `SupportTicketsView`
+
+Kolejny sweep objal aktywny panel `SupportTicketsView` dostepny przez `CustomersModule -> SupportModuleView -> Support Tickets`. Panel mial trzy honest UI ryzyka: failed load mogl wygladac jak `No tickets found`, create ticket pokazywal sukces bez potwierdzenia w refetchu, a daty ticketow/komentarzy mogly renderowac `Invalid Date`.
+
+Wdrozone:
+
+- dodano typy dla ticketow i komentarzy;
+- listy ticketow i komentarzy waliduja odpowiedzi listowe;
+- failed tickets load przechodzi przez `normalizeApiErrorMessage`;
+- failed tickets load pokazuje `Support tickets unavailable` przez `DegradedState`;
+- przy failed load nie renderuje sie `No tickets found`;
+- `Create Ticket` jest blokowany, gdy lista ticketow jest niedostepna;
+- create ticket wykonuje read-after-write i pokazuje success dopiero, gdy nowy subject jest widoczny na liscie;
+- reply wykonuje read-after-write komentarzy i nie dopisuje lokalnego komentarza bez potwierdzenia backendu;
+- stale read-back pokazuje inline `role="alert"`;
+- daty ticketow i komentarzy przechodza przez bezpieczny formatter i pokazuja `Unknown date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SupportTicketsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/support/SupportTicketsView.tsx tests/unit/views/superadmin/SupportTicketsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FG. Follow-up SuperAdmin Customer Security `SecurityEventsView`
+
+Kolejny sweep objal aktywny panel `SecurityEventsView` w `SecurityModuleView`. Panel mial dwa honest UI ryzyka: awaria listy mogla byc pokazywana w tabeli zamiast jednoznacznego degraded state, a `resolve` pokazywal sukces przed potwierdzonym refetchem. Dodatkowo `created_at` mogl renderowac surowe `Invalid Date`.
+
+Wdrozone:
+
+- dodano typ `SecurityEventRow`;
+- normalizacja listy eventow rzuca blad dla niepoprawnej odpowiedzi zamiast cicho robic `[]`;
+- bledy load sa normalizowane przez `normalizeApiErrorMessage`;
+- failed load pokazuje `Security events unavailable` przez `DegradedState`;
+- przy failed load nie renderuje sie `No security events found`;
+- `resolve` wykonuje read-after-write przez `getSecurityEvents`;
+- success toast pojawia sie dopiero, gdy event jest potwierdzony jako resolved albo znika z listy;
+- stale read-back pokazuje inline `role="alert"`;
+- daty eventow przechodza przez bezpieczny formatter i pokazują `Unknown date` zamiast `Invalid Date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/security/SecurityEventsView.tsx tests/unit/views/superadmin/SecurityEventsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FF. Follow-up SuperAdmin Customer Security `PasswordPolicyView`
+
+Kolejny sweep objal aktywny panel `PasswordPolicyView` w tym samym customer security module. Plan historycznie wskazywal password policy jako false-success risk: zapis mogl pokazac sukces bez dowodu utrwalenia, a failed load zostawial edytowalne defaulty.
+
+Wdrozone:
+
+- dodano typy dla organizacji, odpowiedzi backendu i lokalnego modelu password policy;
+- load organizacji i policy waliduje odpowiedzi;
+- failed load przechodzi przez `normalizeApiErrorMessage` i pokazuje `Password policy unavailable` przez `DegradedState`;
+- przy failed load formularz z defaultowa polityka nie jest renderowany;
+- `Save Policy` jest blokowany przy niedostepnym zrodle danych;
+- zapis wykonuje read-after-write przez `getPasswordPolicy`;
+- success toast pojawia sie dopiero, gdy odczytana polityka jest identyczna z zapisana intencja;
+- stale read-back pokazuje inline `role="alert"`;
+- callbacks ustabilizowano, bez lokalnych warningow ESLint.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/security/PasswordPolicyView.tsx tests/unit/views/superadmin/PasswordPolicyView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FB. Follow-up Settings security overview `SecurityOverviewPage`
+
+Follow-up objal routowany `SecurityOverviewPage`. Load security overview lapal bledy poszczegolnych API i podstawial puste sesje/historie/recovery/MFA, co moglo renderowac pozorny security score i rekomendacje zamiast poinformowac, ze dane security sa niedostepne. Dodatkowo event timestamp mogl renderowac `Invalid Date`.
+
+Wdrozone:
+
+- load wymaga `getActiveSessions`, `getLoginHistory`, `/settings/recovery` i `/api/mfa/status`;
+- failed load pokazuje `Security overview unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuje sie fallback security score ani protection cards;
+- login event timestamp renderuje `Unknown date` zamiast `Invalid Date`;
+- bledy load przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalne warningi ESLint.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/SecurityOverviewPage.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/security/SecurityOverviewPage.tsx tests/unit/components/settings/SecurityOverviewPage.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow. Test loguje istniejacy stderr `InfoButton` o braku dokumentacji dla `settings-security-overview`, ale nie jest to blad testu.
+
+### 23FC. Follow-up Settings ownership `SettingsOwnershipPanels`
+
+Follow-up objal routowany `SettingsOwnershipPanels`, czyli Settings overview, tenant defaults, tenant branding, tenant security i module preferences. Panel mial juz empty state na awarie loadu, ale blad nie byl semantycznie alertem i nie przechodzil przez wspolna normalizacje API errors.
+
+Wdrozone:
+
+- blad loadu `organization-context` albo registry resolve przechodzi przez `normalizeApiErrorMessage`;
+- failed load renderuje semantyczny inline `role="alert"`;
+- przy awarii registry panel nie renderuje ownership/taxonomy danych jako pozornie dostepnych.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/SettingsOwnershipPanels.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 1 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/SettingsOwnershipPanels.tsx tests/unit/components/settings/SettingsOwnershipPanels.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test przechodzi, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FD. Final validation pass for Settings sweep
+
+Po domknieciu routowanych paneli `SettingsView` uruchomiono zbiorczy gate dla nowej partii settings:
+
+```text
+npx eslint <13 changed settings components + 13 focused honesty tests> --no-warn-ignored
+npx vitest run <13 focused honesty tests>
+```
+
+Wynik:
+
+```text
+Test Files: 13 passed
+Tests: 25 passed
+```
+
+Nastepnie uruchomiono globalny TypeScript gate:
+
+```text
+npm run type-check
+```
+
+Pierwszy przebieg wykryl kilka compile blockerow z calego aktualnego drzewa zmian. Naprawiono je bez zmiany zakresu funkcjonalnego:
+
+- `OrganizationAdminPanel`: typowanie `ApprovedDomainRow` po normalizacji i guard przed remove bez server id;
+- `AvatarPhotoSettings`: poprawiony type guard po read-back removal;
+- `IntegrationHealthDashboard`: gwarantowany string `id` po mapowaniu health row;
+- `BillingSubscriptionModule`: jawne typowanie tabow billing.
+
+Po poprawkach:
+
+```text
+npm run type-check
+```
+
+Wynik: TypeScript check przeszedl bez bledow.
+
+Dodatkowo uruchomiono focused gate dla plikow poprawionych po type-checku:
+
+```text
+npx vitest run \
+  tests/unit/components/settings/AvatarPhotoSettings.honesty.test.tsx \
+  tests/unit/components/settings/IntegrationHealthDashboard.honesty.test.tsx \
+  tests/unit/components/settings/BillingSubscriptionModule.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 3 passed
+Tests: 7 passed
+```
+
+ESLint po autoformatowaniu nie pokazuje bledow dla dotknietych settings/billing/integration/avatar plikow. `OrganizationAdminPanel` pozostawia istniejace legacy warningi `any`/unused caught error poza zakresem tej partii, ale bez bledow ESLint i bez bledow TypeScript.
+
+### 23FE. Follow-up SuperAdmin Customer Security `IPWhitelistView`
+
+Kolejny sweep objal aktywny panel `IPWhitelistView` dostepny przez `CustomersModule -> SecurityModuleView -> IP Whitelist`. Historycznie plan wskazywal IP whitelist jako problem P1: po dodaniu IP UI mogl pokazac sukces, ale lista pozostawala pusta. Dodatkowo awaria loadu mogla wygladac jak `No IP addresses whitelisted`.
+
+Wdrozone:
+
+- load organizacji i whitelisty waliduje odpowiedzi listowe;
+- bledy load przechodza przez `normalizeApiErrorMessage`;
+- failed load pokazuje `IP whitelist unavailable` przez `DegradedState`;
+- po awarii loadu nie renderuje sie pusta tabela `No IP addresses whitelisted`;
+- `Add IP` jest blokowane przy niedostepnym zrodle danych;
+- `add` czeka na read-back `getIPWhitelist` i pokazuje success dopiero, gdy nowy IP/range jest widoczny;
+- `remove` czeka na read-back i pokazuje success dopiero, gdy usuwany rekord znika;
+- stale read-back pokazuje inline `role="alert"`;
+- usunieto lokalne warningi ESLint i ustabilizowano callbacks.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/superadmin/security/IPWhitelistView.tsx tests/unit/views/superadmin/IPWhitelistView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23FA. Follow-up Settings language `LanguageSettings`
+
+Follow-up objal routowany `LanguageSettings`. Ten panel nie ma klasycznego save flow, ale ukrywal blad `organization-context` jako brak tenant defaultu oraz ignorowal wynik `changeLanguage`. To moglo wprowadzac w blad: uzytkownik nie wiedzial, czy tenant default jest faktycznie pusty, czy tylko nie dalo sie go zaladowac, ani czy zmiana jezyka zostala odrzucona.
+
+Wdrozone:
+
+- failed load `/organization-context` pokazuje inline `role="alert"` zamiast cichego ukrycia tenant defaultu;
+- blad tenant context przechodzi przez `normalizeApiErrorMessage`;
+- `handleLanguageChange` sprawdza wynik `changeLanguage`;
+- nieudana zmiana jezyka pokazuje inline `role="alert"`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/LanguageSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/LanguageSettings.tsx tests/unit/components/settings/LanguageSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EZ. Follow-up Settings voice `VoiceSettings`
+
+Follow-up objal routowany `VoiceSettings`. Load failure zostawial UI na defaultowych edytowalnych ustawieniach voice/TTS, a save nie wykonywal read-backu, wiec success toast mogl pojawic sie bez potwierdzenia utrwalenia.
+
+Wdrozone:
+
+- failed load pokazuje `Voice settings unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne defaultowe voice controls;
+- save wymaga read-backu `getAIVoice`;
+- original state i success toast aktualizuja sie tylko po zgodnym read-backu;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalny warning nieuzywanego importu.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/VoiceSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/VoiceSettings.tsx tests/unit/components/settings/VoiceSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EY. Follow-up Settings AI behavior `AIBehaviorSettings`
+
+Follow-up objal routowany `AIBehaviorSettings`. Load laczyl AI instructions i personality bez degraded gate, a save mial read-back z fallbackami do lokalnych wartosci dla personality/instructions. To moglo pokazac sukces mimo utrwalenia tylko czesci konfiguracji AI.
+
+Wdrozone:
+
+- failed load instructions/personality pokazuje `AI behavior settings unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne defaultowe AI behavior controls;
+- save wymaga read-backu `getAIInstructions` i `getAIPersonality`;
+- original state i success toast aktualizuja sie tylko po zgodnym read-backu calosci `AIBehaviorPreferences`;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AIBehaviorSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/AIBehaviorSettings.tsx tests/unit/components/settings/AIBehaviorSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EX. Follow-up Settings AI autocomplete `AIAutoCompleteSettings`
+
+Follow-up objal routowany `AIAutoCompleteSettings`. Load failure zostawial UI na defaultowych edytowalnych ustawieniach, a save nie wykonywal read-backu, wiec mogl pokazac success toast bez potwierdzenia utrwalenia preferencji.
+
+Wdrozone:
+
+- failed load pokazuje `AI auto-complete unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne defaultowe controls;
+- save wymaga read-backu `getAIAutoComplete`;
+- original state i success toast aktualizuja sie tylko po zgodnym read-backu;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AIAutoCompleteSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/AIAutoCompleteSettings.tsx tests/unit/components/settings/AIAutoCompleteSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EW. Follow-up Settings keyboard shortcuts `KeyboardShortcutsSettings`
+
+Follow-up objal routowany `KeyboardShortcutsSettings`. Load failure zostawial UI na domyslnych edytowalnych skrotach, a save uzywal fallbacku do lokalnego stanu, gdy read-back nie potwierdzil zapisanych skrotow. To moglo wywolac `onUpdate` i success toast mimo stale danych.
+
+Wdrozone:
+
+- failed load pokazuje `Keyboard shortcuts unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne defaultowe shortcuts;
+- save wymaga read-backu `getShortcuts`;
+- `onUpdate` i success toast uruchamiaja sie tylko po zgodnym read-backu;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- defaultowy shortcuts object wyniesiony do stalej, aby load nie zalezal od aktualnego state;
+- usunieto hook-deps warning.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/KeyboardShortcutsSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/KeyboardShortcutsSettings.tsx tests/unit/components/settings/KeyboardShortcutsSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23ER. Follow-up Settings email digest `EmailDigestSettings`
+
+Follow-up objal routowany `EmailDigestSettings`. Load email/digest settings mial lokalne fallbacki do defaultow, a save po `PUT` akceptowal fallback do aktualnego stanu, gdy read-back nie potwierdzil danych. To moglo pokazac sukces mimo nieutrwalonych preferencji email albo digest.
+
+Wdrozone:
+
+- failed load email/digest pokazuje `Email digest unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne domyslne email/digest controls;
+- save wymaga read-backu `/settings/notifications/email` i `/settings/notifications/digest`;
+- success toast pojawia sie tylko, gdy oba read-backi sa zgodne z zapisywanym stanem;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalny warning nieuzywanego `onUpdateUser`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/EmailDigestSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/EmailDigestSettings.tsx tests/unit/components/settings/EmailDigestSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow. Test loguje istniejacy stderr `InfoButton` o braku dokumentacji dla `settings-email-digest`, ale nie jest to blad testu.
+
+### 23ES. Follow-up Settings desktop sounds `DesktopSoundsSettings`
+
+Follow-up objal routowany `DesktopSoundsSettings`. Load sound preferences mial fallback do defaultow, a save po `PUT /settings/notifications/sounds` akceptowal fallback do lokalnego `prefs`, gdy read-back nie potwierdzil utrwalenia. To moglo dac success toast mimo stale danych.
+
+Wdrozone:
+
+- failed load pokazuje `Desktop sound settings unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne domyslne desktop/sound controls;
+- save wymaga read-backu `/settings/notifications/sounds`;
+- success toast pojawia sie tylko, gdy read-back jest zgodny z zapisywanym `prefs`;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalny warning nieuzywanego `onUpdateUser`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/DesktopSoundsSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/DesktopSoundsSettings.tsx tests/unit/components/settings/DesktopSoundsSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow. Test loguje istniejacy stderr `InfoButton` o braku dokumentacji dla `settings-desktop-sounds`, ale nie jest to blad testu.
+
+### 23ET. Follow-up Settings availability `AvailabilitySettings`
+
+Follow-up objal routowany `AvailabilitySettings` dla DND i quiet hours. Load uzywal lokalnych fallbackow do pustych/defaultowych ustawien, a save po `PUT` akceptowal fallback do lokalnego DND/quiet hours, gdy read-back nie potwierdzil danych. Dodatkowo DND `until` moglo renderowac `Invalid Date`.
+
+Wdrozone:
+
+- failed load DND/quiet hours pokazuje `Availability settings unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne domyslne controls;
+- save wymaga read-backu `/settings/notifications/dnd` i `/settings/preferences/quietHours`;
+- success toast pojawia sie tylko, gdy oba read-backi zgadzaja sie z zapisywanym stanem;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- `formatUntil` renderuje `Unknown date` zamiast `Invalid Date`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalne warningi ESLint.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AvailabilitySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/AvailabilitySettings.tsx tests/unit/components/settings/AvailabilitySettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow. Test loguje istniejacy stderr `InfoButton` o braku dokumentacji dla `settings-availability`, ale nie jest to blad testu.
+
+### 23EU. Follow-up Settings accessibility `AccessibilitySettings`
+
+Follow-up objal routowany `AccessibilitySettings`. Load failure zostawial widok na domyslnych edytowalnych preferencjach, a save uzywal fallbacku do lokalnych preferencji, gdy read-back nie potwierdzil zapisu. To bylo szczegolnie ryzykowne, bo komponent aplikuje preferencje bezposrednio na `document.documentElement`.
+
+Wdrozone:
+
+- failed load pokazuje `Accessibility preferences unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne defaultowe sekcje accessibility;
+- save wymaga read-backu `getAccessibilitySettings`;
+- `applyAccessibilityPreferences`, `original` state i success toast uruchamiaja sie tylko po zgodnym read-backu;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- helper aplikujacy DOM preferences wyniesiony poza komponent, aby uniknac niestabilnych deps;
+- usunieto lokalne warningi ESLint.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AccessibilitySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/AccessibilitySettings.tsx tests/unit/components/settings/AccessibilitySettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow. Test loguje istniejacy stderr `InfoButton` o braku dokumentacji dla `settings-accessibility-*`, ale nie jest to blad testu.
+
+### 23EV. Follow-up Settings theme `ThemeSettings`
+
+Follow-up objal routowany `ThemeSettings`. Load failure wygladal jak lokalne/defaultowe appearance settings, a save po `saveAppearancePreferences` fallbackowal do aktualnego local state, jesli read-back nie potwierdzil `theme`, `accentColor` albo `density`. Komponent aplikuje tez globalny theme/density, wiec sukces musi zalezec od utrwalenia danych.
+
+Wdrozone:
+
+- failed load pokazuje `Appearance preferences unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne defaultowe appearance controls;
+- save wymaga read-backu `getAppearancePreferences`;
+- `toggleTheme`, `applyDensity`, original state i success toast uruchamiaja sie tylko po zgodnym read-backu;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalny warning nieuzywanego importu.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/ThemeSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/ThemeSettings.tsx tests/unit/components/settings/ThemeSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EQ. Follow-up Settings data controls `DataControlsSettings`
+
+Follow-up objal routowany `DataControlsSettings`. Load consents/retention byl odporny przez lokalne fallbacki, ale przez to awaria backendu mogla wygladac jak edytowalne defaulty. Save uzywal fallbacku do lokalnego stanu, wiec mogl pokazac success bez potwierdzonego read-backu. Export/delete mogly tez zakonczyc sie bez jasnego inline bledu, gdy backend nie potwierdzil requestu.
+
+Wdrozone:
+
+- failed load consents/retention pokazuje `Data controls unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne domyslne consent/retention controls;
+- save wymaga read-backu `getGdprConsents` i `getGdprRetention`;
+- success toast pojawia sie tylko, gdy read-back potwierdza consents i retention;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- export i deletion requesty wymagaja jawnego potwierdzenia requestu albo niepustego fallback exportu;
+- bledy load/save/export/delete przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalny warning nieuzywanego `onUpdateUser`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/DataControlsSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/DataControlsSettings.tsx tests/unit/components/settings/DataControlsSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EP. Follow-up Settings export/import `SettingsExportImport`
+
+Follow-up objal `SettingsExportImport`. Import settings pokazywal success toast nawet wtedy, gdy backend zwrocil pusta liste `imported`, co oznaczalo brak potwierdzonej zmiany. Bledy importu/exportu byly tylko toastem, bez inline alertu przy komponencie.
+
+Wdrozone:
+
+- import sprawdza negatywne `success: false`;
+- import wymaga co najmniej jednej potwierdzonej kategorii w `imported`;
+- brak potwierdzonego importu pokazuje inline `role="alert"`;
+- `Last import result` jest ustawiany dopiero po potwierdzonym imporcie;
+- bledy export/import przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalne warningi ESLint (`Calendar`, unused caught error, unused tuple variable).
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/SettingsExportImport.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 1 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/advanced/SettingsExportImport.tsx tests/unit/components/settings/SettingsExportImport.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EO. Follow-up Settings history `SettingsHistory`
+
+Follow-up objal `SettingsHistory`. Load failure historii ustawial pusta liste i renderowal `No settings changes found`, a restore pokazywal success toast przed potwierdzonym odswiezeniem historii. Dodatkowo bledne timestampy mogly renderowac `Invalid Date`.
+
+Wdrozone:
+
+- failed `getSettingsHistory` pokazuje `Settings history unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuje sie empty state `No settings changes found`;
+- restore sprawdza negatywne `success: false` z backendu;
+- success toast dla restore pojawia sie dopiero po potwierdzonym refreshu historii;
+- failed refresh po restore pokazuje inline `role="alert"`;
+- daty historii renderuja `Unknown date` zamiast `Invalid Date`;
+- usunieto lokalne warningi ESLint.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/SettingsHistory.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/advanced/SettingsHistory.tsx tests/unit/components/settings/SettingsHistory.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EN. Follow-up Settings billing `BillingSubscriptionModule`
+
+Follow-up objal `BillingSubscriptionModule`. Load billingu maskowal awarie subskrypcji pustym stanem, a checkout/cancel pokazywaly success toast po mutacji i dopiero potem odswiezaly dane. Przy stale read-backu uzytkownik mogl zobaczyc sukces zmiany planu albo anulowania subskrypcji bez potwierdzenia backendu.
+
+Wdrozone:
+
+- failed `GET /api/billing/subscription` pokazuje `Billing data unavailable` jako `DegradedState`;
+- po awarii billing loadu nie renderuja sie akcje plan/cancel na pustych danych;
+- checkout `changePlan`/`subscribeToPlan` wymaga read-backu billing subscription;
+- success toast i `refreshPolicy()` dla checkout pojawiaja sie tylko, gdy `subscription.plan` zgadza sie z wybranym planem;
+- `cancelSubscription` wymaga read-backu `status === cancelled` albo `cancelAtPeriodEnd === true`;
+- success toast i `refreshPolicy()` dla cancel pojawiaja sie tylko po potwierdzonym anulowaniu;
+- stale read-back pokazuje inline `role="alert"`;
+- bledy load/checkout/cancel przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalne warningi ESLint (`any`, unused import/prop, tab cast).
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/BillingSubscriptionModule.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/modules/BillingSubscriptionModule.tsx tests/unit/components/settings/BillingSubscriptionModule.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EM. Follow-up Settings dashboard preferences `DashboardPreferencesSettings`
+
+Follow-up objal routowany `DashboardPreferencesSettings` uzywany w Settings/Appearance module. Widok po awarii `GET /settings/preferences/dashboard` zostawal na domyslnych edytowalnych preferencjach, a debounced autosave/reset pokazywaly success toast i invalidowaly cache po `PUT`, nawet gdy read-back byl pusty albo stale.
+
+Wdrozone:
+
+- failed load pokazuje `Dashboard preferences unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne domyslne preferencje dashboardu;
+- `Reset to Defaults` jest disabled przy load error;
+- autosave i reset wymagaja read-backu `GET /settings/preferences/dashboard`;
+- success toast i `invalidateDashboardPreferencesCache()` uruchamiaja sie tylko, gdy read-back potwierdza caly preferences object;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/autosave/reset przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/DashboardPreferencesSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/DashboardPreferencesSettings.tsx tests/unit/components/settings/DashboardPreferencesSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EL. Follow-up Settings data privacy `DataPrivacySettings`
+
+Follow-up objal routowany `DataPrivacySettings` uzywany m.in. w Appearance/Security privacy module. Widok po awarii `GET /settings/preferences/privacy` zostawal na domyslnych edytowalnych preferencjach, a `Save` ustawial `Saved!` po samym `PUT`, bez odczytu potwierdzajacego zapis. Export/delete requesty tez nie sprawdzaly, czy backend nie zwrocil negatywnego `success: false`.
+
+Wdrozone:
+
+- failed load pokazuje `Data privacy unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne domyslne sekcje data/privacy;
+- `Save` jest disabled przy load error;
+- save wymaga read-backu `GET /settings/preferences/privacy`;
+- `Saved!` i `onUpdate` uruchamiaja sie tylko, gdy read-back potwierdza wszystkie preferencje;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- export data i delete account sprawdzaja negatywne `success: false` przed komunikatem sukcesu;
+- bledy load/save/export/delete przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalny warning nieuzywanego importu.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/DataPrivacySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/DataPrivacySettings.tsx tests/unit/components/settings/DataPrivacySettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EK. Follow-up Settings working hours `WorkingHoursSettings`
+
+Follow-up objal `WorkingHoursSettings`. Widok po awarii `GET /api/settings/working-hours` zostawal na domyslnym edytowalnym schedule, a save uzywal fallbacku do lokalnego `schedule/timezone`, jesli read-back nie zwrocil potwierdzonego stanu. To moglo wywolac `onUpdateUser` i success toast bez utrwalenia danych.
+
+Wdrozone:
+
+- failed load pokazuje `Working hours unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuje sie edytowalny `Weekly Schedule`;
+- `Save` jest disabled przy load error;
+- save wymaga read-backu `GET /api/settings/working-hours`;
+- success toast i `onUpdateUser({ workingHours })` uruchamiaja sie tylko, gdy read-back potwierdza `schedule` i `timezone`;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalne warningi ESLint (`RefreshCw`, hook deps, non-null assertion, unused handler).
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/WorkingHoursSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/WorkingHoursSettings.tsx tests/unit/components/settings/WorkingHoursSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EJ. Follow-up Settings privacy `PrivacySettings`
+
+Follow-up objal `PrivacySettings`. Widok po awarii `getPrivacyPreferences()` zostawal na domyslnych edytowalnych preferencjach, a save uzywal fallbacku `data?.preferences ?? preferences`, przez co mogl pokazac sukces nawet wtedy, gdy read-back nie potwierdzil zapisu.
+
+Wdrozone:
+
+- failed load pokazuje `Privacy preferences unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie edytowalne domyslne sekcje privacy;
+- save wymaga read-backu `getPrivacyPreferences`;
+- success toast pojawia sie tylko, gdy read-back zawiera `preferences` zgodne z zapisywanym stanem;
+- stale/missing read-back pokazuje inline `role="alert"`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalny warning nieuzywanego `onUpdateUser`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/PrivacySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/PrivacySettings.tsx tests/unit/components/settings/PrivacySettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EI. Follow-up Settings integration mappings `MappingDriftPanel`
+
+Follow-up objal `MappingDriftPanel`. Detail load failure wczesniej wygladal jak `No mapping data`, a `Save` dla field mappings pokazywal sukces po `saveMappings` i odpalal `loadDetail`, ale nie sprawdzal, czy odczytane mappings faktycznie odpowiadaja zapisanej konfiguracji.
+
+Wdrozone:
+
+- failed overview load pokazuje `Mapping overview unavailable` jako `DegradedState`;
+- failed detail load pokazuje `Mapping data unavailable` jako `DegradedState`, nie `No mapping data`;
+- `Save` parsuje JSON, robi `saveMappings`, potem obowiazkowy read-back `getMappings`;
+- success toast pojawia sie tylko, gdy `fieldMappings` z read-backu sa zgodne z zapisanym JSON;
+- stale read-back pokazuje inline `role="alert"`;
+- daty w entity/drift/sync tabelach renderuja `Unknown date` zamiast `Invalid Date`;
+- usunieto lokalne `any` warningi w flow load/save.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/MappingDriftPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/integrations/MappingDriftPanel.tsx tests/unit/components/settings/MappingDriftPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EG. Follow-up Settings sessions activity `SessionsActivitySettings`
+
+Follow-up objal `SessionsActivitySettings`. Widok po awarii `getActiveSessions()` pokazywal pusta liste aktywnych sesji, a akcje `Terminate session` i `Sign Out All Other Devices` optymistycznie usuwaly sesje lokalnie po mutacji bez potwierdzonego read-backu.
+
+Wdrozone:
+
+- failed sessions load pokazuje `Active sessions unavailable` jako `DegradedState`;
+- empty state `No active sessions found` nie renderuje sie po awarii loadu;
+- terminate session robi `revokeSession`, potem obowiazkowy read-back `getActiveSessions`;
+- success toast dla terminate pojawia sie tylko, gdy odswiezona lista nie zawiera usuwanego ID;
+- revoke all robi `revokeAllSessions`, potem obowiazkowy read-back;
+- success toast dla revoke all pojawia sie tylko, gdy odswiezona lista zawiera wylacznie current session;
+- stale read-back pokazuje inline `role="alert"`;
+- daty login history renderuja `Unknown date` zamiast `Invalid Date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/SessionsActivitySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/SessionsActivitySettings.tsx tests/unit/components/settings/SessionsActivitySettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow. Test loguje istniejacy stderr `InfoButton` o braku dokumentacji dla `security-sessions-activity`, ale nie jest to blad testu.
+
+### 23EH. Follow-up Settings integration health `IntegrationHealthDashboard`
+
+Follow-up objal `IntegrationHealthDashboard` w settings integrations. Widok po awarii health API pokazywal dalej zerowe statystyki/pusta liste, a akcje `Sync now`, `Pause/Enable` i bulk `Disconnect` toastowaly sukces po mutacji albo lokalnej zmianie stanu bez potwierdzonego read-backu.
+
+Wdrozone:
+
+- failed health load pokazuje `Integration health unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie zerowe statystyki ani empty state `No integrations connected`;
+- `Sync now` robi `POST`, potem obowiazkowy read-back `/api/sync-hub/health`;
+- success toast dla sync pojawia sie tylko, gdy odswiezona lista nadal zawiera integration ID;
+- `Pause/Enable` robi `PUT`, potem obowiazkowy read-back i porownuje `enabled`;
+- bulk disconnect robi `POST /disconnect` dla zaznaczonych integracji, potem obowiazkowy read-back;
+- success toast dla disconnect pojawia sie tylko, gdy zaznaczone integracje nie sa juz enabled;
+- stale read-back pokazuje inline `role="alert"`;
+- daty recent activity renderuja `Unknown date` zamiast `Invalid Date`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/IntegrationHealthDashboard.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/integrations/IntegrationHealthDashboard.tsx tests/unit/components/settings/IntegrationHealthDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EF. Follow-up Settings email signatures `EmailSignaturesSettings`
+
+Follow-up objal `EmailSignaturesSettings`. Widok po awarii loadu non-demo pokazywal pusta liste i akcje tworzenia, a create/update/delete/default wykonywaly mutacje i refetch bez walidacji, czy odswiezona lista potwierdza zmiane. Clipboard rowniez pokazywal sukces bez czekania na `navigator.clipboard.writeText`.
+
+Wdrozone:
+
+- failed non-demo load pokazuje `Email signatures unavailable` jako `DegradedState`;
+- `Add Signature` jest disabled, gdy lista podpisow nie zaladowala sie poprawnie;
+- empty state `No signatures yet` nie renderuje sie po awarii loadu;
+- create signature robi `POST`, potem obowiazkowy read-back listy;
+- update signature robi `PUT`, potem obowiazkowy read-back i porownuje `name/content`;
+- delete signature robi `DELETE`, potem obowiazkowy read-back listy;
+- default signature robi `PUT /default`, potem obowiazkowy read-back i potwierdza `isDefault`;
+- dialog pozostaje otwarty przy stale read-back create/update;
+- stale read-back pokazuje inline `role="alert"`;
+- copy signature czeka na `clipboard.writeText` przed sukcesem i pokazuje blad przy odmowie.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/EmailSignaturesSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/EmailSignaturesSettings.tsx tests/unit/components/settings/EmailSignaturesSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23EE. Follow-up Settings calendar sync `CalendarSyncSettings`
+
+Follow-up objal `CalendarSyncSettings`. Widok po awarii `getCalendars()` podstawial domyslne, rozlaczone providery, co wygladalo jak prawdziwy stan konta. Disconnect i sync options pokazywaly success po mutacji/refetchu bez walidacji, czy odswiezony stan faktycznie potwierdza zmiane.
+
+Wdrozone:
+
+- failed calendar load pokazuje `Calendar sync unavailable` jako `DegradedState`;
+- po awarii loadu nie renderuja sie domyslne providery `Google Calendar`/`Outlook`/`Apple Calendar`;
+- connect bez OAuth redirect wymaga read-backu i potwierdzenia `connected=true`;
+- disconnect wymaga read-backu i potwierdzenia, ze provider nie jest juz connected;
+- sync options po `updateCalendarSettings` robia read-back `getCalendarSettings`;
+- success toast dla ustawien sync pojawia sie tylko, gdy `syncTasks` i `syncMeetings` zgadzaja sie z oczekiwanym stanem;
+- stale read-back pokazuje inline `role="alert"`;
+- bledy przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/CalendarSyncSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/CalendarSyncSettings.tsx tests/unit/components/settings/CalendarSyncSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint i ReadLints dla zmienionych plikow nie pokazuja bledow.
+
+### 23DZ. Follow-up Settings AI prompt library `AIPromptLibrarySettings`
+
+Follow-up objal `AIPromptLibrarySettings` z macierzy Settings AI / Prompt Library. Widok przy awarii `getPromptLibrary` wracal do builtin promptow, przez co backend failure wygladal jak normalna lista. Mutacje create/edit/delete wykonywaly `savePromptLibrary`, po czym lokalnie ustawialy liste i pokazywaly sukces bez potwierdzonego read-backu.
+
+Wdrozone:
+
+- failed load pokazuje `Prompt library unavailable` jako `DegradedState`;
+- builtin prompt fallback jest uzywany tylko po udanym odczycie pustej biblioteki, nie po awarii API;
+- `New Prompt` jest disabled przy load error;
+- create/edit/delete robia `savePromptLibrary`, potem obowiazkowy `getPromptLibrary`;
+- sukces i zamkniecie editora nastepuja tylko, gdy read-back listy pasuje do oczekiwanego stanu;
+- stale read-back pokazuje inline `role="alert"` z komunikatem `Prompt library save was not confirmed by the server`;
+- bledy load/save przechodza przez `normalizeApiErrorMessage`;
+- lista promptow jest normalizowana przed renderem i porownaniem.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AIPromptLibrarySettings.honesty.test.tsx tests/components/settings/AIPromptLibrarySettings.persistence.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/AIPromptLibrarySettings.tsx tests/unit/components/settings/AIPromptLibrarySettings.honesty.test.tsx tests/components/settings/AIPromptLibrarySettings.persistence.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testow maja 0 bledow.
+
+### 23EA. Follow-up Settings integrations `ConnectedAppsSettings`
+
+Follow-up objal user settings integrations w `ConnectedAppsSettings`. Najwieksze ryzyko bylo przy akcjach connect/disconnect: UI potrafil pokazac `Disconnected successfully` albo `Connected successfully` po samej odpowiedzi mutacji i dopiero potem odpalac refresh, bez sprawdzenia czy backendowy read-back faktycznie zmienil status providera.
+
+Wdrozone:
+
+- dodano read-back `GET /api/settings/integrations` po disconnect;
+- disconnect pokazuje sukces dopiero, gdy swiezy snapshot nie zawiera aktywnego providera;
+- stale disconnect pokazuje inline `role="alert"` z komunikatem `Integration disconnect was not confirmed by the server`;
+- connect przez modal dla `basic` i `api_key` rowniez wymaga read-backu aktywnego providera przed sukcesem i zamknieciem modala;
+- OAuth callback `oauth_success` potwierdza aktywny provider przed success toastem;
+- bledy akcji przechodza przez `normalizeApiErrorMessage`;
+- usunieto lokalne warnings ESLint w komponencie.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/ConnectedAppsSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 1 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/ConnectedAppsSettings.tsx tests/unit/components/settings/ConnectedAppsSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DX. Follow-up Tenant Admin P32 operations domains `OrganizationAdminPanel`
+
+Follow-up objal P1 `/admin/operations` w sekcji `Domains`, czyli custom domain i approved email domains. Przed zmiana custom domain po `PATCH /branding/:orgId` od razu ustawial lokalny stan i success toast, a approved email domains pokazywaly sukces po `POST/DELETE` bez sprawdzenia, czy odswiezona lista faktycznie zawiera albo usuwa rekord.
+
+Wdrozone:
+
+- custom domain po `PATCH /branding/:orgId` wykonuje read-back przez `Api.getUserOrganizations()`;
+- success toast dla custom domain pojawia sie tylko, gdy odczyt organizacji potwierdzi zapisany domain;
+- approved email domain po `POST /organizations/:orgId/approved-domains` wymaga potwierdzenia w odswiezonej liscie;
+- usuniecie approved domain wymaga potwierdzenia braku domeny w odswiezonej liscie;
+- stale read-back pokazuje inline `role="alert"` i nie pokazuje success toastu;
+- bledy load/mutation przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Organization/OrganizationAdminPanel.domains.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/Organization/OrganizationAdminPanel.tsx tests/unit/components/Organization/OrganizationAdminPanel.domains.honesty.test.tsx --no-warn-ignored --quiet
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused testy przechodza, ESLint nie raportuje bledow, ReadLints dla zmienionych plikow nie pokazuje bledow. Pelny lint bez `--quiet` nadal pokazuje starsze warningi `no-explicit-any` w calym `OrganizationAdminPanel.tsx`.
+
+### 23DY. Follow-up Settings AI usage `AIUsageDashboard`
+
+Follow-up objal `AIUsageDashboard` z macierzy Settings AI. Widok przy awarii `Api.getAIUsageStats` ustawial lokalne fallbacki: `0` requests/tokens/cost i `100%` success rate. To ukrywalo awarie telemetry jako idealnie zdrowy, pusty usage dashboard.
+
+Wdrozone:
+
+- awaria loadu pokazuje `AI usage unavailable` jako `DegradedState`;
+- dashboard nie renderuje fake `0` i `100%` po bledzie API;
+- brak kontraktu `stats` jest traktowany jak blad, nie jak pusty stan;
+- zera sa renderowane tylko wtedy, gdy backend zwroci prawdziwe zero telemetry;
+- zabezpieczono dzielenie przez zero dla usage limit, feature percentages, daily chart i tokens/request;
+- brak feature-level/daily telemetry pokazuje jawny empty state zamiast generowanych slupkow;
+- bledy loadu przechodza przez `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AIUsageDashboard.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/AIUsageDashboard.tsx tests/unit/components/settings/AIUsageDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DW. Follow-up Tenant Admin P32 integrations `IntegrationsManagementPanel`
+
+Follow-up objal P1 `/admin/integrations` z macierzy P32. Widok mial lokalne, pozorne mutacje: tworzenie webhooka dopisywalo rekord tylko w state, test webhooka byl timeoutem, enable/disable/delete dzialaly lokalnie, a `Connect` dla aplikacji pokazywal success/redirect bez realnego OAuth ani backendowego read-backu.
+
+Decyzja honest UI: do czasu realnego kontraktu tenant admin backendu modul pozostaje read-only dla mutacji.
+
+Wdrozone:
+
+- dodano `ReadOnlyState` z wyjasnieniem dla webhookow i connected apps;
+- `Add Webhook` jest disabled w headerze i panelu pustego stanu;
+- test/enable/disable/edit/delete webhooka sa disabled z `title` opisujacym brak read-backu;
+- `Connect`/`Disconnect` aplikacji sa disabled z `title` opisujacym brak backend-backed OAuth/provider status;
+- usunieto sample webhooki i lokalne pseudo-mutacje z false-success toastami;
+- wyczyszczono stare warnings lintowe w komponencie.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/Admin/IntegrationsManagementPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/Admin/IntegrationsManagementPanel.tsx tests/unit/components/Admin/IntegrationsManagementPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DV. Follow-up Tenant Admin P32 AI Governance `OrgAISettingsView`
+
+Follow-up objal P0 `/admin/ai` z macierzy P32: `AI Governance & Operations`, czyli policy/limits/features dla organizacji. Widok wykonywal juz `PUT` i potem `GET`, ale nie porownywal odczytu z oczekiwanym stanem. W praktyce stale read-back nadal konczyl sie success toastem i czyszczeniem `Unsaved changes`, mimo ze backend nie potwierdzil zapisu.
+
+Wdrozone:
+
+- dodano `orgAISettingsMatch` dla policy, roles, model ids, limits, budget, feature toggles, auto-tier i audit flags;
+- `saveSettings` pokazuje sukces tylko wtedy, gdy read-back pasuje do zapisywanego draftu;
+- stale read-back rzuca czytelny blad `Organization AI settings save was not confirmed by the server`;
+- blad zapisu jest renderowany inline jako `role="alert"`;
+- draft pozostaje niezapisany, a `Save Changes` pozostaje dostepne do ponowienia;
+- load/save error handling przechodzi przez `normalizeApiErrorMessage`;
+- usunieto lokalne `console.error`, `any` casty w rolach/policy i stare ostrzezenia lintowe.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/admin/OrgAISettingsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/admin/OrgAISettingsView.tsx tests/unit/views/admin/OrgAISettingsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DU. Follow-up Tenant Admin P32 audit `AuditLogView`
+
+Follow-up objal P1 `/admin/audit` w `AuditLogView`. Widok mial juz honest degraded state dla awarii P32 audit endpointu, blokowal export przy bledzie i nie pokazywal `No Activity Found` po failed load. Pozostal jednak klasyczny problem z macierzy: niepoprawny timestamp z backendu mogl przejsc przez `new Date(...).toLocaleDateString()` i wyrenderowac `Invalid Date`.
+
+Wdrozone:
+
+- `formatTimestamp` sprawdza `Number.isNaN(date.getTime())`;
+- niepoprawne timestampy renderuja `Unknown date` zamiast `Invalid Date`;
+- bledy load/export przechodza przez `normalizeApiErrorMessage`;
+- zachowany zostal obecny kontrakt P32 `Api.getTenantAdminAuditLogs`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/admin/AuditLogView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/admin/AuditLogView.tsx tests/unit/views/admin/AuditLogView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DT. Follow-up Tenant Admin P32 billing `AdminBillingManagement`
+
+Follow-up objal P0/P32 `/admin/billing` w `AdminBillingManagement`. Widok mial juz degraded states dla billing summary, usage i invoices, ale `Edit Billing Information` nadal raportowal sukces po samym `PUT /api/organizations/:id/billing-info`. To moglo pokazac `Billing information updated`, mimo ze swiezy odczyt ownership/billing contact nadal zwracal stare dane.
+
+Wdrozone:
+
+- `fetchOwnershipData` zwraca snapshot ownership i jest uzywany jako read-after-write dla billing info;
+- `handleSaveBillingInfo` po `PUT` wykonuje swiezy `/api/organizations/:id/ownership`;
+- success toast i zamkniecie modala sa wykonywane dopiero, gdy read-back potwierdzi `billingName`, `billingEmail`, `taxId`, `vatNumber` i billing address;
+- stale read-back pokazuje `role="alert"` w modalu i nie zamyka edycji;
+- usage cards maja bezpieczne formatowanie czesciowych `tokens/storage`, bez `toLocaleString` na `undefined` i bez `NaN%`;
+- bledy billing/usage/invoices/plans/addons przechodza przez `normalizeApiErrorMessage`;
+- wyczyszczono `console`/unused caught warnings w dotknietym komponencie.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/admin/AdminBillingManagement.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/admin/AdminBillingManagement.tsx tests/unit/views/admin/AdminBillingManagement.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DS. Follow-up Tenant Admin organization profile `OrganizationProfileView`
+
+Follow-up objal P1/P32 organization/tenant settings w `OrganizationProfileView`. Widok mial juz degraded state przy awarii initial load i read-only state dla favicon upload, ale `Save Changes` dla profilu organizacji nadal raportowal sukces po samym `PUT /api/organization-profiles/:id`. To moglo pokazywac `Organization profile saved`, mimo ze swiezy odczyt profilu po refreshu nadal zwracal stare dane.
+
+Wdrozone:
+
+- wydzielono `DEFAULT_PROFILE`, normalizacje odpowiedzi profilu i `profilesMatch`;
+- `loadProfile` zwraca snapshot i moze dzialac bez pelnego loadera dla read-after-write;
+- `handleSave` po `PUT` wykonuje swiezy `GET /api/organization-profiles/:id`;
+- success toast i `hasChanges=false` sa wykonywane dopiero, gdy read-back potwierdzi wyslany profil;
+- stale read-back pokazuje `role="alert"` i toast error zamiast falszywego sukcesu;
+- bledy save/logo/domain przechodza przez `normalizeApiErrorMessage`;
+- wyczyszczono `react-hooks/exhaustive-deps` i `any` w dotknietym komponencie.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/admin/OrganizationProfileView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/admin/OrganizationProfileView.tsx tests/unit/views/admin/OrganizationProfileView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DR. Follow-up Tenant Admin P32 people `AdminUserManagement`
+
+Follow-up objal P0 `/admin/people` w `AdminUserManagement`. Widok mial juz degraded state dla awarii listy userow i wykonywal refetch po add/status/delete, ale success toast pojawial sie przed potwierdzeniem wyniku przez swieze `getUsers()`. To oznaczalo ryzyko falszywego `User created`, `User updated`, `User deleted` albo `User status updated`, gdy backend przyjal request, ale lista po refreshu nadal nie zawierala oczekiwanej zmiany.
+
+Wdrozone:
+
+- `loadUsers` zwraca snapshot userow i normalizuje odpowiedz tablica albo `{ users }`;
+- create user pokazuje sukces dopiero, gdy read-back zawiera nowy email;
+- update user pokazuje sukces dopiero, gdy read-back zawiera zaktualizowane pola formularza;
+- delete user pokazuje sukces dopiero, gdy read-back nie zawiera usunietego ID;
+- status active/inactive pokazuje sukces dopiero, gdy read-back potwierdzi nowy status;
+- stale read-back pokazuje `role="alert"` w tabeli albo modalu i nie zamyka modala create/edit;
+- ownership transfer dostal dodatkowy read-back gate na nowego ownera;
+- wyczyszczono `any` dla user plans oraz `console.error` w dotknietym komponencie.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/admin/AdminUserManagement.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/views/admin/AdminUserManagement.tsx tests/unit/views/admin/AdminUserManagement.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DQ. Follow-up Settings templates `SettingsTemplates`
+
+Follow-up objal `SettingsTemplates`. Wczesniejszy sweep blokowal pusty stan przy awarii loadu i wymagal, zeby create zwrocil `template`, ale create/delete nadal mutowaly lokalna liste po samej odpowiedzi backendu. To moglo pokazywac `Template created from current settings` albo `Template deleted`, mimo ze swiezy odczyt listy template po refreshu nie potwierdzal zmiany.
+
+Wdrozone:
+
+- `loadData` zwraca snapshot system/custom templates i moze dzialac bez pelnego loadera dla read-after-write;
+- create template po `createSettingsTemplate` wykonuje swiezy `getSettingsTemplates`;
+- success toast i zamkniecie modala create sa wykonywane dopiero, gdy read-back zawiera nowy custom template;
+- delete template po `deleteSettingsTemplate` wykonuje swiezy `getSettingsTemplates`;
+- success toast delete pojawia sie dopiero, gdy read-back nie zawiera usuwanego template;
+- stale create/delete pokazuje `role="alert"` i toast error zamiast falszywego sukcesu;
+- bledy przechodza przez `normalizeApiErrorMessage`; wyczyszczono unused icon imports w dotknietym komponencie.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/SettingsTemplates.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/advanced/SettingsTemplates.tsx tests/unit/components/settings/SettingsTemplates.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DP. Follow-up Settings import/export `ExportDataSettings`
+
+Follow-up objal drugi brakujacy fragment w `ExportDataSettings`. Wczesniejszy sweep zamienil awarie export history na `Export history unavailable`, ale samo `Request Data Export` nadal moglo dawac falszywy sukces: po `POST /settings/export-data` komponent tworzyl lokalny request z fallbackiem `Date.now()` i pokazywal `Export Requested`, bez potwierdzenia, ze backend dopisal job do historii.
+
+Wdrozone:
+
+- `fetchExports` zwraca snapshot export history i jest uzywany rowniez po mutacji;
+- `handleRequestExport` wymaga `requestId`/`id` w odpowiedzi backendu;
+- po `POST /settings/export-data` wykonywany jest read-back `/settings/export-history`;
+- success toast i zamkniecie dialogu sa wykonywane dopiero, gdy historia zawiera nowy request;
+- stale read-back pokazuje `role="alert"` i destructive toast z konkretnym komunikatem;
+- usunieto lokalny fallback tworzacy niepotwierdzony wpis historii;
+- bledy przechodza przez `normalizeApiErrorMessage`; dotkniety plik ma wyczyszczone unused importy.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/ExportDataSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/ExportDataSettings.tsx tests/unit/components/settings/ExportDataSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DO. Status po sweepie Settings persistence `NotificationSettings`
+
+Kolejny sweep objal `Notifications`, ktore w macierzy Settings byly oznaczone jako niepotwierdzone/prawdopodobnie niespojnie zapisujace. Komponent `NotificationSettings` przy awarii `getNotificationPreferences` zostawial edytowalne domyslne preferencje, a po `saveNotificationPreferences` akceptowal pusty albo stary read-back jako sukces. To moglo dawac falszywe `Notification preferences saved`, mimo ze refresh wracal do poprzednich wartosci.
+
+Wdrozone:
+
+- dodano normalizacje `NotificationPreferences` z zachowaniem dynamicznych kanalow integracji;
+- awaria initial load pokazuje `Notification preferences unavailable` i ukrywa edytowalne defaulty oraz `Save Changes`;
+- `handleSave` po zapisie wykonuje swiezy `getNotificationPreferences`;
+- success toast i `onUpdateUser` sa wykonywane dopiero, gdy read-back potwierdzi wszystkie kategorie oraz kanaly;
+- stale read-back pokazuje `role="alert"` i toast error zamiast falszywego sukcesu;
+- usunieto `console.error`, `any` i nieuzywany import z dotknietego komponentu.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/NotificationSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/NotificationSettings.tsx tests/unit/components/settings/NotificationSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23DN. Status po sweepie Settings security `PasswordSecuritySettings`
+
+Kolejny sweep objal personal settings security, konkretnie `Recovery Options` w `PasswordSecuritySettings`. Sekcja byla edytowalna i po `PUT /api/settings/recovery` wykonywala lokalny `setRecoveryOptions`, zamykala edycje i pokazywala `Recovery options updated`. Brakowalo read-after-write, wiec admin/uzytkownik mogl zobaczyc sukces, mimo ze refresh profilu nadal zwracal stare recovery email/phone.
+
+Wdrozone:
+
+- dodano normalizacje `RecoveryOptions` oraz `recoveryOptionsMatch`;
+- `fetchRecoveryOptions` zwraca snapshot i pokazuje jawny `Recovery options unavailable` przy awarii loadu;
+- `handleSaveRecovery` po `PUT` wykonuje swiezy odczyt `/api/settings/recovery`;
+- success toast i zamkniecie edycji sa wykonywane dopiero, gdy read-back potwierdzi `recoveryEmail` i `recoveryPhone`;
+- stale read-back zostawia formularz otwarty, pokazuje `role="alert"` i nie wywoluje `toast.success`;
+- bledy recovery/password/session przechodza przez `normalizeApiErrorMessage`;
+- usunieto `console.error`, `any` i unused import z dotknietego komponentu.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/PasswordSecuritySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 1 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint src/components/settings/PasswordSecuritySettings.tsx tests/unit/components/settings/PasswordSecuritySettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint i ReadLints dla zmienionego komponentu oraz testu maja 0 bledow.
+
+### 23CK. Status po sweepie AI Platform `AIGovernanceTab`
+
+Kolejny sweep wrocil do P0 z AI Platform: `AI Governance` wygladal jak edytowalny panel, ale przy awarii backendu mogl renderowac `No policy loaded` zamiast jawnej niedostepnosci, a zapis pokazywal sukces przed potwierdzajacym odczytem z backendu.
+
+Wdrozone:
+
+- dodano `loadError` dla krytycznych zrodel governance policy/context policy;
+- awaria initial load czysci lokalny policy state i pokazuje `AI governance unavailable`;
+- sekcje context policy oraz internet/audit policy nie renderuja falszywego pustego lub edytowalnego stanu po awarii;
+- `Save` jest blokowany, gdy governance policy nie zostala poprawnie zaladowana;
+- sukces zapisu pojawia sie dopiero po pelnym `loadAll()` po mutacji;
+- health sanity check dostal osobny `healthError` i `Governance health unavailable`;
+- timestamp health report uzywa bezpiecznego formatowania, bez `Invalid Date`;
+- usunieto lokalny nieuzywany helper `authHeaders` i zastapiono `any` w formularzu typami domenowymi.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIGovernanceTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI admin honest UI:
+
+```text
+npx vitest run <25 AI admin honesty/regression test files including AIGovernanceTab>
+```
+
+Wynik:
+
+```text
+Test Files: 25 passed
+Tests: 54 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Configuration/AIGovernanceTab.tsx tests/unit/views/superadmin/AIGovernanceTab.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CM. Status po sweepie Connector Ops `APIManagementView`
+
+Kolejny sweep wszedl w P0 z Connector Ops / API Keys. Aktualnie uzywany widok SuperAdmin to `APIManagementView` pod `SystemModule > API Keys` oraz wrapper w AI Platform Security. Widok mial realny modal tworzenia klucza, ale awarie backendu byly maskowane:
+
+- awaria listy API keys konczyla sie `console.error`, a UI mogl pokazac zerowe KPI albo pusty stan `No API keys created yet`;
+- awaria organizacji zostawiala aktywny workflow tworzenia klucza, mimo braku wymaganego `organizationId`;
+- create/revoke uruchamialy refetch bez `await`, wiec success path nie byl refresh-proof;
+- usage failure konczylo sie tylko w konsoli i moglo wygladac jak brak wyboru klucza;
+- daty `lastUsedAt` mogly renderowac `Invalid Date`;
+- webhooks pozostaly read-only, bo workflow superadmin webhookow nadal wymaga jednego audytowanego kontraktu backendowego.
+
+Wdrozone:
+
+- dodano `loadError`, `organizationsLoadError` i `usageLoadError`;
+- awaria API keys pokazuje `API keys unavailable`, czyści liste i ukrywa zerowe KPI/pusty stan;
+- awaria organizacji pokazuje `Organizations unavailable` i blokuje `Create API Key`;
+- `Create API Key` jest disabled bez organizacji oraz z czytelnym `title`;
+- create/revoke sa refresh-proof: po mutacji wykonywany jest `await fetchData()`;
+- sukces i blad create/revoke sa komunikowane przez toast;
+- usage failure pokazuje `API key usage unavailable`;
+- daty `lastUsedAt` uzywaja bezpiecznego formattera;
+- istniejacy webhooks read-only test zostal rozszerzony o API keys load/create/revoke scenarios.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Szersza regresja honest UI:
+
+```text
+npx vitest run tests/unit/**/*.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/BillingCenterView.operationalCosts.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 84 passed
+Tests: 143 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/APIManagementView.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow; w legacy `APIManagementView` pozostaja ostrzezenia `@ts-nocheck` i `any`, bez nowych bledow.
+
+### 23CN. Status po sweepie Governance `Audit Timeline`
+
+Kolejny sweep objal aktywna zakladke `Governance & Compliance > Audit Timeline`, ktora sklada sie z `AdminAuditLogsView` oraz `AuditEventsViewer`. Widoki mialy juz podstawowe degraded states, ale nadal zostaly luki z audytu:
+
+- `AuditEventsViewer` formatowal `created_at` przez `new Date(...).toLocaleString()`, co moglo pokazac `Invalid Date`;
+- `AdminAuditLogsView` po `Resolve` latal lokalny wiersz, zamiast potwierdzic stan po stronie backendu refetchem;
+- bledy resolve/export i unified audit events nie byly wszedzie normalizowane przez wspolny mapper.
+
+Wdrozone:
+
+- dodano bezpieczny `formatDateTime` w `AuditEventsViewer` i `AdminAuditLogsView`;
+- niepoprawne timestampy renderuja `Unknown date`, bez `Invalid Date`;
+- `AuditEventsViewer` uzywa `normalizeApiErrorMessage` przy load failure;
+- `AdminAuditLogsView` po `resolveAdminAuditLog` wykonuje `await loadData()`, zamiast lokalnej optymistycznej podmiany statusu;
+- resolve/export errors w `AdminAuditLogsView` sa normalizowane przez `normalizeApiErrorMessage`;
+- rozszerzono testy honesty o malformed timestamps i refresh-proof resolve.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 4 passed
+```
+
+Szersza regresja honest UI:
+
+```text
+npx vitest run tests/unit/**/*.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/BillingCenterView.operationalCosts.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 84 passed
+Tests: 145 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/iam/AdminAuditLogsView.tsx src/views/superadmin/iam/AuditEventsViewer.tsx tests/unit/views/superadmin/AdminAuditLogsView.honesty.test.tsx tests/unit/views/superadmin/AuditEventsViewer.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow; w legacy `AdminAuditLogsView` pozostaja istniejace ostrzezenia `any` i `react-hooks/exhaustive-deps`, bez nowych bledow.
+
+### 23CO. Status po sweepie Governance `ComplianceCenterView`
+
+Kolejny sweep objal P0 `Compliance` w aktywnym module `Governance & Compliance`. Widok mial juz osobne degraded states dla DSAR, audits i processing records oraz refresh-proof create workflows, ale pozostala luka w zrodle frameworkow:
+
+- awaria listy frameworkow mogla w overview wygladac jak `0%` compliance i `0 Active`;
+- zakladka `Frameworks` mogla pokazac `No compliance frameworks`, mimo ze problemem byla niedostepnosc backendu;
+- `Compliance by Framework` moglo wygladac jak pusta lista bez jasnego wyjasnienia zrodla awarii.
+
+Wdrozone:
+
+- overview pokazuje `Unavailable` i `Framework source unavailable` dla compliance score oraz liczby frameworkow, gdy `frameworksLoadError` jest aktywny;
+- sekcja `Compliance by Framework` pokazuje `Compliance frameworks unavailable`;
+- zakladka `Frameworks` pokazuje `Compliance frameworks unavailable` z retry, zamiast `No compliance frameworks`;
+- utrzymano istniejace blokady eksportu, DSAR create, audit scheduling i processing records przy awariach odpowiednich zrodel;
+- rozszerzono testy honesty o awarie framework source.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Szersza regresja honest UI:
+
+```text
+npx vitest run tests/unit/**/*.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/BillingCenterView.operationalCosts.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 84 passed
+Tests: 146 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/ComplianceCenterView.tsx tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow; w legacy `ComplianceCenterView` pozostaja istniejace ostrzezenia `@ts-nocheck`, `any`, `console` i martwa stala `STATUS_COLORS`, bez nowych bledow.
+
+### 23CP. Status po sweepie Customers `OrganizationsView`
+
+Kolejny sweep objal P0 obszar `Customers / Organizations`: organizacje, pending access requests i access codes. Widok mial juz degraded states dla awarii list, ale pozostaly luki w workflowach access:
+
+- approve/reject access request odpalaly `fetchData()` bez `await`, wiec UI mogl pokazac sukces przed potwierdzonym odczytem backendu;
+- generate/deactivate access code rowniez nie czekaly na refetch;
+- `requested_at`, `created_at` i `expires_at` byly formatowane przez `new Date(...)`, co moglo pokazac `Invalid Date`;
+- bledy access request/code mutacji nie przechodzily przez wspolny mapper.
+
+Wdrozone:
+
+- dodano lokalne bezpieczne formatery `formatDate` i `formatDateTime`;
+- access request i access code daty renderuja fallback `-`/`Never` zamiast `Invalid Date`;
+- approve/reject access request wykonuje `await fetchData()` po mutacji;
+- generate/deactivate access code wykonuje `await fetchData()` po mutacji;
+- bledy approve/reject/generate/deactivate uzywaja `normalizeApiErrorMessage`;
+- testy Organizations rozszerzono o refresh-proof approve/reject oraz generate/deactivate access code.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Szersza regresja honest UI:
+
+```text
+npx vitest run tests/unit/**/*.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/BillingCenterView.operationalCosts.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 84 passed
+Tests: 147 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/OrganizationsView.tsx tests/unit/views/superadmin/OrganizationsView.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow; w legacy `OrganizationsView` pozostaja istniejace ostrzezenia `console` i `any`, bez nowych bledow.
+
+### 23CQ. Status po follow-up sweepie Tenant Admin P32 `AdminUserManagement`
+
+Kolejny sweep wrocil do P0 `/admin/people`. Poprzednio widok dostal uczciwy degraded state dla awarii `getUsers`, ale workflowy mutacyjne nadal byly podatne na falszywe poczucie zapisu:
+
+- delete user, deactivate/reactivate, ownership transfer oraz add/edit user odpalaly `loadUsers()` bez `await`;
+- toast sukcesu mogl pojawic sie zanim UI potwierdzil stan po ponownym odczycie backendu;
+- bledy mutacji uzywaly lokalnych fallbackow `e.message`, bez wspolnego mappera;
+- test pokrywal tylko awarie load, bez refresh-proof mutacji.
+
+Wdrozone:
+
+- `deleteUser`, `updateUser(status)`, ownership transfer i add/edit user czekaja na `await loadUsers()` po udanej mutacji;
+- bledy delete/status/transfer/save ida przez `normalizeApiErrorMessage`;
+- status update uzywa typowanego `User['status']` zamiast lokalnego `any`;
+- test `AdminUserManagement.honesty` rozszerzono o add user i deactivate/reactivate z weryfikacja refetchu oraz rzeczywistej zmiany stanu z odpowiedzi backendu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/admin/AdminUserManagement.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja honest UI:
+
+```text
+npx vitest run tests/unit/**/*.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/BillingCenterView.operationalCosts.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 84 passed
+Tests: 148 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/admin/AdminUserManagement.tsx tests/unit/views/admin/AdminUserManagement.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow; w legacy `AdminUserManagement` pozostaja istniejace ostrzezenia `any` i `console`, bez nowych bledow.
+
+### 23CR. Status po sweepie Settings persistence `ProfileSettings` + `AIMemorySettings`
+
+Kolejny sweep objal P0 Settings persistence z macierzy: `/settings/profile` oraz AI Memory. Oba komponenty mialy ryzyko falszywego sukcesu albo falszywych domyslnych wartosci:
+
+- `ProfileSettings` pokazywal `Saved!` po `updateUser`, nawet jesli `getMe()` nie potwierdzil zapisanych pol;
+- `ProfileSettings` przekazywal do store fallback z lokalnego formularza, co moglo maskowac brak persystencji po refreshu;
+- `AIMemorySettings` przy awarii load zostawial domyslne preferencje jako edytowalny stan;
+- `AIMemorySettings` po save ustawial `originalPreferences` na read-back bez sprawdzenia, czy backend zwrocil te same wartosci.
+
+Wdrozone:
+
+- `ProfileSettings` ma read-after-write gate: sukces jest renderowany tylko gdy `getMe()` zwroci profil zgodny z wyslanymi polami;
+- brak potwierdzenia profilu pokazuje widoczny `role="alert"` i nie wywoluje `onUpdateUser`;
+- `AIMemorySettings` pokazuje `AI memory settings unavailable` jako `DegradedState`, gdy preferencje nie zaladuja sie albo backend nie zwroci kontraktu;
+- AI Memory nie renderuje edytowalnych domyslnych toggle'i przy awarii load;
+- AI Memory save pokazuje sukces tylko po zgodnym read-backu, a stale dane z backendu sa traktowane jako blad zapisu;
+- clear memory i save uzywaja `normalizeApiErrorMessage`;
+- usunieto ostrzezenia z dotknietych settings plikow: martwe stale, niestabilny dependency w `useMemo`, zbędny `console.error`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/ProfileSettings.honesty.test.tsx tests/unit/components/settings/AIMemorySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 5 passed
+```
+
+Szersza regresja honest UI:
+
+```text
+npx vitest run tests/unit/**/*.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/BillingCenterView.operationalCosts.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 86 passed
+Tests: 153 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/settings/ProfileSettings.tsx src/components/settings/AIMemorySettings.tsx tests/unit/components/settings/ProfileSettings.honesty.test.tsx tests/unit/components/settings/AIMemorySettings.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CS. Status po sweepie Settings persistence `AIModelParametersSettings`
+
+Kolejny sweep objal P0 Settings persistence dla `AIModelParametersSettings`. Widok pobieral modele i preferencje z prawdziwych endpointow, ale save nadal byl false-positive:
+
+- po `updateAIUserSettings` komponent od razu ustawial `originalPrefs = prefs` i pokazywal toast sukcesu;
+- brak bylo ponownego odczytu `getAIUserSettings`, wiec refresh mogl przywrocic stare `preferred_model_id`, `visible_model_ids`, `model_temperature` albo `max_tokens`;
+- awaria initial load pokazywala lokalny error box, ale save footer nadal istnial jako workflow;
+- load error uzywal lokalnego `err.message`, bez wspolnego mappera.
+
+Wdrozone:
+
+- dodano mapper `mapUserSettingsToPrefs` wspolny dla initial load i read-back po save;
+- save wykonuje `updateAIUserSettings`, potem `getAIUserSettings` i porownuje persisted prefs z wyslanymi wartosciami;
+- toast `Model & parameters saved` pojawia sie tylko po zgodnym read-backu;
+- stale dane po save sa traktowane jako blad `Model preferences were not confirmed by the server`;
+- przy awarii load modele sa czyszczone, a widok pokazuje `AI model preferences unavailable` jako `DegradedState`;
+- save footer jest ukryty przy `loadError`;
+- usunieto martwe importy i nieuzywana stala provider icons.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AIModelParametersSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Szersza regresja honest UI:
+
+```text
+npx vitest run tests/unit/**/*.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/BillingCenterView.operationalCosts.test.tsx
+```
+
+Wynik pierwszego szerokiego runa:
+
+```text
+Test Files: 1 failed | 86 passed
+Tests: 2 failed | 154 passed
+```
+
+Oba failure byly w niezaleznej od tej zmiany suite `PurposeAssignmentsTab.honesty.test.tsx`, z brakiem oczekiwanych tekstow po bardzo wolnym rownoleglym runie. Izolowany rerun tej suite przeszedl:
+
+```text
+npx vitest run tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/settings/AIModelParametersSettings.tsx tests/unit/components/settings/AIModelParametersSettings.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CT. Status po sweepie Settings persistence `WorkPreferencesSettings`
+
+Kolejny sweep objal P0 Settings persistence dla `WorkPreferencesSettings`. Sekcja miala szczegolnie ryzykowny false-success:
+
+- awaria initial load byla tylko logowana, a UI zostawal na domyslnych preferencjach jako edytowalny stan;
+- save wykonywal `PUT`, a potem `GET`, ale blad read-backu byl polykany przez `.catch(() => null)`;
+- toast `Work preferences saved successfully` mogl pojawic sie mimo braku potwierdzonej persystencji;
+- brak odpowiedzi `preferences` po load/save nie byl traktowany jako zepsuty kontrakt.
+
+Wdrozone:
+
+- initial load wymaga `preferences` z `/settings/preferences/work`; brak kontraktu albo blad API pokazuje `Work preferences unavailable`;
+- przy load error edytowalne karty i przycisk save nie sa renderowane;
+- save wykonuje `PUT`, potem obowiazkowy read-back `GET /settings/preferences/work`;
+- sukces jest pokazany tylko gdy read-back zwroci wartosci zgodne z wyslanymi preferencjami;
+- stale dane po save sa traktowane jako blad `Work preferences were not confirmed by the server`;
+- bledy load/save uzywaja `normalizeApiErrorMessage`;
+- usunieto nieuzywany `onUpdateUser` z destrukturyzacji propsow.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/WorkPreferencesSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Regresja settings honesty:
+
+```text
+npx vitest run tests/unit/components/settings/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 14 passed
+Tests: 21 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/settings/WorkPreferencesSettings.tsx tests/unit/components/settings/WorkPreferencesSettings.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CU. Status po sweepie Settings persistence `RegionalSettings`
+
+Kolejny sweep objal P0 Settings persistence dla `RegionalSettings`. Widok mial podobny false UI jak Work Preferences:
+
+- awaria `getRegionalPreferences` byla logowana, a UI przechodzil na fallback z `currentUser` i domyslnych wartosci;
+- operator mogl edytowac timezone/units/currency/date format bez pewnosci, ze dane zostaly zaladowane z backendu;
+- save wykonywal read-back, ale nie sprawdzal, czy zwrocone wartosci sa zgodne z wyslanymi;
+- toast `Regional preferences saved` mogl pojawic sie mimo stalego read-backu.
+
+Wdrozone:
+
+- initial load wymaga kontraktu `preferences` z `SettingsApi.getRegionalPreferences`;
+- awaria load pokazuje `Regional preferences unavailable` jako `DegradedState`;
+- przy load error formularz i przycisk save nie sa renderowane;
+- save wykonuje `updateRegionalPreferences`, potem obowiazkowy read-back `getRegionalPreferences`;
+- sukces jest pokazany tylko gdy read-back zgadza sie z wyslanymi preferencjami;
+- stale dane po save sa traktowane jako blad `Regional preferences were not confirmed by the server`;
+- `onUpdateUser` jest wywolywany dopiero po potwierdzonym zapisie i tylko dla kompatybilnych pol `timezone`/`units`;
+- bledy load/save uzywaja `normalizeApiErrorMessage`;
+- usunieto martwy import `Hash`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/RegionalSettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Regresja settings honesty:
+
+```text
+npx vitest run tests/unit/components/settings/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 15 passed
+Tests: 24 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/components/settings/RegionalSettings.tsx tests/unit/components/settings/RegionalSettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+Uwaga walidacyjna: `npm run type-check` zostal uruchomiony, ale pojedynczy proces `tsc --noEmit` nie zakonczyl sie po ponad 13 minutach i zostal przerwany jako zawieszony gate bez komunikatow bledow. Poprzednie type-checki w tej sesji przechodzily po podobnych zmianach settings, a IDE diagnostics dla zmienionych plikow sa czyste.
+
+### 23CV. Status po sweepie Settings security `AuthenticationAccessPage`
+
+Kolejny sweep objal Settings Security / Authentication & Access. Widok mial juz degraded states dla sesji, historii logowan i recovery, ale pozostaly dwa false UI workflow:
+
+- gdy recovery options nie zaladowaly sie, komponent pokazywal `Recovery options unavailable`, ale pod spodem nadal renderowal `Recovery Email`, `Recovery Phone` i `Backup Codes` jako edytowalne/not configured;
+- terminate session i revoke all sessions wykonywaly lokalny optimistic update listy sesji zamiast ponownego odczytu backendu;
+- bledy sesji/historii/recovery byly czesciowo hard-coded zamiast przechodzic przez wspolny mapper.
+
+Wdrozone:
+
+- recovery cards sa ukryte, gdy `recoveryLoadError` jest aktywny;
+- operator nie moze dodawac recovery email/phone na podstawie niezaladowanego stanu;
+- terminate session wykonuje `revokeSession`, potem `refreshSessions()` z backendu;
+- revoke all sessions wykonuje `revokeAllSessions`, potem `refreshSessions()` z backendu;
+- `refreshSessions` czyści liste i pokazuje degraded state przy awarii read-backu;
+- bledy sessions/login history/recovery uzywaja `normalizeApiErrorMessage`;
+- usunieto martwe importy i lokalny `console.error` fallback.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AuthenticationAccessPage.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Regresja settings honesty:
+
+```text
+npx vitest run tests/unit/components/settings/*.honesty.test.tsx
+```
+
+Wynik: przebieg nie uruchomil testow, bo Vitest pool zglosil `Timeout waiting for worker to respond` dla workerow po dlugiej serii rownoleglych procesow:
+
+```text
+Test Files: no tests
+Tests: no tests
+Errors: 15 errors
+```
+
+To nie bylo failure asercji w zmienionym kodzie. Izolowany focused test dla zmienionej suite przeszedl po tym przebiegu.
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/components/settings/security/AuthenticationAccessPage.tsx tests/unit/components/settings/AuthenticationAccessPage.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CW. Status po sweepie Settings persistence `AIPrivacySettings`
+
+Kolejny sweep objal P0 Settings persistence dla `AIPrivacySettings`. Sekcja dotyczy danych AI i prywatnosci, wiec falszywe domyslne wartosci byly szczegolnie ryzykowne:
+
+- awaria `getAIPrivacyPreferences` byla tylko logowana, a UI zostawal na domyslnych przelacznikach jako edytowalny stan;
+- operator mogl wlaczac/wylaczac dostep AI do danych bez pewnosci, ze prawdziwe ustawienia zostaly zaladowane;
+- save wykonywal `saveAIPrivacyPreferences`, po czym od razu ustawial `originalPreferences = preferences`;
+- toast `AI privacy settings saved` mogl pojawic sie bez potwierdzenia persystencji po refreshu.
+
+Wdrozone:
+
+- initial load wymaga kontraktu `preferences` z `Api.getAIPrivacyPreferences`;
+- awaria load pokazuje `AI privacy settings unavailable` jako `DegradedState`;
+- przy load error sekcje `Data Access Scope`, `Training Opt-out`, retention i audit controls nie sa renderowane;
+- save wykonuje `saveAIPrivacyPreferences`, potem obowiazkowy read-back `getAIPrivacyPreferences`;
+- sukces jest pokazany tylko gdy read-back zgadza sie z wyslanymi preferencjami;
+- stale dane po save sa traktowane jako blad `AI privacy settings were not confirmed by the server`;
+- bledy load/save uzywaja `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/AIPrivacySettings.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Regresja settings honesty:
+
+```text
+npx vitest run tests/unit/components/settings/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 16 passed
+Tests: 28 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/components/settings/AIPrivacySettings.tsx tests/unit/components/settings/AIPrivacySettings.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CX. Status po sweepie Settings persistence `VoiceSettingsPanel`
+
+Kolejny sweep objal P0 Settings persistence dla `VoiceSettingsPanel`. Panel mial realny endpoint `/voice/settings`, ale wczesniej UI potrafil udawac dzialajaca konfiguracje na domyslnych wartosciach:
+
+- awaria load byla tylko logowana do konsoli;
+- po failed load panel nadal renderowal edytowalne input mode, voice, speed i toggles;
+- save wykonywal `POST /voice/settings`, ale fallbackowy read-back byl polykany przez `.catch(() => null)`;
+- `onSettingsChange` bylo wywolywane przy lokalnej zmianie formularza, zanim backend potwierdzil zapis;
+- preview/test bledy byly czesciowo ukryte w konsoli.
+
+Wdrozone:
+
+- initial load wymaga odpowiedzi z `/voice/settings`;
+- failed load pokazuje `Voice settings unavailable` jako `DegradedState`;
+- przy load error nie renderuja sie edytowalne sekcje ani save button;
+- test voice jest disabled, gdy settings nie sa zaladowane;
+- save robi `POST /voice/settings`, potem obowiazkowy read-back `GET /voice/settings`;
+- sukces i `onSettingsChange` sa wykonywane tylko po potwierdzonym read-backu;
+- stale read-back po save pokazuje blad `Voice settings were not confirmed by the server`;
+- preview/test errors sa widoczne jako `role="alert"`, bez `console.error`;
+- bledy load/save/test/preview uzywaja `normalizeApiErrorMessage`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/settings/VoiceSettingsPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Regresja settings honesty:
+
+```text
+npx vitest run tests/unit/components/settings/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 17 passed
+Tests: 31 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/components/settings/VoiceSettingsPanel.tsx tests/unit/components/settings/VoiceSettingsPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CY. Status po follow-upie SuperAdmin Legal publish lifecycle
+
+Kolejny sweep wszedl w P1 z macierzy `legal publish`. Aktywny widok Governance `SuperAdminLegalView` mial realny backend (`getSuperAdminLegalDocs`, `publishSuperAdminLegalDoc`, `toggleSuperAdminLegalDocActive`), ale workflow nadal mogl udawac sukces:
+
+- publish wykonywal mutacje i zamykal formularz przed potwierdzonym read-backiem;
+- refetch po publish/toggle byl odpalany bez `await`;
+- stale dane po publish/toggle nie byly traktowane jako blad;
+- toggle i view error trafialy do `console.error`;
+- bledne daty mogly renderowac sie jako `Invalid Date`;
+- przy awarii listy nadal mozna bylo probowac publikacji na nieznanym stanie dokumentow.
+
+Wdrozone:
+
+- lista dokumentow jest normalizowana i musi miec poprawny kontrakt;
+- `Publish New Version` jest disabled, gdy lista legal docs jest zdegradowana;
+- publish robi mutacje, potem obowiazkowy read-back listy i sprawdza `docType/version/title`;
+- formularz publish zamyka sie dopiero po potwierdzonym read-backu;
+- toggle active/deactivate robi mutacje, potem read-back i sprawdza `id/isActive`;
+- stale read-back po publish/toggle pokazuje jawny blad zamiast sukcesu;
+- view/toggle/publish/load uzywaja `normalizeApiErrorMessage`;
+- daty effective renderuja `Unknown date`, jezeli backend zwroci niepoprawny timestamp;
+- usunieto nowe ostrzezenia ESLint przez doprecyzowanie typu `SuperAdminLegalDocument`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Regresja SuperAdmin views honesty:
+
+```text
+npx vitest run tests/unit/views/superadmin/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 31 passed
+Tests: 61 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/SuperAdminLegalView.tsx tests/unit/views/superadmin/SuperAdminLegalView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CZ. Status po follow-upie SuperAdmin Configuration `LegalPanel`
+
+Po `SuperAdminLegalView` sprawdzony zostal drugi aktywny legal surface: `ConfigurationModule > LegalPanel`. Mial ten sam typ ryzyka, ale w starszym komponencie:
+
+- awaria `getSuperAdminLegalDocs` konczyla sie toastem i `docs = []`, co renderowalo `No legal documents`;
+- `Publish Document` pozostawal aktywny mimo nieznanego stanu listy;
+- publish pokazywal success i zamykal modal przed potwierdzeniem read-backiem;
+- toggle active/archive pokazywal success przed potwierdzonym refetchem;
+- niepoprawne daty effective mogly renderowac `Invalid Date`;
+- bledy mutacji byly tylko toastem, bez trwalego widocznego stanu w panelu.
+
+Wdrozone:
+
+- initial load wymaga listy dokumentow albo `data`;
+- failed load pokazuje `Legal documents unavailable` jako `DegradedState`;
+- przy load error nie ma falszywego empty state i `Publish Document` jest disabled;
+- publish robi mutacje, potem `getSuperAdminLegalDocs` i sprawdza `doc_type/title/version`;
+- modal publish zamyka sie dopiero po potwierdzonym read-backu;
+- stale read-back po publish pokazuje `Legal document publish was not confirmed by the server`;
+- toggle active/archive robi mutacje, potem read-back i sprawdza `id/isActive`;
+- stale read-back po toggle pokazuje `Legal document status was not confirmed by the server`;
+- bledy load/mutacji uzywaja `normalizeApiErrorMessage`;
+- daty effective renderuja `Unknown date` dla niepoprawnych timestampow.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/LegalPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Regresja SuperAdmin components honesty:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 12 passed
+Tests: 29 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/components/SuperAdmin/LegalPanel.tsx tests/unit/components/SuperAdmin/LegalPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DA. Status po follow-upie SuperAdmin Security `SCIMProvisioningView`
+
+Kolejny sweep objal P1 z macierzy produkcyjnej: `SCIM group mappings`. Wczesniejsza paczka potwierdzila, ze SCIM ma realny backend i dobry degraded state na initial load, ale lifecycle mappingow nadal mial false-success ryzyka:
+
+- `Create Group Mapping` robil `POST`, odpalal `fetchData()` bez `await`, zamykal modal i czyscil formularz bez potwierdzenia;
+- `Delete Group Mapping` usuwal rekord lokalnie przez `setGroupMappings(filter(...))`, bez read-backu z backendu;
+- stale dane po create/delete nie byly rozpoznawane jako blad;
+- bledy akcji byly logowane do konsoli i nie mialy semantycznego `role="alert"`;
+- initial load failure nie czyscil wszystkich czesci danych, co moglo zostawic stare wartosci po nieudanym refreshu.
+
+Wdrozone:
+
+- `fetchData()` zwraca snapshot danych po refetchu i czysci SCIM state przy awarii;
+- create mapping wykonuje `POST /scim/admin/group-mappings`, potem czeka na refetch i sprawdza `externalGroupId/externalGroupName/internalRole`;
+- modal create zamyka sie dopiero po potwierdzonym read-backu;
+- stale read-back po create pokazuje `SCIM group mapping was not confirmed by the server`;
+- delete mapping wykonuje `DELETE`, potem czeka na refetch i sprawdza, czy mapping zniknal z listy;
+- stale read-back po delete pokazuje `SCIM group mapping deletion was not confirmed by the server`;
+- bledy load i akcji przechodza przez `normalizeApiErrorMessage`;
+- action error ma `role="alert"`;
+- przyciski delete mapping dostaly opisowe `title`, zeby test i UI byly jednoznaczne.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Regresja SuperAdmin views honesty:
+
+```text
+npx vitest run tests/unit/views/superadmin/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 31 passed
+Tests: 64 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/SCIMProvisioningView.tsx tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DB. Status po follow-upie SuperAdmin Security `SCIMProvisioningView` tokens
+
+Po domknieciu group mappings w tym samym widoku zostal sprawdzony lifecycle tokenow SCIM. To drugi krytyczny element SCIM, bo token jest credentialem i nie moze byc pokazywany jako utworzony albo odwolany bez potwierdzenia backendu.
+
+Przed poprawka:
+
+- `Generate Token` wykonywal `POST`, natychmiast pokazywal jednorazowy sekret i dopisywal token lokalnie do `tokens`;
+- jezeli backend nie zwracal tokenu w kolejnym odczycie listy, UI nadal pokazywal `Token Generated`;
+- `Revoke Token` wykonywal `DELETE`, a potem usuwal token lokalnie przez `filter`;
+- stale dane po revoke nie byly traktowane jako blad;
+- delete token nie mial jednoznacznego `title`, co utrudnialo audit/testy akcji.
+
+Wdrozone:
+
+- `fetchData()` zwraca teraz snapshot `tokens` oraz `groupMappings`;
+- generate token wykonuje `POST /scim/admin/tokens`, potem czeka na refetch listy tokenow;
+- jednorazowy sekret jest pokazany dopiero, gdy read-back potwierdzi token przez `id/name`;
+- stale read-back po generate pokazuje `SCIM token generation was not confirmed by the server`;
+- revoke token wykonuje `DELETE`, potem czeka na refetch i sprawdza, czy token zniknal;
+- stale read-back po revoke pokazuje `SCIM token revocation was not confirmed by the server`;
+- revoke button ma opisowy `title` z nazwa tokenu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 7 passed
+```
+
+Regresja SuperAdmin views honesty:
+
+```text
+npx vitest run tests/unit/views/superadmin/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 31 passed
+Tests: 67 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/SCIMProvisioningView.tsx tests/unit/views/superadmin/SCIMProvisioningView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DC. Status po follow-upie SuperAdmin Security `DLPView`
+
+Kolejny sweep objal P0/P1 security: `DLPView`. Wczesniejsza paczka uczciwie degradowala initial load, ale aktywne mutacje nadal mialy optymistyczne sciezki:
+
+- create policy pokazywal success przed potwierdzeniem, ze polityka pojawila sie na liscie;
+- toggle policy lokalnie mapowal `isActive`, bez potwierdzonego read-backu;
+- delete policy lokalnie filtrowal liste i dopiero potem odpalal `loadData()`;
+- resolve violation lokalnie usuwal naruszenie i dopiero potem odpalal `loadData()`;
+- stale dane po mutacji nie byly traktowane jako blad;
+- data `detectedAt` mogla renderowac `Invalid Date`;
+- bledy akcji nie mialy semantycznego `role="alert"`.
+
+Wdrozone:
+
+- `loadData()` zwraca snapshot policies/violations/stats i czysci state przy awarii;
+- create robi `createDLPPolicy`, potem read-back i sprawdza `name/policyType/enforcementAction`;
+- success create i zamkniecie modala sa wykonywane dopiero po potwierdzonym read-backu;
+- stale create pokazuje `DLP policy creation was not confirmed by the server`;
+- toggle robi mutacje, potem read-back i sprawdza docelowe `isActive`;
+- stale toggle pokazuje `DLP policy status was not confirmed by the server`;
+- delete robi mutacje, potem read-back i sprawdza, czy policy zniknela;
+- stale delete pokazuje `DLP policy deletion was not confirmed by the server`;
+- resolve violation robi mutacje, potem read-back i sprawdza, czy violation zniknelo;
+- stale resolve pokazuje `DLP violation resolution was not confirmed by the server`;
+- daty naruszen renderuja `Unknown date` dla niepoprawnych timestampow;
+- bledy load/mutacji uzywaja `normalizeApiErrorMessage`, a alert akcji ma `role="alert"`;
+- doprecyzowano typ `DLPRule`, usuwajac nowe ostrzezenia `any`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/DLPView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 5 passed
+```
+
+Regresja SuperAdmin views honesty:
+
+```text
+npx vitest run tests/unit/views/superadmin/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 31 passed
+Tests: 71 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/iam/DLPView.tsx tests/unit/views/superadmin/DLPView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DH. Status po follow-upie Connector Ops `EnterpriseFeatureFlags`
+
+Sweep objal P1 Feature Flags z listy Connector Ops. Widok mial juz honest load degraded state i history degraded state, ale lifecycle flag nadal byl optymistyczny:
+
+- create/edit zamykal modal po `createFeatureFlag` / `updateFeatureFlag` bez potwierdzenia w odswiezonej liscie;
+- toggle pokazywal success po `toggleFeatureFlag` i odpalal `fetchFlags()` bez walidacji;
+- delete pokazywal success po `deleteFeatureFlag` i odpalal `fetchFlags()` bez sprawdzenia, czy flaga zniknela;
+- stale read-back po create/toggle/delete nie byl traktowany jako blad;
+- bledne daty `created_at` / `updated_at` mogly renderowac `Invalid Date`;
+- brakowalo inline alertu dla lifecycle failures.
+
+Wdrozone:
+
+- `fetchFlags()` zwraca snapshot listy flag albo `null` przy awarii;
+- create/edit wykonuja mutacje, potem read-back i sprawdzaja `flag_key/name/environment/flag_type/enabled`;
+- modal create/edit zamyka sie dopiero po potwierdzonym read-backu;
+- stale create pokazuje `Feature flag creation was not confirmed by the server`;
+- toggle wymaga potwierdzonego `enabled` w odswiezonej liscie;
+- stale toggle pokazuje `Feature flag toggle was not confirmed by the server`;
+- delete wymaga, zeby flaga zniknela z odswiezonej listy;
+- stale delete pokazuje `Feature flag deletion was not confirmed by the server`;
+- daty flag renderuja `Unknown date` dla niepoprawnych timestampow;
+- load/action/save errors uzywaja `normalizeApiErrorMessage`;
+- usunieto proste `any` z `Variant` i `FlagHistory`.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseFeatureFlags.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Regresja Connector/System components:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseFeatureFlags.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx tests/unit/components/SuperAdmin/BackupConfigPanel.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseIntegrationsHub.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 5 passed
+Tests: 16 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/components/SuperAdmin/system/EnterpriseFeatureFlags.tsx tests/unit/components/SuperAdmin/EnterpriseFeatureFlags.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DI. Status po follow-upie Connector Ops `EnterpriseConfigurationPanel`
+
+Sweep objal P1 Configuration Management. Widok mial juz honest degraded state dla initial load i historii, ale aktywne mutacje nadal byly optymistyczne:
+
+- add config zamykal modal po `createSystemConfig()` bez potwierdzenia na odswiezonej liscie;
+- edit config zamykal modal i pokazywal success po `updateSystemConfig()` bez sprawdzenia wartosci po read-backu;
+- delete config pokazywal success po `deleteSystemConfig()` bez sprawdzenia, czy konfiguracja zniknela;
+- rollback/history uzywaly `any` i `console.error`;
+- bledne `changed_at` w historii moglo renderowac `Invalid Date`;
+- brakowalo inline action/save alertow dla stale read-backu.
+
+Wdrozone:
+
+- `fetchConfigs()` zwraca snapshot konfiguracji albo `null` przy awarii;
+- add config robi mutacje, potem read-back i sprawdza `key/value/category/is_sensitive`;
+- modal add zamyka sie dopiero po potwierdzonym read-backu;
+- stale add pokazuje `Configuration creation was not confirmed by the server`;
+- edit config robi mutacje, potem read-back i wymaga nowej wartosci;
+- stale edit pokazuje `Configuration update was not confirmed by the server`;
+- delete config robi mutacje, potem read-back i sprawdza, czy config zniknal;
+- stale delete pokazuje `Configuration deletion was not confirmed by the server`;
+- modale add/edit maja lokalny `role="alert"` i zostaja otwarte przy stale backendzie;
+- historia uzywa `normalizeVersions()` i bezpiecznego `formatDateTime()`;
+- usunieto `console.error` z rollback flow.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseConfigurationPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Regresja Connector/System components:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseConfigurationPanel.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseFeatureFlags.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx tests/unit/components/SuperAdmin/BackupConfigPanel.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseIntegrationsHub.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 6 passed
+Tests: 20 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/components/SuperAdmin/system/EnterpriseConfigurationPanel.tsx tests/unit/components/SuperAdmin/EnterpriseConfigurationPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DJ. Status po follow-upie Analytics & Reporting `SavedReportsView`
+
+Sweep objal P1 Analytics & Reporting. Widok mial juz honest load degraded state dla listy raportow i execution history, ale lifecycle raportow nadal byl optymistyczny:
+
+- create report zamykal modal po `createAnalyticsReport()` bez potwierdzenia na odswiezonej liscie;
+- delete report czyscil wybrany raport po `deleteAnalyticsReport()` bez sprawdzenia, czy raport zniknal;
+- schedule report zamykal modal po `scheduleAnalyticsReport()` bez potwierdzenia, ze raport ma `schedule_json`;
+- stale read-back po create/delete/schedule nie byl traktowany jako blad;
+- delete byl ikonowym przyciskiem bez dostepnej nazwy;
+- bledne daty nie powinny renderowac `Invalid Date`.
+
+Wdrozone:
+
+- `fetchReports()` zwraca snapshot raportow albo `null` przy awarii;
+- create report robi mutacje, potem read-back i sprawdza `name/report_type`;
+- modal create zamyka sie dopiero po potwierdzonym read-backu;
+- stale create pokazuje `Report creation was not confirmed by the server`;
+- delete robi mutacje, potem read-back i sprawdza, czy raport zniknal;
+- stale delete pokazuje `Report deletion was not confirmed by the server`;
+- schedule robi mutacje, potem read-back i wymaga `schedule_json` na raporcie;
+- stale schedule pokazuje `Report schedule was not confirmed by the server`;
+- schedule modal zostaje otwarty przy stale backendzie;
+- dodano inline action alert z `role="alert"`;
+- delete report ma `aria-label`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SavedReportsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Regresja analytics/reporting:
+
+```text
+npx vitest run tests/unit/views/superadmin/SavedReportsView.honesty.test.tsx tests/unit/views/superadmin/CustomReportsTab.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseAnalyticsPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 3 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/analytics/SavedReportsView.tsx tests/unit/views/superadmin/SavedReportsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DK. Status po follow-upie SuperAdmin Security/Cost Control `AIBudgetsView`
+
+Sweep objal P0/P1 AI Budgets i Model Access z listy Platform Security. Widok mial juz honest degraded state dla initial load, ale aktywne mutacje nadal byly optymistyczne:
+
+- create/update budget zamykal modal i pokazywal success bez potwierdzenia w odswiezonych budzetach;
+- delete budget pokazywal success bez sprawdzenia, czy budzet zniknal;
+- create model permission zamykal modal bez potwierdzenia, ze ograniczenie pojawilo sie na liscie;
+- delete model permission nie walidowal, czy ograniczenie zniknelo;
+- alert actions uzywaly lokalnych zmian i `console.error`;
+- ikonowe akcje budget/model access nie mialy dostepnych nazw.
+
+Wdrozone:
+
+- `fetchData()` zwraca snapshot `budgets/alerts/modelPermissions/usageStats` albo `null` przy awarii;
+- create budget robi mutacje, potem read-back i sprawdza `budgetType/period/budgetLimit`;
+- update budget robi mutacje, potem read-back i wymaga nowej wartosci limitu;
+- modal budget zostaje otwarty przy stale backendzie;
+- stale create/update pokazuja `AI budget creation/update was not confirmed by the server`;
+- delete budget robi mutacje, potem read-back i sprawdza, czy budzet zniknal;
+- model permission create/delete maja analogiczny read-back;
+- stale model permission create/delete pokazuja jawne bledy walidacji;
+- alert acknowledge/dismiss uzywaja `normalizeApiErrorMessage` zamiast `console.error`;
+- dodano inline action alert z `role="alert"`;
+- dodano `aria-label` dla edit/delete budget i delete model permission.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Regresja security/cost-control:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx tests/unit/views/superadmin/DLPView.honesty.test.tsx tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 4 passed
+Tests: 17 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/AIBudgetsView.tsx tests/unit/views/superadmin/AIBudgetsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DF. Status po follow-upie SuperAdmin `APIManagementView` API keys
+
+Sweep wrocil do P0 API Keys z listy Connector Ops/API Management. Widok mial juz uczciwe webhooks read-only i load degraded state, ale lifecycle kluczy nadal nie walidowal efektu mutacji:
+
+- create API key zamykal modal po odpowiedzi `POST`, zanim odswiezona lista potwierdzila nowy klucz;
+- panel z plaintext key mogl pojawic sie mimo stale read-backu;
+- revoke API key pokazywal success po `DELETE` i refetchu bez sprawdzenia, czy klucz zniknal albo stal sie inactive;
+- brak inline `role="alert"` dla bledow lifecycle;
+- helper normalizacji kluczy byl inline w `fetchData()`, utrudniajac walidacje read-backu.
+
+Wdrozone:
+
+- `fetchData()` zwraca snapshot `keys/organizations`;
+- normalizacja API key payloadow zostala wyciagnieta do `normalizeApiKeys()`;
+- create wykonuje read-back i wymaga klucza dopasowanego po `id` albo `name`;
+- modal create zamyka sie dopiero po potwierdzonym read-backu;
+- plaintext created key pokazuje sie dopiero po potwierdzonym read-backu;
+- stale create pokazuje `API key creation was not confirmed by the server`;
+- revoke wykonuje read-back i wymaga, zeby klucz zniknal albo nie byl juz active;
+- stale revoke pokazuje `API key revoke was not confirmed by the server`;
+- dodano inline action alert z `role="alert"`;
+- ograniczono lokalne `any` w nowym kodzie helperow i usage payloadu.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Regresja SuperAdmin views + API management:
+
+```text
+npx vitest run tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/views/superadmin/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 32 passed
+Tests: 83 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/APIManagementView.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: focused test i ReadLints sa czyste. ESLint raportuje tylko historyczne ostrzezenie `@ts-nocheck` na poczatku `APIManagementView.tsx` bez bledow.
+
+### 23DG. Status po follow-upie SuperAdmin Backup & Recovery `EnterpriseBackupPanel`
+
+Sweep domknal P0 Backup & Recovery. Panel mial juz uczciwe degraded states, read-only settings, zablokowane restore/download/delete oraz read-only DR testing, ale dwie mutacje nadal opieraly sie na samym wywolaniu API:
+
+- create backup pokazywal `Backup started` po `Api.createBackup()` i zamykal modal nawet wtedy, gdy odswiezona lista nie zawierala backupu;
+- schedule enable/disable pokazywal success po `Api.updateBackupSchedule()` bez sprawdzenia, czy odswiezony schedule ma oczekiwany stan;
+- stale read-back po create/toggle nie byl traktowany jako blad;
+- brakowalo inline alertu akcji z `role="alert"`.
+
+Wdrozone:
+
+- `fetchBackups()` zwraca snapshot listy backupow albo `null` przy awarii;
+- `fetchSchedules()` zwraca snapshot harmonogramow albo `null` przy awarii;
+- create backup robi mutacje, potem read-back i sprawdza `type/reason`;
+- modal create zamyka sie dopiero po potwierdzonym read-backu;
+- stale create pokazuje `Backup creation was not confirmed by the server`;
+- schedule toggle robi mutacje, potem read-back i wymaga oczekiwanego `enabled`;
+- stale toggle pokazuje `Backup schedule update was not confirmed by the server`;
+- dodano inline action alert z `role="alert"`;
+- destrukcyjne restore/download/delete i DR test pozostaja jawnie disabled/read-only.
+
+Test:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 6 passed
+```
+
+Regresja Backup components:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx tests/unit/components/SuperAdmin/BackupConfigPanel.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 3 passed
+Tests: 10 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DE. Status po follow-upie SuperAdmin Security `ThreatIntelligenceView`
+
+Sweep domknal druga czesc security incident/threat management. Widok mial honest degraded state na initial load, ale lifecycle threat feed nadal ufal lokalnym zmianom:
+
+- create threat zamykal modal i pokazywal success bez potwierdzenia z odswiezonej listy;
+- block/unblock robily lokalne `setThreats(map(...))`;
+- delete robil lokalne `setThreats(filter(...))`;
+- `loadData()` po mutacjach byl odpalany bez walidacji wyniku;
+- stale read-back nie byl traktowany jako blad;
+- bledne `lastSeen` moglo renderowac `Invalid Date`;
+- alert akcji nie mial semantycznego `role="alert"`;
+- error mapping opieral sie na lokalnym `err.message`.
+
+Wdrozone:
+
+- `loadData()` zwraca snapshot threats/stats i czysci state przy awarii;
+- create robi mutacje, potem read-back i sprawdza `threatType/threatLevel/ipAddress/domain`;
+- modal create zamyka sie dopiero po potwierdzonym read-backu;
+- stale create pokazuje `Threat creation was not confirmed by the server`;
+- block robi mutacje, potem read-back i wymaga `isBlocked === true`;
+- unblock robi mutacje, potem read-back i wymaga `isBlocked === false`;
+- delete robi mutacje, potem read-back i sprawdza, czy threat zniknal;
+- stale block/unblock/delete pokazuja jawny blad walidacji;
+- daty threat feed renderuja `Unknown date` dla niepoprawnych timestampow;
+- bledy load/mutacji/reputation check uzywaja `normalizeApiErrorMessage`;
+- usunieto lokalne optymistyczne `setThreats(map/filter)`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Regresja SuperAdmin views honesty:
+
+```text
+npx vitest run tests/unit/views/superadmin/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 31 passed
+Tests: 77 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/iam/ThreatIntelligenceView.tsx tests/unit/views/superadmin/ThreatIntelligenceView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23DD. Status po follow-upie SuperAdmin Security `SecurityIncidentsView`
+
+Kolejny sweep objal P0/P1 security incident management. Widok mial juz honest degraded state na initial load, ale lifecycle incydentow nadal mial optymistyczne zachowania:
+
+- create incident pokazywal success przed potwierdzeniem, ze incydent pojawil sie na liscie;
+- resolve incident lokalnie zmienial status na `resolved` i ustawial `resolvedAt` z czasu przegladarki;
+- delete incident lokalnie filtrowal liste;
+- `loadData()` po resolve/delete byl odpalany bez `await`;
+- stale dane po mutacji nie byly traktowane jako blad;
+- bledne daty `detectedAt` / `resolvedAt` mogly renderowac `Invalid Date`;
+- alert akcji nie mial semantycznego `role="alert"`;
+- error mapping opieral sie o `err.message`, bez wspolnego mappera.
+
+Wdrozone:
+
+- `loadData()` zwraca snapshot incidents/stats i czysci state przy awarii;
+- create robi mutacje, potem read-back i sprawdza `incidentType/severity/description`;
+- modal create zamyka sie dopiero po potwierdzonym read-backu;
+- stale create pokazuje `Security incident creation was not confirmed by the server`;
+- resolve robi mutacje, potem read-back i wymaga statusu `resolved` albo `closed`;
+- stale resolve pokazuje `Security incident resolution was not confirmed by the server`;
+- delete robi mutacje, potem read-back i sprawdza, czy incydent zniknal;
+- stale delete pokazuje `Security incident deletion was not confirmed by the server`;
+- daty incydentow renderuja `Unknown date` dla niepoprawnych timestampow;
+- bledy load/mutacji uzywaja `normalizeApiErrorMessage`;
+- usunieto lokalne optymistyczne `setIncidents(map/filter)`.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Regresja SuperAdmin views honesty:
+
+```text
+npx vitest run tests/unit/views/superadmin/*.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 31 passed
+Tests: 74 passed
+```
+
+Dodatkowe gate:
+
+```text
+npx eslint --fix src/views/superadmin/iam/SecurityIncidentsView.tsx tests/unit/views/superadmin/SecurityIncidentsView.honesty.test.tsx --no-warn-ignored
+ReadLints dla zmienionych plikow
+```
+
+Wynik: ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
+### 23CL. Status po sweepie AI Platform `PolicyEnforcementTab`
+
+Kolejny sweep domknal `Policy Plane: Enforcement State`. Panel byl read-only i pokazywal drift, ale brakowalo jasnego rozroznienia awarii telemetrii od braku danych oraz operacyjnej sciezki naprawy driftu. Istnialo ryzyko, ze `unknown`, zera lub pusta tabela beda odebrane jako poprawny stan control plane.
+
+Wdrozone:
+
+- dodano `loadError` i `Policy enforcement unavailable` dla awarii `getSuperAdminPolicyEnforcement`;
+- przy awarii telemetrii czyszczone sa `rows`, `health` i `summary`, a KPI/tabela nie renderuja falszywego `unknown`/`0`;
+- wiersze driftu dostaly severity: `critical` dla aktywnego providera z runtime drift, `high` dla czesciowo rozjechanych connectorow, `medium` dla pozostalych driftow;
+- dodano kolumne `Detected` z bezpiecznym formatowaniem `updatedAt`, bez `Invalid Date`;
+- dodano `Repair path` jako link do realnego miejsca naprawy: LLM Providers, Connector Ops, Mission Control albo AI Governance;
+- przy krytycznym provider drift widok pokazuje jawna blokade: `High-risk rollout blocked`;
+- dodano przycisk `Refresh`, ktory ponownie odpytuje live telemetryke.
+
+Test:
+
+```text
+npx vitest run tests/unit/views/superadmin/PolicyEnforcementTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI Platform honest UI:
+
+```text
+npx vitest run <26 AI Platform/admin honesty/regression test files including PolicyEnforcementTab>
+```
+
+Wynik:
+
+```text
+Test Files: 26 passed
+Tests: 56 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Policy/PolicyEnforcementTab.tsx tests/unit/views/superadmin/PolicyEnforcementTab.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint/ReadLints dla zmienionych plikow ma 0 bledow.
+
 ### 23BA. Status po koncowym sweepie Settings honest UI
 
 Koncowy sweep po admin/superadmin objal pozostale wysokiego ryzyka komponenty `Settings`, gdzie UI mogl nadal udawac dzialajace funkcje mimo braku backendu albo awarii zrodel danych.
@@ -6299,6 +15567,1357 @@ npx eslint --fix src/components/Admin/AdminEnterpriseOverviewPanel.tsx tests/uni
 ```
 
 Wynik: TypeScript check przeszedl bez bledow. ESLint dla nowych/zmienionych frontendowych i testowych plikow zakonczyl sie bez bledow; w `adminP32.routes.ts` pozostaja istniejace ostrzezenia legacy typu `any` poza zakresem tej partii.
+
+### 23BJ. Status po przepieciu Tenant Admin Audit Log na P32
+
+Kolejna partia objela `AuditLogView`, czyli tenant-admin audit log. Widok mial juz honest UI dla awarii load, ale nadal korzystal ze starego `Api.getAuditLogs(currentOrganization.id)` oraz eksportu przez `/api/organizations/:id/audit-logs/export`. To omijalo kanoniczny P32 kontrakt `/api/admin/audit-logs` i `/api/admin/audit-logs/export`.
+
+Wdrozone:
+
+- `AuditLogView` laduje logi przez `Api.getTenantAdminAuditLogs()`;
+- eksport CSV idzie przez `Api.exportTenantAdminAuditLogs()`;
+- usunieto zaleznosc od `currentOrganization` dla tego widoku, bo P32 scope wynika z aktywnego aktora/tokena;
+- dodano normalizacje backendowych rekordow `admin_audit_logs` do istniejacego modelu UI;
+- `metadata_json` / `metadata` sa parsowane strukturalnie;
+- action type jest mapowany z backendowych `action_type` na UI badge (`SECURITY`, `CREATE`, `DELETE`, `EXPORT`, itd.);
+- awaria load nadal pokazuje `Audit logs unavailable` / `Audit activity unavailable` i blokuje export oraz filtry;
+- test honest UI mockuje juz P32 helper, a nie stary `getAuditLogs`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/admin/AuditLogView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+ReadLints: AuditLogView, AuditLogView.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ReadLints nie wykazal bledow w zmienionych plikach. ESLint `--fix` dla plikow partii zakonczyl sie bez bledow.
+
+### 23BK. Status po dodaniu Tenant Admin Risk Summary na P32
+
+Kolejna partia domknela widocznosc sygnalow audit/risk po przepieciu `AuditLogView` na P32. Backend mial juz kontrakt `GET /api/admin/risk/summary` (`Api.getAdminRiskSummary()`), ale tenant-admin security hub nie mial panelu, ktory pokazywalby te dane w uczciwy sposob. W praktyce `Audit & Risk` bylo widoczne w overview, ale brakowalo dedykowanego miejsca do follow-upu.
+
+Wdrozone:
+
+- dodano `AdminRiskSummaryPanel` korzystajacy z `Api.getAdminRiskSummary()`;
+- panel pokazuje high-risk audit events, unresolved audit items i liczbe ostatnich LLM/provider incidents;
+- awaria load czysci lokalny summary i pokazuje `Risk summary unavailable` z retry, bez falszywych zerowych metryk;
+- incidenty sa renderowane jako kolejka follow-up, a pusty wynik jest opisany jako realny brak recent incidents;
+- `AdminSecurityIdentityPanel` dostal zakladke `Risk summary`, dostepna takze przez `?tab=risk`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx tests/unit/components/Admin/AdminSecurityIdentityPanel.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 3 passed
+```
+
+Szersza regresja audit/risk:
+
+```text
+npx vitest run tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx tests/unit/components/Admin/AdminSecurityIdentityPanel.test.tsx tests/unit/views/admin/AuditLogView.honesty.test.tsx tests/unit/components/Admin/AdminEnterpriseOverviewPanel.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 4 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/AdminRiskSummaryPanel.tsx src/components/Admin/AdminSecurityIdentityPanel.tsx tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx tests/unit/components/Admin/AdminSecurityIdentityPanel.test.tsx --no-warn-ignored
+ReadLints: AdminRiskSummaryPanel, AdminSecurityIdentityPanel i nowe testy
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23BL. Status po utwardzeniu SuperAdmin Governance Approvals
+
+Kolejna partia wrocila do P0 z obszaru Governance & Compliance: `ApprovalWorkflowsView`. Audyt wskazywal tam `[object Object]`, brak pewnego tworzenia workflowow i brak wiarygodnych decyzji approve/reject. Backend dla `/api/superadmin/admin/approval-workflows` oraz `/api/superadmin/admin/approval-requests` juz istnieje, wiec zakres tej partii polegal na usunieciu false UI i domknieciu refresh-proof zachowania.
+
+Wdrozone:
+
+- awaria initial load czysci workflows i requests oraz pokazuje `Approval workflows unavailable` / `Approval requests unavailable`;
+- statystyki `Workflows`, `Pending Requests`, `Approved`, `Rejected` sa ukryte przy awarii load, zeby nie sugerowac zerowych wartosci;
+- `Create Workflow` jest disabled przy niedostepnym backendzie approval;
+- `create workflow`, `delete workflow`, `approve request` i `reject request` po sukcesie robia pelny refetch danych zamiast lokalnego optimistic update;
+- bledy sa normalizowane przez `normalizeApiErrorMessage`, bez `[object Object]`;
+- daty sa formatowane bez `Invalid Date` (`Unknown date` dla niepoprawnej wartosci);
+- przyciski decyzji i usuwania dostaly czytelne `aria-label`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Szersza regresja governance/audit/risk:
+
+```text
+npx vitest run tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx tests/unit/components/Admin/AdminRiskSummaryPanel.test.tsx tests/unit/views/admin/AuditLogView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 3 passed
+Tests: 7 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/iam/ApprovalWorkflowsView.tsx tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx --no-warn-ignored
+ReadLints: ApprovalWorkflowsView i ApprovalWorkflowsView.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23BM. Status po utwardzeniu SuperAdmin Compliance DSAR / Audits
+
+Kolejna partia objela P0 z Governance & Compliance: `ComplianceCenterView`, szczegolnie DSAR, audyty compliance i processing records. Backend ma juz endpointy `/api/superadmin/compliance/dsar`, `/api/superadmin/compliance/audits` i `/api/superadmin/compliance/processing-records`, ale UI nadal mial kilka ryzyk false workflow: aktywne akcje przy awarii list, mutacje bez oczekiwania na refetch, overview z zerami przy niedostepnych zrodlach oraz ryzyko `Invalid Date`.
+
+Wdrozone:
+
+- karty overview dla DSAR i audits pokazuja `Unavailable` oraz opis niedostepnego zrodla, zamiast zerowych metryk po awarii;
+- recent DSARs w overview pokazuje `Recent DSAR requests unavailable`, a nie `No data subject requests`;
+- `New Request`, `Schedule Audit` i `Add Processing Record` sa disabled, gdy odpowiednia lista jest niedostepna;
+- `Export Report` jest disabled, jesli ktorykolwiek z kluczowych compliance feedow jest zdegradowany;
+- `create DSAR`, `schedule audit`, `add processing record` i `save control` czekaja na pelny `fetchData()` po mutacji;
+- bledy mutacji i exportu sa normalizowane przez `normalizeApiErrorMessage`;
+- daty w DSAR, audits i processing records przechodza przez bezpieczne formatowanie z fallbackiem `Unknown date` / `—`;
+- testy potwierdzaja, ze awarie nie renderuja pustych list oraz ze create workflowy wracaja z backendu po refetchu.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja governance:
+
+```text
+npx vitest run tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx
+```
+
+Wynik: komenda zakonczyla sie kodem 0.
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/ComplianceCenterView.tsx tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx --no-warn-ignored
+ReadLints: ComplianceCenterView i ComplianceCenterView.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ReadLints nie wykazal bledow w zmienionych plikach. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `ComplianceCenterView.tsx` (`@ts-nocheck`, `any`, `console`, nieuzywany `STATUS_COLORS`), poza zakresem tej partii.
+
+### 23BN. Status po utwardzeniu SuperAdmin Backup & Recovery / DR
+
+Kolejna partia objela P0 z Connector Ops / operacji platformy: `EnterpriseBackupPanel`. Panel byl juz w duzej mierze zdegradowany dla destrukcyjnych akcji restore/delete/DR, ale nadal mial kilka ryzyk: `Create Backup` startowal mutacje bez oczekiwania na backendowy refetch, toggle harmonogramu robil lokalny optimistic update, przycisk ustawien schedule wygladal aktywnie mimo braku audytowanego edytora, a daty backupow/schedules mogly renderowac `Invalid Date`.
+
+Wdrozone:
+
+- `Create Backup` po sukcesie czeka na `fetchBackups()` przed zamknieciem flow;
+- toggle schedule po sukcesie czeka na `fetchSchedules()` i nie ufa lokalnemu optimistic state;
+- blad create/toggle jest normalizowany przez `normalizeApiErrorMessage`;
+- usunieto `console.error` z operacyjnych catchy;
+- daty backupow i harmonogramow przechodza przez bezpieczne formatowanie z fallbackiem `Unknown date` / `Never`;
+- przycisk schedule settings jest disabled z jasnym powodem, dopoki nie ma audytowanego edytora harmonogramu;
+- przyciski wyboru typu backupu w modalu sa disabled podczas trwajacego create;
+- testy potwierdzaja refetch po `createBackup`, refetch po `updateBackupSchedule`, brak `Invalid Date` i read-only/destructive disabled stance.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 7 passed
+```
+
+Szersza regresja P0 governance/backup:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.test.tsx tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 4 passed
+Tests: 12 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/SuperAdmin/system/EnterpriseBackupPanel.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.test.tsx --no-warn-ignored
+ReadLints: EnterpriseBackupPanel i testy backup panelu
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23BO. Status po utwardzeniu SuperAdmin API Keys / API Management
+
+Kolejna partia objela P0 z Connector Ops: `EnterpriseApiManagement`. Panel wygladal jak pelny superadmin API key workflow, ale korzystal z user/settings/token-billing helperow zamiast kanonicznych endpointow superadmin. Dodatkowo create nie zbieral `organizationId`, ktorego backend wymaga, usage helper zwracal stub, a edit wygladal na aktywny mimo braku audytowanego superadmin update workflow.
+
+Wdrozone:
+
+- lista kluczy korzysta teraz z `GET /api/superadmin/api-keys` przez `Api.get('/superadmin/api-keys')`;
+- tworzenie klucza korzysta z `POST /api/superadmin/api-keys` i wysyla `organizationId`, `name`, `description`, `keyType`, `scopes`, rate limity, IP allowlist i expiry;
+- formularz create wymaga wyboru organizacji z `getOrganizations`; przy awarii organizacji globalny `Create API Key` jest disabled z powodem;
+- revoke korzysta z `DELETE /api/superadmin/api-keys/:id` i po sukcesie czeka na pelny refetch listy;
+- usage korzysta z `GET /api/superadmin/api-keys/:id/usage`, normalizuje odpowiedz backendu `daily/endpoints` i po kliknieciu przechodzi do zakladki usage;
+- create/revoke sa refresh-proof: po mutacji UI nie ufa lokalnemu optimistic state;
+- edit API key zostal jawnie disabled jako read-only do czasu audytowanego update workflow;
+- daty usage/last-used sa bezpiecznie formatowane, bez `Invalid Date`;
+- usunieto nowe `any` z normalizacji odpowiedzi API na rzecz typed helpers.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Szersza regresja SuperAdmin P0:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx tests/unit/views/superadmin/ApprovalWorkflowsView.honesty.test.tsx tests/unit/views/superadmin/ComplianceCenterView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 4 passed
+Tests: 12 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/SuperAdmin/system/EnterpriseApiManagement.tsx tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx --no-warn-ignored
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint dla zmienionych plikow zakonczyl sie bez bledow.
+
+### 23BP. Status po utwardzeniu SuperAdmin Webhooks / API Management
+
+Kolejna partia objela P0 Connector Ops: webhooki widoczne w `EnterpriseIntegrationsHub` oraz zgodnosc z read-only stance w `APIManagementView`. W `APIManagementView` webhooki byly juz uczciwie zdegradowane, ale `EnterpriseIntegrationsHub` nadal pokazywal aktywne `Create Webhook`, `Test` i `Delete`, mimo ze backend ma zdublowane `/api/superadmin/webhooks` i nie ma jednego potwierdzonego, audytowanego workflow mutacji.
+
+Wdrozone:
+
+- `EnterpriseIntegrationsHub` nadal laduje i pokazuje istniejace webhooki oraz delivery inspection;
+- create/test/delete webhook sa disabled z powodem: duplicate superadmin webhook routes musza byc najpierw pogodzone za jednym audytowanym backend workflow;
+- usunieto modal create webhook z tego panelu, zeby nie bylo ukrytej drogi do pozornej mutacji;
+- empty state webhookow nie zaprasza juz do tworzenia webhooka, tylko rozroznia wiarygodnie pusta liste od niedostepnosci API;
+- bledy load webhookow i delivery inspection sa normalizowane przez `normalizeApiErrorMessage`;
+- daty `last_triggered_at` w webhookach sa bezpiecznie formatowane z fallbackiem `Unknown date` / `Never`;
+- testy potwierdzaja, ze mutacje webhookow nie sa wywolywane z UI, a delivery load failure nie renderuje `No deliveries yet`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseIntegrationsHub.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 3 passed
+```
+
+Szersza regresja Connector Ops:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/EnterpriseIntegrationsHub.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx tests/unit/components/SuperAdmin/EnterpriseApiManagement.honesty.test.tsx tests/unit/components/SuperAdmin/EnterpriseBackupPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 4 passed
+Tests: 10 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/SuperAdmin/system/EnterpriseIntegrationsHub.tsx tests/unit/components/SuperAdmin/EnterpriseIntegrationsHub.honesty.test.tsx tests/unit/views/superadmin/APIManagementView.webhooks.test.tsx --no-warn-ignored
+ReadLints: EnterpriseIntegrationsHub, webhook tests, admin_dev_fin
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `EnterpriseIntegrationsHub` (`any`, `console`, nieuzywane caught errors), poza zakresem tej partii.
+
+### 23BQ. Status po utwardzeniu SuperAdmin AI Operations / LLM Provider Management
+
+Kolejna partia objela P0 z AI Operations: `LLMManagementView`, uzywany przez `AIPlatformModule/Configuration/LLMProvidersTab`. Backend ma realne endpointy `/api/llm/providers`, `/api/llm/providers/:id`, `/api/llm/providers/:id/clone-model` i tier update, ale UI mial dwa ryzyka honest UI: awaria listy providerow mogla wygladac jak `No providers configured`, a create/update/clone/delete/tier change pokazywaly sukces i odpalaly refetch bez oczekiwania na potwierdzony stan po stronie backendu.
+
+Wdrozone:
+
+- dodano `providerLoadError` dla listy LLM providerow;
+- awaria `getLLMProviders()` pokazuje `LLM providers unavailable` zamiast pustej tabeli;
+- `Add Provider`, `Test All`, `Apply v3 recommended preset` i `Show Inactive` sa disabled, gdy registry providerow nie jest wiarygodnie zaladowane;
+- create/update/clone provider czekaja na `loadInitialData()` po sukcesie przed domknieciem flow jako refresh-proof;
+- delete provider czeka na pelny refetch po sukcesie;
+- tier change nie robi juz lokalnego optimistic update, tylko czeka na refetch providerow;
+- save provider ma stan `Saving...`, blokujacy podwojne submit;
+- bledy provider operations sa normalizowane przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI/admin:
+
+```text
+npx vitest run tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx tests/unit/components/settings/AISettings.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 4 passed
+Tests: 8 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/LLMManagementView.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx --no-warn-ignored
+ReadLints: LLMManagementView, LLMManagementView.honesty.test, admin_dev_fin
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `LLMManagementView` (`any`, `console`, nieuzywane caught errors), poza zakresem tej partii.
+
+### 23BR. Status po utwardzeniu SuperAdmin AI Operations / Routing Rules
+
+Kolejna partia objela P0 z AI Operations: `RoutingRulesTab` w `AIPlatformModule/Configuration`. Backend ma realne endpointy `GET/POST/PUT/DELETE /api/llm/routing-rules` oraz toggle, ale UI mial false-empty/optimistic ryzyka: awaria tier assignments/providerow/rules mogla wygladac jak `No routing rules yet`, toggle robil lokalny optimistic update, a quick delete usuwal rule z UI przed potwierdzeniem backendu.
+
+Wdrozone:
+
+- dodano `loadError` dla krytycznych zrodel routingu: tier assignments, LLM providers i persisted routing rules;
+- awaria ktoregos z krytycznych zrodel pokazuje `Routing configuration unavailable` zamiast pustych tierow/list;
+- `Add Rule` jest disabled przy niewiarygodnym stanie routingu;
+- toggle rule czeka na backend i potem robi pelny `loadRoutingConfig()` zamiast lokalnego optimistic update;
+- quick delete nie usuwa rule lokalnie przed odpowiedzia backendu, tylko po sukcesie robi pelny refetch;
+- save/create/update/delete w modalu dalej sa refresh-proof przez `await loadRoutingConfig()`;
+- bledy routing operations sa normalizowane przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI routing/provider:
+
+```text
+npx vitest run tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 4 passed
+Tests: 6 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Configuration/RoutingRulesTab.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx --no-warn-ignored
+ReadLints: RoutingRulesTab, RoutingRulesTab.honesty.test, admin_dev_fin
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `RoutingRulesTab` (`any`), poza zakresem tej partii.
+
+### 23BS. Status po utwardzeniu SuperAdmin AI Operations / Purposes & Assignments
+
+Kolejna partia objela P0 z AI Operations: `PurposeAssignmentsTab` w `AIPlatformModule/Configuration`. Backend ma realne endpointy `GET/POST /api/llm/purposes` oraz `GET/POST/DELETE /api/llm/purposes/:purpose/assignments`, wiec workflow pozostaje aktywny. Problemem byly false-empty stany: awaria katalogu purposes/providerow mogla wygladac jak pusta konfiguracja, a awaria assignments mogla zostac pokazana jako `No assignments. Add one above.`.
+
+Wdrozone:
+
+- dodano `loadError` dla krytycznego loadu katalogu purposes i providerow;
+- dodano `assignmentsLoadError` dla listy przypisan wybranego purpose;
+- awaria katalogu pokazuje `Purpose assignments unavailable` zamiast renderowac pusty formularz;
+- awaria listy assignments pokazuje `Purpose assignment list unavailable` zamiast `No assignments`;
+- `Add`, starter presets i remove sa blokowane, gdy lista assignments jest niewiarygodna;
+- `Save purpose`, `Add assignment`, `Apply starter preset` i `Remove assignment` dalej czekaja na backend i potem odswiezaja dane przez `loadAll()` lub `loadAssignments()`;
+- bledy purpose/assignment operations sa normalizowane przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Szersza regresja AI routing/provider/purpose:
+
+```text
+npx vitest run tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 5 passed
+Tests: 9 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Configuration/PurposeAssignmentsTab.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx --no-warn-ignored
+ReadLints: PurposeAssignmentsTab, PurposeAssignmentsTab.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `PurposeAssignmentsTab` (`any`), poza zakresem tej partii.
+
+### 23BT. Status po utwardzeniu SuperAdmin AI Operations / Org AI Policy
+
+Kolejna partia objela P0 z AI Operations: `OrgAIPolicyTab` w `AIPlatformModule/Configuration`. Backend ma realne endpointy `GET/PUT /api/llm/org/:organizationId/policy`, `GET /api/llm/org/:organizationId/policy/history` i `POST /api/llm/org/:organizationId/policy/rollback`, wiec workflow pozostaje aktywny. Problemem byly false UI i race-risk: panel pozwalal edytowac/zapisywac pusty JSON przed pewnym loadem, awaria policy nie miala trwalego degraded state, awaria historii wygladala jak `No policy revisions yet`, a pozniejszy reset organizacji mogl wyczyscic wynik recznego loadu.
+
+Wdrozone:
+
+- dodano `organizationsLoadError`, `policyLoadError`, `historyLoadError` i `hasLoadedPolicy`;
+- `Save draft`/publish workflow jest disabled, dopoki aktualna polityka organizacji nie zostanie zaladowana;
+- Guided Policy Builder i Advanced JSON sa disabled przed loadem albo po awarii policy;
+- awaria policy pokazuje `Org AI policy unavailable` zamiast edytowalnego pustego JSON;
+- awaria historii pokazuje `Policy history unavailable` zamiast `No policy revisions yet`;
+- rollback jest blokowany przy niewiarygodnej historii albo awarii policy;
+- zmiana organizacji resetuje policy state synchronicznie, bez efektu, ktory mogl nadpisac wynik pozniejszego loadu;
+- daty historii sa formatowane przez safe formatter i nie pokazuja `Invalid Date`;
+- save i rollback czekaja na backend i potem robia pelny `loadPolicy()`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 4 passed
+```
+
+Szersza regresja AI configuration:
+
+```text
+npx vitest run tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 6 passed
+Tests: 13 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Configuration/OrgAIPolicyTab.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx --no-warn-ignored
+ReadLints: OrgAIPolicyTab, OrgAIPolicyTab.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `OrgAIPolicyTab` (`any`, `react-hooks/exhaustive-deps`), poza zakresem tej partii.
+
+### 23BU. Status po utwardzeniu SuperAdmin AI Operations / Prompt Builder i AI Intelligence
+
+Kolejna partia objela P0 z AI Operations: `PromptBuilderTab`, czyli wrapper `AIIntelligenceView`. Backend ma realne endpointy `GET /api/prompt-assistant/stats` i `GET /api/prompt-assistant/templates`, a osobne komponenty Block Builder / Test Bench / Assistant maja swoje endpointy runtime. Problemem byly false UI w overview i templates: awaria stats zostawiala zerowe KPI, awaria templates wygladala jak `No templates found`, a `New Template`, `Edit` i `Test` wygladaly na aktywne workflow mimo ze ten sub-komponent tylko listuje dane i nie zapisuje/testuje template przez kanoniczny prompt registry.
+
+Wdrozone:
+
+- dodano `statsLoadError` dla overview `AIIntelligenceView`;
+- awaria stats pokazuje `AI intelligence stats unavailable` zamiast zerowych KPI `0`/`0.0`;
+- dodano `loadError` dla `PromptTemplateManager`;
+- awaria templates pokazuje `Prompt templates unavailable` zamiast `No templates found`;
+- search templates jest disabled przy awarii danych;
+- dodano `ReadOnlyState` informujacy, ze mutacje template sa obslugiwane przez kanoniczny `Prompts Library`;
+- `New Template`, `Edit` i `Test` w builder view sa disabled z jasnym powodem, dopoki nie beda podpiete do kanonicznego workflow;
+- bledy stats/templates sa normalizowane przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 3 passed
+```
+
+Szersza regresja AI development/configuration:
+
+```text
+npx vitest run tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 7 passed
+Tests: 16 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIIntelligenceView.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx --no-warn-ignored
+ReadLints: AIIntelligenceView, AIIntelligenceView.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `AIIntelligenceView` (`any`, `console`, `react-hooks/exhaustive-deps`, kilka nieuzytych importow), poza zakresem tej partii.
+
+### 23BV. Status po utwardzeniu SuperAdmin AI Operations / Experiments
+
+Kolejna partia objela P0 z AI Operations: `ExperimentsTab`, czyli wrapper `ABTestingDashboard`. Backend ma realne endpointy pod `/api/ai/ab-testing/experiments` dla listy, create, start, pause, resume, stop, archive i declare-winner. Problemem byly false UI i drobny kontrakt lifecycle: awaria listy mogla zostawic create/filtery jako aktywne i wygladac jak zwykly pusty stan, bledy byly lokalnymi stringami bez normalizacji, a przycisk `Resume` wolal `start` zamiast kanonicznego `resume`.
+
+Wdrozone:
+
+- awaria listy eksperymentow pokazuje `A/B experiments unavailable` zamiast pustej listy;
+- `New Experiment`, empty-state create i status filters sa disabled przy niewiarygodnym loadzie;
+- create/start/pause/resume/complete/declare-winner odmawia akcji, jesli lista eksperymentow jest w stanie error;
+- `Resume` uzywa endpointu `/resume`, zgodnie z backendem `/api/ai/ab-testing/experiments/:id/resume`;
+- create i lifecycle actions pozostaja refresh-proof przez `await fetchExperiments()`;
+- bledy create/lifecycle/load sa normalizowane przez `normalizeApiErrorMessage`;
+- dodano safe formatter dat dla panelu, zeby unikac `Invalid Date` przy niepoprawnych wartosciach.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI development/configuration:
+
+```text
+npx vitest run tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 8 passed
+Tests: 18 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/ABTestingDashboard.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints: ABTestingDashboard, ABTestingDashboard.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `ABTestingDashboard` (`any`, nieuzyte importy/stany), poza zakresem tej partii.
+
+### 23BW. Status po utwardzeniu SuperAdmin AI Operations / Model Registry Catalog
+
+Kolejna partia objela P0 z AI Operations: `ModelRegistryHub`, a w nim glowna powierzchnie `ModelCatalogTable`. Ten panel jest oparty o kanoniczne LLM providers (`/api/llm/providers`), ale mial false UI: awaria listy providerow konczyla sie toastem i pustym stanem `No models match your filters`, statystyki mogly pokazac zera, a toggle active i delete wykonywaly lokalne optimistic update przed potwierdzeniem backendu.
+
+Wdrozone:
+
+- dodano `loadError` dla katalogu providerow/modeli;
+- awaria `/api/llm/providers` pokazuje `Model catalog unavailable` zamiast zerowych statystyk i pustej tabeli;
+- `Add Model`, filtry, search i menu akcji sa disabled przy niewiarygodnym katalogu;
+- toggle active nie zmienia juz lokalnie statusu przed backendem, tylko po sukcesie robi pelny `loadModels()`;
+- delete nie usuwa juz wiersza lokalnie przed backendem, tylko po sukcesie robi pelny `loadModels()`;
+- bledy load/update/delete sa normalizowane przez `normalizeApiErrorMessage`;
+- menu akcji dostalo `aria-label`, zeby testy i accessibility mialy stabilny uchwyt.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI development/configuration:
+
+```text
+npx vitest run tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 9 passed
+Tests: 20 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/SuperAdmin/ModelRegistry/ModelCatalogTable.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx --no-warn-ignored
+ReadLints: ModelCatalogTable, ModelCatalogTable.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `ModelCatalogTable` (`any`, nieuzyte importy), poza zakresem tej partii.
+
+### 23BX. Status po utwardzeniu SuperAdmin AI Operations / Health Monitoring
+
+Kolejna partia objela P0 z AI Operations: `HealthMonitoringTab`, czyli wrapper `LLMHealthPanel`. Panel ma realny backend `GET /api/llm/health/detailed` oraz `POST /api/llm/health/test-provider`, ale mial ryzyka honest UI: awaria health endpointu byla zwyklym czerwonym blokiem bez wspolnego degraded state, test pojedynczego providera mogl patchowac lokalny wiersz przed pelnym refetchem, a niepoprawne daty `lastCheck`/`summary.lastCheck` mogly pokazac `Invalid Date`.
+
+Wdrozone:
+
+- awaria `GET /api/llm/health/detailed` czysci `providers`, `alerts` i `summary`;
+- awaria health pokazuje `LLM health unavailable` przez wspolny `DegradedState`;
+- panel nie pokazuje wtedy licznikow `Zdrowe`/`Status Providerow`, wiec nie sugeruje false-healthy albo zerowych metryk;
+- `Testuj ponownie` nie patchuje juz lokalnie providera z odpowiedzi testu, tylko po `POST /api/llm/health/test-provider` robi pelny refetch health;
+- takze nieudany test providera wymusza ponowny refetch, zeby ekran odzwierciedlal backendowy stan;
+- dodano safe formatter dat dla `lastCheck` i `summary.lastCheck`, zeby nie pokazywac `Invalid Date`;
+- bledy load sa normalizowane przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI operations/development:
+
+```text
+npx vitest run tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 10 passed
+Tests: 22 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/LLMHealthPanel.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx --no-warn-ignored
+ReadLints: LLMHealthPanel, LLMHealthPanel.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23BY. Status po utwardzeniu SuperAdmin AI Operations / Performance Dashboard
+
+Kolejna partia objela P0 z AI Operations: `PerformanceDashboardTab`, czyli wrapper `AIPerformanceDashboard`. Panel agreguje trzy zrodla: `/api/llm/analytics`, `/api/llm/logs` i `/api/llm/costs`. Przed poprawka awaria ktoregokolwiek z nich mogla byc sprowadzona do pustych fallbackow i zerowych KPI, przez co ekran wygladal jak realny pomiar z `0` requests/cost/latency zamiast niedostepnego zrodla danych.
+
+Wdrozone:
+
+- dodano `loadError` dla calego performance dashboardu;
+- `analytics`, `logs` i `costs` sa traktowane jako krytyczne zrodla dla tego widoku;
+- awaria dowolnego krytycznego zrodla czysci KPI, capability metrics, model metrics i trend;
+- ekran z awaria pokazuje `AI performance metrics unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuja sie karty `Avg Response`, `Success Rate`, `System Health` ani inne metryki, wiec panel nie komunikuje false-zero/false-healthy;
+- `Export` jest blokowany, gdy dane sa niewiarygodne;
+- bledy load sa normalizowane przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI operations/development:
+
+```text
+npx vitest run tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 11 passed
+Tests: 24 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/AIPerformanceDashboard.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints: AIPerformanceDashboard, AIPerformanceDashboard.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `AIPerformanceDashboard` (`any`, nieuzyte importy/zmienne), poza zakresem tej partii. ReadLints nie wykazal bledow.
+
+### 23BZ. Status po utwardzeniu SuperAdmin AI Operations / SLA Management
+
+Kolejna partia objela P0 z AI Operations: `SLAManagementTab`, czyli wrapper `SLADashboard`. Panel agreguje `/api/llm/analytics` i `/api/llm/logs`. Przed poprawka startowal z przykladowym `99.95%` i po awarii ustawial sztuczne zera, przez co mogl komunikowac false SLA compliance, false breach albo pusta historie naruszen bez realnego zrodla danych.
+
+Wdrozone:
+
+- dodano `loadError` dla calego SLA dashboardu;
+- `analytics` i `logs` sa traktowane jako krytyczne zrodla SLA;
+- awaria dowolnego zrodla czysci metryki SLA, breach history i uptime history;
+- ekran z awaria pokazuje `SLA metrics unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuja sie `SLA Compliant`, `SLA Breach Detected`, `Request Statistics`, `No SLA breaches recorded...` ani statyczne KPI;
+- `Export` jest blokowany, gdy dane SLA sa niewiarygodne;
+- poprawiono kolejność argumentow dla uptime compliance (`actual >= target`);
+- dodano safe formatter dat dla wykresu, breach history i `Last calculated`;
+- zabezpieczono success-rate przed dzieleniem przez zero;
+- bledy load sa normalizowane przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/SLADashboard.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI operations/development:
+
+```text
+npx vitest run tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 12 passed
+Tests: 26 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/SLADashboard.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx --no-warn-ignored
+ReadLints: SLADashboard, SLADashboard.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint ma 0 bledow; pozostaja istniejace ostrzezenia legacy w `SLADashboard` (`any`, nieuzyte importy/zmienne), poza zakresem tej partii. ReadLints nie wykazal bledow.
+
+### 23CA. Status po utwardzeniu SuperAdmin AI Operations / Mission Control
+
+Kolejna partia objela P0 z AI Operations: `MissionControlTab`, czyli wrapper `AIMissionControl`. Panel pobiera status przez `/api/llm/health/status` i uruchamia diagnostyke przez `/api/llm/health/test/:capabilityId`. Przed poprawka awaria statusu byla ignorowana w `catch`, przez co UI pokazywal `0.0% Degraded`, `0ms` i `No active providers` jak realny odczyt, mimo braku danych.
+
+Wdrozone:
+
+- dodano `statusLoading` i `loadError` dla statusu Mission Control;
+- awaria `/api/llm/health/status` czysci `status` i pokazuje `AI mission control unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuja sie karty `Success Rate (Last 50)`, `Avg Latency` ani `Active Providers`;
+- przy awarii diagnostyka capability jest zablokowana, z title wyjasniajacym niedostepnosc statusu;
+- test capability normalizuje blad przez `normalizeApiErrorMessage`;
+- po kazdym tescie capability panel robi pelny refetch statusu;
+- usunieto kilka lokalnych `any` w sciezce capability results.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/AIMissionControl.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI operations/development:
+
+```text
+npx vitest run tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 13 passed
+Tests: 28 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/AIMissionControl.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx --no-warn-ignored
+ReadLints: AIMissionControl, AIMissionControl.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CB. Status po utwardzeniu SuperAdmin AI Operations / AI core runtime
+
+Kolejna partia objela P0 z AI Operations: `AI core runtime`, czyli `AICoreRuntimePanel`. Panel pobiera realne dane z V8 endpointow: `/api/v8/ai-core/environment`, `/api/v8/ai-core/tools`, `/api/v8/ai-core/tools/:toolId/policy`, `/api/v8/ai-core/trust/audit-trail` i `/api/v8/ai-core/trust/provenance`. Przed poprawka awaria glownego loadu mogla zostawic nizsze sekcje (`No governed tools returned`, `Select a governed tool...`, trust readback), co wygladalo jak poprawnie zaladowany pusty runtime zamiast niedostepnego V8 core.
+
+Wdrozone:
+
+- glowne bledy load sa normalizowane przez `normalizeApiErrorMessage`;
+- awaria environment/tools pokazuje `AI core runtime unavailable` przez wspolny `DegradedState`;
+- przy awarii glownego runtime nie renderuje sie katalog narzedzi, policy readback ani trust/provenance readback;
+- awaria glownego runtime czysci `environment`, `tools`, `selectedToolId`, `auditTrail` i `provenanceLedger`;
+- bledy policy i trust readback sa normalizowane;
+- usunieto non-null assertions z mapowania audit/provenance entries.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 5 passed
+```
+
+Szersza regresja AI operations/development:
+
+```text
+npx vitest run tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 15 passed
+Tests: 33 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/AI/AICoreRuntimePanel.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx --no-warn-ignored
+ReadLints: AICoreRuntimePanel, AICoreRuntimePanel.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CC. Status po utwardzeniu SuperAdmin AI Operations / Prompt OS runtime
+
+Kolejna partia objela P0 z AI Operations: `Prompt OS runtime`, czyli `PromptOsRuntimeSummaryPanel`. Panel pobiera realny runtime summary z `/api/v8/prompt-os/runtime/summary`. Przed poprawka blad byl lokalnym czerwonym alertem bez wspolnego degraded state i bez normalizacji komunikatu. Sam summary byl czyszczony, ale zachowanie odbiegalo od ujednoliconego wzorca honest UI dla paneli operacyjnych.
+
+Wdrozone:
+
+- bledy `V8PromptOsApi.getRuntimeSummary()` sa normalizowane przez `normalizeApiErrorMessage`;
+- awaria runtime summary pokazuje `Prompt OS runtime unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuja sie liczniki `Presets`, `Bundles`, `Active bundles` ani kontrakt runtime;
+- istniejacy test error-state zostal dostosowany do degraded state zamiast starego `role="alert"`;
+- dodano osobny test honesty blokujacy regresje do false-zero runtime counters.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 2 passed
+Tests: 5 passed
+```
+
+Szersza regresja AI operations/development:
+
+```text
+npx vitest run tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 17 passed
+Tests: 38 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/AI/PromptOsRuntimeSummaryPanel.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx --no-warn-ignored
+ReadLints: PromptOsRuntimeSummaryPanel, PromptOsRuntimeSummaryPanel.honesty.test, PromptOsRuntimeSummaryPanel.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CD. Status po utwardzeniu SuperAdmin AI Operations / Market Inbox
+
+Kolejna partia objela P0 z AI Operations: `Market Inbox`, czyli `MarketInboxTab`. Panel pobiera realne dane z `/api/llm/market/inbox`, uruchamia synchronizacje OpenRouter oraz pozwala oznaczac pozycje jako `approved`/`ignored` i aplikowac zatwierdzone zmiany. Przed poprawka awaria listy byla renderowana jak poprawnie pusta skrzynka (`Inbox is empty`), a zmiana statusu robila optimistic local update bez potwierdzenia refresh-proof stanu backendu.
+
+Wdrozone:
+
+- dodano `loadError` dla listy Market Inbox;
+- awaria `Api.getLLMMarketInbox` czysci `rows` i pokazuje `Market inbox unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuje sie `Inbox is empty`;
+- przy awarii zablokowane sa filtr statusu i `Sync now`;
+- `sync`, `approve`, `ignore` i `apply` blokuja sie, gdy lista jest niedostepna;
+- `approve` i `ignore` nie robia juz optimistic local update, tylko pelny refetch po `Api.updateMarketInboxItem`;
+- `apply` i `sync` pozostaja refresh-proof przez `await load()`;
+- bledy load/sync/update/apply sa normalizowane przez `normalizeApiErrorMessage`;
+- przyciski akcji dostaly `aria-label`, zeby testy i czytniki mogly identyfikowac akcje per model.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI operations/development:
+
+```text
+npx vitest run tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 18 passed
+Tests: 40 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Operations/MarketInboxTab.tsx tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx --no-warn-ignored
+ReadLints: MarketInboxTab, MarketInboxTab.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CE. Status po utwardzeniu SuperAdmin AI Analytics / LLM Observatory
+
+Kolejna partia objela P0 z AI Analytics: `LLM Observatory`, czyli `LLMObservatoryTab`. Panel pobiera historyczne metryki reliability, usage, kosztow i incydentow przez `Api.getAIOperationsLLMObservatory`. Przed poprawka awaria tego endpointu mogla zostawic payload jako `null` i renderowac zerowe KPI oraz puste sekcje (`No historical request data for this period`), co wygladalo jak poprawnie zaladowany okres bez ruchu zamiast niedostepnych danych.
+
+Wdrozone:
+
+- dodano `loadError` dla glownego loadu observability;
+- awaria `Api.getAIOperationsLLMObservatory` czysci `payload`, resetuje filtr providera do `all` i pokazuje `LLM observatory unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuja sie KPI, timeline, tabele providerow/modeli/errorow ani puste komunikaty udajace poprawny brak danych;
+- filtr providera jest disabled przy awarii zrodla i dostaje powod w `title`;
+- komunikaty bledow sa normalizowane przez `normalizeApiErrorMessage` i przekazywane do toastu;
+- odswiezanie po zmianie zakresu czasu zostaje oparte o realny refetch endpointu, bez lokalnego dopowiadania metryk;
+- `loadData` uzywa funkcjonalnej aktualizacji `selectedProvider`, zeby nie wprowadzac zbednej zaleznosci i nie powodowac nadmiarowych reloadow.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI admin/operations/development:
+
+```text
+npx vitest run tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 19 passed
+Tests: 42 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Analytics/LLMObservatoryTab.tsx tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx --no-warn-ignored
+ReadLints: LLMObservatoryTab, LLMObservatoryTab.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CF. Status po utwardzeniu SuperAdmin AI Analytics / Usage Analytics
+
+Kolejna partia objela P0 z AI Analytics: `Usage Analytics`, czyli `UsageAnalyticsDashboard`. Panel pobiera dane z `/api/llm/analytics`, `/api/llm/logs` i `/api/llm/costs`, a nastepnie buduje trendy, model popularity, capability usage, heatmap godzin i summary. Przed poprawka awarie `logs` albo `costs` byly traktowane jak puste dane, a glowny `catch` zerowal metryki, przez co UI mogl pokazac `Total Requests = 0`, puste wykresy i stale `Peak Hour 10:00 - 11:00` jako poprawny stan.
+
+Wdrozone:
+
+- dodano `loadError` dla glownego loadu Usage Analytics;
+- `/api/llm/analytics`, `/api/llm/logs` i `/api/llm/costs` sa traktowane jako krytyczne zrodla danych;
+- awaria dowolnego krytycznego zrodla czysci trendy, modele, capability usage, heatmap, comparison i summary;
+- przy awarii panel pokazuje `AI usage analytics unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuja sie zerowe KPI, puste wykresy ani puste listy udajace poprawny brak danych;
+- zakres czasu i CSV export sa blokowane przy awarii zrodla;
+- CSV export blokuje sie takze, gdy nie ma trend data do eksportu;
+- PDF export zostal oznaczony jako disabled, bo nie ma jeszcze realnego workflow wygenerowanego raportu;
+- `Peak Hour` jest liczony z zaladowanych logow albo pokazuje `n/a`, zamiast stalego mocka `10:00 - 11:00`;
+- usunieto lokalny `console.error` i znormalizowano komunikaty bledow przez `normalizeApiErrorMessage`;
+- helpery ikon zostaly przepisane z `any` na `LucideIcon`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI admin/operations/development:
+
+```text
+npx vitest run tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 20 passed
+Tests: 44 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/AI/UsageAnalyticsDashboard.tsx tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints: UsageAnalyticsDashboard, UsageAnalyticsDashboard.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CG. Status po utwardzeniu SuperAdmin AI Analytics / Cost Analytics
+
+Kolejna partia objela P0 z AI Analytics: `Cost Analytics`, czyli wrapper `CostAnalyticsTab` i `AICostDashboard`. Panel pobiera koszty przez `Api.getLLMCosts` oraz dodatkowy FinOps overview przez `Api.getAIFinOpsOverview`. Przed poprawka awaria glownego kosztowego endpointu ustawiala tylko lokalny blad w sekcji breakdown, ale karty KPI nadal renderowaly `$0.00`, `0` tokenow i sztucznie wyliczone `Est. Monthly`, co moglo wygladac jak realny zerowy koszt.
+
+Wdrozone:
+
+- dodano `loadError` dla glownego loadu kosztow;
+- awaria `Api.getLLMCosts` czysci `costData` i `finOps`;
+- przy awarii panel pokazuje `AI cost analytics unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuja sie karty KPI ani `No cost data available yet`;
+- `FinOps overview` pozostaje opcjonalny, ale jego awaria nie generuje juz sztucznego miesiecznego estimate;
+- `Est. Monthly` pokazuje `n/a`, gdy `projectedMonthEndSpendUsd` nie zostal zaladowany z backendu;
+- usunieto `any` z obslugi bledow i znormalizowano komunikat przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/components/Admin/AICostDashboard.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI admin/operations/development:
+
+```text
+npx vitest run tests/unit/components/Admin/AICostDashboard.honesty.test.tsx tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 21 passed
+Tests: 46 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/components/Admin/AICostDashboard.tsx tests/unit/components/Admin/AICostDashboard.honesty.test.tsx --no-warn-ignored
+ReadLints: AICostDashboard, AICostDashboard.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CH. Status po utwardzeniu SuperAdmin AI Analytics / Pricing Registry
+
+Kolejna partia objela P0 z AI Analytics: `Pricing Registry`, czyli `PricingRegistryTab`. Panel korzysta z realnych endpointow `GET /api/llm/pricing/snapshots` i `POST /api/llm/pricing/snapshots`. Przed poprawka awaria listy snapshotow byla renderowana jak poprawny pusty rejestr (`No snapshots.`), filtry i `Create` pozostawaly aktywne mimo niedostepnego zrodla, a bledy load/create nie byly normalizowane.
+
+Wdrozone:
+
+- dodano `loadError` dla listy pricing snapshots;
+- awaria `Api.getLLMPricingSnapshots` czysci `rows` i pokazuje `Pricing snapshots unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuje sie `No snapshots.`;
+- filtry providera/modelu, `Apply filters` i `Create` sa blokowane, gdy lista snapshotow jest niedostepna;
+- `Create` pozostaje refresh-proof: po udanym `Api.createLLMPricingSnapshot` wykonywany jest pelny refetch listy;
+- bledy load/create sa normalizowane przez `normalizeApiErrorMessage`;
+- `units` przepisano z `any` na `unknown`;
+- daty `effective_from` i `created_at` sa renderowane przez bezpieczny formatter, bez surowego `Invalid Date`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/PricingRegistryTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI admin/operations/development:
+
+```text
+npx vitest run tests/unit/views/superadmin/PricingRegistryTab.honesty.test.tsx tests/unit/components/Admin/AICostDashboard.honesty.test.tsx tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 22 passed
+Tests: 48 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Analytics/PricingRegistryTab.tsx tests/unit/views/superadmin/PricingRegistryTab.honesty.test.tsx --no-warn-ignored
+ReadLints: PricingRegistryTab, PricingRegistryTab.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CI. Status po utwardzeniu SuperAdmin AI Analytics / Performance Metrics
+
+Kolejna partia objela P0 z AI Analytics: `Performance Metrics`, czyli `PerformanceMetricsTab`. Panel pobiera krytyczne dane z `Api.getAIOperationsPerformanceMetrics` i `Api.getAIOperationsPerformanceTrends`, a pomocniczo korzysta z `Api.getMissionControlProviders` i `Api.getLLMHealthDetailed`. Przed poprawka awaria krytycznych zrodel konczyla sie tylko toastem i mogla zostawic pusty dashboard bez degraded state. Awaria health alerts mogla wygladac jak `No active alerts.`, a provider success/error rate mogly byc wyliczane jako `0/100` przy braku health readback.
+
+Wdrozone:
+
+- dodano `loadError` dla krytycznych zrodel metrics/trends;
+- awaria metrics/trends czysci metrics, provider metrics i alerts oraz pokazuje `Performance metrics unavailable` przez wspolny `DegradedState`;
+- przy awarii krytycznej nie renderuja sie karty KPI, provider table ani alerts jako puste/zerowe dane;
+- dodano osobny `alertsLoadError` dla `Api.getLLMHealthDetailed`, zeby awaria health alerts pokazywala `Performance alerts unavailable` zamiast `No active alerts.`;
+- dodano osobny `providerLoadError`, gdy oba zrodla provider performance sa niedostepne;
+- provider success/error rate pokazuja `n/a`, kiedy brakuje health readback, zamiast udawac `0%`/`100%`;
+- `Export` zostal disabled z tytulem, bo nie ma jeszcze realnego workflow wygenerowanego pliku;
+- `Refresh` zostal podlaczony do `loadMetrics`;
+- sparkline dostal bezpieczne dane dla pojedynczego punktu, bez `NaN` w polyline;
+- bledy sa normalizowane przez `normalizeApiErrorMessage`.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/PerformanceMetricsTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI admin/operations/development:
+
+```text
+npx vitest run tests/unit/views/superadmin/PerformanceMetricsTab.honesty.test.tsx tests/unit/views/superadmin/PricingRegistryTab.honesty.test.tsx tests/unit/components/Admin/AICostDashboard.honesty.test.tsx tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 23 passed
+Tests: 50 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Analytics/PerformanceMetricsTab.tsx tests/unit/views/superadmin/PerformanceMetricsTab.honesty.test.tsx --no-warn-ignored
+ReadLints: PerformanceMetricsTab, PerformanceMetricsTab.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
+
+### 23CJ. Status po utwardzeniu SuperAdmin AI Analytics / Custom Reports
+
+Kolejna partia objela P0 z AI Analytics: `Custom Reports`, czyli `CustomReportsTab` oparty o `SavedReportsView`. Widok korzysta z realnych endpointow `GET/POST/DELETE /api/superadmin/analytics/reports`, `POST /execute`, `POST /schedule` i `GET /executions`. Przed poprawka awaria listy raportow mogla wygladac jak pusta lista `No reports yet`, tworzenie raportu robilo refetch bez `await`, a create/delete/execute/schedule mialy ciche `console.error` zamiast czytelnego komunikatu i refresh-proof potwierdzenia.
+
+Wdrozone:
+
+- dodano `loadError` dla listy saved reports;
+- awaria `Api.getAnalyticsReports` czysci raporty, selection, executions i execution result;
+- przy awarii pokazuje sie `Saved reports unavailable` oraz `Reports list unavailable` przez wspolny `DegradedState`;
+- przy awarii nie renderuje sie `No reports yet. Create one to get started.`;
+- filtr typu i `New Report` sa blokowane, gdy lista raportow jest niedostepna;
+- `create`, `delete`, `execute` i `schedule` czekaja na refetch (`await fetchReports`, a dla execute takze `await fetchExecutions`);
+- awaria execution history pokazuje `Report executions unavailable` zamiast `No executions yet`;
+- bledy sa normalizowane przez `normalizeApiErrorMessage` i pokazywane toastem;
+- formatowanie dat jest bezpieczne i nie pokazuje surowego `Invalid Date`;
+- wynik wykonania raportu i CSV export dostaly typ `Record<string, unknown>` zamiast `any`;
+- `CustomReportsTab` usunieto martwe importy ikon z dawnego scaffoldingu.
+
+Focused tests:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomReportsTab.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 1 passed
+Tests: 2 passed
+```
+
+Szersza regresja AI admin/operations/development:
+
+```text
+npx vitest run tests/unit/views/superadmin/CustomReportsTab.honesty.test.tsx tests/unit/views/superadmin/PerformanceMetricsTab.honesty.test.tsx tests/unit/views/superadmin/PricingRegistryTab.honesty.test.tsx tests/unit/components/Admin/AICostDashboard.honesty.test.tsx tests/unit/components/Admin/AI/UsageAnalyticsDashboard.honesty.test.tsx tests/unit/views/superadmin/LLMObservatoryTab.honesty.test.tsx tests/unit/views/superadmin/MarketInboxTab.honesty.test.tsx tests/unit/components/Admin/AI/PromptOsRuntimeSummaryPanel.honesty.test.tsx tests/components/Admin/AI/PromptOsRuntimeSummaryPanel.test.tsx tests/unit/components/Admin/AI/AICoreRuntimePanel.honesty.test.tsx tests/components/Admin/AI/AICoreRuntimePanel.test.tsx tests/unit/components/Admin/AIMissionControl.honesty.test.tsx tests/unit/components/Admin/SLADashboard.honesty.test.tsx tests/unit/components/Admin/AIPerformanceDashboard.honesty.test.tsx tests/unit/components/Admin/LLMHealthPanel.honesty.test.tsx tests/unit/components/SuperAdmin/ModelRegistry/ModelCatalogTable.honesty.test.tsx tests/unit/components/Admin/ABTestingDashboard.honesty.test.tsx tests/unit/views/superadmin/AIIntelligenceView.honesty.test.tsx tests/unit/views/superadmin/OrgAIPolicyTab.honesty.test.tsx tests/unit/views/superadmin/PurposeAssignmentsTab.honesty.test.tsx tests/unit/views/superadmin/RoutingRulesTab.honesty.test.tsx tests/unit/views/superadmin/LLMManagementView.honesty.test.tsx tests/unit/views/admin/AdminLLMView.honesty.test.tsx tests/unit/views/admin/TokenBillingManagementView.honesty.test.tsx
+```
+
+Wynik:
+
+```text
+Test Files: 24 passed
+Tests: 52 passed
+```
+
+Dodatkowe gate:
+
+```text
+npm run type-check
+npx eslint --fix src/views/superadmin/AIPlatformModule/Analytics/CustomReportsTab.tsx src/views/superadmin/analytics/SavedReportsView.tsx tests/unit/views/superadmin/CustomReportsTab.honesty.test.tsx --no-warn-ignored
+ReadLints: CustomReportsTab, SavedReportsView, CustomReportsTab.honesty.test
+```
+
+Wynik: TypeScript check przeszedl bez bledow. ESLint i ReadLints nie wykazaly bledow w zmienionych plikach.
 
 ### 23AX. Status po sweepie Tenant Admin Billing `AdminBillingManagement`
 

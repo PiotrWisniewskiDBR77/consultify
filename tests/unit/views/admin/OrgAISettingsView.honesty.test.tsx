@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { toast } from 'react-hot-toast';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { AdminApi } from '@/services/api/admin.api';
@@ -137,5 +138,51 @@ describe('OrgAISettingsView honest UI', () => {
     await waitFor(() => {
       expect(screen.getAllByRole('switch')[0]).toHaveAttribute('aria-checked', 'true');
     });
+  });
+
+  it('does not claim AI settings success when read-back returns stale values', async () => {
+    const staleSettings = {
+      organizationId: 'org-1',
+      policyLevel: 'ADVISORY',
+      maxPolicyLevel: 'AUTOPILOT',
+      defaultProactivityMode: 'REACTIVE',
+      activeRoles: ['ADVISOR'],
+      defaultRole: 'ADVISOR',
+      maxAICallsPerDay: 100,
+      maxTokensPerMonth: 500000,
+      monthlyBudgetUSD: 100,
+      hardLimitUSD: 500,
+      artifactsEnabled: false,
+      thinkingStepsEnabled: false,
+      focusModesEnabled: false,
+      webSearchEnabled: false,
+      voiceEnabled: false,
+      auditAllRequests: false,
+      auditPolicyChanges: false,
+    };
+
+    vi.mocked(AdminApi.getOrganizationAISettings)
+      .mockResolvedValueOnce(staleSettings)
+      .mockResolvedValueOnce(staleSettings);
+    vi.mocked(AdminApi.updateOrganizationAISettings).mockResolvedValue({});
+
+    render(<OrgAISettingsView />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Organization AI Settings')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Features/i }));
+    fireEvent.click(screen.getAllByRole('switch')[0]);
+    fireEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Organization AI settings save was not confirmed by the server')
+      ).toBeInTheDocument();
+    });
+
+    expect(toast.success).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: /Save Changes/i })).not.toBeDisabled();
   });
 });

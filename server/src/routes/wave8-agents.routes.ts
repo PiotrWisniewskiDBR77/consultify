@@ -42,7 +42,10 @@ router.post(
     const definition = await upsertWave8AgentDefinition({
       organizationId,
       userId,
-      definition: req.body.definition && typeof req.body.definition === 'object' ? req.body.definition : req.body,
+      definition:
+        req.body.definition && typeof req.body.definition === 'object'
+          ? req.body.definition
+          : req.body,
     });
     return res.status(201).json({ success: true, definition });
   })

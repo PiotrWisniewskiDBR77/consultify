@@ -467,6 +467,7 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel />);
 
     expect(screen.getByText('Skip to chat input')).toHaveClass('sr-only');
+    expect(screen.getByTestId('chat-full-welcome')).toBeInTheDocument();
     expect(screen.getByText('Teresa')).toBeInTheDocument();
     expect(screen.getByText('Good morning')).toBeInTheDocument();
     expect(screen.getByText('Analiza rynku')).toBeInTheDocument();
@@ -478,6 +479,18 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getAllByAltText('Consultify').length).toBeGreaterThan(0);
     expect(screen.getByTestId('chat-new-button')).toBeInTheDocument();
     expect(screen.getByTestId('chat-history-button')).toBeInTheDocument();
+  });
+
+  it('does not render the full welcome surface in split/sidebar mode', () => {
+    renderWithRouter(<UnifiedChatPanel mode="split" />);
+
+    expect(screen.queryByTestId('chat-full-welcome')).not.toBeInTheDocument();
+    expect(screen.getByTestId('chat-compact-empty-state')).toBeInTheDocument();
+    expect(screen.queryByText('Good morning')).not.toBeInTheDocument();
+    expect(screen.queryByText('Analiza rynku')).not.toBeInTheDocument();
+    expect(screen.queryByText('Analiza finansowa')).not.toBeInTheDocument();
+    expect(screen.queryAllByAltText('Consultify')).toHaveLength(0);
+    expect(screen.getByTestId('send-button')).toBeInTheDocument();
   });
 
   it('new chat clears state and creates/selects a conversation', async () => {

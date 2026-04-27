@@ -40,6 +40,14 @@ describe('P31 Settings — taxonomy + preferences', () => {
     expect(content).toContain('/preferences/prompt-library');
   });
 
+  it('settings routes expose account recovery read-back instead of a missing route', async () => {
+    const fs = await import('fs');
+    const content = fs.readFileSync('server/src/routes/settings.routes.ts', 'utf-8');
+    expect(content).toContain("'/recovery'");
+    expect(content).toContain('getRecoveryOptions');
+    expect(content).toContain('Recovery options unavailable');
+  });
+
   it('settings route supports GDPR export/deletion', async () => {
     const fs = await import('fs');
     const content = fs.readFileSync('server/src/routes/settings.routes.ts', 'utf-8');
@@ -214,6 +222,18 @@ describe('P33 Superadmin — root control plane + guardrails', () => {
     const fs = await import('fs');
     const content = fs.readFileSync('server/src/routes/superadmin.routes.ts', 'utf-8');
     expect(content).toContain('feature-roadmap');
+  });
+
+  it('billing user-plans client paths align to the superadmin backend route', async () => {
+    const fs = await import('fs');
+    const billingRoutes = fs.readFileSync('server/src/routes/billing/billing.routes.ts', 'utf-8');
+    const legacyApi = fs.readFileSync('src/services/api.ts', 'utf-8');
+    const billingApi = fs.readFileSync('src/services/api/billing.api.ts', 'utf-8');
+
+    expect(billingRoutes).toContain("'/admin/user-plans'");
+    expect(billingRoutes).toContain("'/user-plans'");
+    expect(legacyApi).toContain('/billing/admin/user-plans');
+    expect(billingApi).toContain('/billing/admin/user-plans');
   });
 
   it('V8 admin feature flags routes exist with superadmin guard', async () => {

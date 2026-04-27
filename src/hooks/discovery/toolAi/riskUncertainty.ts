@@ -258,7 +258,9 @@ export function applyRiskPendingAction({
             title: move.title,
             category: move.category || 'mitigate',
             rationale: move.rationale || '',
-            linkedRiskIds: Array.isArray(move.linkedRiskIds) ? move.linkedRiskIds.filter(Boolean) : [],
+            linkedRiskIds: Array.isArray(move.linkedRiskIds)
+              ? move.linkedRiskIds.filter(Boolean)
+              : [],
             linkedAssumptionIds: Array.isArray(move.linkedAssumptionIds)
               ? move.linkedAssumptionIds.filter(Boolean)
               : [],

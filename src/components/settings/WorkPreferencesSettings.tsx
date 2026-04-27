@@ -36,6 +36,8 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
 
 interface WorkPreferencesSettingsProps {
@@ -92,6 +94,9 @@ const DEFAULT_PREFERENCES: WorkPreferences = {
   defaultFocusDuration: 25,
 };
 
+const preferencesMatch = (left: WorkPreferences, right: WorkPreferences) =>
+  JSON.stringify(left) === JSON.stringify(right);
+
 // Priority options with colors
 const PRIORITY_OPTIONS = [
   { value: 'none', label: 'No Priority', color: 'slate' },
@@ -133,12 +138,12 @@ const FOCUS_DURATION_OPTIONS = [
 
 export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = ({
   currentUser,
-  onUpdateUser,
 }) => {
   const { t } = useTranslation();
   const [preferences, setPreferences] = useState<WorkPreferences>(DEFAULT_PREFERENCES);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPreferences();
@@ -146,12 +151,14 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
 
   const loadPreferences = async () => {
     try {
+      setLoadError(null);
       const data = (await Api.get('/settings/preferences/work')) as WorkPreferencesResponse;
-      if (data?.preferences) {
-        setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+      if (!data?.preferences) {
+        throw new Error('Work preferences were not returned by the server');
       }
-    } catch (error) {
-      console.error('Failed to load work preferences:', error);
+      setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load work preferences'));
     } finally {
       setLoading(false);
     }
@@ -161,15 +168,20 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
     setSaving(true);
     try {
       await Api.put('/settings/preferences/work', { preferences });
-      const data = (await Api.get('/settings/preferences/work').catch(
-        () => null
-      )) as WorkPreferencesResponse | null;
-      if (data?.preferences) {
-        setPreferences({ ...DEFAULT_PREFERENCES, ...data.preferences });
+      const data = (await Api.get('/settings/preferences/work')) as WorkPreferencesResponse;
+      if (!data?.preferences) {
+        throw new Error('Work preferences save was not confirmed by the server');
       }
+      const persisted = { ...DEFAULT_PREFERENCES, ...data.preferences };
+      if (!preferencesMatch(persisted, preferences)) {
+        throw new Error('Work preferences were not confirmed by the server');
+      }
+      setPreferences(persisted);
       toast.success(t('settings.work.saved', 'Work preferences saved successfully'));
-    } catch (error) {
-      toast.error(t('settings.work.error', 'Failed to save preferences'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(error, t('settings.work.error', 'Failed to save preferences'))
+      );
     } finally {
       setSaving(false);
     }
@@ -183,6 +195,27 @@ export const WorkPreferencesSettings: React.FC<WorkPreferencesSettingsProps> = (
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={32} className="animate-spin text-purple-600" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <InfoButton cardId="settings-work" position="top-right" />
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
+            <Target size={28} className="text-purple-500" />
+            {t('settings.work.title', 'Work Preferences')}
+          </h2>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+            {t(
+              'settings.work.description',
+              'Customize how you view and manage your tasks and projects'
+            )}
+          </p>
+        </div>
+        <DegradedState title="Work preferences unavailable" description={loadError} />
       </div>
     );
   }

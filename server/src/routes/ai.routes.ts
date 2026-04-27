@@ -99,6 +99,19 @@ const router = Router();
 // Apply rate limiting to all AI routes
 router.use(aiRateLimiter);
 
+function isGovernedMutationApprovalBypassRequest(message: unknown): boolean {
+  const text = String(message || '').toLowerCase();
+  if (!text.trim()) return false;
+  const mutationIntent =
+    /\b(rename|change|update|edit|modify|create|delete|remove|archive|assign|move|set)\b/.test(
+      text
+    ) || /\b(zmień|zmien|edytuj|utw[oó]rz|usuń|usun|przypisz|przenieś|przenies|ustaw)\b/.test(text);
+  const approvalBypass =
+    /\b(without asking|without approval|do not ask|don't ask|no approval|silently)\b/.test(text) ||
+    /\b(bez pytania|bez zgody|bez akceptacji|nie pytaj|po cichu)\b/.test(text);
+  return mutationIntent && approvalBypass;
+}
+
 // -------------------- Chat attachments ingestion --------------------
 // This is intentionally self-contained (no StorageService / KnowledgeService dependency).
 const attachmentsUpload = multer({
@@ -2222,6 +2235,26 @@ router.post(
           return null;
         }
       };
+
+      if (
+        virtualWorkerSlug === 'teresa' &&
+        isGovernedMutationApprovalBypassRequest(message) &&
+        req.organizationId &&
+        req.userId
+      ) {
+        const governedReply = isPolish
+          ? 'Nie mogę wykonać tej zmiany po cichu ani bez Twojej zgody. Każda mutacja w workspace musi przejść przez proposal, osobne zatwierdzenie, wykonanie i audyt AIRun.'
+          : 'I cannot make this change silently or without your approval. Every workspace mutation must go through a proposal, separate approval, execution and AIRun audit.';
+
+        accumulatedContent += governedReply;
+        emitSSE({ text: governedReply });
+        await maybeEmitTeresaProposal(governedReply);
+        emitTrustBundle(governedReply);
+        streamCompleted = true;
+        clearInterval(heartbeatInterval);
+        res.write('data: [DONE]\n\n');
+        return res.end();
+      }
 
       // --------------------------------------------------------
       // Policy gateway (P34-B): allow/deny + rationale + citations/uncertainty posture
@@ -5279,9 +5312,17 @@ router.get(
   asyncHandler(async (req: AuthRequest, res: Response) => {
     try {
       const { listActionCenter } = await import('../services/aiRunLedgerService.js');
+      const { repairTeresaAIRunMirrorsForActionCenter } =
+        await import('../services/v8/teresaCopilotService.js');
       const adminView =
         (req.query as any).scope === 'org' &&
         (req.userRole === 'ADMIN' || req.userRole === 'SUPERADMIN');
+      await repairTeresaAIRunMirrorsForActionCenter({
+        organizationId: req.organizationId as string,
+        userId: req.userId as string,
+        adminView,
+        limit: ((req.query as any).limit as number | undefined) || 100,
+      });
       const actions = await listActionCenter({
         organizationId: req.organizationId as string,
         userId: req.userId as string,
@@ -5330,6 +5371,14 @@ router.get(
     }
     try {
       const { listAIRuns } = await import('../services/aiRunLedgerService.js');
+      const { repairTeresaAIRunMirrorsForActionCenter } =
+        await import('../services/v8/teresaCopilotService.js');
+      await repairTeresaAIRunMirrorsForActionCenter({
+        organizationId: req.organizationId as string,
+        userId: req.userId as string,
+        adminView,
+        limit: ((req.query as any).limit as number | undefined) || 100,
+      });
       const runs = await listAIRuns({
         organizationId: req.organizationId as string,
         userId: req.userId as string,

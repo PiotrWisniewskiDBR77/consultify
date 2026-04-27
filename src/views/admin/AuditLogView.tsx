@@ -32,7 +32,7 @@ import { useTranslation } from 'react-i18next';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
-import { useAppStore } from '../../store/useAppStore';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface AuditLogEntry {
   id: string;
@@ -45,10 +45,29 @@ interface AuditLogEntry {
   resource: string;
   resourceId?: string;
   resourceName?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   ipAddress: string;
   userAgent?: string;
 }
+
+type TenantAdminAuditLogRow = {
+  id?: string;
+  admin_id?: string;
+  adminId?: string;
+  action_type?: string;
+  actionType?: string;
+  metadata?: Record<string, unknown> | string;
+  metadata_json?: string;
+  metadataJson?: string;
+  details?: Record<string, unknown>;
+  ip_address?: string;
+  ipAddress?: string;
+  user_agent?: string;
+  userAgent?: string;
+  created_at?: string;
+  createdAt?: string;
+  timestamp?: string;
+};
 
 interface AuditLogViewProps {
   className?: string;
@@ -56,7 +75,6 @@ interface AuditLogViewProps {
 
 export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
-  const { currentOrganization } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -68,27 +86,99 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
   const [exporting, setExporting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const parseMetadata = useCallback((row: TenantAdminAuditLogRow): Record<string, unknown> => {
+    const raw = row.metadataJson ?? row.metadata_json ?? row.metadata;
+    if (!raw) return row.details || {};
+    if (typeof raw === 'object') return raw;
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const toActionType = useCallback((actionType: string): AuditLogEntry['actionType'] => {
+    const normalized = actionType.toUpperCase();
+    if (
+      normalized.includes('CREATE') ||
+      normalized.includes('ADD') ||
+      normalized.includes('ASSIGN')
+    ) {
+      return 'CREATE';
+    }
+    if (
+      normalized.includes('DELETE') ||
+      normalized.includes('REMOVE') ||
+      normalized.includes('REVOKE')
+    ) {
+      return 'DELETE';
+    }
+    if (normalized.includes('LOGIN')) return 'LOGIN';
+    if (normalized.includes('LOGOUT')) return 'LOGOUT';
+    if (normalized.includes('EXPORT')) return 'EXPORT';
+    if (
+      normalized.includes('SECURITY') ||
+      normalized.includes('SCIM') ||
+      normalized.includes('IAM')
+    ) {
+      return 'SECURITY';
+    }
+    return 'UPDATE';
+  }, []);
+
+  const normalizeAuditLog = useCallback(
+    (row: TenantAdminAuditLogRow): AuditLogEntry => {
+      const metadata = parseMetadata(row);
+      const actionType = String(
+        row.action_type || row.actionType || metadata.actionType || 'UPDATE'
+      );
+      const adminId = String(row.admin_id || row.adminId || metadata.adminId || 'system');
+      return {
+        id: String(
+          row.id ||
+            `${actionType}-${row.created_at || row.createdAt || row.timestamp || Date.now()}`
+        ),
+        timestamp: String(
+          row.created_at || row.createdAt || row.timestamp || new Date().toISOString()
+        ),
+        userId: adminId,
+        userName: String(metadata.adminName || metadata.userName || adminId),
+        userEmail: String(metadata.adminEmail || metadata.userEmail || adminId),
+        action: String(metadata.description || metadata.action || actionType).replaceAll('_', ' '),
+        actionType: toActionType(actionType),
+        resource: String(metadata.resource || metadata.resourceType || 'Admin'),
+        resourceId: metadata.resourceId ? String(metadata.resourceId) : undefined,
+        resourceName: metadata.resourceName ? String(metadata.resourceName) : undefined,
+        details: metadata,
+        ipAddress: String(row.ip_address || row.ipAddress || metadata.ipAddress || 'unknown'),
+        userAgent:
+          row.user_agent || row.userAgent ? String(row.user_agent || row.userAgent) : undefined,
+      };
+    },
+    [parseMetadata, toActionType]
+  );
+
   const loadLogs = useCallback(async () => {
     setLoading(true);
     try {
       setLoadError(null);
-      const params = new URLSearchParams();
-      if (actionFilter !== 'all') params.append('action', actionFilter);
-      if (resourceFilter !== 'all') params.append('resource', resourceFilter);
-      params.append('range', dateRange);
-
-      // Use Api.getAuditLogs instead of direct fetch
-      const data = await Api.getAuditLogs(currentOrganization?.id || '');
-      setLogs((data as any).events || (data as any).logs || data || []);
-    } catch (error) {
-      console.error('Failed to load audit logs:', error);
-      toast.error('Failed to load audit logs');
-      // Set empty state instead of mock data
+      const data = await Api.getTenantAdminAuditLogs({
+        actionType: actionFilter !== 'all' ? actionFilter : undefined,
+        search: searchTerm || undefined,
+        limit: 100,
+        offset: 0,
+      });
+      const rows = Array.isArray(data?.logs) ? data.logs : [];
+      setLogs(rows.map(normalizeAuditLog));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load audit logs');
+      toast.error(message);
       setLogs([]);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load audit logs');
+      setLoadError(message);
     }
     setLoading(false);
-  }, [currentOrganization, actionFilter, resourceFilter, dateRange]);
+  }, [actionFilter, normalizeAuditLog, searchTerm]);
 
   useEffect(() => {
     loadLogs();
@@ -97,23 +187,7 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
   const handleExport = async () => {
     setExporting(true);
     try {
-      const params = new URLSearchParams();
-      if (actionFilter !== 'all') params.append('action', actionFilter);
-      if (resourceFilter !== 'all') params.append('resource', resourceFilter);
-      params.append('range', dateRange);
-      params.append('format', 'csv');
-
-      const res = await fetch(
-        `/api/organizations/${currentOrganization?.id}/audit-logs/export?${params}`,
-        {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
-      const blob = await res.blob();
+      const blob = await Api.exportTenantAdminAuditLogs();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -121,8 +195,8 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       a.click();
       window.URL.revokeObjectURL(url);
       toast.success('Audit log exported');
-    } catch (error) {
-      toast.error('Audit log export failed');
+    } catch (error: unknown) {
+      toast.error(normalizeApiErrorMessage(error, 'Audit log export failed'));
     }
     setExporting(false);
   };
@@ -172,6 +246,10 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) {
+      return 'Unknown date';
+    }
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
@@ -192,6 +270,8 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
   };
 
   const filteredLogs = logs.filter((log) => {
+    if (actionFilter !== 'all' && log.actionType !== actionFilter) return false;
+    if (resourceFilter !== 'all' && log.resource !== resourceFilter) return false;
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
       return (

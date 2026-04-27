@@ -21,9 +21,9 @@ import {
   Users,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface SCIMToken {
   id: string;
@@ -84,8 +84,65 @@ interface ServiceProvider {
 
 type TabType = 'overview' | 'tokens' | 'mappings' | 'logs' | 'conflicts';
 
+interface SCIMDataSnapshot {
+  serviceProvider: ServiceProvider | null;
+  tokens: SCIMToken[];
+  groupMappings: GroupMapping[];
+  conflicts: SCIMConflict[];
+}
+
+const mappingMatchesCreate = (
+  mapping: GroupMapping,
+  expected: { externalGroupId: string; externalGroupName: string; internalRole: string }
+) =>
+  mapping.externalGroupId === expected.externalGroupId &&
+  mapping.externalGroupName === expected.externalGroupName &&
+  mapping.internalRole === expected.internalRole;
+
+const tokenMatchesCreate = (token: SCIMToken, expected: { id?: string; name: string }) =>
+  token.name === expected.name && (!expected.id || token.id === expected.id);
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const unwrapApiPayload = (value: unknown): unknown => {
+  if (!isRecord(value)) return value;
+  const first = isRecord(value.data) ? value.data : value;
+  return isRecord(first) && 'data' in first ? first.data : first;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  const payload = unwrapApiPayload(value);
+  if (Array.isArray(payload)) return payload as T[];
+  if (!isRecord(payload)) return [];
+  for (const key of keys) {
+    if (Array.isArray(payload[key])) return payload[key] as T[];
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  const payload = unwrapApiPayload(value);
+  return (
+    Array.isArray(payload) ||
+    (isRecord(payload) &&
+      (Array.isArray(payload.data) || keys.some((key) => Array.isArray(payload[key]))))
+  );
+};
+
+const getObjectPayload = <T,>(value: unknown, keys: string[] = []): T | null => {
+  const payload = unwrapApiPayload(value);
+  if (!isRecord(payload)) return null;
+  for (const key of keys) {
+    if (isRecord(payload[key])) return payload[key] as T;
+  }
+  return payload as T;
+};
+
+const getErrorMessage = (error: unknown, fallback: string) =>
+  normalizeApiErrorMessage(error, fallback);
+
 const SCIMProvisioningView: React.FC = () => {
-  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [loading, setLoading] = useState(false);
 
@@ -117,9 +174,6 @@ const SCIMProvisioningView: React.FC = () => {
     internalRole: 'member',
   });
 
-  const getErrorMessage = (error: unknown, fallback: string) =>
-    error instanceof Error ? error.message : fallback;
-
   // Fetch data
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -134,14 +188,50 @@ const SCIMProvisioningView: React.FC = () => {
           api.get('/scim/admin/conflicts'),
         ]);
 
-      setServiceProvider(spResponse.data.data);
-      setTokens(tokensResponse.data.data || []);
-      setGroupMappings(mappingsResponse.data.data || []);
-      setSyncLogs(logsResponse.data.data || []);
-      setConflicts(conflictsResponse.data.data || []);
+      const nextServiceProvider = getObjectPayload<ServiceProvider>(spResponse, [
+        'serviceProvider',
+      ]);
+      const nextTokens = getListPayload<SCIMToken>(tokensResponse, ['tokens', 'items']);
+      const nextGroupMappings = getListPayload<GroupMapping>(mappingsResponse, [
+        'groupMappings',
+        'mappings',
+        'items',
+      ]);
+      const nextSyncLogs = getListPayload<SyncLog>(logsResponse, ['logs', 'syncLogs', 'items']);
+      const nextConflicts = getListPayload<SCIMConflict>(conflictsResponse, ['conflicts', 'items']);
+
+      if (!hasListShape(tokensResponse, ['tokens', 'items'])) {
+        throw new Error('SCIM tokens response was not a list');
+      }
+      if (!hasListShape(mappingsResponse, ['groupMappings', 'mappings', 'items'])) {
+        throw new Error('SCIM group mappings response was not a list');
+      }
+      if (!hasListShape(logsResponse, ['logs', 'syncLogs', 'items'])) {
+        throw new Error('SCIM sync logs response was not a list');
+      }
+      if (!hasListShape(conflictsResponse, ['conflicts', 'items'])) {
+        throw new Error('SCIM conflicts response was not a list');
+      }
+
+      setServiceProvider(nextServiceProvider);
+      setTokens(nextTokens);
+      setGroupMappings(nextGroupMappings);
+      setSyncLogs(nextSyncLogs);
+      setConflicts(nextConflicts);
+      return {
+        serviceProvider: nextServiceProvider,
+        tokens: nextTokens,
+        groupMappings: nextGroupMappings,
+        conflicts: nextConflicts,
+      } as SCIMDataSnapshot;
     } catch (error) {
-      console.error('[SCIM] Fetch data error:', error);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load SCIM data');
+      setServiceProvider(null);
+      setTokens([]);
+      setGroupMappings([]);
+      setSyncLogs([]);
+      setConflicts([]);
+      setLoadError(getErrorMessage(error, 'Failed to load SCIM data'));
+      return null;
     } finally {
       setLoading(false);
     }
@@ -156,9 +246,11 @@ const SCIMProvisioningView: React.FC = () => {
     setActionError(null);
     try {
       await api.post('/scim/admin/service-provider', { isActive: true });
-      fetchData();
+      const refreshed = await fetchData();
+      if (!refreshed?.serviceProvider?.isActive) {
+        throw new Error('SCIM enablement was not confirmed by the server');
+      }
     } catch (error) {
-      console.error('[SCIM] Enable error:', error);
       setActionError(getErrorMessage(error, 'Failed to enable SCIM service provider'));
     }
   };
@@ -170,10 +262,16 @@ const SCIMProvisioningView: React.FC = () => {
     setActionError(null);
     try {
       const response = await api.post('/scim/admin/tokens', newToken);
-      setGeneratedToken(response.data.data.token);
-      setTokens([...tokens, response.data.data]);
+      const createdToken = getObjectPayload<SCIMToken & { token?: string }>(response, ['token']);
+      if (!createdToken?.name) {
+        throw new Error('SCIM token generation response was incomplete');
+      }
+      const refreshed = await fetchData();
+      if (!refreshed?.tokens.some((token) => tokenMatchesCreate(token, createdToken))) {
+        throw new Error('SCIM token generation was not confirmed by the server');
+      }
+      setGeneratedToken(createdToken.token ?? null);
     } catch (error) {
-      console.error('[SCIM] Generate token error:', error);
       setActionError(getErrorMessage(error, 'Failed to generate SCIM token'));
     }
   };
@@ -186,9 +284,11 @@ const SCIMProvisioningView: React.FC = () => {
     setActionError(null);
     try {
       await api.delete(`/scim/admin/tokens/${tokenId}`);
-      setTokens(tokens.filter((t) => t.id !== tokenId));
+      const refreshed = await fetchData();
+      if (!refreshed || refreshed.tokens.some((token) => token.id === tokenId)) {
+        throw new Error('SCIM token revocation was not confirmed by the server');
+      }
     } catch (error) {
-      console.error('[SCIM] Revoke token error:', error);
       setActionError(getErrorMessage(error, 'Failed to revoke SCIM token'));
     }
   };
@@ -199,12 +299,15 @@ const SCIMProvisioningView: React.FC = () => {
 
     setActionError(null);
     try {
-      const response = await api.post('/scim/admin/group-mappings', newMapping);
-      fetchData();
+      const expected = { ...newMapping };
+      await api.post('/scim/admin/group-mappings', expected);
+      const refreshed = await fetchData();
+      if (!refreshed?.groupMappings.some((mapping) => mappingMatchesCreate(mapping, expected))) {
+        throw new Error('SCIM group mapping was not confirmed by the server');
+      }
       setShowMappingModal(false);
       setNewMapping({ externalGroupId: '', externalGroupName: '', internalRole: 'member' });
     } catch (error) {
-      console.error('[SCIM] Create mapping error:', error);
       setActionError(getErrorMessage(error, 'Failed to create SCIM group mapping'));
     }
   };
@@ -216,9 +319,11 @@ const SCIMProvisioningView: React.FC = () => {
     setActionError(null);
     try {
       await api.delete(`/scim/admin/group-mappings/${mappingId}`);
-      setGroupMappings(groupMappings.filter((m) => m.id !== mappingId));
+      const refreshed = await fetchData();
+      if (!refreshed || refreshed.groupMappings.some((mapping) => mapping.id === mappingId)) {
+        throw new Error('SCIM group mapping deletion was not confirmed by the server');
+      }
     } catch (error) {
-      console.error('[SCIM] Delete mapping error:', error);
       setActionError(getErrorMessage(error, 'Failed to delete SCIM group mapping'));
     }
   };
@@ -229,9 +334,11 @@ const SCIMProvisioningView: React.FC = () => {
     setSyncing(true);
     try {
       await api.post('/scim/admin/sync', {});
-      fetchData();
+      const refreshed = await fetchData();
+      if (!refreshed) {
+        throw new Error('SCIM sync was not confirmed by read-back');
+      }
     } catch (error) {
-      console.error('[SCIM] Sync error:', error);
       setActionError(getErrorMessage(error, 'Failed to trigger SCIM sync'));
     } finally {
       setSyncing(false);
@@ -246,13 +353,12 @@ const SCIMProvisioningView: React.FC = () => {
     setActionError(null);
     try {
       await api.post(`/scim/admin/conflicts/${conflictId}/resolve`, { resolution });
-      setConflicts(
-        conflicts.map((c) =>
-          c.id === conflictId ? { ...c, resolution, resolvedAt: new Date().toISOString() } : c
-        )
-      );
+      const refreshed = await fetchData();
+      const refreshedConflict = refreshed?.conflicts.find((conflict) => conflict.id === conflictId);
+      if (!refreshed || (refreshedConflict && refreshedConflict.resolution !== resolution)) {
+        throw new Error('SCIM conflict resolution was not confirmed by the server');
+      }
     } catch (error) {
-      console.error('[SCIM] Resolve conflict error:', error);
       setActionError(getErrorMessage(error, 'Failed to resolve SCIM conflict'));
     }
   };
@@ -506,6 +612,7 @@ const SCIMProvisioningView: React.FC = () => {
                   </span>
                   <button
                     onClick={() => handleRevokeToken(token.id)}
+                    title={`Revoke token ${token.name}`}
                     className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
                   >
                     <Trash2 size={18} />
@@ -729,6 +836,7 @@ const SCIMProvisioningView: React.FC = () => {
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDeleteMapping(mapping.id)}
+                      title={`Delete mapping ${mapping.externalGroupName}`}
                       className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
@@ -1061,8 +1169,11 @@ const SCIMProvisioningView: React.FC = () => {
       </div>
 
       {/* Content */}
-      {actionError && !loadError && (
-        <div className="mb-4 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300">
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-amber-200 dark:border-amber-500/20 bg-amber-50 dark:bg-amber-500/10 p-4 text-sm text-amber-800 dark:text-amber-300"
+        >
           <div className="flex items-start justify-between gap-3">
             <span>{actionError}</span>
             <button

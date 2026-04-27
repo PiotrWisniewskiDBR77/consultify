@@ -432,7 +432,9 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   // (CHAT_V8_ACTIONS_AND_APPROVALS, CHAT_V8_RESPONSE_MODEL).
   // Intercepts before the generic bubble so proposals are never rendered as
   // plain chat text and can never silently mutate state.
-  const msgType = (msg as any).type as string | undefined;
+  const msgType = ((msg as any).type ||
+    (msg as any).messageType ||
+    (msg as any).metadata?.messageType) as string | undefined;
   if (msgType && V8_EXECUTION_MESSAGE_TYPES.has(msgType)) {
     const proposalId =
       ((msg as any).metadata?.executionProposal?.proposalId as string | undefined) ||
@@ -653,7 +655,6 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                 )}
 
                 {msg.role === 'ai' &&
-                  !msg.isStreaming &&
                   (msg as any).metadata?.proposal &&
                   (msg as any).metadata?.type !== 'table_proposal' && (
                     <div className="not-prose mb-3">

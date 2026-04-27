@@ -8,15 +8,13 @@
  * - Sync status dashboard
  */
 
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
-  AlertTriangle,
   Check,
   CheckCircle2,
   Clock,
   Copy,
   Edit,
-  ExternalLink,
   Eye,
   EyeOff,
   Link2,
@@ -26,7 +24,6 @@ import {
   RefreshCw,
   Search,
   Send,
-  Settings,
   Trash2,
   Webhook,
   X,
@@ -37,8 +34,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
-import { Api } from '../../services/api';
-import { useAppStore } from '../../store/useAppStore';
+import { ReadOnlyState } from '../Admin/AdminState';
 import { InfoButton } from '../shared/InfoButton';
 
 // Types
@@ -184,33 +180,11 @@ const AVAILABLE_INTEGRATIONS: ConnectedApp[] = [
   },
 ];
 
-// Sample webhook data
-const SAMPLE_WEBHOOKS: WebhookEndpoint[] = [
-  {
-    id: '1',
-    name: 'Task Updates Webhook',
-    url: 'https://api.example.com/webhooks/tasks',
-    secret: 'whsec_xxxxxxxxxxxx',
-    events: ['task.created', 'task.updated', 'task.completed'],
-    isActive: true,
-    lastTriggered: new Date(Date.now() - 3600000).toISOString(),
-    lastStatus: 'success',
-    createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-    failureCount: 0,
-  },
-  {
-    id: '2',
-    name: 'Project Notifications',
-    url: 'https://hooks.slack.com/services/xxx/yyy/zzz',
-    secret: 'whsec_yyyyyyyyyyyy',
-    events: ['project.created', 'project.updated'],
-    isActive: false,
-    lastTriggered: new Date(Date.now() - 86400000).toISOString(),
-    lastStatus: 'failed',
-    createdAt: new Date(Date.now() - 86400000 * 14).toISOString(),
-    failureCount: 3,
-  },
-];
+const WEBHOOK_MUTATION_UNAVAILABLE =
+  'Webhook create, edit, test, enable, disable, and delete actions are disabled until tenant admin webhook routes persist data and expose read-back.';
+
+const APP_CONNECT_UNAVAILABLE =
+  'Integration connect and disconnect actions are disabled until OAuth/provider status is wired to the tenant admin backend.';
 
 interface IntegrationsManagementPanelProps {
   className?: string;
@@ -220,12 +194,11 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
   className = '',
 }) => {
   const { t } = useTranslation();
-  const { currentOrganization } = useAppStore();
 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'webhooks' | 'apps'>('webhooks');
   const [webhooks, setWebhooks] = useState<WebhookEndpoint[]>([]);
-  const [apps, setApps] = useState<ConnectedApp[]>(AVAILABLE_INTEGRATIONS);
+  const [apps] = useState<ConnectedApp[]>(AVAILABLE_INTEGRATIONS);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedWebhook, setSelectedWebhook] = useState<WebhookEndpoint | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -247,13 +220,12 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
       // In a real implementation, fetch from API
       // const webhooksData = await Api.getWebhooks(currentOrganization?.id);
       // const appsData = await Api.getConnectedApps(currentOrganization?.id);
-    } catch (error) {
-      console.error('Error loading integrations:', error);
+    } catch {
       toast.error(t('admin.integrations.loadError', 'Failed to load integrations'));
     } finally {
       setLoading(false);
     }
-  }, [currentOrganization?.id, t]);
+  }, [t]);
 
   useEffect(() => {
     loadData();
@@ -347,7 +319,7 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
       setIsCreating(false);
       setIsEditing(false);
       setSelectedWebhook(null);
-    } catch (error) {
+    } catch {
       toast.error(t('admin.integrations.saveError', 'Failed to save webhook'));
     }
   };
@@ -368,29 +340,6 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
         ? t('admin.integrations.webhookDisabled', 'Webhook disabled')
         : t('admin.integrations.webhookEnabled', 'Webhook enabled')
     );
-  };
-
-  // Test webhook
-  const testWebhook = async (webhook: WebhookEndpoint) => {
-    toast.promise(new Promise((resolve) => setTimeout(resolve, 1500)), {
-      loading: t('admin.integrations.testingWebhook', 'Testing webhook...'),
-      success: t('admin.integrations.testSuccess', 'Webhook test successful'),
-      error: t('admin.integrations.testFailed', 'Webhook test failed'),
-    });
-  };
-
-  // Connect app
-  const connectApp = (app: ConnectedApp) => {
-    // In real implementation, redirect to OAuth flow
-    toast.success(t('admin.integrations.connectRedirect', 'Redirecting to authorization...'));
-  };
-
-  // Disconnect app
-  const disconnectApp = (app: ConnectedApp) => {
-    setApps((prev) =>
-      prev.map((a) => (a.id === app.id ? { ...a, status: 'disconnected', lastSync: null } : a))
-    );
-    toast.success(t('admin.integrations.disconnected', 'Integration disconnected'));
   };
 
   // Cancel editing
@@ -477,30 +426,33 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           </div>
           <div className="flex items-center gap-1">
             <button
-              onClick={() => testWebhook(webhook)}
+              disabled
               className="p-2 text-slate-400 dark:text-slate-500 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-              title={t('admin.integrations.test', 'Test')}
+              title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Send size={16} />
             </button>
             <button
               onClick={() => toggleWebhookActive(webhook)}
+              disabled
               className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
-              title={webhook.isActive ? 'Disable' : 'Enable'}
+              title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               {webhook.isActive ? <Pause size={16} /> : <Play size={16} />}
             </button>
             <button
               onClick={() => startEditing(webhook)}
+              disabled
               className="p-2 text-slate-400 dark:text-slate-500 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg transition-colors"
-              title={t('common.edit', 'Edit')}
+              title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Edit size={16} />
             </button>
             <button
               onClick={() => deleteWebhook(webhook)}
+              disabled
               className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-              title={t('common.delete', 'Delete')}
+              title={WEBHOOK_MUTATION_UNAVAILABLE}
             >
               <Trash2 size={16} />
             </button>
@@ -543,14 +495,16 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           <div>
             {app.status === 'connected' ? (
               <button
-                onClick={() => disconnectApp(app)}
+                disabled
+                title={APP_CONNECT_UNAVAILABLE}
                 className="px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               >
                 {t('admin.integrations.disconnect', 'Disconnect')}
               </button>
             ) : (
               <button
-                onClick={() => connectApp(app)}
+                disabled
+                title={APP_CONNECT_UNAVAILABLE}
                 className="px-3 py-1.5 text-sm bg-violet-500 hover:bg-violet-600 text-white rounded-lg transition-colors"
               >
                 {t('admin.integrations.connect', 'Connect')}
@@ -739,6 +693,8 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           {activeTab === 'webhooks' && (
             <button
               onClick={startCreating}
+              disabled
+              title={WEBHOOK_MUTATION_UNAVAILABLE}
               className="px-4 py-2 bg-violet-500 hover:bg-violet-600 text-white rounded-lg flex items-center gap-2 transition-colors"
             >
               <Plus size={18} />
@@ -747,6 +703,13 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
           )}
         </div>
       </div>
+
+      <ReadOnlyState
+        title="Integrations are read-only"
+        description={
+          activeTab === 'webhooks' ? WEBHOOK_MUTATION_UNAVAILABLE : APP_CONNECT_UNAVAILABLE
+        }
+      />
 
       {/* Tabs */}
       <div className="flex items-center gap-4 border-b border-slate-200 dark:border-navy-700">
@@ -847,6 +810,8 @@ export const IntegrationsManagementPanel: React.FC<IntegrationsManagementPanelPr
               </p>
               <button
                 onClick={startCreating}
+                disabled
+                title={WEBHOOK_MUTATION_UNAVAILABLE}
                 className="px-4 py-2 border border-violet-500 text-violet-500 hover:bg-violet-50 dark:hover:bg-violet-900/20 rounded-lg flex items-center gap-2 mx-auto transition-colors"
               >
                 <Plus size={16} />

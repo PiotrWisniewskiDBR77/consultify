@@ -58,4 +58,29 @@ describe('EnterpriseAuditLog honest UI', () => {
     expect(screen.queryByText('No data')).not.toBeInTheDocument();
     expect(screen.queryByText('Risk Distribution')).not.toBeInTheDocument();
   });
+
+  it('does not claim export success when the export response is empty', async () => {
+    vi.mocked(Api.getAuditLogs).mockResolvedValue({
+      logs: [
+        {
+          id: 'log-1',
+          created_at: 'not-a-date',
+          action_type: 'LOGIN',
+          resource_type: 'USER',
+          risk_score: 10,
+        },
+      ],
+      pagination: { total: 1 },
+    });
+    vi.mocked(Api.exportAuditLogs).mockResolvedValue(undefined);
+
+    render(<EnterpriseAuditLog />);
+
+    await screen.findByText('LOGIN');
+    fireEvent.click(screen.getByRole('button', { name: /Export as CSV/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('Audit log export response was empty');
+    });
+  });
 });

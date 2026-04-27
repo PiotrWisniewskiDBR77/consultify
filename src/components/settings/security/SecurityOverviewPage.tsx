@@ -13,11 +13,8 @@
 import {
   AlertTriangle,
   ArrowRight,
-  Check,
   CheckCircle,
-  Clock,
   Fingerprint,
-  Globe,
   History,
   Key,
   LifeBuoy,
@@ -25,10 +22,9 @@ import {
   Shield,
   ShieldAlert,
   ShieldCheck,
-  Smartphone,
   XCircle,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,6 +32,8 @@ import { cn } from '../../../lib/utils';
 import { ROUTES } from '../../../routes/routeConfig';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState } from '../../Admin/AdminState';
 import { SettingsDivider, SettingsSection } from '../shared';
 
 interface SecurityOverviewPageProps {
@@ -65,6 +63,15 @@ interface LoginEvent {
   device: string;
 }
 
+interface ActiveSessionsResponse {
+  sessions?: unknown[];
+}
+
+interface MfaStatusResponse {
+  isEnabled?: boolean;
+  method?: string;
+}
+
 const DEFAULT_STATUS: SecurityStatus = {
   passwordStrength: 'unknown',
   mfaEnabled: false,
@@ -77,7 +84,6 @@ const DEFAULT_STATUS: SecurityStatus = {
 
 export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   currentUser,
-  onUpdateUser,
   className = '',
 }) => {
   const { t } = useTranslation();
@@ -85,40 +91,47 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
   const [status, setStatus] = useState<SecurityStatus>(DEFAULT_STATUS);
   const [recentEvents, setRecentEvents] = useState<LoginEvent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadSecurityData();
-  }, [currentUser.id]);
-
-  const loadSecurityData = async () => {
+  const loadSecurityData = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const [sessionsRes, historyRes, recoveryRes, mfaRes] = await Promise.all([
-        Api.getActiveSessions().catch(() => ({ sessions: [] })),
-        Api.getLoginHistory().catch(() => []),
-        Api.get('/settings/recovery').catch(() => null),
-        Api.get('/api/mfa/status').catch(() => null),
+        Api.getActiveSessions(),
+        Api.getLoginHistory(),
+        Api.get('/settings/recovery'),
+        Api.get('/api/mfa/status'),
       ]);
+      if (!sessionsRes || !Array.isArray(historyRes) || !recoveryRes || !mfaRes) {
+        throw new Error('Security overview response was missing required data');
+      }
+
+      const sessions = (sessionsRes as ActiveSessionsResponse).sessions ?? [];
+      const mfa = mfaRes as MfaStatusResponse;
 
       setStatus({
         passwordStrength: 'medium',
-        mfaEnabled: currentUser?.mfaEnabled || (mfaRes as any)?.isEnabled || false,
-        mfaMethod: (mfaRes as any)?.method || 'totp',
-        activeSessions: (sessionsRes as any)?.sessions?.length || 1,
+        mfaEnabled: currentUser?.mfaEnabled || mfa.isEnabled || false,
+        mfaMethod: mfa.method || 'totp',
+        activeSessions: sessions.length,
         recoveryEmail: !!recoveryRes?.recoveryEmail,
         recoveryPhone: !!recoveryRes?.recoveryPhone,
         backupCodes: (recoveryRes?.backupCodesCount || 0) > 0,
         backupCodesCount: recoveryRes?.backupCodesCount || 0,
       });
 
-      const events = Array.isArray(historyRes) ? historyRes : [];
-      setRecentEvents(events.slice(0, 5));
-    } catch (error) {
-      console.error('Failed to load security data:', error);
+      setRecentEvents(historyRes.slice(0, 5));
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load security overview'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser?.mfaEnabled]);
+
+  useEffect(() => {
+    void loadSecurityData();
+  }, [currentUser.id, loadSecurityData]);
 
   const securityScore = useMemo(() => {
     let score = 0;
@@ -311,6 +324,11 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
     }
   };
 
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  };
+
   const colorMap = {
     violet: {
       icon: 'bg-violet-500/10 text-violet-400',
@@ -336,6 +354,24 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
 
   const circumference = 2 * Math.PI * 42;
   const dashOffset = circumference - (scorePercentage / 100) * circumference;
+
+  if (loadError) {
+    return (
+      <SettingsSection
+        icon={Shield}
+        title={t('settings.securityOverview.title', 'Security Overview')}
+        description={t(
+          'settings.securityOverview.description',
+          'Monitor your account security status and manage protection settings'
+        )}
+        cardId="settings-security-overview"
+        loading={loading}
+        className={className}
+      >
+        <DegradedState title="Security overview unavailable" description={loadError} />
+      </SettingsSection>
+    );
+  }
 
   return (
     <SettingsSection
@@ -534,7 +570,7 @@ export const SecurityOverviewPage: React.FC<SecurityOverviewPageProps> = ({
                     </div>
                   </div>
                   <span className="text-xs text-slate-500">
-                    {event.timestamp ? new Date(event.timestamp).toLocaleString() : ''}
+                    {event.timestamp ? formatTimestamp(event.timestamp) : ''}
                   </span>
                 </div>
               ))}

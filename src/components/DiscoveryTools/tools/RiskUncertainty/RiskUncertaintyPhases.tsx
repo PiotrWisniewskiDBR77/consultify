@@ -358,7 +358,9 @@ export function RiskMapPhase({
             >
               <select
                 value={item.confidence}
-                onChange={(event) => updateAssumption(item.id, { confidence: Number(event.target.value) })}
+                onChange={(event) =>
+                  updateAssumption(item.id, { confidence: Number(event.target.value) })
+                }
                 className="mt-2 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
               >
                 {[1, 2, 3, 4, 5].map((score) => (
@@ -398,7 +400,9 @@ export function RiskMapPhase({
                   <select
                     key={field}
                     value={item[field]}
-                    onChange={(event) => updateRisk(item.id, { [field]: Number(event.target.value) })}
+                    onChange={(event) =>
+                      updateRisk(item.id, { [field]: Number(event.target.value) })
+                    }
                     className="h-8 rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
                   >
                     {[1, 2, 3, 4, 5].map((score) => (
@@ -438,7 +442,9 @@ export function RiskMapPhase({
             >
               <select
                 value={item.likelihood}
-                onChange={(event) => updateScenario(item.id, { likelihood: Number(event.target.value) })}
+                onChange={(event) =>
+                  updateScenario(item.id, { likelihood: Number(event.target.value) })
+                }
                 className="mt-2 h-8 w-full rounded-lg border border-slate-200 bg-white px-2 text-xs dark:border-navy-700 dark:bg-navy-900"
               >
                 {[1, 2, 3, 4, 5].map((score) => (
@@ -525,7 +531,9 @@ function RiskCard({
     <div className="rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
       <div className="mb-2 flex items-start justify-between gap-3">
         <div>
-          <div className="text-[10px] font-bold uppercase tracking-wide text-amber-500">{badge}</div>
+          <div className="text-[10px] font-bold uppercase tracking-wide text-amber-500">
+            {badge}
+          </div>
           <h4 className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">{title}</h4>
         </div>
         {isAi ? (

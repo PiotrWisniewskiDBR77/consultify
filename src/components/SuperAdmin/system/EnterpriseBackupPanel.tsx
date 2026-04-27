@@ -75,6 +75,41 @@ interface BackupConfig {
   auto_verify: boolean;
 }
 
+const getCreatedBackupId = (result: unknown) => {
+  if (!result || typeof result !== 'object') return '';
+  const payload = result as { id?: unknown; backup?: { id?: unknown }; data?: unknown };
+  const data = payload.data && typeof payload.data === 'object' ? payload.data : null;
+  return String(
+    payload.id ||
+      payload.backup?.id ||
+      (data as { id?: unknown; backup?: { id?: unknown } } | null)?.id ||
+      (data as { backup?: { id?: unknown } } | null)?.backup?.id ||
+      ''
+  );
+};
+
+const normalizeBackups = (payload: unknown): Backup[] => {
+  if (Array.isArray(payload)) return payload as Backup[];
+  if (payload && typeof payload === 'object') {
+    const candidate = payload as { backups?: unknown; data?: unknown; items?: unknown };
+    if (Array.isArray(candidate.backups)) return candidate.backups as Backup[];
+    if (Array.isArray(candidate.data)) return candidate.data as Backup[];
+    if (Array.isArray(candidate.items)) return candidate.items as Backup[];
+  }
+  throw new Error('Backups response was not a list');
+};
+
+const normalizeSchedules = (payload: unknown): BackupSchedule[] => {
+  if (Array.isArray(payload)) return payload as BackupSchedule[];
+  if (payload && typeof payload === 'object') {
+    const candidate = payload as { schedules?: unknown; data?: unknown; items?: unknown };
+    if (Array.isArray(candidate.schedules)) return candidate.schedules as BackupSchedule[];
+    if (Array.isArray(candidate.data)) return candidate.data as BackupSchedule[];
+    if (Array.isArray(candidate.items)) return candidate.items as BackupSchedule[];
+  }
+  throw new Error('Backup schedules response was not a list');
+};
+
 const BACKUP_TYPE_CONFIG = {
   full: { color: 'bg-purple-500/20 text-purple-400', label: 'Full' },
   incremental: { color: 'bg-blue-500/20 text-blue-400', label: 'Incremental' },
@@ -86,6 +121,13 @@ const STATUS_CONFIG = {
   in_progress: { color: 'bg-amber-500', text: 'text-amber-400', icon: RefreshCw },
   completed: { color: 'bg-emerald-500', text: 'text-emerald-400', icon: CheckCircle },
   failed: { color: 'bg-red-500', text: 'text-red-400', icon: XCircle },
+};
+
+const fallbackBackupTypeConfig = { color: 'bg-slate-500/20 text-slate-400', label: 'Unknown' };
+const fallbackStatusConfig = {
+  color: 'bg-slate-500',
+  text: 'text-slate-400 dark:text-slate-500',
+  icon: Clock,
 };
 
 const destructiveBackupActionReason = ADMIN_UI_COPY.destructiveDisabled.description;
@@ -108,14 +150,28 @@ export const EnterpriseBackupPanel: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [backupLoadError, setBackupLoadError] = useState<string | null>(null);
   const [scheduleLoadError, setScheduleLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const formatDateTime = (value?: string | null) => {
+    if (!value) return 'Unknown date';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+  };
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return 'Never';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+  };
 
   const fetchBackups = useCallback(async () => {
     try {
       const data = await Api.getBackups();
-      setBackups(data || []);
+      const backupsData = normalizeBackups(data);
+      setBackups(backupsData);
       setBackupLoadError(null);
+      return backupsData;
     } catch (error) {
-      console.error('Failed to fetch backups:', error);
       setBackupLoadError(
         normalizeApiErrorMessage(
           error,
@@ -123,18 +179,21 @@ export const EnterpriseBackupPanel: React.FC = () => {
         )
       );
       setBackups([]);
+      return null;
     }
   }, []);
 
   const fetchSchedules = useCallback(async () => {
     try {
       const data = await Api.getBackupSchedules();
-      setSchedules(data || []);
+      const schedulesData = normalizeSchedules(data);
+      setSchedules(schedulesData);
       setScheduleLoadError(null);
+      return schedulesData;
     } catch (error) {
-      console.error('Failed to fetch schedules:', error);
       setScheduleLoadError(normalizeApiErrorMessage(error, 'Backup schedules are unavailable.'));
       setSchedules([]);
+      return null;
     }
   }, []);
 
@@ -154,41 +213,63 @@ export const EnterpriseBackupPanel: React.FC = () => {
     }
 
     setCreating(true);
+    setActionError(null);
     try {
-      await Api.createBackup(type, reason);
+      const result = await Api.createBackup(type, reason);
+      const createdId = getCreatedBackupId(result);
+      if (!createdId) {
+        throw new Error('Backup creation response was incomplete');
+      }
+      const refreshed = await fetchBackups();
+      if (!refreshed?.some((backup) => backup.id === createdId)) {
+        throw new Error('Backup creation was not confirmed by the server');
+      }
       toast.success('Backup started');
-      fetchBackups();
-    } catch (error: any) {
-      console.error('Failed to create backup:', error);
-      toast.error(error?.message || 'Failed to create backup - production configuration required');
+      setShowCreateModal(false);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        'Failed to create backup - production configuration required'
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setCreating(false);
-      setShowCreateModal(false);
     }
   };
 
   const handleToggleSchedule = async (id: string, enabled: boolean) => {
+    setActionError(null);
     try {
-      setSchedules((prev) => prev.map((s) => (s.id === id ? { ...s, enabled } : s)));
       await Api.updateBackupSchedule(id, { enabled });
+      const refreshed = await fetchSchedules();
+      if (!refreshed?.some((schedule) => schedule.id === id && schedule.enabled === enabled)) {
+        throw new Error('Backup schedule update was not confirmed by the server');
+      }
       toast.success(`Schedule ${enabled ? 'enabled' : 'disabled'}`);
-      fetchSchedules();
-    } catch (error) {
-      toast.error('Failed to update schedule');
-      fetchSchedules();
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to update schedule');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 Bytes';
+  const safeNumber = (value: unknown, fallback = 0) => {
+    const parsed = Number(value ?? fallback);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
+  const formatBytes = (value: unknown) => {
+    const bytes = safeNumber(value);
+    if (bytes <= 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(k)));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   const getTotalBackupSize = () => {
-    return backups.reduce((acc, b) => acc + (b.sizeBytes || 0), 0);
+    return backups.reduce((acc, b) => acc + safeNumber(b.sizeBytes), 0);
   };
 
   const hasBackupDataError = Boolean(backupLoadError || scheduleLoadError);
@@ -216,6 +297,15 @@ export const EnterpriseBackupPanel: React.FC = () => {
         </button>
       </div>
 
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* Stats */}
       {hasBackupDataError ? (
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
@@ -241,7 +331,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
           <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/30">
             <div className="text-sm text-slate-600 dark:text-slate-400">Last Backup</div>
             <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">
-              {backups[0] ? new Date(backups[0].createdAt).toLocaleDateString() : 'Never'}
+              {formatDate(backups[0]?.createdAt)}
             </div>
           </div>
           <div className="p-4 bg-purple-500/10 rounded-xl border border-purple-500/30">
@@ -263,7 +353,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
         ].map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id as typeof activeTab)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
                 ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
@@ -295,8 +385,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 </div>
               ) : (
                 backups.map((backup) => {
-                  const typeConfig = BACKUP_TYPE_CONFIG[backup.type];
-                  const statusConfig = STATUS_CONFIG[backup.status];
+                  const typeConfig = BACKUP_TYPE_CONFIG[backup.type] || fallbackBackupTypeConfig;
+                  const statusConfig = STATUS_CONFIG[backup.status] || fallbackStatusConfig;
                   const StatusIcon = statusConfig.icon;
 
                   return (
@@ -325,9 +415,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                               {backup.hasS3 && <Cloud className="w-3 h-3 text-cyan-400" />}
                             </div>
                             <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 mt-1">
-                              <span>{backup.sizeMB} MB</span>
+                              <span>{formatBytes(backup.sizeBytes)}</span>
                               <span>•</span>
-                              <span>Created: {new Date(backup.createdAt).toLocaleString()}</span>
+                              <span>Created: {formatDateTime(backup.createdAt)}</span>
                               <span>•</span>
                               <span>Reason: {backup.reason}</span>
                             </div>
@@ -337,7 +427,9 @@ export const EnterpriseBackupPanel: React.FC = () => {
                           <span
                             className={`px-2 py-1 text-xs rounded ${statusConfig.color}/20 ${statusConfig.text}`}
                           >
-                            {backup.status.replace('_', ' ')}
+                            {STATUS_CONFIG[backup.status]
+                              ? backup.status.replace('_', ' ')
+                              : 'unknown'}
                           </span>
                           {backup.status === 'completed' && (
                             <>
@@ -439,9 +531,7 @@ export const EnterpriseBackupPanel: React.FC = () => {
                               {schedule.next_run && (
                                 <>
                                   <span>•</span>
-                                  <span>
-                                    Next run: {new Date(schedule.next_run).toLocaleString()}
-                                  </span>
+                                  <span>Next run: {formatDateTime(schedule.next_run)}</span>
                                 </>
                               )}
                             </div>
@@ -458,7 +548,11 @@ export const EnterpriseBackupPanel: React.FC = () => {
                           >
                             {schedule.enabled ? 'Enabled' : 'Disabled'}
                           </button>
-                          <button className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg">
+                          <button
+                            disabled
+                            title="Schedule editing requires an audited schedule editor workflow."
+                            className="p-2 rounded-lg opacity-50 cursor-not-allowed"
+                          >
                             <Settings className="w-4 h-4 text-slate-400 dark:text-slate-500" />
                           </button>
                         </div>
@@ -666,7 +760,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleCreateBackup('full')}
-                  className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg text-left hover:bg-purple-500/20 transition-colors"
+                  disabled={creating}
+                  className="p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg text-left hover:bg-purple-500/20 transition-colors disabled:opacity-50"
                 >
                   <div className="font-medium text-purple-400 mb-1">Full Backup</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">
@@ -675,7 +770,8 @@ export const EnterpriseBackupPanel: React.FC = () => {
                 </button>
                 <button
                   onClick={() => handleCreateBackup('incremental')}
-                  className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left hover:bg-blue-500/20 transition-colors"
+                  disabled={creating}
+                  className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg text-left hover:bg-blue-500/20 transition-colors disabled:opacity-50"
                 >
                   <div className="font-medium text-blue-400 mb-1">Incremental</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400">

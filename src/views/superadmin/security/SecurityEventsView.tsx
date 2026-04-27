@@ -3,16 +3,56 @@
  * Displays and manages security events and alerts
  */
 
-import { AlertTriangle, CheckCircle } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { CheckCircle } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+
+type SecurityEventRow = {
+  id: string;
+  created_at?: unknown;
+  event_type?: unknown;
+  severity?: unknown;
+  ip_address?: unknown;
+  location_city?: unknown;
+  location_country?: unknown;
+  resolved?: boolean;
+};
+
+const formatSecurityEventDate = (value?: unknown) => {
+  if (!value) return 'Unknown date';
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+const asText = (value: unknown, fallback: string) => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const toBool = (value: unknown, fallback = false) =>
+  typeof value === 'boolean'
+    ? value
+    : value === undefined || value === null
+      ? fallback
+      : value === 1 || value === '1' || value === 'true';
+
+const normalizeEvent = (event: SecurityEventRow): SecurityEventRow => ({
+  ...event,
+  resolved: toBool(event.resolved, false),
+});
 
 export const SecurityEventsView: React.FC = () => {
-  const [events, setEvents] = useState<any[]>([]);
+  const [events, setEvents] = useState<SecurityEventRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     organizationId: '',
     userId: '',
@@ -21,42 +61,63 @@ export const SecurityEventsView: React.FC = () => {
     resolved: '',
   });
 
-  useEffect(() => {
-    fetchEvents();
-  }, [filters]);
-
-  const normalizeEvents = (payload: unknown): any[] => {
-    if (Array.isArray(payload)) return payload;
-    if (payload && typeof payload === 'object') {
-      const anyPayload = payload as any;
-      if (Array.isArray(anyPayload.events)) return anyPayload.events;
-      if (Array.isArray(anyPayload.data)) return anyPayload.data;
-      if (Array.isArray(anyPayload.items)) return anyPayload.items;
+  const normalizeEvents = (payload: unknown): SecurityEventRow[] => {
+    if (Array.isArray(payload)) return payload.map(normalizeEvent);
+    if (isRecord(payload)) {
+      const data = isRecord(payload.data) ? payload.data : null;
+      const nestedData = data && isRecord(data.data) ? data.data : null;
+      const candidates = [payload, data, nestedData].filter(isRecord);
+      for (const candidate of candidates) {
+        if (Array.isArray(candidate.events)) {
+          return (candidate.events as SecurityEventRow[]).map(normalizeEvent);
+        }
+        if (Array.isArray(candidate.data)) {
+          return (candidate.data as SecurityEventRow[]).map(normalizeEvent);
+        }
+        if (Array.isArray(candidate.items)) {
+          return (candidate.items as SecurityEventRow[]).map(normalizeEvent);
+        }
+      }
     }
-    return [];
+    throw new Error('Security events response was not a list');
   };
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async (): Promise<SecurityEventRow[] | null> => {
     setLoading(true);
     setLoadError(null);
     try {
       const eventList = await Api.getSecurityEvents(filters);
-      setEvents(normalizeEvents(eventList));
-    } catch (err) {
-      toast.error('Failed to fetch security events');
-      setLoadError('Failed to fetch security events.');
+      const normalized = normalizeEvents(eventList);
+      setEvents(normalized);
+      return normalized;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch security events');
+      toast.error(message);
+      setEvents([]);
+      setLoadError(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+
+  useEffect(() => {
+    void fetchEvents();
+  }, [fetchEvents]);
 
   const handleResolve = async (eventId: string) => {
     try {
+      setActionError(null);
       await Api.resolveSecurityEvent(eventId);
+      const refreshed = await fetchEvents();
+      if (!refreshed || refreshed.some((event) => event.id === eventId && !event.resolved)) {
+        throw new Error('Security event resolution was not confirmed by the server');
+      }
       toast.success('Event resolved');
-      fetchEvents();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to resolve event');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to resolve event');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -120,9 +181,20 @@ export const SecurityEventsView: React.FC = () => {
         </select>
       </div>
 
+      {loadError && <DegradedState title="Security events unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : (
+      ) : loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-slate-700">
@@ -151,16 +223,7 @@ export const SecurityEventsView: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
-              {loadError ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-6 py-12 text-center text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-900/20"
-                  >
-                    {loadError}
-                  </td>
-                </tr>
-              ) : events.length === 0 ? (
+              {events.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -173,22 +236,24 @@ export const SecurityEventsView: React.FC = () => {
                 events.map((event) => (
                   <tr key={event.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {new Date(event.created_at).toLocaleString()}
+                      {formatSecurityEventDate(event.created_at)}
                     </td>
-                    <td className="px-6 py-4 text-slate-900 dark:text-white">{event.event_type}</td>
+                    <td className="px-6 py-4 text-slate-900 dark:text-white">
+                      {asText(event.event_type, 'Unknown event')}
+                    </td>
                     <td className="px-6 py-4">
                       <span
-                        className={`px-2 py-1 rounded text-xs border ${getSeverityColor(event.severity)}`}
+                        className={`px-2 py-1 rounded text-xs border ${getSeverityColor(asText(event.severity, 'unknown'))}`}
                       >
-                        {event.severity}
+                        {asText(event.severity, 'unknown')}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {event.ip_address || '-'}
+                      {asText(event.ip_address, '-')}
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
                       {event.location_city
-                        ? `${event.location_city}, ${event.location_country}`
+                        ? `${asText(event.location_city, '-')}, ${asText(event.location_country, '-')}`
                         : '-'}
                     </td>
                     <td className="px-6 py-4">
@@ -206,6 +271,7 @@ export const SecurityEventsView: React.FC = () => {
                       {!event.resolved && (
                         <button
                           onClick={() => handleResolve(event.id)}
+                          aria-label={`Resolve security event ${event.id}`}
                           className="text-green-700 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300"
                           title="Resolve event"
                         >

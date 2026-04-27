@@ -19,7 +19,6 @@ import {
   Database,
   DollarSign,
   FileBarChart,
-  FileCheck,
   FileSearch,
   FileText,
   FlaskConical,
@@ -45,6 +44,7 @@ import { InfoButton } from '../../../components/shared/InfoButton';
 import { ModelRegistryHub } from '../../../components/SuperAdmin/ModelRegistry';
 import { useHelpSidePanel } from '../../../contexts/HelpContext';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { CostAnalyticsTab } from './Analytics/CostAnalyticsTab';
 import { CustomReportsTab } from './Analytics/CustomReportsTab';
 import { LLMObservatoryTab } from './Analytics/LLMObservatoryTab';
@@ -61,7 +61,6 @@ import { OrgAIPolicyTab } from './Configuration/OrgAIPolicyTab';
 import { PurposeAssignmentsTab } from './Configuration/PurposeAssignmentsTab';
 import { RoutingRulesTab } from './Configuration/RoutingRulesTab';
 import { ExperimentsTab } from './Development/ExperimentsTab';
-import { ModelRegistryTab } from './Development/ModelRegistryTab';
 import { PromptBuilderTab } from './Development/PromptBuilderTab';
 // Development Tab Components
 import { PromptsLibraryTab } from './Development/PromptsLibraryTab';
@@ -194,6 +193,28 @@ interface AIPlatformModuleProps {
   initialTab?: string;
   initialSubTab?: string;
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getObjectPayload = (value: unknown): unknown => {
+  let current = value;
+
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (!isRecord(current) || !('data' in current)) break;
+    current = current.data;
+  }
+
+  return current;
+};
+
+const toBool = (value: unknown): boolean => value === true || value === 'true' || value === 1;
+
+const asText = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
 
 export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
   initialTab,
@@ -436,28 +457,32 @@ export const AIPlatformModule: React.FC<AIPlatformModuleProps> = ({
   useEffect(() => {
     let mounted = true;
     Api.getAIGovernancePolicy()
-      .then((json: any) => {
+      .then((json: unknown) => {
         if (!mounted) return;
-        const summary = json?.data?.summary || null;
-        const runtime = json?.data?.runtime || null;
+        const payload = getObjectPayload(json);
+
+        if (!isRecord(payload) || !isRecord(payload.summary) || !isRecord(payload.runtime)) {
+          throw new Error('Internet policy response was malformed');
+        }
+
+        const summary = payload.summary;
+        const runtime = payload.runtime;
+
         setInternetSignal({
           loading: false,
           error: null,
-          internetEnabled: Boolean(summary?.internetEnabled),
-          tavilyConfigured: Boolean(runtime?.tavilyConfigured),
-          webSearchAvailable: Boolean(runtime?.webSearchAvailable),
-          searchProvider:
-            typeof runtime?.provider === 'string' && runtime.provider.trim().length > 0
-              ? runtime.provider
-              : null,
+          internetEnabled: toBool(summary.internetEnabled),
+          tavilyConfigured: toBool(runtime.tavilyConfigured),
+          webSearchAvailable: toBool(runtime.webSearchAvailable),
+          searchProvider: asText(runtime.provider),
         });
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
         if (!mounted) return;
         setInternetSignal((prev) => ({
           ...prev,
           loading: false,
-          error: error?.message || 'Unable to load internet policy',
+          error: normalizeApiErrorMessage(error, 'Unable to load internet policy'),
         }));
       });
     return () => {

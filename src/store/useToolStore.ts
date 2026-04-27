@@ -836,7 +836,8 @@ export const GROWTH_PATHS_STEPS: StepDefinition[] = [
     id: 'input',
     name: 'Input & Exploration',
     namePl: 'Input & Exploration',
-    description: 'Capture growth signals from interviews, organization context, and market evidence',
+    description:
+      'Capture growth signals from interviews, organization context, and market evidence',
     descriptionPl: 'Zbierz sygnały wzrostu z wywiadów, kontekstu organizacji i rynku',
     required: true,
     aiAssisted: true,
@@ -884,7 +885,8 @@ export const PORTFOLIO_PRIORITY_STEPS: StepDefinition[] = [
     id: 'input',
     name: 'Input & Exploration',
     namePl: 'Input & Exploration',
-    description: 'Capture portfolio evidence, constraints, performance signals, and sponsor context',
+    description:
+      'Capture portfolio evidence, constraints, performance signals, and sponsor context',
     descriptionPl: 'Zbierz dowody portfolio, ograniczenia, sygnały wyników i kontekst sponsora',
     required: true,
     aiAssisted: true,
@@ -1950,7 +1952,8 @@ const normalizePortfolioPriorityData = (input: PortfolioPriorityData): Portfolio
       marketGrowth: item.marketGrowth ?? 3,
       marketShare: item.marketShare ?? 3,
       investmentLevel: item.investmentLevel ?? 3,
-      category: item.category || getPortfolioCategory(item.marketGrowth ?? 3, item.marketShare ?? 3),
+      category:
+        item.category || getPortfolioCategory(item.marketGrowth ?? 3, item.marketShare ?? 3),
       evidence: item.evidence || [],
       confidence: item.confidence ?? 3,
       proposalStatus: item.proposalStatus || 'accepted',
@@ -1993,7 +1996,8 @@ const updatePortfolioProposalCard = (
   const updateList = <T extends { id: string }>(items: T[]) =>
     items.map((item) => (item.id === cardId ? ({ ...item, ...updates } as T) : item));
 
-  if (cardType === 'signal') return { ...portfolioData, signals: updateList(portfolioData.signals) };
+  if (cardType === 'signal')
+    return { ...portfolioData, signals: updateList(portfolioData.signals) };
   if (cardType === 'item')
     return { ...portfolioData, initiatives: updateList(portfolioData.initiatives) };
   if (cardType === 'tension' || cardType === 'correlation')
@@ -2276,7 +2280,9 @@ const computeStepStatusFromAnswers = (
       const growthAnswers = normalizeGrowthPathsData(answers as GrowthPathsData);
 
       if (stepId === 'mission') {
-        return growthAnswers.context?.goal && growthAnswers.context?.scope ? 'completed' : 'pending';
+        return growthAnswers.context?.goal && growthAnswers.context?.scope
+          ? 'completed'
+          : 'pending';
       }
 
       if (stepId === 'input') {
@@ -2284,7 +2290,9 @@ const computeStepStatusFromAnswers = (
       }
 
       if (stepId === 'options') {
-        return Object.values(growthAnswers.quadrants || {}).some((items) => (items?.length || 0) > 0)
+        return Object.values(growthAnswers.quadrants || {}).some(
+          (items) => (items?.length || 0) > 0
+        )
           ? 'completed'
           : 'pending';
       }
@@ -2788,8 +2796,8 @@ export const useToolStore = create<ToolStoreState>()(
           if (stepDef.id === 'mission') {
             return Boolean(
               growthData.context?.goal &&
-                growthData.context?.scope &&
-                growthData.context?.successSignal
+              growthData.context?.scope &&
+              growthData.context?.successSignal
             );
           }
 
@@ -2814,8 +2822,8 @@ export const useToolStore = create<ToolStoreState>()(
           if (stepDef.id === 'outputs') {
             return Boolean(
               growthData.summary?.executiveSummary ||
-                (growthData.summary?.keyInsights?.length || 0) > 0 ||
-                (growthData.outputCandidates?.length || 0) > 0
+              (growthData.summary?.keyInsights?.length || 0) > 0 ||
+              (growthData.outputCandidates?.length || 0) > 0
             );
           }
         }
@@ -2828,8 +2836,8 @@ export const useToolStore = create<ToolStoreState>()(
           if (stepDef.id === 'mission') {
             return Boolean(
               portfolioData.context?.goal &&
-                portfolioData.context?.scope &&
-                portfolioData.context?.successSignal
+              portfolioData.context?.scope &&
+              portfolioData.context?.successSignal
             );
           }
 
@@ -2852,8 +2860,8 @@ export const useToolStore = create<ToolStoreState>()(
           if (stepDef.id === 'outputs') {
             return Boolean(
               portfolioData.summary?.executiveSummary ||
-                (portfolioData.summary?.keyInsights?.length || 0) > 0 ||
-                (portfolioData.outputCandidates?.length || 0) > 0
+              (portfolioData.summary?.keyInsights?.length || 0) > 0 ||
+              (portfolioData.outputCandidates?.length || 0) > 0
             );
           }
         }
@@ -2891,8 +2899,8 @@ export const useToolStore = create<ToolStoreState>()(
           if (stepDef.id === 'outputs') {
             return Boolean(
               riskData.summary?.executiveSummary ||
-                (riskData.summary?.keyInsights?.length || 0) > 0 ||
-                (riskData.outputCandidates?.length || 0) > 0
+              (riskData.summary?.keyInsights?.length || 0) > 0 ||
+              (riskData.outputCandidates?.length || 0) > 0
             );
           }
         }

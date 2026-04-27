@@ -18,7 +18,7 @@ import {
   Settings,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -31,6 +31,8 @@ import {
   ShortcutPreset,
   User,
 } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import { SettingsDivider, SettingsSection, SettingsToggle } from './shared';
 
 interface KeyboardShortcutsSettingsProps {
@@ -200,6 +202,14 @@ const CATEGORY_ORDER: ShortcutCategory[] = [
   'general',
 ];
 
+const DEFAULT_KEYBOARD_SHORTCUTS: KeyboardShortcuts = {
+  preset: 'default',
+  enabled: true,
+  showHints: true,
+  customShortcuts: {},
+  disabledShortcuts: [],
+};
+
 const KeyBadge = ({ keys }: { keys: string }) => (
   <div className="flex items-center gap-1">
     {keys.split('+').map((key, i) => (
@@ -223,63 +233,66 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
   const [newKeyBinding, setNewKeyBinding] = useState('');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const [shortcuts, setShortcuts] = useState<KeyboardShortcuts>({
-    preset: 'default',
-    enabled: true,
-    showHints: true,
-    customShortcuts: {},
-    disabledShortcuts: [],
-  });
+  const [shortcuts, setShortcuts] = useState<KeyboardShortcuts>(DEFAULT_KEYBOARD_SHORTCUTS);
   const [original, setOriginal] = useState<KeyboardShortcuts>(shortcuts);
 
   const isDirty = JSON.stringify(shortcuts) !== JSON.stringify(original);
 
-  useEffect(() => {
-    loadShortcuts();
-  }, [currentUser.id]);
-
-  const loadShortcuts = async () => {
+  const loadShortcuts = useCallback(async () => {
     try {
+      setLoadError(null);
       const response = await Api.getShortcuts();
-      if (response.preferences) {
-        const merged = { ...shortcuts, ...response.preferences };
-        setShortcuts(merged);
-        setOriginal(merged);
+      if (!response?.preferences) {
+        throw new Error('Keyboard shortcuts response was missing preferences');
       }
-    } catch (error) {
-      console.error('Failed to load shortcuts:', error);
+      const merged = { ...DEFAULT_KEYBOARD_SHORTCUTS, ...response.preferences };
+      setShortcuts(merged);
+      setOriginal(merged);
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load keyboard shortcuts'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadShortcuts();
+  }, [currentUser.id, loadShortcuts]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Api.saveShortcuts(shortcuts);
       const response = await Api.getShortcuts();
-      const next = { ...shortcuts, ...(response.preferences ?? {}) };
+      if (!response?.preferences) {
+        throw new Error('Keyboard shortcuts save was not confirmed by the server');
+      }
+      const next = { ...shortcuts, ...response.preferences };
+      if (JSON.stringify(next) !== JSON.stringify(shortcuts)) {
+        throw new Error('Keyboard shortcuts save was not confirmed by the server');
+      }
       setShortcuts(next);
       setOriginal(next);
       toast.success(t('settings.shortcuts.saved', 'Keyboard shortcuts saved'));
       onUpdate?.();
-    } catch (error) {
-      console.error('Failed to save shortcuts:', error);
-      toast.error(t('settings.shortcuts.error', 'Failed to save shortcuts'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.shortcuts.error', 'Failed to save shortcuts')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
   };
 
   const resetToDefault = () => {
-    setShortcuts({
-      preset: 'default',
-      enabled: true,
-      showHints: true,
-      customShortcuts: {},
-      disabledShortcuts: [],
-    });
+    setShortcuts(DEFAULT_KEYBOARD_SHORTCUTS);
   };
 
   const handleKeyCapture = (e: React.KeyboardEvent) => {
@@ -353,8 +366,25 @@ export const KeyboardShortcutsSettings: React.FC<KeyboardShortcutsSettingsProps>
     </button>
   );
 
+  if (loadError) {
+    return (
+      <div className="space-y-6">
+        <DegradedState title="Keyboard shortcuts unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       {/* ── Section 1: Enable & Presets ── */}
       <SettingsSection
         icon={Keyboard}

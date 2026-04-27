@@ -4,59 +4,126 @@
  */
 
 import { Key } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+
+type UserRow = {
+  id: string;
+  email: string;
+};
+
+type MFAMethodRow = {
+  id: string;
+  method_type?: string;
+  is_enabled?: boolean;
+  is_primary?: boolean;
+  last_used_at?: string | null;
+};
+
+const formatMfaDate = (value?: string | null) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+};
+
+const asText = (value: unknown, fallback = 'Unknown') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
 
 export const MFAView: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [users, setUsers] = useState<any[]>([]);
-  const [mfaMethods, setMfaMethods] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [mfaMethods, setMfaMethods] = useState<MFAMethodRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    if (selectedUserId) {
-      fetchMFAMethods();
-    }
-  }, [selectedUserId]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const userList = await Api.getSuperAdminUsers();
-      setUsers(userList);
-      if (userList.length > 0 && !selectedUserId) {
-        setSelectedUserId(userList[0].id);
+      const normalizedUsers = getListPayload<UserRow>(userList, ['users', 'items']);
+      if (!hasListShape(userList, ['users', 'items'])) {
+        throw new Error('Users response was not a list');
       }
-    } catch (err: any) {
-      console.error('Failed to fetch users:', err);
-      setLoadError(err?.message || 'Failed to fetch users');
-      toast.error(err?.message || 'Failed to fetch users');
+      setUsers(normalizedUsers);
+      setSelectedUserId((current) => current || normalizedUsers[0]?.id || '');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch users');
+      setLoadError(message);
+      toast.error(message);
     }
-  };
+  }, []);
 
-  const fetchMFAMethods = async () => {
-    if (!selectedUserId) return;
+  const fetchMFAMethods = useCallback(async () => {
+    if (!selectedUserId) return null;
     setLoading(true);
     setLoadError(null);
     try {
       const methods = await Api.getMFAMethods(selectedUserId);
-      const normalized = Array.isArray(methods)
-        ? methods
-        : (methods as any)?.methods || (methods as any)?.items || [];
+      const normalized = getListPayload<MFAMethodRow>(methods, ['methods', 'items']);
+      if (!hasListShape(methods, ['methods', 'items'])) {
+        throw new Error('MFA methods response was not a list');
+      }
       setMfaMethods(normalized);
-    } catch (err: any) {
-      setLoadError(err?.message || 'Failed to fetch MFA methods');
-      toast.error(err?.message || 'Failed to fetch MFA methods');
+      return normalized;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch MFA methods');
+      setMfaMethods([]);
+      setLoadError(message);
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedUserId]);
+
+  useEffect(() => {
+    void fetchUsers();
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    if (selectedUserId) {
+      void fetchMFAMethods();
+    }
+  }, [selectedUserId, fetchMFAMethods]);
 
   return (
     <div className="p-6 space-y-6">
@@ -77,17 +144,13 @@ export const MFAView: React.FC = () => {
           <option value="">Select User</option>
           {users.map((user) => (
             <option key={user.id} value={user.id}>
-              {user.email}
+              {asText(user.email, 'Unknown user')}
             </option>
           ))}
         </select>
       </div>
 
-      {loadError && (
-        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
-          {loadError}
-        </div>
-      )}
+      {loadError && <DegradedState title="MFA methods unavailable" description={loadError} />}
 
       {!selectedUserId ? (
         <div className="text-center py-12 text-slate-500 dark:text-slate-400">
@@ -95,7 +158,7 @@ export const MFAView: React.FC = () => {
         </div>
       ) : loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : (
+      ) : loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6">
           {mfaMethods.length === 0 ? (
             <div className="text-center py-12 text-slate-500 dark:text-slate-400">
@@ -125,7 +188,7 @@ export const MFAView: React.FC = () => {
                     </div>
                     <div>
                       <div className="text-slate-900 dark:text-white font-medium">
-                        {method.method_type.toUpperCase()}
+                        {asText(method.method_type, 'unknown').toUpperCase()}
                       </div>
                       <div className="text-sm text-slate-600 dark:text-slate-400">
                         {method.is_enabled ? 'Enabled' : 'Disabled'}
@@ -135,7 +198,7 @@ export const MFAView: React.FC = () => {
                   </div>
                   {method.last_used_at && (
                     <div className="text-sm text-slate-600 dark:text-slate-400">
-                      Last used: {new Date(method.last_used_at).toLocaleDateString()}
+                      Last used: {formatMfaDate(method.last_used_at)}
                     </div>
                   )}
                 </div>

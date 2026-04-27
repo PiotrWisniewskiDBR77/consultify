@@ -11,7 +11,6 @@
  */
 
 import {
-  AlertTriangle,
   Blocks,
   CheckCircle,
   ChevronDown,
@@ -21,25 +20,23 @@ import {
   Eye,
   FileText,
   History,
-  Languages,
   Loader2,
   PanelRightClose,
   PanelRightOpen,
   PlayCircle,
   Plus,
-  RefreshCw,
   Save,
   Search,
-  Sparkles,
   Tag,
   TestTube,
   Trash2,
   Wand2,
-  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
-import { useTranslation } from 'react-i18next';
+
+import { DegradedState } from '@/components/Admin/AdminState';
+import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import api from '../../services/api';
 import { PromptAssistantPanel } from './PromptAssistantPanel';
@@ -82,17 +79,132 @@ const PROMPT_CATEGORIES = [
   { id: 'system', name: 'System Prompts', icon: '⚙️' },
 ];
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getObjectPayload = (value: unknown): unknown => {
+  let current = value;
+
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (!isRecord(current) || !('data' in current)) break;
+    current = current.data;
+  }
+
+  return current;
+};
+
+const asText = (value: unknown, fallback = ''): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return fallback;
+};
+
+const toNumber = (value: unknown, fallback = 0): number => {
+  const numberValue = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+};
+
+const toBool = (value: unknown): boolean => value === true || value === 'true' || value === 1;
+
+const normalizeVariables = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value.map((item) => asText(item).trim()).filter((item) => item.length > 0)
+    : [];
+
+const normalizePrompt = (value: unknown): PromptTemplate => {
+  if (!isRecord(value)) {
+    throw new Error('Prompt row was not an object');
+  }
+
+  const id = asText(value.id).trim();
+  if (!id) {
+    throw new Error('Prompt row was missing an id');
+  }
+
+  return {
+    id,
+    name: asText(value.name, 'Untitled prompt'),
+    category: asText(value.category, 'system'),
+    description: asText(value.description),
+    system_prompt: asText(value.system_prompt),
+    user_prompt_template: asText(value.user_prompt_template),
+    variables: normalizeVariables(value.variables),
+    version: toNumber(value.version, 1),
+    is_active: toBool(value.is_active),
+    created_at: asText(value.created_at),
+    updated_at: asText(value.updated_at),
+    created_by: asText(value.created_by),
+  };
+};
+
+const normalizePromptList = (value: unknown): PromptTemplate[] => {
+  const payload = getObjectPayload(value);
+  let rows: unknown[];
+
+  if (Array.isArray(payload)) {
+    rows = payload;
+  } else if (isRecord(payload) && Array.isArray(payload.prompts)) {
+    rows = payload.prompts;
+  } else if (isRecord(payload) && payload.success === false) {
+    throw new Error(normalizeApiErrorMessage(payload, 'Failed to fetch prompts'));
+  } else {
+    throw new Error('Prompts response was not a list');
+  }
+
+  return rows.map(normalizePrompt);
+};
+
+const normalizeVersion = (value: unknown): PromptVersion => {
+  if (!isRecord(value)) {
+    throw new Error('Prompt version row was not an object');
+  }
+
+  const id = asText(value.id).trim();
+  if (!id) {
+    throw new Error('Prompt version row was missing an id');
+  }
+
+  return {
+    id,
+    prompt_id: asText(value.prompt_id),
+    version: toNumber(value.version, 1),
+    system_prompt: asText(value.system_prompt),
+    user_prompt_template: asText(value.user_prompt_template),
+    changed_by: asText(value.changed_by),
+    changed_at: asText(value.changed_at),
+    change_reason: asText(value.change_reason) || undefined,
+  };
+};
+
+const normalizeVersionList = (value: unknown): PromptVersion[] => {
+  const payload = getObjectPayload(value);
+  let rows: unknown[];
+
+  if (Array.isArray(payload)) {
+    rows = payload;
+  } else if (isRecord(payload) && Array.isArray(payload.versions)) {
+    rows = payload.versions;
+  } else if (isRecord(payload) && payload.success === false) {
+    throw new Error(normalizeApiErrorMessage(payload, 'Failed to fetch versions'));
+  } else {
+    throw new Error('Prompt versions response was not a list');
+  }
+
+  return rows.map(normalizeVersion);
+};
+
 export function PromptManagementUI() {
-  const { t } = useTranslation();
   const [prompts, setPrompts] = useState<PromptTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedPrompt, setSelectedPrompt] = useState<PromptTemplate | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showVersions, setShowVersions] = useState(false);
   const [versions, setVersions] = useState<PromptVersion[]>([]);
+  const [versionsError, setVersionsError] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewResult, setPreviewResult] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -113,22 +225,14 @@ export function PromptManagementUI() {
 
     try {
       const response = await api.get('/ai-prompts');
-      const data = (response as any)?.data ?? response;
-
-      if (data?.success) {
-        setPrompts(data.prompts || []);
-      } else if (data?.prompts) {
-        // Handle case where success flag is missing but data exists
-        setPrompts(data.prompts);
-      } else if (Array.isArray(data)) {
-        // Handle case where backend returns array directly
-        setPrompts(data);
-      } else {
-        throw new Error(data?.error || 'Failed to fetch prompts');
-      }
-    } catch (err: any) {
-      setError(err?.message || 'Failed to fetch prompts');
+      const nextPrompts = normalizePromptList(response);
+      setPrompts(nextPrompts);
+      return nextPrompts;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch prompts');
+      setError(message);
       setPrompts([]);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -139,16 +243,14 @@ export function PromptManagementUI() {
   }, [fetchPrompts]);
 
   const fetchVersionHistory = async (promptId: string) => {
+    setVersionsError(null);
     try {
       const response = await api.get(`/ai-prompts/${promptId}/versions`);
-      const data = (response as any)?.data ?? response;
-      if (data?.success || data?.versions) {
-        setVersions(data.versions || []);
-      } else if (Array.isArray(data)) {
-        setVersions(data);
-      }
-    } catch (err) {
-      console.error('Failed to fetch versions:', err);
+      const nextVersions = normalizeVersionList(response);
+      setVersions(nextVersions);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch versions');
+      setVersionsError(message);
       setVersions([]);
     }
   };
@@ -171,25 +273,41 @@ export function PromptManagementUI() {
   };
 
   const handleSave = async () => {
-    if (!editForm.id) return;
+    if (!editForm.id) {
+      setActionError('Creating prompts is not connected to a confirmed backend workflow yet.');
+      return;
+    }
 
     setIsSaving(true);
+    setActionError(null);
     try {
       const response = await api.put(`/ai-prompts/${editForm.id}`, editForm);
-      const data = (response as any)?.data ?? response;
+      const data = getObjectPayload(response);
 
-      if (data?.success !== false) {
-        toast.success('Prompt saved successfully');
-        setIsEditing(false);
-        await fetchPrompts();
-        if (selectedPrompt) {
-          await handleSelectPrompt({ ...selectedPrompt, ...editForm } as PromptTemplate);
-        }
-      } else {
-        throw new Error(data?.error || 'Failed to save prompt');
+      if (isRecord(data) && data.success === false) {
+        throw new Error(normalizeApiErrorMessage(data, 'Failed to save prompt'));
       }
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to save prompt');
+
+      const nextPrompts = await fetchPrompts();
+      const confirmedPrompt = nextPrompts?.find((prompt) => prompt.id === editForm.id);
+
+      if (!confirmedPrompt) {
+        throw new Error('Prompt save could not be confirmed after refresh');
+      }
+
+      const expectedName = asText(editForm.name, selectedPrompt?.name);
+      if (expectedName && confirmedPrompt.name !== expectedName) {
+        throw new Error('Prompt save refresh returned stale prompt data');
+      }
+
+      toast.success('Prompt saved successfully');
+      setSelectedPrompt(confirmedPrompt);
+      setIsEditing(false);
+      await fetchVersionHistory(confirmedPrompt.id);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to save prompt');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setIsSaving(false);
     }
@@ -200,32 +318,32 @@ export function PromptManagementUI() {
 
     try {
       const response = await api.delete(`/ai-prompts/${selectedPrompt.id}`);
-      const data = (response as any)?.data ?? response;
+      const data = getObjectPayload(response);
 
-      if (data?.success !== false) {
-        toast.success('Prompt deleted');
-        setSelectedPrompt(null);
-        await fetchPrompts();
-      } else {
-        throw new Error(data?.error || 'Failed to delete');
+      if (isRecord(data) && data.success === false) {
+        throw new Error(normalizeApiErrorMessage(data, 'Failed to delete'));
       }
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to delete prompt');
+
+      const deletedId = selectedPrompt.id;
+      const nextPrompts = await fetchPrompts();
+
+      if (!nextPrompts || nextPrompts.some((prompt) => prompt.id === deletedId)) {
+        throw new Error('Prompt deletion could not be confirmed after refresh');
+      }
+
+      toast.success('Prompt deleted');
+      setSelectedPrompt(null);
+      setVersions([]);
+      setVersionsError(null);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to delete prompt');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleCreateNew = () => {
-    setEditForm({
-      name: 'New Prompt',
-      category: 'chat',
-      description: '',
-      system_prompt: '',
-      user_prompt_template: '',
-      variables: [],
-      is_active: true,
-    });
-    setSelectedPrompt(null);
-    setIsEditing(true);
+    setActionError('Creating prompts is not connected to a confirmed backend workflow yet.');
   };
 
   const handleTestPrompt = async () => {
@@ -234,20 +352,24 @@ export function PromptManagementUI() {
     setPreviewLoading(true);
     setShowPreview(true);
     setPreviewResult(null);
+    setActionError(null);
 
     try {
       const response = await api.post(`/ai-prompts/${selectedPrompt.id}/test`, {
         variables: {},
       });
-      const data = (response as any)?.data ?? response;
+      const data = getObjectPayload(response);
 
-      if (data?.success !== false) {
-        setPreviewResult(data?.result || 'No response');
-      } else {
-        setPreviewResult(`Error: ${data?.error || 'Test failed'}`);
+      if (isRecord(data) && data.success === false) {
+        throw new Error(normalizeApiErrorMessage(data, 'Test failed'));
       }
-    } catch (err: any) {
-      setPreviewResult(`Error: ${err?.message || 'Test failed'}`);
+
+      const result = isRecord(data) ? asText(data.result, 'No response') : 'No response';
+      setPreviewResult(result);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Test failed');
+      setActionError(message);
+      setPreviewResult(`Error: ${message}`);
     } finally {
       setPreviewLoading(false);
     }
@@ -260,7 +382,7 @@ export function PromptManagementUI() {
     toast.success('Preview generated');
   };
 
-  const handlePromptBenchResults = (results: any[]) => {
+  const handlePromptBenchResults = (results: unknown[]) => {
     setShowPreview(true);
     setPreviewLoading(false);
     setPreviewResult(JSON.stringify(results, null, 2));
@@ -298,7 +420,13 @@ export function PromptManagementUI() {
   })).filter((cat) => cat.prompts.length > 0 || selectedCategory === cat.id);
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('pl-PL', {
+    const date = new Date(dateStr);
+
+    if (Number.isNaN(date.getTime())) {
+      return 'Unknown date';
+    }
+
+    return date.toLocaleDateString('pl-PL', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -366,9 +494,8 @@ export function PromptManagementUI() {
               <Loader2 size={24} className="animate-spin text-purple-500" />
             </div>
           ) : error ? (
-            <div className="p-4 text-center text-red-500">
-              <AlertTriangle size={24} className="mx-auto mb-2" />
-              <p className="text-sm">{error}</p>
+            <div className="p-4">
+              <DegradedState title="Prompts unavailable" description={error} />
             </div>
           ) : promptsByCategory.length === 0 ? (
             <div className="p-4 text-center text-slate-500 dark:text-slate-400">
@@ -434,6 +561,14 @@ export function PromptManagementUI() {
       <div className={`flex-1 flex ${showAssistant ? '' : ''}`}>
         {/* Editor/Blocks/Test Area */}
         <div className={`flex-1 flex flex-col ${showAssistant ? 'lg:w-3/5' : 'w-full'}`}>
+          {actionError ? (
+            <div
+              role="alert"
+              className="mx-6 mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-200"
+            >
+              {actionError}
+            </div>
+          ) : null}
           {!selectedPrompt && !isEditing ? (
             <div className="flex-1 flex items-center justify-center text-slate-500 dark:text-slate-400">
               <div className="text-center">
@@ -810,6 +945,15 @@ export function PromptManagementUI() {
                 )}
 
                 {/* Version History Panel */}
+                {showVersions && versionsError ? (
+                  <div className="mt-6 max-w-4xl">
+                    <DegradedState
+                      title="Prompt versions unavailable"
+                      description={versionsError}
+                    />
+                  </div>
+                ) : null}
+
                 {showVersions && versions.length > 0 && (
                   <div className="mt-6 max-w-4xl">
                     <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-2">

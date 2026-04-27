@@ -37,6 +37,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface ComplianceFramework {
   id: string;
@@ -112,6 +113,48 @@ const DSAR_TYPE_LABELS = {
   restriction: 'Restriction',
   portability: 'Data Portability',
   objection: 'Objection',
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
 };
 
 export const ComplianceCenterView: React.FC = () => {
@@ -192,6 +235,34 @@ export const ComplianceCenterView: React.FC = () => {
     return Math.max(0, Math.min(100, (p / t) * 100));
   };
 
+  const formatDate = (value: any, fallback = 'Unknown date') => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString();
+  };
+
+  const formatDateTime = (value: any, fallback = 'Unknown date') => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
+  };
+
+  const isOverdue = (value: any, status: string) => {
+    const date = new Date(value);
+    return !Number.isNaN(date.getTime()) && date < new Date() && status !== 'completed';
+  };
+
+  const getRecordId = (result: any, key: string) => {
+    const payload = getObjectPayload(result) as any;
+    return (
+      payload?.id ||
+      payload?.[key]?.id ||
+      payload?.record?.id ||
+      payload?.request?.id ||
+      payload?.audit?.id
+    );
+  };
+
   const normalizeFrameworks = (raw: any[]): ComplianceFramework[] => {
     if (!Array.isArray(raw)) return [];
     // Support legacy response where frameworks were strings like "GDPR"
@@ -258,6 +329,63 @@ export const ComplianceCenterView: React.FC = () => {
     };
   };
 
+  const fetchDsarRequests = useCallback(async () => {
+    try {
+      const dsarResult = await Api.get('/superadmin/compliance/dsar');
+      if (!hasListShape(dsarResult, ['requests', 'dsarRequests', 'items'])) {
+        throw new Error('DSAR response was not a list');
+      }
+      const list = getListPayload<DSAR>(dsarResult, ['requests', 'dsarRequests', 'items']);
+      setDsarRequests(list);
+      setDsarLoadError(null);
+      return list;
+    } catch (error: unknown) {
+      setDsarLoadError(normalizeApiErrorMessage(error, 'Failed to load data subject requests'));
+      setDsarRequests([]);
+      return null;
+    }
+  }, []);
+
+  const fetchAudits = useCallback(async () => {
+    try {
+      const auditsResult = await Api.get('/superadmin/compliance/audits');
+      if (!hasListShape(auditsResult, ['audits', 'items'])) {
+        throw new Error('Compliance audits response was not a list');
+      }
+      const auditsList = getListPayload<Audit>(auditsResult, ['audits', 'items']);
+      setAudits(auditsList);
+      setAuditsLoadError(null);
+      return auditsList;
+    } catch (error: unknown) {
+      setAuditsLoadError(normalizeApiErrorMessage(error, 'Failed to load compliance audits'));
+      setAudits([]);
+      return null;
+    }
+  }, []);
+
+  const fetchProcessingRecords = useCallback(async () => {
+    try {
+      const prResult = await Api.get('/superadmin/compliance/processing-records');
+      if (!hasListShape(prResult, ['records', 'processingRecords', 'items'])) {
+        throw new Error('Processing records response was not a list');
+      }
+      const recordsList = getListPayload<ProcessingRecord>(prResult, [
+        'records',
+        'processingRecords',
+        'items',
+      ]);
+      setProcessingRecords(recordsList);
+      setProcessingRecordsLoadError(null);
+      return recordsList;
+    } catch (error: unknown) {
+      setProcessingRecordsLoadError(
+        normalizeApiErrorMessage(error, 'Failed to load processing records')
+      );
+      setProcessingRecords([]);
+      return null;
+    }
+  }, []);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setFrameworksLoadError(null);
@@ -279,62 +407,46 @@ export const ComplianceCenterView: React.FC = () => {
         }),
         Api.getOrganizations().catch(() => []),
       ]);
-      const normalizedFrameworks = normalizeFrameworks(frameworksResult.frameworks || []);
-      setFrameworks(normalizedFrameworks);
-      setOrganizations(orgsResult);
+      if (!hasListShape(frameworksResult, ['frameworks', 'items'])) {
+        setFrameworksLoadError('Compliance frameworks response was not a list');
+        setFrameworks([]);
+        setComplianceStatus([]);
+      } else {
+        const normalizedFrameworks = normalizeFrameworks(
+          getListPayload<ComplianceFramework>(frameworksResult, ['frameworks', 'items'])
+        );
+        setFrameworks(normalizedFrameworks);
 
-      // Fetch compliance status for each framework
-      const statusPromises = normalizedFrameworks.map(async (fw: ComplianceFramework) => {
-        try {
-          const result = await Api.get(
-            `/superadmin/compliance/status/${fw.id}${
-              selectedOrg !== 'all' ? `?organizationId=${selectedOrg}` : ''
-            }`
-          );
-          return normalizeComplianceStatus(result.status, fw);
-        } catch {
-          return normalizeComplianceStatus(null, fw);
-        }
-      });
-      const statusResults = await Promise.all(statusPromises);
-      setComplianceStatus(statusResults);
-
-      // Fetch DSARs
-      try {
-        const dsarResult = await Api.get('/superadmin/compliance/dsar');
-        // Backend may return array directly
-        const requests = Array.isArray(dsarResult) ? dsarResult : dsarResult?.requests;
-        setDsarRequests(Array.isArray(requests) ? requests : []);
-      } catch (error: any) {
-        setDsarLoadError(error?.message || 'Failed to load data subject requests');
-        setDsarRequests([]);
+        // Fetch compliance status for each framework
+        const statusPromises = normalizedFrameworks.map(async (fw: ComplianceFramework) => {
+          try {
+            const result = await Api.get(
+              `/superadmin/compliance/status/${fw.id}${
+                selectedOrg !== 'all' ? `?organizationId=${selectedOrg}` : ''
+              }`
+            );
+            const statusPayload = getObjectPayload(result) as any;
+            return normalizeComplianceStatus(statusPayload?.status ?? statusPayload, fw);
+          } catch {
+            return normalizeComplianceStatus(null, fw);
+          }
+        });
+        const statusResults = await Promise.all(statusPromises);
+        setComplianceStatus(statusResults);
       }
+      setOrganizations(
+        getListPayload<{ id: string; name: string }>(orgsResult, ['organizations', 'items'])
+      );
 
-      // Fetch audits
-      try {
-        const auditsResult = await Api.get('/superadmin/compliance/audits');
-        const list = Array.isArray(auditsResult) ? auditsResult : auditsResult?.audits;
-        setAudits(Array.isArray(list) ? list : []);
-      } catch (error: any) {
-        setAuditsLoadError(error?.message || 'Failed to load compliance audits');
-        setAudits([]);
-      }
-
-      // Fetch processing records
-      try {
-        const prResult = await Api.get('/superadmin/compliance/processing-records');
-        const recs = Array.isArray(prResult) ? prResult : prResult?.records;
-        setProcessingRecords(Array.isArray(recs) ? recs : []);
-      } catch (error: any) {
-        setProcessingRecordsLoadError(error?.message || 'Failed to load processing records');
-        setProcessingRecords([]);
-      }
+      await fetchDsarRequests();
+      await fetchAudits();
+      await fetchProcessingRecords();
     } catch (error) {
       console.error('Failed to fetch compliance data:', error);
     } finally {
       setLoading(false);
     }
-  }, [selectedOrg]);
+  }, [fetchAudits, fetchDsarRequests, fetchProcessingRecords, selectedOrg]);
 
   useEffect(() => {
     fetchData();
@@ -348,9 +460,7 @@ export const ComplianceCenterView: React.FC = () => {
   const pendingDsars = dsarRequests.filter(
     (d) => d.status === 'pending' || d.status === 'in_progress'
   ).length;
-  const overdueDoars = dsarRequests.filter(
-    (d) => new Date(d.dueDate) < new Date() && d.status !== 'completed'
-  ).length;
+  const overdueDoars = dsarRequests.filter((d) => isOverdue(d.dueDate, d.status)).length;
   const activeAudits = audits.filter((a) => a.status === 'in_progress').length;
 
   const handleEditControl = (_control: any) => {
@@ -369,9 +479,9 @@ export const ComplianceCenterView: React.FC = () => {
       );
       showNotice('Control updated successfully');
       setEditControlModal(null);
-      fetchData();
-    } catch {
-      showNotice('Failed to update control');
+      await fetchData();
+    } catch (error) {
+      showNotice(normalizeApiErrorMessage(error, 'Failed to update control'));
     } finally {
       setEditControlSaving(false);
     }
@@ -384,7 +494,15 @@ export const ComplianceCenterView: React.FC = () => {
     }
     setDsarCreateSaving(true);
     try {
-      await Api.post('/superadmin/compliance/dsar', dsarCreateForm);
+      const result = await Api.post('/superadmin/compliance/dsar', dsarCreateForm);
+      const createdId = getRecordId(result, 'request');
+      if (!createdId) {
+        throw new Error('DSAR creation response was incomplete');
+      }
+      const refreshed = await fetchDsarRequests();
+      if (!refreshed?.some((request) => request.id === createdId)) {
+        throw new Error('DSAR creation was not confirmed by the server');
+      }
       showNotice('DSAR request created successfully');
       setDsarCreateModal(false);
       setDsarCreateForm({
@@ -393,9 +511,8 @@ export const ComplianceCenterView: React.FC = () => {
         requestType: 'access',
         description: '',
       });
-      fetchData();
-    } catch {
-      showNotice('Failed to create DSAR request');
+    } catch (error) {
+      showNotice(normalizeApiErrorMessage(error, 'Failed to create DSAR request'));
     } finally {
       setDsarCreateSaving(false);
     }
@@ -406,9 +523,10 @@ export const ComplianceCenterView: React.FC = () => {
     setDsarViewModal({ open: true, dsar });
     try {
       const result = await Api.get(`/superadmin/compliance/dsar/${dsar.id}`);
-      setDsarViewModal({ open: true, dsar: result?.request || dsar });
-    } catch {
-      // Keep the local data if fetch fails
+      const payload = getObjectPayload(result) as any;
+      setDsarViewModal({ open: true, dsar: payload?.request || payload || dsar });
+    } catch (error) {
+      showNotice(normalizeApiErrorMessage(error, 'Failed to load DSAR request details'));
     } finally {
       setDsarViewLoading(false);
     }
@@ -421,7 +539,15 @@ export const ComplianceCenterView: React.FC = () => {
     }
     setAuditCreateSaving(true);
     try {
-      await Api.post('/superadmin/compliance/audits', auditCreateForm);
+      const result = await Api.post('/superadmin/compliance/audits', auditCreateForm);
+      const createdId = getRecordId(result, 'audit');
+      if (!createdId) {
+        throw new Error('Audit schedule response was incomplete');
+      }
+      const refreshed = await fetchAudits();
+      if (!refreshed?.some((audit) => audit.id === createdId)) {
+        throw new Error('Audit schedule was not confirmed by the server');
+      }
       showNotice('Audit scheduled successfully');
       setAuditCreateModal(false);
       setAuditCreateForm({
@@ -432,9 +558,8 @@ export const ComplianceCenterView: React.FC = () => {
         auditor: '',
         frameworkId: '',
       });
-      fetchData();
-    } catch {
-      showNotice('Failed to schedule audit');
+    } catch (error) {
+      showNotice(normalizeApiErrorMessage(error, 'Failed to schedule audit'));
     } finally {
       setAuditCreateSaving(false);
     }
@@ -447,7 +572,15 @@ export const ComplianceCenterView: React.FC = () => {
     }
     setRecordCreateSaving(true);
     try {
-      await Api.post('/superadmin/compliance/processing-records', recordCreateForm);
+      const result = await Api.post('/superadmin/compliance/processing-records', recordCreateForm);
+      const createdId = getRecordId(result, 'record');
+      if (!createdId) {
+        throw new Error('Processing record creation response was incomplete');
+      }
+      const refreshed = await fetchProcessingRecords();
+      if (!refreshed?.some((record) => record.id === createdId)) {
+        throw new Error('Processing record creation was not confirmed by the server');
+      }
       showNotice('Processing record added successfully');
       setRecordCreateModal(false);
       setRecordCreateForm({
@@ -457,9 +590,8 @@ export const ComplianceCenterView: React.FC = () => {
         legalBasis: '',
         retentionPeriod: '',
       });
-      fetchData();
-    } catch {
-      showNotice('Failed to add processing record');
+    } catch (error) {
+      showNotice(normalizeApiErrorMessage(error, 'Failed to add processing record'));
     } finally {
       setRecordCreateSaving(false);
     }
@@ -479,8 +611,8 @@ export const ComplianceCenterView: React.FC = () => {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showNotice('Compliance report exported');
-    } catch {
-      showNotice('Failed to export report');
+    } catch (error) {
+      showNotice(normalizeApiErrorMessage(error, 'Failed to export report'));
     } finally {
       setExportingReport(false);
     }
@@ -514,19 +646,25 @@ export const ComplianceCenterView: React.FC = () => {
               />
             </div>
           </div>
-          <div className="text-3xl font-bold text-slate-900 dark:text-white">{overallScore}%</div>
-          <div className="mt-2 h-2 bg-slate-100 dark:bg-navy-700 rounded-full overflow-hidden">
-            <div
-              className={`h-full transition-all ${
-                overallScore >= 80
-                  ? 'bg-emerald-500'
-                  : overallScore >= 50
-                    ? 'bg-amber-500'
-                    : 'bg-red-500'
-              }`}
-              style={{ width: `${overallScore}%` }}
-            />
+          <div className="text-3xl font-bold text-slate-900 dark:text-white">
+            {frameworksLoadError ? 'Unavailable' : `${overallScore}%`}
           </div>
+          {frameworksLoadError ? (
+            <div className="mt-1 text-sm text-amber-600">Framework source unavailable</div>
+          ) : (
+            <div className="mt-2 h-2 bg-slate-100 dark:bg-navy-700 rounded-full overflow-hidden">
+              <div
+                className={`h-full transition-all ${
+                  overallScore >= 80
+                    ? 'bg-emerald-500'
+                    : overallScore >= 50
+                      ? 'bg-amber-500'
+                      : 'bg-red-500'
+                }`}
+                style={{ width: `${overallScore}%` }}
+              />
+            </div>
+          )}
         </div>
 
         <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
@@ -536,13 +674,17 @@ export const ComplianceCenterView: React.FC = () => {
               <Users className="text-blue-500" size={20} />
             </div>
           </div>
-          <div className="text-3xl font-bold text-slate-900 dark:text-white">{pendingDsars}</div>
-          {overdueDoars > 0 && (
+          <div className="text-3xl font-bold text-slate-900 dark:text-white">
+            {dsarLoadError ? 'Unavailable' : pendingDsars}
+          </div>
+          {dsarLoadError ? (
+            <div className="mt-1 text-sm text-amber-600">DSAR source unavailable</div>
+          ) : overdueDoars > 0 ? (
             <div className="mt-1 text-sm text-red-500 flex items-center gap-1">
               <AlertCircle size={14} />
               {overdueDoars} overdue
             </div>
-          )}
+          ) : null}
         </div>
 
         <div className="bg-white dark:bg-navy-800 rounded-xl p-4 border border-slate-200 dark:border-navy-700">
@@ -552,9 +694,11 @@ export const ComplianceCenterView: React.FC = () => {
               <FileCheck className="text-violet-500" size={20} />
             </div>
           </div>
-          <div className="text-3xl font-bold text-slate-900 dark:text-white">{activeAudits}</div>
+          <div className="text-3xl font-bold text-slate-900 dark:text-white">
+            {auditsLoadError ? 'Unavailable' : activeAudits}
+          </div>
           <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {audits.length} total
+            {auditsLoadError ? 'Audit source unavailable' : `${audits.length} total`}
           </div>
         </div>
 
@@ -566,9 +710,11 @@ export const ComplianceCenterView: React.FC = () => {
             </div>
           </div>
           <div className="text-3xl font-bold text-slate-900 dark:text-white">
-            {frameworks.length}
+            {frameworksLoadError ? 'Unavailable' : frameworks.length}
           </div>
-          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">Active</div>
+          <div className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {frameworksLoadError ? 'Framework source unavailable' : 'Active'}
+          </div>
         </div>
       </div>
 
@@ -577,88 +723,95 @@ export const ComplianceCenterView: React.FC = () => {
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">
           Compliance by Framework
         </h3>
-        <div className="space-y-4">
-          {complianceStatus.map((status) => (
-            <div key={status.frameworkId} className="p-4 bg-slate-50 dark:bg-navy-900 rounded-xl">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">
-                    {String(status?.frameworkName || 'U')
-                      .trim()
-                      .charAt(0)
-                      .toUpperCase()}
+        {frameworksLoadError ? (
+          <DegradedState
+            title="Compliance frameworks unavailable"
+            description={frameworksLoadError}
+          />
+        ) : (
+          <div className="space-y-4">
+            {complianceStatus.map((status) => (
+              <div key={status.frameworkId} className="p-4 bg-slate-50 dark:bg-navy-900 rounded-xl">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                      {String(status?.frameworkName || 'U')
+                        .trim()
+                        .charAt(0)
+                        .toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-slate-900 dark:text-white">
+                        {status.frameworkName || 'Unknown'}
+                      </h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                        {Number(status.total) || 0} controls
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-medium text-slate-900 dark:text-white">
-                      {status.frameworkName || 'Unknown'}
-                    </h4>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                      {Number(status.total) || 0} controls
-                    </p>
+                  <div className="text-right">
+                    <div
+                      className={`text-2xl font-bold ${
+                        status.score >= 80
+                          ? 'text-emerald-600'
+                          : status.score >= 50
+                            ? 'text-amber-600'
+                            : 'text-red-600'
+                      }`}
+                    >
+                      {Number(status.score) || 0}%
+                    </div>
+                    <button
+                      onClick={() => {
+                        setSelectedFramework(status.frameworkId);
+                        setActiveTab('frameworks');
+                      }}
+                      className="text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1"
+                    >
+                      View Details <ChevronRight size={14} />
+                    </button>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="flex gap-1 h-2">
                   <div
-                    className={`text-2xl font-bold ${
-                      status.score >= 80
-                        ? 'text-emerald-600'
-                        : status.score >= 50
-                          ? 'text-amber-600'
-                          : 'text-red-600'
-                    }`}
-                  >
-                    {Number(status.score) || 0}%
-                  </div>
-                  <button
-                    onClick={() => {
-                      setSelectedFramework(status.frameworkId);
-                      setActiveTab('frameworks');
-                    }}
-                    className="text-sm text-violet-600 hover:text-violet-700 flex items-center gap-1"
-                  >
-                    View Details <ChevronRight size={14} />
-                  </button>
+                    className="bg-emerald-500 rounded-l"
+                    style={{ width: `${pct(status.compliant, status.total)}%` }}
+                  />
+                  <div
+                    className="bg-blue-500"
+                    style={{ width: `${pct(status.inProgress, status.total)}%` }}
+                  />
+                  <div
+                    className="bg-slate-300"
+                    style={{ width: `${pct(status.pending, status.total)}%` }}
+                  />
+                  <div
+                    className="bg-red-500 rounded-r"
+                    style={{ width: `${pct(status.nonCompliant, status.total)}%` }}
+                  />
+                </div>
+                <div className="flex justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500" />{' '}
+                    {Number(status.compliant) || 0} Compliant
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />{' '}
+                    {Number(status.inProgress) || 0} In Progress
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-slate-300" />{' '}
+                    {Number(status.pending) || 0} Pending
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-red-500" />{' '}
+                    {Number(status.nonCompliant) || 0} Non-Compliant
+                  </span>
                 </div>
               </div>
-              <div className="flex gap-1 h-2">
-                <div
-                  className="bg-emerald-500 rounded-l"
-                  style={{ width: `${pct(status.compliant, status.total)}%` }}
-                />
-                <div
-                  className="bg-blue-500"
-                  style={{ width: `${pct(status.inProgress, status.total)}%` }}
-                />
-                <div
-                  className="bg-slate-300"
-                  style={{ width: `${pct(status.pending, status.total)}%` }}
-                />
-                <div
-                  className="bg-red-500 rounded-r"
-                  style={{ width: `${pct(status.nonCompliant, status.total)}%` }}
-                />
-              </div>
-              <div className="flex justify-between mt-2 text-xs text-slate-500 dark:text-slate-400">
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />{' '}
-                  {Number(status.compliant) || 0} Compliant
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-blue-500" />{' '}
-                  {Number(status.inProgress) || 0} In Progress
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-slate-300" />{' '}
-                  {Number(status.pending) || 0} Pending
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-2 h-2 rounded-full bg-red-500" />{' '}
-                  {Number(status.nonCompliant) || 0} Non-Compliant
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Recent DSARs */}
@@ -675,46 +828,50 @@ export const ComplianceCenterView: React.FC = () => {
           </button>
         </div>
         <div className="space-y-3">
-          {dsarRequests.slice(0, 5).map((dsar) => (
-            <div
-              key={dsar.id}
-              className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700 last:border-0"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
-                  <Users size={16} className="text-blue-500" />
-                </div>
-                <div>
-                  <div className="font-medium text-slate-900 dark:text-white">
-                    {dsar.requesterEmail}
+          {dsarLoadError ? (
+            <DegradedState title="Recent DSAR requests unavailable" description={dsarLoadError} />
+          ) : (
+            dsarRequests.slice(0, 5).map((dsar) => (
+              <div
+                key={dsar.id}
+                className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-navy-700 last:border-0"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    <Users size={16} className="text-blue-500" />
                   </div>
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
-                    {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] ||
-                      dsar.requestType}
+                  <div>
+                    <div className="font-medium text-slate-900 dark:text-white">
+                      {dsar.requesterEmail}
+                    </div>
+                    <div className="text-sm text-slate-500 dark:text-slate-400">
+                      {DSAR_TYPE_LABELS[dsar.requestType as keyof typeof DSAR_TYPE_LABELS] ||
+                        dsar.requestType}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      dsar.status === 'completed'
+                        ? 'bg-emerald-500/10 text-emerald-600'
+                        : dsar.status === 'in_progress'
+                          ? 'bg-blue-500/10 text-blue-600'
+                          : dsar.status === 'pending'
+                            ? 'bg-amber-500/10 text-amber-600'
+                            : 'bg-red-500/10 text-red-600'
+                    }`}
+                  >
+                    {dsar.status.replace('_', ' ')}
+                  </span>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Due: {formatDate(dsar.dueDate)}
                   </div>
                 </div>
               </div>
-              <div className="text-right">
-                <span
-                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    dsar.status === 'completed'
-                      ? 'bg-emerald-500/10 text-emerald-600'
-                      : dsar.status === 'in_progress'
-                        ? 'bg-blue-500/10 text-blue-600'
-                        : dsar.status === 'pending'
-                          ? 'bg-amber-500/10 text-amber-600'
-                          : 'bg-red-500/10 text-red-600'
-                  }`}
-                >
-                  {dsar.status.replace('_', ' ')}
-                </span>
-                <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                  Due: {new Date(dsar.dueDate).toLocaleDateString()}
-                </div>
-              </div>
-            </div>
-          ))}
-          {dsarRequests.length === 0 && (
+            ))
+          )}
+          {!dsarLoadError && dsarRequests.length === 0 && (
             <div className="text-center py-8 text-slate-500 dark:text-slate-400">
               <Users size={32} className="mx-auto mb-2 opacity-30" />
               <p>No data subject requests</p>
@@ -819,6 +976,25 @@ export const ComplianceCenterView: React.FC = () => {
       );
     }
 
+    if (frameworksLoadError) {
+      return (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+          <DegradedState
+            title="Compliance frameworks unavailable"
+            description={frameworksLoadError}
+          />
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={fetchData}
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-navy-700 dark:hover:bg-navy-600 dark:text-slate-200 rounded-lg font-medium transition-colors"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      );
+    }
+
     if (frameworks.length === 0) {
       return (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-10 text-center">
@@ -828,11 +1004,6 @@ export const ComplianceCenterView: React.FC = () => {
             This section lists available compliance standards (e.g., SOC 2, GDPR, HIPAA) so you can
             review their controls and see completion status per organization.
           </p>
-          {frameworksLoadError && (
-            <div className="mt-4 text-sm text-red-700 dark:text-red-300 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg p-3 max-w-2xl mx-auto">
-              {frameworksLoadError}
-            </div>
-          )}
           <div className="mt-6 flex justify-center">
             <button
               onClick={fetchData}
@@ -911,12 +1082,14 @@ export const ComplianceCenterView: React.FC = () => {
           <input
             type="text"
             placeholder="Search requests..."
+            disabled={!!dsarLoadError}
             className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg"
           />
         </div>
         <button
           onClick={() => setDsarCreateModal(true)}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+          disabled={!!dsarLoadError}
+          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           New Request
@@ -982,17 +1155,17 @@ export const ComplianceCenterView: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {new Date(dsar.receivedAt).toLocaleDateString()}
+                    {formatDate(dsar.receivedAt)}
                   </td>
                   <td className="px-6 py-4">
                     <span
                       className={`text-sm ${
-                        new Date(dsar.dueDate) < new Date() && dsar.status !== 'completed'
+                        isOverdue(dsar.dueDate, dsar.status)
                           ? 'text-red-600 font-medium'
                           : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
-                      {new Date(dsar.dueDate).toLocaleDateString()}
+                      {formatDate(dsar.dueDate)}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">
@@ -1027,7 +1200,8 @@ export const ComplianceCenterView: React.FC = () => {
       <div className="flex items-center justify-end">
         <button
           onClick={() => setAuditCreateModal(true)}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+          disabled={!!auditsLoadError}
+          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           Schedule Audit
@@ -1067,8 +1241,7 @@ export const ComplianceCenterView: React.FC = () => {
               <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 mb-4">
                 <span className="flex items-center gap-1">
                   <Calendar size={14} />
-                  {new Date(audit.plannedStart).toLocaleDateString()} -{' '}
-                  {new Date(audit.plannedEnd).toLocaleDateString()}
+                  {formatDate(audit.plannedStart)} - {formatDate(audit.plannedEnd)}
                 </span>
               </div>
               {audit.findingsCount > 0 && (
@@ -1114,7 +1287,8 @@ export const ComplianceCenterView: React.FC = () => {
       <div className="flex justify-end">
         <button
           onClick={() => setRecordCreateModal(true)}
-          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2"
+          disabled={!!processingRecordsLoadError}
+          className="px-4 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-lg font-medium flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={18} />
           Add Processing Record
@@ -1168,7 +1342,7 @@ export const ComplianceCenterView: React.FC = () => {
                     {rec.retention_period || '—'}
                   </td>
                   <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                    {rec.created_at ? new Date(rec.created_at).toLocaleDateString() : '—'}
+                    {formatDate(rec.created_at, '—')}
                   </td>
                 </tr>
               ))}
@@ -1234,7 +1408,13 @@ export const ComplianceCenterView: React.FC = () => {
           </button>
           <button
             onClick={handleExportReport}
-            disabled={exportingReport}
+            disabled={
+              exportingReport ||
+              !!frameworksLoadError ||
+              !!dsarLoadError ||
+              !!auditsLoadError ||
+              !!processingRecordsLoadError
+            }
             className="px-4 py-2 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-navy-800/20 flex items-center gap-2 disabled:opacity-50"
           >
             {exportingReport ? (
@@ -1594,30 +1774,24 @@ export const ComplianceCenterView: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 rounded-full bg-blue-500" />
                       <span className="text-sm text-slate-700 dark:text-slate-300">
-                        Received:{' '}
-                        {dsarViewModal.dsar.receivedAt
-                          ? new Date(dsarViewModal.dsar.receivedAt).toLocaleString()
-                          : '—'}
+                        Received: {formatDateTime(dsarViewModal.dsar.receivedAt, '—')}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">
                       <div
-                        className={`w-2 h-2 rounded-full ${dsarViewModal.dsar.dueDate && new Date(dsarViewModal.dsar.dueDate) < new Date() && dsarViewModal.dsar.status !== 'completed' ? 'bg-red-500' : 'bg-amber-500'}`}
+                        className={`w-2 h-2 rounded-full ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'bg-red-500' : 'bg-amber-500'}`}
                       />
                       <span
-                        className={`text-sm ${dsarViewModal.dsar.dueDate && new Date(dsarViewModal.dsar.dueDate) < new Date() && dsarViewModal.dsar.status !== 'completed' ? 'text-red-600 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
+                        className={`text-sm ${isOverdue(dsarViewModal.dsar.dueDate, dsarViewModal.dsar.status) ? 'text-red-600 font-medium' : 'text-slate-700 dark:text-slate-300'}`}
                       >
-                        Due:{' '}
-                        {dsarViewModal.dsar.dueDate
-                          ? new Date(dsarViewModal.dsar.dueDate).toLocaleString()
-                          : '—'}
+                        Due: {formatDateTime(dsarViewModal.dsar.dueDate, '—')}
                       </span>
                     </div>
                     {dsarViewModal.dsar.completedAt && (
                       <div className="flex items-center gap-3">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
                         <span className="text-sm text-slate-700 dark:text-slate-300">
-                          Completed: {new Date(dsarViewModal.dsar.completedAt).toLocaleString()}
+                          Completed: {formatDateTime(dsarViewModal.dsar.completedAt, '—')}
                         </span>
                       </div>
                     )}

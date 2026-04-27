@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes/routeConfig';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { Button } from '../ui/primitives/Button';
 import type { SettingsSection } from './SettingsSidebar';
 import { SettingsTaxonomyPanel } from './SettingsTaxonomyPanel';
@@ -113,11 +114,13 @@ function useSettingsOwnershipData(t: TFunction) {
 
         setOrgContext((context || {}) as OrganizationContextSummary);
         setResolved(nextResolved);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (cancelled) return;
         setError(
-          err?.message ||
+          normalizeApiErrorMessage(
+            err,
             t('settings.ownership.loadError', 'Failed to load settings ownership data.')
+          )
         );
       } finally {
         if (!cancelled) setLoading(false);
@@ -188,7 +191,10 @@ const ValueRow: React.FC<{
 );
 
 const EmptyState: React.FC<{ error?: string | null; t: TFunction }> = ({ error, t }) => (
-  <div className="rounded-2xl border border-dashed border-slate-300 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-950/60 p-6 text-sm text-slate-600 dark:text-slate-400">
+  <div
+    role="alert"
+    className="rounded-2xl border border-dashed border-slate-300 dark:border-navy-700 bg-slate-50/80 dark:bg-navy-950/60 p-6 text-sm text-slate-600 dark:text-slate-400"
+  >
     <div className="flex items-center gap-3">
       <AlertTriangle size={18} className="text-amber-500" />
       <span>

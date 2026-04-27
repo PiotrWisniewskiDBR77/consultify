@@ -7,6 +7,8 @@ import { Edit2, FileText, RefreshCw, Search, Tag, Trash2, Upload, X } from 'luci
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '@/components/Admin/AdminState';
+
 import { Api } from '../../../../services/api';
 
 interface Document {
@@ -33,9 +35,113 @@ const SENSITIVITY_OPTIONS: Array<NonNullable<Document['sensitivity']>> = [
   'confidential',
 ];
 
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const normalizeDocuments = (value: unknown): Document[] => {
+  if (!hasListShape(value, ['documents', 'items'])) {
+    throw new Error('Knowledge documents response was not a list');
+  }
+  return getListPayload<Record<string, unknown>>(value, ['documents', 'items'])
+    .map((doc) => {
+      const ai_visibility: Document['ai_visibility'] =
+        doc.ai_visibility === 'allowed' ||
+        doc.ai_visibility === 'blocked' ||
+        doc.ai_visibility === 'requires_approval'
+          ? doc.ai_visibility
+          : 'allowed';
+      const sensitivity: Document['sensitivity'] =
+        doc.sensitivity === 'public' ||
+        doc.sensitivity === 'internal' ||
+        doc.sensitivity === 'confidential'
+          ? doc.sensitivity
+          : 'internal';
+
+      return {
+        id: asText(doc.id, ''),
+        filename: asText(doc.filename, 'Untitled document'),
+        category:
+          doc.category === null || doc.category === undefined
+            ? undefined
+            : asText(doc.category, ''),
+        tags: Array.isArray(doc.tags) ? doc.tags.map((tag) => asText(tag, '')).filter(Boolean) : [],
+        ai_visibility,
+        sensitivity,
+        status: asText(doc.status, 'unknown'),
+        created_at: asText(doc.created_at, ''),
+        chunk_count: Number.isFinite(Number(doc.chunk_count)) ? Number(doc.chunk_count) : 0,
+      };
+    })
+    .filter((doc) => doc.id);
+};
+
+const getUploadedDocumentInfo = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  const doc = isRecord(payload) && isRecord(payload.document) ? payload.document : payload;
+  return {
+    id: isRecord(doc) ? asText(doc.id, '') : '',
+    chunkCount:
+      isRecord(payload) && Number.isFinite(Number(payload.chunkCount))
+        ? Number(payload.chunkCount)
+        : 0,
+  };
+};
+
 export const DocumentsRAGTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadCategory, setUploadCategory] = useState('');
@@ -54,15 +160,22 @@ export const DocumentsRAGTab: React.FC = () => {
     loadDocuments();
   }, []);
 
-  const loadDocuments = async () => {
-    setLoading(true);
+  const loadDocuments = async (options: { showLoading?: boolean } = {}) => {
+    if (options.showLoading !== false) setLoading(true);
+    setLoadError(null);
     try {
       const data = await Api.getKnowledgeDocuments();
-      setDocuments(Array.isArray(data) ? data : []);
-    } catch (err) {
-      toast.error('Failed to load documents');
+      const nextDocuments = normalizeDocuments(data);
+      setDocuments(nextDocuments);
+      return nextDocuments;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load documents';
+      setLoadError(message);
+      setDocuments([]);
+      toast.error(message);
+      return null;
     } finally {
-      setLoading(false);
+      if (options.showLoading !== false) setLoading(false);
     }
   };
 
@@ -71,6 +184,7 @@ export const DocumentsRAGTab: React.FC = () => {
     if (!uploadFile) return;
 
     setUploading(true);
+    setActionError(null);
     try {
       const tagsArray = uploadTags
         .split(',')
@@ -81,13 +195,22 @@ export const DocumentsRAGTab: React.FC = () => {
         uploadCategory || undefined,
         tagsArray.length > 0 ? tagsArray : undefined
       );
-      toast.success(`Uploaded & Indexed! (${(result as any).chunkCount} chunks)`);
+      const uploaded = getUploadedDocumentInfo(result);
+      const refreshed = await loadDocuments({ showLoading: false });
+      const confirmed = refreshed?.some((doc) =>
+        uploaded.id ? doc.id === uploaded.id : doc.filename === uploadFile.name
+      );
+      if (!confirmed) {
+        throw new Error('Knowledge document upload was not confirmed by the server');
+      }
+      toast.success(`Uploaded & Indexed! (${uploaded.chunkCount} chunks)`);
       setUploadFile(null);
       setUploadCategory('');
       setUploadTags('');
-      loadDocuments();
-    } catch (err: any) {
-      toast.error(err.message || 'Upload failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Upload failed';
+      setActionError(message);
+      toast.error(message);
     } finally {
       setUploading(false);
     }
@@ -95,6 +218,7 @@ export const DocumentsRAGTab: React.FC = () => {
 
   const handleUpdateDocument = async (docId: string) => {
     try {
+      setActionError(null);
       const tagsArray = editDocTags
         .split(',')
         .map((t) => t.trim())
@@ -107,15 +231,27 @@ export const DocumentsRAGTab: React.FC = () => {
         Api.updateAIGovernanceDocumentVisibility(docId, editDocVisibility),
         Api.updateAIGovernanceDocumentSensitivity(docId, editDocSensitivity),
       ]);
+      const refreshed = await loadDocuments({ showLoading: false });
+      const confirmed = refreshed?.some(
+        (doc) =>
+          doc.id === docId &&
+          (editDocCategory ? doc.category === editDocCategory : true) &&
+          doc.ai_visibility === editDocVisibility &&
+          doc.sensitivity === editDocSensitivity
+      );
+      if (!confirmed) {
+        throw new Error('Knowledge document update was not confirmed by the server');
+      }
       toast.success('Document updated');
       setEditingDoc(null);
       setEditDocCategory('');
       setEditDocTags('');
       setEditDocVisibility('allowed');
       setEditDocSensitivity('internal');
-      loadDocuments();
-    } catch (err: any) {
-      toast.error(err.message || 'Update failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Update failed';
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -136,6 +272,16 @@ export const DocumentsRAGTab: React.FC = () => {
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="p-6">
+        <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+          <DegradedState title="Knowledge documents unavailable" description={loadError} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto text-slate-900 dark:text-slate-100">
       {/* Header */}
@@ -148,6 +294,15 @@ export const DocumentsRAGTab: React.FC = () => {
           Upload and manage knowledge documents for AI retrieval
         </p>
       </div>
+
+      {actionError ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      ) : null}
 
       {/* Upload Form */}
       <form
@@ -395,7 +550,9 @@ export const DocumentsRAGTab: React.FC = () => {
                   </label>
                   <select
                     value={editDocVisibility}
-                    onChange={(e) => setEditDocVisibility(e.target.value as any)}
+                    onChange={(e) =>
+                      setEditDocVisibility(e.target.value as NonNullable<Document['ai_visibility']>)
+                    }
                     className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
                   >
                     {AI_VISIBILITY_OPTIONS.map((v) => (
@@ -411,7 +568,9 @@ export const DocumentsRAGTab: React.FC = () => {
                   </label>
                   <select
                     value={editDocSensitivity}
-                    onChange={(e) => setEditDocSensitivity(e.target.value as any)}
+                    onChange={(e) =>
+                      setEditDocSensitivity(e.target.value as NonNullable<Document['sensitivity']>)
+                    }
                     className="w-full bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white focus:border-indigo-500 outline-none"
                   >
                     {SENSITIVITY_OPTIONS.map((s) => (

@@ -15,7 +15,6 @@ import {
   AlertCircle,
   ArrowUpCircle,
   BarChart3,
-  Calendar,
   Check,
   CreditCard,
   Crown,
@@ -26,7 +25,7 @@ import {
   Trash2,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -34,6 +33,8 @@ import { usePolicySnapshot, useSubscriptionStatus } from '../../../contexts/Acce
 import { Api } from '../../../services/api';
 import { trackFunnelEvent } from '../../../services/funnelAnalytics';
 import { User } from '../../../types';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState } from '../../Admin/AdminState';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface BillingSubscriptionModuleProps {
@@ -98,6 +99,30 @@ interface BillingPlanOption {
   popular: boolean;
 }
 
+interface BillingPlanRow {
+  id?: string | number;
+  name?: string;
+  price_monthly?: number | string | null;
+  features?: unknown;
+  is_popular?: boolean;
+}
+
+interface InvoiceRow {
+  id?: string | number;
+  stripe_invoice_id?: string | number;
+  paid_at?: string;
+  due_date?: string;
+  created_at?: string;
+  amount_paid?: number | string;
+  amount_due?: number | string;
+  amount?: number | string;
+  status?: string;
+  pdf_url?: string | null;
+  downloadUrl?: string | null;
+  source?: string | null;
+  currency?: string | null;
+}
+
 const parsePlanFeatures = (raw: unknown): string[] => {
   if (Array.isArray(raw)) return raw.map((item) => String(item));
   if (typeof raw === 'string') {
@@ -111,7 +136,7 @@ const parsePlanFeatures = (raw: unknown): string[] => {
   return [];
 };
 
-const normalizePlan = (plan: any): BillingPlanOption => ({
+const normalizePlan = (plan: BillingPlanRow): BillingPlanOption => ({
   id: String(plan?.id || ''),
   name: String(plan?.name || 'Plan'),
   price: plan?.price_monthly == null ? null : Number(plan.price_monthly),
@@ -119,7 +144,7 @@ const normalizePlan = (plan: any): BillingPlanOption => ({
   popular: Boolean(plan?.is_popular),
 });
 
-const normalizeInvoice = (invoice: any): Invoice => ({
+const normalizeInvoice = (invoice: InvoiceRow): Invoice => ({
   id: String(invoice?.id || invoice?.stripe_invoice_id || ''),
   date: String(
     invoice?.paid_at || invoice?.due_date || invoice?.created_at || new Date().toISOString()
@@ -143,7 +168,6 @@ const STATUS_COLORS: Record<string, string> = {
 
 export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps> = ({
   currentUser,
-  onUpdateUser,
 }) => {
   const { t } = useTranslation();
   const { snapshot, refresh: refreshPolicy } = usePolicySnapshot();
@@ -159,6 +183,8 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   );
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -168,23 +194,20 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     }
   }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [currentUser.id]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async (): Promise<Subscription | null> => {
     try {
       setLoading(true);
+      setLoadError(null);
       const [subRes, usageRes, invoicesRes, paymentRes, plansRes] = await Promise.all([
-        Api.get('/api/billing/subscription').catch(() => ({ data: null })),
+        Api.get('/api/billing/subscription'),
         Api.get('/api/billing/usage').catch(() => ({ data: null })),
         Api.get('/api/billing/invoices').catch(() => ({ data: [] })),
         Api.get('/api/billing/payment-methods').catch(() => ({ data: [] })),
         Api.getSubscriptionPlans().catch(() => []),
       ]);
 
-      if (subRes.data) setSubscription(subRes.data);
-      else setSubscription(null);
+      const nextSubscription = subRes.data ?? null;
+      setSubscription(nextSubscription);
 
       if (usageRes.data) setUsage(usageRes.data);
       else setUsage(null);
@@ -204,12 +227,23 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       setAvailablePlans(
         Array.isArray(plansRes) ? plansRes.map(normalizePlan).filter((plan) => plan.id) : []
       );
-    } catch (error) {
-      console.error('Error loading billing data:', error);
+      return nextSubscription;
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load billing data'));
+      setSubscription(null);
+      setUsage(null);
+      setInvoices([]);
+      setPaymentMethods([]);
+      setAvailablePlans([]);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadData();
+  }, [currentUser.id, loadData]);
 
   const handleSelectPlan = (planId: string) => {
     try {
@@ -229,11 +263,17 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       // ignore
     }
     try {
+      setActionError(null);
       if (subscription?.plan) {
         await Api.changePlan(checkoutPlanId);
       } else {
         await Api.subscribeToPlan(checkoutPlanId);
       }
+      const refreshedSubscription = await loadData();
+      if (refreshedSubscription?.plan !== checkoutPlanId) {
+        throw new Error('Billing plan change was not confirmed by the server');
+      }
+      await refreshPolicy();
       try {
         trackFunnelEvent('checkout_completed', { planId: checkoutPlanId });
       } catch {
@@ -241,15 +281,15 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
       }
       toast.success(t('access.upgrade.checkout.success'));
       setCheckoutPlanId(null);
-      await loadData();
-      await refreshPolicy();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, t('access.upgrade.checkout.failed'));
       try {
-        trackFunnelEvent('checkout_failed', { planId: checkoutPlanId, error: err.message });
+        trackFunnelEvent('checkout_failed', { planId: checkoutPlanId, error: message });
       } catch {
         // ignore
       }
-      toast.error(err.message || t('access.upgrade.checkout.failed'));
+      setActionError(message);
+      toast.error(message);
     } finally {
       setCheckoutLoading(false);
     }
@@ -263,17 +303,26 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     )
       return;
     try {
+      setActionError(null);
       await Api.cancelSubscription();
+      const refreshedSubscription = await loadData();
+      if (
+        !refreshedSubscription ||
+        (refreshedSubscription.status !== 'cancelled' && !refreshedSubscription.cancelAtPeriodEnd)
+      ) {
+        throw new Error('Subscription cancellation was not confirmed by the server');
+      }
+      await refreshPolicy();
       try {
         trackFunnelEvent('subscription_cancelled', {});
       } catch {
         // ignore
       }
       toast.success('Subscription cancelled.');
-      await loadData();
-      await refreshPolicy();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to cancel subscription');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to cancel subscription');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -343,6 +392,15 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+        <InfoButton cardId="settings-billing" position="top-right" />
+        <DegradedState title="Billing data unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   const currentPlan = availablePlans.find((p) => p.id === subscription?.plan);
   const effectiveStatus = subscriptionStatus || subscription?.status || 'trialing';
   const isManualBilling = Boolean(snapshot?.isManualBilling || subscription?.isManualBilling);
@@ -351,6 +409,15 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
       <InfoButton cardId="settings-billing" position="top-right" />
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Past Due Banner */}
       {effectiveStatus === 'past_due' && (
@@ -439,17 +506,19 @@ export const BillingSubscriptionModule: React.FC<BillingSubscriptionModuleProps>
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-navy-700 pb-4">
-        {[
-          { id: 'overview', label: 'Overview', icon: Crown },
-          { id: 'usage', label: 'Usage', icon: BarChart3 },
-          { id: 'invoices', label: 'Invoices', icon: FileText },
-          ...(!isManualBilling ? [{ id: 'payment', label: 'Payment', icon: CreditCard }] : []),
-        ].map((tab) => {
+        {(
+          [
+            { id: 'overview', label: 'Overview', icon: Crown },
+            { id: 'usage', label: 'Usage', icon: BarChart3 },
+            { id: 'invoices', label: 'Invoices', icon: FileText },
+            ...(!isManualBilling ? [{ id: 'payment', label: 'Payment', icon: CreditCard }] : []),
+          ] as Array<{ id: typeof activeTab; label: string; icon: React.ElementType }>
+        ).map((tab) => {
           const Icon = tab.icon;
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
+              onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                 activeTab === tab.id
                   ? 'bg-emerald-600 text-white'

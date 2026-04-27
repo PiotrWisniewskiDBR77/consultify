@@ -17,6 +17,8 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import {
   SettingsButtonGroup,
   SettingsDivider,
@@ -85,6 +87,8 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
     useState<AIBehaviorPreferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
@@ -92,10 +96,14 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
     const load = async () => {
       try {
         setLoading(true);
+        setLoadError(null);
         const [instrRes, persRes] = await Promise.all([
           Api.getAIInstructions(),
           Api.getAIPersonality(),
         ]);
+        if (!instrRes?.preferences || !persRes?.preferences) {
+          throw new Error('AI behavior response was missing instructions or personality');
+        }
         const merged: AIBehaviorPreferences = {
           ...defaultPreferences,
           ...(instrRes?.preferences || {}),
@@ -105,8 +113,8 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
         };
         setPreferences(merged);
         setOriginalPreferences(merged);
-      } catch (err) {
-        console.error('Failed to load AI behavior settings:', err);
+      } catch (err: unknown) {
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load AI behavior settings'));
       } finally {
         setLoading(false);
       }
@@ -117,6 +125,7 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Promise.all([
         Api.saveAIInstructions({
           systemPrompt: preferences.systemPrompt,
@@ -132,21 +141,32 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
         }),
       ]);
       const [instrRes, persRes] = await Promise.all([
-        Api.getAIInstructions().catch(() => null),
-        Api.getAIPersonality().catch(() => null),
+        Api.getAIInstructions(),
+        Api.getAIPersonality(),
       ]);
+      if (!instrRes?.preferences || !persRes?.preferences) {
+        throw new Error('AI behavior settings save was not confirmed by the server');
+      }
       const persisted: AIBehaviorPreferences = {
         ...defaultPreferences,
-        ...(instrRes?.preferences || {}),
-        tone: persRes?.preferences?.tone || preferences.tone,
-        formality: persRes?.preferences?.formality || preferences.formality,
-        verbosity: persRes?.preferences?.verbosity || preferences.verbosity,
+        ...instrRes.preferences,
+        tone: persRes.preferences.tone || defaultPreferences.tone,
+        formality: persRes.preferences.formality || defaultPreferences.formality,
+        verbosity: persRes.preferences.verbosity || defaultPreferences.verbosity,
       };
+      if (JSON.stringify(persisted) !== JSON.stringify(preferences)) {
+        throw new Error('AI behavior settings save was not confirmed by the server');
+      }
       setPreferences(persisted);
       setOriginalPreferences(persisted);
       toast.success(t('settings.ai.behaviorSaved', 'AI behavior settings saved'));
-    } catch {
-      toast.error(t('settings.ai.behaviorError', 'Failed to save AI behavior settings'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.ai.behaviorError', 'Failed to save AI behavior settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -206,8 +226,25 @@ export const AIBehaviorSettings: React.FC<{ className?: string }> = ({ className
     { value: '16000', label: '16K tokens' },
   ];
 
+  if (loadError) {
+    return (
+      <div className={className}>
+        <DegradedState title="AI behavior settings unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       <SettingsSection
         icon={MessageSquare}
         title={t('settings.ai.behaviorTitle', 'AI Behavior & Instructions')}

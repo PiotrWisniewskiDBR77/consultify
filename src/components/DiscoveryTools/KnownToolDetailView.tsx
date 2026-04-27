@@ -1033,8 +1033,10 @@ export function KnownToolDetailView(props: {
             ? [
                 {
                   title: 'Premium producent przed CAPEX-em',
-                  context: 'Marża spada, lead times są niestabilne, a zarząd rozważa automatyzację.',
-                  question: 'Czy zaczynać od inwestycji technologicznej, czy od diagnozy strat i bottlenecków?',
+                  context:
+                    'Marża spada, lead times są niestabilne, a zarząd rozważa automatyzację.',
+                  question:
+                    'Czy zaczynać od inwestycji technologicznej, czy od diagnozy strat i bottlenecków?',
                   evidence: [
                     'Wywiady pokazują silną markę i zaufanie klientów premium, ale też decyzje operacyjne podejmowane intuicyjnie.',
                     'Dane wskazują straty w przepływie, brak wspólnej definicji bottlenecków i rosnące koszty ekspresowych dostaw.',
@@ -1048,8 +1050,10 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Software house po utracie dużego klienta',
-                  context: 'Firma ma mocny zespół ekspercki, ale pipeline sprzedażowy jest zbyt zależny od rekomendacji.',
-                  question: 'Czy skalować sprzedaż outbound, czy najpierw zawęzić pozycjonowanie oferty?',
+                  context:
+                    'Firma ma mocny zespół ekspercki, ale pipeline sprzedażowy jest zbyt zależny od rekomendacji.',
+                  question:
+                    'Czy skalować sprzedaż outbound, czy najpierw zawęzić pozycjonowanie oferty?',
                   evidence: [
                     'CRM pokazuje długi cykl sprzedaży poza rekomendacjami, a rozmowy z klientami wskazują niejasne rozróżnienie oferty.',
                     'Zespół ma mocne kompetencje techniczne, ale materiały sprzedażowe nie pokazują mierzalnych efektów projektów.',
@@ -1064,7 +1068,8 @@ export function KnownToolDetailView(props: {
                 {
                   title: 'Sieć usług lokalnych przed ekspansją',
                   context: 'Popyt rośnie, ale jakość operacyjna różni się między lokalizacjami.',
-                  question: 'Czy otwierać kolejne punkty, czy najpierw standaryzować model działania?',
+                  question:
+                    'Czy otwierać kolejne punkty, czy najpierw standaryzować model działania?',
                   evidence: [
                     'Opinie klientów są bardzo dobre w najlepszych lokalizacjach, ale reklamacje koncentrują się wokół kilku powtarzalnych etapów usługi.',
                     'Managerowie lokalni różnie rozumieją standard jakości, a onboarding nowych pracowników trwa zbyt długo.',
@@ -1080,8 +1085,10 @@ export function KnownToolDetailView(props: {
             : [
                 {
                   title: 'Premium manufacturer before CAPEX',
-                  context: 'Margin is falling, lead times are unstable, and leadership is considering automation.',
-                  question: 'Should the company start with technology investment or diagnose losses and bottlenecks first?',
+                  context:
+                    'Margin is falling, lead times are unstable, and leadership is considering automation.',
+                  question:
+                    'Should the company start with technology investment or diagnose losses and bottlenecks first?',
                   evidence: [
                     'Interviews show strong brand trust and premium customer relationships, but operational decisions are still intuition-led.',
                     'Data points to flow losses, no shared bottleneck definition, and rising expediting costs.',
@@ -1095,7 +1102,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Software firm after losing a major client',
-                  context: 'The team is strong, but the sales pipeline depends too heavily on referrals.',
+                  context:
+                    'The team is strong, but the sales pipeline depends too heavily on referrals.',
                   question: 'Should it scale outbound sales or first sharpen offer positioning?',
                   evidence: [
                     'CRM data shows long sales cycles outside referrals, while customer interviews reveal unclear offer differentiation.',
@@ -1111,7 +1119,8 @@ export function KnownToolDetailView(props: {
                 {
                   title: 'Local services network before expansion',
                   context: 'Demand is growing, but operating quality varies across locations.',
-                  question: 'Should the company open more sites or standardize the operating model first?',
+                  question:
+                    'Should the company open more sites or standardize the operating model first?',
                   evidence: [
                     'Customer reviews are excellent in the best locations, but complaints cluster around repeatable service steps.',
                     'Local managers interpret quality standards differently, and onboarding new staff takes too long.',
@@ -1489,8 +1498,10 @@ export function KnownToolDetailView(props: {
             ? [
                 {
                   title: 'Marketplace dla marki premium',
-                  context: 'Firma rozważa nowy kanał sprzedaży z dużym zasięgiem, ale niską kontrolą relacji.',
-                  question: 'Czy wzrost wolumenu nie zostanie zjedzony przez siłę platformy i presję cenową?',
+                  context:
+                    'Firma rozważa nowy kanał sprzedaży z dużym zasięgiem, ale niską kontrolą relacji.',
+                  question:
+                    'Czy wzrost wolumenu nie zostanie zjedzony przez siłę platformy i presję cenową?',
                   evidence: [
                     'Wywiady wskazują, że klienci lubią markę, ale w marketplace porównują głównie cenę i czas dostawy.',
                     'Dane kanału pokazują wysokie prowizje, duży koszt promocji oraz łatwość kopiowania bestsellerów.',
@@ -1504,7 +1515,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Nowy segment B2B w branży usług',
-                  context: 'Firma chce wejść do większych klientów, gdzie proces zakupowy jest dłuższy i bardziej formalny.',
+                  context:
+                    'Firma chce wejść do większych klientów, gdzie proces zakupowy jest dłuższy i bardziej formalny.',
                   question: 'Czy atrakcyjność rynku równoważy siłę kupujących i koszt sprzedaży?',
                   evidence: [
                     'Rozmowy z handlowcami pokazują większe kontrakty, ale też silniejsze procurement, dłuższe RFP i presję na referencje.',
@@ -1519,7 +1531,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Producent przed wejściem zagranicznym',
-                  context: 'Rynek wygląda duży, ale lokalni gracze mają dystrybucję i relacje z kanałem.',
+                  context:
+                    'Rynek wygląda duży, ale lokalni gracze mają dystrybucję i relacje z kanałem.',
                   question: 'Czy wejście ma sens bez partnerstwa lub unikalnej przewagi kosztowej?',
                   evidence: [
                     'Analiza rynku pokazuje duży popyt, ale także dominację kilku dystrybutorów i wysokie koszty pozyskania półki.',
@@ -1536,7 +1549,8 @@ export function KnownToolDetailView(props: {
             : [
                 {
                   title: 'Marketplace entry for a premium brand',
-                  context: 'The company considers a high-reach channel with low control over customer relationship.',
+                  context:
+                    'The company considers a high-reach channel with low control over customer relationship.',
                   question: 'Will volume growth be eaten by platform power and price pressure?',
                   evidence: [
                     'Interviews show customers like the brand, but marketplace buying is driven by price and delivery comparison.',
@@ -1551,7 +1565,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'New B2B segment for a services firm',
-                  context: 'The company wants larger clients with longer and more formal buying processes.',
+                  context:
+                    'The company wants larger clients with longer and more formal buying processes.',
                   question: 'Does market attractiveness offset buyer power and sales cost?',
                   evidence: [
                     'Sales interviews show larger contracts, but stronger procurement, longer RFPs, and higher reference requirements.',
@@ -1566,7 +1581,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Manufacturer before international entry',
-                  context: 'The market is large, but local players own distribution and channel relationships.',
+                  context:
+                    'The market is large, but local players own distribution and channel relationships.',
                   question: 'Can entry work without a partner or a distinct cost advantage?',
                   evidence: [
                     'Market data shows strong demand, but a few distributors dominate access and shelf acquisition is expensive.',
@@ -1637,7 +1653,9 @@ export function KnownToolDetailView(props: {
                   {index + 1}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {title}
+                  </div>
                   <div className="mt-1 text-sm text-slate-600 dark:text-slate-300">{text}</div>
                 </div>
               </div>
@@ -1656,18 +1674,36 @@ export function KnownToolDetailView(props: {
           {(isPolish
             ? [
                 ['Macierz opcji', 'Opcje wzrostu z impact, effort, risk, evidence i confidence.'],
-                ['Porównanie strategiczne', 'Trade-offy między skalowaniem core, wejściem w rynek, produktem i dywersyfikacją.'],
+                [
+                  'Porównanie strategiczne',
+                  'Trade-offy między skalowaniem core, wejściem w rynek, produktem i dywersyfikacją.',
+                ],
                 ['Rekomendowane ruchy', 'Sekwencja: co robić teraz, co testować, co odłożyć.'],
-                ['Output candidates', 'Materiał do inicjatywy, raportu, decka lub dalszej eksploracji.'],
+                [
+                  'Output candidates',
+                  'Materiał do inicjatywy, raportu, decka lub dalszej eksploracji.',
+                ],
               ]
             : [
-                ['Option matrix', 'Growth options with impact, effort, risk, evidence, and confidence.'],
-                ['Strategic comparison', 'Trade-offs between scaling core, entering markets, product development, and diversification.'],
+                [
+                  'Option matrix',
+                  'Growth options with impact, effort, risk, evidence, and confidence.',
+                ],
+                [
+                  'Strategic comparison',
+                  'Trade-offs between scaling core, entering markets, product development, and diversification.',
+                ],
                 ['Recommended moves', 'A sequence: what to do now, what to test, what to defer.'],
-                ['Output candidates', 'Material for an initiative, report, deck, or follow-on exploration.'],
+                [
+                  'Output candidates',
+                  'Material for an initiative, report, deck, or follow-on exploration.',
+                ],
               ]
           ).map(([title, text]) => (
-            <div key={title} className="rounded-2xl border border-purple-200/70 bg-purple-500/5 p-4 dark:border-purple-900/40">
+            <div
+              key={title}
+              className="rounded-2xl border border-purple-200/70 bg-purple-500/5 p-4 dark:border-purple-900/40"
+            >
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-purple-700 dark:text-purple-300">
                 {title}
               </div>
@@ -1698,7 +1734,8 @@ export function KnownToolDetailView(props: {
                 {
                   title: 'Premium firma szuka wzrostu bez erozji marży',
                   context: 'Core segment jest rentowny, ale tempo wzrostu spada.',
-                  question: 'Czy skalować obecny rynek, wejść do nowej geografii, czy budować nowy produkt?',
+                  question:
+                    'Czy skalować obecny rynek, wejść do nowej geografii, czy budować nowy produkt?',
                   evidence: [
                     'Sprzedaż pokazuje stabilną marżę w obecnym segmencie, ale malejącą liczbę nowych leadów.',
                     'Wywiady wskazują zapytania z sąsiednich segmentów, lecz bez jasnego dopasowania oferty i kanałów.',
@@ -1712,7 +1749,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'SaaS po nasyceniu obecnego ICP',
-                  context: 'Produkt ma dobrą retencję, ale nowy pipeline w obecnym segmencie słabnie.',
+                  context:
+                    'Produkt ma dobrą retencję, ale nowy pipeline w obecnym segmencie słabnie.',
                   question: 'Czy rosnąć przez nowy segment, dodatki produktowe, czy pricing?',
                   evidence: [
                     'Retencja i expansion revenue są dobre, ale win-rate na nowych logo spada trzeci kwartał z rzędu.',
@@ -1727,7 +1765,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Firma usługowa z silną relacją klienta',
-                  context: 'Klienci proszą o dodatkowe usługi, ale zespół boi się rozmycia specjalizacji.',
+                  context:
+                    'Klienci proszą o dodatkowe usługi, ale zespół boi się rozmycia specjalizacji.',
                   question: 'Czy rozwijać produkt/usługę dla obecnych klientów, czy chronić focus?',
                   evidence: [
                     'Najlepsi klienci proszą o usługi komplementarne, ale rentowność projektów spada, gdy zakres jest zbyt szeroki.',
@@ -1745,7 +1784,8 @@ export function KnownToolDetailView(props: {
                 {
                   title: 'Premium company seeking growth without margin erosion',
                   context: 'The core segment is profitable, but growth is slowing.',
-                  question: 'Should it scale the current market, enter a new geography, or build a new product?',
+                  question:
+                    'Should it scale the current market, enter a new geography, or build a new product?',
                   evidence: [
                     'Sales data shows stable margin in the current segment but a declining number of new leads.',
                     'Interviews surface demand from adjacent segments, but offer and channel fit are still unclear.',
@@ -1774,7 +1814,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Services firm with strong client relationships',
-                  context: 'Clients ask for adjacent services, but the team fears diluting specialization.',
+                  context:
+                    'Clients ask for adjacent services, but the team fears diluting specialization.',
                   question: 'Should it develop new offers for current clients or protect focus?',
                   evidence: [
                     'Top clients request complementary services, but project profitability drops when scope becomes too broad.',
@@ -1854,7 +1895,9 @@ export function KnownToolDetailView(props: {
       <div className="space-y-3">
         {[
           isPolish ? 'Zaakceptowana macierz portfolio BCG' : 'Approved BCG portfolio matrix',
-          isPolish ? 'Jawne trade-offy alokacji zasobów' : 'Explicit resource allocation trade-offs',
+          isPolish
+            ? 'Jawne trade-offy alokacji zasobów'
+            : 'Explicit resource allocation trade-offs',
           isPolish
             ? 'Rekomendowane ruchy: invest, maintain, test, harvest, stop'
             : 'Recommended moves: invest, maintain, test, harvest, stop',
@@ -1899,7 +1942,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Portfolio produktów po szybkim wzroście',
-                  context: 'Część produktów ma wolumen, ale niską marżę; inne są małe, lecz perspektywiczne.',
+                  context:
+                    'Część produktów ma wolumen, ale niską marżę; inne są małe, lecz perspektywiczne.',
                   question: 'Gdzie przesunąć zasoby produktowe i sprzedażowe?',
                   evidence: [
                     'Raport sprzedaży pokazuje produkty o wysokim wolumenie i niskiej marży oraz małe produkty z szybkim wzrostem.',
@@ -1946,7 +1990,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Product portfolio after rapid growth',
-                  context: 'Some products have volume but low margin; others are small but promising.',
+                  context:
+                    'Some products have volume but low margin; others are small but promising.',
                   question: 'Where should product and sales resources move?',
                   evidence: [
                     'Sales reports show high-volume low-margin products and smaller products with faster growth.',
@@ -1999,10 +2044,30 @@ export function KnownToolDetailView(props: {
     const riskProcessSection = (
       <div className="grid gap-4 md:grid-cols-2">
         {[
-          ['Mission', isPolish ? 'Decyzja, zakres niepewności i sygnał sukcesu.' : 'Decision, uncertainty scope, and success signal.'],
-          ['Evidence', isPolish ? 'Sygnały z wywiadu, rynku, danych i operacji.' : 'Interview, market, data, and operational signals.'],
-          ['Risk map', isPolish ? 'Założenia, ryzyka i scenariusze jako karty AI.' : 'Assumptions, risks, and scenarios as AI cards.'],
-          ['Outputs', isPolish ? 'Ruchy odporności, output candidates i inicjatywy.' : 'Resilience moves, output candidates, and initiatives.'],
+          [
+            'Mission',
+            isPolish
+              ? 'Decyzja, zakres niepewności i sygnał sukcesu.'
+              : 'Decision, uncertainty scope, and success signal.',
+          ],
+          [
+            'Evidence',
+            isPolish
+              ? 'Sygnały z wywiadu, rynku, danych i operacji.'
+              : 'Interview, market, data, and operational signals.',
+          ],
+          [
+            'Risk map',
+            isPolish
+              ? 'Założenia, ryzyka i scenariusze jako karty AI.'
+              : 'Assumptions, risks, and scenarios as AI cards.',
+          ],
+          [
+            'Outputs',
+            isPolish
+              ? 'Ruchy odporności, output candidates i inicjatywy.'
+              : 'Resilience moves, output candidates, and initiatives.',
+          ],
         ].map(([title, text]) => (
           <div
             key={title}
@@ -2020,10 +2085,18 @@ export function KnownToolDetailView(props: {
     const riskOutcomesSection = (
       <div className="space-y-3">
         {[
-          isPolish ? 'Zaakceptowana mapa założeń, ryzyk i scenariuszy' : 'Approved assumption, risk, and scenario map',
-          isPolish ? 'Ruchy: validate, mitigate, monitor, hedge, escalate' : 'Moves: validate, mitigate, monitor, hedge, escalate',
-          isPolish ? 'Early warnings i działania odporności' : 'Early warnings and resilience actions',
-          isPolish ? 'Kandydaci outputów i inicjatyw downstream' : 'Downstream output and initiative candidates',
+          isPolish
+            ? 'Zaakceptowana mapa założeń, ryzyk i scenariuszy'
+            : 'Approved assumption, risk, and scenario map',
+          isPolish
+            ? 'Ruchy: validate, mitigate, monitor, hedge, escalate'
+            : 'Moves: validate, mitigate, monitor, hedge, escalate',
+          isPolish
+            ? 'Early warnings i działania odporności'
+            : 'Early warnings and resilience actions',
+          isPolish
+            ? 'Kandydaci outputów i inicjatyw downstream'
+            : 'Downstream output and initiative candidates',
         ].map((text) => (
           <div
             key={text}
@@ -2047,7 +2120,8 @@ export function KnownToolDetailView(props: {
             ? [
                 {
                   title: 'Transformacja z niepewną adopcją użytkowników',
-                  context: 'Plan zakłada szybkie wdrożenie, ale zespoły operacyjne mają różne poziomy gotowości.',
+                  context:
+                    'Plan zakłada szybkie wdrożenie, ale zespoły operacyjne mają różne poziomy gotowości.',
                   question: 'Które założenia trzeba zwalidować przed commitmentem budżetu?',
                   evidence: [
                     'Wywiady pokazują entuzjazm zarządu, ale sceptycyzm kierowników liniowych i brak czasu na szkolenia.',
@@ -2062,7 +2136,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Ekspansja przy zmiennym popycie',
-                  context: 'Popyt rośnie, ale dane rynkowe są rozbieżne i zależne od kilku klientów.',
+                  context:
+                    'Popyt rośnie, ale dane rynkowe są rozbieżne i zależne od kilku klientów.',
                   question: 'Jaki scenariusz bazowy, downside i stress powinien sterować decyzją?',
                   evidence: [
                     'Sprzedaż widzi duże zapytania od kilku klientów, ale pipeline jest skoncentrowany i ma niską powtarzalność.',
@@ -2077,7 +2152,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Program kosztowy pod presją czasu',
-                  context: 'Zarząd oczekuje szybkich oszczędności, ale ryzyko wpływu na jakość jest wysokie.',
+                  context:
+                    'Zarząd oczekuje szybkich oszczędności, ale ryzyko wpływu na jakość jest wysokie.',
                   question: 'Jak ograniczyć ryzyko cięcia zdolności krytycznych?',
                   evidence: [
                     'Finanse widzą szybki potencjał oszczędności, ale operacje wskazują zależności między kosztami a SLA.',
@@ -2094,7 +2170,8 @@ export function KnownToolDetailView(props: {
             : [
                 {
                   title: 'Transformation with uncertain user adoption',
-                  context: 'The plan assumes fast rollout, but operating teams have uneven readiness.',
+                  context:
+                    'The plan assumes fast rollout, but operating teams have uneven readiness.',
                   question: 'Which assumptions must be validated before budget commitment?',
                   evidence: [
                     'Interviews show executive enthusiasm, but line-manager skepticism and limited training capacity.',
@@ -2109,7 +2186,8 @@ export function KnownToolDetailView(props: {
                 },
                 {
                   title: 'Expansion under volatile demand',
-                  context: 'Demand is growing, but market data is mixed and dependent on a few customers.',
+                  context:
+                    'Demand is growing, but market data is mixed and dependent on a few customers.',
                   question: 'Which base, downside, and stress scenarios should steer the decision?',
                   evidence: [
                     'Sales sees large requests from a few customers, but pipeline is concentrated and not yet repeatable.',

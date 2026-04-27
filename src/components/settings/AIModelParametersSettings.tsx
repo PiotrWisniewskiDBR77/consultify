@@ -7,7 +7,6 @@
  */
 
 import {
-  AlertCircle,
   Brain,
   CheckCircle,
   Circle,
@@ -15,7 +14,6 @@ import {
   Globe,
   HardDrive,
   Info,
-  Loader2,
   Sparkles,
   Zap,
 } from 'lucide-react';
@@ -25,13 +23,9 @@ import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
-import {
-  SettingsDivider,
-  SettingsFormRow,
-  SettingsInput,
-  SettingsSection,
-  SettingsToggle,
-} from './shared';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
+import { SettingsDivider, SettingsFormRow, SettingsInput, SettingsSection } from './shared';
 
 interface LLMProvider {
   id: string;
@@ -53,14 +47,6 @@ interface UserModelPrefs {
   temperature: number;
   maxTokens: number;
 }
-
-const PROVIDER_ICONS: Record<string, React.ElementType> = {
-  dbr77: Zap,
-  openai: Sparkles,
-  anthropic: Brain,
-  google: Globe,
-  ollama: HardDrive,
-};
 
 const TIER_BADGE: Record<string, { label: string; className: string } | null> = {
   PLATFORM: { label: 'PLATFORM', className: 'bg-violet-600 text-white' },
@@ -87,6 +73,31 @@ const groupModels = (models: LLMProvider[]) => {
 
   return { platform, cloud, local };
 };
+
+const mapUserSettingsToPrefs = (
+  userSettings: Record<string, unknown> | null | undefined,
+  modelList: LLMProvider[]
+): UserModelPrefs => {
+  const loaded: UserModelPrefs = {
+    preferredModelId:
+      typeof userSettings?.preferred_model_id === 'string' ? userSettings.preferred_model_id : null,
+    visibleModelIds: Array.isArray(userSettings?.visible_model_ids)
+      ? (userSettings.visible_model_ids as string[])
+      : [],
+    temperature:
+      typeof userSettings?.model_temperature === 'number' ? userSettings.model_temperature : 0.7,
+    maxTokens: typeof userSettings?.max_tokens === 'number' ? userSettings.max_tokens : 4096,
+  };
+
+  if (loaded.visibleModelIds.length === 0 && modelList.length > 0) {
+    loaded.visibleModelIds = modelList.map((m) => m.id);
+  }
+
+  return loaded;
+};
+
+const prefsMatch = (left: UserModelPrefs, right: UserModelPrefs) =>
+  JSON.stringify(left) === JSON.stringify(right);
 
 export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ className = '' }) => {
   const { t } = useTranslation();
@@ -118,25 +129,13 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
         const modelList: LLMProvider[] = Array.isArray(availableModels) ? availableModels : [];
         setModels(modelList);
 
-        const loaded: UserModelPrefs = {
-          preferredModelId: userSettings?.preferred_model_id || null,
-          visibleModelIds: Array.isArray(userSettings?.visible_model_ids)
-            ? userSettings.visible_model_ids
-            : [],
-          temperature: userSettings?.model_temperature ?? 0.7,
-          maxTokens: userSettings?.max_tokens ?? 4096,
-        };
-
-        // If user has no visible models yet, default to all available
-        if (loaded.visibleModelIds.length === 0 && modelList.length > 0) {
-          loaded.visibleModelIds = modelList.map((m) => m.id);
-        }
+        const loaded = mapUserSettingsToPrefs(userSettings, modelList);
 
         setPrefs(loaded);
         setOriginalPrefs(loaded);
-      } catch (err) {
-        console.error('Failed to load model settings:', err);
-        setLoadError(err instanceof Error ? err.message : 'Failed to load model settings');
+      } catch (err: unknown) {
+        setModels([]);
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load model settings'));
       } finally {
         setLoading(false);
       }
@@ -153,14 +152,25 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
         model_temperature: prefs.temperature,
         max_tokens: prefs.maxTokens,
       });
-      setOriginalPrefs(prefs);
+      const persistedSettings = await Api.getAIUserSettings();
+      const persistedPrefs = mapUserSettingsToPrefs(persistedSettings, models);
+      if (!prefsMatch(persistedPrefs, prefs)) {
+        throw new Error('Model preferences were not confirmed by the server');
+      }
+      setPrefs(persistedPrefs);
+      setOriginalPrefs(persistedPrefs);
       toast.success(t('settings.ai.modelParamsSaved', 'Model & parameters saved'));
-    } catch {
-      toast.error(t('settings.ai.modelParamsError', 'Failed to save model & parameters'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.ai.modelParamsError', 'Failed to save model & parameters')
+        )
+      );
     } finally {
       setSaving(false);
     }
-  }, [prefs, t]);
+  }, [models, prefs, t]);
 
   const toggleModel = (modelId: string) => {
     setPrefs((prev) => {
@@ -302,22 +312,14 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
         )}
         cardId="settings-ai-model-params"
         isDirty={isDirty}
-        onSave={handleSave}
+        onSave={loadError ? undefined : handleSave}
         saving={saving}
         loading={loading}
       >
         <div className="space-y-6">
           {/* Error state */}
           {loadError && (
-            <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-              <AlertCircle size={16} className="text-red-400 mt-0.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-red-300 font-medium">
-                  {t('settings.ai.loadError', 'Failed to load models')}
-                </p>
-                <p className="text-xs text-slate-500 mt-1">{loadError}</p>
-              </div>
-            </div>
+            <DegradedState title="AI model preferences unavailable" description={loadError} />
           )}
 
           {/* Empty state */}
@@ -334,69 +336,74 @@ export const AIModelParametersSettings: React.FC<{ className?: string }> = ({ cl
           )}
 
           {/* Platform models */}
-          {renderSection(
-            t('settings.ai.platformModel', 'Platform Model'),
-            Zap,
-            'text-violet-400',
-            platform,
-            platform.length > 0 && (
-              <div className="mt-3 p-3 bg-gradient-to-r from-violet-600/10 to-indigo-600/5 border border-violet-500/20 rounded-lg">
-                <div className="flex items-start gap-3">
-                  <Sparkles size={16} className="text-violet-400 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-xs text-violet-300 font-medium mb-1">
-                      Vector DBR77 — Platform AI
-                    </p>
-                    <p className="text-xs text-slate-400 leading-relaxed">
-                      {t(
-                        'settings.ai.vectorDesc',
-                        'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations. Currently in beta for early adopters.'
-                      )}
-                    </p>
-                    <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 rounded-full">
-                      <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                      {t('settings.ai.betaActive', 'Beta active for your account')}
-                    </span>
+          {!loadError &&
+            renderSection(
+              t('settings.ai.platformModel', 'Platform Model'),
+              Zap,
+              'text-violet-400',
+              platform,
+              platform.length > 0 && (
+                <div className="mt-3 p-3 bg-gradient-to-r from-violet-600/10 to-indigo-600/5 border border-violet-500/20 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <Sparkles size={16} className="text-violet-400 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-xs text-violet-300 font-medium mb-1">
+                        Vector DBR77 — Platform AI
+                      </p>
+                      <p className="text-xs text-slate-400 leading-relaxed">
+                        {t(
+                          'settings.ai.vectorDesc',
+                          'Optimized for consulting workflows: interview analysis, report generation, and strategic recommendations. Currently in beta for early adopters.'
+                        )}
+                      </p>
+                      <span className="inline-flex items-center gap-1 mt-2 px-2 py-0.5 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 rounded-full">
+                        <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
+                        {t('settings.ai.betaActive', 'Beta active for your account')}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )
-          )}
+              )
+            )}
 
-          {platform.length > 0 && (cloud.length > 0 || local.length > 0) && <SettingsDivider />}
+          {!loadError && platform.length > 0 && (cloud.length > 0 || local.length > 0) && (
+            <SettingsDivider />
+          )}
 
           {/* Cloud models */}
-          {renderSection(
-            t('settings.ai.cloudModels', 'Cloud Providers'),
-            Globe,
-            'text-blue-400',
-            cloud
-          )}
+          {!loadError &&
+            renderSection(
+              t('settings.ai.cloudModels', 'Cloud Providers'),
+              Globe,
+              'text-blue-400',
+              cloud
+            )}
 
-          {cloud.length > 0 && local.length > 0 && <SettingsDivider />}
+          {!loadError && cloud.length > 0 && local.length > 0 && <SettingsDivider />}
 
           {/* Local models */}
-          {renderSection(
-            t('settings.ai.localModels', 'Local Models'),
-            HardDrive,
-            'text-emerald-400',
-            local,
-            local.length > 0 && (
-              <div className="mt-2 flex items-center gap-2">
-                <a
-                  href="https://ollama.com/library"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
-                >
-                  <ExternalLink size={12} />
-                  {t('settings.ai.browseOllamaModels', 'Browse Ollama model library')}
-                </a>
-              </div>
-            )
-          )}
+          {!loadError &&
+            renderSection(
+              t('settings.ai.localModels', 'Local Models'),
+              HardDrive,
+              'text-emerald-400',
+              local,
+              local.length > 0 && (
+                <div className="mt-2 flex items-center gap-2">
+                  <a
+                    href="https://ollama.com/library"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  >
+                    <ExternalLink size={12} />
+                    {t('settings.ai.browseOllamaModels', 'Browse Ollama model library')}
+                  </a>
+                </div>
+              )
+            )}
 
-          {models.length > 0 && (
+          {!loadError && models.length > 0 && (
             <>
               {/* Info box */}
               <div className="p-3 bg-blue-500/5 border border-blue-500/20 rounded-lg flex items-start gap-3">

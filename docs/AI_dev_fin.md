@@ -1169,6 +1169,144 @@ Definition of done:
 
 ## 5A. Kompletny plan wdrozenia finalnego AI
 
+### 5A.0 Final implementation readiness list - stan po Runtime Gate
+
+Ta sekcja jest operacyjna lista prawdy dla finalnego wdrozenia AI OS. Odpowiada na pytanie: co jest juz domkniete, co moze isc dalej, czego nie wolno jeszcze traktowac jako produkcyjnie gotowe i jakie gate'y musza byc zamkniete przed pelnym release.
+
+Aktualny stan po ostatniej petli QA:
+
+| Obszar | Status | Dowod / decyzja |
+|---|---|---|
+| Staging Runtime Gate | `PASS` | deployment `45d0898e-c31d-479a-8cca-98a334e87e55` |
+| AI provider live smoke | `READY_NOT_RUN` | uruchamiac tylko po akceptacji kosztu i konfiguracji |
+| AI OS module routing | `PASS` | `/ai/*` nie jest juz przechwytywane przez aktywny chat |
+| Chat send flow | `PASS` | `/chat` tworzy rozmowe i przechodzi na `/chat/:conversationId` |
+| Chat refresh persistence | `PASS` | hard refresh zachowuje URL i widoczna historie rozmowy |
+| Research / memory route smoke | `PASS` | brak P0/P1 w Runtime Gate |
+| Full live provider regression | `NOT_ALLOWED_NOW` | za drogie i niepotrzebne; tylko minimalny Provider Gate |
+| Broad cross-module QA | `NEXT_PROGRAM` | przenosimy wzorzec na kolejne moduly po decyzji uzytkownika |
+
+Finalne wdrozenie AI dzielimy na trzy poziomy gotowosci:
+
+1. **Runtime ready** - UI, routing, store, persistence i mock AI dzialaja bez P0/P1.
+2. **Provider ready** - live provider odpowiada w minimalnym smoke i ograniczenia koszt/limit/key sa udokumentowane.
+3. **Product ready** - capability ma acceptance matrix, test automatyczny, monitoring, fallback, honest unavailable state i wlasciciela.
+
+Na dzisiaj AI OS jest `Runtime ready`. Nie oznacza to jeszcze pelnego produkcyjnego AI OS z calym V10 runtime, agentami, konektorami i artifact-native execution. Oznacza to, ze fundament UI/runtime dla dalszego programu nie ma aktualnych P0/P1 blockerow.
+
+#### Lista gotowe teraz
+
+Gotowe do traktowania jako zamkniety fundament Runtime Gate:
+
+- routing AI OS i ochrona `/ai` oraz `/ai/*`;
+- fallback dla nieznanych `/ai/*` do AI OS hub, a nie globalnego `/chat`;
+- chat send flow z utworzeniem conversation i finalnym `/chat/:conversationId`;
+- scoped chat rehydration po hard refreshu;
+- brak globalnego persystowania stalego `activeConversationId`;
+- lokalny snapshot aktywnych wiadomosci jako UI fallback podczas backend hydration;
+- testy jednostkowe/komponentowe dla store rehydration, route sync i protected AI routes;
+- Anygravity focused retest dla chat refresh persistence;
+- Runtime Gate sign-off w `testy_antygravity/reports/2026-04-26_2109_ai-os-runtime-gate-signoff.md`;
+- operacyjny QA blueprint w `testy_antygravity/QA_AUTOMATION_BLUEPRINT.md`.
+
+#### Lista gotowe do uruchomienia, ale nie uruchomione
+
+Gotowe jako nastepny kontrolowany krok:
+
+- Provider Gate minimal live smoke:
+  - prompt: `testy_antygravity/ANYGRAVITY_PROVIDER_GATE_PROMPT.md`;
+  - test-pack: `testy_antygravity/test-packs/provider-gate-minimal-live-smoke.md`;
+  - limit: jeden krotki live chat prompt;
+  - opcjonalnie jeden minimalny provider/research smoke tylko po akceptacji.
+- Automatyzacja regresji bez live AI:
+  - backlog: `testy_antygravity/AUTOMATION_BACKLOG.md`;
+  - paczka delegacyjna: `testy_antygravity/TASK_PACKAGE_FOR_OTHER_SOFTS.md`;
+  - indeks raportow i statusow: `testy_antygravity/REPORT_INDEX.md`;
+  - komenda: `npm run test:runtime-gate`;
+  - pierwszy test: Playwright AI OS route matrix w `tests/e2e/smoke/ai-os-route-matrix.spec.ts`;
+  - drugi test: Playwright chat refresh persistence w `tests/e2e/smoke/chat-refresh-persistence.spec.ts`;
+  - trzeci test: conversation API/store contract.
+
+#### Lista niegotowe jako finalny produkt V10
+
+Te obszary pozostaja czescia roadmapy finalnego AI OS i nie moga byc sprzedawane jako w pelni gotowe bez osobnych gate'ow:
+
+- `TrustBundleV1` jako jeden kanoniczny payload dla source/model/cost/confidence;
+- pelny `ResearchSession` z resume, retry, cancel, progress, evidence graph i final artifact;
+- `AIRun` oraz Run Ledger dla kazdej mutacji i akcji;
+- artifact runtime z diff, approval, commit, export i lineage;
+- enterprise connectors z ACL, freshness i source trace;
+- org/project memory z consent, stewardship, tenant isolation i audit;
+- agent catalog z tool scopes, output schemas, golden prompts i approval policy;
+- outcome runtime: KPI, ROI, baseline, assumptions, confidence i investor/client reporting;
+- AI Ops dashboard: provider health, budget, quota, evals, incidents i rollback.
+
+#### Capability status matrix
+
+Kazda capability AI musi miec jawny status przed release, demo albo obietnica GTM. Ta macierz jest aktualnym stanem po Runtime Gate i powinna byc aktualizowana po kazdej bramce.
+
+| Capability | Current status | Runtime Gate | Provider Gate | Automation Gate | Owner / next action |
+|---|---|---|---|---|---|
+| AI OS shell and hub | `runtime_ready` | `PASS` | `not_required` | `implemented_not_run` | utrzymac Playwright route matrix |
+| AI OS route matrix | `runtime_ready` | `PASS` | `not_required` | `implemented_not_run` | uruchomic `npm run test:runtime-gate` |
+| Chat send flow | `runtime_ready` | `PASS` | `ready_not_run` | `partial_pass` | Provider Gate minimal smoke po zgodzie kosztowej |
+| Chat refresh persistence | `runtime_ready` | `PASS` | `not_required` | `implemented_not_run` | utrzymac Playwright refresh test |
+| Action Center / AIRun panel | `partial` | `PASS route smoke` | `not_required` | `planned` | osobny Action/Audit Gate |
+| Research Sessions | `partial` | `PASS route smoke` | `optional_not_run` | `planned` | capability Runtime Gate dla lifecycle/evidence/artifact |
+| Artifact Runtime | `partial` | `PASS route smoke` | `not_required` | `planned` | capability Runtime Gate dla diff/approval/export |
+| Context and learning | `partial` | `PASS route smoke` | `not_required` | `planned` | ACL, consent i tenant isolation gate |
+| Connectors | `partial/planned` | `not_in_core_gate` | `not_required` | `planned` | connector ACL/freshness gate przed enterprise claim |
+| Agent Catalog | `partial` | `PASS route smoke` | `optional_not_run` | `planned` | golden prompts + agent eval gate |
+| Outcome / KPI / ROI / AI Ops | `partial` | `PASS route smoke` | `not_required` | `planned` | KPI/ROI evidence gate |
+| TrustBundleV1 | `planned` | `not_run` | `not_required` | `planned` | zaprojektowac kanoniczny payload |
+| Enterprise org memory | `planned` | `not_run` | `not_required` | `planned` | tenant isolation + stewardship gate |
+| Live provider configuration | `ready_not_run` | `not_applicable` | `ready_not_run` | `planned` | uruchomic tylko przez `WO-01` |
+
+Status definitions:
+
+- `runtime_ready` - dziala w mock/runtime gate bez P0/P1.
+- `partial` - istnieje panel/runtime albo fragment funkcji, ale brakuje pelnej bramki capability.
+- `planned` - roadmapa, nie claim produkcyjny.
+- `ready_not_run` - przygotowane do testu, ale nieuruchomione przez koszt/konfiguracje/decyzje.
+- `implemented_not_run` - automatyzacja istnieje, ale nie ma jeszcze wyniku pelnego przebiegu.
+
+#### Decyzje wymagane przed pelnym release
+
+Przed przejsciem z `Runtime ready` do `Provider ready` trzeba zdecydowac:
+
+1. Czy staging ma teraz uzywac live providera, czy zostajemy w mock AI do czasu kolejnego modulu.
+2. Jaki jest maksymalny koszt Provider Gate.
+3. Czy Provider Gate obejmuje tylko chat, czy tez jeden minimalny research/provider smoke.
+4. Ktory modul po AI OS dostaje nastepna acceptance matrix i batch QA.
+5. Czy Playwright route matrix i chat refresh persistence maja wejsc do obowiazkowego CI/staging gate.
+
+#### Gate policy dla finalnego AI
+
+Zasada operacyjna:
+
+```text
+Runtime Gate PASS -> Provider Gate minimal smoke -> Automation Gate -> Next module acceptance matrix
+```
+
+Nie robimy broad live-provider regresji. Live provider testujemy minimalnie, bo celem jest potwierdzenie konfiguracji i odpowiedzi modelu, a nie ponowne klikanie calego AI OS na kosztownym providerze.
+
+Funkcja AI moze przejsc do `ready_for_user_testing`, jezeli:
+
+- ma acceptance matrix;
+- nie ma P0/P1 w Runtime Gate;
+- ma test-pack dla Anygravity albo Playwright;
+- ma fallback/error state;
+- ma evidence trail w raporcie;
+- ma jasne ograniczenie: `live`, `partial`, `planned`, `blocked` albo `out_of_scope`.
+
+Funkcja AI moze przejsc do `production_ready`, jezeli dodatkowo:
+
+- Provider Gate lub provider-specific smoke przeszedl jako `PASS` albo `PASS_WITH_LIMITATIONS`;
+- koszt/limit providerow jest widoczny dla ownera/admina;
+- telemetry i error reporting lapia provider failure;
+- rollback path jest znany;
+- user-facing copy nie obiecuje capability, ktore jest tylko `planned`.
+
 ### 5A.1 Kolejnosc techniczna
 
 Implementacja powinna isc od fundamentow danych i kontroli, a nie od najbardziej widocznych UI.

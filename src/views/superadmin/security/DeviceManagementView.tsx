@@ -4,53 +4,144 @@
  */
 
 import { Ban } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+
+type UserRow = {
+  id: string;
+  email: unknown;
+};
+
+type DeviceRow = {
+  id: string;
+  device_id?: unknown;
+  device_name?: unknown;
+  device_type?: unknown;
+  browser?: unknown;
+  os?: unknown;
+  ip_address?: unknown;
+  last_seen_at?: unknown;
+  is_blocked?: boolean;
+  is_trusted?: boolean;
+};
+
+const asText = (value: unknown, fallback: string) => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const formatDeviceDate = (value?: unknown) => {
+  if (!value) return '-';
+  const date = new Date(String(value));
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const normalizeDevices = (payload: unknown): DeviceRow[] => {
+  const normalized = getListPayload<DeviceRow>(payload, ['devices', 'items']);
+  if (hasListShape(payload, ['devices', 'items'])) {
+    return normalized;
+  }
+  throw new Error('Devices response was not a list');
+};
+
+const getDeviceLabel = (device: DeviceRow) => {
+  if (device.device_name) return asText(device.device_name, 'Unknown device');
+  if (device.device_id) return asText(device.device_id, 'Unknown device').substring(0, 8);
+  return 'Unknown device';
+};
 
 export const DeviceManagementView: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
-  const [users, setUsers] = useState<any[]>([]);
-  const [devices, setDevices] = useState<any[]>([]);
+  const [users, setUsers] = useState<UserRow[]>([]);
+  const [devices, setDevices] = useState<DeviceRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const blockUnavailableMessage =
     'Device blocking is unavailable: the backend only exposes read-only device inventory in this environment.';
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    if (selectedUserId) {
-      fetchDevices();
-    }
-  }, [selectedUserId]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       const userList = await Api.getSuperAdminUsers();
-      setUsers(userList);
-      if (userList.length > 0 && !selectedUserId) {
-        setSelectedUserId(userList[0].id);
+      const normalizedUsers = getListPayload<UserRow>(userList, ['users', 'items']);
+      if (!hasListShape(userList, ['users', 'items'])) {
+        throw new Error('Users response was not a list');
       }
-    } catch (err) {
-      console.error('Failed to fetch users:', err);
+      setUsers(normalizedUsers);
+      setSelectedUserId((current) => current || normalizedUsers[0]?.id || '');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch users');
+      setLoadError(message);
+      toast.error(message);
     }
-  };
+  }, []);
 
-  const fetchDevices = async () => {
-    if (!selectedUserId) return;
+  const fetchDevices = useCallback(async () => {
+    if (!selectedUserId) return null;
     setLoading(true);
+    setLoadError(null);
     try {
       const deviceList = await Api.getUserDevices(selectedUserId);
-      setDevices(deviceList);
-    } catch (err) {
-      toast.error('Failed to fetch devices');
+      const normalized = normalizeDevices(deviceList);
+      setDevices(normalized);
+      return normalized;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch devices');
+      setDevices([]);
+      setLoadError(message);
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedUserId]);
+
+  useEffect(() => {
+    void fetchUsers();
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    if (selectedUserId) {
+      void fetchDevices();
+    }
+  }, [selectedUserId, fetchDevices]);
 
   const handleBlockDevice = (_deviceId: string, _reason: string) => {
     toast.error(blockUnavailableMessage);
@@ -73,15 +164,17 @@ export const DeviceManagementView: React.FC = () => {
           <option value="">Select User</option>
           {users.map((user) => (
             <option key={user.id} value={user.id}>
-              {user.email}
+              {asText(user.email, 'Unknown user')}
             </option>
           ))}
         </select>
       </div>
 
+      {loadError && <DegradedState title="Device inventory unavailable" description={loadError} />}
+
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : (
+      ) : loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
           <div className="border-b border-amber-200 bg-amber-50 px-6 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300">
             Device inventory is read-only. Blocking requires a configured device management backend.
@@ -126,21 +219,19 @@ export const DeviceManagementView: React.FC = () => {
                 devices.map((device) => (
                   <tr key={device.id} className="hover:bg-slate-50 dark:hover:bg-navy-700/50">
                     <td className="px-6 py-4 text-slate-900 dark:text-white">
-                      {device.device_name || device.device_id.substring(0, 8)}
+                      {getDeviceLabel(device)}
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {device.device_type || '-'}
+                      {asText(device.device_type, '-')}
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {device.browser || '-'} / {device.os || '-'}
+                      {asText(device.browser, '-')} / {asText(device.os, '-')}
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {device.ip_address || '-'}
+                      {asText(device.ip_address, '-')}
                     </td>
                     <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                      {device.last_seen_at
-                        ? new Date(device.last_seen_at).toLocaleDateString()
-                        : '-'}
+                      {formatDeviceDate(device.last_seen_at)}
                     </td>
                     <td className="px-6 py-4">
                       {device.is_blocked ? (
@@ -162,6 +253,7 @@ export const DeviceManagementView: React.FC = () => {
                         <button
                           onClick={() => handleBlockDevice(device.id, 'Admin action')}
                           disabled
+                          aria-label={`Block device ${device.id}`}
                           className="text-slate-400 cursor-not-allowed opacity-60"
                           title={blockUnavailableMessage}
                         >

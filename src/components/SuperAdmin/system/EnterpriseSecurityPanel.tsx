@@ -31,6 +31,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 
 interface SecurityEvent {
@@ -46,7 +47,7 @@ interface SecurityEvent {
   resolved_at?: string;
   resolved_by?: string;
   created_at: string;
-  details: any;
+  details: Record<string, unknown>;
 }
 
 interface Session {
@@ -77,7 +78,7 @@ interface SecurityPolicy {
   name: string;
   description: string;
   category: string;
-  settings: any;
+  settings: Record<string, unknown>;
   enabled: boolean;
   last_updated: string;
 }
@@ -134,16 +135,161 @@ const EVENT_TYPES = [
   'SESSION_HIJACK_ATTEMPT',
 ];
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const asText = (value: unknown, fallback = 'Unknown') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toBool = (value: unknown) =>
+  value === true || value === 'true' || value === 1 || value === '1';
+
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+};
+
+const parseArray = (value: string) => {
+  try {
+    const parsed = JSON.parse(value || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+const getList = (payload: unknown, keys: string[]) => {
+  if (Array.isArray(payload)) return payload;
+  if (!isRecord(payload)) return [];
+  for (const key of keys) {
+    const value = payload[key];
+    if (Array.isArray(value)) return value;
+    if (isRecord(value)) {
+      for (const nestedKey of keys) {
+        const nested = value[nestedKey];
+        if (Array.isArray(nested)) return nested;
+      }
+    }
+  }
+  return [];
+};
+
+const normalizeSeverity = (value: unknown): SecurityEvent['severity'] => {
+  if (value === 'LOW' || value === 'MEDIUM' || value === 'HIGH' || value === 'CRITICAL') {
+    return value;
+  }
+  return 'LOW';
+};
+
+const normalizeEvents = (payload: unknown): SecurityEvent[] =>
+  getList(payload, ['events', 'items', 'data'])
+    .filter(isRecord)
+    .map((event) => ({
+      id: asText(event.id, ''),
+      event_type: asText(event.event_type),
+      severity: normalizeSeverity(event.severity),
+      user_id:
+        event.user_id === null || event.user_id === undefined ? undefined : String(event.user_id),
+      ip_address:
+        event.ip_address === null || event.ip_address === undefined
+          ? undefined
+          : String(event.ip_address),
+      location_country:
+        event.location_country === null || event.location_country === undefined
+          ? undefined
+          : String(event.location_country),
+      location_city:
+        event.location_city === null || event.location_city === undefined
+          ? undefined
+          : String(event.location_city),
+      user_agent:
+        event.user_agent === null || event.user_agent === undefined
+          ? undefined
+          : String(event.user_agent),
+      resolved: toBool(event.resolved),
+      resolved_at:
+        event.resolved_at === null || event.resolved_at === undefined
+          ? undefined
+          : String(event.resolved_at),
+      resolved_by:
+        event.resolved_by === null || event.resolved_by === undefined
+          ? undefined
+          : String(event.resolved_by),
+      created_at: asText(event.created_at, ''),
+      details: isRecord(event.details) ? event.details : {},
+    }));
+
+const normalizeSessions = (payload: unknown): Session[] =>
+  getList(payload, ['sessions', 'items', 'data'])
+    .filter(isRecord)
+    .map((session) => ({
+      id: asText(session.id, ''),
+      user_id: asText(session.user_id, ''),
+      user_email: asText(session.user_email),
+      device_type: asText(session.device_type, 'unknown'),
+      browser: asText(session.browser),
+      ip_address: asText(session.ip_address),
+      location: asText(session.location),
+      created_at: asText(session.created_at, ''),
+      last_activity: asText(session.last_activity, ''),
+      is_current: toBool(session.is_current),
+    }));
+
+const normalizeIPRules = (payload: unknown): IPRule[] =>
+  getList(payload, ['rules', 'ipRules', 'items', 'data'])
+    .filter(isRecord)
+    .map((rule) => ({
+      id: asText(rule.id, ''),
+      ip_pattern: asText(rule.ip_pattern),
+      rule_type: rule.rule_type === 'deny' ? 'deny' : 'allow',
+      description: asText(rule.description, ''),
+      created_at: asText(rule.created_at, ''),
+      created_by: asText(rule.created_by, ''),
+      enabled: toBool(rule.enabled),
+    }));
+
+const normalizePolicies = (payload: unknown): SecurityPolicy[] =>
+  getList(payload, ['policies', 'items', 'data'])
+    .filter(isRecord)
+    .map((policy, idx) => ({
+      id: asText(policy.id, `policy-${idx}`),
+      name: asText(policy.name, 'Password Policy'),
+      description: asText(policy.description, 'Security policy configuration'),
+      category: asText(policy.category, 'Security'),
+      settings: isRecord(policy.settings)
+        ? policy.settings
+        : {
+            minLength: safeNumber(policy.password_min_length, 8),
+            requireUppercase: toBool(policy.password_require_uppercase),
+            requireNumber: toBool(policy.password_require_numbers),
+            sessionTimeout: safeNumber(policy.session_timeout_minutes, 480),
+          },
+      enabled: policy.enabled !== false && policy.enabled !== 'false',
+      last_updated: asText(policy.updated_at || policy.last_updated, ''),
+    }));
+
 export const EnterpriseSecurityPanel: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<
-    'events' | 'sessions' | 'ip-rules' | 'policies' | 'compliance'
-  >('events');
+  type SecurityTab = 'events' | 'sessions' | 'ip-rules' | 'policies' | 'compliance';
+  const [activeTab, setActiveTab] = useState<SecurityTab>('events');
   const [loading, setLoading] = useState(true);
   const [loadErrors, setLoadErrors] = useState<Record<string, string | null>>({});
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Events state
   const [events, setEvents] = useState<SecurityEvent[]>([]);
-  const [eventStats, setEventStats] = useState<any>(null);
+  const [eventStats, setEventStats] = useState<Record<string, number> | null>(null);
   const [eventFilters, setEventFilters] = useState({ severity: '', eventType: '', resolved: '' });
 
   // Sessions state
@@ -162,17 +308,20 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     try {
       setLoadErrors((prev) => ({ ...prev, events: null }));
       const data = await Api.getSecurityEvents(eventFilters);
-      setEvents(Array.isArray(data?.events) ? data.events : []);
+      const normalizedEvents = normalizeEvents(data);
+      setEvents(normalizedEvents);
       const stats = await Api.getSecurityEventStats();
-      setEventStats(stats);
+      setEventStats(isRecord(stats) ? (stats as Record<string, number>) : null);
+      return normalizedEvents;
     } catch (error) {
-      console.error('Failed to fetch security events:', error);
+      const message = normalizeApiErrorMessage(error, 'Failed to fetch security events');
       setLoadErrors((prev) => ({
         ...prev,
-        events: error instanceof Error ? error.message : 'Failed to fetch security events',
+        events: message,
       }));
       setEvents([]);
       setEventStats(null);
+      return null;
     }
   }, [eventFilters]);
 
@@ -180,14 +329,17 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     try {
       setLoadErrors((prev) => ({ ...prev, sessions: null }));
       const response = await Api.getSuperAdminActiveSessions();
-      setSessions((response.sessions || []) as Session[]);
+      const normalizedSessions = normalizeSessions(response);
+      setSessions(normalizedSessions);
+      return normalizedSessions;
     } catch (error) {
-      console.error('Failed to fetch sessions:', error);
+      const message = normalizeApiErrorMessage(error, 'Failed to fetch sessions');
       setLoadErrors((prev) => ({
         ...prev,
-        sessions: error instanceof Error ? error.message : 'Failed to fetch sessions',
+        sessions: message,
       }));
       setSessions([]);
+      return null;
     }
   }, []);
 
@@ -195,14 +347,17 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     try {
       setLoadErrors((prev) => ({ ...prev, ipRules: null }));
       const data = await Api.getIPAccessRules();
-      setIPRules(data);
+      const normalizedRules = normalizeIPRules(data);
+      setIPRules(normalizedRules);
+      return normalizedRules;
     } catch (error) {
-      console.error('Failed to fetch IP rules:', error);
+      const message = normalizeApiErrorMessage(error, 'Failed to fetch IP rules');
       setLoadErrors((prev) => ({
         ...prev,
-        ipRules: error instanceof Error ? error.message : 'Failed to fetch IP rules',
+        ipRules: message,
       }));
       setIPRules([]);
+      return null;
     }
   }, []);
 
@@ -210,31 +365,17 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     try {
       setLoadErrors((prev) => ({ ...prev, policies: null }));
       const data = await Api.getSecurityPolicies();
-      // Transform backend response to component format if needed
-      const policiesData = data.policies || (Array.isArray(data) ? data : [data]);
-      setPolicies(
-        policiesData.map((p: any, idx: number) => ({
-          id: p.id || `policy-${idx}`,
-          name: p.name || 'Password Policy',
-          description: p.description || 'Security policy configuration',
-          category: p.category || 'Security',
-          settings: p.settings || {
-            minLength: p.password_min_length || 8,
-            requireUppercase: p.password_require_uppercase || false,
-            requireNumber: p.password_require_numbers || false,
-            sessionTimeout: p.session_timeout_minutes || 480,
-          },
-          enabled: p.enabled !== false,
-          last_updated: p.updated_at || new Date().toISOString(),
-        }))
-      );
+      const normalizedPolicies = normalizePolicies(data);
+      setPolicies(normalizedPolicies);
+      return normalizedPolicies;
     } catch (error) {
-      console.error('Failed to fetch policies:', error);
+      const message = normalizeApiErrorMessage(error, 'Failed to fetch security policies');
       setLoadErrors((prev) => ({
         ...prev,
-        policies: error instanceof Error ? error.message : 'Failed to fetch security policies',
+        policies: message,
       }));
       setPolicies([]);
+      return null;
     }
   }, []);
 
@@ -242,32 +383,40 @@ export const EnterpriseSecurityPanel: React.FC = () => {
     try {
       setLoadErrors((prev) => ({ ...prev, compliance: null }));
       const data = await Api.getComplianceFrameworks();
-      // Transform backend compliance_frameworks to component format
-      const frameworksData = data.frameworks || data || [];
+      const frameworksData = getList(data, ['frameworks', 'items', 'data']);
       setFrameworks(
-        frameworksData.map((f: any) => {
+        frameworksData.filter(isRecord).map((f) => {
           const requirements =
             typeof f.requirements === 'string'
-              ? JSON.parse(f.requirements || '[]')
-              : f.requirements || [];
+              ? parseArray(f.requirements)
+              : Array.isArray(f.requirements)
+                ? f.requirements
+                : [];
           return {
-            id: f.id,
-            name: f.display_name || f.name,
-            description: f.description,
-            controls_total: requirements.length || f.controls_total || 0,
+            id: asText(f.id, ''),
+            name: asText(f.display_name || f.name),
+            description: asText(f.description, ''),
+            controls_total: requirements.length || safeNumber(f.controls_total),
             controls_compliant:
-              f.controls_compliant || Math.floor((requirements.length || 0) * 0.9),
-            last_assessment: f.last_assessment || f.updated_at || new Date().toISOString(),
-            status: f.status || (f.is_active ? 'partial' : 'pending'),
+              safeNumber(f.controls_compliant) || Math.floor((requirements.length || 0) * 0.9),
+            last_assessment: asText(f.last_assessment || f.updated_at, ''),
+            status:
+              f.status === 'compliant' ||
+              f.status === 'non_compliant' ||
+              f.status === 'partial' ||
+              f.status === 'not_assessed'
+                ? f.status
+                : toBool(f.is_active)
+                  ? 'partial'
+                  : 'not_assessed',
           };
         })
       );
     } catch (error) {
-      console.error('Failed to fetch compliance frameworks:', error);
+      const message = normalizeApiErrorMessage(error, 'Failed to fetch compliance frameworks');
       setLoadErrors((prev) => ({
         ...prev,
-        compliance:
-          error instanceof Error ? error.message : 'Failed to fetch compliance frameworks',
+        compliance: message,
       }));
       setFrameworks([]);
     }
@@ -300,42 +449,66 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
   const handleResolveEvent = async (id: string) => {
     try {
+      setActionError(null);
       await Api.resolveSecurityEvent?.(id);
+      const refreshed = await fetchSecurityEvents();
+      if (!refreshed || refreshed.some((event) => event.id === id && !event.resolved)) {
+        throw new Error('Security event resolution was not confirmed by the server');
+      }
       toast.success('Security event resolved');
-      fetchSecurityEvents();
     } catch (error) {
-      toast.error('Failed to resolve event');
+      const message = normalizeApiErrorMessage(error, 'Failed to resolve event');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleTerminateSession = async (id: string) => {
     if (!confirm('Are you sure you want to terminate this session?')) return;
     try {
+      setActionError(null);
       await Api.terminateSession(id);
+      const refreshed = await fetchSessions();
+      if (!refreshed || refreshed.some((session) => session.id === id)) {
+        throw new Error('Session termination was not confirmed by the server');
+      }
       toast.success('Session terminated');
-      fetchSessions();
     } catch (error) {
-      toast.error('Failed to terminate session');
+      const message = normalizeApiErrorMessage(error, 'Failed to terminate session');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleToggleIPRule = async (id: string, enabled: boolean) => {
     try {
+      setActionError(null);
       await Api.updateIPRule(id, { enabled });
+      const refreshed = await fetchIPRules();
+      if (!refreshed?.some((rule) => rule.id === id && rule.enabled === enabled)) {
+        throw new Error('IP rule update was not confirmed by the server');
+      }
       toast.success(`IP rule ${enabled ? 'enabled' : 'disabled'}`);
-      fetchIPRules();
     } catch (error) {
-      toast.error('Failed to update IP rule');
+      const message = normalizeApiErrorMessage(error, 'Failed to update IP rule');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleTogglePolicy = async (id: string, enabled: boolean) => {
     try {
+      setActionError(null);
       await Api.updateSecurityPolicy(id, { enabled });
+      const refreshed = await fetchPolicies();
+      if (!refreshed?.some((policy) => policy.id === id && policy.enabled === enabled)) {
+        throw new Error('Policy update was not confirmed by the server');
+      }
       toast.success(`Policy ${enabled ? 'enabled' : 'disabled'}`);
-      fetchPolicies();
     } catch (error) {
-      toast.error('Failed to update policy');
+      const message = normalizeApiErrorMessage(error, 'Failed to update policy');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -389,6 +562,17 @@ export const EnterpriseSecurityPanel: React.FC = () => {
   const safeIpRules = Array.isArray(ipRules) ? ipRules : [];
   const safePolicies = Array.isArray(policies) ? policies : [];
   const safeFrameworks = Array.isArray(frameworks) ? frameworks : [];
+  const securityTabs: {
+    id: SecurityTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
+    { id: 'events', label: 'Security Events', icon: AlertTriangle },
+    { id: 'sessions', label: 'Sessions', icon: Users },
+    { id: 'ip-rules', label: 'IP Rules', icon: Globe },
+    { id: 'policies', label: 'Policies', icon: Shield },
+    { id: 'compliance', label: 'Compliance', icon: FileCheck },
+  ];
 
   return (
     <div className="p-6 space-y-6">
@@ -406,16 +590,10 @@ export const EnterpriseSecurityPanel: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1 overflow-x-auto">
-        {[
-          { id: 'events', label: 'Security Events', icon: AlertTriangle },
-          { id: 'sessions', label: 'Sessions', icon: Users },
-          { id: 'ip-rules', label: 'IP Rules', icon: Globe },
-          { id: 'policies', label: 'Policies', icon: Shield },
-          { id: 'compliance', label: 'Compliance', icon: FileCheck },
-        ].map(({ id, label, icon: Icon }) => (
+        {securityTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors whitespace-nowrap ${
               activeTab === id
                 ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
@@ -427,6 +605,15 @@ export const EnterpriseSecurityPanel: React.FC = () => {
           </button>
         ))}
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-12">
@@ -564,7 +751,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                 )}
                               </div>
                               <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400 mt-1">
-                                <span>{new Date(event.created_at).toLocaleString()}</span>
+                                <span>{formatDateTime(event.created_at)}</span>
                                 {event.ip_address && <span>{event.ip_address}</span>}
                                 {event.location_city && (
                                   <span>
@@ -577,6 +764,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                           {!event.resolved && (
                             <button
                               onClick={() => handleResolveEvent(event.id)}
+                              aria-label={`Resolve security event ${event.id}`}
                               className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded-lg transition-colors"
                             >
                               Resolve
@@ -664,13 +852,14 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                                 <span>{session.location}</span>
                               </div>
                               <div className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                                Last active: {new Date(session.last_activity).toLocaleString()}
+                                Last active: {formatDateTime(session.last_activity)}
                               </div>
                             </div>
                           </div>
                           {!session.is_current && (
                             <button
                               onClick={() => handleTerminateSession(session.id)}
+                              aria-label={`Terminate session ${session.id}`}
                               className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm rounded-lg transition-colors"
                             >
                               Terminate
@@ -777,6 +966,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => handleToggleIPRule(rule.id, !rule.enabled)}
+                            aria-label={`${rule.enabled ? 'Disable' : 'Enable'} IP rule ${rule.ip_pattern}`}
                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                               rule.enabled
                                 ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
@@ -834,11 +1024,12 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             {policy.description}
                           </p>
                           <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">
-                            Last updated: {new Date(policy.last_updated).toLocaleDateString()}
+                            Last updated: {formatDate(policy.last_updated)}
                           </div>
                         </div>
                         <button
                           onClick={() => handleTogglePolicy(policy.id, !policy.enabled)}
+                          aria-label={`${policy.enabled ? 'Disable' : 'Enable'} policy ${policy.name}`}
                           className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
                             policy.enabled
                               ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400'
@@ -917,8 +1108,7 @@ export const EnterpriseSecurityPanel: React.FC = () => {
                             />
                           </div>
                           <div className="text-xs text-slate-600 dark:text-slate-400">
-                            Last assessment:{' '}
-                            {new Date(framework.last_assessment).toLocaleDateString()}
+                            Last assessment: {formatDate(framework.last_assessment)}
                           </div>
                         </div>
                       </div>

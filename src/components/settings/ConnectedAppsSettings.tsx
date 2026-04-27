@@ -27,6 +27,7 @@ import {
   type UserIntegration,
   useUserIntegrations,
 } from '../../hooks/useUserIntegrations';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import MappingDriftPanel from './integrations/MappingDriftPanel';
 
 // ─── Brand SVG Icons ─────────────────────────────────────────────────────────
@@ -610,18 +611,10 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
   const [connecting, setConnecting] = useState(false);
   const [testingProvider, setTestingProvider] = useState<string | null>(null);
   const [mappingIntegrationId, setMappingIntegrationId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const {
-    integrations,
-    providers,
-    connectedCount,
-    loading,
-    error,
-    connect,
-    disconnect,
-    testConnection,
-    refresh,
-  } = useUserIntegrations();
+  const { integrations, providers, connectedCount, loading, error, disconnect, refresh } =
+    useUserIntegrations();
 
   const connectedMap = useMemo(() => {
     const map = new Map<string, UserIntegration>();
@@ -654,22 +647,66 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
     return counts;
   }, []);
 
+  const fetchIntegrationSnapshot = useCallback(async () => {
+    const response = await fetch('/api/settings/integrations', {
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      throw new Error('Failed to confirm integration status');
+    }
+    const data = await response.json();
+    return {
+      integrations: Array.isArray(data?.integrations)
+        ? (data.integrations as UserIntegration[])
+        : [],
+      providers: Array.isArray(data?.providers) ? (data.providers as Provider[]) : [],
+    };
+  }, []);
+
+  const snapshotHasActiveProvider = useCallback(
+    (snapshot: { integrations: UserIntegration[]; providers: Provider[] }, providerId: string) =>
+      snapshot.integrations.some(
+        (integration) => integration.provider === providerId && integration.status === 'active'
+      ) ||
+      snapshot.providers.some(
+        (provider) =>
+          provider.id === providerId &&
+          provider.isConnected &&
+          provider.connection?.status === 'active'
+      ),
+    []
+  );
+
   // Handle OAuth success/error from redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const oauthSuccess = params.get('oauth_success');
     const oauthError = params.get('oauth_error');
     if (oauthSuccess) {
-      toast.success(
-        t('settings.integrations.oauthSuccess', `Connected to ${oauthSuccess} successfully!`)
-      );
-      window.history.replaceState({}, '', window.location.pathname);
-      refresh();
+      void (async () => {
+        try {
+          const snapshot = await fetchIntegrationSnapshot();
+          if (!snapshotHasActiveProvider(snapshot, oauthSuccess)) {
+            throw new Error('OAuth connection was not confirmed by the server');
+          }
+          toast.success(
+            t('settings.integrations.oauthSuccess', `Connected to ${oauthSuccess} successfully!`)
+          );
+          await refresh();
+        } catch (err: unknown) {
+          const message = normalizeApiErrorMessage(err, 'Failed to confirm OAuth connection');
+          setActionError(message);
+          toast.error(message);
+        } finally {
+          window.history.replaceState({}, '', window.location.pathname);
+        }
+      })();
     } else if (oauthError) {
       toast.error(`OAuth error: ${oauthError}`);
       window.history.replaceState({}, '', window.location.pathname);
     }
-  }, [refresh]);
+  }, [fetchIntegrationSnapshot, refresh, snapshotHasActiveProvider, t]);
 
   const startOAuthFlow = useCallback(
     async (connectorId: string) => {
@@ -687,9 +724,12 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         } else {
           toast.error('No authorization URL returned');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast.error(
-          err.message || t('settings.integrations.connectError', 'Failed to initiate connection')
+          normalizeApiErrorMessage(
+            err,
+            t('settings.integrations.connectError', 'Failed to initiate connection')
+          )
         );
       }
     },
@@ -729,22 +769,36 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       );
       if (!confirmed) return;
       try {
+        setActionError(null);
         const resp = await fetch(`/api/settings/integrations/${appId}/oauth-disconnect`, {
           method: 'POST',
           credentials: 'include',
         });
         if (resp.ok) {
+          const snapshot = await fetchIntegrationSnapshot();
+          if (snapshotHasActiveProvider(snapshot, appId)) {
+            throw new Error('Integration disconnect was not confirmed by the server');
+          }
+          await refresh();
           toast.success(t('settings.integrations.disconnected', 'Disconnected successfully'));
-          refresh();
         } else {
-          await disconnect(appId);
+          const disconnected = await disconnect(appId);
+          if (!disconnected) {
+            throw new Error('Failed to disconnect');
+          }
+          const snapshot = await fetchIntegrationSnapshot();
+          if (snapshotHasActiveProvider(snapshot, appId)) {
+            throw new Error('Integration disconnect was not confirmed by the server');
+          }
           toast.success(t('settings.integrations.disconnected', 'Disconnected successfully'));
         }
-      } catch {
-        await disconnect(appId);
+      } catch (err: unknown) {
+        const message = normalizeApiErrorMessage(err, 'Failed to disconnect integration');
+        setActionError(message);
+        toast.error(message);
       }
     },
-    [disconnect, t, refresh]
+    [disconnect, fetchIntegrationSnapshot, refresh, snapshotHasActiveProvider, t]
   );
 
   const handleTest = useCallback(
@@ -795,9 +849,13 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
           }),
         });
         if (!resp.ok) throw new Error('Connection failed');
+        const snapshot = await fetchIntegrationSnapshot();
+        if (!snapshotHasActiveProvider(snapshot, connectModalApp.id)) {
+          throw new Error('Integration connection was not confirmed by the server');
+        }
         toast.success(t('settings.integrations.connected', 'Connected successfully'));
         setConnectModalApp(null);
-        refresh();
+        await refresh();
       } else {
         // For providers requiring config (Jira site_url, Teams tenant_id, Monday api_token, etc.)
         // submit the config first so the backend can use it during/after OAuth
@@ -830,9 +888,13 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
               const err = await resp.json().catch(() => ({}));
               throw new Error(err.error || 'Connection failed');
             }
+            const snapshot = await fetchIntegrationSnapshot();
+            if (!snapshotHasActiveProvider(snapshot, connectModalApp.id)) {
+              throw new Error('Integration connection was not confirmed by the server');
+            }
             toast.success(t('settings.integrations.connected', 'Connected successfully'));
             setConnectModalApp(null);
-            refresh();
+            await refresh();
             setConnecting(false);
             return;
           }
@@ -849,14 +911,25 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
         await startOAuthFlow(connectModalApp.id);
         setConnectModalApp(null);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error(
-        err.message || t('settings.integrations.connectError', 'Failed to initiate connection')
+        normalizeApiErrorMessage(
+          err,
+          t('settings.integrations.connectError', 'Failed to initiate connection')
+        )
       );
     } finally {
       setConnecting(false);
     }
-  }, [connectModalApp, draftConfig, startOAuthFlow, t, refresh]);
+  }, [
+    connectModalApp,
+    draftConfig,
+    fetchIntegrationSnapshot,
+    refresh,
+    snapshotHasActiveProvider,
+    startOAuthFlow,
+    t,
+  ]);
 
   // ─── Render ──────────────────────────────────────────────────────────────
 
@@ -910,6 +983,15 @@ export const ConnectedAppsSettings: React.FC<ConnectedAppsSettingsProps> = ({ cl
       </div>
 
       {/* Search */}
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
         <input

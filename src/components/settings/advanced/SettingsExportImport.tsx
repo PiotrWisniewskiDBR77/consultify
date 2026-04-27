@@ -4,7 +4,6 @@
 
 import {
   AlertTriangle,
-  Calendar,
   CheckCircle,
   Download,
   FileJson,
@@ -18,6 +17,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { InfoButton } from '../../shared/InfoButton';
 
 interface SettingsExportImportProps {
@@ -36,6 +36,19 @@ interface ExportConfig {
   keyboard: boolean;
 }
 
+interface ImportPreview {
+  version?: string;
+  userId?: string;
+  exportedAt?: string;
+  settings?: Record<string, unknown>;
+}
+
+interface ImportSettingsResponse {
+  success?: boolean;
+  imported?: string[];
+  skipped?: string[];
+}
+
 export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ currentUser }) => {
   const { t } = useTranslation();
   const [exporting, setExporting] = useState(false);
@@ -51,7 +64,8 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
     keyboard: true,
   });
   const [importFile, setImportFile] = useState<File | null>(null);
-  const [importPreview, setImportPreview] = useState<any>(null);
+  const [importPreview, setImportPreview] = useState<ImportPreview | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [importValidation, setImportValidation] = useState<{
     valid: boolean;
     warnings: string[];
@@ -92,10 +106,11 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
   const handleExport = async () => {
     try {
       setExporting(true);
+      setActionError(null);
 
       // Get selected categories
       const selectedCategories = Object.entries(exportConfig)
-        .filter(([_, selected]) => selected)
+        .filter(([, selected]) => selected)
         .map(([key]) => key);
 
       // Call API to get export data
@@ -117,8 +132,13 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
       URL.revokeObjectURL(url);
 
       toast.success(t('settings.importExport.exportSuccess', 'Settings exported successfully'));
-    } catch (error) {
-      toast.error(t('settings.importExport.exportError', 'Failed to export settings'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.importExport.exportError', 'Failed to export settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setExporting(false);
     }
@@ -132,7 +152,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
     try {
       const text = await file.text();
-      const data = JSON.parse(text);
+      const data = JSON.parse(text) as ImportPreview;
       setImportPreview(data);
 
       // Validate
@@ -165,7 +185,7 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
         warnings,
         errors,
       });
-    } catch (error) {
+    } catch {
       setImportValidation({
         valid: false,
         warnings: [],
@@ -179,11 +199,18 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
     try {
       setImporting(true);
+      setActionError(null);
 
       // Call API to import settings
-      const response = await Api.importSettings(importPreview, true);
+      const response = (await Api.importSettings(importPreview, true)) as ImportSettingsResponse;
+      if (response?.success === false) {
+        throw new Error('Settings import was rejected by the server');
+      }
       const imported = response?.imported || [];
       const skipped = response?.skipped || [];
+      if (imported.length === 0) {
+        throw new Error('Settings import did not confirm any imported categories');
+      }
       setLastImportResult({ imported, skipped });
 
       if (imported.length > 0) {
@@ -199,8 +226,13 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
 
       setImportFile(null);
       setImportPreview(null);
-    } catch (error) {
-      toast.error(t('settings.importExport.importError', 'Failed to import settings'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.importExport.importError', 'Failed to import settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setImporting(false);
     }
@@ -232,6 +264,15 @@ export const SettingsExportImport: React.FC<SettingsExportImportProps> = ({ curr
           {t('settings.importExport.subtitle', 'Backup and restore your settings configuration')}
         </p>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Export Section */}
       <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-6">

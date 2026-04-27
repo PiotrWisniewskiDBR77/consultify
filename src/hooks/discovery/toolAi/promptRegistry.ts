@@ -409,7 +409,9 @@ Return JSON:
   if (toolType === 'risk-uncertainty') {
     const risk = inputData as any;
     const riskSummary = (risk?.risks || [])
-      .map((item: any) => `- ${item.title || item.description}: P${item.probability}/I${item.impact}`)
+      .map(
+        (item: any) => `- ${item.title || item.description}: P${item.probability}/I${item.impact}`
+      )
       .join('\n');
 
     return `Summarize risks and scenarios in a consulting-grade way:

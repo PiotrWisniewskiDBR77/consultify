@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Api } from '@/services/api';
@@ -51,5 +51,41 @@ describe('AuthenticationAccessPage honest UI', () => {
     expect(screen.getByText('Recovery options unavailable')).toBeInTheDocument();
     expect(screen.queryByText('No active sessions found')).not.toBeInTheDocument();
     expect(screen.queryByText('No login history available')).not.toBeInTheDocument();
+    expect(screen.queryByText('Recovery Email')).not.toBeInTheDocument();
+    expect(screen.queryByText('Backup Codes')).not.toBeInTheDocument();
+  });
+
+  it('refetches active sessions after terminating a session', async () => {
+    vi.mocked(Api.getActiveSessions)
+      .mockResolvedValueOnce({
+        sessions: [
+          { id: 'current', deviceInfo: 'Current Browser', current: true },
+          { id: 'other', deviceInfo: 'Other Browser', current: false },
+        ],
+      })
+      .mockResolvedValueOnce({
+        sessions: [{ id: 'current', deviceInfo: 'Current Browser', current: true }],
+      });
+    vi.mocked(Api.getLoginHistory).mockResolvedValue([]);
+    vi.mocked(Api.get).mockResolvedValue({ recoveryEmail: '', recoveryPhone: '', backupCodesCount: 0 });
+    vi.mocked(Api.revokeSession).mockResolvedValue({ success: true });
+
+    render(
+      <AuthenticationAccessPage
+        currentUser={{ id: 'user-1', email: 'user@example.com', mfaEnabled: false } as any}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('Other Browser')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTitle('Terminate'));
+
+    await waitFor(() => {
+      expect(Api.revokeSession).toHaveBeenCalledWith('other');
+      expect(Api.getActiveSessions).toHaveBeenCalledTimes(2);
+      expect(screen.queryByText('Other Browser')).not.toBeInTheDocument();
+    });
   });
 });

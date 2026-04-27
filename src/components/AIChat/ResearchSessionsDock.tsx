@@ -49,6 +49,15 @@ const STATUS_ICON = {
   archived: Archive,
 };
 
+const LOAD_TIMEOUT_MS = 12000;
+
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error(message)), timeoutMs);
+    promise.then(resolve, reject).finally(() => window.clearTimeout(timer));
+  });
+}
+
 export const ResearchSessionsDock: React.FC = () => {
   const [sessions, setSessions] = React.useState<ResearchSessionView[]>([]);
   const [selected, setSelected] = React.useState<ResearchSessionView | null>(null);
@@ -61,28 +70,54 @@ export const ResearchSessionsDock: React.FC = () => {
   const [allowedSources, setAllowedSources] = React.useState<
     Array<'web' | 'attachment' | 'product' | 'org'>
   >(['web', 'attachment', 'product', 'org']);
-  const selectedSessionId = selected?.sessionId || null;
+  const sessionsRef = React.useRef<ResearchSessionView[]>([]);
+  const selectedSessionIdRef = React.useRef<string | null>(null);
+  const loadSeqRef = React.useRef(0);
+
+  React.useEffect(() => {
+    sessionsRef.current = sessions;
+  }, [sessions]);
+
+  React.useEffect(() => {
+    selectedSessionIdRef.current = selected?.sessionId || null;
+  }, [selected?.sessionId]);
 
   const load = React.useCallback(async (options?: { silent?: boolean }) => {
+    const requestId = ++loadSeqRef.current;
+    const hasCachedSessions = sessionsRef.current.length > 0;
     if (!options?.silent) setLoading(true);
     setError(null);
     try {
-      const res = await Api.listResearchSessions({ limit: 50 });
+      const res = await withTimeout(
+        Api.listResearchSessions({ limit: 50 }),
+        LOAD_TIMEOUT_MS,
+        'Research sessions refresh timed out. Please try Refresh again.'
+      );
+      if (requestId !== loadSeqRef.current) return;
       const next = Array.isArray(res?.sessions) ? res.sessions : [];
       setSessions(next);
-      if (!selectedSessionId && next.length > 0) setSelected(next[0]);
+      const selectedSessionId = selectedSessionIdRef.current;
+      if (!selectedSessionId && next.length > 0) {
+        setSelected(next[0]);
+        return;
+      }
       if (selectedSessionId) {
         const fresh = next.find(
           (session: ResearchSessionView) => session.sessionId === selectedSessionId
         );
         if (fresh) setSelected(fresh);
+        if (!fresh && next.length > 0) setSelected(next[0]);
       }
     } catch (err: any) {
+      if (requestId !== loadSeqRef.current) return;
       setError(err?.message || 'Failed to load research sessions');
+      if (hasCachedSessions) {
+        setSessions([...sessionsRef.current]);
+      }
     } finally {
-      setLoading(false);
+      if (requestId === loadSeqRef.current) setLoading(false);
     }
-  }, [selectedSessionId]);
+  }, []);
 
   React.useEffect(() => {
     load();
@@ -138,11 +173,18 @@ export const ResearchSessionsDock: React.FC = () => {
         expectedOutput: 'research_report',
       });
       if (res?.success === false) throw new Error(res?.error || 'Failed to create session');
-      if (res?.session) setSelected(res.session);
+      if (res?.session) {
+        setSelected(res.session);
+        setSessions((prev) => [
+          res.session,
+          ...prev.filter((session) => session.sessionId !== res.session.sessionId),
+        ]);
+      }
       setMission('');
       setScope('');
       setQuestions('');
-      await load({ silent: true });
+      setLoading(false);
+      void load({ silent: true });
     } catch (err: any) {
       setError(err?.message || 'Failed to create research session');
     } finally {
@@ -162,36 +204,45 @@ export const ResearchSessionsDock: React.FC = () => {
   const approve = async (sessionId: string) => {
     await withBusy(sessionId, async () => {
       const res = await Api.approveResearchSession(sessionId);
-      if (res?.session) setSelected(res.session);
-      await refreshSelected(sessionId);
+      if (res?.session) {
+        setSelected(res.session);
+        setSessions((prev) =>
+          prev.map((session) => (session.sessionId === sessionId ? res.session : session))
+        );
+      }
+      void refreshSelected(sessionId);
     });
   };
 
   const start = async (sessionId: string) => {
     await withBusy(sessionId, async () => {
-      await Api.startResearchSession(sessionId);
-      await refreshSelected(sessionId);
+      const res = await Api.startResearchSession(sessionId);
+      if (res?.session) setSelected(res.session);
+      void refreshSelected(sessionId);
     });
   };
 
   const cancel = async (sessionId: string) => {
     await withBusy(sessionId, async () => {
-      await Api.cancelResearchSessionV1(sessionId);
-      await refreshSelected(sessionId);
+      const res = await Api.cancelResearchSessionV1(sessionId);
+      if (res?.session) setSelected(res.session);
+      void refreshSelected(sessionId);
     });
   };
 
   const resume = async (sessionId: string) => {
     await withBusy(sessionId, async () => {
-      await Api.resumeResearchSession(sessionId);
-      await refreshSelected(sessionId);
+      const res = await Api.resumeResearchSession(sessionId);
+      if (res?.session) setSelected(res.session);
+      void refreshSelected(sessionId);
     });
   };
 
   const retry = async (sessionId: string) => {
     await withBusy(sessionId, async () => {
-      await Api.retryResearchSession(sessionId);
-      await refreshSelected(sessionId);
+      const res = await Api.retryResearchSession(sessionId);
+      if (res?.session) setSelected(res.session);
+      void refreshSelected(sessionId);
     });
   };
 
@@ -275,46 +326,57 @@ export const ResearchSessionsDock: React.FC = () => {
                 Start, pause, resume and retry research. Running jobs auto-refresh every 5 seconds.
               </p>
             </div>
-            <button type="button" onClick={() => load()} className="text-xs rounded-md border px-3 py-1.5">
-              Refresh
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="text-xs rounded-md border px-3 py-1.5"
+            >
+              {loading && sessions.length > 0 ? 'Refreshing...' : 'Refresh'}
             </button>
           </div>
           <div className="divide-y divide-slate-100 dark:divide-navy-800">
-            {loading ? (
+            {loading && sessions.length === 0 ? (
               <div className="p-4 text-sm text-slate-500">Loading research sessions...</div>
             ) : sessions.length === 0 ? (
               <div className="p-4 text-sm text-slate-500">No research sessions yet.</div>
             ) : (
-              sessions.map((session) => {
-                const Icon = STATUS_ICON[session.status] || Clock3;
-                return (
-                  <button
-                    key={session.sessionId}
-                    type="button"
-                    onClick={() => setSelected(session)}
-                    className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-navy-800"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]">
-                        <Icon
-                          size={12}
-                          className={session.status === 'running' ? 'animate-spin' : ''}
-                        />
-                        {session.status}
-                      </span>
-                      <span className="text-[11px] text-slate-500">
-                        {session.progress?.stage || 'planned'}
-                      </span>
-                    </div>
-                    <div className="mt-2 font-medium text-slate-900 dark:text-white">
-                      {session.mission}
-                    </div>
-                    <div className="text-xs text-slate-500">
-                      Sources: {(session.allowedSources || []).join(', ') || 'all'}
-                    </div>
-                  </button>
-                );
-              })
+              <>
+                {loading && (
+                  <div className="px-4 py-2 text-xs text-slate-500">
+                    Refreshing sessions in the background...
+                  </div>
+                )}
+                {sessions.map((session) => {
+                  const Icon = STATUS_ICON[session.status] || Clock3;
+                  return (
+                    <button
+                      key={session.sessionId}
+                      type="button"
+                      onClick={() => setSelected(session)}
+                      className="w-full text-left p-4 hover:bg-slate-50 dark:hover:bg-navy-800"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]">
+                          <Icon
+                            size={12}
+                            className={session.status === 'running' ? 'animate-spin' : ''}
+                          />
+                          {session.status}
+                        </span>
+                        <span className="text-[11px] text-slate-500">
+                          {session.progress?.stage || 'planned'}
+                        </span>
+                      </div>
+                      <div className="mt-2 font-medium text-slate-900 dark:text-white">
+                        {session.mission}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        Sources: {(session.allowedSources || []).join(', ') || 'all'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </>
             )}
           </div>
         </section>

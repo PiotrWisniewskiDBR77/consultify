@@ -82,6 +82,30 @@ describe('ProtectedRoute triad role hierarchy', () => {
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
 
+  it('blocks ADMIN from accessing routes requiring SUPERADMIN', () => {
+    authState.currentUser = {
+      isAuthenticated: true,
+      role: 'ADMIN',
+    };
+
+    renderProtectedRoute('SUPERADMIN');
+
+    expect(screen.getByText('Chat Screen')).toBeInTheDocument();
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+  });
+
+  it('blocks OWNER from accessing routes requiring SUPERADMIN', () => {
+    authState.currentUser = {
+      isAuthenticated: true,
+      role: 'OWNER',
+    };
+
+    renderProtectedRoute('SUPERADMIN');
+
+    expect(screen.getByText('Chat Screen')).toBeInTheDocument();
+    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
+  });
+
   it('redirects authenticated users without sufficient role to dashboard', () => {
     authState.currentUser = {
       isAuthenticated: true,

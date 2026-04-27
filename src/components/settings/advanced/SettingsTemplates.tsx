@@ -2,25 +2,14 @@
  * SettingsTemplates - Predefined settings configurations
  */
 
-import {
-  Check,
-  Copy,
-  Eye,
-  Layout,
-  Loader2,
-  Plus,
-  Save,
-  Shield,
-  Star,
-  Trash2,
-  Zap,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { Check, Layout, Loader2, Plus, Star, Trash2, Zap } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 import { InfoButton } from '../../shared/InfoButton';
 
@@ -40,6 +29,31 @@ interface Template {
   createdAt?: string;
 }
 
+interface SettingsTemplatesSnapshot {
+  systemTemplates: Template[];
+  customTemplates: Template[];
+}
+
+const normalizeTemplates = (response: unknown): SettingsTemplatesSnapshot => {
+  const templates = (response as { templates?: unknown })?.templates;
+  if (!Array.isArray(templates)) {
+    throw new Error('Settings templates response was invalid');
+  }
+
+  const normalizedTemplates = (templates as Template[]).map((template) => ({
+    ...template,
+    categories: Array.isArray(template.categories) ? template.categories : ['All'],
+  }));
+
+  return {
+    systemTemplates: normalizedTemplates.filter((template) => template.type === 'system'),
+    customTemplates: normalizedTemplates.filter((template) => template.type === 'custom'),
+  };
+};
+
+const templateMatchesCreate = (templates: Template[], expected: Template) =>
+  templates.some((template) => template.id === expected.id || template.name === expected.name);
+
 const normalizeTemplateKey = (value: string) =>
   value
     .toLowerCase()
@@ -56,39 +70,30 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
   const [newTemplateName, setNewTemplateName] = useState('');
   const [newTemplateDesc, setNewTemplateDesc] = useState('');
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+
+  const loadData = useCallback(async (showLoader = true) => {
+    try {
+      if (showLoader) setLoading(true);
+      setLoadError(null);
+      const response = await Api.getSettingsTemplates();
+      const snapshot = normalizeTemplates(response);
+      setTemplates(snapshot.systemTemplates);
+      setCustomTemplates(snapshot.customTemplates);
+      return snapshot;
+    } catch (error: unknown) {
+      setTemplates([]);
+      setCustomTemplates([]);
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load settings templates'));
+      return null;
+    } finally {
+      if (showLoader) setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, [currentUser.id]);
-
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      setLoadError(null);
-      const response = await Api.getSettingsTemplates();
-
-      if (Array.isArray(response?.templates)) {
-        const responseTemplates = response.templates as Template[];
-        const normalizedTemplates = responseTemplates.map((template) => ({
-          ...template,
-          categories: Array.isArray(template.categories) ? template.categories : ['All'],
-        }));
-        const systemTemplates = normalizedTemplates.filter((t) => t.type === 'system');
-        const customTpls = normalizedTemplates.filter((t) => t.type === 'custom');
-        setTemplates(systemTemplates);
-        setCustomTemplates(customTpls);
-      } else {
-        throw new Error('Settings templates response was invalid');
-      }
-    } catch (error) {
-      console.error('Error loading templates:', error);
-      setTemplates([]);
-      setCustomTemplates([]);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load settings templates');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [currentUser.id, loadData]);
 
   const handleApplyTemplate = async (template: Template) => {
     if (
@@ -110,8 +115,13 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
           name: getTemplateLabel(template, 'name'),
         })
       );
-    } catch (error) {
-      toast.error(t('settings.templates.applyError', 'Failed to apply template'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.templates.applyError', 'Failed to apply template')
+        )
+      );
     } finally {
       setApplying(null);
     }
@@ -121,6 +131,7 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
     if (!newTemplateName.trim()) return;
 
     try {
+      setActionError(null);
       // Get current settings to save as template
       const exportResponse = await Api.exportSettings();
       const settingsData = exportResponse?.data?.settings || {};
@@ -138,17 +149,22 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
         throw new Error('Template creation response was invalid');
       }
       const template = response.template as unknown as Template;
-      setCustomTemplates([
-        ...customTemplates,
-        { ...template, type: 'custom', categories: [t('common.all', 'All')] },
-      ]);
+      const snapshot = await loadData(false);
+      if (!snapshot || !templateMatchesCreate(snapshot.customTemplates, template)) {
+        throw new Error('Settings template creation was not confirmed by the server');
+      }
 
       setShowCreateModal(false);
       setNewTemplateName('');
       setNewTemplateDesc('');
       toast.success(t('settings.templates.created', 'Template created from current settings'));
-    } catch (error) {
-      toast.error(t('settings.templates.createError', 'Failed to create template'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.templates.createError', 'Failed to create template')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -157,10 +173,18 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
 
     try {
       await Api.deleteSettingsTemplate(id);
-      setCustomTemplates(customTemplates.filter((t) => t.id !== id));
+      const snapshot = await loadData(false);
+      if (!snapshot || snapshot.customTemplates.some((template) => template.id === id)) {
+        throw new Error('Settings template deletion was not confirmed by the server');
+      }
       toast.success(t('settings.templates.deleted', 'Template deleted'));
-    } catch (error) {
-      toast.error(t('settings.templates.deleteError', 'Failed to delete template'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.templates.deleteError', 'Failed to delete template')
+      );
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -207,6 +231,15 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
 
       {loadError && (
         <DegradedState title="Settings templates unavailable" description={loadError} />
+      )}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+        >
+          {actionError}
+        </div>
       )}
 
       {/* System Templates */}
@@ -345,6 +378,15 @@ export const SettingsTemplates: React.FC<SettingsTemplatesProps> = ({ currentUse
             </h3>
 
             <div className="space-y-4">
+              {actionError && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm"
+                >
+                  {actionError}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   {t('settings.templates.templateName', 'Template Name')}

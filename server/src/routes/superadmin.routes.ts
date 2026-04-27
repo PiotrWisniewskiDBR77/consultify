@@ -1855,12 +1855,43 @@ const ensureAlertsTable = async () => {
       channels TEXT DEFAULT '[]',
       is_enabled INTEGER DEFAULT 1,
       last_triggered_at TEXT,
-      created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now'))
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
     )`,
     [],
     { fallback: false }
   );
+
+  await Promise.all([
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN enabled INTEGER DEFAULT 1`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN frequency TEXT DEFAULT 'daily'`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN retention_days INTEGER DEFAULT 30`, [], {
+      fallback: true,
+    }),
+    dbRun(
+      `ALTER TABLE backup_configurations ADD COLUMN include_attachments INTEGER DEFAULT 1`,
+      [],
+      {
+        fallback: true,
+      }
+    ),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN include_audit_logs INTEGER DEFAULT 1`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN last_backup_at TEXT`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN next_backup_at TEXT`, [], {
+      fallback: true,
+    }),
+    dbRun(`ALTER TABLE backup_configurations ADD COLUMN updated_at TIMESTAMPTZ`, [], {
+      fallback: true,
+    }),
+  ]);
 };
 
 router.get(
@@ -2240,6 +2271,26 @@ router.post(
 // BACKUP SCHEDULING (backup_configurations table)
 // ==========================================
 
+const ensureBackupConfigurationsTable = async () => {
+  await dbRun(
+    `CREATE TABLE IF NOT EXISTS backup_configurations (
+      id TEXT PRIMARY KEY,
+      organization_id TEXT NOT NULL,
+      enabled INTEGER DEFAULT 1,
+      frequency TEXT DEFAULT 'daily',
+      retention_days INTEGER DEFAULT 30,
+      include_attachments INTEGER DEFAULT 1,
+      include_audit_logs INTEGER DEFAULT 1,
+      last_backup_at TEXT,
+      next_backup_at TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )`,
+    [],
+    { fallback: false }
+  );
+};
+
 router.post(
   '/system/backup',
   requireSuperAdminCapability('platform_ops'),
@@ -2268,6 +2319,17 @@ router.post(
 router.get(
   '/backup/schedules',
   asyncHandler(async (_req: AuthRequest, res: Response) => {
+    try {
+      await ensureBackupConfigurationsTable();
+    } catch (error: any) {
+      logger.warn('[SuperAdmin] Backup schedule schema unavailable:', error?.message || error);
+      return res.status(503).json({
+        success: false,
+        error: 'Backup schedules are not available.',
+        code: 'BACKUP_SCHEDULES_UNAVAILABLE',
+      });
+    }
+
     // Model schedules as a single platform-level configuration row (organization_id = 'system')
     const cfgId = 'backupcfg-system';
     const existing = await dbGet(
@@ -2278,7 +2340,7 @@ router.get(
     if (!existing) {
       await dbRun(
         `INSERT INTO backup_configurations (id, organization_id, enabled, frequency, retention_days, include_attachments, include_audit_logs, created_at, updated_at)
-         VALUES (?, 'system', 1, 'daily', 30, 1, 1, datetime('now'), datetime('now'))`,
+         VALUES (?, 'system', 1, 'daily', 30, 1, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
         [cfgId],
         { fallback: false }
       );
@@ -2313,6 +2375,17 @@ router.get(
 router.put(
   '/backup/schedules/:id',
   asyncHandler(async (req: AuthRequest, res: Response) => {
+    try {
+      await ensureBackupConfigurationsTable();
+    } catch (error: any) {
+      logger.warn('[SuperAdmin] Backup schedule schema unavailable:', error?.message || error);
+      return res.status(503).json({
+        success: false,
+        error: 'Backup schedules are not available.',
+        code: 'BACKUP_SCHEDULES_UNAVAILABLE',
+      });
+    }
+
     const { id } = req.params;
     const { enabled, frequency, retention_days } = req.body || {};
     const existing = await dbGet(`SELECT * FROM backup_configurations WHERE id = ?`, [id], {
@@ -2325,7 +2398,7 @@ router.put(
        SET enabled = COALESCE(?, enabled),
            frequency = COALESCE(?, frequency),
            retention_days = COALESCE(?, retention_days),
-           updated_at = datetime('now')
+           updated_at = CURRENT_TIMESTAMP
        WHERE id = ?`,
       [
         enabled === undefined ? null : enabled ? 1 : 0,

@@ -25,6 +25,7 @@ import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface Budget {
   id: string;
@@ -77,6 +78,13 @@ interface UsageStats {
   alertCount: number;
 }
 
+interface AIBudgetSnapshot {
+  budgets: Budget[];
+  alerts: Alert[];
+  modelPermissions: ModelPermission[];
+  usageStats: UsageStats | null;
+}
+
 type TabType = 'overview' | 'budgets' | 'alerts' | 'models';
 
 const MODEL_PROVIDERS = [
@@ -93,6 +101,110 @@ const MODEL_PROVIDERS = [
   { id: 'google', name: 'Google', models: ['gemini-pro', 'gemini-pro-vision'] },
 ];
 
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const asArray = <T,>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+const getCreatedId = (result: unknown, key: string) => {
+  if (!result || typeof result !== 'object') return '';
+  const response = result as { data?: unknown };
+  const data = response.data && typeof response.data === 'object' ? response.data : response;
+  const payload = data as Record<string, unknown>;
+  const nested = payload[key] && typeof payload[key] === 'object' ? payload[key] : null;
+  const nestedData =
+    payload.data && typeof payload.data === 'object' && !Array.isArray(payload.data)
+      ? (payload.data as Record<string, unknown>)
+      : null;
+  return String(
+    payload.id ||
+      (nested as Record<string, unknown> | null)?.id ||
+      nestedData?.id ||
+      (nestedData?.[key] as { id?: unknown } | undefined)?.id ||
+      ''
+  );
+};
+
+const normalizeUsageStats = (value: unknown): UsageStats | null => {
+  if (!value || typeof value !== 'object') return null;
+  const raw = value as Partial<UsageStats>;
+  return {
+    budgets: asArray<UsageStats['budgets'][number]>(raw.budgets).map((budget) => ({
+      ...budget,
+      limit: safeNumber(budget.limit),
+      current: safeNumber(budget.current),
+      remaining: safeNumber(budget.remaining),
+      percentUsed: safeNumber(budget.percentUsed),
+    })),
+    alertCount: safeNumber(raw.alertCount),
+  };
+};
+
+const normalizeModelCosts = (value: unknown): Record<string, { input: number; output: number }> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value as Record<string, { input?: unknown; output?: unknown }>).map(
+      ([model, costs]) => [
+        model,
+        { input: safeNumber(costs?.input), output: safeNumber(costs?.output) },
+      ]
+    )
+  );
+};
+
 const AIBudgetsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [loading, setLoading] = useState(false);
@@ -106,6 +218,7 @@ const AIBudgetsView: React.FC = () => {
     {}
   );
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // UI state
   const [showBudgetModal, setShowBudgetModal] = useState(false);
@@ -145,20 +258,43 @@ const AIBudgetsView: React.FC = () => {
         api.get('/ai-budgets/model-permissions'),
       ]);
 
-      setBudgets(budgetsRes.data.data || []);
-      setAlerts(alertsRes.data.data || []);
-      setUsageStats(statsRes.data.data);
-      setModelCosts(costsRes.data.data || {});
-      setModelPermissions(permissionsRes.data.data || []);
-    } catch (error: any) {
-      console.error('[AI Budgets] Fetch error:', error);
-      setLoadError(error?.message || 'Failed to load AI budgets');
+      const budgetsData = getListPayload<Budget>(budgetsRes, ['budgets']);
+      const alertsData = getListPayload<Alert>(alertsRes, ['alerts']);
+      const permissionsData = getListPayload<ModelPermission>(permissionsRes, [
+        'permissions',
+        'modelPermissions',
+      ]);
+      if (!hasListShape(budgetsRes, ['budgets'])) {
+        throw new Error('AI budgets response was not a list');
+      }
+      if (!hasListShape(alertsRes, ['alerts'])) {
+        throw new Error('AI budget alerts response was not a list');
+      }
+      if (!hasListShape(permissionsRes, ['permissions', 'modelPermissions'])) {
+        throw new Error('Model permissions response was not a list');
+      }
+      const statsData = normalizeUsageStats(getObjectPayload(statsRes));
+      setBudgets(budgetsData);
+      setAlerts(alertsData);
+      setUsageStats(statsData);
+      setModelCosts(normalizeModelCosts(getObjectPayload(costsRes)));
+      setModelPermissions(permissionsData);
+      return {
+        budgets: budgetsData,
+        alerts: alertsData,
+        modelPermissions: permissionsData,
+        usageStats: statsData,
+      } satisfies AIBudgetSnapshot;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load AI budgets');
+      setLoadError(message);
       setBudgets([]);
       setAlerts([]);
       setUsageStats(null);
       setModelCosts({});
       setModelPermissions([]);
-      toast.error(error?.message || 'Failed to load AI budgets');
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -182,14 +318,43 @@ const AIBudgetsView: React.FC = () => {
       toast.error('Warning threshold must be between 0 and 100%');
       return;
     }
+    setActionError(null);
     try {
+      const expected = { ...newBudget };
+      let createdId = '';
       if (editingBudget) {
         await api.put(`/ai-budgets/budgets/${editingBudget.id}`, newBudget);
-        toast.success('Budget updated');
       } else {
-        await api.post('/ai-budgets/budgets', newBudget);
-        toast.success('Budget created');
+        const result = await api.post('/ai-budgets/budgets', newBudget);
+        createdId = getCreatedId(result, 'budget');
+        if (!createdId) {
+          throw new Error('AI budget creation response was incomplete');
+        }
       }
+      const refreshed = await fetchData();
+      const confirmed = editingBudget
+        ? refreshed?.budgets.some(
+            (budget) =>
+              budget.id === editingBudget.id &&
+              budget.budgetType === expected.budgetType &&
+              budget.period === expected.period &&
+              Number(budget.budgetLimit) === Number(expected.budgetLimit)
+          )
+        : refreshed?.budgets.some(
+            (budget) =>
+              budget.id === createdId &&
+              budget.budgetType === expected.budgetType &&
+              budget.period === expected.period &&
+              Number(budget.budgetLimit) === Number(expected.budgetLimit)
+          );
+      if (!confirmed) {
+        throw new Error(
+          editingBudget
+            ? 'AI budget update was not confirmed by the server'
+            : 'AI budget creation was not confirmed by the server'
+        );
+      }
+      toast.success(editingBudget ? 'Budget updated' : 'Budget created');
       setShowBudgetModal(false);
       setEditingBudget(null);
       setNewBudget({
@@ -199,22 +364,27 @@ const AIBudgetsView: React.FC = () => {
         warningThreshold: 0.8,
         hardLimit: true,
       });
-      await fetchData();
-    } catch (error: any) {
-      console.error('[AI Budgets] Create error:', error);
-      toast.error(error?.message || 'Failed to save budget');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to save budget');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleDeleteBudget = async (budgetId: string) => {
     if (!confirm('Delete this budget?')) return;
+    setActionError(null);
     try {
       await api.delete(`/ai-budgets/budgets/${budgetId}`);
+      const refreshed = await fetchData();
+      if (!refreshed || refreshed.budgets.some((budget) => budget.id === budgetId)) {
+        throw new Error('AI budget deletion was not confirmed by the server');
+      }
       toast.success('Budget deleted');
-      await fetchData();
-    } catch (error: any) {
-      console.error('[AI Budgets] Delete error:', error);
-      toast.error(error?.message || 'Failed to delete budget');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to delete budget');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -232,41 +402,84 @@ const AIBudgetsView: React.FC = () => {
 
   // Alert actions
   const handleAcknowledgeAlert = async (alertId: string) => {
+    setActionError(null);
     try {
       await api.post(`/ai-budgets/alerts/${alertId}/acknowledge`, {});
-      setAlerts(alerts.map((a) => (a.id === alertId ? { ...a, status: 'acknowledged' } : a)));
-    } catch (error) {
-      console.error('[AI Budgets] Acknowledge error:', error);
+      const refreshed = await fetchData();
+      if (
+        !refreshed ||
+        refreshed.alerts.some((alert) => alert.id === alertId && alert.status !== 'acknowledged')
+      ) {
+        throw new Error('AI budget alert acknowledgement was not confirmed by the server');
+      }
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to acknowledge alert');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleDismissAlert = async (alertId: string) => {
+    setActionError(null);
     try {
       await api.post(`/ai-budgets/alerts/${alertId}/dismiss`, {});
-      setAlerts(alerts.filter((a) => a.id !== alertId));
-    } catch (error) {
-      console.error('[AI Budgets] Dismiss error:', error);
+      const refreshed = await fetchData();
+      if (!refreshed || refreshed.alerts.some((alert) => alert.id === alertId)) {
+        throw new Error('AI budget alert dismissal was not confirmed by the server');
+      }
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to dismiss alert');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   // Model permissions
   const handleSaveModelPermission = async () => {
+    setActionError(null);
     try {
-      await api.post('/ai-budgets/model-permissions', newModelPermission);
+      const result = await api.post('/ai-budgets/model-permissions', newModelPermission);
+      const createdId = getCreatedId(result, 'permission');
+      if (!createdId) {
+        throw new Error('Model permission creation response was incomplete');
+      }
+      const refreshed = await fetchData();
+      if (
+        !refreshed?.modelPermissions.some(
+          (permission) =>
+            permission.id === createdId &&
+            permission.modelId === newModelPermission.modelId &&
+            permission.modelProvider === newModelPermission.modelProvider &&
+            permission.scopeType === newModelPermission.scopeType &&
+            permission.isAllowed === newModelPermission.isAllowed
+        )
+      ) {
+        throw new Error('Model permission creation was not confirmed by the server');
+      }
       setShowModelModal(false);
-      fetchData();
-    } catch (error) {
-      console.error('[AI Budgets] Save model permission error:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to save model permission');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleDeleteModelPermission = async (permissionId: string) => {
     if (!confirm('Remove this model restriction?')) return;
+    setActionError(null);
     try {
       await api.delete(`/ai-budgets/model-permissions/${permissionId}`);
-      fetchData();
-    } catch (error) {
-      console.error('[AI Budgets] Delete permission error:', error);
+      const refreshed = await fetchData();
+      if (
+        !refreshed ||
+        refreshed.modelPermissions.some((permission) => permission.id === permissionId)
+      ) {
+        throw new Error('Model permission deletion was not confirmed by the server');
+      }
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to delete model permission');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -277,7 +490,7 @@ const AIBudgetsView: React.FC = () => {
     { id: 'models' as TabType, label: 'Model Access', icon: Bot },
   ];
 
-  const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+  const formatCurrency = (value: number) => `$${safeNumber(value).toFixed(2)}`;
   const safePercent = (current: number, limit: number) => {
     const currentValue = Number(current);
     const limitValue = Number(limit);
@@ -285,11 +498,11 @@ const AIBudgetsView: React.FC = () => {
     return (currentValue / limitValue) * 100;
   };
   const formatTokens = (value: number) =>
-    value >= 1000000
-      ? `${(value / 1000000).toFixed(1)}M`
-      : value >= 1000
-        ? `${(value / 1000).toFixed(1)}K`
-        : value;
+    safeNumber(value) >= 1000000
+      ? `${(safeNumber(value) / 1000000).toFixed(1)}M`
+      : safeNumber(value) >= 1000
+        ? `${(safeNumber(value) / 1000).toFixed(1)}K`
+        : safeNumber(value);
 
   const renderOverview = () => (
     <div className="space-y-6">
@@ -534,12 +747,14 @@ const AIBudgetsView: React.FC = () => {
                     )}
                     <button
                       onClick={() => openEditBudget(budget)}
+                      aria-label={`Edit budget ${budget.id}`}
                       className="p-2 text-slate-500 hover:text-violet-500 hover:bg-violet-500/10 rounded-lg transition-colors"
                     >
                       <Check size={18} />
                     </button>
                     <button
                       onClick={() => handleDeleteBudget(budget.id)}
+                      aria-label={`Delete budget ${budget.id}`}
                       className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
@@ -599,7 +814,10 @@ const AIBudgetsView: React.FC = () => {
                 <select
                   value={newBudget.budgetType}
                   onChange={(e) =>
-                    setNewBudget({ ...newBudget, budgetType: e.target.value as any })
+                    setNewBudget({
+                      ...newBudget,
+                      budgetType: e.target.value as Budget['budgetType'],
+                    })
                   }
                   className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 >
@@ -614,7 +832,12 @@ const AIBudgetsView: React.FC = () => {
                 </label>
                 <select
                   value={newBudget.period}
-                  onChange={(e) => setNewBudget({ ...newBudget, period: e.target.value as any })}
+                  onChange={(e) =>
+                    setNewBudget({
+                      ...newBudget,
+                      period: e.target.value as Exclude<Budget['period'], 'total'>,
+                    })
+                  }
                   className="w-full px-3 py-2 bg-white dark:bg-gray-900 border border-slate-200 dark:border-gray-700 rounded-lg text-slate-900 dark:text-white"
                 >
                   <option value="daily">Daily</option>
@@ -629,6 +852,7 @@ const AIBudgetsView: React.FC = () => {
                 </label>
                 <input
                   type="number"
+                  aria-label="Budget Limit"
                   value={newBudget.budgetLimit}
                   onChange={(e) =>
                     setNewBudget({ ...newBudget, budgetLimit: parseFloat(e.target.value) })
@@ -642,6 +866,7 @@ const AIBudgetsView: React.FC = () => {
                 </label>
                 <input
                   type="number"
+                  aria-label="Warning Threshold"
                   value={newBudget.warningThreshold * 100}
                   onChange={(e) =>
                     setNewBudget({
@@ -756,8 +981,8 @@ const AIBudgetsView: React.FC = () => {
                       {alert.message}
                     </p>
                     <div className="flex items-center gap-4 mt-2 text-xs text-slate-500 dark:text-gray-400">
-                      <span>{new Date(alert.createdAt).toLocaleString()}</span>
-                      <span>{alert.percentage.toFixed(1)}% of limit</span>
+                      <span>{formatDateTime(alert.createdAt)}</span>
+                      <span>{safeNumber(alert.percentage).toFixed(1)}% of limit</span>
                     </div>
                   </div>
                 </div>
@@ -765,6 +990,7 @@ const AIBudgetsView: React.FC = () => {
                   {alert.status === 'active' && (
                     <button
                       onClick={() => handleAcknowledgeAlert(alert.id)}
+                      aria-label={`Acknowledge alert ${alert.id}`}
                       className="flex items-center gap-1 px-3 py-1.5 text-sm bg-slate-100 hover:bg-slate-200 text-slate-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white rounded-lg transition-colors"
                     >
                       <Check size={14} />
@@ -773,6 +999,7 @@ const AIBudgetsView: React.FC = () => {
                   )}
                   <button
                     onClick={() => handleDismissAlert(alert.id)}
+                    aria-label={`Dismiss alert ${alert.id}`}
                     className="p-1.5 text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                   >
                     <X size={18} />
@@ -870,6 +1097,7 @@ const AIBudgetsView: React.FC = () => {
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => handleDeleteModelPermission(perm.id)}
+                      aria-label={`Delete model permission ${perm.id}`}
                       className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors"
                     >
                       <Trash2 size={18} />
@@ -1023,6 +1251,15 @@ const AIBudgetsView: React.FC = () => {
           })}
         </div>
       </div>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
 
       {/* Content */}
       {loading ? (

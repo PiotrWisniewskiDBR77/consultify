@@ -17,6 +17,7 @@ import {
 } from '../../i18n';
 import { Api } from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface LanguageSettingsProps {
   className?: string;
@@ -44,6 +45,8 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
   const { currentUser } = useAppStore();
   const currentLang = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en';
   const [tenantDefaultLanguage, setTenantDefaultLanguage] = useState<string | null>(null);
+  const [tenantLoadError, setTenantLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -53,11 +56,15 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
           profile?: { defaultLanguage?: string | null };
         };
         if (!cancelled) {
+          setTenantLoadError(null);
           setTenantDefaultLanguage(context?.profile?.defaultLanguage || null);
         }
-      } catch {
+      } catch (error: unknown) {
         if (!cancelled) {
           setTenantDefaultLanguage(null);
+          setTenantLoadError(
+            normalizeApiErrorMessage(error, 'Organization language default unavailable')
+          );
         }
       }
     };
@@ -76,7 +83,11 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
     : ALL_LANGUAGES;
 
   const handleLanguageChange = async (langCode: string) => {
-    await changeLanguage(langCode);
+    setActionError(null);
+    const changed = await changeLanguage(langCode);
+    if (!changed) {
+      setActionError(t('settings.appearance.languageChangeError', 'Failed to change language'));
+    }
   };
 
   return (
@@ -101,6 +112,22 @@ export const LanguageSettings: React.FC<LanguageSettingsProps> = ({ className = 
             <div className="mt-1 text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">
               Tenant default language: {tenantDefaultLanguage}
             </div>
+          </div>
+        ) : null}
+        {tenantLoadError ? (
+          <div
+            role="alert"
+            className="mt-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-100"
+          >
+            {tenantLoadError}
+          </div>
+        ) : null}
+        {actionError ? (
+          <div
+            role="alert"
+            className="mt-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+          >
+            {actionError}
           </div>
         ) : null}
       </div>

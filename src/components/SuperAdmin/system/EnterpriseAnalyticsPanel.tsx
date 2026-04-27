@@ -26,13 +26,13 @@ import {
   RefreshCw,
   Settings,
   Users,
-  X,
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState, ReadOnlyState } from '../../Admin/AdminState';
 
 interface MetricCard {
@@ -41,7 +41,7 @@ interface MetricCard {
   value: string | number;
   change: number;
   changeLabel: string;
-  icon: React.FC<any>;
+  icon: React.ComponentType<{ className?: string }>;
   color: string;
 }
 
@@ -65,6 +65,37 @@ interface ScheduledReport {
   is_active: boolean;
 }
 
+type AnalyticsTab = 'dashboard' | 'reports' | 'scheduled';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getList = (payload: unknown, keys: string[]) => {
+  if (Array.isArray(payload)) return payload;
+  if (!isRecord(payload)) return [];
+  for (const key of keys) {
+    const value = payload[key];
+    if (Array.isArray(value)) return value;
+    if (isRecord(value)) {
+      for (const nestedKey of keys) {
+        const nested = value[nestedKey];
+        if (Array.isArray(nested)) return nested;
+      }
+    }
+  }
+  return [];
+};
+
+const asText = (value: unknown, fallback = 'Unknown') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const formatDate = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleDateString();
+};
+
 const TIME_RANGES = [
   { id: '24h', label: 'Last 24 Hours' },
   { id: '7d', label: 'Last 7 Days' },
@@ -84,15 +115,23 @@ const REPORT_TYPES = [
 export const EnterpriseAnalyticsPanel: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'reports' | 'scheduled'>('dashboard');
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>('dashboard');
   const [metrics, setMetrics] = useState<MetricCard[]>([]);
   const [apiChartData, setApiChartData] = useState<ChartData | null>(null);
   const [aiChartData, setAiChartData] = useState<ChartData | null>(null);
   const [scheduledReports, setScheduledReports] = useState<ScheduledReport[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [scheduledLoadError, setScheduledLoadError] = useState<string | null>(null);
-  const [showCreateReport, setShowCreateReport] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const analyticsTabs: {
+    id: AnalyticsTab;
+    label: string;
+    icon: React.ComponentType<{ className?: string }>;
+  }[] = [
+    { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'reports', label: 'Generate Report', icon: FileText },
+    { id: 'scheduled', label: 'Scheduled Reports', icon: Clock },
+  ];
 
   const fetchAnalytics = useCallback(async () => {
     try {
@@ -167,8 +206,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
       setLoading(false);
       return true;
     } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-      setLoadError(error instanceof Error ? error.message : 'Failed to fetch analytics');
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to fetch analytics'));
       setMetrics([]);
       setApiChartData(null);
       setAiChartData(null);
@@ -181,30 +219,40 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
     try {
       setScheduledLoadError(null);
       const reports = await Api.getAnalyticsReports();
-      setScheduledReports(
-        reports
-          .filter((report: any) => report.schedule)
-          .map((report: any) => ({
-            id: report.id,
-            name: report.name,
-            type: report.report_type || report.type || 'custom',
-            schedule:
-              typeof report.schedule === 'string'
-                ? report.schedule
-                : report.schedule?.frequency || 'scheduled',
-            recipients: Array.isArray(report.recipients) ? report.recipients : [],
-            last_sent: report.last_sent || report.lastSent || undefined,
-            next_run: report.next_run || report.nextRun || undefined,
-            is_active: report.status !== 'paused' && report.status !== 'disabled',
-          }))
-      );
+      const normalizedReports = getList(reports, ['reports', 'items', 'data'])
+        .filter(isRecord)
+        .filter((report) => report.schedule)
+        .map((report) => ({
+          id: asText(report.id, ''),
+          name: asText(report.name),
+          type: asText(report.report_type || report.type, 'custom'),
+          schedule:
+            typeof report.schedule === 'string'
+              ? report.schedule
+              : isRecord(report.schedule)
+                ? asText(report.schedule.frequency, 'scheduled')
+                : 'scheduled',
+          recipients: Array.isArray(report.recipients)
+            ? report.recipients.map((recipient) => String(recipient))
+            : [],
+          last_sent:
+            (report.last_sent || report.lastSent) === null ||
+            (report.last_sent || report.lastSent) === undefined
+              ? undefined
+              : String(report.last_sent || report.lastSent),
+          next_run:
+            (report.next_run || report.nextRun) === null ||
+            (report.next_run || report.nextRun) === undefined
+              ? undefined
+              : String(report.next_run || report.nextRun),
+          is_active: report.status !== 'paused' && report.status !== 'disabled',
+        }));
+      setScheduledReports(normalizedReports);
     } catch (error) {
-      console.error('Failed to fetch scheduled reports:', error);
-      setScheduledLoadError(
-        error instanceof Error ? error.message : 'Failed to load scheduled reports'
-      );
+      const message = normalizeApiErrorMessage(error, 'Failed to load scheduled reports');
+      setScheduledLoadError(message);
       setScheduledReports([]);
-      toast.error('Failed to load scheduled reports');
+      toast.error(message);
     }
   }, []);
 
@@ -297,14 +345,10 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
 
       {/* Tabs */}
       <div className="flex gap-2 border-b border-slate-200 dark:border-white/10 pb-1">
-        {[
-          { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
-          { id: 'reports', label: 'Generate Report', icon: FileText },
-          { id: 'scheduled', label: 'Scheduled Reports', icon: Clock },
-        ].map(({ id, label, icon: Icon }) => (
+        {analyticsTabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveTab(id as any)}
+            onClick={() => setActiveTab(id)}
             className={`flex items-center gap-2 px-4 py-2 font-medium rounded-t-lg transition-colors ${
               activeTab === id
                 ? 'bg-slate-100 dark:bg-white/10 text-slate-900 dark:text-slate-100 border-b-2 border-primary-500'
@@ -505,6 +549,13 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                 </button>
               </div>
 
+              {!scheduledLoadError && (
+                <ReadOnlyState
+                  title="Scheduled report creation unavailable"
+                  description="The reporting backend exposes scheduled report reads here, but no audited create/update workflow is wired to this panel yet."
+                />
+              )}
+
               {scheduledLoadError ? (
                 <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
                   <DegradedState
@@ -552,7 +603,7 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
                             {report.next_run && (
                               <>
                                 <span>•</span>
-                                <span>Next: {new Date(report.next_run).toLocaleDateString()}</span>
+                                <span>Next: {formatDate(report.next_run)}</span>
                               </>
                             )}
                           </div>
@@ -573,19 +624,6 @@ export const EnterpriseAnalyticsPanel: React.FC = () => {
             </div>
           )}
         </>
-      )}
-
-      {/* Create Scheduled Report Modal */}
-      {showCreateReport && (
-        <CreateScheduledReportModal
-          onClose={() => setShowCreateReport(false)}
-          onSave={() => {
-            fetchScheduledReports();
-            setShowCreateReport(false);
-            toast.success('Scheduled report created');
-          }}
-          reportTypes={REPORT_TYPES}
-        />
       )}
     </div>
   );
@@ -629,126 +667,6 @@ const SimpleBarChart: React.FC<{ data: ChartData }> = ({ data }) => {
             </span>
           </div>
         ))}
-      </div>
-    </div>
-  );
-};
-
-// Create Scheduled Report Modal
-const CreateScheduledReportModal: React.FC<{
-  onClose: () => void;
-  onSave: () => void;
-  reportTypes: { id: string; label: string }[];
-}> = ({ onClose, onSave, reportTypes }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    type: 'system_performance',
-    schedule: 'weekly',
-    recipients: '',
-  });
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    // Simulate API call
-    await new Promise((r) => setTimeout(r, 500));
-    onSave();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-navy-900 rounded-xl border border-slate-200 dark:border-white/10 p-6 w-full max-w-lg">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-slate-900 dark:text-white">Schedule Report</h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-navy-800/40 rounded-lg"
-          >
-            <X className="w-5 h-5 text-slate-400 dark:text-slate-500" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Report Name
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              placeholder="Monthly Performance Summary"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Report Type
-              </label>
-              <select
-                value={formData.type}
-                onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              >
-                {reportTypes.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                Schedule
-              </label>
-              <select
-                value={formData.schedule}
-                onChange={(e) => setFormData({ ...formData, schedule: e.target.value })}
-                className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-              Recipients (comma-separated emails)
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.recipients}
-              onChange={(e) => setFormData({ ...formData, recipients: e.target.value })}
-              className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
-              placeholder="admin@example.com, cto@example.com"
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-slate-400 dark:text-slate-500 hover:text-slate-900 dark:hover:text-white"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg disabled:opacity-50 flex items-center gap-2"
-            >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              Schedule
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

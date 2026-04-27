@@ -25,6 +25,52 @@ const MEMORY_KEY_OPTIONS = [
   { value: 'decision_criteria', label: 'Decision criteria' },
 ] as const;
 
+function humanizeFactKey(key: string): string {
+  const known: Record<string, string> = {
+    conversationId: 'Conversation context',
+    focusMode: 'Focus mode',
+    hasScreenContext: 'Screen context',
+    userWorkProfilePreferences: 'Work profile preferences',
+    userPreferencePreview: 'Preference preview',
+    projectId: 'Project scope',
+    capturedBy: 'Captured from',
+    scope: 'Scope',
+  };
+  if (known[key]) return known[key];
+  return key
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatFactValue(key: string, value: unknown): string {
+  if (value === true) return 'Yes';
+  if (value === false) return 'No';
+  if (value == null || value === '') return 'Not set';
+  if (Array.isArray(value)) return `${value.length} item${value.length === 1 ? '' : 's'}`;
+  if (typeof value === 'number') {
+    if (key === 'userWorkProfilePreferences') {
+      return `${value} preference${value === 1 ? '' : 's'}`;
+    }
+    return String(value);
+  }
+  if (typeof value === 'object') return 'Configured';
+  const text = String(value);
+  if (/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(text)) return 'Linked';
+  if (key.toLowerCase().endsWith('id')) return text ? 'Linked' : 'Not set';
+  if (key === 'focusMode') return text.replace(/\b\w/g, (char) => char.toUpperCase());
+  if (key === 'capturedBy') return text.replace(/[_-]+/g, ' ');
+  return text;
+}
+
+function getDisplayFacts(facts: unknown): Array<{ label: string; value: string }> {
+  if (!facts || typeof facts !== 'object' || Array.isArray(facts)) return [];
+  return Object.entries(facts as Record<string, unknown>).map(([key, value]) => ({
+    label: humanizeFactKey(key),
+    value: formatFactValue(key, value),
+  }));
+}
+
 export const Wave6ContextLearningPanel: React.FC = () => {
   const [panel, setPanel] = React.useState<any>(null);
   const [projectId, setProjectId] = React.useState('');
@@ -316,9 +362,27 @@ export const Wave6ContextLearningPanel: React.FC = () => {
                   <div className="text-xs text-slate-500">
                     Fresh: {snapshot.freshnessAt || 'unknown'}
                   </div>
-                  <pre className="mt-2 max-h-32 overflow-auto rounded bg-slate-50 p-2 text-xs dark:bg-navy-950">
-                    {JSON.stringify(snapshot.facts, null, 2)}
-                  </pre>
+                  <div className="mt-2 rounded bg-slate-50 p-2 text-xs dark:bg-navy-950">
+                    {getDisplayFacts(snapshot.facts).length > 0 ? (
+                      <dl className="grid gap-2">
+                        {getDisplayFacts(snapshot.facts).map((fact) => (
+                          <div
+                            key={`${snapshot.snapshotId}-${fact.label}`}
+                            className="flex items-start justify-between gap-3 rounded border border-slate-200 bg-white px-2 py-1.5 dark:border-navy-800 dark:bg-navy-900"
+                          >
+                            <dt className="text-slate-500 dark:text-slate-400">{fact.label}</dt>
+                            <dd className="text-right font-medium text-slate-700 dark:text-slate-200">
+                              {fact.value}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : (
+                      <div className="text-slate-500 dark:text-slate-400">
+                        No displayable facts for this snapshot.
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
               {(panel?.snapshots || []).length === 0 && (

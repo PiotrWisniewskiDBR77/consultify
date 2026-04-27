@@ -18,12 +18,13 @@ import {
   Shield,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface AuditLog {
   id: string;
@@ -35,7 +36,7 @@ interface AuditLog {
   user_agent: string;
   risk_score: number;
   status: string;
-  metadata_json: any;
+  metadata_json: Record<string, unknown>;
   created_at: string;
   resolved_at: string | null;
   resolution_notes: string | null;
@@ -54,6 +55,71 @@ interface AuditStats {
   low_risk_count: number;
   avg_risk_score: number;
 }
+
+interface AuditLogsSnapshot {
+  logs: AuditLog[];
+  stats: AuditStats;
+}
+
+function formatDateTime(value?: string | null): string {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Unknown date';
+  return date.toLocaleString();
+}
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const asText = (value: unknown, fallback: string) => {
+  if (typeof value === 'string' && value.trim()) return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return fallback;
+};
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const normalizeLog = (log: AuditLog): AuditLog => ({
+  ...log,
+  status: asText(log.status, 'unresolved').toLowerCase(),
+});
+
+const normalizeLogs = (value: unknown): AuditLog[] => {
+  if (Array.isArray(value)) return (value as AuditLog[]).map(normalizeLog);
+  if (isRecord(value)) {
+    const payload = getObjectPayload(value);
+    const candidates = [value, isRecord(value.data) ? value.data : null, payload].filter(isRecord);
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate.logs)) return (candidate.logs as AuditLog[]).map(normalizeLog);
+      if (Array.isArray(candidate.items)) return (candidate.items as AuditLog[]).map(normalizeLog);
+      if (Array.isArray(candidate.data)) return (candidate.data as AuditLog[]).map(normalizeLog);
+    }
+  }
+  throw new Error('Admin audit logs response was not a list');
+};
+
+const normalizeStats = (value: unknown): AuditStats => {
+  const statsValue = isRecord(getObjectPayload(value))
+    ? (getObjectPayload(value) as Partial<AuditStats>)
+    : {};
+  return {
+    total_logs: safeNumber(statsValue.total_logs),
+    unresolved_count: safeNumber(statsValue.unresolved_count),
+    high_risk_count: safeNumber(statsValue.high_risk_count),
+    medium_risk_count: safeNumber(statsValue.medium_risk_count),
+    low_risk_count: safeNumber(statsValue.low_risk_count),
+    avg_risk_score: safeNumber(statsValue.avg_risk_score),
+  };
+};
 
 const AdminAuditLogsView: React.FC = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -74,59 +140,69 @@ const AdminAuditLogsView: React.FC = () => {
   const [showResolveModal, setShowResolveModal] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, [filters]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setLoadError(null);
       setError(null);
 
-      const params: any = { limit: 100 };
+      const params: {
+        limit: number;
+        actionType?: string;
+        status?: string;
+        riskScoreMin?: number;
+        fromDate?: string;
+        toDate?: string;
+      } = { limit: 100 };
       if (filters.actionType) params.actionType = filters.actionType;
       if (filters.status) params.status = filters.status;
       if (filters.riskScoreMin) params.riskScoreMin = parseInt(filters.riskScoreMin);
+      if (filters.fromDate) params.fromDate = filters.fromDate;
+      if (filters.toDate) params.toDate = filters.toDate;
 
       const [logsData, statsData] = await Promise.all([
         Api.getAdminAuditLogs(params),
         Api.getAdminAuditStats(),
       ]);
 
-      setLogs((logsData as any).logs || logsData);
-      setStats(statsData as any);
-    } catch (err: any) {
-      setLoadError(err.message || 'Failed to load audit logs');
+      const nextLogs = normalizeLogs(logsData);
+      const nextStats = normalizeStats(statsData);
+      setLogs(nextLogs);
+      setStats(nextStats);
+      return { logs: nextLogs, stats: nextStats } satisfies AuditLogsSnapshot;
+    } catch (err: unknown) {
+      setLoadError(normalizeApiErrorMessage(err, 'Failed to load audit logs'));
       setLogs([]);
       setStats(null);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.actionType, filters.fromDate, filters.riskScoreMin, filters.status, filters.toDate]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleResolve = async (logId: string) => {
     try {
       setResolving(logId);
+      setError(null);
       await Api.resolveAdminAuditLog(logId, resolutionNotes);
-      setLogs((prev) =>
-        prev.map((log) =>
-          log.id === logId
-            ? {
-                ...log,
-                status: 'resolved',
-                resolved_at: new Date().toISOString(),
-                resolution_notes: resolutionNotes,
-              }
-            : log
-        )
-      );
+      const refreshed = await loadData();
+      if (
+        !refreshed ||
+        refreshed.logs.some((log) => log.id === logId && log.status !== 'resolved')
+      ) {
+        throw new Error('Audit log resolution was not confirmed by the server');
+      }
       setShowResolveModal(null);
       setResolutionNotes('');
       toast.success('Audit log resolved successfully');
-    } catch (err: any) {
-      setError(err.message || 'Failed to resolve audit log');
-      toast.error(err.message || 'Failed to resolve audit log');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to resolve audit log');
+      setError(message);
+      toast.error(message);
     } finally {
       setResolving(null);
     }
@@ -135,25 +211,35 @@ const AdminAuditLogsView: React.FC = () => {
   const handleExport = async () => {
     try {
       setExporting(true);
+      setError(null);
       const result = await Api.exportAdminAuditLogs({
         ...filters,
         riskScoreMin: filters.riskScoreMin ? parseInt(filters.riskScoreMin) : undefined,
         format: 'csv',
-      } as any);
+      });
 
       // Create download link - handle either blob or url response
-      const url = result instanceof Blob ? URL.createObjectURL(result) : (result as any).url;
+      const objectUrl = result instanceof Blob ? URL.createObjectURL(result) : null;
+      const exportPayload = getObjectPayload(result);
+      const url =
+        objectUrl ||
+        (isRecord(exportPayload) ? String((exportPayload as { url?: unknown }).url || '') : '');
+      if (!url) {
+        throw new Error('Audit log export did not return a downloadable file');
+      }
       const a = document.createElement('a');
       a.href = url;
       a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
 
       toast.success('Export downloaded successfully');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to export audit logs');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to export audit logs');
+      setError(message);
+      toast.error(message);
     } finally {
       setExporting(false);
     }
@@ -170,34 +256,35 @@ const AdminAuditLogsView: React.FC = () => {
   };
 
   const getRiskBadge = (score: number) => {
-    if (score >= 80) {
+    const riskScore = safeNumber(score);
+    if (riskScore >= 80) {
       return (
         <span className="flex items-center gap-1 px-2 py-1 bg-rose-600/20 text-rose-400 rounded text-xs font-medium animate-pulse">
           <AlertCircle className="w-3 h-3" />
-          CRITICAL ({score})
+          CRITICAL ({riskScore})
         </span>
       );
     }
-    if (score >= 60) {
+    if (riskScore >= 60) {
       return (
         <span className="flex items-center gap-1 px-2 py-1 bg-red-500/10 text-red-400 rounded text-xs font-medium">
           <AlertCircle className="w-3 h-3" />
-          HIGH ({score})
+          HIGH ({riskScore})
         </span>
       );
     }
-    if (score >= 30) {
+    if (riskScore >= 30) {
       return (
         <span className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 text-amber-400 rounded text-xs font-medium">
           <AlertTriangle className="w-3 h-3" />
-          MEDIUM ({score})
+          MEDIUM ({riskScore})
         </span>
       );
     }
     return (
       <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded text-xs font-medium">
         <CheckCircle className="w-3 h-3" />
-        LOW ({score})
+        LOW ({riskScore})
       </span>
     );
   };
@@ -307,11 +394,9 @@ const AdminAuditLogsView: React.FC = () => {
       {/* Error Alert */}
       {error && (
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+          <div role="alert" className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
+            <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -520,33 +605,34 @@ const AdminAuditLogsView: React.FC = () => {
                       <td className="py-3 px-4">
                         <div>
                           <p className="font-medium">
-                            {log.admin?.firstName} {log.admin?.lastName}
+                            {asText(log.admin?.firstName, 'Unknown')}{' '}
+                            {asText(log.admin?.lastName, '')}
                           </p>
                           <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {log.admin?.email}
+                            {asText(log.admin?.email, 'Unknown admin')}
                           </p>
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <span className="text-sm font-mono bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 px-2 py-1 rounded">
-                          {log.action_type}
+                          {asText(log.action_type, 'Unknown action')}
                         </span>
                       </td>
                       <td className="py-3 px-4">
                         <div>
-                          <p className="text-sm">{log.resource_type || '-'}</p>
+                          <p className="text-sm">{asText(log.resource_type, '-')}</p>
                           <p className="text-xs text-slate-600 dark:text-slate-400 truncate max-w-[150px]">
-                            {log.resource_id || '-'}
+                            {asText(log.resource_id, '-')}
                           </p>
                         </div>
                       </td>
-                      <td className="py-3 px-4 text-sm">{log.ip_address || 'Unknown'}</td>
+                      <td className="py-3 px-4 text-sm">{asText(log.ip_address, 'Unknown')}</td>
                       <td className="py-3 px-4">{getRiskBadge(log.risk_score)}</td>
                       <td className="py-3 px-4">{getStatusBadge(log.status)}</td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1 text-sm text-slate-700 dark:text-slate-300">
                           <Clock className="w-4 h-4 text-slate-500 dark:text-slate-400" />
-                          {new Date(log.created_at).toLocaleString()}
+                          {formatDateTime(log.created_at)}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -554,6 +640,7 @@ const AdminAuditLogsView: React.FC = () => {
                           {log.status !== 'resolved' && (
                             <button
                               onClick={() => setShowResolveModal(log.id)}
+                              aria-label={`Resolve audit log ${log.id}`}
                               className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
                               title="Resolve"
                             >

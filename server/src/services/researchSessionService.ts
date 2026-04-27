@@ -276,6 +276,14 @@ export async function ensureResearchSessionSchema(): Promise<void> {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    await dbRun(`ALTER TABLE research_sessions ADD COLUMN final_artifact_id TEXT`).catch(
+      () => undefined
+    );
+    await dbRun(`ALTER TABLE research_sessions ADD COLUMN error TEXT`).catch(() => undefined);
+    await dbRun(`ALTER TABLE research_sessions ADD COLUMN completed_at TEXT`).catch(
+      () => undefined
+    );
+    await dbRun(`ALTER TABLE research_sessions ADD COLUMN archived_at TEXT`).catch(() => undefined);
     await dbRun(`ALTER TABLE research_report_artifacts ADD COLUMN wave5_artifact_id TEXT`).catch(
       () => undefined
     );
@@ -394,17 +402,28 @@ export async function transitionResearchSession(params: {
   if (!current) throw new Error('Research session not found');
   await dbRun(
     `UPDATE research_sessions
-     SET status = ?, progress_json = ?, error = NULL, updated_at = CURRENT_TIMESTAMP,
-         archived_at = CASE WHEN ? = 'archived' THEN CURRENT_TIMESTAMP ELSE archived_at END
+     SET status = ?, progress_json = ?, error = NULL, updated_at = CURRENT_TIMESTAMP
      WHERE session_id = ? AND organization_id = ?`,
     [
       params.status,
       safeJsonStringify({ ...(current.progress || {}), stage: params.status }),
-      params.status,
       params.sessionId,
       params.organizationId,
     ]
   );
+  if (params.status === 'archived') {
+    await dbRun(
+      `UPDATE research_sessions
+       SET archived_at = CURRENT_TIMESTAMP
+       WHERE session_id = ? AND organization_id = ?`,
+      [params.sessionId, params.organizationId]
+    ).catch((err: any) => {
+      logger.warn(
+        '[ResearchSession] Failed to persist archived_at during archive transition',
+        err?.message || String(err)
+      );
+    });
+  }
   await recordEvent({
     sessionId: params.sessionId,
     organizationId: params.organizationId,

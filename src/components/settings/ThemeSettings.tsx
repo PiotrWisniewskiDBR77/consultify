@@ -15,7 +15,9 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import Api from '../../services/api';
 import { useAppStore } from '../../store/useAppStore';
-import { SettingsButtonGroup, SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
+import { SettingsDivider, SettingsFormRow, SettingsSection } from './shared';
 
 interface ThemeSettingsProps {
   className?: string;
@@ -44,6 +46,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
   const [originalDensity, setOriginalDensity] = useState<Density>('comfortable');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty =
     theme !== originalTheme || accentColor !== originalAccent || density !== originalDensity;
@@ -51,7 +55,11 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
   useEffect(() => {
     const loadTheme = async () => {
       try {
+        setLoadError(null);
         const response = await Api.getAppearancePreferences();
+        if (!response?.preferences) {
+          throw new Error('Appearance preferences response was missing preferences');
+        }
         const savedTheme = response?.preferences?.theme as Theme;
         const savedAccent = response?.preferences?.accentColor;
         const savedDensity = response?.preferences?.density as Density;
@@ -71,8 +79,8 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
           setOriginalDensity(savedDensity);
           applyDensity(savedDensity);
         }
-      } catch (err) {
-        setOriginalTheme(useAppStore.getState().theme as Theme);
+      } catch (err: unknown) {
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load appearance preferences'));
       } finally {
         setLoading(false);
       }
@@ -94,11 +102,18 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
   const handleSave = async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Api.saveAppearancePreferences({ theme, accentColor, density });
       const response = await Api.getAppearancePreferences();
-      const nextTheme = (response?.preferences?.theme as Theme) || theme;
-      const nextAccent = response?.preferences?.accentColor || accentColor;
-      const nextDensity = (response?.preferences?.density as Density) || density;
+      if (!response?.preferences) {
+        throw new Error('Appearance settings save was not confirmed by the server');
+      }
+      const nextTheme = response.preferences.theme as Theme;
+      const nextAccent = response.preferences.accentColor;
+      const nextDensity = response.preferences.density as Density;
+      if (nextTheme !== theme || nextAccent !== accentColor || nextDensity !== density) {
+        throw new Error('Appearance settings save was not confirmed by the server');
+      }
       toggleTheme(nextTheme);
       setAccentColor(nextAccent);
       setDensity(nextDensity);
@@ -107,8 +122,13 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
       setOriginalAccent(nextAccent);
       setOriginalDensity(nextDensity);
       toast.success(t('settings.appearance.saved', 'Appearance settings saved'));
-    } catch (err: any) {
-      toast.error(t('settings.appearance.error', 'Failed to save settings'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.appearance.error', 'Failed to save settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -138,8 +158,25 @@ export const ThemeSettings: React.FC<ThemeSettingsProps> = ({ className = '' }) 
     },
   ];
 
+  if (loadError) {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <DegradedState title="Appearance preferences unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className={cn('space-y-6', className)}>
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       <SettingsSection
         icon={Palette}
         title={t('settings.appearance.title', 'Theme & Appearance')}

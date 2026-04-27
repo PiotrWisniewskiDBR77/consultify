@@ -42,8 +42,7 @@ interface RecordEventInput {
 
 let schemaReady: Promise<void> | null = null;
 
-const ACTION_CENTER_SORT_EXPR =
-  'COALESCE(CAST(l.updated_at AS TEXT), CAST(a.created_at AS TEXT))';
+const ACTION_CENTER_SORT_EXPR = 'COALESCE(CAST(l.updated_at AS TEXT), CAST(a.created_at AS TEXT))';
 
 function safeJsonParse<T>(raw: unknown, fallback: T): T {
   if (raw == null) return fallback;

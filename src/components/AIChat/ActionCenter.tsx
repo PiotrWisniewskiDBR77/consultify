@@ -59,7 +59,14 @@ export const ActionCenter: React.FC = () => {
     setError(null);
     setLedgerWarning(null);
     try {
-      const center = await Api.getAIActionCenter({ scope: 'mine', limit: 100 });
+      const mineCenter = await Api.getAIActionCenter({ scope: 'mine', limit: 100 });
+      let center = mineCenter;
+      if (!Array.isArray(mineCenter?.actions) || mineCenter.actions.length === 0) {
+        const orgCenter = await Api.getAIActionCenter({ scope: 'org', limit: 100 });
+        if (Array.isArray(orgCenter?.actions) && orgCenter.actions.length > 0) {
+          center = orgCenter;
+        }
+      }
       setActions(Array.isArray(center?.actions) ? center.actions : []);
       const actionId = selectedActionId || center?.actions?.[0]?.id || null;
       if (actionId) {
@@ -71,7 +78,14 @@ export const ActionCenter: React.FC = () => {
     }
 
     try {
-      const ledger = await Api.getAIRunLedger({ scope: 'mine', limit: 100 });
+      const mineLedger = await Api.getAIRunLedger({ scope: 'mine', limit: 100 });
+      let ledger = mineLedger;
+      if (!Array.isArray(mineLedger?.runs) || mineLedger.runs.length === 0) {
+        const orgLedger = await Api.getAIRunLedger({ scope: 'org', limit: 100 });
+        if (Array.isArray(orgLedger?.runs) && orgLedger.runs.length > 0) {
+          ledger = orgLedger;
+        }
+      }
       setRuns(Array.isArray(ledger?.runs) ? ledger.runs : []);
       if (ledger?.success === false && ledger?.error) {
         setLedgerWarning(ledger.error);

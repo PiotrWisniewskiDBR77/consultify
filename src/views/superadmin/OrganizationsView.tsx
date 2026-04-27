@@ -53,6 +53,62 @@ interface OrganizationsViewProps {
   onViewUsers?: (organizationId: string) => void;
 }
 
+type OrganizationRow = Organization & {
+  organization_name?: string;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const getOrganizationsPayload = (value: unknown) =>
+  getListPayload<Organization>(value, ['organizations', 'items']);
+
+const getAccessRequestsPayload = (value: unknown) =>
+  getListPayload<AccessRequest>(value, ['requests', 'accessRequests', 'items']).map((request) => ({
+    ...request,
+    status: String(request.status || 'pending').toLowerCase() as AccessRequest['status'],
+  }));
+
+const getAccessCodesPayload = (value: unknown) =>
+  getListPayload<AccessCode>(value, ['codes', 'accessCodes', 'items']);
+
 export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUsers }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('organizations');
   const [organizations, setOrganizations] = useState<Organization[]>([]);
@@ -67,6 +123,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     requests: string | null;
     codes: string | null;
   }>({ organizations: null, requests: null, codes: null });
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Modal States
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null);
@@ -102,7 +159,10 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       ]);
 
       if (orgsRes.status === 'rejected') throw orgsRes.reason;
-      setOrganizations(orgsRes.value);
+      if (!hasListShape(orgsRes.value, ['organizations', 'items'])) {
+        throw new Error('Organizations response was not a list');
+      }
+      setOrganizations(getOrganizationsPayload(orgsRes.value));
 
       const errors: string[] = [];
       const nextLoadErrors: {
@@ -111,7 +171,13 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         codes: string | null;
       } = { organizations: null, requests: null, codes: null };
       if (reqsRes.status === 'fulfilled') {
-        setRequests(reqsRes.value);
+        if (hasListShape(reqsRes.value, ['requests', 'accessRequests', 'items'])) {
+          setRequests(getAccessRequestsPayload(reqsRes.value));
+        } else {
+          setRequests([]);
+          nextLoadErrors.requests = 'Access requests failed to load.';
+          errors.push(nextLoadErrors.requests);
+        }
       } else {
         setRequests([]);
         nextLoadErrors.requests = 'Access requests failed to load.';
@@ -119,7 +185,13 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       }
 
       if (codesRes.status === 'fulfilled') {
-        setCodes(codesRes.value);
+        if (hasListShape(codesRes.value, ['codes', 'accessCodes', 'items'])) {
+          setCodes(getAccessCodesPayload(codesRes.value));
+        } else {
+          setCodes([]);
+          nextLoadErrors.codes = 'Access codes failed to load.';
+          errors.push(nextLoadErrors.codes);
+        }
       } else {
         setCodes([]);
         nextLoadErrors.codes = 'Access codes failed to load.';
@@ -132,7 +204,6 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         toast.error(errors.join(' '));
       }
     } catch (err) {
-      console.error(err);
       setOrganizations([]);
       setRequests([]);
       setCodes([]);
@@ -153,6 +224,18 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
 
   const pendingRequestsCount = requests.filter((r) => r.status === 'pending').length;
 
+  const formatDate = (value?: string | null, fallback = '-') => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleDateString();
+  };
+
+  const formatDateTime = (value?: string | null, fallback = '-') => {
+    if (!value) return fallback;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? fallback : date.toLocaleString();
+  };
+
   // Organization Actions
   const handleDeleteOrg = async (id: string, name: string) => {
     if (
@@ -163,11 +246,23 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       return;
     setProcessingId(id);
     try {
+      setActionError(null);
       await Api.deleteOrganization(id);
+      const refreshedOrganizations = await Api.getOrganizations();
+      if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
+        throw new Error('Organization deletion could not be confirmed by read-back');
+      }
+      const normalizedOrganizations = getOrganizationsPayload(refreshedOrganizations);
+      setOrganizations(normalizedOrganizations);
+      setLoadErrors((prev) => ({ ...prev, organizations: null }));
+      if (normalizedOrganizations.some((org) => org.id === id)) {
+        throw new Error('Organization deletion was not confirmed by the server');
+      }
       toast.success('Organization deleted');
-      await fetchData();
     } catch (err) {
-      toast.error(normalizeApiErrorMessage(err, 'Failed to delete organization'));
+      const message = normalizeApiErrorMessage(err, 'Failed to delete organization');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -189,16 +284,34 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   const saveInlineEdit = async (orgId: string) => {
     setProcessingId(orgId);
     try {
+      setActionError(null);
       await Api.updateOrganization(orgId, {
         plan: editForm.plan,
         status: editForm.status,
         discount_percent: editForm.discount_percent,
       });
+      const refreshedOrganizations = await Api.getOrganizations();
+      if (!hasListShape(refreshedOrganizations, ['organizations', 'items'])) {
+        throw new Error('Organization update could not be confirmed by read-back');
+      }
+      const normalizedOrganizations = getOrganizationsPayload(refreshedOrganizations);
+      setOrganizations(normalizedOrganizations);
+      setLoadErrors((prev) => ({ ...prev, organizations: null }));
+      const updatedOrganization = normalizedOrganizations.find((org) => org.id === orgId);
+      if (
+        !updatedOrganization ||
+        updatedOrganization.plan !== editForm.plan ||
+        updatedOrganization.status !== editForm.status ||
+        (updatedOrganization.discount_percent || 0) !== editForm.discount_percent
+      ) {
+        throw new Error('Organization update was not confirmed by the server');
+      }
       toast.success('Organization updated');
       setEditingOrgId(null);
-      await fetchData();
     } catch (err) {
-      toast.error(normalizeApiErrorMessage(err, 'Failed to update organization'));
+      const message = normalizeApiErrorMessage(err, 'Failed to update organization');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -208,11 +321,24 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
   const handleApprove = async (id: string) => {
     setProcessingId(id);
     try {
+      setActionError(null);
       await Api.approveAccessRequest(id);
+      const refreshedRequests = await Api.getAccessRequests();
+      if (!hasListShape(refreshedRequests, ['requests', 'accessRequests', 'items'])) {
+        throw new Error('Access request approval could not be confirmed by read-back');
+      }
+      const normalizedRequests = getAccessRequestsPayload(refreshedRequests);
+      setRequests(normalizedRequests);
+      setLoadErrors((prev) => ({ ...prev, requests: null }));
+      const updatedRequest = normalizedRequests.find((request) => request.id === id);
+      if (updatedRequest && updatedRequest.status !== 'approved') {
+        throw new Error('Access request approval was not confirmed by the server');
+      }
       toast.success('Access request approved');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to approve request');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to approve request');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -224,11 +350,24 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
 
     setProcessingId(id);
     try {
+      setActionError(null);
       await Api.rejectAccessRequest(id, reason);
+      const refreshedRequests = await Api.getAccessRequests();
+      if (!hasListShape(refreshedRequests, ['requests', 'accessRequests', 'items'])) {
+        throw new Error('Access request rejection could not be confirmed by read-back');
+      }
+      const normalizedRequests = getAccessRequestsPayload(refreshedRequests);
+      setRequests(normalizedRequests);
+      setLoadErrors((prev) => ({ ...prev, requests: null }));
+      const updatedRequest = normalizedRequests.find((request) => request.id === id);
+      if (updatedRequest && updatedRequest.status !== 'rejected') {
+        throw new Error('Access request rejection was not confirmed by the server');
+      }
       toast.success('Access request rejected');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to reject request');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to reject request');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -244,18 +383,35 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     }
     try {
       setProcessingId('new-access-code');
+      setActionError(null);
+      const expectedCode = newCodeData.code.trim().toUpperCase();
+      const previousCodeCount = codes.length;
       await Api.generateAccessCode({
         ...newCodeData,
-        code: newCodeData.code.trim() || undefined,
+        code: expectedCode || undefined,
         maxUses,
         expiresAt: newCodeData.expiresAt || undefined,
       });
+      const refreshedCodes = await Api.getAccessCodes();
+      if (!hasListShape(refreshedCodes, ['codes', 'accessCodes', 'items'])) {
+        throw new Error('Access code generation could not be confirmed by read-back');
+      }
+      const normalizedCodes = getAccessCodesPayload(refreshedCodes);
+      setCodes(normalizedCodes);
+      setLoadErrors((prev) => ({ ...prev, codes: null }));
+      if (expectedCode && !normalizedCodes.some((code) => code.code === expectedCode)) {
+        throw new Error('Access code generation was not confirmed by the server');
+      }
+      if (!expectedCode && normalizedCodes.length <= previousCodeCount) {
+        throw new Error('Access code generation was not confirmed by the server');
+      }
       toast.success('Access code generated');
       setShowCodeModal(false);
       setNewCodeData({ code: '', role: 'USER', maxUses: 100, expiresAt: '' });
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to generate code');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to generate code');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -266,11 +422,23 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       return;
     setProcessingId(codeId);
     try {
+      setActionError(null);
       await Api.deactivateAccessCode(codeId);
+      const refreshedCodes = await Api.getAccessCodes();
+      if (!hasListShape(refreshedCodes, ['codes', 'accessCodes', 'items'])) {
+        throw new Error('Access code deactivation could not be confirmed by read-back');
+      }
+      const normalizedCodes = getAccessCodesPayload(refreshedCodes);
+      setCodes(normalizedCodes);
+      setLoadErrors((prev) => ({ ...prev, codes: null }));
+      if (normalizedCodes.some((code) => code.id === codeId)) {
+        throw new Error('Access code deactivation was not confirmed by the server');
+      }
       toast.success('Access code deactivated');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to deactivate access code');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to deactivate access code');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setProcessingId(null);
     }
@@ -281,9 +449,16 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
     toast.success('Code copied to clipboard');
   };
 
+  const getOrgName = (org: Organization) =>
+    String(
+      (org as OrganizationRow).name ||
+        (org as OrganizationRow).organization_name ||
+        'Unknown Organization'
+    );
+
   // Filtered Data
   const filteredOrgs = organizations.filter((org) => {
-    const name = String(org.name || (org as any).organization_name || 'Unknown Organization');
+    const name = getOrgName(org);
     return (
       name.toLowerCase().includes(searchTerm.toLowerCase()) || (org.id || '').includes(searchTerm)
     );
@@ -314,9 +489,6 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
         return 'text-slate-600 dark:text-slate-500';
     }
   };
-
-  const getOrgName = (org: Organization) =>
-    String((org as any).name || (org as any).organization_name || 'Unknown Organization');
 
   return (
     <div className="p-8 overflow-y-auto h-full relative">
@@ -355,6 +527,15 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
       {nonBlockingLoadErrors.length > 0 && (
         <div className="mb-6 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-900/30 text-amber-800 dark:text-amber-200 rounded-xl px-4 py-3 text-sm">
           {nonBlockingLoadErrors.join(' ')}
+        </div>
+      )}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-6 rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+        >
+          {actionError}
         </div>
       )}
 
@@ -549,7 +730,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                           )}
                         </td>
                         <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                          {org.created_at ? new Date(org.created_at).toLocaleDateString() : '-'}
+                          {formatDate(org.created_at)}
                         </td>
                         <td className="p-4 text-right">
                           {isEditing ? (
@@ -668,7 +849,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                     className="hover:bg-slate-50 dark:hover:bg-navy-800/20 transition-colors"
                   >
                     <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                      {new Date(req.requested_at).toLocaleString()}
+                      {formatDateTime(req.requested_at)}
                     </td>
                     <td className="p-4 text-slate-900 dark:text-white font-medium">
                       {req.organization_name}
@@ -812,7 +993,7 @@ export const OrganizationsView: React.FC<OrganizationsViewProps> = ({ onViewUser
                         </div>
                       </td>
                       <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
-                        {code.expires_at ? new Date(code.expires_at).toLocaleDateString() : 'Never'}
+                        {formatDate(code.expires_at, 'Never')}
                       </td>
                       <td className="p-4 text-slate-500 dark:text-slate-400 text-xs">
                         {code.created_by_email || 'Super Admin'}

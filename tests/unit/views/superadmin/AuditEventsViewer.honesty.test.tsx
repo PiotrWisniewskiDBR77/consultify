@@ -31,4 +31,70 @@ describe('AuditEventsViewer honest UI', () => {
     expect(screen.getByPlaceholderText('Resource type')).toBeDisabled();
     expect(screen.getByPlaceholderText('Actor ID')).toBeDisabled();
   });
+
+  it('renders malformed audit timestamps as unknown date instead of Invalid Date', async () => {
+    vi.mocked(Api.getAuditEvents).mockResolvedValue({
+      data: [
+        {
+          id: 'evt-1',
+          actor_id: 'admin-1',
+          actor_type: 'admin',
+          action: 'policy.update',
+          resource_type: 'policy',
+          resource_id: 'pol-1',
+          metadata: { changed: true },
+          created_at: 'not-a-date',
+        },
+      ],
+      total: 1,
+    });
+
+    render(<AuditEventsViewer />);
+
+    expect(await screen.findByText('policy.update')).toBeInTheDocument();
+    expect(screen.getByText('Unknown date')).toBeInTheDocument();
+    expect(screen.queryByText(/Invalid Date/i)).not.toBeInTheDocument();
+  });
+
+  it('treats malformed audit response shape as degraded instead of empty events', async () => {
+    vi.mocked(Api.getAuditEvents).mockResolvedValue({
+      data: { id: 'evt-1', action: 'policy.update' },
+      total: 'bad-total',
+    });
+
+    render(<AuditEventsViewer />);
+
+    expect(await screen.findByText('Audit events unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Audit events response was not a list')).toBeInTheDocument();
+    expect(screen.queryByText('No audit events found')).not.toBeInTheDocument();
+    expect(screen.queryByText(/NaN|bad-total/i)).not.toBeInTheDocument();
+  });
+
+  it('accepts wrapped audit event payloads with nested totals', async () => {
+    vi.mocked(Api.getAuditEvents).mockResolvedValue({
+      data: {
+        data: {
+          events: [
+            {
+              id: 'evt-1',
+              actor_id: 'admin-1',
+              actor_type: 'admin',
+              action: 'policy.update',
+              resource_type: 'policy',
+              resource_id: 'pol-1',
+              metadata: { changed: true },
+              created_at: 'not-a-date',
+            },
+          ],
+          total: 1,
+        },
+      },
+    });
+
+    render(<AuditEventsViewer />);
+
+    expect(await screen.findByText('policy.update')).toBeInTheDocument();
+    expect(screen.getByText('1 event')).toBeInTheDocument();
+    expect(screen.queryByText('No audit events found')).not.toBeInTheDocument();
+  });
 });

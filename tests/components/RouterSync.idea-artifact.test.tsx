@@ -138,6 +138,18 @@ describe('RouterSync idea artifact deep links', () => {
     });
   });
 
+  it('protects AI OS routes for unauthenticated users', async () => {
+    appState.currentUser = null as any;
+    routerState.searchParams = new URLSearchParams();
+    routerState.pathname = '/ai/actions';
+
+    render(<RouterSync />);
+
+    await waitFor(() => {
+      expect(navigateMock).toHaveBeenCalledWith('/login', { replace: true });
+    });
+  });
+
   it('maps /trial and /trial/start to the correct auth steps', async () => {
     appState.currentUser = null as any;
     routerState.searchParams = new URLSearchParams();

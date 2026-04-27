@@ -106,6 +106,41 @@ const assertDbRunSuccess = (result: { success?: boolean; error?: string }, messa
   }
 };
 
+const RECOVERY_EMAIL_KEY = 'security.recovery_email';
+const RECOVERY_PHONE_KEY = 'security.recovery_phone';
+
+const getBackupCodesCount = async (userId: string) => {
+  const row = await dbGet<{ backup_codes_count?: number | string }>(
+    `SELECT backup_codes_count
+     FROM user_mfa
+     WHERE user_id = ?
+     LIMIT 1`,
+    [userId],
+    { fallback: true }
+  );
+
+  return Number(row?.backup_codes_count || 0);
+};
+
+const getRecoveryOptions = async (userId: string) => {
+  await ensureUserPreferencesTable();
+
+  const rows = await dbAll<{ key: string; value: string }>(
+    `SELECT key, value
+     FROM user_preferences
+     WHERE user_id = ? AND key IN (?, ?)`,
+    [userId, RECOVERY_EMAIL_KEY, RECOVERY_PHONE_KEY],
+    { fallback: true }
+  );
+  const values = new Map(rows.map((row) => [row.key, row.value]));
+
+  return {
+    recoveryEmail: values.get(RECOVERY_EMAIL_KEY) || '',
+    recoveryPhone: values.get(RECOVERY_PHONE_KEY) || '',
+    backupCodesCount: await getBackupCodesCount(userId),
+  };
+};
+
 /**
  * GET /api/settings
  * Get system/user settings
@@ -201,6 +236,86 @@ const ensureUserPreferencesTable = async () => {
     fallback: false,
   });
 };
+
+/**
+ * GET /api/settings/recovery
+ * Get account recovery options with explicit read-back fields for Honest UI.
+ */
+router.get(
+  '/recovery',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    try {
+      return res.json(await getRecoveryOptions(userId));
+    } catch (error: any) {
+      logger.error('[Settings] Failed to load recovery options:', error);
+      return res.status(503).json({
+        error: 'Recovery options unavailable',
+        code: 'RECOVERY_OPTIONS_UNAVAILABLE',
+      });
+    }
+  })
+);
+
+/**
+ * PUT /api/settings/recovery
+ * Update recovery contact options and return the persisted read-back state.
+ */
+router.put(
+  '/recovery',
+  verifyToken,
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const hasRecoveryEmail = Object.prototype.hasOwnProperty.call(req.body || {}, 'recoveryEmail');
+    const hasRecoveryPhone = Object.prototype.hasOwnProperty.call(req.body || {}, 'recoveryPhone');
+
+    if (!hasRecoveryEmail && !hasRecoveryPhone) {
+      return res.status(400).json({ error: 'At least one recovery option is required' });
+    }
+
+    const recoveryEmail = hasRecoveryEmail
+      ? String(req.body.recoveryEmail || '').trim()
+      : undefined;
+    const recoveryPhone = hasRecoveryPhone
+      ? String(req.body.recoveryPhone || '').trim()
+      : undefined;
+
+    if (recoveryEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recoveryEmail)) {
+      return res.status(400).json({ error: 'Recovery email is invalid' });
+    }
+
+    try {
+      await ensureUserPreferencesTable();
+
+      if (recoveryEmail !== undefined) {
+        await upsertUserPreferenceValue(userId, RECOVERY_EMAIL_KEY, recoveryEmail);
+      }
+      if (recoveryPhone !== undefined) {
+        await upsertUserPreferenceValue(userId, RECOVERY_PHONE_KEY, recoveryPhone);
+      }
+
+      const persisted = await getRecoveryOptions(userId);
+      return res.json({ success: true, ...persisted });
+    } catch (error: any) {
+      logger.error('[Settings] Failed to save recovery options:', error);
+      return res.status(503).json({
+        error: 'Recovery options unavailable',
+        code: 'RECOVERY_OPTIONS_UNAVAILABLE',
+      });
+    }
+  })
+);
 
 /**
  * GET /api/settings/preferences/regional

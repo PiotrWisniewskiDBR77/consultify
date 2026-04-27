@@ -51,6 +51,27 @@ function isChatRootPath(): boolean {
   return normalized === '/chat';
 }
 
+function getChatRouteConversationId(): string | null {
+  if (typeof window === 'undefined') return null;
+  const normalized = window.location.pathname.replace(/\/+$/, '') || '/';
+  const match = normalized.match(/^\/chat\/([^/]+)$/);
+  return match?.[1] ? decodeURIComponent(match[1]) : null;
+}
+
+function normalizePersistedMessages(
+  rawMessages: any,
+  conversationId: string
+): ConversationMessage[] {
+  if (!Array.isArray(rawMessages)) return [];
+  return rawMessages
+    .filter((message) => message?.conversationId === conversationId && message?.content)
+    .map((message) => ({
+      ...message,
+      metadata: normalizeApiMetadata(message.metadata),
+      createdAt: message.createdAt ? new Date(message.createdAt) : new Date(),
+    }));
+}
+
 function withDeadline<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
@@ -872,13 +893,14 @@ export const useConversationStore = create<ConversationState>()(
 
         // Optimistic UI: append immediately so chat feels responsive (especially in split mode).
         const optimisticId = `local-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const messageMetadata = normalizeApiMetadata(message.metadata);
         const optimisticMessage: ConversationMessage = {
           id: optimisticId,
           conversationId,
           role: message.role,
           content: message.content,
           messageType: message.messageType || 'text',
-          metadata: { ...(message.metadata || {}), local: true } as any,
+          metadata: { ...messageMetadata, local: true } as any,
           tokenCount: message.tokenCount,
           modelUsed: message.modelUsed,
           createdAt: new Date(),
@@ -910,12 +932,22 @@ export const useConversationStore = create<ConversationState>()(
             role: message.role,
             content: message.content,
             messageType: message.messageType,
-            metadata: message.metadata,
+            metadata: messageMetadata,
             tokenCount: message.tokenCount,
             modelUsed: message.modelUsed,
           });
 
-          const newMessage = mapApiMessage(result);
+          const newMessage =
+            result && typeof result === 'object'
+              ? mapApiMessage(result)
+              : ({
+                  ...optimisticMessage,
+                  metadata: {
+                    ...optimisticMessage.metadata,
+                    local: true,
+                    serverAckMissing: true,
+                  },
+                } as ConversationMessage);
 
           const cachedForConversation = _conversationMessagesCache[conversationId] || [];
           const optimisticIndex = cachedForConversation.findIndex((m) => m.id === optimisticId);
@@ -1562,13 +1594,45 @@ export const useConversationStore = create<ConversationState>()(
         showArchived: state.showArchived,
         collapsedConversationGroups: state.collapsedConversationGroups,
         displayMode: state.displayMode,
-        activeConversationId: state.activeConversationId, // Persist active conversation across screens
+        activeMessages: state.activeConversationId
+          ? state.activeMessages
+              .filter((message) => message.conversationId === state.activeConversationId)
+              .slice(-50)
+          : [],
         draftChatLanguage: state.draftChatLanguage,
         chatLanguageByConversationId: state.chatLanguageByConversationId,
       }),
       merge: (persistedState: any, currentState) => {
         const persisted = persistedState?.state || persistedState || {};
-        if (!isChatRootPath()) return { ...currentState, ...persisted };
+        const chatRouteConversationId = getChatRouteConversationId();
+        if (chatRouteConversationId) {
+          const activeMessages = normalizePersistedMessages(
+            persisted.activeMessages,
+            chatRouteConversationId
+          );
+          _conversationMessagesCache[chatRouteConversationId] = activeMessages;
+          return {
+            ...currentState,
+            ...persisted,
+            activeConversationId: chatRouteConversationId,
+            activeMessages,
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+            isLoading: false,
+          };
+        }
+
+        if (!isChatRootPath()) {
+          return {
+            ...currentState,
+            ...persisted,
+            activeConversationId: null,
+            activeMessages: [],
+            _activeConversationState: null,
+            _activeConversationStateMessage: null,
+            isLoading: false,
+          };
+        }
 
         return {
           ...currentState,
@@ -1589,9 +1653,14 @@ export const useConversationStore = create<ConversationState>()(
             state.isSidebarOpen = false;
           }
 
+          const chatRouteConversationId = getChatRouteConversationId();
           if (state && isChatRootPath()) {
             state.clearActiveChat();
             return;
+          }
+
+          if (chatRouteConversationId && state) {
+            state.activeConversationId = chatRouteConversationId;
           }
 
           if (state?.activeConversationId) {
@@ -1663,18 +1732,25 @@ function mapApiConversation(api: any): Conversation {
   };
 }
 
+function normalizeApiMetadata(rawMetadata: any): Record<string, any> {
+  if (typeof rawMetadata === 'string') {
+    try {
+      const parsed = JSON.parse(rawMetadata);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch {
+      return {};
+    }
+  }
+
+  return rawMetadata && typeof rawMetadata === 'object' ? rawMetadata : {};
+}
+
 function mapApiMessage(api: any): ConversationMessage {
-  const rawMetadata = api.metadata;
-  const metadata =
-    typeof rawMetadata === 'string'
-      ? (() => {
-          try {
-            return JSON.parse(rawMetadata);
-          } catch {
-            return {};
-          }
-        })()
-      : rawMetadata || {};
+  if (!api || typeof api !== 'object') {
+    throw new Error('Invalid conversation message response');
+  }
+
+  const metadata = normalizeApiMetadata(api.metadata);
 
   return {
     id: api.id,

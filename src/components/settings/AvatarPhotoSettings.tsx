@@ -28,6 +28,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface AvatarPhotoSettingsProps {
   currentUser: User;
@@ -36,6 +37,14 @@ interface AvatarPhotoSettingsProps {
 
 const ALLOWED_FORMATS = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
+const avatarMatchesUpload = (
+  persistedUser: User | null,
+  avatarUrl: string | undefined
+): persistedUser is User => Boolean(avatarUrl) && persistedUser?.avatarUrl === avatarUrl;
+
+const avatarMatchesRemoval = (persistedUser: User | null): persistedUser is User =>
+  persistedUser !== null && !persistedUser.avatarUrl;
 
 export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
   currentUser,
@@ -53,31 +62,37 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
 
   const currentAvatar = previewUrl || currentUser?.avatarUrl;
 
-  const validateFile = (file: File): string | null => {
-    if (!ALLOWED_FORMATS.includes(file.type)) {
-      return t(
-        'settings.avatar.invalidFormat',
-        'Invalid file format. Please use JPG, PNG, GIF or WebP.'
-      );
-    }
-    if (file.size > MAX_FILE_SIZE) {
-      return t('settings.avatar.fileTooLarge', 'File is too large. Maximum size is 5MB.');
-    }
-    return null;
-  };
+  const validateFile = useCallback(
+    (file: File): string | null => {
+      if (!ALLOWED_FORMATS.includes(file.type)) {
+        return t(
+          'settings.avatar.invalidFormat',
+          'Invalid file format. Please use JPG, PNG, GIF or WebP.'
+        );
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return t('settings.avatar.fileTooLarge', 'File is too large. Maximum size is 5MB.');
+      }
+      return null;
+    },
+    [t]
+  );
 
-  const handleFileSelect = useCallback((file: File) => {
-    setError(null);
-    const validationError = validateFile(file);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      setError(null);
+      const validationError = validateFile(file);
+      if (validationError) {
+        setError(validationError);
+        return;
+      }
 
-    setSelectedFile(file);
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-  }, []);
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+    },
+    [validateFile]
+  );
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,16 +131,23 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
     try {
       const result = await Api.uploadAvatar(currentUser.id, selectedFile);
       const persistedUser = await Api.getMe();
-      onUpdateUser((persistedUser || { avatarUrl: result.avatarUrl }) as Partial<User>);
+      if (!avatarMatchesUpload(persistedUser, result.avatarUrl)) {
+        throw new Error('Profile photo upload was not confirmed by the server');
+      }
+      onUpdateUser(persistedUser);
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
       setPreviewUrl(null);
       setSelectedFile(null);
       toast.success(t('settings.avatar.uploadSuccess', 'Profile photo updated successfully!'));
-    } catch (err: any) {
-      setError(err?.message || t('settings.avatar.uploadError', 'Failed to upload photo'));
-      toast.error(t('settings.avatar.uploadError', 'Failed to upload photo'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.avatar.uploadError', 'Failed to upload photo')
+      );
+      setError(message);
+      toast.error(message);
     } finally {
       setIsUploading(false);
     }
@@ -140,13 +162,20 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
     try {
       await Api.removeAvatar(currentUser.id);
       const persistedUser = await Api.getMe();
-      onUpdateUser((persistedUser || { avatarUrl: undefined }) as Partial<User>);
+      if (!avatarMatchesRemoval(persistedUser)) {
+        throw new Error('Profile photo removal was not confirmed by the server');
+      }
+      onUpdateUser(persistedUser);
       setPreviewUrl(null);
       setSelectedFile(null);
       toast.success(t('settings.avatar.removeSuccess', 'Profile photo removed'));
-    } catch (err: any) {
-      setError(err?.message || t('settings.avatar.removeError', 'Failed to remove photo'));
-      toast.error(t('settings.avatar.removeError', 'Failed to remove photo'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.avatar.removeError', 'Failed to remove photo')
+      );
+      setError(message);
+      toast.error(message);
     } finally {
       setIsRemoving(false);
     }
@@ -237,7 +266,10 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
 
       {/* Error Message */}
       {error && (
-        <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400">
+        <div
+          role="alert"
+          className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400"
+        >
           <AlertCircle size={20} />
           <span>{error}</span>
           <button onClick={() => setError(null)} className="ml-auto">
@@ -252,6 +284,7 @@ export const AvatarPhotoSettings: React.FC<AvatarPhotoSettingsProps> = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => !selectedFile && fileInputRef.current?.click()}
+        aria-label="Upload profile photo"
         className={`
                     relative p-8 border-2 border-dashed rounded-xl text-center cursor-pointer
                     transition-all duration-200

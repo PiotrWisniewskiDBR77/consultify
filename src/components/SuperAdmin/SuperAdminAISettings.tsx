@@ -10,21 +10,14 @@
  * - Circuit breaker configuration
  */
 
-import { AnimatePresence, motion, Reorder } from 'framer-motion';
+import { AnimatePresence, Reorder } from 'framer-motion';
 import {
   Activity,
-  AlertTriangle,
   CheckCircle,
-  ChevronDown,
-  ChevronUp,
-  Database,
-  Eye,
   Gauge,
   Globe,
   GripVertical,
-  Info,
   Lock,
-  Plus,
   RefreshCw,
   Save,
   Server,
@@ -35,6 +28,8 @@ import {
 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
+
+import { DegradedState } from '@/components/Admin/AdminState';
 
 import { InfoButton } from '../shared/InfoButton';
 
@@ -95,12 +90,159 @@ const PII_SENSITIVITY_OPTIONS = [
   },
 ];
 
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const toBool = (value: unknown, fallback = false) =>
+  typeof value === 'boolean'
+    ? value
+    : value === undefined || value === null
+      ? fallback
+      : value === 1 || value === '1' || value === 'true';
+
+const toNumber = (value: unknown, fallback: number) =>
+  Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+const normalizeSettings = (value: unknown): SuperAdminSettings => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload) || !('id' in payload)) {
+    throw new Error('AI settings response was incomplete');
+  }
+
+  const globalRateLimit = isRecord(payload.globalRateLimit) ? payload.globalRateLimit : {};
+  const circuitBreakerConfig = isRecord(payload.circuitBreakerConfig)
+    ? payload.circuitBreakerConfig
+    : {};
+  const piiDetectionSensitivity =
+    payload.piiDetectionSensitivity === 'low' ||
+    payload.piiDetectionSensitivity === 'medium' ||
+    payload.piiDetectionSensitivity === 'high'
+      ? payload.piiDetectionSensitivity
+      : 'medium';
+
+  return {
+    id: asText(payload.id, ''),
+    defaultProvider:
+      payload.defaultProvider === null || payload.defaultProvider === undefined
+        ? null
+        : asText(payload.defaultProvider, ''),
+    fallbackChain: Array.isArray(payload.fallbackChain)
+      ? payload.fallbackChain.map((item) => asText(item, '')).filter(Boolean)
+      : [],
+    circuitBreakerConfig: {
+      failureThreshold: toNumber(circuitBreakerConfig.failureThreshold, 5),
+      cooldownSeconds: toNumber(circuitBreakerConfig.cooldownSeconds, 60),
+    },
+    globalTokenLimit: toNumber(payload.globalTokenLimit, 10000000),
+    globalRateLimit: {
+      requestsPerMinute: toNumber(globalRateLimit.requestsPerMinute, 60),
+      requestsPerHour: toNumber(globalRateLimit.requestsPerHour, 1000),
+    },
+    maxContextWindowSize: toNumber(payload.maxContextWindowSize, 128000),
+    maxTokensPerRequest: toNumber(payload.maxTokensPerRequest, 8192),
+    piiDetectionSensitivity,
+    requireEncryption: toBool(payload.requireEncryption, false),
+    dataResidency:
+      payload.dataResidency === null || payload.dataResidency === undefined
+        ? null
+        : asText(payload.dataResidency, ''),
+    updatedAt:
+      payload.updatedAt === null || payload.updatedAt === undefined
+        ? undefined
+        : asText(payload.updatedAt, ''),
+    updatedBy:
+      payload.updatedBy === null || payload.updatedBy === undefined
+        ? undefined
+        : asText(payload.updatedBy, ''),
+  };
+};
+
+const normalizeProviders = (value: unknown): LLMProvider[] => {
+  if (!hasListShape(value, ['providers', 'items'])) {
+    throw new Error('LLM providers response was not a list');
+  }
+  return getListPayload<Record<string, unknown>>(value, ['providers', 'items'])
+    .map((provider) => ({
+      id: asText(provider.id, ''),
+      name: asText(provider.name, ''),
+      provider: asText(provider.provider, ''),
+      is_active: toBool(provider.is_active, true),
+    }))
+    .filter((provider) => provider.id);
+};
+
+const settingsConfirmSaved = (expected: SuperAdminSettings, actual: SuperAdminSettings) =>
+  expected.defaultProvider === actual.defaultProvider &&
+  JSON.stringify(expected.fallbackChain) === JSON.stringify(actual.fallbackChain) &&
+  expected.globalTokenLimit === actual.globalTokenLimit &&
+  expected.globalRateLimit.requestsPerMinute === actual.globalRateLimit.requestsPerMinute &&
+  expected.globalRateLimit.requestsPerHour === actual.globalRateLimit.requestsPerHour &&
+  expected.maxContextWindowSize === actual.maxContextWindowSize &&
+  expected.maxTokensPerRequest === actual.maxTokensPerRequest &&
+  expected.piiDetectionSensitivity === actual.piiDetectionSensitivity &&
+  expected.requireEncryption === actual.requireEncryption &&
+  expected.dataResidency === actual.dataResidency &&
+  expected.circuitBreakerConfig.failureThreshold === actual.circuitBreakerConfig.failureThreshold &&
+  expected.circuitBreakerConfig.cooldownSeconds === actual.circuitBreakerConfig.cooldownSeconds;
+
 export const SuperAdminAISettings: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<SuperAdminSettings | null>(null);
   const [providers, setProviders] = useState<LLMProvider[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Fallback chain management
   const [fallbackChain, setFallbackChain] = useState<string[]>([]);
@@ -109,8 +251,10 @@ export const SuperAdminAISettings: React.FC = () => {
     loadSettings();
   }, []);
 
-  const loadSettings = async () => {
-    setLoading(true);
+  const loadSettings = async (options: { showLoading?: boolean } = {}) => {
+    if (options.showLoading !== false) setLoading(true);
+    setLoadError(null);
+    setSaveError(null);
     try {
       const [settingsRes, providersRes] = await Promise.all([
         fetch('/api/ai-settings/superadmin', {
@@ -121,21 +265,32 @@ export const SuperAdminAISettings: React.FC = () => {
         }),
       ]);
 
-      if (settingsRes.ok) {
-        const data = await settingsRes.json();
-        setSettings(data);
-        setFallbackChain(data.fallbackChain || []);
+      if (!settingsRes.ok) {
+        throw new Error('AI settings endpoint returned an error');
+      }
+      if (!providersRes.ok) {
+        throw new Error('LLM providers endpoint returned an error');
       }
 
-      if (providersRes.ok) {
-        const provData = await providersRes.json();
-        setProviders(provData.filter((p: LLMProvider) => p.is_active));
-      }
-    } catch (err) {
-      console.error('Failed to load settings:', err);
-      toast.error('Failed to load AI settings');
+      const data = await settingsRes.json();
+      const provData = await providersRes.json();
+      const nextSettings = normalizeSettings(data);
+      const nextProviders = normalizeProviders(provData);
+
+      setSettings(nextSettings);
+      setFallbackChain(nextSettings.fallbackChain);
+      setProviders(nextProviders.filter((p) => p.is_active));
+      return { settings: nextSettings, providers: nextProviders };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load AI settings';
+      setLoadError(message);
+      setSettings(null);
+      setProviders([]);
+      setFallbackChain([]);
+      toast.error(message);
+      return null;
     } finally {
-      setLoading(false);
+      if (options.showLoading !== false) setLoading(false);
     }
   };
 
@@ -143,8 +298,9 @@ export const SuperAdminAISettings: React.FC = () => {
     if (!settings) return;
 
     setSaving(true);
+    setSaveError(null);
     try {
-      const payload = {
+      const payload: SuperAdminSettings = {
         ...settings,
         fallbackChain,
       };
@@ -158,16 +314,20 @@ export const SuperAdminAISettings: React.FC = () => {
         body: JSON.stringify(payload),
       });
 
-      if (res.ok) {
-        const updated = await res.json();
-        setSettings(updated);
-        setHasChanges(false);
-        toast.success('Settings saved successfully');
-      } else {
-        throw new Error('Failed to save');
+      if (!res.ok) {
+        throw new Error('AI settings save endpoint returned an error');
       }
-    } catch (err) {
-      toast.error('Failed to save settings');
+
+      const refreshed = await loadSettings({ showLoading: false });
+      if (!refreshed || !settingsConfirmSaved(payload, refreshed.settings)) {
+        throw new Error('AI settings save was not confirmed by the server');
+      }
+      setHasChanges(false);
+      toast.success('Settings saved successfully');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to save settings';
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -221,9 +381,13 @@ export const SuperAdminAISettings: React.FC = () => {
 
   if (!settings) {
     return (
-      <div className="flex items-center justify-center h-96 text-slate-400 dark:text-slate-500">
-        <AlertTriangle size={24} className="mr-2" />
-        Failed to load settings
+      <div className="flex items-center justify-center h-96">
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6 max-w-xl w-full">
+          <DegradedState
+            title="AI settings unavailable"
+            description={loadError || 'Failed to load settings'}
+          />
+        </div>
       </div>
     );
   }
@@ -247,7 +411,7 @@ export const SuperAdminAISettings: React.FC = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={loadSettings}
+            onClick={() => void loadSettings()}
             className="px-4 py-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 transition-colors"
           >
             <RefreshCw size={18} />
@@ -266,6 +430,15 @@ export const SuperAdminAISettings: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {saveError ? (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+        >
+          {saveError}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Default Provider & Fallback Chain */}
@@ -502,7 +675,10 @@ export const SuperAdminAISettings: React.FC = () => {
                       value={option.value}
                       checked={settings.piiDetectionSensitivity === option.value}
                       onChange={(e) =>
-                        updateSetting('piiDetectionSensitivity', e.target.value as any)
+                        updateSetting(
+                          'piiDetectionSensitivity',
+                          e.target.value as SuperAdminSettings['piiDetectionSensitivity']
+                        )
                       }
                       className="sr-only"
                     />

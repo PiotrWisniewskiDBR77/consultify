@@ -7,7 +7,6 @@ import {
   AlertCircle,
   AlertTriangle,
   Check,
-  CheckCircle,
   FileText,
   Loader2,
   Plus,
@@ -23,19 +22,27 @@ import { toast } from 'react-hot-toast';
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface DLPPolicy {
   id: string;
   name: string;
   description: string;
   policyType: string;
-  rules: any[];
+  rules: DLPRule[];
   enforcementAction: string;
   isActive: boolean;
   createdBy: string;
   createdByEmail: string;
   createdAt: string;
   updatedAt: string;
+}
+
+interface DLPRule {
+  name: string;
+  pattern?: string;
+  keywords?: string[];
+  severity: string;
 }
 
 interface DLPViolation {
@@ -70,6 +77,12 @@ interface DLPStats {
   };
 }
 
+interface DLPDataSnapshot {
+  policies: DLPPolicy[];
+  violations: DLPViolation[];
+  stats: DLPStats;
+}
+
 const POLICY_TYPES = [
   { value: 'data_classification', label: 'Data Classification' },
   { value: 'pii_detection', label: 'PII Detection' },
@@ -91,6 +104,93 @@ const ENFORCEMENT_ACTIONS = [
 
 const SEVERITY_LEVELS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const normalizeStats = (value: unknown): DLPStats => {
+  const payload = getObjectPayload(value);
+  const statsValue = isRecord(payload) ? (payload as Partial<DLPStats>) : {};
+  return {
+    policies: {
+      total: safeNumber(statsValue.policies?.total),
+      active: safeNumber(statsValue.policies?.active),
+    },
+    violations: {
+      total: safeNumber(statsValue.violations?.total),
+      unresolved: safeNumber(statsValue.violations?.unresolved),
+      bySeverity: {
+        critical: safeNumber(statsValue.violations?.bySeverity?.critical),
+        high: safeNumber(statsValue.violations?.bySeverity?.high),
+        medium: safeNumber(statsValue.violations?.bySeverity?.medium),
+        low: safeNumber(statsValue.violations?.bySeverity?.low),
+      },
+    },
+  };
+};
+
+const getCreatedPolicyId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const policy = isRecord(result.policy) ? result.policy : null;
+  return String(
+    result.id ||
+      policy?.id ||
+      data?.id ||
+      (isRecord(data?.policy) ? data.policy.id : '') ||
+      nestedData?.id ||
+      (isRecord(nestedData?.policy) ? nestedData.policy.id : '') ||
+      ''
+  );
+};
+
 const DLPView: React.FC = () => {
   const [policies, setPolicies] = useState<DLPPolicy[]>([]);
   const [violations, setViolations] = useState<DLPViolation[]>([]);
@@ -106,7 +206,7 @@ const DLPView: React.FC = () => {
     description: '',
     policyType: 'pii_detection',
     enforcementAction: 'warn',
-    rules: [] as any[],
+    rules: [] as DLPRule[],
   });
   const [newRule, setNewRule] = useState({
     name: '',
@@ -131,16 +231,34 @@ const DLPView: React.FC = () => {
         Api.getDLPStats(),
       ]);
 
-      setPolicies(policiesData);
-      setViolations(violationsData);
-      setStats(statsData as any);
-    } catch (err: any) {
-      const message = err.message || 'Failed to load DLP data';
+      if (!hasListShape(policiesData, ['policies', 'items'])) {
+        throw new Error('DLP policies response was not a list');
+      }
+      if (!hasListShape(violationsData, ['violations', 'items'])) {
+        throw new Error('DLP violations response was not a list');
+      }
+      const policySnapshot = getListPayload<DLPPolicy>(policiesData, ['policies', 'items']);
+      const violationSnapshot = getListPayload<DLPViolation>(violationsData, [
+        'violations',
+        'items',
+      ]);
+      const statsSnapshot = normalizeStats(statsData);
+      setPolicies(policySnapshot);
+      setViolations(violationSnapshot);
+      setStats(statsSnapshot);
+      return {
+        policies: policySnapshot,
+        violations: violationSnapshot,
+        stats: statsSnapshot,
+      } satisfies DLPDataSnapshot;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load DLP data');
       setLoadError(message);
       setPolicies([]);
       setViolations([]);
       setStats(null);
       toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -178,15 +296,23 @@ const DLPView: React.FC = () => {
   const handleCreate = async () => {
     try {
       setSaving(true);
-      await Api.createDLPPolicy({
+      setError(null);
+      const result = await Api.createDLPPolicy({
         name: formData.name,
-        description: formData.description,
         policyType: formData.policyType,
         enforcementAction: formData.enforcementAction,
+        description: formData.description,
         rules: formData.rules,
       });
+      const createdId = getCreatedPolicyId(result);
+      if (!createdId) {
+        throw new Error('DLP policy creation response was incomplete');
+      }
+      const refreshed = await loadData();
+      if (!refreshed?.policies.some((policy) => policy.id === createdId)) {
+        throw new Error('DLP policy creation was not confirmed by the server');
+      }
       toast.success('DLP policy created successfully');
-      await loadData();
       setShowCreateModal(false);
       setFormData({
         name: '',
@@ -195,8 +321,10 @@ const DLPView: React.FC = () => {
         enforcementAction: 'warn',
         rules: [],
       });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create DLP policy');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to create DLP policy');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -204,36 +332,54 @@ const DLPView: React.FC = () => {
 
   const handleTogglePolicy = async (policyId: string, isActive: boolean) => {
     try {
+      setError(null);
       await Api.toggleDLPPolicy(policyId, !isActive);
+      const refreshed = await loadData();
+      if (
+        !refreshed?.policies.some(
+          (policy) => policy.id === policyId && policy.isActive === !isActive
+        )
+      ) {
+        throw new Error('DLP policy status was not confirmed by the server');
+      }
       toast.success(`Policy ${!isActive ? 'activated' : 'deactivated'} successfully`);
-      setPolicies((prev) =>
-        prev.map((p) => (p.id === policyId ? { ...p, isActive: !isActive } : p))
-      );
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to toggle policy');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to toggle policy');
+      setError(message);
+      toast.error(message);
     }
   };
 
   const handleDeletePolicy = async (policyId: string) => {
     if (!confirm('Are you sure you want to delete this policy?')) return;
     try {
+      setError(null);
       await Api.deleteDLPPolicy(policyId);
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.policies.some((policy) => policy.id === policyId)) {
+        throw new Error('DLP policy deletion was not confirmed by the server');
+      }
       toast.success('Policy deleted successfully');
-      setPolicies((prev) => prev.filter((p) => p.id !== policyId));
-      loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete policy');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to delete policy');
+      setError(message);
+      toast.error(message);
     }
   };
 
   const handleResolveViolation = async (violationId: string) => {
     try {
+      setError(null);
       await Api.resolveDLPViolation(violationId);
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.violations.some((violation) => violation.id === violationId)) {
+        throw new Error('DLP violation resolution was not confirmed by the server');
+      }
       toast.success('Violation resolved successfully');
-      setViolations((prev) => prev.filter((v) => v.id !== violationId));
-      loadData();
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to resolve violation');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to resolve violation');
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -262,9 +408,9 @@ const DLPView: React.FC = () => {
         );
       default:
         return (
-          <span className="flex items-center gap-1 px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded text-xs font-medium">
-            <CheckCircle className="w-3 h-3" />
-            LOW
+          <span className="flex items-center gap-1 px-2 py-1 bg-slate-50 dark:bg-navy-800/10 text-slate-400 dark:text-slate-500 rounded text-xs font-medium">
+            <AlertTriangle className="w-3 h-3" />
+            Unknown
           </span>
         );
     }
@@ -362,11 +508,9 @@ const DLPView: React.FC = () => {
       {/* Error Alert */}
       {error && (
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+          <div role="alert" className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
+            <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -515,6 +659,7 @@ const DLPView: React.FC = () => {
                           <div className="flex items-center justify-end gap-2">
                             <button
                               onClick={() => handleTogglePolicy(policy.id, policy.isActive)}
+                              aria-label={`${policy.isActive ? 'Deactivate' : 'Activate'} DLP policy ${policy.id}`}
                               className={`p-2 rounded-lg transition-colors ${
                                 policy.isActive
                                   ? 'text-amber-400 hover:bg-amber-500/10'
@@ -530,6 +675,7 @@ const DLPView: React.FC = () => {
                             </button>
                             <button
                               onClick={() => handleDeletePolicy(policy.id)}
+                              aria-label={`Delete DLP policy ${policy.id}`}
                               className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                               title="Delete"
                             >
@@ -618,11 +764,12 @@ const DLPView: React.FC = () => {
                         </td>
                         <td className="py-3 px-4">{getSeverityBadge(violation.severity)}</td>
                         <td className="py-3 px-4 text-sm text-slate-300">
-                          {new Date(violation.detectedAt).toLocaleString()}
+                          {formatDateTime(violation.detectedAt)}
                         </td>
                         <td className="py-3 px-4 text-right">
                           <button
                             onClick={() => handleResolveViolation(violation.id)}
+                            aria-label={`Resolve DLP violation ${violation.id}`}
                             className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
                             title="Resolve"
                           >

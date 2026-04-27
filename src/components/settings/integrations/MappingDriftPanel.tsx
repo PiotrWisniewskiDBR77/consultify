@@ -24,6 +24,8 @@ import { useTranslation } from 'react-i18next';
 
 import { v8Get } from '../../../services/api/v8/client';
 import { V8SyncApi, V8SyncMappingData } from '../../../services/api/v8/sync';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+import { DegradedState } from '../../Admin/AdminState';
 
 interface MappingOverviewItem {
   integrationId: string;
@@ -43,6 +45,14 @@ interface MappingDriftPanelProps {
 
 type SubTab = 'fields' | 'entities' | 'drift' | 'sync';
 
+const normalizeJson = (value: unknown) => JSON.stringify(value ?? []);
+
+const formatTimestamp = (timestamp: string | null | undefined) => {
+  if (!timestamp) return '—';
+  const date = new Date(timestamp);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
 const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
   integrationId: initialId,
   onBack,
@@ -60,14 +70,18 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
   const [fieldMappingsJson, setFieldMappingsJson] = useState('[]');
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SubTab>('fields');
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const loadOverview = useCallback(async () => {
     setOverviewLoading(true);
     try {
+      setLoadError(null);
       const resp = await v8Get<{ integrations: MappingOverviewItem[] }>('/sync/mappings/overview');
-      const d = (resp as any)?.data ?? resp;
+      const d = (resp as { data?: { integrations: MappingOverviewItem[] } }).data ?? resp;
       setOverview(d.integrations || []);
-    } catch {
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load mapping overview'));
       setOverview([]);
     } finally {
       setOverviewLoading(false);
@@ -78,13 +92,21 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
     async (id: string) => {
       setLoading(true);
       try {
+        setLoadError(null);
         const resp = await V8SyncApi.getMappings(id);
-        const d = (resp as any)?.data ?? resp;
+        const d = ((resp as { data?: V8SyncMappingData }).data ?? resp) as V8SyncMappingData;
         setData(d);
         setFieldMappingsJson(JSON.stringify(d.fieldMappings ?? [], null, 2));
-      } catch {
-        toast.error(t('integrations.mappings.loadError', 'Failed to load mapping data'));
+        return d as V8SyncMappingData;
+      } catch (error: unknown) {
+        const message = normalizeApiErrorMessage(
+          error,
+          t('integrations.mappings.loadError', 'Failed to load mapping data')
+        );
+        setLoadError(message);
+        toast.error(message);
         setData(null);
+        return null;
       } finally {
         setLoading(false);
       }
@@ -105,8 +127,8 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
     try {
       JSON.parse(value);
       setJsonError(null);
-    } catch (e: any) {
-      setJsonError(e.message);
+    } catch (e: unknown) {
+      setJsonError(e instanceof Error ? e.message : 'Invalid JSON');
     }
   };
 
@@ -114,12 +136,21 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
     if (jsonError || !selectedId) return;
     setSaving(true);
     try {
+      setActionError(null);
       const parsed = JSON.parse(fieldMappingsJson);
       await V8SyncApi.saveMappings(selectedId, parsed);
+      const refreshed = await loadDetail(selectedId);
+      if (!refreshed || normalizeJson(refreshed.fieldMappings) !== normalizeJson(parsed)) {
+        throw new Error('Field mappings save was not confirmed by the server');
+      }
       toast.success(t('integrations.mappings.saved', 'Mappings saved'));
-      loadDetail(selectedId);
-    } catch {
-      toast.error(t('integrations.mappings.saveError', 'Failed to save mappings'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('integrations.mappings.saveError', 'Failed to save mappings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -173,6 +204,10 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
           <Loader2 className="w-6 h-6 animate-spin text-brand" />
         </div>
       );
+    }
+
+    if (loadError) {
+      return <DegradedState title="Mapping overview unavailable" description={loadError} />;
     }
 
     if (overview.length === 0) {
@@ -270,9 +305,13 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
         >
           <ArrowLeft size={14} /> {t('common.back', 'Back')}
         </button>
-        <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl text-slate-500 dark:text-slate-400 text-sm">
-          {t('integrations.mappings.noData', 'No mapping data available for this integration.')}
-        </div>
+        {loadError ? (
+          <DegradedState title="Mapping data unavailable" description={loadError} />
+        ) : (
+          <div className="text-center py-16 bg-slate-50 dark:bg-navy-800/30 rounded-xl text-slate-500 dark:text-slate-400 text-sm">
+            {t('integrations.mappings.noData', 'No mapping data available for this integration.')}
+          </div>
+        )}
       </div>
     );
   }
@@ -314,6 +353,15 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
       >
         <ArrowLeft size={14} /> {t('common.back', 'Back to overview')}
       </button>
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
 
       <div className="bg-white dark:bg-navy-800/40 rounded-xl border border-slate-200 dark:border-navy-700">
         <div className="flex border-b border-slate-200 dark:border-navy-700 overflow-x-auto">
@@ -414,7 +462,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                         </td>
                         <td className="py-2 pr-4">{statusBadge(m.syncStatus)}</td>
                         <td className="py-2 text-xs text-slate-500">
-                          {m.lastSyncedAt ? new Date(m.lastSyncedAt).toLocaleString() : '—'}
+                          {formatTimestamp(m.lastSyncedAt)}
                         </td>
                       </tr>
                     ))
@@ -459,7 +507,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                     </div>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                       {t('integrations.mappings.detected', 'Detected')}:{' '}
-                      {new Date(d.detectedAt).toLocaleString()}
+                      {formatTimestamp(d.detectedAt)}
                     </p>
                     {d.affectedFields && (
                       <p className="text-xs font-mono text-slate-600 dark:text-slate-400 mt-1">
@@ -512,7 +560,7 @@ const MappingDriftPanel: React.FC<MappingDriftPanelProps> = ({
                           {s.errorClass || '—'}
                         </td>
                         <td className="py-2 text-xs text-slate-500 dark:text-slate-400">
-                          {s.lastSyncedAt ? new Date(s.lastSyncedAt).toLocaleString() : '—'}
+                          {formatTimestamp(s.lastSyncedAt)}
                         </td>
                       </tr>
                     ))

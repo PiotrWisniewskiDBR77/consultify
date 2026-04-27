@@ -228,6 +228,10 @@ export const RouterSync: React.FC = () => {
     const isProtected =
       path === '/chat' ||
       path.startsWith('/chat/') ||
+      path === '/ai' ||
+      path.startsWith('/ai/') ||
+      path === '/ai-os' ||
+      path.startsWith('/ai-os/') ||
       path === '/studio' ||
       path.startsWith('/admin') ||
       path.startsWith('/settings') ||

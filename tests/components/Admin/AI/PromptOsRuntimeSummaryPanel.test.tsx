@@ -61,7 +61,8 @@ describe('PromptOsRuntimeSummaryPanel', () => {
     vi.mocked(V8PromptOsApi.getRuntimeSummary).mockRejectedValueOnce(new Error('network down'));
     renderPanel();
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('network down');
+      expect(screen.getByText('Prompt OS runtime unavailable')).toBeInTheDocument();
     });
+    expect(screen.getByText('network down')).toBeInTheDocument();
   });
 });

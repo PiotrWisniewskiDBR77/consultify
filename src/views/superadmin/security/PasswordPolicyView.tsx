@@ -4,81 +4,200 @@
  */
 
 import { Save } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../../components/Admin/AdminState';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
+
+type OrganizationRow = {
+  id: string;
+  name: unknown;
+};
+
+type PasswordPolicy = {
+  minLength: number;
+  requireUppercase: boolean;
+  requireLowercase: boolean;
+  requireNumbers: boolean;
+  requireSpecialChars: boolean;
+  maxAgeDays: number | null;
+  preventReuseCount: number;
+  lockoutAttempts: number;
+  lockoutDurationMinutes: number;
+  requireMfa: boolean;
+};
+
+type PasswordPolicyResponse = {
+  min_length?: unknown;
+  require_uppercase?: unknown;
+  require_lowercase?: unknown;
+  require_numbers?: unknown;
+  require_special_chars?: unknown;
+  max_age_days?: unknown;
+  prevent_reuse_count?: unknown;
+  lockout_attempts?: unknown;
+  lockout_duration_minutes?: unknown;
+  require_mfa?: unknown;
+};
+
+const DEFAULT_POLICY: PasswordPolicy = {
+  minLength: 8,
+  requireUppercase: true,
+  requireLowercase: true,
+  requireNumbers: true,
+  requireSpecialChars: true,
+  maxAgeDays: null,
+  preventReuseCount: 5,
+  lockoutAttempts: 5,
+  lockoutDurationMinutes: 30,
+  requireMfa: false,
+};
+
+const safeNumber = (value: unknown, fallback: number) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const safeNullableNumber = (value: unknown, fallback: number | null) => {
+  if (value === null || value === undefined || value === '') return fallback;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toBool = (value: unknown, fallback: boolean) =>
+  typeof value === 'boolean'
+    ? value
+    : value === undefined || value === null
+      ? fallback
+      : value === 1 || value === '1' || value === 'true';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const asText = (value: unknown, fallback: string) => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const POLICY_KEYS = [
+  'min_length',
+  'require_uppercase',
+  'require_lowercase',
+  'require_numbers',
+  'require_special_chars',
+  'max_age_days',
+  'prevent_reuse_count',
+  'lockout_attempts',
+  'lockout_duration_minutes',
+  'require_mfa',
+];
+
+const hasPolicyShape = (value: unknown) =>
+  isRecord(value) && POLICY_KEYS.some((key) => key in value);
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const getPolicyPayload = (value: unknown): PasswordPolicyResponse => {
+  if (!isRecord(value)) throw new Error('Password policy response was missing policy data');
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const policy = isRecord(value.policy) ? value.policy : null;
+  const nestedPolicy = data && isRecord(data.policy) ? data.policy : null;
+  const deeplyNestedPolicy = nestedData && isRecord(nestedData.policy) ? nestedData.policy : null;
+  const payload = deeplyNestedPolicy || nestedPolicy || policy || nestedData || data || value;
+  if (!hasPolicyShape(payload)) {
+    throw new Error('Password policy response was missing policy data');
+  }
+  return payload as PasswordPolicyResponse;
+};
+
+const normalizePolicy = (policy: PasswordPolicyResponse): PasswordPolicy => ({
+  minLength: safeNumber(policy.min_length, DEFAULT_POLICY.minLength),
+  requireUppercase: toBool(policy.require_uppercase, DEFAULT_POLICY.requireUppercase),
+  requireLowercase: toBool(policy.require_lowercase, DEFAULT_POLICY.requireLowercase),
+  requireNumbers: toBool(policy.require_numbers, DEFAULT_POLICY.requireNumbers),
+  requireSpecialChars: toBool(policy.require_special_chars, DEFAULT_POLICY.requireSpecialChars),
+  maxAgeDays: safeNullableNumber(policy.max_age_days, DEFAULT_POLICY.maxAgeDays),
+  preventReuseCount: safeNumber(policy.prevent_reuse_count, DEFAULT_POLICY.preventReuseCount),
+  lockoutAttempts: safeNumber(policy.lockout_attempts, DEFAULT_POLICY.lockoutAttempts),
+  lockoutDurationMinutes: safeNumber(
+    policy.lockout_duration_minutes,
+    DEFAULT_POLICY.lockoutDurationMinutes
+  ),
+  requireMfa: toBool(policy.require_mfa, DEFAULT_POLICY.requireMfa),
+});
 
 export const PasswordPolicyView: React.FC = () => {
   const [selectedOrgId, setSelectedOrgId] = useState<string>('');
-  const [organizations, setOrganizations] = useState<any[]>([]);
-  const [policy, setPolicy] = useState<any>({
-    minLength: 8,
-    requireUppercase: true,
-    requireLowercase: true,
-    requireNumbers: true,
-    requireSpecialChars: true,
-    maxAgeDays: null,
-    preventReuseCount: 5,
-    lockoutAttempts: 5,
-    lockoutDurationMinutes: 30,
-    requireMfa: false,
-  });
+  const [organizations, setOrganizations] = useState<OrganizationRow[]>([]);
+  const [policy, setPolicy] = useState<PasswordPolicy>(DEFAULT_POLICY);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
-
-  useEffect(() => {
-    if (selectedOrgId) {
-      fetchPolicy();
-    }
-  }, [selectedOrgId]);
-
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     try {
       const orgs = await Api.getOrganizations();
-      setOrganizations(orgs);
-      if (orgs.length > 0 && !selectedOrgId) {
-        setSelectedOrgId(orgs[0].id);
+      const normalizedOrgs = getListPayload<OrganizationRow>(orgs, ['organizations', 'items']);
+      if (
+        !normalizedOrgs.length &&
+        !(Array.isArray(orgs) || (isRecord(orgs) && ('data' in orgs || 'organizations' in orgs)))
+      ) {
+        throw new Error('Organizations response was not a list');
       }
-    } catch (err: any) {
-      console.error('Failed to fetch organizations:', err);
-      setLoadError(err?.message || 'Failed to fetch organizations');
-      toast.error(err?.message || 'Failed to fetch organizations');
+      setOrganizations(normalizedOrgs);
+      setSelectedOrgId((current) => current || normalizedOrgs[0]?.id || '');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch organizations');
+      setLoadError(message);
+      toast.error(message);
     }
-  };
+  }, []);
 
-  const fetchPolicy = async () => {
-    if (!selectedOrgId) return;
+  const fetchPolicy = useCallback(async (): Promise<PasswordPolicy | null> => {
+    if (!selectedOrgId) return null;
     setLoading(true);
     setLoadError(null);
     try {
       const pol = await Api.getPasswordPolicy(selectedOrgId);
-      if (pol) {
-        setPolicy({
-          minLength: pol.min_length,
-          requireUppercase: pol.require_uppercase === 1,
-          requireLowercase: pol.require_lowercase === 1,
-          requireNumbers: pol.require_numbers === 1,
-          requireSpecialChars: pol.require_special_chars === 1,
-          maxAgeDays: pol.max_age_days,
-          preventReuseCount: pol.prevent_reuse_count,
-          lockoutAttempts: pol.lockout_attempts,
-          lockoutDurationMinutes: pol.lockout_duration_minutes,
-          requireMfa: pol.require_mfa === 1,
-        });
-      }
-    } catch (err: any) {
-      setLoadError(err?.message || 'Failed to fetch password policy');
-      toast.error(err?.message || 'Failed to fetch password policy');
+      const next = normalizePolicy(getPolicyPayload(pol));
+      setPolicy(next);
+      return next;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to fetch password policy');
+      setLoadError(message);
+      toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedOrgId]);
+
+  useEffect(() => {
+    void fetchOrganizations();
+  }, [fetchOrganizations]);
+
+  useEffect(() => {
+    if (selectedOrgId) {
+      void fetchPolicy();
+    }
+  }, [selectedOrgId, fetchPolicy]);
 
   const handleSave = async () => {
     if (!selectedOrgId) {
@@ -95,10 +214,17 @@ export const PasswordPolicyView: React.FC = () => {
     }
     try {
       setSaving(true);
+      setActionError(null);
       await Api.updatePasswordPolicy(selectedOrgId, policy);
+      const persisted = await fetchPolicy();
+      if (!persisted || JSON.stringify(persisted) !== JSON.stringify(policy)) {
+        throw new Error('Password policy update was not confirmed by the server');
+      }
       toast.success('Password policy updated');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to update password policy');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to update password policy');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -122,13 +248,13 @@ export const PasswordPolicyView: React.FC = () => {
             <option value="">Select Organization</option>
             {organizations.map((org) => (
               <option key={org.id} value={org.id}>
-                {org.name}
+                {asText(org.name, 'Unknown organization')}
               </option>
             ))}
           </select>
           <button
             onClick={handleSave}
-            disabled={!selectedOrgId || saving}
+            disabled={!selectedOrgId || saving || Boolean(loadError)}
             className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white rounded-lg flex items-center gap-2"
           >
             <Save size={18} />
@@ -137,15 +263,20 @@ export const PasswordPolicyView: React.FC = () => {
         </div>
       </div>
 
-      {loadError && (
-        <div className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
-          {loadError}
+      {loadError && <DegradedState title="Password policy unavailable" description={loadError} />}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 dark:border-red-500/20 bg-red-50 dark:bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300"
+        >
+          {actionError}
         </div>
       )}
 
       {loading ? (
         <div className="text-center py-12 text-slate-600 dark:text-slate-400">Loading...</div>
-      ) : (
+      ) : loadError ? null : (
         <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 space-y-6">
           <div className="grid grid-cols-2 gap-6">
             <div>

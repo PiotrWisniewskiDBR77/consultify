@@ -3,37 +3,14 @@
  * NEW: Model management, versioning, and comparison
  */
 
-import {
-  Activity,
-  AlertTriangle,
-  Archive,
-  BarChart3,
-  Check,
-  ChevronRight,
-  Clock,
-  Cpu,
-  Database,
-  DollarSign,
-  Edit,
-  Eye,
-  Filter,
-  Info,
-  Layers,
-  Plus,
-  RefreshCw,
-  Search,
-  Settings,
-  Sparkles,
-  Star,
-  Tag,
-  TrendingUp,
-  Zap,
-} from 'lucide-react';
+import { Activity, Check, Cpu, Database, Edit, Eye, Plus, RefreshCw, Search } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '@/components/Admin/AdminState';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
+import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 interface Model {
   id: string;
@@ -54,6 +31,52 @@ interface Model {
   createdAt: string;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && (isRecord(data.data) || Array.isArray(data.data)) ? data.data : data || value;
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const toNumber = (value: unknown, fallback = 0) =>
+  Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+const normalizeProviders = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  if (!Array.isArray(payload)) {
+    throw new Error('Model registry providers response was not a list');
+  }
+  return payload.filter(isRecord);
+};
+
+const normalizeHealthProviders = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload) || !Array.isArray(payload.providers)) {
+    throw new Error('Model registry health response was incomplete');
+  }
+  return payload.providers.filter(isRecord);
+};
+
+const normalizeUsageByProvider = (value: unknown) => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload) || !Array.isArray(payload.byProvider)) {
+    throw new Error('Model registry usage response was incomplete');
+  }
+  return payload.byProvider.filter(isRecord).map((row) => ({
+    provider: asText(row.provider, ''),
+    calls: toNumber(row.calls, 0),
+  }));
+};
+
 export const ModelRegistryTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [models, setModels] = useState<Model[]>([]);
@@ -61,6 +84,7 @@ export const ModelRegistryTab: React.FC = () => {
   const [filterProvider, setFilterProvider] = useState<string>('');
   const [filterStatus, setFilterStatus] = useState<string>('');
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     loadModels();
@@ -68,6 +92,7 @@ export const ModelRegistryTab: React.FC = () => {
 
   const loadModels = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [providersPayload, healthPayload, usagePayload] = await Promise.all([
         Api.getLLMProviders(),
@@ -75,29 +100,23 @@ export const ModelRegistryTab: React.FC = () => {
         Api.getLLMControlUsage(),
       ]);
 
-      const providers: any[] = Array.isArray(providersPayload) ? providersPayload : [];
-      const healthProviders: any[] = Array.isArray((healthPayload as any)?.providers)
-        ? (healthPayload as any).providers
-        : [];
-      const usageByProvider: Array<{ provider?: string; calls?: number }> = Array.isArray(
-        (usagePayload as any)?.byProvider
-      )
-        ? (usagePayload as any).byProvider
-        : [];
+      const providers = normalizeProviders(providersPayload);
+      const healthProviders = normalizeHealthProviders(healthPayload);
+      const usageByProvider = normalizeUsageByProvider(usagePayload);
 
       const callsByProvider = new Map(
         usageByProvider
           .map((r) => ({
-            key: String(r?.provider || '').toLowerCase(),
-            calls: Number(r?.calls || 0),
+            key: r.provider.toLowerCase(),
+            calls: r.calls,
           }))
           .filter((r) => !!r.key)
           .map((r) => [r.key, r.calls] as const)
       );
 
-      const healthById = new Map(healthProviders.map((p) => [String(p?.id || ''), p] as const));
+      const healthById = new Map(healthProviders.map((p) => [asText(p.id, ''), p] as const));
 
-      const normalizeTier = (tier: any): Model['tier'] => {
+      const normalizeTier = (tier: unknown): Model['tier'] => {
         const t = String(tier || 'standard').toLowerCase();
         if (t === 'budget') return 'budget';
         if (t === 'premium') return 'premium';
@@ -105,38 +124,38 @@ export const ModelRegistryTab: React.FC = () => {
         return 'standard';
       };
 
-      const statusFromProvider = (p: any): Model['status'] => {
+      const statusFromProvider = (p: Record<string, unknown>): Model['status'] => {
         if (!p) return 'archived';
         const isActive = p.is_active === 1 || p.is_active === true;
         return isActive ? 'active' : 'archived';
       };
 
       const nextModels: Model[] = providers.map((p) => {
-        const id = String(p?.id || p?.model_id || p?.name || '');
-        const health = healthById.get(String(p?.id || ''));
-        const respMs = Number(health?.responseTime || health?.latency || 0);
+        const id = asText(p.id, asText(p.model_id, asText(p.name, 'unknown-model')));
+        const health = healthById.get(asText(p.id, ''));
+        const respMs = toNumber(health?.responseTime ?? health?.latency, 0);
         const status = statusFromProvider(p);
         const isUp =
-          String(health?.status || '').toLowerCase() === 'healthy' ||
-          String(health?.status || '').toLowerCase() === 'degraded';
-        const providerKey = String(p?.provider || '').toLowerCase();
+          asText(health?.status, '').toLowerCase() === 'healthy' ||
+          asText(health?.status, '').toLowerCase() === 'degraded';
+        const providerKey = asText(p.provider, '').toLowerCase();
         return {
           id,
-          name: String(p?.name || p?.model_id || p?.provider || 'Unknown'),
-          provider: String(p?.provider || 'Unknown'),
-          modelId: String(p?.model_id || ''),
-          version: String(p?.updated_at || p?.created_at || ''),
+          name: asText(p.name, asText(p.model_id, asText(p.provider, 'Unknown'))),
+          provider: asText(p.provider, 'Unknown'),
+          modelId: asText(p.model_id, ''),
+          version: asText(p.updated_at, asText(p.created_at, '')),
           status,
-          tier: normalizeTier(p?.tier),
+          tier: normalizeTier(p.tier),
           capabilities: [],
-          contextWindow: Number(p?.context_window || 0),
+          contextWindow: toNumber(p.context_window, 0),
           maxOutputTokens: undefined,
-          costPer1k: Number(p?.cost_per_1k || 0),
+          costPer1k: toNumber(p.cost_per_1k, 0),
           avgLatency: respMs,
           successRate: isUp ? 100 : 0,
-          lastUsed: String(p?.updated_at || p?.created_at || ''),
+          lastUsed: asText(p.updated_at, asText(p.created_at, '')),
           totalRequests: callsByProvider.get(providerKey) || 0,
-          createdAt: String(p?.created_at || ''),
+          createdAt: asText(p.created_at, ''),
         };
       });
 
@@ -145,8 +164,12 @@ export const ModelRegistryTab: React.FC = () => {
         source: 'superadmin_ai_platform',
         count: nextModels.length,
       });
-    } catch (err) {
-      toast.error('Failed to load models');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load models');
+      setModels([]);
+      setSelectedModel(null);
+      setLoadError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -231,184 +254,201 @@ export const ModelRegistryTab: React.FC = () => {
         </button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Database size={16} className="text-indigo-500" />
-            <span className="text-sm text-slate-500 dark:text-slate-400">Total Models</span>
-          </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">{models.length}</div>
+      {loadError ? (
+        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-6">
+          <DegradedState title="Model registry unavailable" description={loadError} />
         </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Check size={16} className="text-emerald-500" />
-            <span className="text-sm text-slate-500 dark:text-slate-400">Active</span>
-          </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {models.filter((m) => m.status === 'active').length}
-          </div>
-        </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Cpu size={16} className="text-purple-500" />
-            <span className="text-sm text-slate-500 dark:text-slate-400">Providers</span>
-          </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {providers.length}
-          </div>
-        </div>
-        <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Activity size={16} className="text-blue-500" />
-            <span className="text-sm text-slate-500 dark:text-slate-400">Total Requests</span>
-          </div>
-          <div className="text-2xl font-bold text-slate-900 dark:text-white">
-            {formatNumber(models.reduce((sum, m) => sum + m.totalRequests, 0))}
-          </div>
-        </div>
-      </div>
+      ) : null}
 
-      {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search models..."
-            className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400"
-          />
-        </div>
-        <select
-          value={filterProvider}
-          onChange={(e) => setFilterProvider(e.target.value)}
-          className="px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
-        >
-          <option value="">All Providers</option>
-          {providers.map((p) => (
-            <option key={p} value={p}>
-              {p}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filterStatus}
-          onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
-        >
-          <option value="">All Status</option>
-          <option value="active">Active</option>
-          <option value="beta">Beta</option>
-          <option value="deprecated">Deprecated</option>
-          <option value="archived">Archived</option>
-        </select>
-      </div>
+      {!loadError ? (
+        <>
+          {/* Stats */}
+          <div className="grid grid-cols-4 gap-4">
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Database size={16} className="text-indigo-500" />
+                <span className="text-sm text-slate-500 dark:text-slate-400">Total Models</span>
+              </div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {models.length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Check size={16} className="text-emerald-500" />
+                <span className="text-sm text-slate-500 dark:text-slate-400">Active</span>
+              </div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {models.filter((m) => m.status === 'active').length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Cpu size={16} className="text-purple-500" />
+                <span className="text-sm text-slate-500 dark:text-slate-400">Providers</span>
+              </div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {providers.length}
+              </div>
+            </div>
+            <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Activity size={16} className="text-blue-500" />
+                <span className="text-sm text-slate-500 dark:text-slate-400">Total Requests</span>
+              </div>
+              <div className="text-2xl font-bold text-slate-900 dark:text-white">
+                {formatNumber(models.reduce((sum, m) => sum + m.totalRequests, 0))}
+              </div>
+            </div>
+          </div>
 
-      {/* Models Table */}
-      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-200 dark:border-navy-700">
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Model
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Provider
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Tier
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Status
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Cost
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Latency
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Success
-              </th>
-              <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Requests
-              </th>
-              <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
-            {filteredModels.map((model) => (
-              <tr
-                key={model.id}
-                className="hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
-              >
-                <td className="px-6 py-4">
-                  <div>
-                    <div className="font-medium text-slate-900 dark:text-white">{model.name}</div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-                      {model.modelId}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
-                    {model.provider}
-                  </span>
-                </td>
-                <td className="px-6 py-4">{getTierBadge(model.tier)}</td>
-                <td className="px-6 py-4">{getStatusBadge(model.status)}</td>
-                <td className="px-6 py-4">
-                  <div className="text-xs">
-                    <div className="text-slate-700 dark:text-slate-300">
-                      {formatCostPer1k(model.costPer1k)}
-                    </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
-                    {model.avgLatency < 1000
-                      ? `${model.avgLatency}ms`
-                      : `${(model.avgLatency / 1000).toFixed(1)}s`}
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span
-                    className={`text-sm ${model.successRate >= 99 ? 'text-emerald-500' : model.successRate >= 95 ? 'text-amber-500' : 'text-red-500'}`}
+          {/* Filters */}
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search models..."
+                className="w-full pl-10 pr-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400"
+              />
+            </div>
+            <select
+              value={filterProvider}
+              onChange={(e) => setFilterProvider(e.target.value)}
+              className="px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+            >
+              <option value="">All Providers</option>
+              {providers.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="px-4 py-2 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg text-slate-900 dark:text-white"
+            >
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="beta">Beta</option>
+              <option value="deprecated">Deprecated</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+
+          {/* Models Table */}
+          <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 overflow-hidden">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200 dark:border-navy-700">
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Model
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Provider
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Tier
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Status
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Cost
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Latency
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Success
+                  </th>
+                  <th className="text-left px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Requests
+                  </th>
+                  <th className="text-right px-6 py-4 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-navy-700">
+                {filteredModels.map((model) => (
+                  <tr
+                    key={model.id}
+                    className="hover:bg-slate-50 dark:hover:bg-navy-900/50 transition-colors"
                   >
-                    {model.successRate.toFixed(1)}%
-                  </span>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-slate-700 dark:text-slate-300">
-                    {formatNumber(model.totalRequests)}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => setSelectedModel(model)}
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
-                      title="View Details"
-                    >
-                      <Eye size={16} className="text-slate-400" />
-                    </button>
-                    <button
-                      className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
-                      title="Edit"
-                    >
-                      <Edit size={16} className="text-slate-400" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    <td className="px-6 py-4">
+                      <div>
+                        <div className="font-medium text-slate-900 dark:text-white">
+                          {model.name}
+                        </div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                          {model.modelId}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {model.provider}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">{getTierBadge(model.tier)}</td>
+                    <td className="px-6 py-4">{getStatusBadge(model.status)}</td>
+                    <td className="px-6 py-4">
+                      <div className="text-xs">
+                        <div className="text-slate-700 dark:text-slate-300">
+                          {formatCostPer1k(model.costPer1k)}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {model.avgLatency < 1000
+                          ? `${model.avgLatency}ms`
+                          : `${(model.avgLatency / 1000).toFixed(1)}s`}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`text-sm ${model.successRate >= 99 ? 'text-emerald-500' : model.successRate >= 95 ? 'text-amber-500' : 'text-red-500'}`}
+                      >
+                        {model.successRate.toFixed(1)}%
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {formatNumber(model.totalRequests)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedModel(model)}
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+                          title="View Details"
+                        >
+                          <Eye size={16} className="text-slate-400" />
+                        </button>
+                        <button
+                          className="p-2 hover:bg-slate-100 dark:hover:bg-navy-700 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit size={16} className="text-slate-400" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : null}
 
       {/* Model Detail Modal */}
       {selectedModel && (

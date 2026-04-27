@@ -25,7 +25,9 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
-import { SettingsDivider, SettingsSection, SettingsToggle } from './shared';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
+import { SettingsDivider, SettingsSection } from './shared';
 
 interface NotificationSettingsProps {
   currentUser: User;
@@ -33,7 +35,7 @@ interface NotificationSettingsProps {
 }
 
 // Map provider IDs to Icons
-const PROVIDER_ICONS: Record<string, any> = {
+const PROVIDER_ICONS: Record<string, React.ElementType> = {
   slack: Slack,
   teams: MessageCircle,
   whatsapp: MessageCircle,
@@ -45,7 +47,7 @@ const PROVIDER_ICONS: Record<string, any> = {
 interface Integration {
   id: string;
   provider: string;
-  config: any;
+  config: unknown;
   status: 'active' | 'error' | 'disabled';
 }
 
@@ -69,6 +71,53 @@ const defaultPreferences: NotificationPreferences = {
   mentions: { email: true, inApp: true },
 };
 
+type NotificationPreferencesUpdate = Partial<User> & {
+  notification_preferences?: string;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const normalizeChannelPreferences = (
+  defaults: ChannelPreferences,
+  input: unknown
+): ChannelPreferences => {
+  const next: ChannelPreferences = { ...defaults };
+  if (!isRecord(input)) return next;
+
+  for (const [key, value] of Object.entries(input)) {
+    if (typeof value === 'boolean') {
+      next[key] = value;
+    }
+  }
+
+  return next;
+};
+
+const normalizeNotificationPreferences = (input: unknown): NotificationPreferences => {
+  const source = isRecord(input) ? input : {};
+  return {
+    taskAssignment: normalizeChannelPreferences(
+      defaultPreferences.taskAssignment,
+      source.taskAssignment
+    ),
+    taskUpdates: normalizeChannelPreferences(defaultPreferences.taskUpdates, source.taskUpdates),
+    milestones: normalizeChannelPreferences(defaultPreferences.milestones, source.milestones),
+    mentions: normalizeChannelPreferences(defaultPreferences.mentions, source.mentions),
+  };
+};
+
+const channelPreferencesMatch = (actual: ChannelPreferences, expected: ChannelPreferences) => {
+  const keys = new Set([...Object.keys(actual), ...Object.keys(expected)]);
+  return Array.from(keys).every((key) => Boolean(actual[key]) === Boolean(expected[key]));
+};
+
+const preferencesMatch = (actual: NotificationPreferences, expected: NotificationPreferences) =>
+  channelPreferencesMatch(actual.taskAssignment, expected.taskAssignment) &&
+  channelPreferencesMatch(actual.taskUpdates, expected.taskUpdates) &&
+  channelPreferencesMatch(actual.milestones, expected.milestones) &&
+  channelPreferencesMatch(actual.mentions, expected.mentions);
+
 export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   currentUser,
   onUpdateUser,
@@ -80,6 +129,8 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
@@ -87,13 +138,13 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
   useEffect(() => {
     const fetchPrefs = async () => {
       try {
+        setLoadError(null);
         const data = await Api.getNotificationPreferences(currentUser.id);
-        if (data && Object.keys(data).length > 0) {
-          setPreferences(data);
-          setOriginalPreferences(data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch notification preferences', err);
+        const loaded = normalizeNotificationPreferences(data);
+        setPreferences(loaded);
+        setOriginalPreferences(loaded);
+      } catch (err: unknown) {
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load notification preferences'));
       } finally {
         setLoading(false);
       }
@@ -111,8 +162,8 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
           ? response
           : response.integrations || [];
         setIntegrations(data.filter((i) => i.status === 'active' || !i.status));
-      } catch (err) {
-        console.error('Failed to fetch integrations', err);
+      } catch {
+        setIntegrations([]);
       }
     };
     fetchIntegrations();
@@ -120,22 +171,28 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
 
   const handleSave = useCallback(async () => {
     setSaving(true);
+    setSaveError(null);
     try {
       await Api.saveNotificationPreferences(currentUser.id, preferences);
       const persisted = await Api.getNotificationPreferences(currentUser.id);
-      const next =
-        persisted && Object.keys(persisted).length > 0
-          ? ({ ...defaultPreferences, ...persisted } as NotificationPreferences)
-          : preferences;
+      const next = normalizeNotificationPreferences(persisted);
+      if (!preferencesMatch(next, preferences)) {
+        throw new Error('Notification preferences were not confirmed by the server');
+      }
       setPreferences(next);
       setOriginalPreferences(next);
       toast.success(t('settings.notifications.saved', 'Notification preferences saved'));
       onUpdateUser({
         ...currentUser,
         notification_preferences: JSON.stringify(next),
-      } as any);
-    } catch (err) {
-      toast.error(t('settings.notifications.error', 'Failed to save preferences'));
+      } as NotificationPreferencesUpdate);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.notifications.error', 'Failed to save preferences')
+      );
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -201,108 +258,125 @@ export const NotificationSettings: React.FC<NotificationSettingsProps> = ({
       )}
       cardId="settings-notifications"
       isDirty={isDirty}
-      onSave={handleSave}
+      onSave={loadError ? undefined : handleSave}
       saving={saving}
       loading={loading}
     >
       <div className="space-y-6">
-        {/* Channel Headers */}
-        <div className="grid grid-cols-12 gap-4 pb-4 border-b border-white/10">
-          <div className="col-span-5 text-sm font-medium text-slate-400 dark:text-slate-500">
-            {t('settings.notifications.activity', 'Activity')}
-          </div>
+        {loadError && (
+          <DegradedState title="Notification preferences unavailable" description={loadError} />
+        )}
+
+        {saveError && (
           <div
-            className="col-span-7 grid gap-4"
-            style={{ gridTemplateColumns: `repeat(${2 + integrations.length}, 1fr)` }}
+            role="alert"
+            className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
           >
-            <ChannelHeader icon={Bell} label={t('settings.notifications.inApp', 'In-App')} />
-            <ChannelHeader icon={Mail} label={t('settings.notifications.email', 'Email')} />
-            {integrations.map((int) => {
-              const Icon = PROVIDER_ICONS[int.provider] || Hash;
-              return (
-                <ChannelHeader
-                  key={int.id}
-                  icon={Icon}
-                  label={t(
-                    `settings.notifications.provider.${int.provider}`,
-                    int.provider.charAt(0).toUpperCase() + int.provider.slice(1)
-                  )}
+            {saveError}
+          </div>
+        )}
+
+        {!loadError && (
+          <>
+            {/* Channel Headers */}
+            <div className="grid grid-cols-12 gap-4 pb-4 border-b border-white/10">
+              <div className="col-span-5 text-sm font-medium text-slate-400 dark:text-slate-500">
+                {t('settings.notifications.activity', 'Activity')}
+              </div>
+              <div
+                className="col-span-7 grid gap-4"
+                style={{ gridTemplateColumns: `repeat(${2 + integrations.length}, 1fr)` }}
+              >
+                <ChannelHeader icon={Bell} label={t('settings.notifications.inApp', 'In-App')} />
+                <ChannelHeader icon={Mail} label={t('settings.notifications.email', 'Email')} />
+                {integrations.map((int) => {
+                  const Icon = PROVIDER_ICONS[int.provider] || Hash;
+                  return (
+                    <ChannelHeader
+                      key={int.id}
+                      icon={Icon}
+                      label={t(
+                        `settings.notifications.provider.${int.provider}`,
+                        int.provider.charAt(0).toUpperCase() + int.provider.slice(1)
+                      )}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Category Rows */}
+            <div className="space-y-1">
+              {categories.map((category, index) => (
+                <NotificationRow
+                  key={category.key}
+                  icon={category.icon}
+                  title={category.title}
+                  description={category.description}
+                  preferences={preferences[category.key]}
+                  integrations={integrations}
+                  onToggle={(channel) => toggle(category.key, channel)}
+                  isLast={index === categories.length - 1}
                 />
-              );
-            })}
-          </div>
-        </div>
+              ))}
+            </div>
 
-        {/* Category Rows */}
-        <div className="space-y-1">
-          {categories.map((category, index) => (
-            <NotificationRow
-              key={category.key}
-              icon={category.icon}
-              title={category.title}
-              description={category.description}
-              preferences={preferences[category.key]}
-              integrations={integrations}
-              onToggle={(channel) => toggle(category.key, channel)}
-              isLast={index === categories.length - 1}
-            />
-          ))}
-        </div>
+            <SettingsDivider />
 
-        <SettingsDivider />
-
-        {/* Quick Actions */}
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => {
-              const all: NotificationPreferences = {
-                taskAssignment: { email: true, inApp: true },
-                taskUpdates: { email: true, inApp: true },
-                milestones: { email: true, inApp: true },
-                mentions: { email: true, inApp: true },
-              };
-              integrations.forEach((int) => {
-                Object.keys(all).forEach((key) => {
-                  (all[key as keyof NotificationPreferences] as any)[int.provider] = true;
-                });
-              });
-              setPreferences(all);
-            }}
-            className="px-3 py-1.5 text-sm text-emerald-400 hover:text-emerald-300 
+            {/* Quick Actions */}
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={() => {
+                  const all: NotificationPreferences = {
+                    taskAssignment: { email: true, inApp: true },
+                    taskUpdates: { email: true, inApp: true },
+                    milestones: { email: true, inApp: true },
+                    mentions: { email: true, inApp: true },
+                  };
+                  integrations.forEach((int) => {
+                    Object.keys(all).forEach((key) => {
+                      all[key as keyof NotificationPreferences][int.provider] = true;
+                    });
+                  });
+                  setPreferences(all);
+                }}
+                className="px-3 py-1.5 text-sm text-emerald-400 hover:text-emerald-300
                                  bg-emerald-500/10 hover:bg-emerald-500/20 rounded-lg transition-colors"
-          >
-            <Check size={14} className="inline mr-1.5" />
-            {t('settings.notifications.enableAll', 'Enable All')}
-          </button>
-          <button
-            onClick={() => {
-              const minimal: NotificationPreferences = {
-                taskAssignment: { email: false, inApp: true },
-                taskUpdates: { email: false, inApp: false },
-                milestones: { email: false, inApp: true },
-                mentions: { email: true, inApp: true },
-              };
-              setPreferences(minimal);
-            }}
-            className="px-3 py-1.5 text-sm text-amber-400 hover:text-amber-300 
+              >
+                <Check size={14} className="inline mr-1.5" />
+                {t('settings.notifications.enableAll', 'Enable All')}
+              </button>
+              <button
+                onClick={() => {
+                  const minimal: NotificationPreferences = {
+                    taskAssignment: { email: false, inApp: true },
+                    taskUpdates: { email: false, inApp: false },
+                    milestones: { email: false, inApp: true },
+                    mentions: { email: true, inApp: true },
+                  };
+                  setPreferences(minimal);
+                }}
+                className="px-3 py-1.5 text-sm text-amber-400 hover:text-amber-300
                                  bg-amber-500/10 hover:bg-amber-500/20 rounded-lg transition-colors"
-          >
-            <AlertCircle size={14} className="inline mr-1.5" />
-            {t('settings.notifications.minimal', 'Minimal')}
-          </button>
-        </div>
+              >
+                <AlertCircle size={14} className="inline mr-1.5" />
+                {t('settings.notifications.minimal', 'Minimal')}
+              </button>
+            </div>
 
-        {/* Info Box */}
-        {integrations.length > 0 && (
-          <div className="p-4 bg-violet-600/5 border border-violet-500/20 rounded-lg">
-            <p className="text-sm text-slate-400 dark:text-slate-500">
-              <Bell size={14} className="inline mr-2 text-violet-400" />
-              {t(
-                'settings.notifications.integrationNote',
-                `You have ${integrations.length} connected integration(s). Notifications can be sent to these channels as well.`
-              )}
-            </p>
-          </div>
+            {/* Info Box */}
+            {integrations.length > 0 && (
+              <div className="p-4 bg-violet-600/5 border border-violet-500/20 rounded-lg">
+                <p className="text-sm text-slate-400 dark:text-slate-500">
+                  <Bell size={14} className="inline mr-2 text-violet-400" />
+                  {t(
+                    'settings.notifications.integrationNote',
+                    `You have ${integrations.length} connected integration(s). Notifications can be sent to these channels as well.`
+                  )}
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </SettingsSection>

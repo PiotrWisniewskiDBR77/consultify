@@ -29,6 +29,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 
 interface ConfigItem {
@@ -55,6 +56,11 @@ interface ConfigVersion {
   reason?: string;
 }
 
+type ConfigCreatePayload = Pick<
+  ConfigItem,
+  'key' | 'value' | 'type' | 'category' | 'description' | 'is_sensitive'
+>;
+
 const CATEGORIES = [
   { id: 'all', label: 'All', icon: '📋' },
   { id: 'general', label: 'General', icon: '⚙️' },
@@ -74,6 +80,116 @@ const TYPE_ICONS = {
   boolean: '✅',
   json: '{ }',
   secret: '🔐',
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const asText = (value: unknown, fallback = 'Unknown') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
+const toBool = (value: unknown) =>
+  value === true || value === 'true' || value === 1 || value === '1';
+
+const normalizeConfigType = (value: unknown): ConfigItem['type'] => {
+  if (
+    value === 'string' ||
+    value === 'number' ||
+    value === 'boolean' ||
+    value === 'json' ||
+    value === 'secret'
+  ) {
+    return value;
+  }
+  return 'string';
+};
+
+const normalizeConfigItem = (value: unknown): ConfigItem | null => {
+  if (!isRecord(value)) return null;
+  return {
+    id: asText(value.id, ''),
+    key: asText(value.key),
+    value: asText(value.value, ''),
+    type: normalizeConfigType(value.type),
+    category: asText(value.category, 'general'),
+    description:
+      value.description === null || value.description === undefined
+        ? undefined
+        : String(value.description),
+    is_sensitive: toBool(value.is_sensitive),
+    is_locked: toBool(value.is_locked),
+    environment:
+      value.environment === null || value.environment === undefined
+        ? undefined
+        : String(value.environment),
+    updated_at: asText(value.updated_at, ''),
+    updated_by:
+      value.updated_by === null || value.updated_by === undefined
+        ? undefined
+        : String(value.updated_by),
+  };
+};
+
+const normalizeConfigs = (data: unknown): ConfigItem[] => {
+  const candidate = Array.isArray(data)
+    ? data
+    : isRecord(data)
+      ? data.configs || data.items || data.data
+      : null;
+  if (!Array.isArray(candidate)) {
+    throw new Error('System configuration response was not a list');
+  }
+  return candidate.map(normalizeConfigItem).filter((config): config is ConfigItem => !!config);
+};
+
+const getCreatedConfigId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const config = isRecord(result.config) ? result.config : null;
+  return String(
+    result.id || config?.id || data?.id || (isRecord(data?.config) ? data.config.id : '') || ''
+  );
+};
+
+const configMatchesCreate = (
+  config: ConfigItem,
+  expected: ConfigCreatePayload,
+  expectedId: string
+) =>
+  config.id === expectedId &&
+  config.key === expected.key &&
+  config.value === expected.value &&
+  config.category === expected.category &&
+  config.is_sensitive === expected.is_sensitive;
+
+const formatDateTime = (value: string) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
+
+const normalizeVersions = (data: unknown): ConfigVersion[] => {
+  const candidate = Array.isArray(data)
+    ? data
+    : isRecord(data)
+      ? data.versions || data.items || data.data
+      : null;
+  if (Array.isArray(candidate)) {
+    return candidate.filter(isRecord).map((version) => ({
+      id: asText(version.id, ''),
+      config_key: asText(version.config_key, ''),
+      old_value: asText(version.old_value, ''),
+      new_value: asText(version.new_value, ''),
+      changed_at: asText(version.changed_at, ''),
+      changed_by: asText(version.changed_by),
+      reason:
+        version.reason === null || version.reason === undefined
+          ? undefined
+          : String(version.reason),
+    }));
+  }
+  return [];
 };
 
 export const EnterpriseConfigurationPanel: React.FC = () => {
@@ -96,24 +212,28 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   ]);
   const [unsavedChanges, setUnsavedChanges] = useState<Record<string, string>>({});
   const [revealedSecrets, setRevealedSecrets] = useState<Set<string>>(new Set());
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const handleRollback = async (version: ConfigVersion) => {
     if (!historyConfig) return;
     const reason = window.prompt('Rollback reason (optional):') || undefined;
     try {
       await Api.rollbackSystemConfig(historyConfig.id, version.id, reason);
+      const refreshed = await fetchConfigs();
+      if (
+        !refreshed?.some(
+          (config) => config.id === historyConfig.id && config.value === version.new_value
+        )
+      ) {
+        throw new Error('Configuration rollback was not confirmed by the server');
+      }
+      const data = await Api.getSystemConfigVersions(historyConfig.id);
+      setVersions(normalizeVersions(data));
       toast.success('Rollback completed');
-      // Refresh both the configs list and the versions list
-      await Promise.allSettled([
-        fetchConfigs(),
-        (async () => {
-          const data = await Api.getSystemConfigVersions(historyConfig.id);
-          setVersions((data as any)?.versions || []);
-        })(),
-      ]);
-    } catch (e) {
-      console.error('Rollback failed:', e);
-      toast.error('Failed to rollback configuration');
+    } catch (error) {
+      const message = normalizeApiErrorMessage(error, 'Failed to rollback configuration');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -122,13 +242,16 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
     try {
       setLoadError(null);
       const data = await Api.getSystemConfigs(selectedEnvironment);
-      setConfigs(Array.isArray(data) ? data : []);
+      const configsData = normalizeConfigs(data);
+      setConfigs(configsData);
+      return configsData;
     } catch (error) {
-      console.error('[Config] Failed to fetch from API:', error);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load system configuration');
-      toast.error('Failed to load system configuration');
+      const message = normalizeApiErrorMessage(error, 'Failed to load system configuration');
+      setLoadError(message);
+      toast.error(message);
       setConfigs([]);
       setUnsavedChanges({});
+      return null;
     } finally {
       setLoading(false);
     }
@@ -139,30 +262,59 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
   }, [fetchConfigs, selectedEnvironment]);
 
   const handleSaveConfig = async (config: ConfigItem, newValue: string) => {
+    setActionError(null);
     try {
       await Api.updateSystemConfig(config.id, { value: newValue });
-      toast.success(`Configuration "${config.key}" updated`);
+      const refreshed = await fetchConfigs();
+      if (!refreshed?.some((item) => item.id === config.id && item.value === newValue)) {
+        throw new Error('Configuration update was not confirmed by the server');
+      }
       setUnsavedChanges((prev) => {
         const next = { ...prev };
         delete next[config.id];
         return next;
       });
-      fetchConfigs();
       setEditingConfig(null);
+      toast.success(`Configuration "${config.key}" updated`);
     } catch (error) {
-      toast.error('Failed to update configuration');
+      const message = normalizeApiErrorMessage(error, 'Failed to update configuration');
+      setActionError(message);
+      toast.error(message);
+      throw new Error(message);
     }
   };
 
   const handleDeleteConfig = async (id: string) => {
     if (!confirm('Are you sure you want to delete this configuration?')) return;
+    setActionError(null);
     try {
       await Api.deleteSystemConfig(id);
+      const refreshed = await fetchConfigs();
+      if (!refreshed || refreshed.some((config) => config.id === id)) {
+        throw new Error('Configuration deletion was not confirmed by the server');
+      }
       toast.success('Configuration deleted');
-      fetchConfigs();
     } catch (error) {
-      toast.error('Failed to delete configuration');
+      const message = normalizeApiErrorMessage(error, 'Failed to delete configuration');
+      setActionError(message);
+      toast.error(message);
     }
+  };
+
+  const handleAddConfigSaved = async (expected: ConfigCreatePayload, createdId: string) => {
+    setActionError(null);
+    if (!createdId) {
+      const message = 'Configuration creation response was incomplete';
+      setActionError(message);
+      throw new Error(message);
+    }
+    const refreshed = await fetchConfigs();
+    if (!refreshed?.some((config) => configMatchesCreate(config, expected, createdId))) {
+      const message = 'Configuration creation was not confirmed by the server';
+      setActionError(message);
+      throw new Error(message);
+    }
+    setShowAddModal(false);
   };
 
   const handleViewHistory = async (config: ConfigItem) => {
@@ -171,7 +323,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
     setHistoryLoadError(null);
     try {
       const data = await Api.getSystemConfigVersions(config.id);
-      setVersions((data as any)?.versions || []);
+      setVersions(normalizeVersions(data));
     } catch (error) {
       setHistoryLoadError(
         error instanceof Error ? error.message : 'Failed to load configuration version history'
@@ -327,6 +479,15 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       </div>
 
       {/* Config Stats */}
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
+        </div>
+      )}
+
       {loadError ? (
         <div className="rounded-xl border border-slate-200 bg-white p-6 dark:border-white/10 dark:bg-navy-950/20">
           <DegradedState title="Configuration overview unavailable" description={loadError} />
@@ -436,10 +597,7 @@ export const EnterpriseConfigurationPanel: React.FC = () => {
       {showAddModal && (
         <ConfigAddModal
           onClose={() => setShowAddModal(false)}
-          onSave={() => {
-            fetchConfigs();
-            setShowAddModal(false);
-          }}
+          onSave={handleAddConfigSaved}
           categories={CATEGORIES.filter((c) => c.id !== 'all')}
         />
       )}
@@ -550,16 +708,23 @@ const ConfigRow: React.FC<{
 const ConfigEditModal: React.FC<{
   config: ConfigItem;
   onClose: () => void;
-  onSave: (value: string) => void;
+  onSave: (value: string) => Promise<void>;
 }> = ({ config, onClose, onSave }) => {
   const [value, setValue] = useState(config.value);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    await onSave(value);
-    setSaving(false);
+    setSaveError(null);
+    try {
+      await onSave(value);
+    } catch (error) {
+      setSaveError(normalizeApiErrorMessage(error, 'Failed to update configuration'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -576,6 +741,15 @@ const ConfigEditModal: React.FC<{
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {saveError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-300"
+            >
+              {saveError}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Key
@@ -615,6 +789,7 @@ const ConfigEditModal: React.FC<{
                       : 'text'
                 }
                 value={value}
+                aria-label="Configuration Value"
                 onChange={(e) => setValue(e.target.value)}
                 className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               />
@@ -653,7 +828,7 @@ const ConfigEditModal: React.FC<{
 // Add Modal
 const ConfigAddModal: React.FC<{
   onClose: () => void;
-  onSave: () => void;
+  onSave: (expected: ConfigCreatePayload, createdId: string) => Promise<void>;
   categories: { id: string; label: string }[];
 }> = ({ onClose, onSave, categories }) => {
   const [formData, setFormData] = useState({
@@ -665,22 +840,26 @@ const ConfigAddModal: React.FC<{
     is_sensitive: false,
   });
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
+    setSaveError(null);
     try {
-      await Api.createSystemConfig({
+      const result = await Api.createSystemConfig({
         key: formData.key,
         value: formData.value,
         description: formData.description || undefined,
         category: formData.category || undefined,
         is_sensitive: !!formData.is_sensitive,
       });
+      await onSave(formData, getCreatedConfigId(result));
       toast.success('Configuration created');
-      onSave();
     } catch (error) {
-      toast.error('Failed to create configuration');
+      const message = normalizeApiErrorMessage(error, 'Failed to create configuration');
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -700,6 +879,15 @@ const ConfigAddModal: React.FC<{
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {saveError && (
+            <div
+              role="alert"
+              className="rounded-lg border border-red-500/30 bg-red-500/5 p-3 text-sm text-red-600 dark:text-red-300"
+            >
+              {saveError}
+            </div>
+          )}
+
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Key *
@@ -770,6 +958,7 @@ const ConfigAddModal: React.FC<{
                 type={formData.type === 'number' ? 'number' : 'text'}
                 required
                 value={formData.value}
+                aria-label="Configuration Value"
                 onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-50/30 dark:bg-navy-950/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-white"
               />
@@ -877,7 +1066,7 @@ const ConfigHistoryModal: React.FC<{
                   </span>
                 </div>
                 <span className="text-xs text-slate-500 dark:text-slate-400">
-                  {new Date(version.changed_at).toLocaleString()}
+                  {formatDateTime(version.changed_at)}
                 </span>
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">

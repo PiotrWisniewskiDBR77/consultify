@@ -16,9 +16,6 @@ import {
   Check,
   CheckCircle,
   ChevronDown,
-  Clock,
-  Copy,
-  Download,
   Eye,
   EyeOff,
   Fingerprint,
@@ -32,7 +29,6 @@ import {
   Monitor,
   Phone,
   RefreshCw,
-  Shield,
   ShieldCheck,
   ShieldOff,
   Smartphone,
@@ -40,13 +36,14 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { cn } from '../../../lib/utils';
 import { Api } from '../../../services/api';
 import { User } from '../../../types';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 import { DegradedState } from '../../Admin/AdminState';
 import { MFASetup } from '../../Profile/MFASetup';
 import { SettingsDivider, SettingsSection } from '../shared';
@@ -76,6 +73,16 @@ interface LoginEvent {
   location: string;
   ip: string;
   device: string;
+}
+
+interface ActiveSessionsResponse {
+  sessions?: Session[];
+}
+
+interface RecoveryOptionsResponse {
+  recoveryEmail?: string;
+  recoveryPhone?: string;
+  backupCodesCount?: number;
 }
 
 type ExpandedPanel = 'password' | 'mfa' | 'recovery' | null;
@@ -131,17 +138,21 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
       ]);
 
       if (sessionsRes.status === 'fulfilled') {
-        setSessions((sessionsRes.value as any)?.sessions || []);
+        setSessions((sessionsRes.value as ActiveSessionsResponse)?.sessions || []);
       } else {
         setSessions([]);
-        setSessionsLoadError('Failed to load active sessions');
+        setSessionsLoadError(
+          normalizeApiErrorMessage(sessionsRes.reason, 'Failed to load active sessions')
+        );
       }
 
       if (historyRes.status === 'fulfilled') {
         setLoginHistory(Array.isArray(historyRes.value) ? historyRes.value.slice(0, 10) : []);
       } else {
         setLoginHistory([]);
-        setLoginHistoryLoadError('Failed to load login history');
+        setLoginHistoryLoadError(
+          normalizeApiErrorMessage(historyRes.reason, 'Failed to load login history')
+        );
       }
 
       if (recoveryRes.status === 'fulfilled' && recoveryRes.value) {
@@ -149,10 +160,20 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
         setRecoveryPhone(recoveryRes.value.recoveryPhone || '');
         setBackupCodesCount(recoveryRes.value.backupCodesCount || 0);
       } else if (recoveryRes.status === 'rejected') {
-        setRecoveryLoadError('Failed to load recovery options');
+        setRecoveryLoadError(
+          normalizeApiErrorMessage(recoveryRes.reason, 'Failed to load recovery options')
+        );
       }
-    } catch (error) {
-      console.error('Failed to load auth data:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load authentication data');
+      setSessions([]);
+      setLoginHistory([]);
+      setRecoveryEmail('');
+      setRecoveryPhone('');
+      setBackupCodesCount(0);
+      setSessionsLoadError(message);
+      setLoginHistoryLoadError(message);
+      setRecoveryLoadError(message);
     } finally {
       setLoading(false);
     }
@@ -211,20 +232,30 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
   const terminateSession = async (sessionId: string) => {
     try {
       await Api.revokeSession(sessionId);
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+      await refreshSessions();
       toast.success(t('settings.security.sessionTerminated', 'Session terminated'));
-    } catch (_error) {
-      toast.error(t('settings.security.sessionError', 'Failed to terminate session'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.security.sessionError', 'Failed to terminate session')
+        )
+      );
     }
   };
 
   const revokeAllSessions = async () => {
     try {
       await Api.revokeAllSessions();
-      setSessions((prev) => prev.filter((s) => s.current));
+      await refreshSessions();
       toast.success(t('settings.security.allSessionsRevoked', 'All other sessions revoked'));
-    } catch (_error) {
-      toast.error(t('settings.security.revokeAllError', 'Failed to revoke sessions'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.security.revokeAllError', 'Failed to revoke sessions')
+        )
+      );
     }
   };
 
@@ -232,11 +263,11 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
     setLoadingSessions(true);
     try {
       const response = await Api.getActiveSessions();
-      setSessions((response as any)?.sessions || []);
+      setSessions((response as ActiveSessionsResponse)?.sessions || []);
       setSessionsLoadError(null);
-    } catch (_error) {
+    } catch (error: unknown) {
       setSessions([]);
-      setSessionsLoadError('Failed to load active sessions');
+      setSessionsLoadError(normalizeApiErrorMessage(error, 'Failed to load active sessions'));
       toast.error(t('settings.security.sessionsError', 'Failed to load sessions'));
     } finally {
       setLoadingSessions(false);
@@ -253,7 +284,7 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
         editingRecovery === 'email' ? { recoveryEmail: editValue } : { recoveryPhone: editValue };
 
       await Api.put('/settings/recovery', updates);
-      const persisted = await Api.get('/settings/recovery');
+      const persisted = (await Api.get('/settings/recovery')) as RecoveryOptionsResponse | null;
       if (!persisted) {
         throw new Error('Recovery options were saved but could not be reloaded');
       }
@@ -660,159 +691,170 @@ export const AuthenticationAccessPage: React.FC<AuthenticationAccessPageProps> =
             {recoveryLoadError && (
               <DegradedState title="Recovery options unavailable" description={recoveryLoadError} />
             )}
-            {/* Recovery Email */}
-            <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-blue-500/10 rounded-lg">
-                    <Mail size={14} className="text-blue-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      {t('settings.authAccess.recoveryEmail', 'Recovery Email')}
-                    </p>
+            {!recoveryLoadError && (
+              <>
+                {/* Recovery Email */}
+                <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 bg-blue-500/10 rounded-lg">
+                        <Mail size={14} className="text-blue-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {t('settings.authAccess.recoveryEmail', 'Recovery Email')}
+                        </p>
+                        {editingRecovery !== 'email' && (
+                          <p className="text-xs text-slate-500">
+                            {recoveryEmail
+                              ? maskEmail(recoveryEmail)
+                              : t('settings.authAccess.notConfigured', 'Not configured')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                     {editingRecovery !== 'email' && (
-                      <p className="text-xs text-slate-500">
-                        {recoveryEmail
-                          ? maskEmail(recoveryEmail)
-                          : t('settings.authAccess.notConfigured', 'Not configured')}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        {recoveryEmail && <Check size={14} className="text-emerald-400" />}
+                        <button
+                          onClick={() => {
+                            setEditingRecovery('email');
+                            setEditValue(recoveryEmail);
+                          }}
+                          className="text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-md hover:bg-violet-500/10 transition-colors"
+                        >
+                          {recoveryEmail ? t('common.change', 'Change') : t('common.add', 'Add')}
+                        </button>
+                      </div>
                     )}
                   </div>
+                  {editingRecovery === 'email' && (
+                    <div className="flex gap-2 mt-3">
+                      <input
+                        type="email"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        placeholder={t(
+                          'settings.authAccess.emailPlaceholder',
+                          'Enter recovery email'
+                        )}
+                        className="flex-1 px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      />
+                      <button
+                        onClick={handleSaveRecovery}
+                        disabled={savingRecovery}
+                        className="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                      >
+                        {savingRecovery
+                          ? t('common.saving', 'Saving...')
+                          : t('common.save', 'Save')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingRecovery(null);
+                          setEditValue('');
+                        }}
+                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
+                      >
+                        {t('common.cancel', 'Cancel')}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                {editingRecovery !== 'email' && (
-                  <div className="flex items-center gap-2">
-                    {recoveryEmail && <Check size={14} className="text-emerald-400" />}
-                    <button
-                      onClick={() => {
-                        setEditingRecovery('email');
-                        setEditValue(recoveryEmail);
-                      }}
-                      className="text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-md hover:bg-violet-500/10 transition-colors"
-                    >
-                      {recoveryEmail ? t('common.change', 'Change') : t('common.add', 'Add')}
-                    </button>
-                  </div>
-                )}
-              </div>
-              {editingRecovery === 'email' && (
-                <div className="flex gap-2 mt-3">
-                  <input
-                    type="email"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    placeholder={t('settings.authAccess.emailPlaceholder', 'Enter recovery email')}
-                    className="flex-1 px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={handleSaveRecovery}
-                    disabled={savingRecovery}
-                    className="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
-                  >
-                    {savingRecovery ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingRecovery(null);
-                      setEditValue('');
-                    }}
-                    className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
-                  >
-                    {t('common.cancel', 'Cancel')}
-                  </button>
-                </div>
-              )}
-            </div>
 
-            {/* Recovery Phone */}
-            <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-emerald-500/10 rounded-lg">
-                    <Phone size={14} className="text-emerald-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      {t('settings.authAccess.recoveryPhone', 'Recovery Phone')}
-                    </p>
+                {/* Recovery Phone */}
+                <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 bg-emerald-500/10 rounded-lg">
+                        <Phone size={14} className="text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {t('settings.authAccess.recoveryPhone', 'Recovery Phone')}
+                        </p>
+                        {editingRecovery !== 'phone' && (
+                          <p className="text-xs text-slate-500">
+                            {recoveryPhone
+                              ? maskPhone(recoveryPhone)
+                              : t('settings.authAccess.notConfigured', 'Not configured')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                     {editingRecovery !== 'phone' && (
-                      <p className="text-xs text-slate-500">
-                        {recoveryPhone
-                          ? maskPhone(recoveryPhone)
-                          : t('settings.authAccess.notConfigured', 'Not configured')}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        {recoveryPhone && <Check size={14} className="text-emerald-400" />}
+                        <button
+                          onClick={() => {
+                            setEditingRecovery('phone');
+                            setEditValue(recoveryPhone);
+                          }}
+                          className="text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-md hover:bg-violet-500/10 transition-colors"
+                        >
+                          {recoveryPhone ? t('common.change', 'Change') : t('common.add', 'Add')}
+                        </button>
+                      </div>
                     )}
                   </div>
+                  {editingRecovery === 'phone' && (
+                    <div className="flex gap-2 mt-3">
+                      <input
+                        type="tel"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        placeholder={t('settings.authAccess.phonePlaceholder', '+48...')}
+                        className="flex-1 px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+                      />
+                      <button
+                        onClick={handleSaveRecovery}
+                        disabled={savingRecovery}
+                        className="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+                      >
+                        {savingRecovery
+                          ? t('common.saving', 'Saving...')
+                          : t('common.save', 'Save')}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingRecovery(null);
+                          setEditValue('');
+                        }}
+                        className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
+                      >
+                        {t('common.cancel', 'Cancel')}
+                      </button>
+                    </div>
+                  )}
                 </div>
-                {editingRecovery !== 'phone' && (
-                  <div className="flex items-center gap-2">
-                    {recoveryPhone && <Check size={14} className="text-emerald-400" />}
-                    <button
-                      onClick={() => {
-                        setEditingRecovery('phone');
-                        setEditValue(recoveryPhone);
-                      }}
-                      className="text-xs text-violet-400 hover:text-violet-300 px-2 py-1 rounded-md hover:bg-violet-500/10 transition-colors"
-                    >
-                      {recoveryPhone ? t('common.change', 'Change') : t('common.add', 'Add')}
-                    </button>
-                  </div>
-                )}
-              </div>
-              {editingRecovery === 'phone' && (
-                <div className="flex gap-2 mt-3">
-                  <input
-                    type="tel"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    placeholder={t('settings.authAccess.phonePlaceholder', '+48...')}
-                    className="flex-1 px-3 py-2 bg-navy-800 border border-white/10 rounded-lg text-white text-sm placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent"
-                  />
-                  <button
-                    onClick={handleSaveRecovery}
-                    disabled={savingRecovery}
-                    className="px-3 py-2 bg-violet-600 hover:bg-violet-500 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
-                  >
-                    {savingRecovery ? t('common.saving', 'Saving...') : t('common.save', 'Save')}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEditingRecovery(null);
-                      setEditValue('');
-                    }}
-                    className="px-3 py-2 bg-white/5 border border-white/10 text-slate-300 rounded-lg text-xs font-medium hover:bg-white/10 transition-colors"
-                  >
-                    {t('common.cancel', 'Cancel')}
-                  </button>
-                </div>
-              )}
-            </div>
 
-            {/* Backup Codes */}
-            <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-1.5 bg-violet-500/10 rounded-lg">
-                    <Key size={14} className="text-violet-400" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      {t('settings.authAccess.backupCodes', 'Backup Codes')}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      {backupCodesCount > 0
-                        ? t('settings.authAccess.codesRemaining', '{{count}} codes remaining', {
-                            count: backupCodesCount,
-                          })
-                        : t('settings.authAccess.noCodes', 'No backup codes generated')}
-                    </p>
+                {/* Backup Codes */}
+                <div className="bg-navy-900/30 border border-white/5 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-1.5 bg-violet-500/10 rounded-lg">
+                        <Key size={14} className="text-violet-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-white">
+                          {t('settings.authAccess.backupCodes', 'Backup Codes')}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {backupCodesCount > 0
+                            ? t('settings.authAccess.codesRemaining', '{{count}} codes remaining', {
+                                count: backupCodesCount,
+                              })
+                            : t('settings.authAccess.noCodes', 'No backup codes generated')}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {backupCodesCount > 0 && <Check size={14} className="text-emerald-400" />}
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {backupCodesCount > 0 && <Check size={14} className="text-emerald-400" />}
-                </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>

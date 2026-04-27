@@ -23,6 +23,7 @@ import { toast } from 'react-hot-toast';
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface Permission {
   key: string;
@@ -44,6 +45,128 @@ interface PermissionsStats {
   categoryBreakdown: Record<string, number>;
 }
 
+interface PermissionsSnapshot {
+  permissions: Permission[];
+  matrix: PermissionMatrix;
+  stats: PermissionsStats;
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value && typeof value === 'object' && !Array.isArray(value));
+
+const groupPermissionsByCategory = (permissions: Permission[]) =>
+  permissions.reduce<Record<string, Permission[]>>((acc, permission) => {
+    const category = permission.category || 'general';
+    acc[category] = [...(acc[category] || []), permission];
+    return acc;
+  }, {});
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const normalizePermissions = (value: unknown): Permission[] => {
+  const list = getListPayload<Permission>(value, ['permissions', 'items']);
+  const data = isRecord(value) && isRecord(value.data) ? value.data : null;
+  const hasListShape =
+    Array.isArray(value) ||
+    (isRecord(value) &&
+      ('data' in value ||
+        'permissions' in value ||
+        'items' in value ||
+        (data && ('permissions' in data || 'items' in data))));
+  if (!hasListShape) {
+    throw new Error('Permissions response was not a list');
+  }
+  return list.filter(
+    (permission): permission is Permission =>
+      isRecord(permission) &&
+      typeof permission.key === 'string' &&
+      typeof permission.description === 'string' &&
+      typeof permission.category === 'string'
+  );
+};
+
+const normalizeMatrix = (value: unknown, permissions: Permission[]): PermissionMatrix => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload)) {
+    throw new Error('Permissions matrix response was not an object');
+  }
+  return {
+    categories: isRecord(payload.categories)
+      ? (payload.categories as Record<string, Permission[]>)
+      : groupPermissionsByCategory(permissions),
+    roles: Array.isArray(payload.roles) ? (payload.roles as PermissionMatrix['roles']) : [],
+    matrix: isRecord(payload.matrix)
+      ? (payload.matrix as Record<string, Record<string, boolean>>)
+      : {},
+  };
+};
+
+const getRoleName = (role: string | { name: string }) =>
+  typeof role === 'string' ? role : role.name;
+
+const rolePermissionsMatch = (
+  snapshot: PermissionsSnapshot,
+  sourceRole: string,
+  targetRole: string
+) =>
+  snapshot.permissions.every(
+    (permission) =>
+      Boolean(snapshot.matrix.matrix[sourceRole]?.[permission.key]) ===
+      Boolean(snapshot.matrix.matrix[targetRole]?.[permission.key])
+  );
+
+const normalizeStats = (value: unknown, permissions: Permission[]): PermissionsStats => {
+  const payload = getObjectPayload(value);
+  if (isRecord(payload) && 'totalPermissions' in payload) {
+    return {
+      totalPermissions:
+        typeof payload.totalPermissions === 'number'
+          ? payload.totalPermissions
+          : permissions.length,
+      systemPermissions:
+        typeof payload.systemPermissions === 'number' ? payload.systemPermissions : 0,
+      customPermissions:
+        typeof payload.customPermissions === 'number' ? payload.customPermissions : 0,
+      roleAssignments: isRecord(payload.roleAssignments)
+        ? (payload.roleAssignments as Record<string, number>)
+        : {},
+      categoryBreakdown: isRecord(payload.categoryBreakdown)
+        ? (payload.categoryBreakdown as Record<string, number>)
+        : {},
+    };
+  }
+  const categoryBreakdown = permissions.reduce<Record<string, number>>((acc, permission) => {
+    acc[permission.category] = (acc[permission.category] || 0) + 1;
+    return acc;
+  }, {});
+  return {
+    totalPermissions: permissions.length,
+    systemPermissions: 0,
+    customPermissions: permissions.length,
+    roleAssignments: {},
+    categoryBreakdown,
+  };
+};
+
 const PermissionsMatrixView: React.FC = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
   const [matrix, setMatrix] = useState<PermissionMatrix | null>(null);
@@ -63,7 +186,7 @@ const PermissionsMatrixView: React.FC = () => {
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (): Promise<PermissionsSnapshot | null> => {
     try {
       setLoading(true);
       setLoadError(null);
@@ -73,18 +196,36 @@ const PermissionsMatrixView: React.FC = () => {
         Api.getPermissionsMatrix(),
         Api.getPermissionsStats(),
       ]);
-      setPermissions(permsData);
-      setMatrix(matrixData as any);
-      setStats(statsData as any);
-    } catch (err: any) {
-      setLoadError(err.message || 'Failed to load permissions');
+      const permissions = normalizePermissions(permsData);
+      const snapshot = {
+        permissions,
+        matrix: normalizeMatrix(matrixData, permissions),
+        stats: normalizeStats(statsData, permissions),
+      };
+      setPermissions(snapshot.permissions);
+      setMatrix(snapshot.matrix);
+      setStats(snapshot.stats);
+      return snapshot;
+    } catch (err: unknown) {
+      setLoadError(normalizeApiErrorMessage(err, 'Failed to load permissions'));
       setPermissions([]);
       setMatrix(null);
       setStats(null);
+      return null;
     } finally {
       setLoading(false);
     }
   };
+
+  const findPermission = (snapshot: PermissionsSnapshot, permissionKey: string) =>
+    snapshot.permissions.find((permission) => permission.key === permissionKey);
+
+  const hasPermissionState = (
+    snapshot: PermissionsSnapshot,
+    role: string,
+    permissionKey: string,
+    expectedValue: boolean
+  ) => snapshot.matrix?.matrix?.[role]?.[permissionKey] === expectedValue;
 
   const handleTogglePermission = async (
     role: string,
@@ -92,28 +233,24 @@ const PermissionsMatrixView: React.FC = () => {
     currentValue: boolean
   ) => {
     const toggleKey = `${role}-${permissionKey}`;
+    const expectedValue = !currentValue;
     try {
       setToggling(toggleKey);
-      await Api.toggleRolePermission(role, permissionKey, !currentValue);
+      setError(null);
+      const result = await Api.toggleRolePermission(role, permissionKey, expectedValue);
+      if (result?.success === false) {
+        throw new Error('Permission toggle was rejected by the server');
+      }
+      const refreshed = await loadData();
+      if (!refreshed || !hasPermissionState(refreshed, role, permissionKey, expectedValue)) {
+        throw new Error('Permission toggle was not confirmed by the server');
+      }
 
-      // Update local state
-      setMatrix((prev) => {
-        if (!prev) return prev;
-        return {
-          ...prev,
-          matrix: {
-            ...prev.matrix,
-            [role]: {
-              ...prev.matrix[role],
-              [permissionKey]: !currentValue,
-            },
-          },
-        };
-      });
-
-      toast.success(`Permission ${!currentValue ? 'granted' : 'revoked'} for ${role}`);
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to toggle permission');
+      toast.success(`Permission ${expectedValue ? 'granted' : 'revoked'} for ${role}`);
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to toggle permission');
+      setError(message);
+      toast.error(message);
     } finally {
       setToggling(null);
     }
@@ -122,15 +259,24 @@ const PermissionsMatrixView: React.FC = () => {
   const handleCopyPermissions = async () => {
     try {
       setSaving(true);
+      setError(null);
       await Api.copyRolePermissions(copyFormData.sourceRole, copyFormData.targetRole);
-      await loadData();
+      const refreshed = await loadData();
+      if (
+        !refreshed ||
+        !rolePermissionsMatch(refreshed, copyFormData.sourceRole, copyFormData.targetRole)
+      ) {
+        throw new Error('Permission copy was not confirmed by the server');
+      }
       setShowCopyModal(false);
       setCopyFormData({ sourceRole: '', targetRole: '' });
       toast.success(
         `Permissions copied from ${copyFormData.sourceRole} to ${copyFormData.targetRole}`
       );
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to copy permissions');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to copy permissions');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -140,11 +286,14 @@ const PermissionsMatrixView: React.FC = () => {
     try {
       setSaving(true);
       await Api.createAdminPermission(formData);
-      await loadData();
+      const refreshed = await loadData();
+      if (!refreshed || !findPermission(refreshed, formData.key)) {
+        throw new Error('Permission creation was not confirmed by the server');
+      }
       setShowCreateModal(false);
       setFormData({ key: '', description: '', category: 'general' });
-    } catch (err: any) {
-      setError(err.message || 'Failed to create permission');
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to create permission'));
     } finally {
       setSaving(false);
     }
@@ -158,11 +307,19 @@ const PermissionsMatrixView: React.FC = () => {
         description: formData.description,
         category: formData.category,
       });
-      await loadData();
+      const refreshed = await loadData();
+      const refreshedPermission = refreshed && findPermission(refreshed, editingPermission.key);
+      if (
+        !refreshedPermission ||
+        refreshedPermission.description !== formData.description ||
+        refreshedPermission.category !== formData.category
+      ) {
+        throw new Error('Permission update was not confirmed by the server');
+      }
       setEditingPermission(null);
       setFormData({ key: '', description: '', category: 'general' });
-    } catch (err: any) {
-      setError(err.message || 'Failed to update permission');
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to update permission'));
     } finally {
       setSaving(false);
     }
@@ -172,9 +329,12 @@ const PermissionsMatrixView: React.FC = () => {
     if (!confirm('Are you sure you want to delete this permission?')) return;
     try {
       await Api.deleteAdminPermission(key);
-      await loadData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to delete permission');
+      const refreshed = await loadData();
+      if (!refreshed || findPermission(refreshed, key)) {
+        throw new Error('Permission deletion was not confirmed by the server');
+      }
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to delete permission'));
     }
   };
 
@@ -267,11 +427,9 @@ const PermissionsMatrixView: React.FC = () => {
       {/* Error Alert */}
       {error && (
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+          <div role="alert" className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
+            <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -328,7 +486,7 @@ const PermissionsMatrixView: React.FC = () => {
                       Permission
                     </th>
                     {(matrix.roles || []).map((role) => {
-                      const roleName = typeof role === 'string' ? role : role.name;
+                      const roleName = getRoleName(role);
                       return (
                         <th
                           key={roleName}
@@ -372,7 +530,7 @@ const PermissionsMatrixView: React.FC = () => {
                             </div>
                           </td>
                           {matrix.roles.map((role) => {
-                            const roleName = typeof role === 'string' ? role : role.name;
+                            const roleName = getRoleName(role);
                             const isEnabled = matrix.matrix[roleName]?.[perm.key];
                             const toggleKey = `${roleName}-${perm.key}`;
                             return (
@@ -382,6 +540,7 @@ const PermissionsMatrixView: React.FC = () => {
                                     handleTogglePermission(roleName, perm.key, isEnabled)
                                   }
                                   disabled={toggling === toggleKey}
+                                  aria-label={`${isEnabled ? 'Revoke' : 'Grant'} ${perm.key} for ${roleName}`}
                                   className={`p-1 rounded-lg transition-all ${
                                     isEnabled
                                       ? 'bg-emerald-500/20 hover:bg-emerald-500/30'
@@ -469,6 +628,7 @@ const PermissionsMatrixView: React.FC = () => {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEditModal(perm)}
+                            aria-label={`Edit permission ${perm.key}`}
                             className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                             title="Edit"
                           >
@@ -476,6 +636,7 @@ const PermissionsMatrixView: React.FC = () => {
                           </button>
                           <button
                             onClick={() => handleDelete(perm.key)}
+                            aria-label={`Delete permission ${perm.key}`}
                             className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Delete"
                           >
@@ -592,7 +753,7 @@ const PermissionsMatrixView: React.FC = () => {
                 >
                   <option value="">Select source role...</option>
                   {matrix?.roles?.map((role) => {
-                    const roleName = typeof role === 'string' ? role : role.name;
+                    const roleName = getRoleName(role);
                     return (
                       <option key={roleName} value={roleName}>
                         {roleName}
@@ -612,7 +773,7 @@ const PermissionsMatrixView: React.FC = () => {
                 >
                   <option value="">Select target role...</option>
                   {matrix?.roles?.map((role) => {
-                    const roleName = typeof role === 'string' ? role : role.name;
+                    const roleName = getRoleName(role);
                     return (
                       <option
                         key={roleName}

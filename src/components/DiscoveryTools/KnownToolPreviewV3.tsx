@@ -214,8 +214,7 @@ export const KnownToolPreviewV3Body: React.FC<{
     if (tool.toolType === 'growth-paths') {
       return isPolish
         ? {
-            goal:
-              'Zamienia ambicję wzrostu i sygnały z wywiadu w opcje Ansoffa oraz sekwencję decyzji.',
+            goal: 'Zamienia ambicję wzrostu i sygnały z wywiadu w opcje Ansoffa oraz sekwencję decyzji.',
             outcome:
               'Macierz opcji, porównanie trade-offów, rekomendowane ruchy i kandydaci na inicjatywy.',
             team: 'Zarząd, strategy lead, commercial lead lub właściciel wzrostu',
@@ -223,8 +222,7 @@ export const KnownToolPreviewV3Body: React.FC<{
             duration: '60-90 min',
           }
         : {
-            goal:
-              'Turns growth ambition and interview signals into Ansoff options and a decision sequence.',
+            goal: 'Turns growth ambition and interview signals into Ansoff options and a decision sequence.',
             outcome:
               'Option matrix, trade-off comparison, recommended moves, and initiative candidates.',
             team: 'Leadership, strategy lead, commercial lead, or growth owner',
@@ -236,21 +234,21 @@ export const KnownToolPreviewV3Body: React.FC<{
     if (tool.toolType === 'portfolio-priority') {
       return isPolish
         ? {
-            goal:
-              'Zamienia kontekst organizacji i wywiadu w decyzje, które elementy portfolio finansować, testować, utrzymać lub wygasić.',
+            goal: 'Zamienia kontekst organizacji i wywiadu w decyzje, które elementy portfolio finansować, testować, utrzymać lub wygasić.',
             outcome:
               'Macierz BCG, trade-offy alokacji zasobów, rekomendowane ruchy i kandydaci na inicjatywy.',
             team: 'Zarząd, strategy lead, product lead, CFO lub właściciel portfolio',
-            aiRole: 'Analityk portfolio, generator kart do akceptacji i konsultant alokacji zasobów',
+            aiRole:
+              'Analityk portfolio, generator kart do akceptacji i konsultant alokacji zasobów',
             duration: '60-90 min',
           }
         : {
-            goal:
-              'Turns organization and interview context into decisions on which portfolio items to fund, test, maintain, or stop.',
+            goal: 'Turns organization and interview context into decisions on which portfolio items to fund, test, maintain, or stop.',
             outcome:
               'BCG matrix, resource allocation trade-offs, recommended moves, and initiative candidates.',
             team: 'Leadership, strategy lead, product lead, CFO, or portfolio owner',
-            aiRole: 'Portfolio analyst, card proposal generator, and resource allocation consultant',
+            aiRole:
+              'Portfolio analyst, card proposal generator, and resource allocation consultant',
             duration: '60-90 min',
           };
     }
@@ -258,8 +256,7 @@ export const KnownToolPreviewV3Body: React.FC<{
     if (tool.toolType === 'risk-uncertainty') {
       return isPolish
         ? {
-            goal:
-              'Zamienia kontekst decyzji i sygnały z wywiadu w mapę założeń, ryzyk i scenariuszy.',
+            goal: 'Zamienia kontekst decyzji i sygnały z wywiadu w mapę założeń, ryzyk i scenariuszy.',
             outcome:
               'Założenia do walidacji, ryzyka, scenariusze, ruchy odporności i kandydaci na inicjatywy.',
             team: 'Zarząd, strategy lead, transformation lead, PMO lub właściciel ryzyka',
@@ -267,8 +264,7 @@ export const KnownToolPreviewV3Body: React.FC<{
             duration: '60-90 min',
           }
         : {
-            goal:
-              'Turns decision context and interview signals into an assumption, risk, and scenario map.',
+            goal: 'Turns decision context and interview signals into an assumption, risk, and scenario map.',
             outcome:
               'Assumptions to validate, risks, scenarios, resilience moves, and initiative candidates.',
             team: 'Leadership, strategy lead, transformation lead, PMO, or risk owner',

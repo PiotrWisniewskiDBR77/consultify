@@ -189,12 +189,20 @@ vi.mock('../../../server/src/utils/DbPromise.js', () => ({
       return { changes: 1 };
     }
     if (normalized.startsWith('UPDATE research_sessions SET status = ?')) {
-      const [status, progressJson, statusForArchive, sessionId] = params;
+      const [status, progressJson, sessionId] = params;
       const session = db.sessions.get(sessionId);
       Object.assign(session, {
         status,
         progress_json: progressJson,
-        archived_at: statusForArchive === 'archived' ? new Date().toISOString() : session.archived_at,
+        updated_at: new Date().toISOString(),
+      });
+      return { changes: 1 };
+    }
+    if (normalized.startsWith('UPDATE research_sessions SET archived_at')) {
+      const [sessionId] = params;
+      const session = db.sessions.get(sessionId);
+      Object.assign(session, {
+        archived_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       });
       return { changes: 1 };
@@ -521,6 +529,27 @@ describe('ResearchSession Wave 4 runtime lifecycle', () => {
     expect(gateway).toContain("app.use('/api/research', researchRoutes)");
     expect(gateway).not.toContain("mountStub('/api/research'");
     expect(gateway).toContain('recoverInterruptedResearchSessions');
+  });
+
+  it('keeps approval durable even when background queueing is deferred', () => {
+    const routes = readFileSync('server/src/routes/research.routes.ts', 'utf8');
+    expect(routes).toContain("eventType: 'approved'");
+    expect(routes).toContain("eventType: 'queue_deferred'");
+    expect(routes).toContain('Approval succeeded but background queue failed');
+    expect(routes).toContain('Research session approved; background start is deferred.');
+  });
+
+  it('does not make non-archive lifecycle transitions depend on archived_at', () => {
+    const service = readFileSync('server/src/services/researchSessionService.ts', 'utf8');
+    const transitionStart = service.indexOf('export async function transitionResearchSession');
+    const runStart = service.indexOf('export async function runResearchSession');
+    const transitionBlock = service.slice(transitionStart, runStart);
+
+    expect(transitionBlock).not.toContain(
+      "archived_at = CASE WHEN ? = 'archived' THEN CURRENT_TIMESTAMP ELSE archived_at END"
+    );
+    expect(transitionBlock).toContain("if (params.status === 'archived')");
+    expect(service).toContain('ALTER TABLE research_sessions ADD COLUMN archived_at TEXT');
   });
 
   it('enforces allowedSources by disabling web research and web evidence', async () => {

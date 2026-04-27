@@ -8,22 +8,15 @@
  * - Integration with calendar
  */
 
-import {
-  AlertCircle,
-  Calendar,
-  CheckCircle,
-  Clock,
-  Globe,
-  Loader2,
-  RefreshCw,
-  Save,
-} from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import { AlertCircle, Calendar, CheckCircle, Clock, Globe, Loader2, Save } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { DaySchedule, User, WorkingHours } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 
 interface WorkingHoursSettingsProps {
   currentUser: User;
@@ -76,6 +69,8 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
   const [timezone, setTimezone] = useState(
     currentUser.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone
   );
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [schedule, setSchedule] = useState<Record<DayKey, DaySchedule>>({
     monday: { ...DEFAULT_SCHEDULE },
@@ -87,51 +82,61 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
     sunday: { ...WEEKEND_SCHEDULE },
   });
 
-  useEffect(() => {
-    loadWorkingHours();
-  }, []);
+  const schedulesMatch = (left: Record<DayKey, DaySchedule>, right: Record<DayKey, DaySchedule>) =>
+    JSON.stringify(left) === JSON.stringify(right);
 
-  const loadWorkingHours = async () => {
+  const loadWorkingHours = useCallback(async () => {
     setLoading(true);
     try {
+      setLoadError(null);
       const response = (await Api.get('/api/settings/working-hours')) as
         | Partial<WorkingHoursResponse>
         | undefined;
-      if (response?.schedule) {
-        setSchedule(response.schedule as Record<DayKey, DaySchedule>);
-        setTimezone(response.timezone || timezone);
-        // Check if all weekday times are the same
-        if (response.schedule) {
-          const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as DayKey[];
-          const firstEnabled = response.schedule.monday;
-          const allSame = weekdays.every((day) => {
-            const s = response.schedule![day];
-            return s.startTime === firstEnabled.startTime && s.endTime === firstEnabled.endTime;
-          });
-          setSameEveryDay(allSame);
-        }
+      if (!response?.schedule) {
+        throw new Error('Working hours response was missing schedule');
       }
-    } catch (error) {
-      console.error('Failed to load working hours:', error);
-      // Use defaults
+      const loadedSchedule = response.schedule as Record<DayKey, DaySchedule>;
+      setSchedule(loadedSchedule);
+      setTimezone((current) => response.timezone || current);
+      // Check if all weekday times are the same
+      const weekdays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as DayKey[];
+      const firstEnabled = loadedSchedule.monday;
+      const allSame = weekdays.every((day) => {
+        const s = loadedSchedule[day];
+        return s.startTime === firstEnabled.startTime && s.endTime === firstEnabled.endTime;
+      });
+      setSameEveryDay(allSame);
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load working hours'));
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void loadWorkingHours();
+  }, [loadWorkingHours]);
 
   const handleSave = async () => {
     setSaving(true);
     try {
+      setSaveError(null);
       await Api.put('/api/settings/working-hours', {
         timezone,
         schedule,
       });
-      const persisted = (await Api.get('/api/settings/working-hours').catch(
-        () => null
+      const persisted = (await Api.get(
+        '/api/settings/working-hours'
       )) as Partial<WorkingHoursResponse> | null;
-      const nextSchedule =
-        (persisted?.schedule as Record<DayKey, DaySchedule> | undefined) || schedule;
-      const nextTimezone = persisted?.timezone || timezone;
+      if (
+        !persisted?.schedule ||
+        !schedulesMatch(persisted.schedule as Record<DayKey, DaySchedule>, schedule) ||
+        (persisted.timezone || timezone) !== timezone
+      ) {
+        throw new Error('Working hours save was not confirmed by the server');
+      }
+      const nextSchedule = persisted.schedule as Record<DayKey, DaySchedule>;
+      const nextTimezone = persisted.timezone || timezone;
       setSchedule(nextSchedule);
       setTimezone(nextTimezone);
 
@@ -142,8 +147,13 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
       };
       onUpdateUser({ workingHours });
       toast.success(t('settings.workingHours.saved', 'Working hours saved'));
-    } catch (error) {
-      toast.error(t('settings.workingHours.error', 'Failed to save working hours'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.workingHours.error', 'Failed to save working hours')
+      );
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -172,19 +182,6 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
         [day]: { ...prev[day], [field]: value },
       }));
     }
-  };
-
-  const handleSameEveryDayToggle = () => {
-    if (!sameEveryDay) {
-      // Apply Monday's schedule to all weekdays
-      const mondaySchedule = schedule.monday;
-      const newSchedule = { ...schedule };
-      ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].forEach((day) => {
-        newSchedule[day as DayKey] = { ...mondaySchedule };
-      });
-      setSchedule(newSchedule);
-    }
-    setSameEveryDay(!sameEveryDay);
   };
 
   // Calculate total weekly hours
@@ -232,7 +229,7 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
         </div>
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || !!loadError}
           className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors disabled:opacity-50"
         >
           {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
@@ -240,249 +237,264 @@ export const WorkingHoursSettings: React.FC<WorkingHoursSettingsProps> = ({
         </button>
       </div>
 
-      {/* Summary Card */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className={cardClass}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-lg">
-              <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t('settings.workingHours.workingDays', 'Working Days')}
-              </p>
-              <p className="text-xl font-bold text-slate-900 dark:text-white">
-                {DAYS_OF_WEEK.filter((d) => schedule[d.key].enabled).length}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className={cardClass}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg">
-              <Clock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t('settings.workingHours.weeklyHours', 'Weekly Hours')}
-              </p>
-              <p className="text-xl font-bold text-slate-900 dark:text-white">
-                {totalHours.toFixed(1)}h
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className={cardClass}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-100 dark:bg-amber-500/20 rounded-lg">
-              <Globe className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
-                {t('settings.workingHours.timezone', 'Timezone')}
-              </p>
-              <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[150px]">
-                {timezone.replace('_', ' ')}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
+      {loadError && <DegradedState title="Working hours unavailable" description={loadError} />}
 
-      {/* Options */}
-      <div className={cardClass}>
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="font-semibold text-slate-900 dark:text-white">
-              {t('settings.workingHours.scheduleType', 'Schedule Type')}
-            </h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-              {t(
-                'settings.workingHours.scheduleTypeDescription',
-                'Choose how you want to set your working hours'
-              )}
-            </p>
-          </div>
+      {saveError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {saveError}
         </div>
+      )}
 
-        <div className="flex gap-4">
-          <button
-            onClick={() => setSameEveryDay(true)}
-            className={`flex-1 p-4 rounded-xl border-2 transition-all ${
-              sameEveryDay
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-4 h-4 rounded-full border-2 ${
+      {!loadError && (
+        <>
+          {/* Summary Card */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className={cardClass}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-500/20 rounded-lg">
+                  <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('settings.workingHours.workingDays', 'Working Days')}
+                  </p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    {DAYS_OF_WEEK.filter((d) => schedule[d.key].enabled).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className={cardClass}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg">
+                  <Clock className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('settings.workingHours.weeklyHours', 'Weekly Hours')}
+                  </p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    {totalHours.toFixed(1)}h
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className={cardClass}>
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-amber-100 dark:bg-amber-500/20 rounded-lg">
+                  <Globe className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t('settings.workingHours.timezone', 'Timezone')}
+                  </p>
+                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate max-w-[150px]">
+                    {timezone.replace('_', ' ')}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Options */}
+          <div className={cardClass}>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">
+                  {t('settings.workingHours.scheduleType', 'Schedule Type')}
+                </h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  {t(
+                    'settings.workingHours.scheduleTypeDescription',
+                    'Choose how you want to set your working hours'
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setSameEveryDay(true)}
+                className={`flex-1 p-4 rounded-xl border-2 transition-all ${
                   sameEveryDay
-                    ? 'border-purple-500 bg-purple-500'
-                    : 'border-slate-300 dark:border-slate-600'
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
                 }`}
               >
-                {sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
-              </div>
-              <span className="font-medium text-slate-900 dark:text-white">
-                {t('settings.workingHours.sameEveryDay', 'Same every day')}
-              </span>
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
-              {t(
-                'settings.workingHours.sameEveryDayDescription',
-                'Use the same hours for all weekdays'
-              )}
-            </p>
-          </button>
-          <button
-            onClick={() => setSameEveryDay(false)}
-            className={`flex-1 p-4 rounded-xl border-2 transition-all ${
-              !sameEveryDay
-                ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
-                : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div
-                className={`w-4 h-4 rounded-full border-2 ${
-                  !sameEveryDay
-                    ? 'border-purple-500 bg-purple-500'
-                    : 'border-slate-300 dark:border-slate-600'
-                }`}
-              >
-                {!sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
-              </div>
-              <span className="font-medium text-slate-900 dark:text-white">
-                {t('settings.workingHours.customPerDay', 'Custom per day')}
-              </span>
-            </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
-              {t(
-                'settings.workingHours.customPerDayDescription',
-                'Set different hours for each day'
-              )}
-            </p>
-          </button>
-        </div>
-      </div>
-
-      {/* Schedule */}
-      <div className={cardClass}>
-        <h3 className="font-semibold text-slate-900 dark:text-white mb-6">
-          {t('settings.workingHours.weeklySchedule', 'Weekly Schedule')}
-        </h3>
-
-        <div className="space-y-3">
-          {DAYS_OF_WEEK.map((day) => {
-            const daySchedule = schedule[day.key];
-            const isWeekend = day.key === 'saturday' || day.key === 'sunday';
-            const isDisabled = sameEveryDay && !isWeekend && day.key !== 'monday';
-
-            return (
-              <div
-                key={day.key}
-                className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
-                  daySchedule.enabled
-                    ? 'bg-slate-50 dark:bg-navy-950/50'
-                    : 'bg-slate-100 dark:bg-white/5 opacity-60'
-                }`}
-              >
-                {/* Day Toggle */}
-                <button
-                  onClick={() => handleDayToggle(day.key)}
-                  className={`w-12 h-6 rounded-full transition-colors relative ${
-                    daySchedule.enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
-                      daySchedule.enabled ? 'left-7' : 'left-1'
-                    }`}
-                  />
-                </button>
-
-                {/* Day Label */}
-                <div className="w-28">
-                  <span
-                    className={`font-medium ${
-                      daySchedule.enabled ? 'text-slate-900 dark:text-white' : 'text-slate-400'
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 ${
+                      sameEveryDay
+                        ? 'border-purple-500 bg-purple-500'
+                        : 'border-slate-300 dark:border-slate-600'
                     }`}
                   >
-                    {t(`settings.workingHours.days.${day.key}.full`, day.label)}
+                    {sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
+                  </div>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {t('settings.workingHours.sameEveryDay', 'Same every day')}
                   </span>
                 </div>
-
-                {/* Time Inputs */}
-                {daySchedule.enabled ? (
-                  <div className="flex items-center gap-3 flex-1">
-                    <select
-                      value={daySchedule.startTime}
-                      onChange={(e) => handleTimeChange(day.key, 'startTime', e.target.value)}
-                      disabled={isDisabled}
-                      className={inputClass + (isDisabled ? ' opacity-50' : '')}
-                    >
-                      {TIME_OPTIONS.map((time) => (
-                        <option key={time} value={time}>
-                          {time}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="text-slate-500 dark:text-slate-400">
-                      {t('settings.workingHours.to', 'to')}
-                    </span>
-                    <select
-                      value={daySchedule.endTime}
-                      onChange={(e) => handleTimeChange(day.key, 'endTime', e.target.value)}
-                      disabled={isDisabled}
-                      className={inputClass + (isDisabled ? ' opacity-50' : '')}
-                    >
-                      {TIME_OPTIONS.map((time) => (
-                        <option key={time} value={time}>
-                          {time}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* Hours display */}
-                    <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">
-                      {(() => {
-                        const start =
-                          parseInt(daySchedule.startTime.split(':')[0]) * 60 +
-                          parseInt(daySchedule.startTime.split(':')[1]);
-                        const end =
-                          parseInt(daySchedule.endTime.split(':')[0]) * 60 +
-                          parseInt(daySchedule.endTime.split(':')[1]);
-                        return ((end - start) / 60).toFixed(1) + 'h';
-                      })()}
-                    </span>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
+                  {t(
+                    'settings.workingHours.sameEveryDayDescription',
+                    'Use the same hours for all weekdays'
+                  )}
+                </p>
+              </button>
+              <button
+                onClick={() => setSameEveryDay(false)}
+                className={`flex-1 p-4 rounded-xl border-2 transition-all ${
+                  !sameEveryDay
+                    ? 'border-purple-500 bg-purple-50 dark:bg-purple-500/10'
+                    : 'border-slate-200 dark:border-navy-700 hover:border-purple-300'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-full border-2 ${
+                      !sameEveryDay
+                        ? 'border-purple-500 bg-purple-500'
+                        : 'border-slate-300 dark:border-slate-600'
+                    }`}
+                  >
+                    {!sameEveryDay && <CheckCircle className="w-3 h-3 text-white" />}
                   </div>
-                ) : (
-                  <div className="flex-1 text-slate-400 dark:text-slate-500 text-sm">
-                    {t('settings.workingHours.notWorking', 'Not working')}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Info Box */}
-      <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200 dark:border-blue-500/30">
-        <div className="flex gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>{t('settings.workingHours.note', 'Note')}:</strong>{' '}
-              {t(
-                'settings.workingHours.noteText',
-                'Your working hours are used for scheduling features like meeting availability, out-of-office notifications, and focus time suggestions.'
-              )}
-            </p>
+                  <span className="font-medium text-slate-900 dark:text-white">
+                    {t('settings.workingHours.customPerDay', 'Custom per day')}
+                  </span>
+                </div>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1 text-left">
+                  {t(
+                    'settings.workingHours.customPerDayDescription',
+                    'Set different hours for each day'
+                  )}
+                </p>
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
+
+          {/* Schedule */}
+          <div className={cardClass}>
+            <h3 className="font-semibold text-slate-900 dark:text-white mb-6">
+              {t('settings.workingHours.weeklySchedule', 'Weekly Schedule')}
+            </h3>
+
+            <div className="space-y-3">
+              {DAYS_OF_WEEK.map((day) => {
+                const daySchedule = schedule[day.key];
+                const isWeekend = day.key === 'saturday' || day.key === 'sunday';
+                const isDisabled = sameEveryDay && !isWeekend && day.key !== 'monday';
+
+                return (
+                  <div
+                    key={day.key}
+                    className={`flex items-center gap-4 p-4 rounded-lg transition-all ${
+                      daySchedule.enabled
+                        ? 'bg-slate-50 dark:bg-navy-950/50'
+                        : 'bg-slate-100 dark:bg-white/5 opacity-60'
+                    }`}
+                  >
+                    {/* Day Toggle */}
+                    <button
+                      onClick={() => handleDayToggle(day.key)}
+                      className={`w-12 h-6 rounded-full transition-colors relative ${
+                        daySchedule.enabled ? 'bg-purple-500' : 'bg-slate-300 dark:bg-slate-600'
+                      }`}
+                    >
+                      <span
+                        className={`absolute top-1 w-4 h-4 rounded-full bg-white dark:bg-navy-900 shadow transition-all ${
+                          daySchedule.enabled ? 'left-7' : 'left-1'
+                        }`}
+                      />
+                    </button>
+
+                    {/* Day Label */}
+                    <div className="w-28">
+                      <span
+                        className={`font-medium ${
+                          daySchedule.enabled ? 'text-slate-900 dark:text-white' : 'text-slate-400'
+                        }`}
+                      >
+                        {t(`settings.workingHours.days.${day.key}.full`, day.label)}
+                      </span>
+                    </div>
+
+                    {/* Time Inputs */}
+                    {daySchedule.enabled ? (
+                      <div className="flex items-center gap-3 flex-1">
+                        <select
+                          value={daySchedule.startTime}
+                          onChange={(e) => handleTimeChange(day.key, 'startTime', e.target.value)}
+                          disabled={isDisabled}
+                          className={inputClass + (isDisabled ? ' opacity-50' : '')}
+                        >
+                          {TIME_OPTIONS.map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-slate-500 dark:text-slate-400">
+                          {t('settings.workingHours.to', 'to')}
+                        </span>
+                        <select
+                          value={daySchedule.endTime}
+                          onChange={(e) => handleTimeChange(day.key, 'endTime', e.target.value)}
+                          disabled={isDisabled}
+                          className={inputClass + (isDisabled ? ' opacity-50' : '')}
+                        >
+                          {TIME_OPTIONS.map((time) => (
+                            <option key={time} value={time}>
+                              {time}
+                            </option>
+                          ))}
+                        </select>
+
+                        {/* Hours display */}
+                        <span className="text-sm text-slate-500 dark:text-slate-400 ml-2">
+                          {(() => {
+                            const start =
+                              parseInt(daySchedule.startTime.split(':')[0]) * 60 +
+                              parseInt(daySchedule.startTime.split(':')[1]);
+                            const end =
+                              parseInt(daySchedule.endTime.split(':')[0]) * 60 +
+                              parseInt(daySchedule.endTime.split(':')[1]);
+                            return ((end - start) / 60).toFixed(1) + 'h';
+                          })()}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex-1 text-slate-400 dark:text-slate-500 text-sm">
+                        {t('settings.workingHours.notWorking', 'Not working')}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Info Box */}
+          <div className="p-4 bg-blue-50 dark:bg-blue-500/10 rounded-xl border border-blue-200 dark:border-blue-500/30">
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  <strong>{t('settings.workingHours.note', 'Note')}:</strong>{' '}
+                  {t(
+                    'settings.workingHours.noteText',
+                    'Your working hours are used for scheduling features like meeting availability, out-of-office notifications, and focus time suggestions.'
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };

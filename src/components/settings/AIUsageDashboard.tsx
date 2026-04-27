@@ -15,9 +15,7 @@ import {
   AlertCircle,
   ArrowDown,
   ArrowUp,
-  BarChart3,
   Brain,
-  Calendar,
   Clock,
   DollarSign,
   FileText,
@@ -30,14 +28,15 @@ import {
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { cn } from '../../lib/utils';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Progress } from '../ui/progress';
 import { Select } from '../ui/select';
 import { Skeleton } from '../ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 interface AIUsageDashboardProps {
   currentUser: User;
@@ -70,11 +69,16 @@ interface DailyUsage {
 
 export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser }) => {
   const { t } = useTranslation();
+  void currentUser;
   const [period, setPeriod] = useState<'7d' | '30d' | '90d'>('30d');
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [periodStats, setPeriodStats] = useState<PeriodStats | null>(null);
   const [usageByFeature, setUsageByFeature] = useState<UsageStat[]>([]);
   const [dailyUsage, setDailyUsage] = useState<DailyUsage[]>([]);
+
+  const toFiniteNumber = (value: unknown, fallback = 0) =>
+    typeof value === 'number' && Number.isFinite(value) ? value : fallback;
 
   const normalizeFeatureKey = (feature: unknown) =>
     String(feature || 'general')
@@ -94,19 +98,22 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
     const fetchUsage = async () => {
       setLoading(true);
       try {
+        setLoadError(null);
         const response = await Api.getAIUsageStats(period);
 
-        if (response?.stats) {
-          setPeriodStats({
-            totalRequests: response.stats.totalRequests || 0,
-            totalTokens: response.stats.totalTokens || 0,
-            totalCost: response.stats.totalCost || 0,
-            avgResponseTime: response.stats.avgResponseTime || 0,
-            successRate: response.stats.successRate || 100,
-            limit: response.stats.limit || 1000000,
-            used: response.stats.used || 0,
-          });
+        if (!response?.stats) {
+          throw new Error('AI usage stats response is missing usage totals');
         }
+
+        setPeriodStats({
+          totalRequests: toFiniteNumber(response.stats.totalRequests),
+          totalTokens: toFiniteNumber(response.stats.totalTokens),
+          totalCost: toFiniteNumber(response.stats.totalCost),
+          avgResponseTime: toFiniteNumber(response.stats.avgResponseTime),
+          successRate: Math.min(Math.max(toFiniteNumber(response.stats.successRate), 0), 100),
+          limit: toFiniteNumber(response.stats.limit),
+          used: toFiniteNumber(response.stats.used),
+        });
 
         // Map usage by feature from API response
         if (response?.usageByFeature && response.usageByFeature.length > 0) {
@@ -120,65 +127,37 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
           };
 
           setUsageByFeature(
-            response.usageByFeature.map((item: any) => {
+            response.usageByFeature.map((item: Record<string, unknown>) => {
               const feature = normalizeFeatureKey(item.feature);
               return {
                 feature,
                 icon: iconMap[feature] || Sparkles,
-                count: item.count || 0,
-                tokens: item.tokens || 0,
-                cost: item.cost || 0,
-                trend: 0, // Could be calculated from historical data
+                count: toFiniteNumber(item.count),
+                tokens: toFiniteNumber(item.tokens),
+                cost: toFiniteNumber(item.cost),
+                trend: toFiniteNumber(item.trend),
               };
             })
           );
         } else {
-          // Default empty state
-          setUsageByFeature([
-            { feature: 'chat', icon: MessageSquare, count: 0, tokens: 0, cost: 0, trend: 0 },
-            {
-              feature: 'document',
-              icon: FileText,
-              count: 0,
-              tokens: 0,
-              cost: 0,
-              trend: 0,
-            },
-            { feature: 'search', icon: Search, count: 0, tokens: 0, cost: 0, trend: 0 },
-          ]);
+          setUsageByFeature([]);
         }
 
         // Set daily usage from API
         if (response?.dailyUsage && response.dailyUsage.length > 0) {
-          setDailyUsage(response.dailyUsage);
+          setDailyUsage(
+            response.dailyUsage.map((item: Record<string, unknown>) => ({
+              date: String(item.date || ''),
+              tokens: toFiniteNumber(item.tokens),
+              requests: toFiniteNumber(item.requests),
+            }))
+          );
         } else {
-          // Generate empty daily usage if no data
-          const days = period === '7d' ? 7 : period === '30d' ? 30 : 90;
-          const daily: DailyUsage[] = [];
-          const today = new Date();
-          for (let i = days - 1; i >= 0; i--) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            daily.push({
-              date: date.toISOString().split('T')[0],
-              tokens: 0,
-              requests: 0,
-            });
-          }
-          setDailyUsage(daily);
+          setDailyUsage([]);
         }
-      } catch (error) {
-        console.error('Failed to fetch AI usage:', error);
-        // Set defaults on error
-        setPeriodStats({
-          totalRequests: 0,
-          totalTokens: 0,
-          totalCost: 0,
-          avgResponseTime: 0,
-          successRate: 100,
-          limit: 1000000,
-          used: 0,
-        });
+      } catch (error: unknown) {
+        setLoadError(normalizeApiErrorMessage(error, 'Failed to load AI usage statistics'));
+        setPeriodStats(null);
         setUsageByFeature([]);
         setDailyUsage([]);
       } finally {
@@ -205,7 +184,8 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
   };
 
   // Calculate usage percentage
-  const usagePercentage = periodStats ? (periodStats.used / periodStats.limit) * 100 : 0;
+  const usagePercentage =
+    periodStats && periodStats.limit > 0 ? (periodStats.used / periodStats.limit) * 100 : 0;
   const isNearLimit = usagePercentage >= 80;
   const isOverLimit = usagePercentage >= 100;
 
@@ -220,6 +200,15 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
         <Skeleton className="h-64 rounded-xl" />
         <Skeleton className="h-80 rounded-xl" />
       </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <DegradedState
+        title={t('settings.aiUsage.unavailableTitle', 'AI usage unavailable')}
+        description={loadError}
+      />
     );
   }
 
@@ -384,51 +373,63 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {usageByFeature.map((stat) => {
-              const Icon = stat.icon;
-              const percentage = periodStats ? (stat.tokens / periodStats.totalTokens) * 100 : 0;
+            {usageByFeature.length === 0 ? (
+              <div className="py-8 text-center text-sm text-slate-500 dark:text-slate-400">
+                {t(
+                  'settings.aiUsage.noFeatureUsage',
+                  'No feature-level AI usage has been reported for this period.'
+                )}
+              </div>
+            ) : (
+              usageByFeature.map((stat) => {
+                const Icon = stat.icon;
+                const percentage =
+                  periodStats && periodStats.totalTokens > 0
+                    ? (stat.tokens / periodStats.totalTokens) * 100
+                    : 0;
 
-              return (
-                <div key={stat.feature} className="flex items-center gap-4">
-                  <div className="p-2 bg-slate-100 dark:bg-navy-800 rounded-lg">
-                    <Icon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium text-slate-900 dark:text-white">
-                        {t(
-                          `settings.aiUsage.features.${stat.feature}`,
-                          formatFeatureFallback(stat.feature)
-                        )}
-                      </span>
-                      <div className="flex items-center gap-3 text-sm">
-                        <span className="text-slate-500 dark:text-slate-400">
-                          {formatNumber(stat.tokens)} tokens
-                        </span>
-                        <span className="text-slate-400 dark:text-slate-500">•</span>
-                        <span className="text-slate-500 dark:text-slate-400">
-                          {stat.count} requests
-                        </span>
-                        <span
-                          className={cn(
-                            'flex items-center gap-1',
-                            stat.trend > 0 ? 'text-emerald-600' : 'text-red-600'
-                          )}
-                        >
-                          {stat.trend > 0 ? (
-                            <ArrowUp className="w-3 h-3" />
-                          ) : (
-                            <ArrowDown className="w-3 h-3" />
-                          )}
-                          {Math.abs(stat.trend)}%
-                        </span>
-                      </div>
+                return (
+                  <div key={stat.feature} className="flex items-center gap-4">
+                    <div className="p-2 bg-slate-100 dark:bg-navy-800 rounded-lg">
+                      <Icon className="w-5 h-5 text-slate-600 dark:text-slate-400" />
                     </div>
-                    <Progress value={percentage} className="h-2" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-slate-900 dark:text-white">
+                          {t(
+                            `settings.aiUsage.features.${stat.feature}`,
+                            formatFeatureFallback(stat.feature)
+                          )}
+                        </span>
+                        <div className="flex items-center gap-3 text-sm">
+                          <span className="text-slate-500 dark:text-slate-400">
+                            {formatNumber(stat.tokens)} tokens
+                          </span>
+                          <span className="text-slate-400 dark:text-slate-500">•</span>
+                          <span className="text-slate-500 dark:text-slate-400">
+                            {stat.count} requests
+                          </span>
+                          <span
+                            className={cn(
+                              'flex items-center gap-1',
+                              stat.trend > 0 ? 'text-emerald-600' : 'text-red-600'
+                            )}
+                          >
+                            {stat.trend > 0 ? (
+                              <ArrowUp className="w-3 h-3" />
+                            ) : (
+                              <ArrowDown className="w-3 h-3" />
+                            )}
+                            {Math.abs(stat.trend)}%
+                          </span>
+                        </div>
+                      </div>
+                      <Progress value={percentage} className="h-2" />
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </CardContent>
       </Card>
@@ -451,24 +452,33 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
         </CardHeader>
         <CardContent>
           {/* Simple bar chart visualization */}
-          <div className="h-48 flex items-end gap-1">
-            {dailyUsage.slice(-30).map((day, index) => {
-              const maxTokens = Math.max(...dailyUsage.map((d) => d.tokens));
-              const height = (day.tokens / maxTokens) * 100;
-              return (
-                <div
-                  key={day.date}
-                  className="flex-1 bg-violet-200 dark:bg-violet-800 rounded-t hover:bg-violet-300 dark:hover:bg-violet-700 transition-colors cursor-pointer group relative"
-                  style={{ height: `${height}%` }}
-                  title={`${day.date}: ${formatNumber(day.tokens)} tokens`}
-                >
-                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
-                    {formatNumber(day.tokens)} tokens
+          {dailyUsage.length === 0 ? (
+            <div className="flex h-48 items-center justify-center text-sm text-slate-500 dark:text-slate-400">
+              {t(
+                'settings.aiUsage.noDailyUsage',
+                'No daily AI usage has been reported for this period.'
+              )}
+            </div>
+          ) : (
+            <div className="h-48 flex items-end gap-1">
+              {dailyUsage.slice(-30).map((day) => {
+                const maxTokens = Math.max(...dailyUsage.map((d) => d.tokens));
+                const height = maxTokens > 0 ? (day.tokens / maxTokens) * 100 : 0;
+                return (
+                  <div
+                    key={day.date}
+                    className="flex-1 bg-violet-200 dark:bg-violet-800 rounded-t hover:bg-violet-300 dark:hover:bg-violet-700 transition-colors cursor-pointer group relative"
+                    style={{ height: `${height}%` }}
+                    title={`${day.date}: ${formatNumber(day.tokens)} tokens`}
+                  >
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition-opacity pointer-events-none">
+                      {formatNumber(day.tokens)} tokens
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
           <div className="flex justify-between mt-2 text-xs text-slate-400 dark:text-slate-500">
             <span>{dailyUsage[0]?.date}</span>
             <span>{dailyUsage[dailyUsage.length - 1]?.date}</span>
@@ -560,7 +570,9 @@ export const AIUsageDashboard: React.FC<AIUsageDashboardProps> = ({ currentUser 
                 </span>
                 <span className="text-sm font-medium">
                   {periodStats
-                    ? Math.round(periodStats.totalTokens / periodStats.totalRequests)
+                    ? periodStats.totalRequests > 0
+                      ? Math.round(periodStats.totalTokens / periodStats.totalRequests)
+                      : 0
                     : 0}
                 </span>
               </div>

@@ -6,13 +6,15 @@ import {
   ShieldAlert,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { DegradedState } from '@/components/Admin/AdminState';
 import { Button } from '@/components/Admin/shared/Button';
 import { Card } from '@/components/Admin/shared/Card';
 import { MetricCard } from '@/components/Admin/shared/MetricCard';
 import { Api } from '@/services/api';
+import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 type UseCasePurpose = {
   purpose: string;
@@ -70,6 +72,40 @@ type UseCaseCard = {
   purposes: UseCasePurpose[];
 };
 
+type UseCaseOverview = {
+  useCases: UseCaseCard[];
+  summary: Record<string, unknown>;
+  riskFeed: Array<{
+    severity: string;
+    title: string;
+    blastRadius: string;
+    recommendation: string;
+  }>;
+  vendorScorecards: Array<{
+    provider: string;
+    costUsd: number;
+    requests: number;
+    avgLatencyMs: number;
+    sharePct: number;
+  }>;
+};
+
+type OperatorOps = {
+  readinessScore: number;
+  autonomyScore: number;
+  guardrails: {
+    releaseCoveragePct: number;
+    promptTracePct: number;
+    policyTracePct: number;
+  };
+  workstreams: Array<{
+    key: string;
+    label: string;
+    status: string;
+    coveragePct: number;
+  }>;
+};
+
 const STATUS_STYLES: Record<string, string> = {
   healthy: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-300',
   degraded: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
@@ -85,37 +121,206 @@ const formatUsd = (value: number) =>
     maximumFractionDigits: value < 100 ? 2 : 0,
   }).format(Number(value || 0));
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const getObjectPayload = (value: unknown): unknown => {
+  let current = value;
+
+  for (let depth = 0; depth < 4; depth += 1) {
+    if (!isRecord(current) || !('data' in current)) break;
+    current = current.data;
+  }
+
+  return current;
+};
+
+const asText = (value: unknown, fallback = ''): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  return fallback;
+};
+
+const toNumber = (value: unknown, fallback = 0): number => {
+  const numberValue = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+};
+
+const toBool = (value: unknown): boolean => value === true || value === 'true' || value === 1;
+
+const normalizeModelRef = (value: unknown): UseCasePurpose['primary'] => {
+  if (!isRecord(value)) return null;
+
+  return {
+    provider: asText(value.provider, 'unknown'),
+    name: asText(value.name, 'Unknown model'),
+    modelId: asText(value.modelId, 'unknown'),
+    healthStatus: asText(value.healthStatus, 'unknown'),
+  };
+};
+
+const normalizePurpose = (value: unknown): UseCasePurpose => {
+  if (!isRecord(value)) {
+    throw new Error('Use case purpose row was not an object');
+  }
+
+  const purpose = asText(value.purpose).trim();
+  if (!purpose) {
+    throw new Error('Use case purpose row was missing a purpose');
+  }
+
+  const usage = isRecord(value.usage) ? value.usage : {};
+
+  return {
+    purpose,
+    entrypoint: asText(value.entrypoint) || undefined,
+    assignmentCount: toNumber(value.assignmentCount),
+    eligibleAssignmentCount: toNumber(
+      value.eligibleAssignmentCount,
+      toNumber(value.assignmentCount)
+    ),
+    status: asText(value.status, 'unknown') as UseCasePurpose['status'],
+    policyAllowed: value.policyAllowed === undefined ? undefined : toBool(value.policyAllowed),
+    enabledForOrg: value.enabledForOrg === undefined ? undefined : toBool(value.enabledForOrg),
+    residencyStatus: asText(value.residencyStatus, 'allowed'),
+    releaseBundleId: asText(value.releaseBundleId) || null,
+    releaseStatus: asText(value.releaseStatus, 'missing'),
+    promptKey: asText(value.promptKey) || null,
+    promptVersion: asText(value.promptVersion) || null,
+    policyVersion: asText(value.policyVersion) || null,
+    completenessStatus: asText(value.completenessStatus, 'unknown'),
+    completenessScore: toNumber(value.completenessScore),
+    blockers: Array.isArray(value.blockers)
+      ? value.blockers.map((item) => asText(item).trim()).filter(Boolean)
+      : [],
+    primary: normalizeModelRef(value.primary),
+    fallbacks: Array.isArray(value.fallbacks)
+      ? value.fallbacks
+          .map(normalizeModelRef)
+          .filter((item): item is NonNullable<typeof item> => Boolean(item))
+      : [],
+    usage: {
+      requests30d: toNumber(usage.requests30d),
+      costUsd30d: toNumber(usage.costUsd30d),
+      avgLatencyMs30d: toNumber(usage.avgLatencyMs30d),
+    },
+  };
+};
+
+const normalizeUseCase = (value: unknown): UseCaseCard => {
+  if (!isRecord(value)) {
+    throw new Error('Use case row was not an object');
+  }
+
+  const key = asText(value.key).trim();
+  if (!key) {
+    throw new Error('Use case row was missing a key');
+  }
+
+  return {
+    key,
+    label: asText(value.label, key),
+    description: asText(value.description),
+    businessOwner: asText(value.businessOwner, 'Unassigned'),
+    entrypoint: asText(value.entrypoint) || undefined,
+    uxStatus: asText(value.uxStatus, 'unknown'),
+    status: asText(value.status, 'unknown') as UseCaseCard['status'],
+    completenessStatus: asText(value.completenessStatus, 'unknown'),
+    completenessScore: toNumber(value.completenessScore),
+    releaseCoveragePct: toNumber(value.releaseCoveragePct),
+    coveragePct: toNumber(value.coveragePct),
+    healthyPurposes: toNumber(value.healthyPurposes),
+    degradedPurposes: toNumber(value.degradedPurposes),
+    criticalPurposes: toNumber(value.criticalPurposes),
+    costUsd30d: toNumber(value.costUsd30d),
+    requests30d: toNumber(value.requests30d),
+    purposes: Array.isArray(value.purposes) ? value.purposes.map(normalizePurpose) : [],
+  };
+};
+
+const normalizeOverview = (value: unknown): UseCaseOverview => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload)) {
+    throw new Error('Use case overview response was not an object');
+  }
+
+  if (!Array.isArray(payload.useCases)) {
+    throw new Error('Use case overview response was missing useCases');
+  }
+
+  if (!isRecord(payload.summary)) {
+    throw new Error('Use case overview response was missing summary');
+  }
+
+  return {
+    useCases: payload.useCases.map(normalizeUseCase),
+    summary: payload.summary,
+    riskFeed: Array.isArray(payload.riskFeed)
+      ? payload.riskFeed.map((risk) => ({
+          severity: isRecord(risk) ? asText(risk.severity, 'unknown') : 'unknown',
+          title: isRecord(risk) ? asText(risk.title, 'Untitled risk') : 'Untitled risk',
+          blastRadius: isRecord(risk) ? asText(risk.blastRadius) : '',
+          recommendation: isRecord(risk) ? asText(risk.recommendation) : '',
+        }))
+      : [],
+    vendorScorecards: Array.isArray(payload.vendorScorecards)
+      ? payload.vendorScorecards.filter(isRecord).map((vendor) => ({
+          provider: asText(vendor.provider, 'unknown'),
+          costUsd: toNumber(vendor.costUsd),
+          requests: toNumber(vendor.requests),
+          avgLatencyMs: toNumber(vendor.avgLatencyMs),
+          sharePct: toNumber(vendor.sharePct),
+        }))
+      : [],
+  };
+};
+
+const normalizeOperatorOps = (value: unknown): OperatorOps | null => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload)) return null;
+
+  const guardrails = isRecord(payload.guardrails) ? payload.guardrails : {};
+
+  return {
+    readinessScore: toNumber(payload.readinessScore),
+    autonomyScore: toNumber(payload.autonomyScore),
+    guardrails: {
+      releaseCoveragePct: toNumber(guardrails.releaseCoveragePct),
+      promptTracePct: toNumber(guardrails.promptTracePct),
+      policyTracePct: toNumber(guardrails.policyTracePct),
+    },
+    workstreams: Array.isArray(payload.workstreams)
+      ? payload.workstreams.filter(isRecord).map((item) => ({
+          key: asText(item.key, asText(item.label, 'workstream')),
+          label: asText(item.label, 'Workstream'),
+          status: asText(item.status, 'unknown'),
+          coveragePct: toNumber(item.coveragePct),
+        }))
+      : [],
+  };
+};
+
 export const AIUseCaseControlPlane: React.FC = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [overview, setOverview] = useState<{
-    useCases: UseCaseCard[];
-    summary: any;
-    riskFeed?: Array<{
-      severity: string;
-      title: string;
-      blastRadius: string;
-      recommendation: string;
-    }>;
-    vendorScorecards?: Array<{
-      provider: string;
-      costUsd: number;
-      requests: number;
-      avgLatencyMs: number;
-      sharePct: number;
-    }>;
-  } | null>(null);
-  const [operatorOps, setOperatorOps] = useState<any>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [overview, setOverview] = useState<UseCaseOverview | null>(null);
+  const [operatorOps, setOperatorOps] = useState<OperatorOps | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const [result, operator] = await Promise.all([
         Api.getLLMUseCaseOverview(),
         Api.getAIOperatorOps().catch(() => null),
       ]);
-      setOverview(result);
-      setOperatorOps(operator);
+      setOverview(normalizeOverview(result));
+      setOperatorOps(normalizeOperatorOps(operator));
+    } catch (err: unknown) {
+      setOverview(null);
+      setOperatorOps(null);
+      setLoadError(normalizeApiErrorMessage(err, 'Failed to load AI use case control plane'));
     } finally {
       setLoading(false);
     }
@@ -128,30 +333,53 @@ export const AIUseCaseControlPlane: React.FC = () => {
   const summary = overview?.summary || {};
   const useCases = overview?.useCases || [];
 
-  const deliveryRisk = useMemo(
-    () => useCases.filter((useCase) => useCase.status === 'critical').length,
-    [useCases]
+  const deliveryRisk = useCases.filter((useCase) => useCase.status === 'critical').length;
+
+  const renderHeader = () => (
+    <div className="flex items-start justify-between gap-4">
+      <div>
+        <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
+          {t('aiPlatform.controlPlane.title', 'AI Operating System')}
+        </h2>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+          {t(
+            'aiPlatform.controlPlane.subtitle',
+            'Business control plane for chat, documents, reports, presentations, visuals, and delivery risk.'
+          )}
+        </p>
+      </div>
+      <Button onClick={() => void load()} disabled={loading}>
+        <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+        {t('common.refresh', 'Refresh')}
+      </Button>
+    </div>
   );
+
+  if (loadError) {
+    return (
+      <div className="p-6 overflow-y-auto h-full space-y-6">
+        {renderHeader()}
+        <Card className="p-6">
+          <DegradedState title="AI use case control plane unavailable" description={loadError} />
+        </Card>
+      </div>
+    );
+  }
+
+  if (loading && !overview) {
+    return (
+      <div className="p-6 overflow-y-auto h-full space-y-6">
+        {renderHeader()}
+        <Card className="flex items-center justify-center p-10 text-sm text-slate-500 dark:text-slate-400">
+          {t('common.loading', 'Loading...')}
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 overflow-y-auto h-full space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            {t('aiPlatform.controlPlane.title', 'AI Operating System')}
-          </h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            {t(
-              'aiPlatform.controlPlane.subtitle',
-              'Business control plane for chat, documents, reports, presentations, visuals, and delivery risk.'
-            )}
-          </p>
-        </div>
-        <Button onClick={() => void load()} disabled={loading}>
-          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-          {t('common.refresh', 'Refresh')}
-        </Button>
-      </div>
+      {renderHeader()}
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard
@@ -256,7 +484,7 @@ export const AIUseCaseControlPlane: React.FC = () => {
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {(operatorOps.workstreams || []).map((item: any) => (
+            {operatorOps.workstreams.map((item) => (
               <span
                 key={item.key}
                 className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${

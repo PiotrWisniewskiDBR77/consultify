@@ -121,20 +121,45 @@ router.get(
 router.post(
   '/sessions/:sessionId/approve',
   asyncHandler(async (req: Request, res: Response) => {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
     const approved = await transitionResearchSession({
       sessionId: String(req.params.sessionId),
-      organizationId: getOrgId(req),
-      actorUserId: getUserId(req),
+      organizationId: orgId,
+      actorUserId: userId,
       status: 'approved',
       eventType: 'approved',
       details: { explicitApproval: true },
     });
-    const session = await beginResearchSessionInBackground({
-      sessionId: approved.sessionId,
-      organizationId: getOrgId(req),
-      actorUserId: getUserId(req),
-    });
-    return res.status(202).json({ success: true, session, background: true });
+
+    try {
+      const session = await beginResearchSessionInBackground({
+        sessionId: approved.sessionId,
+        organizationId: orgId,
+        actorUserId: userId,
+      });
+      return res.status(202).json({ success: true, session, background: true });
+    } catch (err: any) {
+      logger.warn('[ResearchSession] Approval succeeded but background queue failed', {
+        sessionId: approved.sessionId,
+        error: err?.message || String(err),
+      });
+      const session =
+        (await transitionResearchSession({
+          sessionId: approved.sessionId,
+          organizationId: orgId,
+          actorUserId: userId,
+          status: 'approved',
+          eventType: 'queue_deferred',
+          details: { background: false, reason: err?.message || String(err) },
+        }).catch(() => null)) || approved;
+      return res.status(202).json({
+        success: true,
+        session,
+        background: false,
+        warning: 'Research session approved; background start is deferred.',
+      });
+    }
   })
 );
 

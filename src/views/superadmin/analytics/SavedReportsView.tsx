@@ -1,6 +1,5 @@
 import {
   Activity,
-  AlertTriangle,
   Bot,
   Building2,
   Calendar,
@@ -9,18 +8,19 @@ import {
   Clock,
   DollarSign,
   Download,
-  Edit,
   FileText,
-  Filter,
   Loader2,
   Play,
   Plus,
-  RefreshCw,
   Trash2,
   Users,
   XCircle,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast } from 'react-hot-toast';
+
+import { DegradedState } from '@/components/Admin/AdminState';
+import { normalizeApiErrorMessage } from '@/utils/apiError';
 
 import { Card } from '../../../components/ui/BaseCard';
 import Api from '../../../services/api';
@@ -48,6 +48,20 @@ interface Execution {
   completed_at?: string;
   result_json?: string;
   error_message?: string;
+}
+
+interface ReportExecutionResult {
+  data?: Array<Record<string, unknown>>;
+  rowCount?: number;
+  total_revenue?: number;
+  total_tokens?: number;
+  total_cost?: number;
+}
+
+interface ReportCreateExpectation {
+  name: string;
+  report_type: string;
+  id?: string;
 }
 
 const REPORT_TYPES = [
@@ -86,13 +100,83 @@ const DEFAULT_REPORT_QUERIES: Record<string, string> = {
              LIMIT 500`,
 };
 
+const reportMatchesCreate = (report: Report, expected: ReportCreateExpectation) =>
+  expected.id
+    ? report.id === expected.id
+    : report.name === expected.name && report.report_type === expected.report_type;
+
+const hasSchedule = (report: Report) => Boolean(report.schedule_json);
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const getCreatedReportId = (value: unknown) => {
+  if (!isRecord(value)) return '';
+  const payload = getObjectPayload(value);
+  const report = isRecord(value.report) ? value.report : null;
+  const payloadReport = isRecord(payload) && isRecord(payload.report) ? payload.report : null;
+  return String(
+    value.id || report?.id || (isRecord(payload) ? payload.id : '') || payloadReport?.id || ''
+  );
+};
+
+const getCreatedExecutionId = (value: unknown) => {
+  if (!isRecord(value)) return '';
+  const payload = getObjectPayload(value);
+  const execution = isRecord(value.execution) ? value.execution : null;
+  const payloadExecution =
+    isRecord(payload) && isRecord(payload.execution) ? payload.execution : null;
+  return String(
+    value.id || execution?.id || (isRecord(payload) ? payload.id : '') || payloadExecution?.id || ''
+  );
+};
+
 const SavedReportsView: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [executions, setExecutions] = useState<Execution[]>([]);
-  const [executionResult, setExecutionResult] = useState<any>(null);
+  const [executionResult, setExecutionResult] = useState<ReportExecutionResult | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [executionLoadError, setExecutionLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [isExecuting, setIsExecuting] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -102,7 +186,7 @@ const SavedReportsView: React.FC = () => {
     name: '',
     description: '',
     reportType: 'users',
-    filters: {} as Record<string, any>,
+    filters: {} as Record<string, unknown>,
     columns: [] as string[],
   });
 
@@ -112,71 +196,110 @@ const SavedReportsView: React.FC = () => {
     is_active: true,
   });
 
-  useEffect(() => {
-    fetchReports();
-  }, [filterType]);
-
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
     try {
       const data = await Api.getAnalyticsReports(filterType || undefined);
-      setReports(data || []);
-    } catch (err: any) {
-      console.error('Failed to fetch reports:', err);
-      setError(err.message || 'Failed to load reports. Please try again.');
+      const reportsData = getListPayload<Report>(data, ['reports', 'items']);
+      if (!hasListShape(data, ['reports', 'items'])) {
+        throw new Error('Saved reports response was not a list');
+      }
+      setReports(reportsData);
+      return reportsData;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to load reports. Please try again.');
+      setReports([]);
+      setSelectedReport(null);
+      setExecutions([]);
+      setExecutionResult(null);
+      setLoadError(message);
+      toast.error(message);
+      return null;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [filterType]);
 
-  const fetchExecutions = async (reportId: string) => {
+  useEffect(() => {
+    void fetchReports();
+  }, [fetchReports]);
+
+  const fetchExecutions = async (reportId: string): Promise<Execution[] | null> => {
+    setExecutionLoadError(null);
     try {
       const data = await Api.getReportExecutions(reportId);
-      setExecutions(data || []);
-    } catch (error) {
-      console.error('Failed to fetch executions:', error);
+      const executionsData = getListPayload<Execution>(data, ['executions', 'items']);
+      if (!hasListShape(data, ['executions', 'items'])) {
+        throw new Error('Report executions response was not a list');
+      }
+      setExecutions(executionsData);
+      return executionsData;
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to fetch executions');
+      setExecutions([]);
+      setExecutionLoadError(message);
+      toast.error(message);
+      return null;
     }
   };
 
   const handleSelectReport = (report: Report) => {
     setSelectedReport(report);
     setExecutionResult(null);
-    fetchExecutions(report.id);
+    void fetchExecutions(report.id);
   };
 
   const handleCreateReport = async () => {
+    if (loadError) return;
     if (!newReport.name || !newReport.reportType) return;
 
+    setActionError(null);
     try {
-      await Api.createAnalyticsReport({
+      const expected: ReportCreateExpectation = {
         name: newReport.name,
-        description: newReport.description,
         report_type: newReport.reportType,
+      };
+      const created = await Api.createAnalyticsReport({
+        name: expected.name,
+        description: newReport.description,
+        report_type: expected.report_type,
         query_sql: DEFAULT_REPORT_QUERIES[newReport.reportType] || 'SELECT 1 as ok',
         parameters: [],
         visualization_type: 'table',
       });
+      expected.id = getCreatedReportId(created) || undefined;
+      const refreshed = await fetchReports();
+      if (!refreshed?.some((report) => reportMatchesCreate(report, expected))) {
+        throw new Error('Report creation was not confirmed by the server');
+      }
       setShowCreateModal(false);
       setNewReport({ name: '', description: '', reportType: 'users', filters: {}, columns: [] });
-      fetchReports();
-    } catch (error) {
-      console.error('Failed to create report:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to create report');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
   const handleDeleteReport = async (reportId: string) => {
     if (!confirm('Are you sure you want to delete this report?')) return;
 
+    setActionError(null);
     try {
       await Api.deleteAnalyticsReport(reportId);
+      const refreshed = await fetchReports();
+      if (!refreshed || refreshed.some((report) => report.id === reportId)) {
+        throw new Error('Report deletion was not confirmed by the server');
+      }
       if (selectedReport?.id === reportId) {
         setSelectedReport(null);
         setExecutions([]);
       }
-      fetchReports();
-    } catch (error) {
-      console.error('Failed to delete report:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to delete report');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -184,13 +307,24 @@ const SavedReportsView: React.FC = () => {
     if (!selectedReport) return;
 
     setIsExecuting(true);
+    setActionError(null);
     try {
       const result = await Api.executeAnalyticsReport(selectedReport.id);
-      setExecutionResult(result);
-      fetchExecutions(selectedReport.id);
-      fetchReports();
-    } catch (error) {
-      console.error('Failed to execute report:', error);
+      const executionId = getCreatedExecutionId(result);
+      const resultPayload = getObjectPayload(result);
+      const refreshedExecutions = await fetchExecutions(selectedReport.id);
+      await fetchReports();
+      if (
+        !refreshedExecutions ||
+        (executionId && !refreshedExecutions.some((item) => item.id === executionId))
+      ) {
+        throw new Error('Report execution was not confirmed by the server');
+      }
+      setExecutionResult(resultPayload as ReportExecutionResult);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to execute report');
+      setActionError(message);
+      toast.error(message);
     } finally {
       setIsExecuting(false);
     }
@@ -199,22 +333,30 @@ const SavedReportsView: React.FC = () => {
   const handleScheduleReport = async () => {
     if (!selectedReport) return;
 
+    setActionError(null);
     try {
       await Api.scheduleAnalyticsReport(selectedReport.id, schedule);
+      const refreshed = await fetchReports();
+      const refreshedReport = refreshed?.find((report) => report.id === selectedReport.id);
+      if (!refreshedReport || !hasSchedule(refreshedReport)) {
+        throw new Error('Report schedule was not confirmed by the server');
+      }
+      setSelectedReport(refreshedReport);
       setShowScheduleModal(false);
-      fetchReports();
-    } catch (error) {
-      console.error('Failed to schedule report:', error);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to schedule report');
+      setActionError(message);
+      toast.error(message);
     }
   };
 
-  const exportToCSV = (rows: any[]) => {
+  const exportToCSV = (rows: Array<Record<string, unknown>>) => {
     if (!rows || rows.length === 0) return;
 
     const headers = Object.keys(rows[0]);
     const csvContent = [
       headers.join(','),
-      ...rows.map((row: any) =>
+      ...rows.map((row) =>
         headers
           .map((h) => {
             const val = row[h];
@@ -241,8 +383,12 @@ const SavedReportsView: React.FC = () => {
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return 'Never';
-    return new Date(dateStr).toLocaleString();
+    const date = new Date(dateStr);
+    if (Number.isNaN(date.getTime())) return 'Unknown date';
+    return date.toLocaleString();
   };
+
+  const controlsDisabled = !!loadError;
 
   if (isLoading) {
     return (
@@ -268,6 +414,8 @@ const SavedReportsView: React.FC = () => {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
+              disabled={controlsDisabled}
+              title={loadError || undefined}
               className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-lg px-3 py-2 text-slate-900 dark:text-white text-sm appearance-none pr-8"
             >
               <option value="">All Types</option>
@@ -281,7 +429,9 @@ const SavedReportsView: React.FC = () => {
           </div>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+            disabled={controlsDisabled}
+            title={loadError || undefined}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4" />
             New Report
@@ -289,23 +439,18 @@ const SavedReportsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Error Banner */}
-      {error && (
-        <div className="flex items-center justify-between p-4 bg-red-500/10 border border-red-500/30 rounded-xl">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-            <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
-          </div>
-          <button
-            onClick={() => {
-              setError(null);
-              fetchReports();
-            }}
-            className="flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Retry
-          </button>
+      {loadError ? (
+        <div className="p-4 bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl">
+          <DegradedState title="Saved reports unavailable" description={loadError} />
+        </div>
+      ) : null}
+
+      {actionError && (
+        <div
+          role="alert"
+          className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-600 dark:text-red-300"
+        >
+          {actionError}
         </div>
       )}
 
@@ -317,7 +462,9 @@ const SavedReportsView: React.FC = () => {
               Reports ({reports.length})
             </h3>
             <div className="space-y-2 max-h-[600px] overflow-y-auto">
-              {reports.length === 0 ? (
+              {loadError ? (
+                <DegradedState title="Reports list unavailable" description={loadError} />
+              ) : reports.length === 0 ? (
                 <p className="text-slate-600 dark:text-slate-400 text-sm text-center py-8">
                   No reports yet. Create one to get started.
                 </p>
@@ -407,6 +554,7 @@ const SavedReportsView: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleDeleteReport(selectedReport.id)}
+                      aria-label={`Delete report ${selectedReport.name}`}
                       className="p-2 text-red-400 hover:bg-red-600/20 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -522,7 +670,7 @@ const SavedReportsView: React.FC = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {executionResult.data.slice(0, 10).map((row: any, idx: number) => (
+                          {executionResult.data.slice(0, 10).map((row, idx) => (
                             <tr key={idx} className="border-b border-gray-700/50">
                               {Object.keys(row)
                                 .slice(0, 6)
@@ -551,7 +699,12 @@ const SavedReportsView: React.FC = () => {
               {/* Execution History */}
               <Card className="bg-gray-800 p-4">
                 <h4 className="text-lg font-semibold text-white mb-4">Execution History</h4>
-                {executions.length === 0 ? (
+                {executionLoadError ? (
+                  <DegradedState
+                    title="Report executions unavailable"
+                    description={executionLoadError}
+                  />
+                ) : executions.length === 0 ? (
                   <p className="text-gray-500 dark:text-gray-400 text-sm text-center py-4">
                     No executions yet
                   </p>

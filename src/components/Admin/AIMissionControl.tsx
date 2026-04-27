@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { Button } from '../ui/primitives/Button';
+import { DegradedState } from './AdminState';
 
 interface CapabilityResult {
   capability: string;
   status: 'SUCCESS' | 'FAILED' | 'PENDING';
   latency: number;
-  details: any;
+  details: unknown;
   error?: string;
 }
 
@@ -26,10 +28,86 @@ interface SystemStatus {
   timestamp: string;
 }
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const asText = (value: unknown, fallback: string) =>
+  typeof value === 'string' && value.trim()
+    ? value
+    : typeof value === 'number' || typeof value === 'boolean'
+      ? String(value)
+      : fallback;
+
+const toNumber = (value: unknown, fallback = 0) =>
+  Number.isFinite(Number(value)) ? Number(value) : fallback;
+
+const normalizeSystemStatus = (value: unknown): SystemStatus => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload) || !Array.isArray(payload.providers) || !isRecord(payload.metrics)) {
+    throw new Error('AI mission status response was incomplete');
+  }
+
+  return {
+    providers: payload.providers.filter(isRecord).map((provider) => ({
+      name: asText(provider.name, 'Unknown provider'),
+      type: asText(provider.type, ''),
+      status: asText(provider.status, 'UNKNOWN'),
+      visibility: asText(provider.visibility, ''),
+    })),
+    metrics: {
+      uptime50: toNumber(payload.metrics.uptime50, 0),
+      avgLatencyMs: toNumber(payload.metrics.avgLatencyMs, 0),
+      totalRequests: toNumber(payload.metrics.totalRequests, 0),
+    },
+    timestamp: asText(payload.timestamp, new Date().toISOString()),
+  };
+};
+
+const normalizeCapabilityResult = (
+  value: unknown,
+  capability: string,
+  fallbackError?: string
+): CapabilityResult => {
+  const payload = getObjectPayload(value);
+  if (!isRecord(payload)) {
+    return {
+      capability,
+      status: 'FAILED',
+      latency: 0,
+      details: null,
+      error: fallbackError || 'Capability test response was incomplete',
+    };
+  }
+
+  const status =
+    payload.status === 'SUCCESS' || payload.status === 'FAILED' || payload.status === 'PENDING'
+      ? payload.status
+      : 'FAILED';
+
+  return {
+    capability: asText(payload.capability, capability),
+    status,
+    latency: toNumber(payload.latency, 0),
+    details: payload.details ?? null,
+    error:
+      status === 'FAILED'
+        ? asText(payload.error, fallbackError || 'Capability test did not confirm success')
+        : undefined,
+  };
+};
+
 export const AIMissionControl: React.FC = () => {
   const [status, setStatus] = useState<SystemStatus | null>(null);
   const [results, setResults] = useState<Record<string, CapabilityResult>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const capabilities = [
     { id: 'connection', name: 'AI Connection (Basic)', icon: '🔌' },
@@ -44,20 +122,16 @@ export const AIMissionControl: React.FC = () => {
   }, []);
 
   const fetchStatus = async () => {
+    setStatusLoading(true);
+    setLoadError(null);
     try {
       const response = await Api.get('/api/llm/health/status');
-      const data = response?.data ?? response;
-      setStatus({
-        providers: Array.isArray(data?.providers) ? data.providers : [],
-        metrics: {
-          uptime50: Number(data?.metrics?.uptime50 || 0),
-          avgLatencyMs: Number(data?.metrics?.avgLatencyMs || 0),
-          totalRequests: Number(data?.metrics?.totalRequests || 0),
-        },
-        timestamp: String(data?.timestamp || new Date().toISOString()),
-      });
-    } catch (err) {
-      console.error('Failed to fetch AI status', err);
+      setStatus(normalizeSystemStatus(response));
+    } catch (err: unknown) {
+      setStatus(null);
+      setLoadError(normalizeApiErrorMessage(err, 'Failed to fetch AI status'));
+    } finally {
+      setStatusLoading(false);
     }
   };
 
@@ -65,22 +139,19 @@ export const AIMissionControl: React.FC = () => {
     setLoading((prev) => ({ ...prev, [capId]: true }));
     try {
       const response = await Api.post(`/api/llm/health/test/${capId}`, { context: {} });
-      const data = response?.data ?? response;
-      setResults((prev) => ({ ...prev, [capId]: data }));
-    } catch (err: any) {
+      setResults((prev) => ({ ...prev, [capId]: normalizeCapabilityResult(response, capId) }));
+    } catch (err: unknown) {
       setResults((prev) => ({
         ...prev,
-        [capId]: {
-          capability: capId,
-          status: 'FAILED',
-          latency: 0,
-          details: null,
-          error: err.message,
-        },
+        [capId]: normalizeCapabilityResult(
+          null,
+          capId,
+          normalizeApiErrorMessage(err, 'Capability test failed')
+        ),
       }));
     } finally {
       setLoading((prev) => ({ ...prev, [capId]: false }));
-      fetchStatus(); // Refresh overall metrics
+      await fetchStatus();
     }
   };
 
@@ -94,59 +165,69 @@ export const AIMissionControl: React.FC = () => {
       </div>
 
       {/* System Status Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {loadError ? (
         <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
-          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
-            Success Rate (Last 50)
-          </h3>
-          <div className="mt-2 flex items-baseline">
-            <span className="text-3xl font-bold text-slate-900 dark:text-white">
-              {status?.metrics?.uptime50?.toFixed(1) ?? '0.0'}%
-            </span>
-            <span
-              className={`ml-2 text-sm font-medium ${status?.metrics?.uptime50 && status.metrics.uptime50 > 95 ? 'text-emerald-400' : 'text-amber-300'}`}
-            >
-              {status?.metrics?.uptime50 && status.metrics.uptime50 > 95 ? 'Excellent' : 'Degraded'}
-            </span>
-          </div>
+          <DegradedState title="AI mission control unavailable" description={loadError} />
         </div>
-        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
-          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
-            Avg Latency
-          </h3>
-          <div className="mt-2 flex items-baseline">
-            <span className="text-3xl font-bold text-slate-900 dark:text-white">
-              {status?.metrics?.avgLatencyMs ?? 0}ms
-            </span>
-            <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">per request</span>
-          </div>
+      ) : statusLoading && !status ? (
+        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10 text-sm text-slate-600 dark:text-slate-400">
+          Loading AI mission status...
         </div>
-        <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
-          <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
-            Active Providers
-          </h3>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {(() => {
-              const activeProviders = status?.providers?.filter((p) => p.status === 'ACTIVE') || [];
-              if (activeProviders.length === 0) {
-                return (
-                  <span className="text-slate-600 dark:text-slate-400 text-sm">
-                    No active providers
+      ) : status ? (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
+              Success Rate (Last 50)
+            </h3>
+            <div className="mt-2 flex items-baseline">
+              <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                {status.metrics.uptime50.toFixed(1)}%
+              </span>
+              <span
+                className={`ml-2 text-sm font-medium ${status.metrics.uptime50 > 95 ? 'text-emerald-400' : 'text-amber-300'}`}
+              >
+                {status.metrics.uptime50 > 95 ? 'Excellent' : 'Degraded'}
+              </span>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
+              Avg Latency
+            </h3>
+            <div className="mt-2 flex items-baseline">
+              <span className="text-3xl font-bold text-slate-900 dark:text-white">
+                {status.metrics.avgLatencyMs}ms
+              </span>
+              <span className="ml-2 text-sm text-slate-600 dark:text-slate-400">per request</span>
+            </div>
+          </div>
+          <div className="bg-white dark:bg-navy-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-white/10">
+            <h3 className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">
+              Active Providers
+            </h3>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(() => {
+                const activeProviders = status.providers.filter((p) => p.status === 'ACTIVE');
+                if (activeProviders.length === 0) {
+                  return (
+                    <span className="text-slate-600 dark:text-slate-400 text-sm">
+                      No active providers
+                    </span>
+                  );
+                }
+                return activeProviders.map((p) => (
+                  <span
+                    key={p.name}
+                    className="px-2 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 text-xs font-medium rounded-full border border-emerald-500/30"
+                  >
+                    {p.name}
                   </span>
-                );
-              }
-              return activeProviders.map((p) => (
-                <span
-                  key={p.name}
-                  className="px-2 py-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 text-xs font-medium rounded-full border border-emerald-500/30"
-                >
-                  {p.name}
-                </span>
-              ));
-            })()}
+                ));
+              })()}
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Capability Tests */}
       <div className="bg-white dark:bg-navy-900 rounded-xl shadow-sm border border-slate-200 dark:border-white/10 overflow-hidden">
@@ -185,10 +266,11 @@ export const AIMissionControl: React.FC = () => {
                 )}
                 <Button
                   onClick={() => testCapability(cap.id)}
-                  loading={loading[cap.id] as any}
+                  loading={Boolean(loading[cap.id])}
+                  disabled={Boolean(loadError)}
+                  title={loadError ? 'AI mission control status is unavailable' : undefined}
                   variant={results[cap.id]?.status === 'FAILED' ? 'danger' : 'primary'}
                   size="sm"
-                  {...({} as any)}
                 >
                   Run Test
                 </Button>
@@ -222,7 +304,7 @@ export const AIMissionControl: React.FC = () => {
                   </span>
                 </div>
                 {res.error && <div className="text-rose-200 ml-4">Error: {res.error}</div>}
-                {res.details && (
+                {res.details !== null && res.details !== undefined && (
                   <pre className="ml-4 mt-1 text-slate-100 whitespace-pre-wrap break-words">
                     {JSON.stringify(res.details, null, 2)}
                   </pre>

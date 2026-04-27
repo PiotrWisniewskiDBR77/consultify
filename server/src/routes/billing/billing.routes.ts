@@ -62,7 +62,10 @@ router.use(defaultRateLimiter);
 function isSchemaMissingError(err: unknown): boolean {
   const msg = String((err as any)?.message || '').toLowerCase();
   return (
-    msg.includes('no such table') || msg.includes('does not exist') || msg.includes('relation')
+    msg.includes('no such table') ||
+    msg.includes('no such column') ||
+    msg.includes('does not exist') ||
+    msg.includes('relation')
   );
 }
 
@@ -213,24 +216,29 @@ router.get(
         ORDER BY sp.price_monthly DESC
       `)) as any[];
 
-      const mrr = plans.reduce(
-        (sum: number, p: any) => sum + (p.price_monthly || 0) * (p.subscriber_count || 0),
-        0
-      );
+      const mrr = plans.reduce((sum: number, p: any) => {
+        const priceMonthly = Number(p.price_monthly || 0);
+        const subscriberCount = Number(p.subscriber_count || 0);
+        return sum + priceMonthly * subscriberCount;
+      }, 0);
 
       return res.json({
         mrr,
         arr: mrr * 12,
         activeSubscriptions: plans.reduce(
-          (sum: number, p: any) => sum + (p.subscriber_count || 0),
+          (sum: number, p: any) => sum + Number(p.subscriber_count || 0),
           0
         ),
-        planDistribution: plans.map((p: any) => ({
-          plan: p.name,
-          price: p.price_monthly,
-          subscribers: p.subscriber_count,
-          revenue: (p.price_monthly || 0) * (p.subscriber_count || 0),
-        })),
+        planDistribution: plans.map((p: any) => {
+          const priceMonthly = Number(p.price_monthly || 0);
+          const subscriberCount = Number(p.subscriber_count || 0);
+          return {
+            plan: p.name,
+            price: priceMonthly,
+            subscribers: subscriberCount,
+            revenue: priceMonthly * subscriberCount,
+          };
+        }),
       });
     } catch {
       return res.json({ mrr: 0, arr: 0, activeSubscriptions: 0, planDistribution: [] });
@@ -257,9 +265,9 @@ router.get(
       `)) as any;
 
       return res.json({
-        totalTokensThisMonth: tokenRow?.total_tokens || 0,
+        totalTokensThisMonth: Number(tokenRow?.total_tokens || 0),
         totalStorageGB: 0,
-        activeOrganizations: orgRow?.active_orgs || 0,
+        activeOrganizations: Number(orgRow?.active_orgs || 0),
       });
     } catch {
       return res.json({ totalTokensThisMonth: 0, totalStorageGB: 0, activeOrganizations: 0 });
@@ -326,13 +334,17 @@ router.get(
                 GROUP BY sp.id
             `);
 
-      const byPlan = (subscriptions || []).map((s: any) => ({
-        plan_id: s.plan_id,
-        plan_name: s.plan_name,
-        price_monthly: s.price_monthly || 0,
-        subscriber_count: s.subscriber_count || 0,
-        plan_mrr: (s.price_monthly || 0) * (s.subscriber_count || 0),
-      }));
+      const byPlan = (subscriptions || []).map((s: any) => {
+        const priceMonthly = Number(s.price_monthly || 0);
+        const subscriberCount = Number(s.subscriber_count || 0);
+        return {
+          plan_id: s.plan_id,
+          plan_name: s.plan_name,
+          price_monthly: priceMonthly,
+          subscriber_count: subscriberCount,
+          plan_mrr: priceMonthly * subscriberCount,
+        };
+      });
 
       const totalMRR = byPlan.reduce((sum: number, p: any) => sum + p.plan_mrr, 0);
       const activeSubscriptions = byPlan.reduce(
@@ -745,7 +757,7 @@ router.get(
   asyncHandler(async (_req: AuthRequest, res: Response) => {
     try {
       const plans = await dbAll<any>(
-        `SELECT * FROM subscription_plans ORDER BY sort_order ASC`,
+        `SELECT * FROM subscription_plans ORDER BY price_monthly ASC`,
         [],
         { fallback: false }
       );
@@ -918,6 +930,14 @@ router.delete(
 
 router.get(
   '/admin/user-plans',
+  verifyToken,
+  requireSuperAdmin,
+  asyncHandler(async (_req: AuthRequest, res: Response) => {
+    return respondSchemaUnavailable(res, 'User seat plans');
+  })
+);
+router.get(
+  '/user-plans',
   verifyToken,
   requireSuperAdmin,
   asyncHandler(async (_req: AuthRequest, res: Response) => {
@@ -1386,10 +1406,10 @@ router.get(
       }
 
       const billing = await dbGet(
-        `SELECT subscription_plan_id, status, current_period_end, billing_rail, contract_status,
-                renewal_at, grace_until, access_expires_at, managed_by_user_id, is_manual_override
+        `SELECT *
          FROM organization_billing
          WHERE organization_id = ?
+         ORDER BY CASE WHEN subscription_plan_id IS NULL THEN 1 ELSE 0 END
          LIMIT 1`,
         [orgId]
       );

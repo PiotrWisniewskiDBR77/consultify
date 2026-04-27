@@ -26,7 +26,8 @@ export function GrowthPathsLibraryGraphic({
           ['Rozwój produktu', 'Nowe propozycje wartości dla obecnych klientów'],
           ['Dywersyfikacja', 'Nowy produkt i nowy rynek, najwyższe ryzyko'],
         ],
-        insight: 'Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.',
+        insight:
+          'Rekomendacja nie wynika z największej liczby pomysłów, tylko z najlepszej sekwencji: skaluj core, przetestuj nowy segment, dopiero potem zwiększ ryzyko.',
         output: 'Source summary -> inicjatywa -> deck -> raport',
       }
     : {
@@ -78,11 +79,16 @@ export function GrowthPathsLibraryGraphic({
           <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]">
             <div className="space-y-2">
               {labels.stages.map((stage, index) => (
-                <div key={stage} className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60">
+                <div
+                  key={stage}
+                  className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 dark:bg-navy-900/60"
+                >
                   <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-purple-600 text-xs font-bold text-white">
                     {index + 1}
                   </div>
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{stage}</div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {stage}
+                  </div>
                 </div>
               ))}
             </div>
@@ -97,7 +103,9 @@ export function GrowthPathsLibraryGraphic({
                 className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-white/10 dark:bg-white/[0.04]"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-slate-900 dark:text-white">{title}</div>
+                  <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                    {title}
+                  </div>
                   <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950/40 dark:text-purple-200">
                     Q{index + 1}
                   </span>

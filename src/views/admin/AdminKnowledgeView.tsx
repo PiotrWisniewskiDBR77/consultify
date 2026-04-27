@@ -18,8 +18,57 @@ import {
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '@/components/Admin/AdminState';
+
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+
+  return (
+    Array.isArray(value.data) ||
+    keys.some((key) => Array.isArray(value[key])) ||
+    Boolean(
+      data &&
+      (Array.isArray(data.data) ||
+        keys.some((key) => Array.isArray(data[key])) ||
+        Boolean(nestedData && keys.some((key) => Array.isArray(nestedData[key]))))
+    )
+  );
+};
+
+const normalizeCandidateList = (value: unknown) => {
+  if (!hasListShape(value, ['candidates', 'ideas', 'items'])) {
+    throw new Error('Knowledge candidates response was not a list');
+  }
+  return getListPayload<any>(value, ['candidates', 'ideas', 'items']);
+};
 
 export const AdminKnowledgeView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
@@ -30,6 +79,8 @@ export const AdminKnowledgeView: React.FC = () => {
   const [documents, setDocuments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // Filter State
   const [candidateFilter, setCandidateFilter] = useState<
@@ -95,15 +146,18 @@ export const AdminKnowledgeView: React.FC = () => {
     }
   };
 
-  const loadData = async () => {
-    setLoading(true);
+  const loadData = async (options: { showLoading?: boolean } = {}) => {
+    if (options.showLoading !== false) setLoading(true);
+    setLoadError(null);
     try {
       if (activeTab === 'candidates') {
         if (showApprovedLibrary) {
           const filters: any = {};
           if (ideaCategoryFilter) filters.category = ideaCategoryFilter;
           const data = await Api.getApprovedIdeas(filters);
-          setCandidates(Array.isArray(data) ? data : []);
+          const nextCandidates = normalizeCandidateList(data);
+          setCandidates(nextCandidates);
+          return { candidates: nextCandidates };
         } else if (candidateFilter === 'all') {
           // Load all statuses
           const [pending, approved, rejected, implemented] = await Promise.all([
@@ -112,34 +166,56 @@ export const AdminKnowledgeView: React.FC = () => {
             Api.getKnowledgeCandidates('rejected'),
             Api.getKnowledgeCandidates('implemented'),
           ]);
-          setCandidates([...pending, ...approved, ...rejected, ...implemented]);
+          const nextCandidates = [
+            ...normalizeCandidateList(pending),
+            ...normalizeCandidateList(approved),
+            ...normalizeCandidateList(rejected),
+            ...normalizeCandidateList(implemented),
+          ];
+          setCandidates(nextCandidates);
+          return { candidates: nextCandidates };
         } else {
           const data = await Api.getKnowledgeCandidates(candidateFilter);
-          setCandidates(Array.isArray(data) ? data : []);
+          const nextCandidates = normalizeCandidateList(data);
+          setCandidates(nextCandidates);
+          return { candidates: nextCandidates };
         }
       } else if (activeTab === 'strategies') {
         const data = await Api.getAllGlobalStrategies();
         setStrategies(Array.isArray(data) ? data : []);
+        return { strategies: Array.isArray(data) ? data : [] };
       } else {
         const data = await Api.getKnowledgeDocuments();
         setDocuments(Array.isArray(data) ? data : []);
+        return { documents: Array.isArray(data) ? data : [] };
       }
-    } catch (err) {
-      toast.error('Failed to load data');
-      console.error(err);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Failed to load data';
+      setLoadError(message);
+      setCandidates([]);
+      setStrategies([]);
+      setDocuments([]);
+      toast.error(message);
+      return null;
     } finally {
-      setLoading(false);
+      if (options.showLoading !== false) setLoading(false);
     }
   };
 
   // Candidates Actions
   const handleAction = async (id: string, action: 'approved' | 'rejected') => {
     try {
+      setActionError(null);
       await Api.updateCandidateStatus(id, action);
+      const refreshed = await loadData({ showLoading: false });
+      if (!refreshed || refreshed.candidates?.some((candidate) => candidate.id === id)) {
+        throw new Error('Idea status update was not confirmed by the server');
+      }
       toast.success(`Idea ${action}`);
-      setCandidates(candidates.filter((c) => c.id !== id));
-    } catch (err) {
-      toast.error('Action failed');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Action failed';
+      setActionError(message);
+      toast.error(message);
     }
   };
 
@@ -406,8 +482,21 @@ export const AdminKnowledgeView: React.FC = () => {
           <div className="flex justify-center py-20 text-slate-500 animate-pulse">
             Accessing Global Brain...
           </div>
+        ) : loadError ? (
+          <div className="bg-white dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-6">
+            <DegradedState title="Knowledge base unavailable" description={loadError} />
+          </div>
         ) : (
           <>
+            {actionError ? (
+              <div
+                role="alert"
+                className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+              >
+                {actionError}
+              </div>
+            ) : null}
+
             {/* --- IDEA CANDIDATES --- */}
             {activeTab === 'candidates' && (
               <div className="space-y-4">

@@ -21,6 +21,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { DegradedState } from '../../components/Admin/AdminState';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 
 interface OAuthStatus {
   google: { configured: boolean; loginUrl: string };
@@ -31,6 +32,23 @@ interface OAuthStatus {
 interface AdminSecuritySettingsProps {
   className?: string;
 }
+
+interface SecuritySettingsSnapshot {
+  mfaRequired: boolean;
+  ssoEnabled: boolean;
+  sessionTimeout: number;
+  ipWhitelist: string;
+  loginMaxAttempts: number;
+  lockoutDuration: number;
+}
+
+const settingsMatch = (actual: SecuritySettingsSnapshot, expected: SecuritySettingsSnapshot) =>
+  actual.mfaRequired === expected.mfaRequired &&
+  actual.ssoEnabled === expected.ssoEnabled &&
+  Number(actual.sessionTimeout) === Number(expected.sessionTimeout) &&
+  actual.ipWhitelist === expected.ipWhitelist &&
+  Number(actual.loginMaxAttempts) === Number(expected.loginMaxAttempts) &&
+  Number(actual.lockoutDuration) === Number(expected.lockoutDuration);
 
 export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ className = '' }) => {
   const { t } = useTranslation();
@@ -45,6 +63,7 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
   const [oauthStatus, setOAuthStatus] = useState<OAuthStatus | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [oauthLoadError, setOauthLoadError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -60,15 +79,14 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
       }
       const data = await response.json();
       setOAuthStatus(data);
-    } catch (error) {
-      console.error('Failed to fetch OAuth status:', error);
+    } catch (error: unknown) {
       setOAuthStatus(null);
-      setOauthLoadError(error instanceof Error ? error.message : 'Failed to load OAuth status');
+      setOauthLoadError(normalizeApiErrorMessage(error, 'Failed to load OAuth status'));
     }
   };
 
-  const fetchSettings = async () => {
-    setLoading(true);
+  const fetchSettings = async (showLoader = true) => {
+    if (showLoader) setLoading(true);
     try {
       setLoadError(null);
       const response = await fetch('/api/security/admin-settings', {
@@ -78,46 +96,65 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
         throw new Error(`HTTP ${response.status}`);
       }
       const data = await response.json();
-      setMfaRequired(data.mfaRequired ?? false);
-      setSsoEnabled(data.ssoEnabled ?? false);
-      setSessionTimeout(data.sessionTimeout ?? 30);
-      setIpWhitelist(data.ipWhitelist ?? '');
-      setLoginMaxAttempts(data.loginMaxAttempts ?? 5);
-      setLockoutDuration(data.lockoutDuration ?? 30);
-    } catch (error) {
-      console.error('Failed to fetch security settings:', error);
-      setLoadError(error instanceof Error ? error.message : 'Failed to load security settings');
+      const snapshot = {
+        mfaRequired: data.mfaRequired ?? false,
+        ssoEnabled: data.ssoEnabled ?? false,
+        sessionTimeout: data.sessionTimeout ?? 30,
+        ipWhitelist: data.ipWhitelist ?? '',
+        loginMaxAttempts: data.loginMaxAttempts ?? 5,
+        lockoutDuration: data.lockoutDuration ?? 30,
+      } satisfies SecuritySettingsSnapshot;
+      setMfaRequired(snapshot.mfaRequired);
+      setSsoEnabled(snapshot.ssoEnabled);
+      setSessionTimeout(snapshot.sessionTimeout);
+      setIpWhitelist(snapshot.ipWhitelist);
+      setLoginMaxAttempts(snapshot.loginMaxAttempts);
+      setLockoutDuration(snapshot.lockoutDuration);
+      return snapshot;
+    } catch (error: unknown) {
+      setLoadError(normalizeApiErrorMessage(error, 'Failed to load security settings'));
+      return null;
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   };
 
   const handleSave = async () => {
     setSaving(true);
+    setSaveError(null);
     try {
+      const expected = {
+        mfaRequired,
+        ssoEnabled,
+        sessionTimeout,
+        ipWhitelist,
+        loginMaxAttempts,
+        lockoutDuration,
+      } satisfies SecuritySettingsSnapshot;
       const response = await fetch('/api/security/admin-settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        body: JSON.stringify({
-          mfaRequired,
-          ssoEnabled,
-          sessionTimeout,
-          ipWhitelist,
-          loginMaxAttempts,
-          lockoutDuration,
-        }),
+        body: JSON.stringify(expected),
       });
-      if (response.ok) {
-        toast.success(t('admin.security.saved', 'Security settings saved'));
-      } else {
+      if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to save');
       }
-    } catch (error: any) {
-      toast.error(error.message || t('admin.security.saveError', 'Failed to save settings'));
+      const persisted = await fetchSettings(false);
+      if (!persisted || !settingsMatch(persisted, expected)) {
+        throw new Error('Security settings save was not confirmed by the server');
+      }
+      toast.success(t('admin.security.saved', 'Security settings saved'));
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('admin.security.saveError', 'Failed to save settings')
+      );
+      setSaveError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -413,6 +450,16 @@ export const AdminSecuritySettings: React.FC<AdminSecuritySettingsProps> = ({ cl
               />
             </div>
           ) : null}
+
+          {/* Security Alert */}
+          {saveError && (
+            <div
+              role="alert"
+              className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+            >
+              {saveError}
+            </div>
+          )}
 
           {/* Security Alert */}
           <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex items-start gap-3">

@@ -15,12 +15,13 @@ import {
   UserCircle,
   Users,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { changeLanguage, SUPPORTED_LANGUAGES } from '../../i18n';
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { InfoButton } from '../shared/InfoButton';
 
 interface ProfileSettingsProps {
@@ -128,23 +129,23 @@ const TIME_FORMATS = [
   { value: '12h', label: '12-hour (2:30 PM)' },
 ];
 
-// Pronouns and department option values (labels resolved via i18n inside component)
-const PRONOUNS_VALUES = ['', 'he/him', 'she/her', 'they/them', 'other'] as const;
-const DEPARTMENT_VALUES = [
-  '',
-  'Engineering',
-  'Product',
-  'Design',
-  'Marketing',
-  'Sales',
-  'Operations',
-  'Finance',
-  'HR',
-  'Legal',
-  'Customer Success',
-  'Support',
-  'Executive',
-  'Other',
+const PROFILE_CONFIRMATION_FIELDS = [
+  'firstName',
+  'lastName',
+  'phone',
+  'companyName',
+  'jobTitle',
+  'timezone',
+  'dateFormat',
+  'timeFormat',
+  'linkedinId',
+  'displayName',
+  'pronouns',
+  'department',
+  'statusMessage',
+  'isOutOfOffice',
+  'outOfOfficeUntil',
+  'outOfOfficeMessage',
 ] as const;
 
 // Extended form state type
@@ -224,6 +225,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [showJobTitleSuggestions, setShowJobTitleSuggestions] = useState(false);
 
   const [formState, setFormState] = useState<ExtendedFormState>({
@@ -246,8 +248,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
     outOfOfficeMessage: currentUser.outOfOfficeMessage || '',
   });
 
-  const getJobTitleLabel = (title: string) =>
-    t(`settings.profile.jobTitleSuggestions.${JOB_TITLE_I18N_KEYS[title] || 'other'}`, title);
+  const getJobTitleLabel = useCallback(
+    (title: string) =>
+      t(`settings.profile.jobTitleSuggestions.${JOB_TITLE_I18N_KEYS[title] || 'other'}`, title),
+    [t]
+  );
   const formatI18nKey = (value: string) =>
     value.replace(/\//g, '_slash_').replace(/\./g, '_dot_').replace(/-/g, '_dash_');
 
@@ -259,7 +264,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       (title) =>
         title.toLowerCase().includes(query) || getJobTitleLabel(title).toLowerCase().includes(query)
     );
-  }, [formState.jobTitle, t]);
+  }, [formState.jobTitle, getJobTitleLabel]);
 
   // Initial state sync
   useEffect(() => {
@@ -286,13 +291,31 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   // Handle manual save
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveStatus('idle');
+    setSaveError(null);
     try {
-      await Api.updateUser(currentUser.id, formState as any);
+      await Api.updateUser(currentUser.id, formState as Partial<User>);
       const persistedUser = await Api.getMe();
-      onUpdateUser((persistedUser || formState) as Partial<User>);
+
+      if (!persistedUser) {
+        throw new Error('Profile save was not confirmed by the server');
+      }
+
+      const mismatchedField = PROFILE_CONFIRMATION_FIELDS.find(
+        (field) =>
+          String((persistedUser as Partial<ExtendedFormState>)[field] ?? '') !==
+          String(formState[field] ?? '')
+      );
+
+      if (mismatchedField) {
+        throw new Error('Profile changes were not confirmed by the server');
+      }
+
+      onUpdateUser(persistedUser);
       setSaveStatus('success');
       setTimeout(() => setSaveStatus('idle'), 2000);
-    } catch (error) {
+    } catch (error: unknown) {
+      setSaveError(normalizeApiErrorMessage(error, 'Failed to save profile settings'));
       setSaveStatus('error');
     } finally {
       setIsSaving(false);
@@ -957,6 +980,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
         <div className="fixed bottom-8 right-8 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
           <CheckCircle size={16} />
           {t('settings.profile.saved', 'Saved!')}
+        </div>
+      )}
+      {saveStatus === 'error' && saveError && (
+        <div
+          role="alert"
+          className="fixed bottom-8 right-8 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2"
+        >
+          {saveError}
         </div>
       )}
     </div>

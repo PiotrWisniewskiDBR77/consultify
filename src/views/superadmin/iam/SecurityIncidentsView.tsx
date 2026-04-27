@@ -18,12 +18,13 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { toast } from 'react-hot-toast';
 
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface SecurityIncident {
   id: string;
@@ -60,6 +61,17 @@ interface IncidentStats {
   };
 }
 
+interface IncidentDataSnapshot {
+  incidents: SecurityIncident[];
+  stats: IncidentStats;
+}
+
+interface IncidentFilters {
+  severity?: string;
+  status?: string;
+  incidentType?: string;
+}
+
 const SEVERITY_OPTIONS = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 const STATUS_OPTIONS = ['open', 'in_progress', 'resolved', 'closed'];
 const INCIDENT_TYPES = [
@@ -76,6 +88,93 @@ const INCIDENT_TYPES = [
   { value: 'suspicious_activity', label: 'Suspicious Activity' },
   { value: 'other', label: 'Other' },
 ];
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
+  if (Array.isArray(value)) return value as T[];
+  if (!isRecord(value)) return [];
+  const data = isRecord(value.data) ? value.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const candidates = [value, data, nestedData].filter(isRecord);
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate.data)) return candidate.data as T[];
+    for (const key of keys) {
+      if (Array.isArray(candidate[key])) return candidate[key] as T[];
+    }
+  }
+  return [];
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const normalizeStats = (value: unknown): IncidentStats => {
+  const payload = getObjectPayload(value);
+  const statsValue = isRecord(payload) ? (payload as Partial<IncidentStats>) : {};
+  return {
+    totalIncidents: safeNumber(statsValue.totalIncidents),
+    byStatus: {
+      open: safeNumber(statsValue.byStatus?.open),
+      inProgress: safeNumber(statsValue.byStatus?.inProgress),
+      resolved: safeNumber(statsValue.byStatus?.resolved),
+      closed: safeNumber(statsValue.byStatus?.closed),
+    },
+    bySeverity: {
+      critical: safeNumber(statsValue.bySeverity?.critical),
+      high: safeNumber(statsValue.bySeverity?.high),
+      medium: safeNumber(statsValue.bySeverity?.medium),
+      low: safeNumber(statsValue.bySeverity?.low),
+    },
+  };
+};
+
+const getCreatedIncidentId = (result: unknown) => {
+  if (!isRecord(result)) return '';
+  const data = isRecord(result.data) ? result.data : null;
+  const nestedData = data && isRecord(data.data) ? data.data : null;
+  const incident = isRecord(result.incident) ? result.incident : null;
+  return String(
+    result.id ||
+      incident?.id ||
+      data?.id ||
+      (isRecord(data?.incident) ? data.incident.id : '') ||
+      nestedData?.id ||
+      (isRecord(nestedData?.incident) ? nestedData.incident.id : '') ||
+      ''
+  );
+};
+
+const formatDateTime = (value: string | null) => {
+  if (!value) return 'Unknown date';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
+};
 
 const SecurityIncidentsView: React.FC = () => {
   const [incidents, setIncidents] = useState<SecurityIncident[]>([]);
@@ -101,17 +200,13 @@ const SecurityIncidentsView: React.FC = () => {
     affectedResources: '',
   });
 
-  useEffect(() => {
-    loadData();
-  }, [filters.severity, filters.status, filters.incidentType]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setLoadError(null);
       setError(null);
 
-      const params: any = {};
+      const params: IncidentFilters = {};
       if (filters.severity) params.severity = filters.severity;
       if (filters.status) params.status = filters.status;
       if (filters.incidentType) params.incidentType = filters.incidentType;
@@ -121,23 +216,41 @@ const SecurityIncidentsView: React.FC = () => {
         Api.getSecurityIncidentStats(),
       ]);
 
-      setIncidents(incidentsData);
-      setStats(statsData as any);
-    } catch (err: any) {
-      const message = err.message || 'Failed to load security incidents';
+      if (!hasListShape(incidentsData, ['incidents', 'items'])) {
+        throw new Error('Security incidents response was not a list');
+      }
+      const incidentsSnapshot = getListPayload<SecurityIncident>(incidentsData, [
+        'incidents',
+        'items',
+      ]);
+      const statsSnapshot = normalizeStats(statsData);
+      setIncidents(incidentsSnapshot);
+      setStats(statsSnapshot);
+      return {
+        incidents: incidentsSnapshot,
+        stats: statsSnapshot,
+      } satisfies IncidentDataSnapshot;
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to load security incidents');
       setLoadError(message);
       setIncidents([]);
       setStats(null);
       toast.error(message);
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.incidentType, filters.severity, filters.status]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreate = async () => {
     try {
       setSaving(true);
-      await Api.createSecurityIncident({
+      setError(null);
+      const result = await Api.createSecurityIncident({
         incidentType: formData.incidentType,
         severity: formData.severity,
         description: formData.description,
@@ -146,8 +259,15 @@ const SecurityIncidentsView: React.FC = () => {
           .map((r) => r.trim())
           .filter(Boolean),
       });
+      const createdId = getCreatedIncidentId(result);
+      if (!createdId) {
+        throw new Error('Security incident creation response was incomplete');
+      }
+      const refreshed = await loadData();
+      if (!refreshed?.incidents.some((incident) => incident.id === createdId)) {
+        throw new Error('Security incident creation was not confirmed by the server');
+      }
       toast.success('Security incident created successfully');
-      await loadData();
       setShowCreateModal(false);
       setFormData({
         incidentType: 'suspicious_activity',
@@ -155,8 +275,10 @@ const SecurityIncidentsView: React.FC = () => {
         description: '',
         affectedResources: '',
       });
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to create security incident');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to create security incident');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -165,20 +287,27 @@ const SecurityIncidentsView: React.FC = () => {
   const handleResolve = async (incidentId: string) => {
     try {
       setSaving(true);
+      setError(null);
       await Api.resolveSecurityIncident(incidentId, resolutionNotes);
-      toast.success('Incident resolved successfully');
-      setIncidents((prev) =>
-        prev.map((inc) =>
-          inc.id === incidentId
-            ? { ...inc, status: 'resolved', resolvedAt: new Date().toISOString(), resolutionNotes }
-            : inc
+      const refreshed = await loadData();
+      if (
+        !refreshed ||
+        refreshed.incidents.some(
+          (incident) =>
+            incident.id === incidentId &&
+            incident.status !== 'resolved' &&
+            incident.status !== 'closed'
         )
-      );
+      ) {
+        throw new Error('Security incident resolution was not confirmed by the server');
+      }
+      toast.success('Incident resolved successfully');
       setShowResolveModal(null);
       setResolutionNotes('');
-      loadData(); // Refresh stats
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to resolve incident');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to resolve incident');
+      setError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -187,12 +316,17 @@ const SecurityIncidentsView: React.FC = () => {
   const handleDelete = async (incidentId: string) => {
     if (!confirm('Are you sure you want to delete this incident?')) return;
     try {
+      setError(null);
       await Api.deleteSecurityIncident(incidentId);
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.incidents.some((incident) => incident.id === incidentId)) {
+        throw new Error('Security incident deletion was not confirmed by the server');
+      }
       toast.success('Incident deleted successfully');
-      setIncidents((prev) => prev.filter((inc) => inc.id !== incidentId));
-      loadData(); // Refresh stats
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to delete incident');
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(err, 'Failed to delete incident');
+      setError(message);
+      toast.error(message);
     }
   };
 
@@ -346,11 +480,9 @@ const SecurityIncidentsView: React.FC = () => {
       {/* Error Alert */}
       {error && (
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+          <div role="alert" className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
+            <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -512,13 +644,14 @@ const SecurityIncidentsView: React.FC = () => {
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1 text-sm text-slate-300">
                           <Clock className="w-4 h-4 text-slate-500 dark:text-slate-500" />
-                          {new Date(incident.detectedAt).toLocaleString()}
+                          {formatDateTime(incident.detectedAt)}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => setShowDetailModal(incident)}
+                            aria-label={`View incident ${incident.id}`}
                             className="p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                             title="View Details"
                           >
@@ -527,6 +660,7 @@ const SecurityIncidentsView: React.FC = () => {
                           {incident.status !== 'resolved' && incident.status !== 'closed' && (
                             <button
                               onClick={() => setShowResolveModal(incident.id)}
+                              aria-label={`Resolve incident ${incident.id}`}
                               className="p-2 text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
                               title="Resolve"
                             >
@@ -535,6 +669,7 @@ const SecurityIncidentsView: React.FC = () => {
                           )}
                           <button
                             onClick={() => handleDelete(incident.id)}
+                            aria-label={`Delete incident ${incident.id}`}
                             className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Delete"
                           >
@@ -714,7 +849,7 @@ const SecurityIncidentsView: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm text-slate-400 dark:text-slate-500">Detected At</p>
-                  <p>{new Date(showDetailModal.detectedAt).toLocaleString()}</p>
+                  <p>{formatDateTime(showDetailModal.detectedAt)}</p>
                 </div>
               </div>
               <div>
@@ -740,7 +875,7 @@ const SecurityIncidentsView: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-700">
                   <div>
                     <p className="text-sm text-slate-400 dark:text-slate-500">Resolved At</p>
-                    <p>{new Date(showDetailModal.resolvedAt).toLocaleString()}</p>
+                    <p>{formatDateTime(showDetailModal.resolvedAt)}</p>
                   </div>
                   {showDetailModal.resolvedBy && (
                     <div>

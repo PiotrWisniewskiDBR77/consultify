@@ -321,8 +321,7 @@ export function computeToolReviewGaps(
     const growth = data as GrowthPathsData;
     const acceptedOptions = Object.values(growth.quadrants || {}).reduce(
       (sum: number, items: any) =>
-        sum +
-        (items || []).filter((item: any) => isGovernedAccepted(item.proposalStatus)).length,
+        sum + (items || []).filter((item: any) => isGovernedAccepted(item.proposalStatus)).length,
       0
     );
     const acceptedComparisons =
@@ -342,7 +341,9 @@ export function computeToolReviewGaps(
     if (!(growth.signals?.length || 0))
       gaps.push(isPolish ? 'Brak sygnałów wzrostu' : 'Missing growth signals');
     if (!acceptedOptions)
-      gaps.push(isPolish ? 'Brak zaakceptowanych opcji wzrostu' : 'Missing accepted growth options');
+      gaps.push(
+        isPolish ? 'Brak zaakceptowanych opcji wzrostu' : 'Missing accepted growth options'
+      );
     if (!acceptedComparisons)
       gaps.push(isPolish ? 'Brak porównania strategicznego' : 'Missing strategic comparison');
     if (!acceptedMoves)
@@ -375,7 +376,9 @@ export function computeToolReviewGaps(
     if (!(portfolio.signals?.length || 0))
       gaps.push(isPolish ? 'Brak sygnałów portfolio' : 'Missing portfolio signals');
     if (!acceptedItems)
-      gaps.push(isPolish ? 'Brak zaakceptowanych elementów portfolio' : 'Missing accepted portfolio items');
+      gaps.push(
+        isPolish ? 'Brak zaakceptowanych elementów portfolio' : 'Missing accepted portfolio items'
+      );
     if (!acceptedTradeOffs)
       gaps.push(isPolish ? 'Brak trade-offów portfolio' : 'Missing portfolio trade-offs');
     if (!acceptedMoves)
@@ -414,8 +417,7 @@ export function computeToolReviewGaps(
       gaps.push(isPolish ? 'Brak zaakceptowanych założeń' : 'Missing accepted assumptions');
     if (!acceptedRisks)
       gaps.push(isPolish ? 'Brak zaakceptowanych ryzyk' : 'Missing accepted risks');
-    if (!acceptedScenarios)
-      gaps.push(isPolish ? 'Brak scenariuszy' : 'Missing scenarios');
+    if (!acceptedScenarios) gaps.push(isPolish ? 'Brak scenariuszy' : 'Missing scenarios');
     if (!acceptedMoves)
       gaps.push(isPolish ? 'Brak rekomendowanych ruchów' : 'Missing recommended moves');
     if (!acceptedSummary)
@@ -615,7 +617,10 @@ export function computeToolCompletionItems(
     const portfolio = data as PortfolioPriorityData;
     items.push({
       label: isPolish ? 'Portfolio mission' : 'Portfolio mission',
-      done: !!portfolio?.context?.goal && !!portfolio?.context?.scope && !!portfolio?.context?.successSignal,
+      done:
+        !!portfolio?.context?.goal &&
+        !!portfolio?.context?.scope &&
+        !!portfolio?.context?.successSignal,
       anchorId: 'tool-content',
     });
     items.push({

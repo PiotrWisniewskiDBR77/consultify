@@ -12,12 +12,14 @@
  *  - Test voice button
  */
 
-import { Mic, Play, Square, Volume2 } from 'lucide-react';
+import { Play, Square, Volume2 } from 'lucide-react';
 import React, { useCallback, useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { DegradedState } from '../Admin/AdminState';
 import {
   SettingsDivider,
   SettingsFormRow,
@@ -69,6 +71,8 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isDirty = JSON.stringify(preferences) !== JSON.stringify(originalPreferences);
 
@@ -76,14 +80,16 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
     const load = async () => {
       try {
         setLoading(true);
+        setLoadError(null);
         const response = await Api.getAIVoice();
-        if (response?.preferences) {
-          const merged = { ...defaultPreferences, ...response.preferences };
-          setPreferences(merged);
-          setOriginalPreferences(merged);
+        if (!response?.preferences) {
+          throw new Error('Voice settings response was missing preferences');
         }
-      } catch (err) {
-        console.error('Failed to load voice settings:', err);
+        const merged = { ...defaultPreferences, ...response.preferences };
+        setPreferences(merged);
+        setOriginalPreferences(merged);
+      } catch (err: unknown) {
+        setLoadError(normalizeApiErrorMessage(err, 'Failed to load voice settings'));
       } finally {
         setLoading(false);
       }
@@ -102,11 +108,26 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
+      setActionError(null);
       await Api.saveAIVoice(preferences);
-      setOriginalPreferences(preferences);
+      const response = await Api.getAIVoice();
+      if (!response?.preferences) {
+        throw new Error('Voice settings save was not confirmed by the server');
+      }
+      const next = { ...defaultPreferences, ...response.preferences };
+      if (JSON.stringify(next) !== JSON.stringify(preferences)) {
+        throw new Error('Voice settings save was not confirmed by the server');
+      }
+      setPreferences(next);
+      setOriginalPreferences(next);
       toast.success(t('settings.voice.saved', 'Voice settings saved'));
-    } catch {
-      toast.error(t('settings.voice.error', 'Failed to save voice settings'));
+    } catch (err: unknown) {
+      const message = normalizeApiErrorMessage(
+        err,
+        t('settings.voice.error', 'Failed to save voice settings')
+      );
+      setActionError(message);
+      toast.error(message);
     } finally {
       setSaving(false);
     }
@@ -147,8 +168,25 @@ export const VoiceSettings: React.FC<{ className?: string }> = ({ className = ''
 
   const anyVoiceEnabled = preferences.ttsEnabled || preferences.sttEnabled;
 
+  if (loadError) {
+    return (
+      <div className={className}>
+        <DegradedState title="Voice settings unavailable" description={loadError} />
+      </div>
+    );
+  }
+
   return (
     <div className={className}>
+      {actionError && (
+        <div
+          role="alert"
+          className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
+        >
+          {actionError}
+        </div>
+      )}
+
       <SettingsSection
         icon={Volume2}
         title={t('settings.voice.title', 'Voice & TTS')}

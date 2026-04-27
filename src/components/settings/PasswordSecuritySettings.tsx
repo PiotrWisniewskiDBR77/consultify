@@ -29,7 +29,6 @@ import {
   MapPin,
   Monitor,
   Phone,
-  RefreshCw,
   Shield,
   ShieldCheck,
   Smartphone,
@@ -40,6 +39,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '../../services/api';
 import { User } from '../../types';
+import { normalizeApiErrorMessage } from '../../utils/apiError';
 import { MFASetup } from '../Profile/MFASetup';
 
 interface PasswordSecuritySettingsProps {
@@ -78,6 +78,20 @@ interface RecoveryOptions {
   lastBackupCodesGenerated?: string;
 }
 
+const normalizeRecoveryOptions = (response: Partial<RecoveryOptions> | null): RecoveryOptions => ({
+  recoveryEmail: response?.recoveryEmail || '',
+  recoveryPhone: response?.recoveryPhone || '',
+  backupCodesCount: response?.backupCodesCount || 0,
+  lastBackupCodesGenerated: response?.lastBackupCodesGenerated,
+});
+
+const recoveryOptionsMatch = (
+  actual: RecoveryOptions,
+  expected: Pick<RecoveryOptions, 'recoveryEmail' | 'recoveryPhone'>
+) =>
+  actual.recoveryEmail === expected.recoveryEmail &&
+  actual.recoveryPhone === expected.recoveryPhone;
+
 export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> = ({
   currentUser,
 }) => {
@@ -108,6 +122,8 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoveryPhone, setRecoveryPhone] = useState('');
   const [savingRecovery, setSavingRecovery] = useState(false);
+  const [recoveryLoadError, setRecoveryLoadError] = useState<string | null>(null);
+  const [recoveryActionError, setRecoveryActionError] = useState<string | null>(null);
 
   // Security events state
   const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
@@ -151,8 +167,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       setIsLoadingSessions(true);
       const response = await Api.getActiveSessions();
       setSessions(response.sessions || []);
-    } catch (error) {
-      console.error('Failed to fetch sessions:', error);
+    } catch {
       setSessions([]);
     } finally {
       setIsLoadingSessions(false);
@@ -164,8 +179,7 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       setLoadingEvents(true);
       const response = await Api.get('/api/security/events?limit=10');
       setSecurityEvents(response.events || []);
-    } catch (error) {
-      console.error('Failed to fetch security events:', error);
+    } catch {
       setSecurityEvents([]);
     } finally {
       setLoadingEvents(false);
@@ -174,12 +188,16 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
   const fetchRecoveryOptions = async () => {
     try {
+      setRecoveryLoadError(null);
       const response = await Api.get('/api/settings/recovery');
-      setRecoveryOptions(response);
-      setRecoveryEmail(response.recoveryEmail || '');
-      setRecoveryPhone(response.recoveryPhone || '');
-    } catch (error) {
-      console.error('Failed to fetch recovery options:', error);
+      const snapshot = normalizeRecoveryOptions(response);
+      setRecoveryOptions(snapshot);
+      setRecoveryEmail(snapshot.recoveryEmail);
+      setRecoveryPhone(snapshot.recoveryPhone);
+      return snapshot;
+    } catch (error: unknown) {
+      setRecoveryLoadError(normalizeApiErrorMessage(error, 'Failed to load recovery options'));
+      return null;
     }
   };
 
@@ -203,11 +221,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       setConfirmPassword('');
       toast.success(t('settings.security.passwordChanged', 'Password changed successfully!'));
       fetchSessions();
-    } catch (error: any) {
-      setPasswordError(
-        error.message || t('settings.security.passwordChangeFailed', 'Failed to change password')
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(
+        error,
+        t('settings.security.passwordChangeFailed', 'Failed to change password')
       );
-      toast.error(error.message || 'Failed to change password');
+      setPasswordError(message);
+      toast.error(message);
     } finally {
       setIsChangingPassword(false);
     }
@@ -219,8 +239,13 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       await Api.revokeSession(sessionId);
       setSessions(sessions.filter((s) => s.id !== sessionId));
       toast.success(t('settings.security.sessionRevoked', 'Session revoked successfully'));
-    } catch (error) {
-      toast.error(t('settings.security.sessionRevokeFailed', 'Failed to revoke session'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.security.sessionRevokeFailed', 'Failed to revoke session')
+        )
+      );
     } finally {
       setIsRevokingSession(null);
     }
@@ -243,23 +268,35 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
       toast.success(
         t('settings.security.allSessionsRevoked', 'All other sessions have been logged out')
       );
-    } catch (error) {
-      toast.error(t('settings.security.revokeAllFailed', 'Failed to revoke sessions'));
+    } catch (error: unknown) {
+      toast.error(
+        normalizeApiErrorMessage(
+          error,
+          t('settings.security.revokeAllFailed', 'Failed to revoke sessions')
+        )
+      );
     }
   };
 
   const handleSaveRecovery = async () => {
     setSavingRecovery(true);
+    setRecoveryActionError(null);
     try {
+      const expected = { recoveryEmail, recoveryPhone };
       await Api.put('/api/settings/recovery', {
         recoveryEmail,
         recoveryPhone,
       });
-      setRecoveryOptions((prev) => ({ ...prev, recoveryEmail, recoveryPhone }));
+      const persisted = await fetchRecoveryOptions();
+      if (!persisted || !recoveryOptionsMatch(persisted, expected)) {
+        throw new Error('Recovery options were not confirmed by the server');
+      }
       setEditingRecovery(false);
       toast.success('Recovery options updated');
-    } catch (error) {
-      toast.error('Failed to update recovery options');
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Failed to update recovery options');
+      setRecoveryActionError(message);
+      toast.error(message);
     } finally {
       setSavingRecovery(false);
     }
@@ -674,7 +711,14 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
 
         {expandedSections.recovery && (
           <div className="p-6 border-t border-slate-100 dark:border-navy-700 space-y-4">
-            {!editingRecovery ? (
+            {recoveryLoadError ? (
+              <div
+                role="alert"
+                className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+              >
+                Recovery options unavailable: {recoveryLoadError}
+              </div>
+            ) : !editingRecovery ? (
               <>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-navy-950/50 rounded-lg">
@@ -741,6 +785,15 @@ export const PasswordSecuritySettings: React.FC<PasswordSecuritySettingsProps> =
               </>
             ) : (
               <div className="space-y-4">
+                {recoveryActionError && (
+                  <div
+                    role="alert"
+                    className="p-4 rounded-lg bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400"
+                  >
+                    {recoveryActionError}
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                     Recovery Email

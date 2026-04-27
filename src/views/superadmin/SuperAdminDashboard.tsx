@@ -23,8 +23,8 @@ import {
   Zap,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { toast } from 'react-hot-toast';
 
+import { DegradedState } from '../../components/Admin/AdminState';
 import { Api } from '../../services/api';
 
 interface SuperAdminStats {
@@ -128,7 +128,9 @@ const ActionChip: React.FC<{
 
 function formatTimeAgo(dateStr?: string): string {
   if (!dateStr) return '';
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const timestamp = new Date(dateStr).getTime();
+  if (Number.isNaN(timestamp)) return 'Unknown time';
+  const diff = Date.now() - timestamp;
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return 'just now';
   if (mins < 60) return `${mins}m ago`;
@@ -188,13 +190,20 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
 }) => {
   const [signals, setSignals] = useState<SignalItem[]>([]);
   const [signalsLoading, setSignalsLoading] = useState(true);
+  const [signalsError, setSignalsError] = useState<string | null>(null);
 
   const fetchSignals = useCallback(async () => {
+    setSignalsLoading(true);
+    setSignalsError(null);
     try {
       const data = (await Api.getSuperAdminSignals()) as SignalItem[];
-      setSignals(Array.isArray(data) ? data : []);
-    } catch {
-      /* signals are non-critical for dashboard */
+      if (!Array.isArray(data)) {
+        throw new Error('Signals response was not a list');
+      }
+      setSignals(data);
+    } catch (error) {
+      setSignals([]);
+      setSignalsError(error instanceof Error ? error.message : 'Failed to load signals');
     } finally {
       setSignalsLoading(false);
     }
@@ -304,6 +313,23 @@ export const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({
             {signalsLoading ? (
               <div className="py-6 flex items-center justify-center text-slate-400">
                 <Loader2 size={14} className="animate-spin" />
+              </div>
+            ) : signalsError ? (
+              <div className="p-4">
+                <DegradedState
+                  title="Signals unavailable"
+                  description={signalsError}
+                  compact
+                  action={
+                    <button
+                      type="button"
+                      onClick={() => void fetchSignals()}
+                      className="rounded-lg bg-orange-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-orange-700"
+                    >
+                      Retry
+                    </button>
+                  }
+                />
               </div>
             ) : topSignals.length === 0 ? (
               <div className="py-6 text-center text-xs text-slate-400 dark:text-slate-500">

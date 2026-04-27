@@ -25,6 +25,7 @@ import React, { useEffect, useState } from 'react';
 import { DegradedState } from '../../../components/Admin/AdminState';
 import { Card, CardWithHeader } from '../../../components/Admin/shared/Card';
 import { Api } from '../../../services/api';
+import { normalizeApiErrorMessage } from '../../../utils/apiError';
 
 interface AdminSession {
   id: string;
@@ -55,6 +56,69 @@ interface SessionStats {
   breakGlassActive: number;
 }
 
+interface SessionsSnapshot {
+  sessions: AdminSession[];
+  stats: SessionStats;
+}
+
+const safeNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value ?? fallback);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+type JsonRecord = Record<string, unknown> & {
+  data?: JsonRecord | unknown[];
+};
+
+const isRecord = (value: unknown): value is JsonRecord =>
+  typeof value === 'object' && value !== null;
+
+const getObjectPayload = (value: unknown) => {
+  if (!isRecord(value)) return value;
+  const data = isRecord(value.data) ? value.data : null;
+  return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const hasListShape = (value: unknown, keys: string[]) => {
+  if (Array.isArray(value)) return true;
+  if (!isRecord(value)) return false;
+  const data = isRecord(value.data) ? value.data : null;
+
+  return (
+    'data' in value ||
+    keys.some((key) => key in value) ||
+    Boolean(data && keys.some((key) => key in data))
+  );
+};
+
+const normalizeSessions = (value: unknown): AdminSession[] => {
+  if (Array.isArray(value)) return value as AdminSession[];
+  if (isRecord(value)) {
+    const data = isRecord(value.data) ? value.data : null;
+    const nestedData = data && isRecord(data.data) ? data.data : null;
+    const candidates = [value, data, nestedData].filter(isRecord);
+    for (const candidate of candidates) {
+      if (Array.isArray(candidate.sessions)) return candidate.sessions as AdminSession[];
+      if (Array.isArray(candidate.items)) return candidate.items as AdminSession[];
+      if (Array.isArray(candidate.data)) return candidate.data as AdminSession[];
+    }
+  }
+  throw new Error('Admin sessions response was not a list');
+};
+
+const normalizeStats = (value: unknown): SessionStats => {
+  const payload = getObjectPayload(value);
+  const statsValue = isRecord(payload) ? payload : {};
+  return {
+    totalSessions: safeNumber(statsValue.total ?? statsValue.totalSessions),
+    activeSessions: safeNumber(statsValue.active ?? statsValue.activeSessions),
+    mfaVerifiedSessions: safeNumber(statsValue.mfaVerified ?? statsValue.mfaVerifiedSessions),
+    uniqueAdmins: safeNumber(statsValue.uniqueAdmins),
+    jitActive: safeNumber(statsValue.jitActive),
+    breakGlassActive: safeNumber(statsValue.breakGlassActive),
+  };
+};
+
 const AdminSessionsView: React.FC = () => {
   const [sessions, setSessions] = useState<AdminSession[]>([]);
   const [stats, setStats] = useState<SessionStats | null>(null);
@@ -76,22 +140,19 @@ const AdminSessionsView: React.FC = () => {
         Api.getAdminSessions(),
         Api.getAdminSessionStats(),
       ]);
-      const nextSessions = (sessionsData as any)?.sessions;
-      setSessions(Array.isArray(nextSessions) ? nextSessions : []);
-      // Map API response to expected interface
-      const mappedStats = statsData as any;
-      setStats({
-        totalSessions: mappedStats.total || 0,
-        activeSessions: mappedStats.active || 0,
-        mfaVerifiedSessions: mappedStats.mfaVerified || 0,
-        uniqueAdmins: mappedStats.uniqueAdmins || 0,
-        jitActive: mappedStats.jitActive || 0,
-        breakGlassActive: mappedStats.breakGlassActive || 0,
-      });
-    } catch (err: any) {
-      setLoadError(err.message || 'Failed to load sessions');
+      if (!hasListShape(sessionsData, ['sessions', 'items'])) {
+        throw new Error('Admin sessions response was not a list');
+      }
+      const nextSessions = normalizeSessions(sessionsData);
+      const nextStats = normalizeStats(statsData);
+      setSessions(nextSessions);
+      setStats(nextStats);
+      return { sessions: nextSessions, stats: nextStats } satisfies SessionsSnapshot;
+    } catch (err: unknown) {
+      setLoadError(normalizeApiErrorMessage(err, 'Failed to load sessions'));
       setSessions([]);
       setStats(null);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -100,13 +161,14 @@ const AdminSessionsView: React.FC = () => {
   const handleRevokeSession = async (sessionId: string) => {
     try {
       setActionLoading(sessionId);
+      setError(null);
       await Api.revokeAdminSession(sessionId);
-      setSessions((prev) => prev.filter((s) => s.id !== sessionId));
-      if (stats) {
-        setStats({ ...stats, activeSessions: stats.activeSessions - 1 });
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.sessions.some((session) => session.id === sessionId)) {
+        throw new Error('Admin session revocation was not confirmed by the server');
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to revoke session');
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to revoke session'));
     } finally {
       setActionLoading(null);
     }
@@ -121,17 +183,22 @@ const AdminSessionsView: React.FC = () => {
 
     try {
       setActionLoading('all');
+      setError(null);
       await Api.revokeAllAdminSessions(undefined, 'bulk_revoke');
-      await loadData();
-    } catch (err: any) {
-      setError(err.message || 'Failed to revoke all sessions');
+      const refreshed = await loadData();
+      if (!refreshed || refreshed.sessions.length > 0) {
+        throw new Error('Bulk admin session revocation was not confirmed by the server');
+      }
+    } catch (err: unknown) {
+      setError(normalizeApiErrorMessage(err, 'Failed to revoke all sessions'));
     } finally {
       setActionLoading(null);
     }
   };
 
   const getDeviceIcon = (userAgent: string) => {
-    const ua = userAgent.toLowerCase();
+    const safeUserAgent = String(userAgent || '');
+    const ua = safeUserAgent.toLowerCase();
     if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
       return <Smartphone className="w-4 h-4" />;
     }
@@ -139,11 +206,14 @@ const AdminSessionsView: React.FC = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+    if (!dateString) return 'Unknown date';
+    const date = new Date(dateString);
+    return Number.isNaN(date.getTime()) ? 'Unknown date' : date.toLocaleString();
   };
 
   const isExpired = (expiresAt: string) => {
-    return new Date(expiresAt) < new Date();
+    const date = new Date(expiresAt);
+    return !Number.isNaN(date.getTime()) && date < new Date();
   };
 
   if (loading) {
@@ -240,11 +310,9 @@ const AdminSessionsView: React.FC = () => {
       {/* Error Alert */}
       {error && (
         <Card variant="bordered" className="p-4 border-red-500/30 bg-red-500/5">
-          <div className="flex items-center gap-2 text-red-400">
+          <div role="alert" className="flex items-center gap-2 text-red-400">
             <AlertTriangle className="w-5 h-5" />
-            <span>
-              {typeof error === 'string' ? error : (error as any)?.message || 'An error occurred'}
-            </span>
+            <span>{error}</span>
             <button onClick={() => setError(null)} className="ml-auto text-sm hover:text-red-300">
               Dismiss
             </button>
@@ -328,10 +396,10 @@ const AdminSessionsView: React.FC = () => {
                       <td className="py-3 px-4">
                         <div>
                           <p className="font-medium">
-                            {session.admin.firstName} {session.admin.lastName}
+                            {session.admin?.firstName || 'Unknown'} {session.admin?.lastName || ''}
                           </p>
                           <p className="text-sm text-slate-600 dark:text-slate-400">
-                            {session.admin.email}
+                            {session.admin?.email || 'Unknown admin'}
                           </p>
                         </div>
                       </td>
@@ -339,7 +407,7 @@ const AdminSessionsView: React.FC = () => {
                         <div className="flex items-center gap-2">
                           {getDeviceIcon(session.userAgent)}
                           <span className="text-sm text-slate-300 truncate max-w-[200px]">
-                            {session.userAgent.split(' ')[0]}
+                            {String(session.userAgent || 'Unknown device').split(' ')[0]}
                           </span>
                         </div>
                       </td>
@@ -379,6 +447,7 @@ const AdminSessionsView: React.FC = () => {
                         <button
                           onClick={() => handleRevokeSession(session.id)}
                           disabled={actionLoading === session.id}
+                          aria-label={`Revoke admin session ${session.id}`}
                           className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors disabled:opacity-50"
                           title="Revoke Session"
                         >
