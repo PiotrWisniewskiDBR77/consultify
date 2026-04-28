@@ -30,6 +30,9 @@ describe('Final QA closure safe mutation contracts', () => {
     const controller = read('server/src/controllers/SuperAdminController.ts');
 
     expect(controller).toContain('const createApiKey');
+    expect(controller).toContain("await maybeAdd('user_id', 'TEXT')");
+    expect(controller).toContain("await maybeAdd('permissions', 'TEXT')");
+    expect(controller).toContain('row.isActive ?? row.isactive ?? row.is_active');
     expect(controller).toContain("warning: 'Save this API key now. It cannot be shown again.'");
     expect(controller).toContain('const deleteApiKey');
     expect(controller).toContain('SET is_active = 0');

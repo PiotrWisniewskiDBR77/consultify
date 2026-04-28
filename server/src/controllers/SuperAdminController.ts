@@ -1695,9 +1695,11 @@ const ensureApiKeysSchema = async () => {
     });
   };
 
+  await maybeAdd('user_id', 'TEXT');
   await maybeAdd('description', 'TEXT');
   await maybeAdd('key_type', 'TEXT');
   await maybeAdd('scopes', 'TEXT');
+  await maybeAdd('permissions', 'TEXT');
   await maybeAdd('allowed_ips', 'TEXT');
   await maybeAdd('rate_limit_per_minute', 'INTEGER');
   await maybeAdd('rate_limit_per_day', 'INTEGER');
@@ -1764,30 +1766,33 @@ const getApiKeys = catchAsync(async (req, res, next) => {
         `;
     const keys = await new Promise((resolve, reject) => {
       const parseRows = (rows: any[]) => {
-        const parsedRows = (rows || []).map((row) => ({
-          ...row,
-          isActive: !!row.isActive,
-          scopes:
-            typeof row.scopes === 'string'
-              ? (() => {
-                  try {
-                    return JSON.parse(row.scopes);
-                  } catch {
-                    return [];
-                  }
-                })()
-              : row.scopes || [],
-          allowedIps:
-            typeof row.allowedIps === 'string'
-              ? (() => {
-                  try {
-                    return JSON.parse(row.allowedIps);
-                  } catch {
-                    return [];
-                  }
-                })()
-              : row.allowedIps || [],
-        }));
+        const parsedRows = (rows || []).map((row) => {
+          const isActiveValue = row.isActive ?? row.isactive ?? row.is_active;
+          return {
+            ...row,
+            isActive: isActiveValue === true || isActiveValue === 1 || isActiveValue === '1',
+            scopes:
+              typeof row.scopes === 'string'
+                ? (() => {
+                    try {
+                      return JSON.parse(row.scopes);
+                    } catch {
+                      return [];
+                    }
+                  })()
+                : row.scopes || [],
+            allowedIps:
+              typeof row.allowedIps === 'string'
+                ? (() => {
+                    try {
+                      return JSON.parse(row.allowedIps);
+                    } catch {
+                      return [];
+                    }
+                  })()
+                : row.allowedIps || [],
+          };
+        });
         resolve(parsedRows);
       };
 
@@ -1869,10 +1874,10 @@ const createApiKey = catchAsync(async (req, res, next) => {
       db.run(
         `INSERT INTO api_keys (
           id, organization_id, user_id, name, description,
-          key_hash, key_prefix, key_type, scopes,
+          key_hash, key_prefix, key_type, scopes, permissions,
           rate_limit_per_minute, rate_limit_per_day,
           allowed_ips, expires_at, is_active, created_by, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, datetime('now'))`,
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, datetime('now'))`,
         [
           keyId,
           orgId,
@@ -1882,6 +1887,7 @@ const createApiKey = catchAsync(async (req, res, next) => {
           keyHash,
           keyPrefix,
           keyType === 'service' || keyType === 'user' ? keyType : 'org',
+          JSON.stringify(scopesArr),
           JSON.stringify(scopesArr),
           rlMin,
           rlDay,
