@@ -436,6 +436,28 @@ describe('ResearchSession Wave 4 runtime lifecycle', () => {
     expect(reloaded.finalArtifact.contentMarkdown).toContain('## Evidence');
   });
 
+  it('fails create early when organization or user context is missing', async () => {
+    const { planResearchSession } = await import(
+      '../../../server/src/services/researchSessionService.js'
+    );
+
+    await expect(
+      planResearchSession({
+        organizationId: '',
+        userId: 'user-1',
+        mission: 'Missing organization',
+      })
+    ).rejects.toThrow('Research session requires organizationId and userId');
+
+    await expect(
+      planResearchSession({
+        organizationId: 'org-1',
+        userId: '',
+        mission: 'Missing user',
+      })
+    ).rejects.toThrow('Research session requires organizationId and userId');
+  });
+
   it('keeps cancelled sessions resumable without losing identity', async () => {
     const { planResearchSession, transitionResearchSession, cancelResearchSession } = await import(
       '../../../server/src/services/researchSessionService.js'
@@ -537,6 +559,38 @@ describe('ResearchSession Wave 4 runtime lifecycle', () => {
     expect(routes).toContain("eventType: 'queue_deferred'");
     expect(routes).toContain('Approval succeeded but background queue failed');
     expect(routes).toContain('Research session approved; background start is deferred.');
+  });
+
+  it('uses the canonical auth middleware organization context in research routes', () => {
+    const routes = readFileSync('server/src/routes/research.routes.ts', 'utf8');
+    expect(routes).toContain('return req.organizationId || req.user?.organizationId');
+    expect(routes).toContain('Organization and user context are required');
+  });
+
+  it('keeps start idempotent after approve already queued the background worker', () => {
+    const routes = readFileSync('server/src/routes/research.routes.ts', 'utf8');
+    expect(routes).toContain("if (existing.status === 'running')");
+    expect(routes).toContain('idempotent: true');
+    expect(routes).toContain("if (existing.status === 'completed')");
+    expect(routes).toContain("Research session is archived");
+  });
+
+  it('enforces connector honesty before answering fresh database questions', () => {
+    const routes = readFileSync('server/src/routes/ai.routes.ts', 'utf8');
+    expect(routes).toContain('HARD CONNECTOR DATA TRUST CONSTRAINT');
+    expect(routes).toContain('buildConnectorHonestyConstraint');
+    expect(routes).toContain('buildConnectorHonestyBlockResponse');
+    expect(routes).toContain('fresh_connector_data_without_verified_tool_result');
+    expect(routes).toContain('MUST NOT invent exact counts');
+  });
+
+  it('enforces AI Ops health before recommending expensive AI runs', () => {
+    const routes = readFileSync('server/src/routes/ai.routes.ts', 'utf8');
+    expect(routes).toContain('HARD AI OPS HEALTH CONSTRAINT');
+    expect(routes).toContain('buildAIOpsHealthConstraint');
+    expect(routes).toContain('buildAIOpsHealthBlockResponse');
+    expect(routes).toContain('expensive_ai_operation_requires_healthy_internal_provider_posture');
+    expect(routes).toContain('!suppressWebForInternalOpsHealth');
   });
 
   it('does not make non-archive lifecycle transitions depend on archived_at', () => {

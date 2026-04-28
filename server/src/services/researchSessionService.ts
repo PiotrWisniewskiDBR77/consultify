@@ -36,6 +36,13 @@ export interface ResearchSessionPlanInput {
 let schemaReady: Promise<void> | null = null;
 const activeResearchControllers = new Map<string, AbortController>();
 
+async function runRequired(sql: string, params: unknown[] = [], label: string): Promise<void> {
+  const result = await dbRun(sql, params, { fallback: false });
+  if (result && result.success === false) {
+    throw new Error(`${label} failed: ${result.error || 'database write was not applied'}`);
+  }
+}
+
 class ResearchSessionCancelledError extends Error {
   constructor() {
     super('Research session paused by user');
@@ -354,9 +361,12 @@ function mapSession(row: any, events: any[] = [], evidence: any[] = [], artifact
 }
 
 export async function planResearchSession(input: ResearchSessionPlanInput): Promise<any> {
+  if (!input.organizationId || !input.userId) {
+    throw new Error('Research session requires organizationId and userId');
+  }
   await ensureResearchSessionSchema();
   const sessionId = `rs-${uuidv4()}`;
-  await dbRun(
+  await runRequired(
     `INSERT INTO research_sessions (
       session_id, organization_id, user_id, project_id, conversation_id, status,
       mission, scope, questions_json, allowed_sources_json, budget_json,
@@ -376,7 +386,8 @@ export async function planResearchSession(input: ResearchSessionPlanInput): Prom
       input.expectedOutput || 'research_report',
       safeJsonStringify(input.attachmentDocIds || []),
       safeJsonStringify({ stage: 'planned', percent: 0 }),
-    ]
+    ],
+    'insert research_session'
   );
   await recordEvent({
     sessionId,
@@ -386,7 +397,11 @@ export async function planResearchSession(input: ResearchSessionPlanInput): Prom
     status: 'planned',
     details: { mission: input.mission, allowedSources: normalizeSources(input.allowedSources) },
   });
-  return getResearchSession(sessionId, input.organizationId);
+  const session = await getResearchSession(sessionId, input.organizationId);
+  if (!session) {
+    throw new Error('Research session was created but could not be read back');
+  }
+  return session;
 }
 
 export async function transitionResearchSession(params: {

@@ -150,6 +150,448 @@ V9 jest waska paczka funkcji, ktore maja realny kod i flagi:
 - workspace breadcrumb i recent conversations dropdown;
 - admin V9 flags panel: role gate, reset, filter, grouping, copy snapshot, copy override URL, row shortcuts.
 
+### V8/V9 — Chat window (UI) jako lista prób użytkownika
+
+Cel: miec jedna, kompletna checkliste **prób użytkownika** dla „okna czata” (zarowno w glownej trasie `/chat`, jak i w panelu bocznym), zanim uznamy, ze V8/V9 realnie dowozi obietnice „od rozmowy do wykonania” bez silent writes i bez hidden learning.
+
+Surfaces (dwie implementacje, jedna prawda produktu):
+
+- **Panel boczny / kanoniczny runtime v8**: `UnifiedChatPanel` (split / layout context).
+- **Glowny chat route (legacy-but-live)**: `/chat` → `AIChatWelcomeView` (musi zachowywac sie zgodnie z kontraktem, mimo ze nie jest „kanonicznym shellem” v8).
+
+Ogólna zasada dla wszystkich prób:
+
+- „Pass” oznacza: brak crash, brak perma-spinnera, brak fake-success, brak raw backend errors w UI, brak silent execution, brak hidden learning.
+- Dla prób dot. governance: kazda mutacja = proposal → approval → execution → audit (`AIRun`).
+- Evidence: zawsze zapisuj **(a)** screen + **(b)** jeden kluczowy dowod z Network (status/endpoint) lub z Action Center/Audit.
+
+#### CW-0 — Setup (warunki wstepne)
+
+- [ ] User jest zalogowany (JWT + org).
+- [ ] Masz dostep do:
+  - `/chat` (glowny chat),
+  - AI OS hub `/ai` (nawigacja do modułów),
+  - `/ai/action-center`, `/ai/research-sessions`, `/ai/artifacts`, `/ai/context`, `/ai/connectors`, `/ai/agents`, `/ai/outcomes`, `/ai/ai-ops` (jesli dostepne w danej roli).
+
+#### CW-1 — Lifecycle rozmowy (historia / projekty / biblioteka)
+
+Wymagane zachowania w obu surfaces:
+
+- [ ] **New chat** tworzy nowa konwersacje (nie tylko czyści UI).
+- [ ] **Hard refresh** nie psuje konwersacji (brak redirect loop, brak „blank screen”).
+- [ ] **Historia rozmów jako biblioteka**:
+  - [ ] lista konwersacji,
+  - [ ] wejscie w konwersacje,
+  - [ ] pinned/star, archive,
+  - [ ] rename, delete,
+  - [ ] search (nawet jesli „partial”, nie moze wprowadzac w blad).
+- [ ] **Folders / projekty**:
+  - [ ] „Add to project” / „Move to project” dziala i zmienia przynaleznosc rozmowy,
+  - [ ] brak fake-success (po reloadzie widać to samo).
+
+#### CW-2 — Composer: wysylka, streaming, stop, retry, edycja
+
+- [ ] **Send** wysyla message i uruchamia streaming.
+- [ ] **Streaming SSE**:
+  - [ ] odpowiedz przychodzi w chunkach,
+  - [ ] konczy sie `[DONE]`,
+  - [ ] brak „hang” bez bledu.
+- [ ] **Stop generating** przerywa stream (bez crash).
+- [ ] **Retry** potrafi ponowic odpowiedz po przerwaniu/blędzie.
+- [ ] **Edycja wiadomosci usera** (co najmniej w `/chat`):
+  - [ ] user moze edytowac poprzedni prompt,
+  - [ ] system poprawnie re-streamuje odpowiedz,
+  - [ ] historia zachowuje spojnosc.
+- [ ] **Input UX (V9)**:
+  - [ ] `NextModelChip` pokazuje, jaki model obsluzy nastepny prompt,
+  - [ ] `InputCharCounter` + soft-limit toast dzialaja,
+  - [ ] `InputHintStrip` widoczny (jesli wlaczony flagami),
+  - [ ] PII heuristic toast pojawia sie na wrażliwych danych i da sie go dismiss.
+
+#### CW-3 — Zrodla: pliki lokalne + URL + „recent”
+
+- [ ] **Upload pliku lokalnego**:
+  - [ ] PDF / TXT / MD / CSV / JSON dzialaja,
+  - [ ] typ nieobslugiwany jest uczciwie odrzucony (bez crash),
+  - [ ] UI komunikuje „AI odpowie bez tych źródeł” jesli ingest padnie.
+- [ ] **Dodaj URL**:
+  - [ ] wklejenie URL uruchamia ingest-url,
+  - [ ] brak fake-success (jesli URL nie do pobrania, jest jawny komunikat).
+- [ ] **Recent attachments**:
+  - [ ] po dodaniu pliku pojawia sie na liscie recent,
+  - [ ] recent jest ograniczony i nie psuje UI.
+
+#### CW-4 — Cloud sync / integracje plikow (Drive/OneDrive/Dropbox)
+
+Próba minimalna na kazdym providerze (jesli provider „not implemented” – musi byc honest fallback):
+
+- [ ] **Connect provider**:
+  - [ ] UI prowadzi do połączenia (lub uczciwie mówi „nie dostępne”).
+- [ ] **Picker modal**:
+  - [ ] lista plików/folderów sie ładuje,
+  - [ ] breadcrumb dziala,
+  - [ ] search filtruje,
+  - [ ] widać tylko typy wspierane „w chat”.
+- [ ] **Select file**:
+  - [ ] wybranie pliku uruchamia pobranie/ingest,
+  - [ ] w razie bledu jest jawny komunikat (bez silent fail).
+
+#### CW-5 — Tools menu: tryby, styl, instrukcje, prywatnosc, TTS
+
+- [ ] **AI modes toggles** (co najmniej):
+  - [ ] `deepResearch`,
+  - [ ] `showReasoning`,
+  - [ ] `multiAgent`,
+  - [ ] `privateMode`,
+  - [ ] `textToSpeech` (TTS).
+- [ ] **Response style**:
+  - [ ] zmiana stylu wpływa na kolejne odpowiedzi,
+  - [ ] modal „Personalize AI responses” dziala i nie gubi danych.
+- [ ] **Custom instructions**:
+  - [ ] instrukcje wczytuja sie przy otwarciu menu,
+  - [ ] zapis działa (po reloadzie nadal widać).
+- [ ] **Add to project**:
+  - [ ] otwiera flow przypiecia do projektu/folderu i finalnie zapisuje zmiane.
+- [ ] **TTS settings**:
+  - [ ] wybor voice i rate dziala (przynajmniej w przegladarce wspierajacej speechSynthesis).
+
+#### CW-6 — Co-Thinker (persony) i „moduły co-thinkera”
+
+- [ ] **Wybór persony**:
+  - Consultant, Idea Creator, Analyst, Auditor, Editor.
+- [ ] **Market Researcher**:
+  - [ ] wlacza tryb researchowy i domyslnie web-search (jesli tak ustawiono w UX),
+  - [ ] nie miesza sie z innymi personami (mutual exclusivity).
+- [ ] **Active pill**:
+  - [ ] pokazuje aktywna persone,
+  - [ ] “Clear” resetuje tryb.
+
+#### CW-7 — Tok myslenia: widoczny i niewidoczny
+
+- [ ] **showReasoning = ON**:
+  - [ ] widoczne bloki thinking / stream thinking,
+  - [ ] brak wycieku surowych struktur lub „raw JSON”.
+- [ ] **showReasoning = OFF**:
+  - [ ] thinking nie jest renderowany (nawet jesli pipeline go posiada),
+  - [ ] nie ma „pustych ramek” ani UX-smieci.
+
+#### CW-8 — Deep Thinking / Deep Research confirm gate (bezpieczne uruchamianie)
+
+- [ ] Gdy `deepResearch` jest wlaczone, stream nie startuje „po cichu”:
+  - [ ] system wymusza confirm (UI karta / flow),
+  - [ ] po confirm dopiero startuje stream.
+- [ ] Negatywny przypadek:
+  - [ ] bez confirm dostajesz jawny błąd typu `DEEP_THINKING_CONFIRM_REQUIRED` (nie raw 500).
+
+#### CW-9 — Trust: cytowania, linki, „why this answer?”, kopiowanie
+
+- [ ] **Citations**:
+  - [ ] klikalne linki,
+  - [ ] domain pill,
+  - [ ] kopiowanie cytowań (copy citations).
+- [ ] **Why this answer?**:
+  - [ ] widoczny snippet (gdy wspierane) i nie przecieka raw.
+- [ ] **Copy reasoning / copy message**:
+  - [ ] kopiowanie treści działa,
+  - [ ] brak crash na clipboard error.
+
+#### CW-10 — Governance: proposals, Action Center, AIRun, audit (P0)
+
+Scenariusz: popros AI o „zrob coś w aplikacji” (np. stwórz inicjatywę, zmień dane, zaplanuj job).
+
+- [ ] **Zamiast silent execution** pojawia sie proposal (execution-proposal / Teresa proposal card).
+- [ ] **Action Center** pokazuje nową akcję:
+  - [ ] pending_review → approve/reject,
+  - [ ] execute tylko po approval,
+  - [ ] audit jest dostepny po wykonaniu.
+- [ ] **Run ledger** ma spójny wpis `AIRun` (runId / statusy).
+- [ ] **Reject** nie ma side-effect (brak mutacji po odrzuceniu).
+
+#### CW-11 — Artifacts z czatu (Wave 5 runtime)
+
+Scenariusz: popros o wygenerowanie raportu/deck/tabeli jako output.
+
+- [ ] artefakt jest wykryty i widoczny jako „output”,
+- [ ] zapis do Wave 5 runtime jest jawny (a przy błędzie: „local draft only” + instrukcja co dalej),
+- [ ] mutation proposals (diff/approve/commit) dzialaja w `/ai/artifacts`,
+- [ ] provenance / export manifest jest osiagalny.
+
+#### CW-12 — Kontext i edukacja (Wave 6) + uczenie (stewardship)
+
+- [ ] **/ai/context** (panel) pokazuje kontekst bez raw JSON.
+- [ ] **Create memory candidate**:
+  - [ ] candidate widoczny w kolejce stewardship,
+  - [ ] approve/reject/apply/expire działają.
+- [ ] **Private mode**:
+  - [ ] w private mode system nie zapisuje trwale (brak hidden learning),
+  - [ ] UI uczciwie komunikuje ograniczenie.
+
+#### CW-13 — Voice (dictation vs voice conversation) + fallback
+
+- [ ] Dictation:
+  - [ ] nagrywa / wypełnia tekst,
+  - [ ] user moze poprawic i wyslac.
+- [ ] Voice conversation:
+  - [ ] auto-send + AI odpowiada (TTS),
+  - [ ] stop/mute/interrupt dziala.
+- [ ] Voice unavailable:
+  - [ ] uczciwy fallback, brak crash, brak „pustych obietnic”.
+
+Wynik:
+
+- Jesli wszystkie CW-1..CW-13 przechodza w obu surfaces, uznajemy „Chat window module” za domkniety na poziomie V8/V9.
+- Jesli którykolwiek punkt governance (CW-10) lub hidden learning (CW-12) failuje → **BLOCKER P0**.
+
+### V8/V9 — Minimalny katalog prób (capabilities) dla AI OS
+
+Ta sekcja jest „druga lista” (obok CW-0..CW-13) i stanowi **precyzyjny minimalny katalog prób użytkownika** dla kluczowych funkcjonalnosci, ktore system musi juz realizowac (V8/V9 + fale AI OS).
+
+Regula ogolna:
+
+- Kazda próba ma: **(1)** krok UI lub call API, **(2)** oczekiwany wynik, **(3)** evidence (Network/Action Center/Audit/Artifact/Panel).
+- Jesli próba dotyczy mutacji: **musi** powstac proposal + approval + AIRun + audit (P0: „no silent execution”).
+
+#### CAP-1 — Czat „otwierajacy” (shell, wejscie, nawigacja)
+
+- [ ] Wejscie w czat i start rozmowy: `/chat` dziala (glowny shell) + tworzenie/ładowanie konwersacji.
+- [ ] Kanoniczny runtime v8 istnieje i jest uzywany tam, gdzie powinien: `UnifiedChatPanel` + `EnhancedChatInput` + `useAIStream` + stores.
+- [ ] Sync route ↔ conversation: po wejsciu w konwersacje i hard refresh nie gubi sie stan ani nie ma redirect loop.
+
+Evidence:
+
+- Screen: `/chat` i/lub widok split z `UnifiedChatPanel`.
+- Network: `/api/conversations/*` (create/list/load), oraz `/api/ai/chat/stream` na wysylce.
+
+#### CAP-2 — Czat „pomocnik w procesach” (Answer / Suggest / Act + tryby)
+
+- [ ] Tryb **Answer**: zwykla odpowiedz z uczciwymi zalozeniami, bez obiecywania rzeczy nieistniejacych.
+- [ ] Tryb **Suggest**: AI potrafi zaproponowac artefakt/proces, ale nie zapisuje nic bez review/approval.
+- [ ] Tryb **Act**: gdy user prosi o mutacje, powstaje proposal (governance), nie silent execution.
+- [ ] Zaawansowane tryby odpowiedzi:
+  - [ ] response style dziala (wplywa na kolejne odpowiedzi),
+  - [ ] tier/model selection nie psuje runtime (przynajmniej nie crashuje),
+  - [ ] private mode ma realny efekt (brak hidden learning),
+  - [ ] assistant/memory scope jest respektowany (jesli expose’owany).
+
+Evidence:
+
+- Screen: Tools menu / Co-Thinker + odpowiedz.
+- Network: payload do `/api/ai/chat/stream` zawiera `aiModes`, `responseStyle`, `privateMode` itd.
+
+#### CAP-3 — Attachments / URL ingest (wejscia do pracy)
+
+- [ ] Streaming SSE: `POST /api/ai/chat/stream` konczy sie `[DONE]`, bez hang.
+- [ ] Ingest plikow: `POST /api/ai/attachments/ingest` dziala dla wspieranych typow.
+- [ ] Ingest URL: `POST /api/ai/attachments/ingest-url` dziala, a bledy sa jawne (bez fake-success).
+- [ ] Historia rozmow: lifecycle konwersacji (list/load/update) jest stabilny (`/api/conversations/*`).
+
+Evidence:
+
+- Network: ingest + stream.
+- Chat UI: komunikat „AI odpowie bez tych źródeł”, gdy ingest padnie.
+
+#### CAP-4 — Trust / prawdomownosc (zrodla, ograniczenia, brak fake-success)
+
+- [ ] Gdy brak danych do KPI/ROI: AI prosi o brakujace liczby lub jawnie oznacza szacunek.
+- [ ] Rozroznienie klas zrodel: attachment / web / product / org memory nie miesza sie bez disclosure.
+- [ ] Partial/legacy: UI nie sugeruje „gotowe”, gdy integracja jest `not implemented` (honest fallback).
+
+Evidence:
+
+- Screen: trust/citations (jesli wystepuja) + jawne zalozenia.
+- Network/console: brak raw JSON leak i brak „Something went very wrong!” jako jedyny UX.
+
+#### CAP-5 — Sterowanie aplikacja przez chat (Governance: proposals → approval → execution → audit)
+
+Action Center / AIRun:
+
+- [ ] `GET /api/ai/actions/center` pokazuje pending/approved/executed/failed/rejected (dla roli).
+- [ ] `GET /api/ai/actions/runs` pokazuje ledger (dla roli).
+- [ ] `GET /api/ai/actions/:id/audit` zwraca audyt dla akcji.
+- [ ] approve/reject/execute dziala: `/api/ai/actions/:id/*`.
+
+Invariants (P0):
+
+- [ ] Brak silent execution (nie wolno wykonywac mutacji bez approval/audytu).
+- [ ] Unifikacja proposals w konwersacji: `GET /api/ai/conversations/:id/proposals` zwraca czytelny spis.
+
+Teresa Copilot P08:
+
+- [ ] `POST /api/v8/teresa/proposal` tworzy proposal.
+- [ ] `POST /api/v8/teresa/proposal/:id/approve|reject|execute` dziala zgodnie z lifecycle.
+- [ ] `GET /api/v8/teresa/proposal/:id` + `GET /api/v8/teresa/audit/:proposalId` pokazuja szczegoly i audit.
+- [ ] Operatorzy (`/operators/initiative-draft`, `/operators/notebook-entry`, `/operators/structured-query`) nie omijaja approval.
+
+Evidence:
+
+- Screen: proposal card + Action Center.
+- Network: action center + audit response.
+
+#### CAP-6 — Deep Research (ResearchSession + evidence)
+
+- [ ] Research sessions lifecycle (UI dock i/lub API):
+  - [ ] create: `POST /api/research/sessions`
+  - [ ] approve: `POST /api/research/sessions/:id/approve`
+  - [ ] start: `POST /api/research/sessions/:id/start`
+  - [ ] status: `GET /api/research/sessions/:id` (do `completed|failed|paused`)
+  - [ ] resume/retry/cancel: odpowiednie endpointy (jesli wspierane)
+- [ ] Research konczy sie „czymś”: final report / evidence / artifact (inspekowalne).
+- [ ] Graceful failure: gdy provider/down, UI pokazuje honest degraded state (bez crash).
+
+Evidence:
+
+- Network: statusy create/approve/start + final GET.
+- Screen: Research Sessions dock / evidence.
+
+#### CAP-7 — Artifacts (Wave 5)
+
+- [ ] Tworzenie artefaktu (z czatu lub w `/ai/artifacts`).
+- [ ] Wersjonowanie/lineage/provenance.
+- [ ] Mutation proposal + diff + approve/reject + commit.
+- [ ] Export/manifest.
+- [ ] Governance spieta z AIRun (brak „commit bez review”).
+
+Evidence:
+
+- Screen: `/ai/artifacts` (diff, lineage, provenance).
+- Network: artifact detail + mutation endpoints.
+
+#### CAP-8 — Context & Learning (Wave 6, stewardship-only)
+
+- [ ] Context panel czytelny (bez raw JSON) + scope (org/project/user).
+- [ ] Snapshoty kontekstu (`/api/ai-context/snapshots`) dzialaja i respektuja private mode.
+- [ ] Memory stewardship:
+  - [ ] create candidate: `POST /api/ai-context/memory/candidates`
+  - [ ] decision: `POST /api/ai-context/memory/candidates/:id/decision` (approve/reject/apply/expire)
+- [ ] Private mode realnie ogranicza retencje (P0: brak hidden learning).
+
+Evidence:
+
+- Screen: `/ai/context` i kolejka stewardship.
+- Network: candidate create + decision.
+
+#### CAP-9 — Connectors + tooling (Wave 7)
+
+- [ ] Connector catalog + registry (`/api/ai-connectors/*`) pokazuje stany: connected/disconnected/stale/failed.
+- [ ] Freshness / stale honesty: gdy stale/brak dostepu, AI/UX komunikuje ograniczenia.
+- [ ] Tool gating: mutujace narzedzia wymagaja AIRun/proposal; niedozwolone tool’e sa blokowane (twarde komunikaty).
+
+Evidence:
+
+- Screen: `/ai/connectors`.
+- Network: connector endpoints + refusal/tool_not_allowed.
+
+#### CAP-10 — Agents (Wave 8)
+
+- [ ] Agent catalog (`/api/ai-agents/catalog`) czytelny, bez raw JSON.
+- [ ] Launch agent jest governed (budget/schedule/approval) — brak background silent cost loop.
+- [ ] Schedules (`/api/ai-agents/schedules`) istnieja jako obiekty z review/budget.
+- [ ] Tool restrictions per agent (tool_not_allowed_for_agent, airun_id_required).
+
+Evidence:
+
+- Screen: `/ai/agents` + proposal/budget UI.
+- Network: agent endpoints + denial codes.
+
+#### CAP-11 — Outcomes / KPI / ROI + AI Ops (Wave 9)
+
+- [ ] Outcomes runtime:
+  - [ ] KPI baseline/target,
+  - [ ] ROI scenariusze z zalozeniami + confidence,
+  - [ ] executive/client/investor reports,
+  - [ ] evidence registry.
+- [ ] AI Ops dashboard:
+  - [ ] provider health,
+  - [ ] eval/acceptance runs,
+  - [ ] incidents,
+  - [ ] jawne „blocked” gdy provider niedostepny (brak fake-success).
+
+Evidence:
+
+- Screen: `/ai/outcomes`, `/ai/ai-ops`.
+- Network: `/api/ai-outcomes/*`.
+
+#### CAP-12 — Prompt/Provider control plane (governance operacyjne)
+
+- [ ] Prompt SSOT: CRUD promptow po kanonicznych routach (wg `AI_GOVERNANCE_API_MAP.md`).
+- [ ] Provider routing/health/cost: kontrola dostawcow + capability testy + koszty/analytics.
+- [ ] Produkt nie moze ukrywac braku providerow (honest degraded posture).
+
+Evidence:
+
+- Screen: superadmin AI platform / AI ops.
+- Network: `/api/ai-prompts/*`, `/api/llm/*` (gdzie dostepne).
+
+### V8/V9/V10 — Katalog funkcji AI jako próby użytkownika (co AI powinien już umieć)
+
+To jest lista „prób użytkownika” opisująca **jakie funkcje** AI powinien już realizować po dużych wdrożeniach V8/V9 oraz w ramach fal AI OS (Wave 0–9). V10 jest tu traktowane jako docelowe bloki runtime — próby opisują stan „powinno działać” w produkcie, a nie plan.
+
+#### P-1 — Asystenci (kto jest AI)
+
+- [ ] Użytkownik potrafi uruchomić i użyć: Anna (public/product) oraz Teresa (tenant/workspace).
+- [ ] Użytkownik potrafi wejść w role-specyficzny tryb pracy (np. CFO/COO/Transformation/IT‑CISO/partner) bez utraty governance.
+
+#### P-2 — Rozumowanie i routing pracy
+
+- [ ] AI wybiera sensowny tryb pracy: szybki chat vs research vs proposal/action vs artifact vs connector vs voice/background.
+- [ ] AI nie udaje wykonanego działania: gdy nie ma danych / uprawnień / źródeł — komunikuje ograniczenia i proponuje następny krok.
+
+#### P-3 — Chat jako produkt (shell + biblioteka rozmów)
+
+- [ ] Użytkownik może: zacząć rozmowę, wrócić do historii, zarządzać biblioteką (folders/projekty, pinned/star, archive, rename, delete) i bezpiecznie odświeżyć (hard refresh).
+
+#### P-4 — Streaming + tryby pracy w oknie czata
+
+- [ ] Użytkownik widzi stabilny streaming (stop/retry/abort), a narzędzia (deepResearch, showReasoning, multiAgent, privateMode, TTS) realnie wpływają na runtime.
+- [ ] Użytkownik może ustawić response style + custom instructions, a ustawienia utrzymują się w czasie.
+- [ ] Użytkownik może włączyć Co‑Thinker/persony (w tym Market Researcher) i zobaczyć, że zmieniają zachowanie odpowiedzi.
+
+#### P-5 — Wiedza i retrieval (źródła)
+
+- [ ] Użytkownik może podać źródła: pliki, URL, oraz (jeśli dostępne) pliki z chmury — i AI odpowiada jawnie, czy źródła zostały faktycznie użyte.
+- [ ] AI rozróżnia klasy źródeł (product/workspace/attachment/web/org memory/connector) i nie miesza ich bez disclosure.
+
+#### P-6 — Deep Research (ResearchSession)
+
+- [ ] Użytkownik może uruchomić deep research w trybie kontrolowanym (confirm gate), zobaczyć postęp oraz wynik końcowy jako inspekowalny report/evidence (nie tylko tekst).
+- [ ] W razie problemów providerów system degraduje się uczciwie (statusy, brak crash, brak fake-success).
+
+#### P-7 — Governance: proposals → approval → execution → audit (AIRun)
+
+- [ ] Gdy użytkownik prosi o zmianę w aplikacji, AI generuje proposal zamiast silent execution.
+- [ ] Użytkownik może przejść przez review/approve/execute oraz zobaczyć audit trail i run ledger.
+
+#### P-8 — Artefakty (Wave 5)
+
+- [ ] Użytkownik może tworzyć i przeglądać artefakty (reports/decks/sheets/decisions).
+- [ ] Użytkownik może przejść lifecycle mutation proposal: diff → approve/reject → commit oraz zobaczyć lineage/provenance/export.
+
+#### P-9 — Context & Learning (Wave 6)
+
+- [ ] Użytkownik może zobaczyć kontekst w czytelnej formie (bez raw JSON) i zarządzać snapshotami.
+- [ ] Użytkownik może uruchomić learning tylko przez stewardship: candidate → decyzja (approve/reject/apply/expire).
+- [ ] Private mode realnie ogranicza retencję (brak hidden learning).
+
+#### P-10 — Connectors + tooling (Wave 7)
+
+- [ ] Użytkownik widzi catalog/registry konektorów (connected/disconnected/stale/failed) i rozumie freshness.
+- [ ] Narzędzia są gated: mutacje wymagają AIRun/proposal; niedozwolone tool’e są blokowane czytelnym komunikatem.
+
+#### P-11 — Agents (Wave 8)
+
+- [ ] Użytkownik widzi agent catalog (role, tool scope, kontrakt) bez raw JSON leakage.
+- [ ] Użytkownik może uruchomić agenta i planować schedule tylko w trybie governed (approval/budget), bez „always-on” kosztów w tle.
+
+#### P-12 — Outcomes/KPI/ROI + AI Ops (Wave 9)
+
+- [ ] Użytkownik potrafi powiązać pracę z KPI/ROI: baseline/target, scenariusze finansowe z założeniami i confidence, oraz raporty exec/client/investor.
+- [ ] Użytkownik ma AI Ops: provider health, eval/acceptance runs, incidenty i jawne „blocked” przy awarii (zero udawania sukcesu).
+
+#### P-13 — Prompt/Provider control plane (operacyjne sterowanie jakością)
+
+- [ ] Użytkownik-admin/superadmin potrafi zarządzać promptami (SSOT), providerami i routingiem oraz widzi koszty/budżety.
+- [ ] System nie ukrywa ograniczeń (limity, brak providerów, brak feature) — zawsze honest degraded posture.
+
 ### V10 - docelowy runtime AI OS
 
 V10 jest wieksza paczka runtime'ow i modeli. W obecnym checkoutcie `feat/ai-chat-v9` nie ma plikow `server/src/routes/v10`, `server/src/services/v10`, `src/hooks/v10` ani `src/components/v10`. Istnieje jednak commit `a336e4e32 feat(v10): ship runtime workspace and rollout wiring`, ktory zawieral docelowy szkielet.

@@ -36,7 +36,7 @@ const serviceUnavailable = (res: Response) =>
   });
 
 function getOrgId(req: any): string {
-  return req.user?.organizationId || req.user?.organization_id || '';
+  return req.organizationId || req.user?.organizationId || req.user?.organization_id || '';
 }
 
 function sha256(input: string): string {
@@ -44,7 +44,7 @@ function sha256(input: string): string {
 }
 
 function getUserId(req: any): string {
-  return req.user?.id || req.userId || req.user?.userId || '';
+  return req.userId || req.user?.id || req.user?.userId || '';
 }
 
 async function ensureTable(): Promise<boolean> {
@@ -67,6 +67,9 @@ router.get(
   asyncHandler(async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+    if (!orgId || !userId) {
+      return res.status(403).json({ error: 'Organization and user context are required' });
+    }
     const status = req.query.status ? String(req.query.status) : null;
     const limit = Math.min(200, Math.max(1, Number(req.query.limit || 50)));
     const scope = String(req.query.scope || 'mine');
@@ -86,6 +89,9 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
+    if (!orgId || !userId) {
+      return res.status(403).json({ error: 'Organization and user context are required' });
+    }
     const mission = String((req.body as any)?.mission || '').trim();
     if (!mission) return res.status(400).json({ error: 'mission is required' });
     const session = await planResearchSession({
@@ -172,6 +178,25 @@ router.post(
     if (!existing) return res.status(404).json({ error: 'Research session not found' });
     if (existing.status === 'planned') {
       return res.status(409).json({ error: 'Research session must be approved before start' });
+    }
+    if (existing.status === 'running') {
+      return res.status(202).json({
+        success: true,
+        session: existing,
+        background: true,
+        idempotent: true,
+      });
+    }
+    if (existing.status === 'completed') {
+      return res.status(200).json({
+        success: true,
+        session: existing,
+        background: false,
+        idempotent: true,
+      });
+    }
+    if (existing.status === 'archived') {
+      return res.status(409).json({ error: 'Research session is archived' });
     }
     const session = await beginResearchSessionInBackground({
       sessionId: String(req.params.sessionId),

@@ -96,6 +96,168 @@ import {
 
 const router = Router();
 
+function isConnectorFreshDataAsk(message: unknown): boolean {
+  const text = String(message || '').toLowerCase();
+  const mentionsConnector =
+    /\b(connector|connectors|integration|integrations|sql|database|db|postgres|mysql|warehouse|crm|salesforce|hubspot|konektor|konektora|integracja|baza|bazie)\b/i.test(
+      text
+    );
+  const asksForFreshFact =
+    /\b(current|latest|fresh|live|actual|active|count|how many|ile|aktualn|bieżąc|biezac|aktywn|rekord|klient|customer|query|sprawd[źz])\b/i.test(
+      text
+    );
+  return mentionsConnector && asksForFreshFact;
+}
+
+function hasVerifiedConnectorResult(context: unknown): boolean {
+  const external = (context as any)?.external || {};
+  return Boolean(
+    external?.connectorToolResult?.verified === true ||
+      external?.connectorToolResult?.fresh === true ||
+      external?.connectorQuery?.executed === true ||
+      external?.toolResult?.connector === true
+  );
+}
+
+async function getConnectorStatusSummary(organizationId?: string | null): Promise<string> {
+  let statusSummary = 'No verified connector status was loaded for this answer.';
+  if (!organizationId) return statusSummary;
+
+  try {
+    const rows = await dbAll<any>(
+      `SELECT id, connector_id, connector_type, provider, status, last_sync_at, updated_at
+       FROM integrations
+       WHERE organization_id = ?
+       ORDER BY updated_at DESC
+       LIMIT 25`,
+      [organizationId]
+    );
+    const relevantRows = (rows || []).filter((row) =>
+      /sql|database|postgres|mysql|warehouse|crm|salesforce|hubspot/i.test(
+        [row.connector_id, row.connector_type, row.provider, row.id].filter(Boolean).join(' ')
+      )
+    );
+    const sample = (relevantRows.length > 0 ? relevantRows : rows || [])
+      .slice(0, 8)
+      .map((row) => {
+        const name = row.connector_id || row.connector_type || row.provider || row.id || 'unknown';
+        return `${name}: status=${row.status || 'unknown'}, lastSync=${row.last_sync_at || 'unknown'}`;
+      });
+    if (sample.length > 0) statusSummary = sample.join('; ');
+  } catch (err: any) {
+    logger.warn('[AI Stream] Connector honesty status lookup failed:', err?.message || err);
+  }
+
+  return statusSummary;
+}
+
+async function buildConnectorHonestyConstraint(params: {
+  organizationId?: string | null;
+  message: unknown;
+  context: unknown;
+}): Promise<string> {
+  if (!isConnectorFreshDataAsk(params.message) || hasVerifiedConnectorResult(params.context)) {
+    return '';
+  }
+
+  const statusSummary = await getConnectorStatusSummary(params.organizationId);
+
+  return [
+    '## HARD CONNECTOR DATA TRUST CONSTRAINT',
+    'The user is asking for fresh/current data from a connector or production database.',
+    `Known connector status snapshot: ${statusSummary}`,
+    'You do NOT have a verified live connector query result in this request.',
+    'Therefore you MUST NOT invent exact counts, records, customer numbers, SQL results, freshness timestamps, or claim that you queried production data.',
+    'Answer with an honest access/freshness limitation, explain that the connector/query result is unavailable or unverified, and propose a governed reconnect/access/check workflow.',
+    'If the user asks for mutation, keep using governed_execution and require approval.',
+  ].join('\n');
+}
+
+async function buildConnectorHonestyBlockResponse(params: {
+  organizationId?: string | null;
+  message: unknown;
+  context: unknown;
+}): Promise<string> {
+  if (!isConnectorFreshDataAsk(params.message) || hasVerifiedConnectorResult(params.context)) {
+    return '';
+  }
+
+  const statusSummary = await getConnectorStatusSummary(params.organizationId);
+  return [
+    'Nie mogę podać aktualnej liczby rekordów klientów z produkcyjnej bazy SQL, bo w tym żądaniu nie mam zweryfikowanego wyniku live query z konektora.',
+    '',
+    `Stan konektorów widoczny dla backendu: ${statusSummary}`,
+    '',
+    'Nie będę zgadywać ani podawać liczby "z kapelusza". Bezpieczna ścieżka to: sprawdzić status konektora, odnowić połączenie/sekrety w trybie governed reconnect, uruchomić jawne read-only query z audytem, a dopiero potem raportować liczbę z timestampem i źródłem.',
+  ].join('\n');
+}
+
+function isAIOpsHealthAsk(message: unknown): boolean {
+  const text = String(message || '').toLowerCase();
+  const mentionsOpsHealth =
+    /\b(ai ops|aiops|provider|providers|model health|health|eval gate|deep research|kosztown|costly|degraded|blocked|awaria|zdrowi|zdrowe|providerzy)\b/i.test(
+      text
+    );
+  const asksForRunDecision =
+    /\b(can i|should i|safe|proceed|run|launch|uruchomi|odpali|bezpiecz|mogę|moge|czy mogę|czy moge)\b/i.test(
+      text
+    );
+  return mentionsOpsHealth && asksForRunDecision;
+}
+
+async function buildAIOpsHealthConstraint(message: unknown): Promise<string> {
+  if (!isAIOpsHealthAsk(message)) return '';
+
+  const { hardBlock, statusSummary } = await getAIOpsHealthSnapshot();
+  if (!hardBlock) return '';
+
+  return [
+    '## HARD AI OPS HEALTH CONSTRAINT',
+    `Internal AI provider health snapshot: ${statusSummary}`,
+    'The user is asking whether it is safe to run an expensive AI operation such as Deep Research.',
+    'You MUST use the internal AI Ops health snapshot above, not public web information about general AI systems.',
+    'Do NOT recommend starting expensive research, agents, or provider-heavy workflows while health is error/degraded/unknown, providers are unavailable, or the health monitor is not running.',
+    'State the degraded/blocked posture plainly, explain the operational risk, and recommend checking provider configuration, eval gate, and AI Ops before proceeding.',
+  ].join('\n');
+}
+
+async function getAIOpsHealthSnapshot(): Promise<{ hardBlock: boolean; statusSummary: string }> {
+  let statusSummary = 'AI health status could not be loaded.';
+  let hardBlock = true;
+  try {
+    const healthMonitor = (await import('../services/ai/healthMonitor.js')).default as any;
+    const status = healthMonitor.getStatus?.() || {};
+    const overall =
+      (status?.lastCheck as { overall?: string } | null)?.overall ||
+      status?.status ||
+      'error';
+    const providers = status?.providers && typeof status.providers === 'object' ? status.providers : {};
+    const providerCount = Object.keys(providers).length;
+    const isRunning = Boolean(status?.isRunning);
+    hardBlock = overall !== 'healthy' || providerCount === 0 || !isRunning;
+    statusSummary = `overall=${overall}; providerCount=${providerCount}; isRunning=${isRunning}; consecutiveFailures=${status?.consecutiveFailures ?? 'unknown'}`;
+  } catch (err: any) {
+    logger.warn('[AI Stream] AI Ops health lookup failed:', err?.message || err);
+  }
+
+  return { hardBlock, statusSummary };
+}
+
+async function buildAIOpsHealthBlockResponse(message: unknown): Promise<string> {
+  if (!isAIOpsHealthAsk(message)) return '';
+
+  const { hardBlock, statusSummary } = await getAIOpsHealthSnapshot();
+  if (!hardBlock) return '';
+
+  return [
+    'Nie rekomenduję uruchamiania kosztownego Deep Research ani innych provider-heavy workflow w tym stanie.',
+    '',
+    `Wewnętrzny AI Ops health snapshot: ${statusSummary}`,
+    '',
+    'To oznacza posture degraded/blocked dla kosztownych operacji. Najpierw trzeba naprawić konfigurację providerów, potwierdzić eval gate oraz koszt/budget posture, a dopiero potem uruchamiać Deep Research.',
+  ].join('\n');
+}
+
 // Apply rate limiting to all AI routes
 router.use(aiRateLimiter);
 
@@ -1656,6 +1818,16 @@ router.post(
       );
     };
 
+    const emitDeterministicBlock = (outputText: string, reason: string) => {
+      accumulatedContent = outputText;
+      res.write(`data: ${JSON.stringify({ text: outputText })}\n\n`);
+      emitMinimalTrustBundle(outputText, { mode: 'blocked', reason });
+      res.write('data: [DONE]\n\n');
+      streamCompleted = true;
+      clearInterval(heartbeatInterval);
+      return res.end();
+    };
+
     // --------------------------------------------------------------------
     // E2E_MODE: deterministic streaming for runtime tests (CI + Playwright)
     // --------------------------------------------------------------------
@@ -1686,6 +1858,26 @@ router.post(
         res.write('data: [DONE]\n\n');
         return res.end();
       }
+    }
+
+    const connectorHonestyBlock = await buildConnectorHonestyBlockResponse({
+      organizationId: req.organizationId,
+      message,
+      context,
+    });
+    if (connectorHonestyBlock) {
+      return emitDeterministicBlock(
+        connectorHonestyBlock,
+        'fresh_connector_data_without_verified_tool_result'
+      );
+    }
+
+    const aiOpsHealthBlock = await buildAIOpsHealthBlockResponse(message);
+    if (aiOpsHealthBlock) {
+      return emitDeterministicBlock(
+        aiOpsHealthBlock,
+        'expensive_ai_operation_requires_healthy_internal_provider_posture'
+      );
     }
 
     const connectionCleanup = () => {
@@ -2050,6 +2242,57 @@ router.post(
           privateMode: Boolean(privateMode),
         },
       };
+
+      const connectorHonestyConstraint = await buildConnectorHonestyConstraint({
+        organizationId: req.organizationId,
+        message,
+        context,
+      });
+      if (connectorHonestyConstraint) {
+        pipelineRequest = {
+          ...pipelineRequest,
+          options: {
+            ...(pipelineRequest.options || {}),
+            systemInstruction:
+              String((pipelineRequest.options as any)?.systemInstruction || '') +
+              `\n\n${connectorHonestyConstraint}\n`,
+          },
+          context: {
+            ...((pipelineRequest as any).context || {}),
+            external: {
+              ...(((pipelineRequest as any).context || {}).external || {}),
+              connectorHonesty: {
+                enforced: true,
+                reason: 'fresh_connector_data_without_verified_tool_result',
+              },
+            },
+          },
+        } as any;
+      }
+
+      const aiOpsHealthConstraint = await buildAIOpsHealthConstraint(message);
+      const suppressWebForInternalOpsHealth = Boolean(aiOpsHealthConstraint);
+      if (aiOpsHealthConstraint) {
+        pipelineRequest = {
+          ...pipelineRequest,
+          options: {
+            ...(pipelineRequest.options || {}),
+            systemInstruction:
+              String((pipelineRequest.options as any)?.systemInstruction || '') +
+              `\n\n${aiOpsHealthConstraint}\n`,
+          },
+          context: {
+            ...((pipelineRequest as any).context || {}),
+            external: {
+              ...(((pipelineRequest as any).context || {}).external || {}),
+              aiOpsHealth: {
+                enforced: true,
+                reason: 'expensive_ai_operation_requires_healthy_internal_provider_posture',
+              },
+            },
+          },
+        } as any;
+      }
 
       // --------------------------------------------------------
       // Chat trace: create a persistent run record (admin ops)
@@ -2853,6 +3096,7 @@ router.post(
           shouldPreferGovernedProductKnowledge && !explicitExternalWebRequest;
         if (
           !governedKnowledgeSuppressesWeb &&
+          !suppressWebForInternalOpsHealth &&
           (searchIntent?.shouldSearch || workerAutoSearchRequested) &&
           webPolicy?.internetEnabled
         ) {
