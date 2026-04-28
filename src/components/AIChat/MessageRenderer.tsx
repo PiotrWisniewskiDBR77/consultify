@@ -1333,7 +1333,20 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <span>{userVisibleContent}</span>
+                  <div className="flex flex-col">
+                    <span>{userVisibleContent}</span>
+                    {msg.role === 'user' && !msg.isStreaming && editingMessageId !== msg.id && (
+                      <div className="flex justify-end mt-3 border-t border-white/10 pt-2">
+                        <button
+                          onClick={() => handleStartEditMessage(msg.id)}
+                          className="flex items-center gap-1.5 px-2 py-1 text-[11px] font-medium rounded-md border border-white/20 text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                        >
+                          <Pencil size={12} />
+                          {t('chat.actions.editAndResend', 'Edit & Resend')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 )}
               </>
             )}

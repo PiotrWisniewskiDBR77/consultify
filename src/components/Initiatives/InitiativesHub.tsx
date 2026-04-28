@@ -45,6 +45,7 @@ import { checkDuplicateInitiative } from '@/utils/initiativeDuplicateDetection';
 import { ACTIVE_STATUSES, ALL_STATUSES } from '@/utils/initiativeHelpers';
 import { dispatchPilotAccessBlocked, isPilotParticipantRole } from '@/utils/pilotAccess';
 
+import { usePortfolioStore } from '../../store/portfolioSlice';
 import { useAppStore } from '../../store/useAppStore';
 import { InitiativeStatus, PortfolioFilters, PortfolioInitiative } from '../../types';
 // Detail views
@@ -145,6 +146,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentProjectId, currentUser } = useAppStore();
+  const refreshTrigger = usePortfolioStore((state) => state.refreshTrigger);
   const isPilotParticipant = isPilotParticipantRole(currentUser?.role);
   const [searchParams, setSearchParams] = useSearchParams();
   const [handledDeepLinkOpen, setHandledDeepLinkOpen] = useState(false);
@@ -403,6 +405,12 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
     fetchRetryRef.current = 0;
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      fetchData(true);
+    }
+  }, [refreshTrigger, fetchData]);
 
   useEffect(() => {
     const loadUsers = async () => {

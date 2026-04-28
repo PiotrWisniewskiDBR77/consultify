@@ -27,6 +27,11 @@ const isMissingSqliteTable = (error: any, tableName: string): boolean => {
   return code === 'SQLITE_ERROR' && msg.includes(`no such table: ${tableName}`.toLowerCase());
 };
 
+const dbGetOne = (db: any, sql: string, params: unknown[]) => {
+  const getOne = typeof db.get === 'function' ? db.get : db.queryOne;
+  return getOne.call(db, sql, params);
+};
+
 // ==================== VALIDATION SCHEMAS ====================
 
 const CreateProjectSchema = z.object({
@@ -138,7 +143,8 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
     const db = getDatabase();
 
     // Allow access if user owns it OR it's a team project in their org
-    const project = await db.queryOne(
+    const project = await dbGetOne(
+      db,
       `
             SELECT 
                 cp.*,
@@ -149,7 +155,7 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
               OR (cp.scope = 'team' AND cp.organization_id = ?)
             )
         `,
-      [id, userId, orgId]
+      [id, userId, orgId || null]
     );
 
     if (!project) {
@@ -294,10 +300,11 @@ router.patch('/:id', verifyToken, async (req: Request, res: Response) => {
     const db = getDatabase();
 
     // Find project (personal ownership or team in org)
-    const existing = (await db.queryOne(
+    const existing = (await dbGetOne(
+      db,
       `SELECT id, user_id, scope, organization_id FROM chat_projects
        WHERE id = ? AND (user_id = ? OR (scope = 'team' AND organization_id = ?))`,
-      [id, userId, orgId]
+      [id, userId, orgId || null]
     )) as any;
 
     if (!existing) {
@@ -369,10 +376,11 @@ router.delete('/:id', verifyToken, async (req: Request, res: Response) => {
     const db = getDatabase();
 
     // Find project
-    const existing = (await db.queryOne(
+    const existing = (await dbGetOne(
+      db,
       `SELECT id, user_id, scope, organization_id FROM chat_projects
        WHERE id = ? AND (user_id = ? OR (scope = 'team' AND organization_id = ?))`,
-      [id, userId, orgId]
+      [id, userId, orgId || null]
     )) as any;
 
     if (!existing) {
@@ -426,10 +434,11 @@ router.post(
       const db = getDatabase();
 
       // Check project access (personal or team)
-      const project = (await db.queryOne(
+      const project = (await dbGetOne(
+        db,
         `SELECT id, user_id, scope, organization_id FROM chat_projects
          WHERE id = ? AND (user_id = ? OR (scope = 'team' AND organization_id = ?))`,
-        [id, userId, orgId]
+        [id, userId, orgId || null]
       )) as any;
 
       if (!project) {
@@ -451,14 +460,15 @@ router.post(
 
       // Check conversation access (personal ownership/creator or same org).
       // Some legacy rows use created_by as the owner field, so accept both.
-      const conversation = await db.queryOne(
+      const conversation = await dbGetOne(
+        db,
         `SELECT id FROM conversations
          WHERE id = ? AND (
            user_id = ?
            OR created_by = ?
            OR (organization_id IS NOT NULL AND organization_id = ?)
          )`,
-        [conversationId, userId, userId, orgId]
+        [conversationId, userId, userId, orgId || null]
       );
 
       if (!conversation) {
@@ -508,7 +518,7 @@ router.delete(
              OR created_by = ?
              OR (organization_id IS NOT NULL AND organization_id = ?)
            )`,
-        [new Date().toISOString(), conversationId, id, userId, userId, orgId]
+        [new Date().toISOString(), conversationId, id, userId, userId, orgId || null]
       );
 
       logger.info(`[ChatProjects] Removed conversation ${conversationId} from project ${id}`);

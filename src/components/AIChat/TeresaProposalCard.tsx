@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Api } from '@/services/api';
 import type { TeresaChatProposal } from '@/types';
+import { usePortfolioStore } from '@/store/portfolioSlice';
 
 type ProposalAction = 'approve' | 'reject' | 'execute';
 
@@ -95,6 +96,7 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
           unwrapProposalResponse(response),
           t('aiChat.teresaProposal.approved', 'Teresa proposal approved.')
         );
+        usePortfolioStore.getState().triggerRefresh();
         return;
       }
 
@@ -104,6 +106,7 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
           unwrapProposalResponse(response),
           t('aiChat.teresaProposal.rejected', 'Teresa proposal rejected.')
         );
+        usePortfolioStore.getState().triggerRefresh();
         return;
       }
 
@@ -113,6 +116,7 @@ export const TeresaProposalCard: React.FC<TeresaProposalCardProps> = ({
         nextProposal,
         t('aiChat.teresaProposal.executed', 'Teresa handoff executed.')
       );
+      usePortfolioStore.getState().triggerRefresh();
     } catch (error) {
       onLifecycleMessage?.(
         error instanceof Error
