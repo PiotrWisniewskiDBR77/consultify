@@ -128,6 +128,7 @@ const INTERVIEW_MANAGED_ASSIGNMENTS_TABLE_VIEW_STORAGE_KEY =
 const INTERVIEW_SESSIONS_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-sessions-table-view';
 const INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-insights-table-view';
 const INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-templates-table-view';
+const INTERVIEW_CREATE_SESSION_TOAST_ID = 'interview-create-session';
 
 const INTERVIEW_ASSIGNMENTS_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 const INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
@@ -1371,6 +1372,7 @@ export const InterviewHub: React.FC = () => {
 
   // Handlers
   const handleNewSession = useCallback(async () => {
+    const toastId = INTERVIEW_CREATE_SESSION_TOAST_ID;
     try {
       const projectId = await ensureProjectId();
       if (!projectId) {
@@ -1381,6 +1383,9 @@ export const InterviewHub: React.FC = () => {
         );
         return;
       }
+      toast.loading(isPolish ? 'Tworzenie sesji wywiadu...' : 'Creating interview session...', {
+        id: toastId,
+      });
       const newSession = await Api.post('/interview/sessions', {
         projectId,
         name: `Interview ${new Date().toLocaleDateString()}`,
@@ -1402,10 +1407,20 @@ export const InterviewHub: React.FC = () => {
       });
       setActiveDocumentId(doc.id);
 
-      toast.success(isPolish ? 'Nowa sesja wywiadu rozpoczęta!' : 'New interview session started!');
+      toast.success(isPolish ? 'Nowa sesja wywiadu rozpoczęta!' : 'New interview session started!', {
+        id: toastId,
+      });
     } catch (error) {
       console.error('[InterviewHub] Failed to create session:', error);
-      toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
+      toast.error(
+        getSafeInterviewErrorMessage(
+          error,
+          isPolish
+            ? 'Nie udało się utworzyć sesji. Spróbuj ponownie za chwilę.'
+            : 'Failed to create session. Please try again shortly.'
+        ),
+        { id: toastId, duration: 6000 }
+      );
     }
   }, [ensureProjectId, isPolish]);
 

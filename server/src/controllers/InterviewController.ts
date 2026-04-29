@@ -37,6 +37,51 @@ import * as queryHelpers from '../utils/queryHelpers.js';
 const INTERVIEW_CATEGORIES = ['strategy', 'operations', 'digital', 'people', 'finance'] as const;
 type InterviewCategory = (typeof INTERVIEW_CATEGORIES)[number];
 
+const DEFAULT_INTERVIEW_QUESTION_TEMPLATES = [
+  {
+    id: 'tpl_strategy_1',
+    category: 'strategy',
+    questionText: 'What are your main business objectives for the next 2-3 years?',
+    sortOrder: 1,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_strategy_2',
+    category: 'strategy',
+    questionText: "What is your company's vision for digital transformation?",
+    sortOrder: 2,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_operations_1',
+    category: 'operations',
+    questionText: 'Where do you see the biggest inefficiencies in your operations?',
+    sortOrder: 1,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_digital_1',
+    category: 'digital',
+    questionText: 'What systems and tools do you currently use?',
+    sortOrder: 1,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_people_1',
+    category: 'people',
+    questionText: "How would you describe your team's digital skills?",
+    sortOrder: 1,
+    isRequired: 1,
+  },
+  {
+    id: 'tpl_finance_1',
+    category: 'finance',
+    questionText: 'What is the available budget for transformation initiatives?',
+    sortOrder: 1,
+    isRequired: 1,
+  },
+] as const;
+
 // Question statuses (task-list style)
 const QUESTION_STATUSES = ['not_started', 'in_progress', 'answered', 'needs_follow_up'] as const;
 type QuestionStatus = (typeof QUESTION_STATUSES)[number];
@@ -548,6 +593,35 @@ async function ensureInterviewSessionV6Columns(): Promise<void> {
   if (!cols.has('runtime_mode_default')) {
     await queryHelpers.queryRun(
       `ALTER TABLE interview_sessions ADD COLUMN runtime_mode_default TEXT DEFAULT 'single_question'`
+    );
+  }
+}
+
+async function ensureInterviewQuestionTemplatesTable(): Promise<void> {
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS interview_question_templates (
+      id TEXT PRIMARY KEY,
+      category TEXT NOT NULL,
+      question_text TEXT NOT NULL,
+      sort_order INTEGER DEFAULT 0,
+      is_required INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+
+  for (const template of DEFAULT_INTERVIEW_QUESTION_TEMPLATES) {
+    await queryHelpers.queryRun(
+      `INSERT INTO interview_question_templates
+       (id, category, question_text, sort_order, is_required)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        template.id,
+        template.category,
+        template.questionText,
+        template.sortOrder,
+        template.isRequired,
+      ]
     );
   }
 }
@@ -1870,6 +1944,7 @@ export const InterviewController = {
     const now = new Date().toISOString();
     await ensureInterviewSessionV6Columns();
     await ensureInterviewQuestionV6Columns();
+    await ensureInterviewQuestionTemplatesTable();
 
     // Create session
     // Note: Schema uses owner_id (not user_id) and doesn't have topic column
