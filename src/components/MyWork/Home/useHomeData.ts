@@ -447,7 +447,6 @@ function createEmptyScreen(): HomeScreenData {
   return {
     ...cloneMockScreen(),
     updatedAt: new Date().toISOString(),
-    blocks: [],
   };
 }
 

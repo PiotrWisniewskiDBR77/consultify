@@ -493,6 +493,15 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('send-button')).toBeInTheDocument();
   });
 
+  it('keeps explicit full mode welcome even when the stored display mode is split', () => {
+    conversationStoreState.displayMode = 'split';
+
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    expect(screen.getByTestId('chat-full-welcome')).toBeInTheDocument();
+    expect(screen.queryByTestId('chat-compact-empty-state')).not.toBeInTheDocument();
+  });
+
   it('new chat clears state and creates/selects a conversation', async () => {
     createConversationMock.mockResolvedValue({ id: 'conv-1' });
     renderWithRouter(<UnifiedChatPanel />);

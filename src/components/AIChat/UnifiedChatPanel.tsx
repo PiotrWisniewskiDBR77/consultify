@@ -581,7 +581,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   }, []);
 
   // Computed values
-  const isSplitMode = mode === 'split' || displayMode === 'split';
+  const isSplitMode = mode === 'split' || (mode !== 'full' && displayMode === 'split');
   const isCompact = isSplitMode;
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);

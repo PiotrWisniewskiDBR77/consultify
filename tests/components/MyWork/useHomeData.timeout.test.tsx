@@ -37,6 +37,7 @@ describe('useHomeData runtime recovery', () => {
     const { result } = renderHook(() => useHomeData());
 
     expect(result.current.loading).toBe(true);
+    expect(result.current.blocks.length).toBeGreaterThan(0);
 
     await act(async () => {
       vi.advanceTimersByTime(12_000);
@@ -45,6 +46,6 @@ describe('useHomeData runtime recovery', () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
     expect(result.current.error).toBe('Home V2 unavailable. Please try again in a moment.');
-    expect(result.current.blocks).toEqual([]);
+    expect(result.current.blocks.length).toBeGreaterThan(0);
   });
 });
