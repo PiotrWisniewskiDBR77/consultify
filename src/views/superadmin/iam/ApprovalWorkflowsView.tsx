@@ -112,6 +112,7 @@ const ApprovalWorkflowsView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'workflows' | 'requests'>('workflows');
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [workflowPendingDelete, setWorkflowPendingDelete] = useState<ApprovalWorkflow | null>(null);
   const [saving, setSaving] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -189,7 +190,6 @@ const ApprovalWorkflowsView: React.FC = () => {
   };
 
   const handleDeleteWorkflow = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this workflow?')) return;
     try {
       setError(null);
       await Api.deleteApprovalWorkflow(id);
@@ -197,6 +197,7 @@ const ApprovalWorkflowsView: React.FC = () => {
       if (!refreshed || refreshed.workflows.some((workflow) => workflow.id === id)) {
         throw new Error('Approval workflow deletion was not confirmed by the server');
       }
+      setWorkflowPendingDelete(null);
     } catch (err: unknown) {
       setError(normalizeApiErrorMessage(err, 'Failed to delete workflow'));
     }
@@ -486,7 +487,7 @@ const ApprovalWorkflowsView: React.FC = () => {
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleDeleteWorkflow(workflow.id)}
+                              onClick={() => setWorkflowPendingDelete(workflow)}
                               className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                               aria-label={`Delete approval workflow ${workflow.name}`}
                               title="Delete"
@@ -692,6 +693,32 @@ const ApprovalWorkflowsView: React.FC = () => {
                   <Check className="w-4 h-4" />
                 )}
                 Create
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
+      {workflowPendingDelete && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card variant="elevated" className="w-full max-w-md p-6">
+            <h3 className="text-lg font-semibold mb-3">Delete approval workflow?</h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              This will delete <span className="font-medium">{workflowPendingDelete.name}</span>.
+              The workflow list must confirm the removal before the action is treated as successful.
+            </p>
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => setWorkflowPendingDelete(null)}
+                className="px-4 py-2 text-sm bg-slate-700 hover:bg-slate-600 rounded-lg"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteWorkflow(workflowPendingDelete.id)}
+                className="flex items-center gap-2 px-4 py-2 text-sm bg-red-600 hover:bg-red-700 rounded-lg"
+              >
+                <Trash2 className="w-4 h-4" />
+                Delete Workflow
               </button>
             </div>
           </Card>

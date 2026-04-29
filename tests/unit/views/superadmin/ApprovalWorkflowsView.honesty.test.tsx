@@ -95,6 +95,7 @@ describe('ApprovalWorkflowsView honest data states', () => {
     expect(Api.getApprovalWorkflows).toHaveBeenCalledTimes(2);
 
     fireEvent.click(screen.getByRole('button', { name: /Delete approval workflow Security approval/i }));
+    fireEvent.click(screen.getByRole('button', { name: /^Delete Workflow$/i }));
 
     await waitFor(() => {
       expect(Api.deleteApprovalWorkflow).toHaveBeenCalledWith('wf-2');

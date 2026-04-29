@@ -4,6 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { HomeView } from '../../../src/components/MyWork/Home/HomeView';
 
+const { toastErrorMock } = vi.hoisted(() => ({
+  toastErrorMock: vi.fn(),
+}));
+vi.mock('react-hot-toast', () => ({
+  default: {
+    error: toastErrorMock,
+  },
+}));
+
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual<typeof import('react-router-dom')>('react-router-dom');
   return {
@@ -25,6 +34,7 @@ vi.mock('react-i18next', () => ({
         'myWork.radar.roofExpandHint': 'Expand roof truth',
         'myWork.radar.explain': 'Explain',
         'myWork.radar.pulse': 'Pulse',
+        'myWork.radar.loadErrorToast': 'Radar could not load. Showing recovery state.',
       };
       return labels[key] || fallback || key;
     },
@@ -280,5 +290,6 @@ describe('HomeView aggregated contract', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /\+ Retry/i }));
     expect(refresh).toHaveBeenCalledTimes(1);
+    expect(toastErrorMock).toHaveBeenCalledWith('Radar could not load. Showing recovery state.');
   });
 });

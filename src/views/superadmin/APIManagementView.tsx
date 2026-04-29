@@ -482,6 +482,7 @@ export const APIManagementView: React.FC = () => {
   } | null>(null);
   const [selectedKeyForUsage, setSelectedKeyForUsage] = useState<string | null>(null);
   const [usageData, setUsageData] = useState<UsageData | null>(null);
+  const [keyPendingRevoke, setKeyPendingRevoke] = useState<APIKey | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -564,9 +565,6 @@ export const APIManagementView: React.FC = () => {
   };
 
   const handleRevokeKey = async (keyId: string) => {
-    if (!confirm('Are you sure you want to revoke this API key? This action cannot be undone.'))
-      return;
-
     try {
       await Api.delete(`/api/superadmin/api-keys/${keyId}`);
       const refreshed = await fetchData();
@@ -582,6 +580,8 @@ export const APIManagementView: React.FC = () => {
       const message = normalizeApiErrorMessage(error, 'Failed to revoke key');
       setActionError(message);
       toast.error(message);
+    } finally {
+      setKeyPendingRevoke(null);
     }
   };
 
@@ -842,7 +842,7 @@ export const APIManagementView: React.FC = () => {
                         </button>
                         {key.isActive && (
                           <button
-                            onClick={() => handleRevokeKey(key.id)}
+                            onClick={() => setKeyPendingRevoke(key)}
                             aria-label={`Revoke API key ${key.id}`}
                             className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
                             title="Revoke Key"
@@ -1059,6 +1059,33 @@ export const APIManagementView: React.FC = () => {
         onCreated={handleKeyCreated}
         organizations={organizations}
       />
+      {keyPendingRevoke && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl border border-slate-200 bg-white p-6 shadow-xl dark:border-navy-700 dark:bg-navy-900">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">Revoke API key?</h3>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              This will revoke <span className="font-medium">{keyPendingRevoke.name}</span>. The
+              secret cannot be used after revocation.
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setKeyPendingRevoke(null)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 dark:border-navy-700 dark:text-slate-300 dark:hover:bg-navy-800"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRevokeKey(keyPendingRevoke.id)}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+              >
+                Revoke Key
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

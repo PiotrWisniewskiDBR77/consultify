@@ -101,10 +101,79 @@ type JsonRecord = Record<string, unknown> & {
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === 'object' && value !== null;
 
+const asText = (value: unknown, fallback = '') => {
+  if (value === null || value === undefined || value === '') return fallback;
+  return String(value);
+};
+
 const getObjectPayload = (value: unknown) => {
   if (!isRecord(value)) return value;
   const data = isRecord(value.data) ? value.data : null;
   return data && isRecord(data.data) ? data.data : data || value;
+};
+
+const parseListValue = (value: unknown): string[] => {
+  if (Array.isArray(value)) {
+    return value.map((item) => asText(item).trim()).filter(Boolean);
+  }
+  if (typeof value !== 'string') return [];
+
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (Array.isArray(parsed)) {
+      return parsed.map((item) => asText(item).trim()).filter(Boolean);
+    }
+  } catch {
+    // Fall back to comma-separated legacy values.
+  }
+
+  return trimmed
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const parseResolvedBy = (value: unknown): SecurityIncident['resolvedBy'] => {
+  let payload = value;
+  if (typeof payload === 'string') {
+    try {
+      payload = JSON.parse(payload);
+    } catch {
+      return null;
+    }
+  }
+  if (!isRecord(payload)) return null;
+
+  return {
+    id: asText(payload.id),
+    email: asText(payload.email),
+    firstName: asText(payload.firstName ?? payload.first_name),
+    lastName: asText(payload.lastName ?? payload.last_name),
+  };
+};
+
+const normalizeIncident = (value: unknown, index: number): SecurityIncident => {
+  const row = isRecord(value) ? value : {};
+  const detectedAt = asText(row.detectedAt ?? row.detected_at);
+  const createdAt = asText(row.createdAt ?? row.created_at ?? detectedAt);
+  const fallbackId = createdAt || detectedAt || String(index);
+
+  return {
+    id: asText(row.id ?? row.incidentId ?? row.incident_id, `incident-${fallbackId}`),
+    incidentType: asText(row.incidentType ?? row.incident_type, 'other'),
+    severity: asText(row.severity, 'LOW').toUpperCase(),
+    status: asText(row.status, 'open'),
+    description: asText(row.description, 'No description provided'),
+    affectedResources: parseListValue(row.affectedResources ?? row.affected_resources),
+    detectedAt,
+    resolvedAt: asText(row.resolvedAt ?? row.resolved_at) || null,
+    resolutionNotes: asText(row.resolutionNotes ?? row.resolution_notes) || null,
+    createdAt,
+    resolvedBy: parseResolvedBy(row.resolvedBy ?? row.resolved_by),
+  };
 };
 
 const getListPayload = <T,>(value: unknown, keys: string[]): T[] => {
@@ -219,10 +288,10 @@ const SecurityIncidentsView: React.FC = () => {
       if (!hasListShape(incidentsData, ['incidents', 'items'])) {
         throw new Error('Security incidents response was not a list');
       }
-      const incidentsSnapshot = getListPayload<SecurityIncident>(incidentsData, [
+      const incidentsSnapshot = getListPayload<unknown>(incidentsData, [
         'incidents',
         'items',
-      ]);
+      ]).map(normalizeIncident);
       const statsSnapshot = normalizeStats(statsData);
       setIncidents(incidentsSnapshot);
       setStats(statsSnapshot);

@@ -148,6 +148,36 @@ describe('SecurityIncidentsView honest UI', () => {
     expect(screen.getByRole('button', { name: /Delete incident incident-1/i })).toBeInTheDocument();
   });
 
+  it('normalizes staging incident rows before rendering details', async () => {
+    vi.mocked(Api.getSecurityIncidents).mockResolvedValue({
+      incidents: [
+        {
+          id: 'incident-snake-case',
+          incident_type: 'privilege_escalation',
+          severity: 'critical',
+          status: 'open',
+          description: 'Privileged session anomaly',
+          affected_resources: '["admin-session-1","api-key-2"]',
+          detected_at: '2026-04-28T19:17:00.000Z',
+          resolved_at: null,
+          resolution_notes: null,
+          created_at: '2026-04-28T19:17:00.000Z',
+          resolved_by: '{"first_name":"Security","last_name":"Operator","email":"sec@example.com"}',
+        },
+      ],
+    });
+
+    render(<SecurityIncidentsView />);
+
+    expect(await screen.findByText('Privileged session anomaly')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /View incident incident-snake-case/i }));
+
+    expect(screen.getAllByText('Privilege Escalation').length).toBeGreaterThan(0);
+    expect(screen.getByText('admin-session-1')).toBeInTheDocument();
+    expect(screen.getByText('api-key-2')).toBeInTheDocument();
+    expect(screen.queryByText('Something went very wrong!')).not.toBeInTheDocument();
+  });
+
   it('closes create modal only after incident is confirmed by read-back', async () => {
     vi.mocked(Api.getSecurityIncidents).mockResolvedValueOnce([]).mockResolvedValueOnce([incident]);
 

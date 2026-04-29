@@ -138,8 +138,8 @@ describe('APIManagementView honesty', () => {
       expect(screen.getByText('Created Key')).toBeInTheDocument();
     });
 
-    vi.stubGlobal('confirm', vi.fn(() => true));
     fireEvent.click(screen.getByTitle('Revoke Key'));
+    fireEvent.click(screen.getByRole('button', { name: /^Revoke Key$/i }));
 
     await waitFor(() => {
       expect(Api.delete).toHaveBeenCalledWith('/api/superadmin/api-keys/key-2');
@@ -196,12 +196,12 @@ describe('APIManagementView honesty', () => {
 
     vi.mocked(Api.get).mockResolvedValue({ keys: [key] });
     vi.mocked(Api.delete).mockResolvedValue({ success: true });
-    vi.stubGlobal('confirm', vi.fn(() => true));
 
     render(<APIManagementView />);
 
     await screen.findByText('Active Key');
     fireEvent.click(screen.getByTitle('Revoke Key'));
+    fireEvent.click(screen.getByRole('button', { name: /^Revoke Key$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(
@@ -237,12 +237,12 @@ describe('APIManagementView honesty', () => {
       return {};
     });
     vi.mocked(Api.delete).mockResolvedValue({ success: true });
-    vi.stubGlobal('confirm', vi.fn(() => true));
 
     render(<APIManagementView />);
 
     await screen.findByText('Active Key');
     fireEvent.click(screen.getByTitle('Revoke Key'));
+    fireEvent.click(screen.getByRole('button', { name: /^Revoke Key$/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(

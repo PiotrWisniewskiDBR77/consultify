@@ -9,7 +9,8 @@ import {
   Lightbulb,
   Sparkles,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
@@ -70,6 +71,13 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
   const triageData = useRadarTriageData(undefined, isV8Enabled);
   const roofSummary = useV8MyWorkRoofSummary(isV8Enabled);
   const [roofMetaOpen, setRoofMetaOpen] = useState(false);
+  const lastErrorToastRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!error || error === lastErrorToastRef.current) return;
+    lastErrorToastRef.current = error;
+    toast.error(t('myWork.radar.loadErrorToast', 'Radar could not load. Showing recovery state.'));
+  }, [error, t]);
 
   const navigate = useNavigate();
   const [recentInsights, setRecentInsights] = useState<V8InterviewInsight[]>([]);
