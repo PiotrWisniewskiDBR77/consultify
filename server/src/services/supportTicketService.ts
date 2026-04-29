@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import _logger from '../utils/Logger.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 
 class SupportTicketServiceClass {
   private db: IDatabase;
@@ -27,17 +28,99 @@ class SupportTicketServiceClass {
   }
 
   async getTickets(filters: any = {}): Promise<any[]> {
-    const query = 'SELECT * FROM support_tickets ORDER BY created_at DESC';
-    return await this.db.all(query, []);
+    const cols = await getTableColumns('support_tickets');
+    const where: string[] = [];
+    const params: any[] = [];
+
+    if (filters.organizationId && cols.has('organization_id')) {
+      where.push('organization_id = ?');
+      params.push(filters.organizationId);
+    }
+    if (filters.userId && cols.has('user_id')) {
+      where.push('user_id = ?');
+      params.push(filters.userId);
+    }
+    if (filters.status && cols.has('status')) {
+      where.push('status = ?');
+      params.push(filters.status);
+    }
+    if (filters.priority && cols.has('priority')) {
+      where.push('priority = ?');
+      params.push(filters.priority);
+    }
+    if (filters.assignedTo && cols.has('assigned_to')) {
+      where.push('assigned_to = ?');
+      params.push(filters.assignedTo);
+    }
+
+    const orderBy = cols.has('created_at')
+      ? 'ORDER BY created_at DESC, id DESC'
+      : 'ORDER BY id DESC';
+    const limit = Number.isFinite(Number(filters.limit))
+      ? Math.min(Math.max(Number(filters.limit), 1), 500)
+      : 50;
+    params.push(limit);
+
+    const query = `SELECT * FROM support_tickets ${
+      where.length ? `WHERE ${where.join(' AND ')}` : ''
+    } ${orderBy} LIMIT ?`;
+    return await this.db.all(query, params);
   }
 
   async createTicket(data: any): Promise<any> {
     const id = this.uuidv4();
-    const { userId, subject, description, priority = 'medium' } = data;
+    const cols = await getTableColumns('support_tickets');
+    const now = new Date().toISOString();
+    const ticketNumber = `TKT-${Date.now().toString(36).toUpperCase()}`;
+    const {
+      userId,
+      subject,
+      description,
+      priority = 'medium',
+      category = 'general',
+      organizationId,
+    } = data;
+
+    let resolvedOrganizationId = organizationId || data.organization_id || null;
+    if (!resolvedOrganizationId && cols.has('organization_id')) {
+      const ownerRow = userId
+        ? await this.db
+            .get('SELECT organization_id FROM users WHERE id = ?', [userId])
+            .catch(() => null)
+        : null;
+      resolvedOrganizationId = (ownerRow as any)?.organization_id || null;
+    }
+    if (!resolvedOrganizationId && cols.has('organization_id')) {
+      const orgRow = await this.db
+        .get('SELECT id FROM organizations ORDER BY created_at DESC LIMIT 1', [])
+        .catch(() => null);
+      resolvedOrganizationId = (orgRow as any)?.id || null;
+    }
+
+    const insert: Record<string, any> = {
+      id,
+      user_id: userId,
+      subject,
+      description,
+      priority,
+      status: 'open',
+      organization_id: resolvedOrganizationId,
+      ticket_number: ticketNumber,
+      category: category || 'general',
+      created_at: now,
+      updated_at: now,
+      last_activity_at: now,
+    };
+
+    const insertColumns = Object.keys(insert).filter(
+      (column) => cols.has(column) && insert[column] !== undefined
+    );
+    const placeholders = insertColumns.map(() => '?').join(', ');
+    const values = insertColumns.map((column) => insert[column]);
 
     await this.db.run(
-      'INSERT INTO support_tickets (id, user_id, subject, description, priority, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [id, userId, subject, description, priority, 'open']
+      `INSERT INTO support_tickets (${insertColumns.join(', ')}) VALUES (${placeholders})`,
+      values
     );
 
     return await this.getTicketById(id);
@@ -58,16 +141,25 @@ class SupportTicketServiceClass {
   }
 
   async updateTicket(id: string, updates: any): Promise<boolean> {
+    const cols = await getTableColumns('support_tickets');
     const fields: string[] = [];
     const params: any[] = [];
 
-    if (updates.status) {
+    if (updates.status && cols.has('status')) {
       fields.push('status = ?');
       params.push(updates.status);
     }
-    if (updates.priority) {
+    if (updates.priority && cols.has('priority')) {
       fields.push('priority = ?');
       params.push(updates.priority);
+    }
+    if ((updates.assignedTo || updates.assigneeId) && cols.has('assigned_to')) {
+      fields.push('assigned_to = ?');
+      params.push(updates.assignedTo || updates.assigneeId);
+    }
+    if (cols.has('updated_at')) {
+      fields.push('updated_at = ?');
+      params.push(new Date().toISOString());
     }
 
     if (fields.length === 0) return true;
@@ -87,11 +179,38 @@ class SupportTicketServiceClass {
     isInternal: boolean = false
   ): Promise<any> {
     const id = this.uuidv4();
-    await this.db.run(
-      'INSERT INTO support_ticket_comments (id, ticket_id, user_id, comment_text, is_internal) VALUES (?, ?, ?, ?, ?)',
-      [id, ticketId, userId, text, isInternal ? 1 : 0]
+    const now = new Date().toISOString();
+    const cols = await getTableColumns('support_ticket_comments');
+    const insert: Record<string, any> = {
+      id,
+      ticket_id: ticketId,
+      user_id: userId,
+      comment_text: text,
+      is_internal: isInternal ? 1 : 0,
+      created_at: now,
+    };
+    const insertColumns = Object.keys(insert).filter(
+      (column) => cols.has(column) && insert[column] !== undefined
     );
-    return { id, ticketId, userId, commentText: text, isInternal };
+    await this.db.run(
+      `INSERT INTO support_ticket_comments (${insertColumns.join(', ')}) VALUES (${insertColumns
+        .map(() => '?')
+        .join(', ')})`,
+      insertColumns.map((column) => insert[column])
+    );
+    await this.db.run(
+      'UPDATE support_tickets SET last_activity_at = ?, updated_at = ? WHERE id = ?',
+      [now, now, ticketId]
+    ).catch(() => undefined);
+    return {
+      id,
+      ticketId,
+      userId,
+      commentText: text,
+      comment_text: text,
+      isInternal,
+      created_at: now,
+    };
   }
 }
 

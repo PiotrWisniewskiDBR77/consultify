@@ -3783,6 +3783,7 @@ const createSupportTicket = catchAsync(async (req, res, next) => {
   }
   const ticket = await deps.SupportTicketService.createTicket({
     ...req.body,
+    organizationId: req.body?.organizationId || req.user?.organizationId,
     userId: req.body?.userId || req.user?.id,
     subject: String(subject).trim(),
     description: String(description).trim(),
