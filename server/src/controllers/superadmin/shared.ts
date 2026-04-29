@@ -15,6 +15,7 @@ import { getDatabase } from '../../database/index.js';
 import { activityService } from '../../services/ActivityService.js';
 import adminSessionService from '../../services/adminSessionService.js';
 import complianceService from '../../services/complianceService.js';
+import supportTicketService from '../../services/supportTicketService.js';
 import feedbackService from '../../services/feedbackService.js';
 import integrationService from '../../services/integrationService.js';
 import invitationService from '../../services/invitationService.js';
@@ -181,10 +182,7 @@ export const deps: {
   DeviceManagementService: { getUserDevices: async () => [] } as any,
   PasswordPolicyService: { getPolicy: async () => ({}) } as any,
   SecurityEventService: { getEvents: async () => [] } as any,
-  SupportTicketService: {
-    getTickets: async () => [],
-    createTicket: async () => ({ ticketNumber: 'T-123' }),
-  } as any,
+  SupportTicketService: supportTicketService,
   CustomerSuccessService: { getNotes: async () => [] } as any,
   FeedbackService: feedbackService as any,
   UserAdoptionService: userAdoptionService as any,
