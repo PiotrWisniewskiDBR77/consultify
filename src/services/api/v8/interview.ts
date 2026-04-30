@@ -189,8 +189,41 @@ export interface V8InsightFinding {
   source_section_index?: number | null;
   source_key?: string | null;
   review_status?: 'draft' | 'in_review' | 'published';
+  readback_status:
+    | 'draft_interpretation'
+    | 'shared_for_readback'
+    | 'confirmed_by_client'
+    | 'partially_confirmed'
+    | 'challenged_by_client'
+    | 'needs_more_evidence';
+  readback_summary?: string | null;
+  readback_updated_at?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface V8InsightSourcePackEntry {
+  answerId: string;
+  questionText: string;
+  answerSnippet: string;
+  respondentLabel?: string | null;
+  respondentRole?: string | null;
+  department?: string | null;
+  sourceSessionId?: string | null;
+  linkedThemes: string[];
+  linkedIssues: string[];
+  linkedOpportunities: string[];
+  capturedPointers: V8InsightEvidencePointer[];
+  degradedReason?: 'missing_pointer' | 'source_unavailable';
+}
+
+export interface V8InsightSourcePack {
+  insightId: string;
+  sourceSessionIds: string[];
+  entries: V8InsightSourcePackEntry[];
+  degraded: boolean;
+  degradedReasons: string[];
+  activePointerCount: number;
 }
 
 export interface V8InsightAnalysisLens {
@@ -520,6 +553,11 @@ export const V8InterviewApi = {
       `/interview/insights/${encodeURIComponent(insightId)}/analysis`
     ),
 
+  getSourcePack: (insightId: string) =>
+    v8Get<{ sourcePack: V8InsightSourcePack; insightId: string }>(
+      `/interview/insights/${encodeURIComponent(insightId)}/source-pack`
+    ),
+
   listFindings: (insightId: string) =>
     v8Get<{ findings: V8InsightFinding[]; insightId: string }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings`
@@ -548,6 +586,25 @@ export const V8InterviewApi = {
   updateFinding: (insightId: string, findingId: string, payload: Record<string, unknown>) =>
     v8Patch<{ finding: V8InsightFinding; pointer_warnings?: string[] }>(
       `/interview/insights/${encodeURIComponent(insightId)}/findings/${encodeURIComponent(findingId)}`,
+      payload
+    ),
+
+  updateFindingReadback: (
+    insightId: string,
+    findingId: string,
+    payload: {
+      readback_status:
+        | 'draft_interpretation'
+        | 'shared_for_readback'
+        | 'confirmed_by_client'
+        | 'partially_confirmed'
+        | 'challenged_by_client'
+        | 'needs_more_evidence';
+      readback_summary?: string | null;
+    }
+  ) =>
+    v8Patch<{ finding: V8InsightFinding; insightId: string; findingId: string }>(
+      `/interview/insights/${encodeURIComponent(insightId)}/findings/${encodeURIComponent(findingId)}/readback`,
       payload
     ),
 

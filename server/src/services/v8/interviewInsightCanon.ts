@@ -219,6 +219,17 @@ export const P10_HANDOFF_TO_INITIATIVES = {
   rule: 'Initiative must be able to reconstruct context via links-first (max 5 links in context pack), without copying full transcripts',
 } as const;
 
+export const P10_READBACK_STATUSES = [
+  'draft_interpretation',
+  'shared_for_readback',
+  'confirmed_by_client',
+  'partially_confirmed',
+  'challenged_by_client',
+  'needs_more_evidence',
+] as const;
+
+export type P10ReadbackStatus = (typeof P10_READBACK_STATUSES)[number];
+
 // ────────────────────────────────────────────────────────────────
 // §2.3.5 — Anti-duplicate gate
 // ────────────────────────────────────────────────────────────────
@@ -407,6 +418,10 @@ export function isValidP10EvidencePointerType(type: string): type is P10Evidence
   return (P10_EVIDENCE_POINTER_TYPES as readonly string[]).includes(type);
 }
 
+export function isValidP10ReadbackStatus(status: string): status is P10ReadbackStatus {
+  return (P10_READBACK_STATUSES as readonly string[]).includes(status);
+}
+
 /**
  * Check if a finding can be published based on confidence rules.
  */
@@ -415,6 +430,7 @@ export function canPublishFinding(
     confidenceLevel: string;
     evidencePointers: Array<{ isTombstone: boolean }>;
     limits?: string;
+    nextAction?: string;
   },
   mode: 'publish' | 'handoff' = 'publish'
 ): { allowed: boolean; reason?: string } {
@@ -428,6 +444,16 @@ export function canPublishFinding(
 
   if (mode === 'handoff' && finding.confidenceLevel === 'contradicted') {
     return { allowed: false, reason: 'Contradicted evidence blocks automatic handoff' };
+  }
+
+  if (mode === 'handoff' && finding.confidenceLevel === 'low') {
+    const nextAction = String(finding.nextAction || '').toLowerCase();
+    if (!/(investigat|validat|review|verify|confirm|zbadaj|zweryfik|potwierd)/i.test(nextAction)) {
+      return {
+        allowed: false,
+        reason: 'Low-confidence findings can only hand off investigation or validation work',
+      };
+    }
   }
 
   const activePointers = finding.evidencePointers.filter((p) => !p.isTombstone);

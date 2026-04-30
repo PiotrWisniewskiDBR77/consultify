@@ -26,12 +26,14 @@ import {
   addEvidencePointer,
   addFinding,
   buildHandoffPayload,
+  buildSourcePack,
   getFinding,
   type InsightLifecycleAction,
   listFindings,
   recordHandoff,
   removeEvidencePointer,
   updateFinding,
+  updateFindingReadback,
   validateLifecycleTransition,
 } from '../../services/v8/interviewInsightFindingsService.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
@@ -181,12 +183,21 @@ router.post(
           confidenceLevel: f.confidence_level,
           evidencePointers: f.evidence_pointers,
           limits: f.limits,
+          nextAction: f.next_action,
         });
         if (!check.allowed) {
           return res.status(422).json({
             error: `Finding "${f.id}" blocks publish: ${check.reason}`,
             code: 'P10_FINDING_NOT_PUBLISHABLE',
             findingId: f.id,
+          });
+        }
+        if (f.readback_status !== 'confirmed_by_client') {
+          return res.status(422).json({
+            error: `Finding "${f.id}" blocks publish: client readback confirmation is required`,
+            code: 'P10_READBACK_REQUIRED',
+            findingId: f.id,
+            readbackStatus: f.readback_status,
           });
         }
       }
@@ -255,6 +266,30 @@ router.post(
         action: typedAction,
         updatedAt: now,
       },
+      meta: insightsMeta(),
+    });
+  })
+);
+
+router.get(
+  '/insights/:insightId/source-pack',
+  requirePermission('INTERVIEW_INSIGHTS_VIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId } = getV8Context(req);
+    const { insightId } = req.params as { insightId: string };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+
+    const sourcePack = await buildSourcePack(insightId);
+    if (!sourcePack) {
+      return res.status(404).json({ error: 'Source pack not found', code: 'P10_SOURCE_PACK_NOT_FOUND' });
+    }
+
+    return res.json({
+      data: { sourcePack, insightId },
       meta: insightsMeta(),
     });
   })
@@ -562,6 +597,45 @@ router.patch(
   })
 );
 
+router.patch(
+  '/insights/:insightId/findings/:findingId/readback',
+  requirePermission('INTERVIEW_INSIGHTS_REVIEW'),
+  asyncHandler(async (req: AuthRequest, res: Response) => {
+    const { organizationId, userId } = getV8Context(req);
+    const { insightId, findingId } = req.params as { insightId: string; findingId: string };
+    const { readback_status, readback_summary } = req.body as {
+      readback_status?: string;
+      readback_summary?: string | null;
+    };
+
+    const insight = await getInsightById(insightId);
+    if (!insight || insight.organizationId !== organizationId) {
+      return res.status(404).json({ error: 'Insight not found' });
+    }
+    if (!readback_status) {
+      return res.status(400).json({
+        error: 'readback_status is required',
+        code: 'P10_READBACK_STATUS_REQUIRED',
+      });
+    }
+
+    const result = await updateFindingReadback(
+      insightId,
+      findingId,
+      { readback_status, readback_summary },
+      userId
+    );
+    if (result.error) {
+      return res.status(400).json({ error: result.error, code: 'P10_READBACK_UPDATE_FAILED' });
+    }
+
+    return res.json({
+      data: { finding: result.finding, insightId, findingId },
+      meta: insightsMeta(),
+    });
+  })
+);
+
 router.post(
   '/insights/:insightId/findings/:findingId/handoff',
   requirePermission('INTERVIEW_INSIGHTS_HANDOFF'),
@@ -585,6 +659,7 @@ router.post(
         confidenceLevel: finding.confidence_level,
         evidencePointers: finding.evidence_pointers,
         limits: finding.limits,
+        nextAction: finding.next_action,
       },
       'handoff'
     );

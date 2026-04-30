@@ -73,6 +73,7 @@ import {
   type V8InsightAnalysisMatrixCell,
   type V8InsightCandidate,
   type V8InsightFinding,
+  type V8InsightSourcePack,
   V8InterviewApi,
 } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
@@ -150,6 +151,14 @@ interface InsightEvidenceMapEntry {
   linked_issues: string[];
   evidence_pointers?: string[];
 }
+
+type P10ReadbackStatus =
+  | 'draft_interpretation'
+  | 'shared_for_readback'
+  | 'confirmed_by_client'
+  | 'partially_confirmed'
+  | 'challenged_by_client'
+  | 'needs_more_evidence';
 
 interface Insight {
   id: string;
@@ -386,6 +395,11 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'candidate-triage', icon: Eye, label: { en: 'Candidate Triage', pl: 'Triage kandydatów' } },
   { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
   {
+    id: 'source-pack',
+    icon: Link2,
+    label: { en: 'Source Pack', pl: 'Pakiet źródeł' },
+  },
+  {
     id: 'analysis-matrix',
     icon: BarChart3,
     label: { en: 'Analysis Matrix', pl: 'Macierz Analizy' },
@@ -493,12 +507,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [findings, setFindings] = useState<V8InsightFinding[]>([]);
   const [candidates, setCandidates] = useState<V8InsightCandidate[]>([]);
   const [analysis, setAnalysis] = useState<V8InsightAnalysis | null>(null);
+  const [sourcePack, setSourcePack] = useState<V8InsightSourcePack | null>(null);
   const [analysisLensMode, setAnalysisLensMode] = useState<'stakeholder' | 'session'>(
     'stakeholder'
   );
   const [analysisRoleFilter, setAnalysisRoleFilter] = useState('all');
   const [analysisDepartmentFilter, setAnalysisDepartmentFilter] = useState('all');
   const [candidateActionLoadingId, setCandidateActionLoadingId] = useState<string | null>(null);
+  const [readbackLoadingId, setReadbackLoadingId] = useState<string | null>(null);
 
   // NMode shared section state — Comments
   const [nComments, setNComments] = useState<CommentItem[]>([]);
@@ -540,6 +556,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   }, []);
 
+  const loadSourcePack = useCallback(async (currentInsightId: string) => {
+    try {
+      const sourcePackRes = await V8InterviewApi.getSourcePack(currentInsightId)
+        .then((r) => r.sourcePack)
+        .catch(() => null);
+      setSourcePack(sourcePackRes || null);
+    } catch {
+      setSourcePack(null);
+    }
+  }, []);
+
   // ── Load data ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -572,6 +599,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setFindings([]);
         setCandidates([]);
         setAnalysis(null);
+        setSourcePack(null);
         return true;
       };
 
@@ -592,6 +620,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         await loadPersistedFindings(insightId);
         await loadCandidates(insightId);
         await loadInsightAnalysis(insightId);
+        await loadSourcePack(insightId);
 
         if (data.sourceSessionIds?.length > 0) {
           try {
@@ -673,6 +702,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         await loadPersistedFindings(insightId);
         await loadCandidates(insightId);
         await loadInsightAnalysis(insightId);
+        await loadSourcePack(insightId);
         const nextStatus = data?.status as InsightStatus | undefined;
         if (lastStatus === null) lastStatus = nextStatus ?? null;
 
@@ -697,6 +727,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     isPolish,
     loadCandidates,
     loadInsightAnalysis,
+    loadSourcePack,
     loadPersistedFindings,
   ]);
 
@@ -795,6 +826,17 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     () => insight?.evidenceMap ?? [],
     [insight?.evidenceMap]
   );
+  const sourcePackByAnswerId = useMemo(
+    () =>
+      (sourcePack?.entries || []).reduce<Record<string, V8InsightSourcePack['entries'][number]>>(
+        (acc, entry) => {
+          if (entry.answerId) acc[entry.answerId] = entry;
+          return acc;
+        },
+        {}
+      ),
+    [sourcePack?.entries]
+  );
   const v6MissingData = useMemo<string[]>(() => insight?.missingData ?? [], [insight?.missingData]);
   const findingsBySourceKey = useMemo(
     () =>
@@ -831,6 +873,24 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       promoted: candidates.filter((candidate) => candidate.triage_status === 'promoted').length,
     }),
     [candidates]
+  );
+
+  const readbackSummary = useMemo(
+    () => ({
+      confirmed: findings.filter((finding) => finding.readback_status === 'confirmed_by_client')
+        .length,
+      challenged: findings.filter((finding) => finding.readback_status === 'challenged_by_client')
+        .length,
+      needsMoreEvidence: findings.filter(
+        (finding) => finding.readback_status === 'needs_more_evidence'
+      ).length,
+      unresolved: findings.filter(
+        (finding) =>
+          finding.readback_status !== 'confirmed_by_client' &&
+          finding.readback_status !== 'partially_confirmed'
+      ).length,
+    }),
+    [findings]
   );
 
   const analysisTopicsById = useMemo(
@@ -1306,6 +1366,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         await loadPersistedFindings(insightId);
         await loadCandidates(insightId);
         await loadInsightAnalysis(insightId);
+        await loadSourcePack(insightId);
         const activityRes = await V8InterviewApi.getInsightActivity(insightId)
           .then((r) => r.activity)
           .catch(() => Api.get(`/interview/insights/${insightId}/activity`).catch(() => []));
@@ -1338,7 +1399,15 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setLifecycleTransitioning(false);
       }
     },
-    [insight, insightId, isPolish, loadCandidates, loadInsightAnalysis, loadPersistedFindings]
+    [
+      insight,
+      insightId,
+      isPolish,
+      loadCandidates,
+      loadInsightAnalysis,
+      loadPersistedFindings,
+      loadSourcePack,
+    ]
   );
 
   const handleCandidateAction = useCallback(
@@ -1365,6 +1434,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           loadCandidates(insightId),
           loadPersistedFindings(insightId),
           loadInsightAnalysis(insightId),
+          loadSourcePack(insightId),
         ]);
         const activityRes = await V8InterviewApi.getInsightActivity(insightId)
           .then((r) => r.activity)
@@ -1398,7 +1468,58 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setCandidateActionLoadingId(null);
       }
     },
-    [insight, insightId, isPolish, loadCandidates, loadInsightAnalysis, loadPersistedFindings]
+    [
+      insight,
+      insightId,
+      isPolish,
+      loadCandidates,
+      loadInsightAnalysis,
+      loadPersistedFindings,
+      loadSourcePack,
+    ]
+  );
+
+  const handleReadbackStatus = useCallback(
+    async (finding: V8InsightFinding, status: P10ReadbackStatus) => {
+      if (!insight) return;
+      setReadbackLoadingId(finding.id);
+      try {
+        const summaryDefaults: Record<P10ReadbackStatus, string> = {
+          draft_interpretation: 'Readback reset to draft interpretation.',
+          shared_for_readback: 'Finding shared for client readback.',
+          confirmed_by_client: 'Client confirmed the interpretation for governed downstream use.',
+          partially_confirmed: 'Client partially confirmed; keep limits visible before publish.',
+          challenged_by_client: 'Client challenged the interpretation; return to evidence review.',
+          needs_more_evidence: 'Readback requires more evidence before publish or handoff.',
+        };
+        await V8InterviewApi.updateFindingReadback(insight.id, finding.id, {
+          readback_status: status,
+          readback_summary: summaryDefaults[status],
+        });
+        await Promise.all([
+          loadPersistedFindings(insightId),
+          loadCandidates(insightId),
+          loadInsightAnalysis(insightId),
+          loadSourcePack(insightId),
+        ]);
+        toast.success(isPolish ? 'Readback zaktualizowany' : 'Readback updated');
+      } catch {
+        toast.error(
+          isPolish ? 'Nie udało się zaktualizować readback' : 'Failed to update readback'
+        );
+      } finally {
+        setReadbackLoadingId(null);
+      }
+    },
+    [
+      insight,
+      insightId,
+      isPolish,
+      loadCandidates,
+      loadInsightAnalysis,
+      loadPersistedFindings,
+      loadSourcePack,
+    ]
   );
 
   const toggleLimitsExpand = useCallback((cardKey: string) => {
@@ -1685,6 +1806,14 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         onChange: () => {},
         readOnly: true,
       },
+      {
+        id: 'readback',
+        label: { en: 'Readback', pl: 'Readback' },
+        type: 'text' as const,
+        value: `${readbackSummary.confirmed}/${findingsSummary.total}`,
+        onChange: () => {},
+        readOnly: true,
+      },
     ],
     [
       candidateSummary.total,
@@ -1692,6 +1821,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       findingsSummary.total,
       insight,
       isPolish,
+      readbackSummary.confirmed,
       typeMeta,
     ]
   );
@@ -1921,6 +2051,180 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           );
           break;
         }
+
+        case 'source-pack':
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant={sourcePack?.degraded ? 'warning' : 'purple'}
+                title={isPolish ? 'Source / Evidence Pack' : 'Source / Evidence Pack'}
+              >
+                {isPolish
+                  ? 'To jest jawny pakiet źródeł dla insightu: sesje, pytania, odpowiedzi, respondent/rola i wskaźniki dowodowe. Brak dowodu jest pokazany jako stan zdegradowany.'
+                  : 'This is the explicit source pack for the insight: sessions, questions, answers, respondent/role, and evidence pointers. Missing evidence is shown as degraded state.'}
+              </Callout>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Sesje' : 'Sessions'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Fragmenty' : 'Fragments'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {sourcePack?.entries.length || 0}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Aktywne dowody' : 'Active evidence'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {sourcePack?.activePointerCount ?? findingsSummary.activeEvidence}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Stan' : 'State'}
+                  </div>
+                  <div
+                    className={`mt-1 text-sm font-semibold ${
+                      sourcePack?.degraded
+                        ? 'text-amber-600 dark:text-amber-300'
+                        : 'text-emerald-600 dark:text-emerald-300'
+                    }`}
+                  >
+                    {sourcePack?.degraded
+                      ? isPolish
+                        ? 'Zdegradowany'
+                        : 'Degraded'
+                      : isPolish
+                        ? 'Audytowalny'
+                        : 'Auditable'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Readback OK' : 'Readback OK'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
+                    {readbackSummary.confirmed}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Zakwestionowane' : 'Challenged'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-red-600 dark:text-red-300">
+                    {readbackSummary.challenged}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Potrzeba evidence' : 'Needs evidence'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-amber-600 dark:text-amber-300">
+                    {readbackSummary.needsMoreEvidence}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                  <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Niepotwierdzone' : 'Unresolved'}
+                  </div>
+                  <div className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">
+                    {readbackSummary.unresolved}
+                  </div>
+                </div>
+              </div>
+
+              {(sourcePack?.degradedReasons || []).length > 0 && (
+                <Callout variant="warning" title={isPolish ? 'Braki źródeł' : 'Source gaps'} compact>
+                  <ul className="list-disc list-inside space-y-1">
+                    {(sourcePack?.degradedReasons || []).map((reason) => (
+                      <li key={reason} className="text-sm">
+                        {reason}
+                      </li>
+                    ))}
+                  </ul>
+                </Callout>
+              )}
+
+              {sourcePack?.entries.length ? (
+                <div className="space-y-3">
+                  {sourcePack.entries.map((entry) => (
+                    <div
+                      key={entry.answerId}
+                      className="rounded-2xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-4 py-4 space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                            {entry.questionText || entry.answerId}
+                          </div>
+                          <div className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                            {[
+                              entry.respondentLabel,
+                              entry.respondentRole,
+                              entry.department,
+                              entry.sourceSessionId,
+                            ]
+                              .filter(Boolean)
+                              .join(' · ') || (isPolish ? 'Brak metadanych respondenta' : 'No respondent metadata')}
+                          </div>
+                        </div>
+                        {entry.degradedReason ? (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px] font-medium">
+                            <AlertTriangle size={10} />
+                            {isPolish ? 'Brak wskaźnika' : 'Missing pointer'}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[10px] font-medium">
+                            <CheckCircle2 size={10} />
+                            {entry.capturedPointers.length} {isPolish ? 'dow.' : 'ev.'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="rounded-xl bg-slate-50 dark:bg-navy-900/50 px-3 py-2 text-xs italic text-slate-600 dark:text-slate-300">
+                        "{entry.answerSnippet}"
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[...entry.linkedThemes, ...entry.linkedIssues, ...entry.linkedOpportunities].map(
+                          (label) => (
+                            <span
+                              key={label}
+                              className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium"
+                            >
+                              {label}
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyStateInline
+                  icon={Link2}
+                  message={isPolish ? 'Brak pakietu źródeł' : 'No source pack available'}
+                  hint={
+                    isPolish
+                      ? 'Pakiet pojawi się po wygenerowaniu insightu i backfillu findingów.'
+                      : 'Source pack appears after insight generation and finding backfill.'
+                  }
+                />
+              )}
+            </div>
+          );
+          break;
 
         case 'analysis-matrix': {
           const stakeholderLenses = analysis?.people.stakeholderLenses || [];
@@ -3155,7 +3459,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
         case 'evidence-map': {
           const entriesWithNoPointers = v6EvidenceMap.filter(
-            (e) => !e.evidence_pointers || e.evidence_pointers.length === 0
+            (e) =>
+              (!e.evidence_pointers || e.evidence_pointers.length === 0) &&
+              (sourcePackByAnswerId[e.answer_id]?.capturedPointers.length || 0) === 0
           );
           component = (
             <div className="space-y-4">
@@ -3229,7 +3535,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         header: isPolish ? 'Powiązania' : 'Links',
                         render: (row) => {
                           const hasPointers =
-                            row.evidence_pointers && row.evidence_pointers.length > 0;
+                            (row.evidence_pointers && row.evidence_pointers.length > 0) ||
+                            (sourcePackByAnswerId[row.answer_id]?.capturedPointers.length || 0) >
+                              0;
                           return (
                             <div className="space-y-1">
                               <div className="flex flex-wrap gap-1">
@@ -3449,6 +3757,72 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                             ))}
                           </div>
                         ) : null}
+
+                        {linkedFinding && (
+                          <div className="rounded-xl border border-slate-200/70 dark:border-navy-700/60 bg-white/70 dark:bg-navy-900/30 px-3 py-3 space-y-3">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Client readback' : 'Client readback'}
+                                </div>
+                                <div className="mt-1 text-xs text-slate-600 dark:text-slate-300">
+                                  {linkedFinding.readback_status}
+                                  {linkedFinding.readback_summary
+                                    ? ` · ${linkedFinding.readback_summary}`
+                                    : ''}
+                                </div>
+                              </div>
+                              {readbackLoadingId === linkedFinding.id && (
+                                <Loader2
+                                  size={14}
+                                  className="animate-spin text-slate-400 flex-shrink-0"
+                                />
+                              )}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <button
+                                onClick={() =>
+                                  handleReadbackStatus(linkedFinding, 'shared_for_readback')
+                                }
+                                disabled={readbackLoadingId === linkedFinding.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-700 dark:text-blue-300 hover:bg-blue-500/20 text-xs font-medium disabled:opacity-50"
+                              >
+                                <Send size={12} />
+                                {isPolish ? 'Wyślij readback' : 'Share readback'}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleReadbackStatus(linkedFinding, 'confirmed_by_client')
+                                }
+                                disabled={readbackLoadingId === linkedFinding.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-500/20 text-xs font-medium disabled:opacity-50"
+                              >
+                                <CheckCircle2 size={12} />
+                                {isPolish ? 'Potwierdzone' : 'Confirmed'}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleReadbackStatus(linkedFinding, 'challenged_by_client')
+                                }
+                                disabled={readbackLoadingId === linkedFinding.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-700 dark:text-red-300 hover:bg-red-500/20 text-xs font-medium disabled:opacity-50"
+                              >
+                                <AlertCircle size={12} />
+                                {isPolish ? 'Zakwestionowane' : 'Challenged'}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleReadbackStatus(linkedFinding, 'needs_more_evidence')
+                                }
+                                disabled={readbackLoadingId === linkedFinding.id}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-700 dark:text-amber-300 hover:bg-amber-500/20 text-xs font-medium disabled:opacity-50"
+                              >
+                                <AlertTriangle size={12} />
+                                {isPolish ? 'Więcej evidence' : 'Needs evidence'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
                         <div className="flex flex-wrap gap-2">
                           <button
