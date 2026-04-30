@@ -274,7 +274,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     abortStream,
   } = useToolAI({ toolType });
 
-  const isDynamicSwot = toolType === 'dynamic-swot';
+  const isStrategicPhaseTool = [
+    'dynamic-swot',
+    'market-forces',
+    'growth-paths',
+    'portfolio-priority',
+    'risk-uncertainty',
+  ].includes(toolType);
   const toolMeta = buildToolMeta(toolType);
   const stepDefs = getStepDefinitions();
   const currentStepDef = stepDefs[currentStep - 1];
@@ -290,7 +296,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
-  const [activeSection, setActiveSection] = useState<string>(isDynamicSwot ? 'mission' : 'work');
+  const [activeSection, setActiveSection] = useState<string>(
+    isStrategicPhaseTool ? 'mission' : 'work'
+  );
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -394,11 +402,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   );
 
   useEffect(() => {
-    if (!isDynamicSwot) return;
+    if (!isStrategicPhaseTool) return;
     if (currentStepDef?.id && activeSection !== currentStepDef.id) {
       setActiveSection(currentStepDef.id);
     }
-  }, [activeSection, currentStepDef?.id, isDynamicSwot]);
+  }, [activeSection, currentStepDef?.id, isStrategicPhaseTool]);
 
   const handleExportPdf = useCallback(async () => {
     try {
@@ -705,14 +713,16 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   };
 
   const handleAddComment = async (content: string) => {
-    if (!toolSessionId || !content.trim()) return;
+    if (!toolSessionId || !content.trim()) return false;
     try {
-      await Api.post(`/api/tools/${toolSessionId}/comments`, { text: content.trim() });
+      await Api.post(`/api/tools/${toolSessionId}/comments`, { content: content.trim() });
       const updated = await Api.get(`/api/tools/${toolSessionId}/comments`);
       setComments(updated || []);
       toast.success(isPolish ? 'Dodano komentarz' : 'Comment added');
+      return true;
     } catch {
       toast.error(isPolish ? 'Nie udało się dodać komentarza' : 'Failed to add comment');
+      return false;
     }
   };
 
@@ -1533,20 +1543,24 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       </div>
     );
 
-    if (isDynamicSwot) {
+    if (isStrategicPhaseTool) {
       const renderPhaseCanvas = (phaseStep: StepDefinition, extras?: React.ReactNode) => {
         const phaseIndex = stepDefs.findIndex((step) => step.id === phaseStep.id) + 1;
-        const isDynamicSwotSessionPhase = [
+        const isStrategicSessionPhase = [
           'mission',
           'input',
           'swot',
+          'forces',
+          'options',
+          'items',
+          'assumptions',
           'insights',
           'outputs',
         ].includes(phaseStep.id);
 
         return (
           <div className="space-y-6">
-            {!isDynamicSwotSessionPhase && (
+            {!isStrategicSessionPhase && (
               <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-4 dark:border-navy-700/70 dark:bg-navy-950/30">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-2">
@@ -1587,6 +1601,11 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   onDismissMissionSuggestion={dismissMissionSuggestion}
                   isGeneratingAI={isGeneratingAI}
                   sessionGenerationStatus={currentSession.sessionGenerationStatus}
+                  onAcceptCard={acceptCard}
+                  onRejectCard={rejectCard}
+                  onRethinkCard={(cardType, cardId, comment) => {
+                    rethinkCard(phaseStep.id, cardType, cardId, comment);
+                  }}
                 />
               ) : (
                 <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
@@ -1632,7 +1651,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
       const missionStep = stepDefs.find((step) => step.id === 'mission');
       const inputStep = stepDefs.find((step) => step.id === 'input');
-      const swotStep = stepDefs.find((step) => step.id === 'swot');
+      const analysisStep = stepDefs.find((step) =>
+        ['swot', 'forces', 'options', 'items', 'assumptions'].includes(step.id)
+      );
       const insightsStep = stepDefs.find((step) => step.id === 'insights');
       const outputsStep = stepDefs.find((step) => step.id === 'outputs');
 
@@ -1657,13 +1678,13 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               },
             ]
           : []),
-        ...(swotStep
+        ...(analysisStep
           ? [
               {
-                id: 'swot',
+                id: analysisStep.id,
                 icon: Target,
-                label: { en: 'SWOT Build', pl: 'SWOT Build' },
-                component: renderPhaseCanvas(swotStep),
+                label: { en: analysisStep.name, pl: analysisStep.namePl },
+                component: renderPhaseCanvas(analysisStep),
               },
             ]
           : []),
@@ -1688,10 +1709,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                     }
                     commentDraft={commentDraft}
                     onCommentDraftChange={setCommentDraft}
-                    onSubmitComment={() => {
-                      void handleAddComment(commentDraft);
-                      setCommentDraft('');
-                      setDraftPriority('normal');
+                    onSubmitComment={async () => {
+                      const added = await handleAddComment(commentDraft);
+                      if (added) {
+                        setCommentDraft('');
+                        setDraftPriority('normal');
+                      }
                     }}
                     draftPriority={draftPriority}
                     onDraftPriorityChange={setDraftPriority}
@@ -1919,10 +1942,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
             onToggleSort={() => setCommentSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
             commentDraft={commentDraft}
             onCommentDraftChange={setCommentDraft}
-            onSubmitComment={() => {
-              void handleAddComment(commentDraft);
-              setCommentDraft('');
-              setDraftPriority('normal');
+            onSubmitComment={async () => {
+              const added = await handleAddComment(commentDraft);
+              if (added) {
+                setCommentDraft('');
+                setDraftPriority('normal');
+              }
             }}
             draftPriority={draftPriority}
             onDraftPriorityChange={setDraftPriority}
@@ -2011,7 +2036,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     handleGenerateAI,
     handleOpenChat,
     history.length,
-    isDynamicSwot,
+    isStrategicPhaseTool,
     isGeneratingAI,
     isPolish,
     isStreaming,
@@ -2042,14 +2067,14 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     (sectionId: string) => {
       setActiveSection(sectionId);
 
-      if (!isDynamicSwot) return;
+      if (!isStrategicPhaseTool) return;
 
       const targetIndex = stepDefs.findIndex((step) => step.id === sectionId);
       if (targetIndex >= 0) {
         setCurrentStep(targetIndex + 1);
       }
     },
-    [isDynamicSwot, setCurrentStep, stepDefs]
+    [isStrategicPhaseTool, setCurrentStep, stepDefs]
   );
 
   if (loading) {

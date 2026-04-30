@@ -472,6 +472,20 @@ const ensureToolsSchema = async (): Promise<void> => {
   }
 };
 
+const ensureToolCommentsSchema = async (): Promise<void> => {
+  await queryHelpers.queryRun(
+    `CREATE TABLE IF NOT EXISTS tool_comments (
+      id TEXT PRIMARY KEY,
+      tool_session_id TEXT NOT NULL,
+      organization_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      content TEXT NOT NULL,
+      priority TEXT DEFAULT 'normal',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  );
+};
+
 const createDecisionRecord = async (params: {
   orgId: string;
   projectId?: string | null;
@@ -1978,6 +1992,129 @@ export class ToolController {
       );
 
       res.json({ initiatives });
+    }
+  );
+
+  static listComments = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureToolCommentsSchema();
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const comments = await queryHelpers.queryAll(
+        `SELECT
+          c.id,
+          c.content,
+          c.priority,
+          c.user_id as "authorId",
+          COALESCE(NULLIF(TRIM(COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '')), ''), u.email, 'User') as "authorName",
+          c.created_at as "createdAt"
+         FROM tool_comments c
+         LEFT JOIN users u ON u.id = c.user_id
+         WHERE c.tool_session_id = ? AND c.organization_id = ?
+         ORDER BY c.created_at DESC`,
+        [toolId, user.organizationId]
+      );
+
+      res.json(comments);
+    }
+  );
+
+  static addComment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      const content = String(req.body?.content || req.body?.text || '').trim();
+      if (!content) {
+        res.status(400).json({ error: 'Comment content is required' });
+        return;
+      }
+
+      await ensureToolCommentsSchema();
+
+      const session = (await queryHelpers.queryOne(
+        `SELECT id FROM tool_sessions WHERE id = ? AND organization_id = ?`,
+        [toolId, user.organizationId]
+      )) as { id: string } | null;
+
+      if (!session) {
+        res.status(404).json({ error: 'Tool session not found' });
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const id = uuidv4();
+      const priority = String(req.body?.priority || 'normal');
+
+      await queryHelpers.queryRun(
+        `INSERT INTO tool_comments (id, tool_session_id, organization_id, user_id, content, priority, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [id, toolId, user.organizationId, user.id, content, priority, now]
+      );
+
+      await logAudit(user.organizationId, user.id, 'tool_comment_added', toolId, { commentId: id });
+
+      res.status(201).json({
+        id,
+        content,
+        priority,
+        authorId: user.id,
+        authorName: [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email || 'User',
+        createdAt: now,
+      });
+    }
+  );
+
+  static deleteComment = asyncHandler(
+    async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+      const user = req.user;
+      const { toolId, commentId } = req.params;
+      if (!user) {
+        res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+
+      await ensureToolCommentsSchema();
+
+      const comment = (await queryHelpers.queryOne(
+        `SELECT id, user_id FROM tool_comments WHERE id = ? AND tool_session_id = ? AND organization_id = ?`,
+        [commentId, toolId, user.organizationId]
+      )) as { id: string; user_id: string } | null;
+
+      if (!comment) {
+        res.status(404).json({ error: 'Comment not found' });
+        return;
+      }
+
+      if (comment.user_id !== user.id && user.role !== 'ADMIN' && user.role !== 'OWNER') {
+        res.status(403).json({ error: 'Forbidden' });
+        return;
+      }
+
+      await queryHelpers.queryRun(`DELETE FROM tool_comments WHERE id = ?`, [commentId]);
+      await logAudit(user.organizationId, user.id, 'tool_comment_deleted', toolId, { commentId });
+
+      res.json({ ok: true });
     }
   );
 }
