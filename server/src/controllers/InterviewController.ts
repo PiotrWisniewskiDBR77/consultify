@@ -519,6 +519,10 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_questions');
   const missingColumns: Array<{ name: string; sql: string }> = [
     {
+      name: 'answer_options',
+      sql: `ALTER TABLE interview_questions ADD COLUMN answer_options TEXT DEFAULT '[]'`,
+    },
+    {
       name: 'answer_type',
       sql: `ALTER TABLE interview_questions ADD COLUMN answer_type TEXT DEFAULT 'open'`,
     },
@@ -590,10 +594,45 @@ async function ensureInterviewQuestionV6Columns(): Promise<void> {
 
 async function ensureInterviewSessionV6Columns(): Promise<void> {
   const cols = await getTableColumns('interview_sessions');
-  if (!cols.has('runtime_mode_default')) {
-    await queryHelpers.queryRun(
-      `ALTER TABLE interview_sessions ADD COLUMN runtime_mode_default TEXT DEFAULT 'single_question'`
-    );
+  const missingColumns: Array<{ name: string; sql: string }> = [
+    {
+      name: 'runtime_mode_default',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN runtime_mode_default TEXT DEFAULT 'single_question'`,
+    },
+    {
+      name: 'template_id',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN template_id TEXT`,
+    },
+    {
+      name: 'template_version',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN template_version INTEGER DEFAULT 1`,
+    },
+    {
+      name: 'assignment_id',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN assignment_id TEXT`,
+    },
+    {
+      name: 'total_questions',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN total_questions INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'answered_questions',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN answered_questions INTEGER DEFAULT 0`,
+    },
+    {
+      name: 'last_activity_at',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN last_activity_at TIMESTAMP`,
+    },
+    {
+      name: 'started_at',
+      sql: `ALTER TABLE interview_sessions ADD COLUMN started_at TIMESTAMP`,
+    },
+  ];
+
+  for (const column of missingColumns) {
+    if (!cols.has(column.name)) {
+      await queryHelpers.queryRun(column.sql);
+    }
   }
 }
 
