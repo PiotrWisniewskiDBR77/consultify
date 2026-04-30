@@ -21,6 +21,7 @@ import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
 import { ToolHeader } from './ToolHeader';
 import { ToolReviewPanel } from './ToolReviewPanel';
+import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 
 // ==================== TYPES ====================
 
@@ -574,6 +575,9 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
     );
   }
 
+  const aiCardStatusCounts = countAiCardStatuses(currentSession.inputData);
+  const aiReviewCount = getAiReviewTotal(aiCardStatusCounts);
+
   return (
     <div className="flex flex-col h-full bg-slate-50 dark:bg-navy-950">
       {/* Tool Header */}
@@ -639,10 +643,6 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
                 content: m.content,
               })),
               onGenerateFullSession: generateFullSession,
-              phaseAiActions,
-              activeAiActionId,
-              onRunPhaseAiAction: (actionId: any) => void runPhaseAiAction(actionId),
-              onAbortAi: abortStream,
               missionSuggestion,
               onApplyMissionSuggestion: applyMissionSuggestion,
               onDismissMissionSuggestion: dismissMissionSuggestion,
@@ -670,10 +670,13 @@ export const ToolWorkspace: React.FC<ToolWorkspaceProps> = ({
             onPrevStep: handlePrevStep,
             onNextStep: handleNextStep,
             isPolish,
+            phaseAiActions,
+            activeAiActionId,
             isStreaming,
-            onRequestSuggestions: () => {},
-            onGenerateAnalysis: () => {},
-            onAbort: abortStream,
+            onRunPhaseAiAction: (actionId: any) => void runPhaseAiAction(actionId),
+            onAbortAi: abortStream,
+            aiReviewCount,
+            onReviewAiCards: scrollToAiCards,
           } as any)}
         />
       )}

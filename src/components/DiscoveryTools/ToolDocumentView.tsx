@@ -1105,10 +1105,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                 content: message.content,
               }))}
               showContextPanel={toolType === 'dynamic-swot'}
-              phaseAiActions={phaseAiActions}
-              activeAiActionId={activeAiActionId}
-              onRunPhaseAiAction={(actionId) => void runPhaseAiAction(actionId)}
-              onAbortAi={abortStream}
               missionSuggestion={missionSuggestion}
               onApplyMissionSuggestion={applyMissionSuggestion}
               onDismissMissionSuggestion={dismissMissionSuggestion}
@@ -1586,10 +1582,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   }))}
                   showContextPanel
                   onGenerateFullSession={generateFullSession}
-                  phaseAiActions={phaseAiActions}
-                  activeAiActionId={activeAiActionId}
-                  onRunPhaseAiAction={(actionId) => void runPhaseAiAction(actionId)}
-                  onAbortAi={abortStream}
                   missionSuggestion={missionSuggestion}
                   onApplyMissionSuggestion={applyMissionSuggestion}
                   onDismissMissionSuggestion={dismissMissionSuggestion}

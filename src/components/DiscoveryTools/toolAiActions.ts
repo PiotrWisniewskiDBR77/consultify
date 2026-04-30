@@ -1,10 +1,13 @@
 import type { StepDefinition, ToolType } from '@/store/useToolStore';
 
 export type ToolPhaseAiActionId =
-  | 'suggest-step'
-  | 'generate-correlations'
-  | 'generate-summary'
-  | 'generate-full-session';
+  | 'frame-mission'
+  | 'draft-session'
+  | 'find-signals'
+  | 'build-analysis'
+  | 'synthesize-insights'
+  | 'finalize-outputs'
+  | 'review-ai-cards';
 
 export type ToolPhaseAiActionIcon = 'sparkles' | 'wand' | 'search';
 
@@ -48,354 +51,119 @@ export function getToolPhaseAiActions(
 ): ToolPhaseAiActionDefinition[] {
   if (!stepDefinition) return [];
 
-  if (toolType === 'dynamic-swot') {
-    switch (stepDefinition.id) {
-      case 'mission':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Mission Framing',
-            'AI framing briefu',
-            'Critique and sharpen the mission brief',
-            'Skrytykuj i wyostrz brief misji'
-          ),
-          createAction(
-            'generate-full-session',
-            'wand',
-            'Full Session Draft',
-            'Szkic całej sesji',
-            'Generate a controlled first draft of the full SWOT session',
-            'Wygeneruj kontrolowany pierwszy szkic całej sesji SWOT'
-          ),
-        ];
-      case 'input':
-        return [
-          createAction(
-            'suggest-step',
-            'search',
-            'AI Signals',
-            'AI sygnały',
-            'Suggest high-value evidence and signals for exploration',
-            'Zaproponuj wartościowe sygnały i dowody do eksploracji'
-          ),
-        ];
-      case 'swot':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI SWOT Matrix',
-            'AI macierz SWOT',
-            'Turn captured signals into proposed SWOT factors',
-            'Zamień zebrane sygnały w proponowane czynniki SWOT'
-          ),
-        ];
-      case 'insights':
-        return [
-          createAction(
-            'generate-correlations',
-            'wand',
-            'AI Tensions',
-            'AI napięcia',
-            'Synthesize correlations, tensions, and strategic logic',
-            'Syntezuj korelacje, napięcia i logikę strategiczną'
-          ),
-        ];
-      case 'outputs':
-        return [
-          createAction(
-            'generate-summary',
-            'wand',
-            'AI Final Summary',
-            'AI final summary',
-            'Generate the final source summary, moves, and output candidates',
-            'Wygeneruj final source summary, ruchy i kandydatów outputów'
-          ),
-        ];
-      default:
-        return [];
-    }
+  const buildCopy: Partial<Record<ToolType, { label: string; labelPl: string; title: string; titlePl: string }>> = {
+    'dynamic-swot': {
+      label: 'Build SWOT',
+      labelPl: 'Buduj SWOT',
+      title: 'Turn accepted signals into SWOT proposal cards',
+      titlePl: 'Zamień zaakceptowane sygnały w proponowane karty SWOT',
+    },
+    'market-forces': {
+      label: 'Build Forces',
+      labelPl: 'Buduj siły',
+      title: 'Turn accepted signals into scored Porter forces',
+      titlePl: 'Zamień zaakceptowane sygnały w ocenione siły Portera',
+    },
+    'growth-paths': {
+      label: 'Build Options',
+      labelPl: 'Buduj opcje',
+      title: 'Turn accepted signals into Ansoff growth options',
+      titlePl: 'Zamień zaakceptowane sygnały w opcje wzrostu Ansoffa',
+    },
+    'portfolio-priority': {
+      label: 'Build Portfolio',
+      labelPl: 'Buduj portfolio',
+      title: 'Turn accepted signals into portfolio priority cards',
+      titlePl: 'Zamień zaakceptowane sygnały w karty priorytetyzacji portfolio',
+    },
+    'risk-uncertainty': {
+      label: 'Build Risk Map',
+      labelPl: 'Buduj mapę ryzyka',
+      title: 'Turn accepted signals into assumptions, risks, and scenarios',
+      titlePl: 'Zamień zaakceptowane sygnały w założenia, ryzyka i scenariusze',
+    },
+  };
+
+  const analysisStepIds: Partial<Record<ToolType, string>> = {
+    'dynamic-swot': 'swot',
+    'market-forces': 'forces',
+    'growth-paths': 'options',
+    'portfolio-priority': 'items',
+    'risk-uncertainty': 'assumptions',
+  };
+
+  if (stepDefinition.id === 'mission') {
+    return [
+      createAction(
+        'frame-mission',
+        'sparkles',
+        'AI Frame',
+        'AI Frame',
+        'Sharpen the strategic question before analysis',
+        'Wyostrz pytanie strategiczne przed analizą'
+      ),
+      createAction(
+        'draft-session',
+        'wand',
+        'AI Draft',
+        'AI Draft',
+        'Generate a controlled first draft of the full tool session',
+        'Wygeneruj kontrolowany pierwszy szkic całej sesji narzędzia'
+      ),
+    ];
   }
 
-  if (toolType === 'market-forces') {
-    switch (stepDefinition.id) {
-      case 'mission':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Market Framing',
-            'AI framing rynku',
-            'Critique and sharpen the market brief',
-            'Skrytykuj i wyostrz brief rynkowy'
-          ),
-          createAction(
-            'generate-full-session',
-            'wand',
-            'Full Session Draft',
-            'Szkic całej sesji',
-            'Generate a controlled first draft of the full Porter session',
-            'Wygeneruj kontrolowany pierwszy szkic całej sesji Portera'
-          ),
-        ];
-      case 'input':
-        return [
-          createAction(
-            'suggest-step',
-            'search',
-            'AI Market Signals',
-            'AI sygnały rynkowe',
-            'Suggest evidence and competitive signals for exploration',
-            'Zaproponuj dowody i sygnały konkurencyjne do eksploracji'
-          ),
-        ];
-      case 'forces':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Force Scorecard',
-            'AI scorecard sił',
-            'Turn signals into scored Porter forces',
-            'Zamień sygnały w ocenione siły Portera'
-          ),
-        ];
-      case 'insights':
-        return [
-          createAction(
-            'generate-correlations',
-            'wand',
-            'AI Implications',
-            'AI implikacje',
-            'Synthesize market structure into implications and moves',
-            'Syntezuj strukturę rynku w implikacje i ruchy'
-          ),
-        ];
-      case 'outputs':
-        return [
-          createAction(
-            'generate-summary',
-            'wand',
-            'AI Final Summary',
-            'AI final summary',
-            'Generate final summary, output candidates, and initiatives',
-            'Wygeneruj final summary, output candidates i inicjatywy'
-          ),
-        ];
-      default:
-        return [];
-    }
+  if (stepDefinition.id === 'input') {
+    return [
+      createAction(
+        'find-signals',
+        'search',
+        'Find Signals',
+        'Find Signals',
+        'Extract evidence from interview and organization context',
+        'Wyciągnij evidence z wywiadu i kontekstu organizacji'
+      ),
+    ];
   }
 
-  if (toolType === 'growth-paths') {
-    switch (stepDefinition.id) {
-      case 'mission':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Growth Framing',
-            'AI framing wzrostu',
-            'Critique and sharpen the growth mission',
-            'Skrytykuj i wyostrz brief wzrostu'
-          ),
-          createAction(
-            'generate-full-session',
-            'wand',
-            'Full Session Draft',
-            'Szkic całej sesji',
-            'Generate a controlled first draft of the full Ansoff session',
-            'Wygeneruj kontrolowany pierwszy szkic całej sesji Ansoffa'
-          ),
-        ];
-      case 'input':
-        return [
-          createAction(
-            'suggest-step',
-            'search',
-            'AI Growth Signals',
-            'AI sygnały wzrostu',
-            'Suggest evidence and growth signals for exploration',
-            'Zaproponuj dowody i sygnały wzrostu do eksploracji'
-          ),
-        ];
-      case 'options':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Ansoff Options',
-            'AI opcje Ansoffa',
-            'Turn signals into proposed Ansoff growth options',
-            'Zamień sygnały w proponowane opcje wzrostu Ansoffa'
-          ),
-        ];
-      case 'insights':
-        return [
-          createAction(
-            'generate-correlations',
-            'wand',
-            'AI Growth Synthesis',
-            'AI synteza wzrostu',
-            'Compare options and synthesize recommended growth moves',
-            'Porównaj opcje i syntezuj rekomendowane ruchy wzrostu'
-          ),
-        ];
-      case 'outputs':
-        return [
-          createAction(
-            'generate-summary',
-            'wand',
-            'AI Final Summary',
-            'AI final summary',
-            'Generate final summary, output candidates, and initiatives',
-            'Wygeneruj final summary, output candidates i inicjatywy'
-          ),
-        ];
-      default:
-        return [];
-    }
+  if (analysisStepIds[toolType] === stepDefinition.id) {
+    const copy = buildCopy[toolType];
+    return [
+      createAction(
+        'build-analysis',
+        'sparkles',
+        copy?.label || 'Build Analysis',
+        copy?.labelPl || 'Buduj analizę',
+        copy?.title || 'Turn accepted signals into proposal cards',
+        copy?.titlePl || 'Zamień zaakceptowane sygnały w proponowane karty'
+      ),
+    ];
   }
 
-  if (toolType === 'portfolio-priority') {
-    switch (stepDefinition.id) {
-      case 'mission':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Portfolio Framing',
-            'AI framing portfolio',
-            'Critique and sharpen the portfolio decision brief',
-            'Skrytykuj i wyostrz brief decyzji portfolio'
-          ),
-          createAction(
-            'generate-full-session',
-            'wand',
-            'Full Session Draft',
-            'Szkic całej sesji',
-            'Generate a controlled first draft of the full portfolio session',
-            'Wygeneruj kontrolowany pierwszy szkic całej sesji portfolio'
-          ),
-        ];
-      case 'input':
-        return [
-          createAction(
-            'suggest-step',
-            'search',
-            'AI Portfolio Signals',
-            'AI sygnały portfolio',
-            'Suggest evidence and constraints for portfolio prioritization',
-            'Zaproponuj dowody i ograniczenia do priorytetyzacji portfolio'
-          ),
-        ];
-      case 'items':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Portfolio Matrix',
-            'AI macierz portfolio',
-            'Turn signals into scored BCG portfolio cards',
-            'Zamień sygnały w ocenione karty portfolio BCG'
-          ),
-        ];
-      case 'insights':
-        return [
-          createAction(
-            'generate-correlations',
-            'wand',
-            'AI Trade-offs',
-            'AI trade-offy',
-            'Synthesize portfolio trade-offs and recommended moves',
-            'Syntezuj trade-offy portfolio i rekomendowane ruchy'
-          ),
-        ];
-      case 'outputs':
-        return [
-          createAction(
-            'generate-summary',
-            'wand',
-            'AI Final Summary',
-            'AI final summary',
-            'Generate final summary, output candidates, and initiatives',
-            'Wygeneruj final summary, output candidates i inicjatywy'
-          ),
-        ];
-      default:
-        return [];
-    }
+  if (stepDefinition.id === 'insights') {
+    return [
+      createAction(
+        'synthesize-insights',
+        'wand',
+        'Synthesize',
+        'Synthesize',
+        'Create trade-offs, tensions, priorities, and recommended moves',
+        'Stwórz trade-offy, napięcia, priorytety i rekomendowane ruchy'
+      ),
+    ];
   }
 
-  if (toolType === 'risk-uncertainty') {
-    switch (stepDefinition.id) {
-      case 'mission':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Risk Framing',
-            'AI framing ryzyka',
-            'Critique and sharpen the risk decision brief',
-            'Skrytykuj i wyostrz brief decyzji ryzyka'
-          ),
-          createAction(
-            'generate-full-session',
-            'wand',
-            'Full Session Draft',
-            'Szkic całej sesji',
-            'Generate a controlled first draft of the full risk session',
-            'Wygeneruj kontrolowany pierwszy szkic całej sesji ryzyka'
-          ),
-        ];
-      case 'input':
-        return [
-          createAction(
-            'suggest-step',
-            'search',
-            'AI Risk Signals',
-            'AI sygnały ryzyka',
-            'Suggest evidence and weak signals for risk exploration',
-            'Zaproponuj evidence i słabe sygnały do eksploracji ryzyka'
-          ),
-        ];
-      case 'assumptions':
-        return [
-          createAction(
-            'suggest-step',
-            'sparkles',
-            'AI Risk Map',
-            'AI mapa ryzyka',
-            'Turn signals into assumptions, risks, and scenarios',
-            'Zamień sygnały w założenia, ryzyka i scenariusze'
-          ),
-        ];
-      case 'insights':
-        return [
-          createAction(
-            'generate-correlations',
-            'wand',
-            'AI Risk Synthesis',
-            'AI synteza ryzyka',
-            'Synthesize resilience moves and early warnings',
-            'Syntezuj ruchy odporności i early warnings'
-          ),
-        ];
-      case 'outputs':
-        return [
-          createAction(
-            'generate-summary',
-            'wand',
-            'AI Final Summary',
-            'AI final summary',
-            'Generate final summary, output candidates, and initiatives',
-            'Wygeneruj final summary, output candidates i inicjatywy'
-          ),
-        ];
-      default:
-        return [];
-    }
+  if (stepDefinition.id === 'outputs') {
+    return [
+      createAction(
+        'finalize-outputs',
+        'wand',
+        'Finalize',
+        'Finalize',
+        'Prepare final summary, output candidates, and initiative drafts',
+        'Przygotuj final summary, output candidates i szkice inicjatyw'
+      ),
+    ];
   }
 
   if (!stepDefinition.aiAssisted) return [];
@@ -403,10 +171,10 @@ export function getToolPhaseAiActions(
   if (SUMMARY_STEP_IDS.has(stepDefinition.id)) {
     return [
       createAction(
-        'generate-summary',
+        'finalize-outputs',
         'wand',
-        'AI Summary',
-        'AI podsumowanie',
+        'Finalize',
+        'Finalize',
         'Generate a consulting-grade summary for this phase',
         'Wygeneruj konsultingowe podsumowanie tej fazy'
       ),
@@ -415,10 +183,10 @@ export function getToolPhaseAiActions(
 
   return [
     createAction(
-      'suggest-step',
+      'build-analysis',
       'sparkles',
-      'AI Suggestions',
-      'AI sugestie',
+      'Build Analysis',
+      'Buduj analizę',
       'Generate structured AI suggestions for this step',
       'Wygeneruj ustrukturyzowane sugestie AI dla tego kroku'
     ),

@@ -7,6 +7,9 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React from 'react';
 
+import type { ToolPhaseAiActionDefinition, ToolPhaseAiActionId } from './toolAiActions';
+import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
+
 // ==================== TYPES ====================
 
 interface ToolActionBarProps {
@@ -16,6 +19,13 @@ interface ToolActionBarProps {
   onPrevStep: () => void;
   onNextStep: () => void;
   isPolish: boolean;
+  phaseAiActions?: ToolPhaseAiActionDefinition[];
+  activeAiActionId?: ToolPhaseAiActionId | null;
+  isStreaming?: boolean;
+  onRunPhaseAiAction?: (actionId: ToolPhaseAiActionId) => void;
+  onAbortAi?: () => void;
+  aiReviewCount?: number;
+  onReviewAiCards?: () => void;
 }
 
 // ==================== COMPONENT ====================
@@ -27,13 +37,21 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
   onPrevStep,
   onNextStep,
   isPolish,
+  phaseAiActions = [],
+  activeAiActionId = null,
+  isStreaming = false,
+  onRunPhaseAiAction,
+  onAbortAi,
+  aiReviewCount = 0,
+  onReviewAiCards,
 }) => {
   const isFirstStep = currentStep === 1;
   const isLastStep = currentStep === totalSteps;
+  const showAiCluster = phaseAiActions.length > 0 || isStreaming || aiReviewCount > 0;
 
   return (
     <div className="bg-white dark:bg-navy-900 border-t border-slate-200 dark:border-navy-700 px-4 py-3">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         {/* Left: Previous button */}
         <button
           onClick={onPrevStep}
@@ -54,22 +72,37 @@ export const ToolActionBar: React.FC<ToolActionBarProps> = ({
           {isPolish ? 'Krok' : 'Step'} {currentStep}/{totalSteps}
         </div>
 
-        {/* Right: Next button */}
-        <button
-          onClick={onNextStep}
-          disabled={!canAdvance}
-          className={`
-            flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
-            ${
-              !canAdvance
-                ? 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                : 'bg-primary-500 text-white hover:bg-primary-600'
-            }
-          `}
-        >
-          {isLastStep ? (isPolish ? 'Zakończ' : 'Finish') : isPolish ? 'Następny' : 'Next'}
-          <ChevronRight className="w-4 h-4" />
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {showAiCluster && (
+            <ToolPhaseAiActions
+              actions={phaseAiActions}
+              activeActionId={activeAiActionId}
+              isStreaming={isStreaming}
+              isPolish={isPolish}
+              onRunAction={(actionId) => onRunPhaseAiAction?.(actionId)}
+              onAbort={onAbortAi}
+              aiReviewCount={aiReviewCount}
+              onReviewAiCards={onReviewAiCards}
+            />
+          )}
+
+          {/* Right: Next button */}
+          <button
+            onClick={onNextStep}
+            disabled={!canAdvance}
+            className={`
+              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors
+              ${
+                !canAdvance
+                  ? 'bg-slate-100 dark:bg-navy-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
+                  : 'bg-primary-500 text-white hover:bg-primary-600'
+              }
+            `}
+          >
+            {isLastStep ? (isPolish ? 'Zakończ' : 'Finish') : isPolish ? 'Następny' : 'Next'}
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );

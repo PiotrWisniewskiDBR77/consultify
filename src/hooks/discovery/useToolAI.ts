@@ -197,7 +197,13 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
     if (prompt) {
       setPendingAction('suggestions');
-      setActiveAiActionId('suggest-step');
+      setActiveAiActionId(
+        currentStepDef.id === 'mission'
+          ? 'frame-mission'
+          : currentStepDef.id === 'input'
+            ? 'find-signals'
+            : 'build-analysis'
+      );
       await sendMessage(prompt);
     }
   }, [currentSession?.inputData, currentStepDef, sendMessage, toolType]);
@@ -214,7 +220,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         return;
       }
       setPendingAction('correlations');
-      setActiveAiActionId('generate-correlations');
+      setActiveAiActionId('synthesize-insights');
       await sendMessage(prompt);
       return;
     }
@@ -229,7 +235,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         return;
       }
       setPendingAction('correlations');
-      setActiveAiActionId('generate-correlations');
+      setActiveAiActionId('synthesize-insights');
       await sendMessage(prompt);
       return;
     }
@@ -242,7 +248,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         return;
       }
       setPendingAction('correlations');
-      setActiveAiActionId('generate-correlations');
+      setActiveAiActionId('synthesize-insights');
       await sendMessage(prompt);
       return;
     }
@@ -255,7 +261,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
         return;
       }
       setPendingAction('correlations');
-      setActiveAiActionId('generate-correlations');
+      setActiveAiActionId('synthesize-insights');
       await sendMessage(prompt);
       return;
     }
@@ -272,7 +278,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     }
 
     setPendingAction('correlations');
-    setActiveAiActionId('generate-correlations');
+    setActiveAiActionId('synthesize-insights');
     await sendMessage(prompt);
   }, [toolType, currentSession, sendMessage]);
 
@@ -285,7 +291,7 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
 
     if (prompt) {
       setPendingAction('summary');
-      setActiveAiActionId('generate-summary');
+      setActiveAiActionId('finalize-outputs');
       await sendMessage(prompt);
     }
   }, [toolType, currentSession, sendMessage]);
@@ -329,25 +335,29 @@ export const useToolAI = ({ toolType }: UseToolAIOptions): UseToolAIReturn => {
     }
 
     setPendingAction('full-session');
-    setActiveAiActionId('generate-full-session');
+    setActiveAiActionId('draft-session');
     await sendMessage(prompt);
   }, [toolType, currentSession, formatForPrompt, sendMessage, setSessionGenerationStatus]);
 
   const runPhaseAiAction = useCallback(
     async (actionId: ToolPhaseAiActionId) => {
-      if (actionId === 'suggest-step') {
+      if (
+        actionId === 'frame-mission' ||
+        actionId === 'find-signals' ||
+        actionId === 'build-analysis'
+      ) {
         await requestSuggestions();
         return;
       }
-      if (actionId === 'generate-correlations') {
+      if (actionId === 'synthesize-insights') {
         await generateCorrelations();
         return;
       }
-      if (actionId === 'generate-summary') {
+      if (actionId === 'finalize-outputs') {
         await generateSummary();
         return;
       }
-      if (actionId === 'generate-full-session') {
+      if (actionId === 'draft-session') {
         await generateFullSession();
       }
     },

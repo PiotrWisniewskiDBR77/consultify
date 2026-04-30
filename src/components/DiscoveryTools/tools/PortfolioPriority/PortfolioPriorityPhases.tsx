@@ -1,4 +1,4 @@
-import { Check, Plus, RefreshCw, Trash2, X } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
 import {
@@ -8,6 +8,9 @@ import {
   ToolSession,
   useToolStore,
 } from '@/store/useToolStore';
+
+import { ProposalCardActions as CardActions } from '../../shared/ProposalCardGovernance';
+import { PortfolioBcgVisual } from '../../shared/StrategicCanvasVisuals';
 
 type PhaseProps = {
   session: ToolSession;
@@ -43,89 +46,6 @@ const proposalBadge = (proposalStatus?: string, isPolish?: boolean) => {
   if (proposalStatus === 'rethinking') return isPolish ? 'Przemyślenie' : 'Rethinking';
   return isPolish ? 'Zaakceptowane' : 'Accepted';
 };
-
-function CardActions({
-  cardType,
-  cardId,
-  isPolish,
-  onAcceptCard,
-  onRejectCard,
-  onRethinkCard,
-}: {
-  cardType: ProposalCardType;
-  cardId: string;
-  isPolish: boolean;
-  onAcceptCard?: (cardType: ProposalCardType, cardId: string) => void;
-  onRejectCard?: (cardType: ProposalCardType, cardId: string) => void;
-  onRethinkCard?: (cardType: ProposalCardType, cardId: string, comment?: string) => void;
-}) {
-  const [isCommenting, setIsCommenting] = useState(false);
-  const [comment, setComment] = useState('');
-
-  const submitRethink = () => {
-    onRethinkCard?.(cardType, cardId, comment.trim() || undefined);
-    setComment('');
-    setIsCommenting(false);
-  };
-
-  return (
-    <div className="flex flex-col items-end gap-2">
-      <div className="flex gap-1">
-        <button
-          type="button"
-          onClick={() => onAcceptCard?.(cardType, cardId)}
-          className="rounded-lg bg-emerald-50 p-1.5 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:text-emerald-300"
-          aria-label={isPolish ? 'Akceptuj' : 'Accept'}
-        >
-          <Check className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsCommenting((value) => !value)}
-          className="rounded-lg bg-violet-50 p-1.5 text-violet-700 hover:bg-violet-100 dark:bg-violet-950/30 dark:text-violet-300"
-          aria-label={isPolish ? 'Przemyśl ponownie' : 'Rethink'}
-        >
-          <RefreshCw className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={() => onRejectCard?.(cardType, cardId)}
-          className="rounded-lg bg-rose-50 p-1.5 text-rose-700 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-300"
-          aria-label={isPolish ? 'Odrzuć' : 'Reject'}
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      {isCommenting && (
-        <div className="w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-sm dark:border-navy-700 dark:bg-navy-900">
-          <textarea
-            value={comment}
-            onChange={(event) => setComment(event.target.value)}
-            rows={2}
-            placeholder={isPolish ? 'Feedback dla AI...' : 'Feedback for AI...'}
-            className="w-full resize-none rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs dark:border-navy-700 dark:bg-navy-950"
-          />
-          <div className="mt-2 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsCommenting(false)}
-              className="rounded-lg px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-navy-800"
-            >
-              {isPolish ? 'Anuluj' : 'Cancel'}
-            </button>
-            <button
-              type="button"
-              onClick={submitRethink}
-              className="rounded-lg bg-violet-600 px-2 py-1 text-xs font-medium text-white hover:bg-violet-700"
-            >
-              {isPolish ? 'Przemyśl' : 'Rethink'}
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export function PortfolioInputPhase({
   session,
@@ -380,6 +300,8 @@ export function PortfolioItemsPhase({
           ))}
         </div>
       </div>
+
+      <PortfolioBcgVisual data={data} isPolish={isPolish} />
 
       <div className="grid gap-4 xl:grid-cols-2">
         {CATEGORIES.map((category) => (

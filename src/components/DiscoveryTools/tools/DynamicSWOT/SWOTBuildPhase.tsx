@@ -11,6 +11,7 @@ import {
 } from '@/store/useToolStore';
 
 import { InlineAssist } from '../../InlineAssist';
+import { SwotMatrixVisual } from '../../shared/StrategicCanvasVisuals';
 
 type QuadrantId = SWOTItem['quadrant'];
 
@@ -418,6 +419,8 @@ export function SWOTBuildPhase({ session, isPolish, isGeneratingAI = false }: Bu
           ) : null}
         </div>
       </div>
+
+      <SwotMatrixVisual data={swotData} isPolish={isPolish} />
 
       <div className="grid gap-4 md:grid-cols-2">
         {ALL_QUADRANTS.map((quadrant) => (
