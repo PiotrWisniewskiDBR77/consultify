@@ -51,7 +51,10 @@ import {
   type SortOrder,
 } from '../shared/NModeSections';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
+import { ToolActionBar } from './ToolActionBar';
 import { ToolCanvas } from './ToolCanvas';
+import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
+import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
 import {
   computeDynamicSwotOverallReadiness,
   computeDynamicSwotPhaseSummaries,
@@ -350,6 +353,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const completionItems = useMemo(
     () => computeToolCompletionItems(toolType, currentSession?.inputData, isPolish),
     [toolType, currentSession?.inputData, isPolish]
+  );
+  const aiReviewCount = useMemo(
+    () => getAiReviewTotal(countAiCardStatuses(currentSession?.inputData)),
+    [currentSession?.inputData]
   );
   const completionReady = reviewGaps.length === 0;
   const missingItemsPayload = useMemo(
@@ -1575,6 +1582,33 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               </div>
             )}
 
+            {(phaseAiActions.length > 0 || isStreaming || aiReviewCount > 0) && (
+              <div className="rounded-2xl border border-violet-200/70 bg-violet-50/70 px-4 py-3 dark:border-violet-900/40 dark:bg-violet-950/20">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-500">
+                      {isPolish ? 'AI Copilot' : 'AI Copilot'}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                      {isPolish
+                        ? 'Akcje AI dla bieżącej fazy sesji narzędzia.'
+                        : 'AI actions for the current tool session phase.'}
+                    </div>
+                  </div>
+                  <ToolPhaseAiActions
+                    actions={phaseAiActions}
+                    activeActionId={activeAiActionId}
+                    isStreaming={isStreaming}
+                    isPolish={isPolish}
+                    onRunAction={(actionId) => void runPhaseAiAction(actionId)}
+                    onAbort={abortStream}
+                    aiReviewCount={aiReviewCount}
+                    onReviewAiCards={scrollToAiCards}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-slate-50/70 dark:border-navy-700/70 dark:bg-navy-900/40">
               {currentSession ? (
                 <ToolCanvas
@@ -1616,35 +1650,29 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
             {extras}
 
-            <div className="flex items-center justify-between pt-2">
-              <button
-                type="button"
-                onClick={() => setCurrentStep(Math.max(1, phaseIndex - 1))}
-                disabled={phaseIndex <= 1}
-                className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 disabled:opacity-50 dark:bg-navy-900/70 dark:text-slate-300"
-              >
-                {isPolish ? 'Previous' : 'Previous'}
-              </button>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {isPolish ? 'Faza' : 'Phase'} {phaseIndex}/{stepDefs.length}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (phaseIndex === currentStep) {
-                    nextStep();
-                    return;
-                  }
-                  setCurrentStep(Math.min(stepDefs.length, phaseIndex + 1));
-                }}
-                disabled={
-                  phaseIndex >= stepDefs.length || (phaseIndex === currentStep && !canAdvanceStep())
+            <ToolActionBar
+              currentStep={phaseIndex}
+              totalSteps={stepDefs.length}
+              canAdvance={
+                phaseIndex < stepDefs.length && (phaseIndex !== currentStep || canAdvanceStep())
+              }
+              onPrevStep={() => setCurrentStep(Math.max(1, phaseIndex - 1))}
+              onNextStep={() => {
+                if (phaseIndex === currentStep) {
+                  nextStep();
+                  return;
                 }
-                className="rounded-lg bg-primary-500 px-3 py-2 text-sm text-white disabled:opacity-50"
-              >
-                {isPolish ? 'Next' : 'Next'}
-              </button>
-            </div>
+                setCurrentStep(Math.min(stepDefs.length, phaseIndex + 1));
+              }}
+              isPolish={isPolish}
+              phaseAiActions={phaseAiActions}
+              activeAiActionId={activeAiActionId}
+              isStreaming={isStreaming}
+              onRunPhaseAiAction={(actionId) => void runPhaseAiAction(actionId)}
+              onAbortAi={abortStream}
+              aiReviewCount={aiReviewCount}
+              onReviewAiCards={scrollToAiCards}
+            />
           </div>
         );
       };
