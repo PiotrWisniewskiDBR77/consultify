@@ -9,11 +9,13 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import _logger from '../utils/Logger.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import * as queryHelpers from '../utils/queryHelpers.js';
 
 class SupportTicketServiceClass {
   private db: IDatabase;
   private uuidv4: typeof uuidv4;
   private logger: any;
+  private initialized = false;
 
   constructor(deps?: { db?: IDatabase; uuidv4?: typeof uuidv4; logger?: any }) {
     this.db = deps?.db || getDatabase();
@@ -26,8 +28,49 @@ class SupportTicketServiceClass {
     if (deps.uuidv4) this.uuidv4 = deps.uuidv4;
     if (deps.logger) this.logger = deps.logger;
   }
+ 
+  private async ensureTables(): Promise<void> {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    await queryHelpers.queryRun(
+      `CREATE TABLE IF NOT EXISTS support_tickets (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        user_id TEXT,
+        ticket_number TEXT UNIQUE,
+        subject TEXT NOT NULL,
+        description TEXT,
+        priority TEXT DEFAULT 'medium',
+        status TEXT DEFAULT 'open',
+        category TEXT,
+        assigned_to TEXT,
+        tags_json TEXT DEFAULT '[]',
+        metadata_json TEXT DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_activity_at TIMESTAMP,
+        resolved_at TIMESTAMP,
+        closed_at TIMESTAMP,
+        first_response_at TIMESTAMP
+      )`
+    );
+
+    await queryHelpers.queryRun(
+      `CREATE TABLE IF NOT EXISTS support_ticket_comments (
+        id TEXT PRIMARY KEY,
+        ticket_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        comment_text TEXT NOT NULL,
+        is_internal INTEGER DEFAULT 0,
+        attachments_json TEXT DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`
+    );
+  }
 
   async getTickets(filters: any = {}): Promise<any[]> {
+    await this.ensureTables();
     const cols = await getTableColumns('support_tickets');
     const where: string[] = [];
     const params: any[] = [];
@@ -69,6 +112,7 @@ class SupportTicketServiceClass {
 
   async createTicket(data: any): Promise<any> {
     const id = this.uuidv4();
+    await this.ensureTables();
     const cols = await getTableColumns('support_tickets');
     const now = new Date().toISOString();
     const ticketNumber = `TKT-${Date.now().toString(36).toUpperCase()}`;
@@ -127,6 +171,7 @@ class SupportTicketServiceClass {
   }
 
   async getTicketById(id: string): Promise<any> {
+    await this.ensureTables();
     return await this.db.get('SELECT * FROM support_tickets WHERE id = ?', [id]);
   }
 
@@ -141,6 +186,7 @@ class SupportTicketServiceClass {
   }
 
   async updateTicket(id: string, updates: any): Promise<boolean> {
+    await this.ensureTables();
     const cols = await getTableColumns('support_tickets');
     const fields: string[] = [];
     const params: any[] = [];
@@ -180,6 +226,7 @@ class SupportTicketServiceClass {
   ): Promise<any> {
     const id = this.uuidv4();
     const now = new Date().toISOString();
+    await this.ensureTables();
     const cols = await getTableColumns('support_ticket_comments');
     const insert: Record<string, any> = {
       id,
