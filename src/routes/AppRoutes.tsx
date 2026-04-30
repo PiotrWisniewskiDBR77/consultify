@@ -25,6 +25,7 @@ import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { useAppStore } from '@/store/useAppStore';
 import { AppView, AuthStep, SessionMode, User } from '@/types';
+import { canUseInternalTools } from '@/utils/internalToolsAccess';
 import { lazyWithRetry } from '@/utils/lazyWithRetry';
 import { shouldHideNonCoreModulesInPublicProduction } from '@/utils/publicProduction';
 import { isSuperAdminRole } from '@/utils/roleGuards';
@@ -518,6 +519,11 @@ const ProductionModuleGate: React.FC<{
 }> = ({ enabled, moduleName, children }) =>
   enabled ? <>{children}</> : <PublicProductionModuleDisabled moduleName={moduleName} />;
 
+const InternalToolsGate: React.FC<{ enabled: boolean; children: React.ReactNode }> = ({
+  enabled,
+  children,
+}) => (enabled ? <>{children}</> : <Navigate to={ROUTES.AI_CHAT} replace />);
+
 export const AppRoutes: React.FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -554,6 +560,7 @@ export const AppRoutes: React.FC = () => {
     () => shouldHideNonCoreModulesInPublicProduction(),
     []
   );
+  const internalToolsEnabled = canUseInternalTools(currentUser);
 
   // If user is SUPERADMIN, ensure they land in SuperAdmin panel on generic routes.
   // This makes "login → superadmin" stable even when the app restores the last route (/chat).
@@ -708,6 +715,18 @@ export const AppRoutes: React.FC = () => {
 
   // --- RENDER ---
   // All routing now goes through React Router - removed blocking if/else conditions
+  const renderInternalToolsShell = (
+    routeBreadcrumbs: string[],
+    children: React.ReactNode
+  ): React.ReactNode => (
+    <InternalToolsGate enabled={internalToolsEnabled}>
+      <MainLayout breadcrumbs={breadcrumbs || routeBreadcrumbs}>
+        <RouteErrorBoundary>
+          <AnimationWrapper variant="fade">{children}</AnimationWrapper>
+        </RouteErrorBoundary>
+      </MainLayout>
+    </InternalToolsGate>
+  );
 
   return (
     <Suspense
@@ -1120,15 +1139,7 @@ export const AppRoutes: React.FC = () => {
         {/* AI OS - Manual acceptance hub for AI Actions, Memory, Connectors, Agents and Outcomes */}
         <Route
           path={ROUTES.AI_OS.ROOT}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI OS']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <AIOSHub />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
+          element={renderInternalToolsShell(['AI OS'], <AIOSHub />)}
         />
         <Route path={ROUTES.AI_OS.ALIAS} element={<Navigate to={ROUTES.AI_OS.ROOT} replace />} />
         <Route
@@ -1147,99 +1158,43 @@ export const AppRoutes: React.FC = () => {
         {/* Wave 3 - AI Action Center / AIRun ledger */}
         <Route
           path={ROUTES.AI_OS.ACTION_CENTER}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Action Center']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <ActionCenter />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
+          element={renderInternalToolsShell(['AI', 'Action Center'], <ActionCenter />)}
         />
 
         {/* Wave 4 - Research Sessions Dock / Evidence reports */}
         <Route
           path={ROUTES.AI_OS.RESEARCH}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Research Sessions']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <ResearchSessionsDock />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
+          element={renderInternalToolsShell(['AI', 'Research Sessions'], <ResearchSessionsDock />)}
         />
 
         {/* Wave 5 - Artifact Runtime / Document Work */}
         <Route
           path={ROUTES.AI_OS.ARTIFACTS}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Artifacts']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <Wave5ArtifactRuntimePanel />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
+          element={renderInternalToolsShell(['AI', 'Artifacts'], <Wave5ArtifactRuntimePanel />)}
         />
 
         {/* Wave 6 - Org, Project, User Context and Controlled Learning */}
         <Route
           path={ROUTES.AI_OS.CONTEXT}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Context']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <Wave6ContextLearningPanel />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
+          element={renderInternalToolsShell(['AI', 'Context'], <Wave6ContextLearningPanel />)}
         />
 
         {/* Wave 7 - Enterprise Connectors, Tooling and AI App Management */}
         <Route
           path={ROUTES.AI_OS.CONNECTORS}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Connectors']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <Wave7ConnectorAdminPanel />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
+          element={renderInternalToolsShell(['AI', 'Connectors'], <Wave7ConnectorAdminPanel />)}
         />
 
         {/* Wave 8 - Agent Catalog, Roles and Scheduled Work */}
         <Route
           path={ROUTES.AI_OS.AGENTS}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Agents']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <Wave8AgentCatalogPanel />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
+          element={renderInternalToolsShell(['AI', 'Agents'], <Wave8AgentCatalogPanel />)}
         />
 
         {/* Wave 9 - Outcome, KPI, ROI, AI Ops and Final Acceptance */}
         <Route
           path={ROUTES.AI_OS.OUTCOMES}
-          element={
-            <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Outcomes']}>
-              <RouteErrorBoundary>
-                <AnimationWrapper variant="fade">
-                  <Wave9OutcomeAIOpsPanel />
-                </AnimationWrapper>
-              </RouteErrorBoundary>
-            </MainLayout>
-          }
+          element={renderInternalToolsShell(['AI', 'Outcomes'], <Wave9OutcomeAIOpsPanel />)}
         />
         <Route path="/ai/*" element={<Navigate to={ROUTES.AI_OS.ROOT} replace />} />
 

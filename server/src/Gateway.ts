@@ -1,8 +1,10 @@
 import type { Express } from 'express';
 
 import apiLoggingMiddleware from './middleware/apiLogging.middleware.js';
+import verifyToken from './middleware/auth.middleware.js';
 import { demoContextMiddleware, demoWriteProtection } from './middleware/demoGuard.middleware.js';
 import { deprecationHeader } from './middleware/deprecationHeader.middleware.js';
+import { requireInternalToolsAccess } from './middleware/internalTools.middleware.js';
 import { v8FeatureGate } from './middleware/v8FeatureGate.middleware.js';
 import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware.js';
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
@@ -320,6 +322,27 @@ export class ApiGateway {
       app.use('/api/analytics/ai', aiAnalyticsRoutesV2);
       // V8 shadow mode: check flag and intercept legacy AI routes for comparison
       app.use('/api/ai', v8ShadowModeCheck, v8ShadowInterceptor);
+
+      const internalToolsGuard = [verifyToken, requireInternalToolsAccess];
+      app.use('/api/ai/actions', ...internalToolsGuard);
+      app.use('/api/ai/prompts', ...internalToolsGuard);
+      app.use('/api/ai-context', ...internalToolsGuard);
+      app.use('/api/ai-connectors', ...internalToolsGuard);
+      app.use('/api/ai-agents', ...internalToolsGuard);
+      app.use('/api/ai-outcomes', ...internalToolsGuard);
+      app.use('/api/research', ...internalToolsGuard);
+      app.use('/api/artifacts', ...internalToolsGuard);
+      app.use('/api/artifact-runs', ...internalToolsGuard);
+      app.use('/api/agents', ...internalToolsGuard);
+      app.use('/api/ai-operator', ...internalToolsGuard);
+      app.use('/api/ai-memory', ...internalToolsGuard);
+      app.use('/api/ai-prompts', ...internalToolsGuard);
+      app.use('/api/ai-training', ...internalToolsGuard);
+      app.use('/api/ai-analytics', ...internalToolsGuard);
+      app.use('/api/ai-budgets', ...internalToolsGuard);
+      app.use('/api/ai-infrastructure', ...internalToolsGuard);
+      app.use('/api/ai-development', ...internalToolsGuard);
+      app.use('/api/ai-operations', ...internalToolsGuard);
 
       logger.info('[ApiGateway] Mounting /api/ai');
       app.use('/api/ai', aiRoutes);

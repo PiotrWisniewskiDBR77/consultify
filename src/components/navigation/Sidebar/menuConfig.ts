@@ -53,57 +53,6 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(MessageSquare, { size: 20 }),
       viewId: AppView.AI_CHAT,
     },
-    {
-      id: 'AI_OS',
-      label: t('sidebar.aiOs', 'AI OS'),
-      icon: React.createElement(Brain, { size: 20 }),
-      viewId: AppView.AI_OS_HOME,
-      badge: 'new',
-      subItems: [
-        {
-          id: 'AI_OS_ACTIONS',
-          label: t('sidebar.aiActions', 'AI Actions'),
-          icon: React.createElement(Zap, { size: 16 }),
-          viewId: AppView.AI_OS_ACTION_CENTER,
-        },
-        {
-          id: 'AI_OS_RESEARCH',
-          label: t('sidebar.aiResearch', 'Research Sessions'),
-          icon: React.createElement(BookOpen, { size: 16 }),
-          viewId: AppView.AI_OS_RESEARCH,
-        },
-        {
-          id: 'AI_OS_ARTIFACTS',
-          label: t('sidebar.aiArtifacts', 'Artifacts'),
-          icon: React.createElement(FileText, { size: 16 }),
-          viewId: AppView.AI_OS_ARTIFACTS,
-        },
-        {
-          id: 'AI_OS_MEMORY',
-          label: t('sidebar.aiMemory', 'Memory & Scope'),
-          icon: React.createElement(Database, { size: 16 }),
-          viewId: AppView.AI_OS_CONTEXT_MEMORY,
-        },
-        {
-          id: 'AI_OS_CONNECTORS',
-          label: t('sidebar.aiConnectors', 'Connectors'),
-          icon: React.createElement(GitBranch, { size: 16 }),
-          viewId: AppView.AI_OS_CONNECTORS,
-        },
-        {
-          id: 'AI_OS_AGENTS',
-          label: t('sidebar.aiAgents', 'Agents'),
-          icon: React.createElement(Bot, { size: 16 }),
-          viewId: AppView.AI_OS_AGENTS,
-        },
-        {
-          id: 'AI_OS_OUTCOMES',
-          label: t('sidebar.aiOutcomes', 'KPI/ROI & AI Ops'),
-          icon: React.createElement(TrendingUp, { size: 16 }),
-          viewId: AppView.AI_OS_OUTCOMES,
-        },
-      ],
-    },
     // 2. My Work - moja praca, zadania, inbox
     {
       id: 'MY_WORK',
@@ -250,6 +199,66 @@ export function getOrganizationMenuItem(t: TranslationFn): MenuItem {
     icon: React.createElement(Factory, { size: 20 }),
     viewId: AppView.ORGANIZATION_PROFILE,
     // No subItems - organization module has its own internal navigation (like Settings)
+  };
+}
+
+export function getInternalToolsMenuItem(t: TranslationFn): MenuItem {
+  return {
+    id: 'INTERNAL_TOOLS',
+    label: t('sidebar.internalTools', 'Internal Tools'),
+    icon: React.createElement(Brain, { size: 20 }),
+    viewId: AppView.AI_OS_HOME,
+    badge: 'new',
+    subItems: [
+      {
+        id: 'AI_OS_HOME',
+        label: t('sidebar.aiOs', 'AI OS'),
+        icon: React.createElement(Brain, { size: 16 }),
+        viewId: AppView.AI_OS_HOME,
+      },
+      {
+        id: 'AI_OS_ACTIONS',
+        label: t('sidebar.aiActions', 'AI Actions'),
+        icon: React.createElement(Zap, { size: 16 }),
+        viewId: AppView.AI_OS_ACTION_CENTER,
+      },
+      {
+        id: 'AI_OS_RESEARCH',
+        label: t('sidebar.aiResearch', 'Research Sessions'),
+        icon: React.createElement(BookOpen, { size: 16 }),
+        viewId: AppView.AI_OS_RESEARCH,
+      },
+      {
+        id: 'AI_OS_ARTIFACTS',
+        label: t('sidebar.aiArtifacts', 'Artifacts'),
+        icon: React.createElement(FileText, { size: 16 }),
+        viewId: AppView.AI_OS_ARTIFACTS,
+      },
+      {
+        id: 'AI_OS_MEMORY',
+        label: t('sidebar.aiMemory', 'Memory & Scope'),
+        icon: React.createElement(Database, { size: 16 }),
+        viewId: AppView.AI_OS_CONTEXT_MEMORY,
+      },
+      {
+        id: 'AI_OS_CONNECTORS',
+        label: t('sidebar.aiConnectors', 'Connectors'),
+        icon: React.createElement(GitBranch, { size: 16 }),
+        viewId: AppView.AI_OS_CONNECTORS,
+      },
+      {
+        id: 'AI_OS_AGENTS',
+        label: t('sidebar.aiAgents', 'Agents'),
+        icon: React.createElement(Bot, { size: 16 }),
+        viewId: AppView.AI_OS_AGENTS,
+      },
+      {
+        id: 'AI_OS_OUTCOMES',
+        label: t('sidebar.aiOutcomes', 'KPI/ROI & AI Ops'),
+        icon: React.createElement(TrendingUp, { size: 16 }),
+        viewId: AppView.AI_OS_OUTCOMES,
+      },
+    ],
   };
 }
 

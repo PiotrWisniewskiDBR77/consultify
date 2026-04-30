@@ -24,6 +24,7 @@ import {
   lockMainMenuForPublicProduction,
   shouldLockNonCoreModulesInPublicProduction,
 } from '../../../utils/publicProduction';
+import { canUseInternalTools } from '../../../utils/internalToolsAccess';
 import {
   isAdminOwnerOrSuperAdminRole,
   isPilotRestrictedRole,
@@ -33,6 +34,7 @@ import { PhaseIndicator } from '../../PMO/PhaseIndicator';
 import { FloatingSubmenu } from './FloatingSubmenu';
 import {
   getAdminMenuItem,
+  getInternalToolsMenuItem,
   getMenuStructure,
   getOrganizationMenuItem,
   getSettingsMenuItem,
@@ -142,8 +144,10 @@ export const Sidebar: React.FC = () => {
   }, [currentUser?.role, menuStructure]);
   const adminMenuItem = React.useMemo(() => getAdminMenuItem(t), [t]);
   const organizationMenuItem = React.useMemo(() => getOrganizationMenuItem(t), [t]);
+  const internalToolsMenuItem = React.useMemo(() => getInternalToolsMenuItem(t), [t]);
   const settingsMenuItem = React.useMemo(() => getSettingsMenuItem(t), [t]);
   const superAdminMenuItem = React.useMemo(() => getSuperAdminMenuItem(t), [t]);
+  const showInternalToolsMenu = canUseInternalTools(currentUser);
   const shouldLockFooterAdminMenus = !isSuperAdminRole(currentUser?.role);
   const lockedOrganizationMenuItem = React.useMemo<MenuItem>(() => {
     if (!shouldLockFooterAdminMenus) return organizationMenuItem;
@@ -486,6 +490,7 @@ export const Sidebar: React.FC = () => {
             renderNavItem(lockedOrganizationMenuItem)}
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) && renderNavItem(lockedAdminMenuItem)}
           {isSuperAdminRole(currentUser?.role) && renderNavItem(superAdminMenuItem)}
+          {showInternalToolsMenu && renderNavItem(internalToolsMenuItem)}
           {renderNavItem(settingsMenuItem)}
         </SidebarFooter>
       </motion.div>

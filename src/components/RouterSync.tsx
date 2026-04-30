@@ -18,6 +18,7 @@ import {
   isPilotRestrictedRole,
   isSuperAdminRole,
 } from '../utils/roleGuards';
+import { canUseInternalTools, isInternalToolsPath } from '../utils/internalToolsAccess';
 
 /**
  * RouterSync
@@ -179,6 +180,7 @@ export const RouterSync: React.FC = () => {
     const userRole = currentUser?.role ?? null;
     const defaultAuthenticatedRoute = getDefaultAuthenticatedRoute(userRole);
     const isPilotAllowedRoute = isPilotAllowedPath(path);
+    const isInternalToolsRoute = isInternalToolsPath(path);
 
     // Prevent infinite loops: skip if we're already navigating
     if (isNavigatingRef.current) {
@@ -266,6 +268,16 @@ export const RouterSync: React.FC = () => {
       return;
     }
 
+    if (isAuthenticated && isInternalToolsRoute && !canUseInternalTools(currentUser)) {
+      console.log('[RouterSync] Internal tools route blocked, redirecting to /chat');
+      isNavigatingRef.current = true;
+      navigate('/chat', { replace: true });
+      setTimeout(() => {
+        isNavigatingRef.current = false;
+      }, 50);
+      return;
+    }
+
     // Root route should redirect authenticated users to their home
     if ((path === '/' || path === '') && isAuthenticated) {
       console.log('[RouterSync] Authenticated on /, redirecting to', defaultAuthenticatedRoute);
@@ -331,6 +343,10 @@ export const RouterSync: React.FC = () => {
   }, [
     location.pathname,
     currentUser?.isAuthenticated,
+    currentUser?.email,
+    currentUser?.companyName,
+    currentUser?.organizationName,
+    currentUser?.organizationId,
     currentUser?.role,
     navigate,
     setCurrentViewState,

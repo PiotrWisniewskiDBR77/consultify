@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { AppView } from '../../../../src/types';
 import {
   getAdminMenuItem,
+  getInternalToolsMenuItem,
   getMenuStructure,
   getOrganizationMenuItem,
   getPartnerMenuItem,
@@ -30,21 +31,32 @@ describe('Sidebar menuConfig (L2)', () => {
     expect(affiliate?.viewId).toBe(AppView.AFFILIATE_DASHBOARD);
   });
 
-  it('exposes AI OS manual-test entrypoints in the main sidebar', () => {
+  it('keeps AI OS out of the main sidebar', () => {
     const menu = getMenuStructure(t);
-    const aiOs = menu.find((item) => item.id === 'AI_OS');
+    expect(menu.some((item) => item.id === 'AI_OS')).toBe(false);
+    expect(menu.some((item) => item.id === 'INTERNAL_TOOLS')).toBe(false);
+  });
 
-    expect(aiOs?.label).toBe('AI OS');
-    expect(aiOs?.viewId).toBe(AppView.AI_OS_HOME);
-    expect(aiOs?.subItems?.map((item) => item.id)).toEqual([
+  it('exposes AI OS manual-test entrypoints as an internal tools footer item', () => {
+    const aiOs = getInternalToolsMenuItem(t);
+
+    expect(aiOs.label).toBe('Internal Tools');
+    expect(aiOs.viewId).toBe(AppView.AI_OS_HOME);
+    expect(aiOs.subItems?.map((item) => item.id)).toEqual([
+      'AI_OS_HOME',
       'AI_OS_ACTIONS',
+      'AI_OS_RESEARCH',
+      'AI_OS_ARTIFACTS',
       'AI_OS_MEMORY',
       'AI_OS_CONNECTORS',
       'AI_OS_AGENTS',
       'AI_OS_OUTCOMES',
     ]);
-    expect(aiOs?.subItems?.map((item) => item.viewId)).toEqual([
+    expect(aiOs.subItems?.map((item) => item.viewId)).toEqual([
+      AppView.AI_OS_HOME,
       AppView.AI_OS_ACTION_CENTER,
+      AppView.AI_OS_RESEARCH,
+      AppView.AI_OS_ARTIFACTS,
       AppView.AI_OS_CONTEXT_MEMORY,
       AppView.AI_OS_CONNECTORS,
       AppView.AI_OS_AGENTS,
