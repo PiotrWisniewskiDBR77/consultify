@@ -1874,6 +1874,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   return (
     <>
+      {commandRowPortalTarget && commandRowActions
+        ? createPortal(commandRowActions, commandRowPortalTarget)
+        : null}
       <NModeShell
         loading={loading}
         presentationMode="n"
