@@ -700,6 +700,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const [previewKnownToolLoading, setPreviewKnownToolLoading] = useState(false);
   const [autoExportPdfForId, setAutoExportPdfForId] = useState<string | null>(null);
   const [generateInitiativesForId, setGenerateInitiativesForId] = useState<string | null>(null);
+  const [toolCommandRowActions, setToolCommandRowActions] = useState<React.ReactNode>(null);
   const [generationDefaults, setGenerationDefaults] = useState({
     methodologyId: 'impact-feasibility',
     count: 3,
@@ -3187,6 +3188,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               sessionId={doc.id}
               autoExportPdf={doc.id === autoExportPdfForId}
               onAutoExportPdfConsumed={() => setAutoExportPdfForId(null)}
+              onCommandRowActionsChange={setToolCommandRowActions}
               onBack={handleShowList}
               onOpenInitiative={(initiativeId) => {
                 // Open initiative in the same hub
@@ -4548,6 +4550,18 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         commandRowContent={CommandRowContent}
         primaryCta={PrimaryCta}
         availableViewModes={['table']}
+        commandRowRightContent={
+          activeDocumentId &&
+          toolCommandRowActions &&
+          (() => {
+            const activeDoc = openDocuments.find((doc) => doc.id === activeDocumentId);
+            return activeDoc?.type === 'tool' &&
+              activeDoc.subType !== 'initiative' &&
+              !String(activeDoc.id || '').startsWith('known:')
+              ? toolCommandRowActions
+              : null;
+          })()
+        }
         toolControl={
           <button
             type="button"

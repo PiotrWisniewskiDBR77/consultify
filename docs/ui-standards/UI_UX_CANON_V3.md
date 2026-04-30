@@ -83,11 +83,13 @@ SSOT: `docs/ui-standards/03-modules/module-hub-standard.md`
 
 SSOT: `docs/ui-standards/01-shell-layout/app-topbar-standard-v3.md`
 
-### 5.2 Module Topbar (kontekstowy)
+### 5.2 Module Topbar + Menu 3 (kontekstowe)
 
-Kolejność elementów (prawa strona):
+Kolejność elementów w Module Topbar (prawa strona):
 
-**AI context → +New → View modes → Filters**
+**Area → Add → Tool → View → Filters** (wizualnie od prawej; w DOM zwykle `Filters → View → Tool → Add → Area`).
+
+Kontekstowe akcje AI dla otwartego dokumentu / narzędzia / sekcji nie są osobnym paskiem w canvasie. Muszą trafiać do **prawej strony Menu 3 / Command Row** obok aktywnych dynamicznych kart.
 
 SSOT: `docs/ui-standards/03-modules/module-hub-standard.md`
 
@@ -217,6 +219,7 @@ Kanon v3:
 
 - AI context jest **jednym z kluczowych** elementów Module Topbar i musi być czytelny “na pierwszy rzut oka”.
 - Jednocześnie nie może konkurować z Primary CTA (na ekranie nadal max 1 “kolorowy” element jako CTA).
+- Kontekstowe AI actions dla aktywnego dokumentu/narzędzia są w **prawym slocie Menu 3**, nie jako dodatkowy toolbar pod metadanymi ani w canvasie.
 
 Kontrakt wizualny (v3):
 

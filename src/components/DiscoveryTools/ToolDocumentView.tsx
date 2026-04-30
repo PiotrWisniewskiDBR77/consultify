@@ -1,5 +1,4 @@
 import {
-  BookOpen,
   Check,
   CheckCircle2,
   Clock,
@@ -13,11 +12,11 @@ import {
   Target,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { CONSULTING_TOOL_STANDARD_OUTPUTS } from '@/config/consultingToolsStandard';
-import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useToolAI } from '@/hooks/discovery/useToolAI';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { Api } from '@/services/api';
@@ -33,12 +32,7 @@ import { AppView } from '@/types';
 import { exportToPDF } from '@/utils/pdfExport';
 
 import { EmbeddedView } from '../shared/NModeBlocks';
-import {
-  type NModeAction,
-  type NModePropertyField,
-  type NModeSection,
-  NModeShell,
-} from '../shared/NModeLayout';
+import { type NModePropertyField, type NModeSection, NModeShell } from '../shared/NModeLayout';
 import {
   ActivityLogCanvas,
   type ActivityLogEntry,
@@ -50,16 +44,17 @@ import {
   type DateFilter,
   type SortOrder,
 } from '../shared/NModeSections';
-import { GenerateInitiativesModal } from './GenerateInitiativesModal';
-import { ToolCanvas } from './ToolCanvas';
 import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
+import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
+import { ToolCanvas } from './ToolCanvas';
 import {
   computeDynamicSwotOverallReadiness,
   computeDynamicSwotPhaseSummaries,
   computeToolCompletionItems,
   computeToolReviewGaps,
 } from './toolCompletion';
+import { ToolContextPanel } from './ToolContextPanel';
 
 interface ToolDocumentViewProps {
   toolType: ToolType;
@@ -68,6 +63,7 @@ interface ToolDocumentViewProps {
   onOpenInitiative?: (initiativeId: string) => void;
   autoExportPdf?: boolean;
   onAutoExportPdfConsumed?: () => void;
+  onCommandRowActionsChange?: (node: React.ReactNode | null) => void;
 }
 
 interface HistoryEvent {
@@ -227,14 +223,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   onOpenInitiative,
   autoExportPdf,
   onAutoExportPdfConsumed,
+  onCommandRowActionsChange,
 }) => {
   const { i18n } = useTranslation();
   const isPolish = i18n.language === 'pl';
-  const {
-    setOpen: setHelpOpen,
-    setActiveTab: setHelpTab,
-    setKnowledgeModuleIdOverride,
-  } = useHelpSidePanel();
   const {
     currentOrganization,
     currentProjectId,
@@ -301,6 +293,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const [activeSection, setActiveSection] = useState<string>(
     isStrategicPhaseTool ? 'mission' : 'work'
   );
+  const [commandRowPortalTarget, setCommandRowPortalTarget] = useState<HTMLElement | null>(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [showRequestReviewModal, setShowRequestReviewModal] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -615,12 +608,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     if (isChatCollapsed) toggleChatCollapse();
   };
 
-  const handleOpenKnowledgeBase = () => {
-    setKnowledgeModuleIdOverride(toolType);
-    setHelpTab('knowledge');
-    setHelpOpen(true);
-  };
-
   const handleRequestReview = async () => {
     if (!toolSessionId || !completionReady) {
       toast.error(
@@ -894,61 +881,6 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     ]
   );
 
-  const actions: NModeAction[] = useMemo(() => {
-    const result: NModeAction[] = [
-      {
-        id: 'kb',
-        label: { en: 'How to / KB', pl: 'How to / KB' },
-        icon: BookOpen,
-        variant: 'neutral',
-        onClick: handleOpenKnowledgeBase,
-      },
-    ];
-
-    if (toolStatus === 'DRAFT') {
-      result.push({
-        id: 'review',
-        label: { en: 'Request Review', pl: 'Request Review' },
-        icon: Send,
-        variant: 'neutral',
-        onClick: handleRequestReview,
-        disabled: !completionReady || toolPermissions.canRequestReview === false,
-      });
-    }
-
-    if (toolStatus === 'REVIEW') {
-      result.push({
-        id: 'approve',
-        label: { en: 'Approve', pl: 'Approve' },
-        icon: CheckCircle2,
-        variant: 'success',
-        onClick: handleApprove,
-        disabled: toolPermissions.canApproveTool === false,
-      });
-    }
-
-    if (['APPROVED', 'GENERATED', 'COMPLETED'].includes(toolStatus)) {
-      result.push({
-        id: 'generate',
-        label: { en: 'Generate initiatives', pl: 'Generuj inicjatywy' },
-        icon: Lightbulb,
-        variant: 'ai',
-        onClick: () => setShowGenerateModal(true),
-        disabled: toolPermissions.canGenerate === false,
-      });
-    }
-
-    return result;
-  }, [
-    completionReady,
-    handleOpenKnowledgeBase,
-    isPolish,
-    toolPermissions.canApproveTool,
-    toolPermissions.canGenerate,
-    toolPermissions.canRequestReview,
-    toolStatus,
-  ]);
-
   const sections: NModeSection[] = useMemo(() => {
     const workSection = (
       <div className="space-y-6">
@@ -1111,16 +1043,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               isStreaming={isStreaming}
               streamedContent={streamedContent || ''}
               isPolish={isPolish}
-              orgName={currentOrganization?.name}
               onOpenChat={handleOpenChat}
               onOpenInitiatives={() => setShowGenerateModal(true)}
               generatedInitiatives={generatedInitiatives}
-              recentInitiatives={generatedInitiatives.slice(0, 5)}
-              chatSnippets={(activeChatMessages || []).slice(-6).map((message: any) => ({
-                role: message.role,
-                content: message.content,
-              }))}
-              showContextPanel={toolType === 'dynamic-swot'}
               missionSuggestion={missionSuggestion}
               onApplyMissionSuggestion={applyMissionSuggestion}
               onDismissMissionSuggestion={dismissMissionSuggestion}
@@ -1549,6 +1474,30 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       </div>
     );
 
+    const aiCollaborationSection = currentSession ? (
+      <ToolContextPanel
+        toolType={toolType}
+        session={currentSession}
+        currentStepId={currentStepDef?.id}
+        isPolish={isPolish}
+        orgName={currentOrganization?.name}
+        aiContent={isStreaming ? streamedContent : undefined}
+        onOpenChat={handleOpenChat}
+        onOpenInitiatives={() => setShowGenerateModal(true)}
+        generatedInitiatives={generatedInitiatives}
+        recentInitiatives={generatedInitiatives.slice(0, 5)}
+        chatSnippets={(activeChatMessages || []).slice(-6).map((message: any) => ({
+          role: message.role,
+          content: message.content,
+        }))}
+        embedded
+      />
+    ) : (
+      <div className="py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+        {isPolish ? 'Brak danych sesji' : 'No session data'}
+      </div>
+    );
+
     if (isStrategicPhaseTool) {
       const renderPhaseCanvas = (phaseStep: StepDefinition, extras?: React.ReactNode) => {
         const phaseIndex = stepDefs.findIndex((step) => step.id === phaseStep.id) + 1;
@@ -1591,16 +1540,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
                   isStreaming={isStreaming}
                   streamedContent={streamedContent || ''}
                   isPolish={isPolish}
-                  orgName={currentOrganization?.name}
                   onOpenChat={handleOpenChat}
                   onOpenInitiatives={() => setShowGenerateModal(true)}
                   generatedInitiatives={generatedInitiatives}
-                  recentInitiatives={generatedInitiatives.slice(0, 5)}
-                  chatSnippets={(activeChatMessages || []).slice(-6).map((message: any) => ({
-                    role: message.role,
-                    content: message.content,
-                  }))}
-                  showContextPanel
                   onGenerateFullSession={generateFullSession}
                   missionSuggestion={missionSuggestion}
                   onApplyMissionSuggestion={applyMissionSuggestion}
@@ -1661,260 +1603,36 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         );
       };
 
-      const missionStep = stepDefs.find((step) => step.id === 'mission');
-      const inputStep = stepDefs.find((step) => step.id === 'input');
-      const analysisStep = stepDefs.find((step) =>
-        ['swot', 'forces', 'options', 'items', 'assumptions'].includes(step.id)
-      );
-      const insightsStep = stepDefs.find((step) => step.id === 'insights');
-      const outputsStep = stepDefs.find((step) => step.id === 'outputs');
+      const phaseIcon = (stepId: string) => {
+        if (['mission', 'context'].includes(stepId)) return Target;
+        if (['input', 'signals'].includes(stepId)) return MessageSquare;
+        if (['insights', 'synthesis'].includes(stepId)) return Lightbulb;
+        if (['outputs', 'report', 'initiatives'].includes(stepId)) return CheckCircle2;
+        return Target;
+      };
 
       return [
-        ...(missionStep
-          ? [
-              {
-                id: 'mission',
-                icon: Target,
-                label: { en: 'Mission & Context', pl: 'Mission & Context' },
-                component: renderPhaseCanvas(missionStep),
-              },
-            ]
-          : []),
-        ...(inputStep
-          ? [
-              {
-                id: 'input',
-                icon: MessageSquare,
-                label: { en: 'Input & Exploration', pl: 'Input & Exploration' },
-                component: renderPhaseCanvas(inputStep),
-              },
-            ]
-          : []),
-        ...(analysisStep
-          ? [
-              {
-                id: analysisStep.id,
-                icon: Target,
-                label: { en: analysisStep.name, pl: analysisStep.namePl },
-                component: renderPhaseCanvas(analysisStep),
-              },
-            ]
-          : []),
-        ...(insightsStep
-          ? [
-              {
-                id: 'insights',
-                icon: Lightbulb,
-                label: { en: 'Synthesis & Insights', pl: 'Synthesis & Insights' },
-                badge:
-                  (swotData?.tensions?.length || 0) + (swotData?.recommendedMoves?.length || 0),
-                component: renderPhaseCanvas(
-                  insightsStep,
-                  <CommentsCanvas
-                    comments={nModeComments}
-                    onDeleteComment={handleDeleteComment}
-                    dateFilter={commentDateFilter}
-                    onDateFilterChange={setCommentDateFilter}
-                    sortOrder={commentSortOrder}
-                    onToggleSort={() =>
-                      setCommentSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
-                    }
-                    commentDraft={commentDraft}
-                    onCommentDraftChange={setCommentDraft}
-                    onSubmitComment={async () => {
-                      const added = await handleAddComment(commentDraft);
-                      if (added) {
-                        setCommentDraft('');
-                        setDraftPriority('normal');
-                      }
-                    }}
-                    draftPriority={draftPriority}
-                    onDraftPriorityChange={setDraftPriority}
-                    getPriorityDotClass={getPriorityDotClass}
-                    getCommentPriority={() => 'normal'}
-                    getPriorityButtonClass={getPriorityButtonClass}
-                    getCommentPriorityLabel={getPriorityLabel}
-                    getCommentPriorityHint={(priority) => getPriorityHint(priority, isPolish)}
-                  />
-                ),
-              },
-            ]
-          : []),
-        ...(outputsStep
-          ? [
-              {
-                id: 'outputs',
-                icon: CheckCircle2,
-                label: { en: 'Outputs & Actions', pl: 'Outputs & Actions' },
-                badge: generatedInitiatives.length + (swotData?.outputCandidates?.length || 0),
-                component: renderPhaseCanvas(
-                  outputsStep,
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                        {isPolish ? 'Readiness & governance' : 'Readiness & governance'}
-                      </h2>
-                      <div className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40">
-                        <div className="grid gap-3 md:grid-cols-2">
-                          <div>
-                            <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                              {isPolish ? 'Status' : 'Status'}
-                            </div>
-                            <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                              {statusLabel(toolStatus, isPolish)}
-                            </div>
-                          </div>
-                          <div>
-                            <div className="text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                              {isPolish ? 'Progress' : 'Progress'}
-                            </div>
-                            <div className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-                              {progress}%
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-4 space-y-2">
-                          {completionItems.map((item, index) => (
-                            <div
-                              key={`${item.label}-${index}`}
-                              className="flex items-center gap-3 text-sm"
-                            >
-                              <span
-                                className={`h-2 w-2 rounded-full ${
-                                  item.done ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'
-                                }`}
-                              />
-                              <span
-                                className={
-                                  item.done
-                                    ? 'text-slate-700 dark:text-slate-300'
-                                    : 'text-slate-500 dark:text-slate-400'
-                                }
-                              >
-                                {item.label}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                        {reviewGaps.length > 0 && (
-                          <div className="mt-4 rounded-xl bg-amber-500/10 px-4 py-3 text-sm text-amber-700 dark:text-amber-300">
-                            <div className="mb-2 font-medium">
-                              {isPolish ? 'Brakujące elementy' : 'Missing items'}
-                            </div>
-                            <ul className="space-y-1">
-                              {reviewGaps.map((gap, index) => (
-                                <li key={`${gap}-${index}`}>• {gap}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
-                        <div className="mt-4 flex flex-wrap gap-2">
-                          {toolStatus === 'DRAFT' && (
-                            <button
-                              type="button"
-                              onClick={handleRequestReview}
-                              disabled={
-                                !completionReady || toolPermissions.canRequestReview === false
-                              }
-                              className="rounded-lg bg-amber-500 px-3 py-2 text-sm text-white disabled:opacity-50"
-                            >
-                              {isPolish ? 'Request Review' : 'Request Review'}
-                            </button>
-                          )}
-                          {toolStatus === 'REVIEW' && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={handleApprove}
-                                disabled={toolPermissions.canApproveTool === false}
-                                className="rounded-lg bg-emerald-500 px-3 py-2 text-sm text-white disabled:opacity-50"
-                              >
-                                {isPolish ? 'Approve' : 'Approve'}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={handleSendBack}
-                                className="rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-navy-900/70 dark:text-slate-300"
-                              >
-                                {isPolish ? 'Send back' : 'Send back'}
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                        {isPolish ? 'Output candidates' : 'Output candidates'}
-                      </h2>
-                      {(swotData?.outputCandidates || []).length === 0 ? (
-                        <div className="rounded-2xl bg-slate-50/70 p-4 text-sm text-slate-500 dark:bg-navy-900/40 dark:text-slate-400">
-                          {isPolish ? 'Brak kandydatów outputów.' : 'No output candidates yet.'}
-                        </div>
-                      ) : (
-                        <div className="grid gap-3 md:grid-cols-2">
-                          {swotData?.outputCandidates?.map((candidate) => (
-                            <div
-                              key={candidate.id}
-                              className="rounded-2xl bg-slate-50/70 p-4 dark:bg-navy-900/40"
-                            >
-                              <div className="text-sm font-medium text-slate-800 dark:text-slate-100">
-                                {candidate.title}
-                              </div>
-                              <div className="mt-1 text-[11px] uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                                {candidate.outputType}
-                              </div>
-                              <div className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-                                {candidate.description}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="grid gap-4 xl:grid-cols-2">
-                      <ActivityLogCanvas
-                        entries={activityEntries}
-                        stats={activityStats}
-                        typeMeta={activityTypeMeta}
-                      />
-                      <EmbeddedView
-                        title={isPolish ? 'Powiązania' : 'Backlinks'}
-                        count={toolBacklinks.length}
-                        loading={toolBacklinksLoading}
-                        readOnly
-                        viewModes={['list']}
-                      >
-                        {toolBacklinks.length === 0 && !toolBacklinksLoading ? (
-                          <div className="px-1 text-[11px] text-slate-500 dark:text-slate-400">
-                            {isPolish ? 'Brak powiązań' : 'No links yet'}
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {toolBacklinks.map((item) => (
-                              <div
-                                key={item.id}
-                                className="rounded-xl bg-white/70 px-3 py-2 dark:bg-navy-950/40"
-                              >
-                                <div className="text-[11px] font-medium text-slate-800 dark:text-slate-200">
-                                  {item.sourceType}
-                                </div>
-                                <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                                  {item.sourceId}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </EmbeddedView>
-                    </div>
-                  </div>
-                ),
-              },
-            ]
-          : []),
+        ...stepDefs.map((step) => {
+          const isOutputs = ['outputs', 'report', 'initiatives'].includes(step.id);
+          return {
+            id: step.id,
+            icon: phaseIcon(step.id),
+            label: {
+              en: isOutputs ? 'Outputs & Actions' : step.name,
+              pl: isOutputs ? 'Outputs & Actions' : step.namePl,
+            },
+            badge: isOutputs
+              ? generatedInitiatives.length + (swotData?.outputCandidates?.length || 0)
+              : undefined,
+            component: renderPhaseCanvas(step),
+          };
+        }),
+        {
+          id: 'ai-collaboration',
+          icon: Sparkles,
+          label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
+          component: aiCollaborationSection,
+        },
       ] as NModeSection[];
     }
 
@@ -1938,6 +1656,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         label: { en: 'Outputs', pl: 'Outputs' },
         badge: generatedInitiatives.length + (swotData?.outputCandidates?.length || 0),
         component: outputsSection,
+      },
+      {
+        id: 'ai-collaboration',
+        icon: Sparkles,
+        label: { en: 'AI Collaboration Panel', pl: 'AI Collaboration Panel' },
+        component: aiCollaborationSection,
       },
       {
         id: 'comments',
@@ -2089,6 +1813,54 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     [isStrategicPhaseTool, setCurrentStep, stepDefs]
   );
 
+  const commandRowActions = useMemo(() => {
+    const showAiActions = phaseAiActions.length > 0 || isStreaming || aiReviewCount > 0;
+    if (!showAiActions) return null;
+
+    return (
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
+        <ToolPhaseAiActions
+          actions={phaseAiActions}
+          activeActionId={activeAiActionId}
+          isStreaming={isStreaming}
+          isPolish={isPolish}
+          onRunAction={(actionId) => void runPhaseAiAction(actionId)}
+          onAbort={abortStream}
+          aiReviewCount={aiReviewCount}
+          onReviewAiCards={scrollToAiCards}
+          className="shrink-0"
+        />
+      </div>
+    );
+  }, [
+    abortStream,
+    activeAiActionId,
+    aiReviewCount,
+    isPolish,
+    isStreaming,
+    phaseAiActions,
+    runPhaseAiAction,
+  ]);
+
+  useEffect(() => {
+    if (!onCommandRowActionsChange) return;
+
+    onCommandRowActionsChange(commandRowActions);
+    return () => onCommandRowActionsChange(null);
+  }, [commandRowActions, onCommandRowActionsChange]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const syncPortalTarget = () => {
+      setCommandRowPortalTarget(document.getElementById('module-command-row-right-actions'));
+    };
+
+    syncPortalTarget();
+    const rafId = window.requestAnimationFrame(syncPortalTarget);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [toolSessionId, commandRowActions]);
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center bg-slate-50 dark:bg-navy-950">
@@ -2123,67 +1895,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         }}
         properties={properties}
         sections={sections}
-        actions={actions}
-        actionsVisible={actions.length > 0}
-        renderActionBar={() => {
-          const showAiActions = phaseAiActions.length > 0 || isStreaming || aiReviewCount > 0;
-          if (!actions.length && !showAiActions) return null;
-
-          return (
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                {actions.map((action) => {
-                  const Icon = action.icon;
-                  const label = isPolish ? action.label.pl : action.label.en;
-                  const title = action.title
-                    ? isPolish
-                      ? action.title.pl
-                      : action.title.en
-                    : label;
-                  const variantClass =
-                    action.variant === 'success'
-                      ? 'border-emerald-400/30 text-emerald-600 hover:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400'
-                      : action.variant === 'danger'
-                        ? 'border-red-400/30 text-red-600 hover:bg-red-500/10 dark:border-red-500/20 dark:text-red-400'
-                        : action.variant === 'ai'
-                          ? 'border-primary-400/30 bg-primary-500/10 text-primary-600 hover:bg-primary-500/15 dark:border-primary-500/20 dark:text-primary-300'
-                          : 'border-slate-300/40 text-slate-600 hover:bg-slate-100 dark:border-navy-600/30 dark:text-slate-400 dark:hover:bg-navy-800/60';
-
-                  return (
-                    <button
-                      key={action.id}
-                      type="button"
-                      onClick={action.onClick}
-                      disabled={action.disabled || action.loading}
-                      title={title}
-                      className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${variantClass}`}
-                    >
-                      {action.loading ? (
-                        <Loader2 size={13} className="animate-spin" />
-                      ) : (
-                        <Icon size={13} />
-                      )}
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {showAiActions && (
-                <ToolPhaseAiActions
-                  actions={phaseAiActions}
-                  activeActionId={activeAiActionId}
-                  isStreaming={isStreaming}
-                  isPolish={isPolish}
-                  onRunAction={(actionId) => void runPhaseAiAction(actionId)}
-                  onAbort={abortStream}
-                  aiReviewCount={aiReviewCount}
-                  onReviewAiCards={scrollToAiCards}
-                />
-              )}
-            </div>
-          );
-        }}
+        actions={[]}
+        actionsVisible={false}
         activeSection={activeSection}
         onSectionChange={handleSectionChange}
       >

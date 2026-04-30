@@ -25,7 +25,6 @@ import { ReasoningStep } from './steps/ReasoningStep';
 import { ReportStep } from './steps/ReportStep';
 import { ResultsStep } from './steps/ResultsStep';
 import { SummaryStep } from './steps/SummaryStep';
-import { ToolContextPanel } from './ToolContextPanel';
 import { SWOTBuildPhase } from './tools/DynamicSWOT/SWOTBuildPhase';
 import { SWOTInputExplorationPhase } from './tools/DynamicSWOT/SWOTInputExplorationPhase';
 import { SWOTInsightsPhase } from './tools/DynamicSWOT/SWOTInsightsPhase';
@@ -78,13 +77,9 @@ interface ToolCanvasProps {
   isStreaming: boolean;
   streamedContent: string;
   isPolish: boolean;
-  orgName?: string | null;
   onOpenChat: () => void;
   onOpenInitiatives?: () => void;
   generatedInitiatives?: { id: string; title: string; status?: string }[];
-  recentInitiatives?: { id: string; title: string; status?: string }[];
-  chatSnippets?: { role: string; content: string }[];
-  showContextPanel?: boolean;
   onGenerateFullSession?: () => void;
   missionSuggestion?: Partial<ConsultingMissionContext> | null;
   onApplyMissionSuggestion?: () => void;
@@ -106,13 +101,9 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   isStreaming,
   streamedContent,
   isPolish,
-  orgName,
   onOpenChat,
   onOpenInitiatives,
   generatedInitiatives,
-  recentInitiatives,
-  chatSnippets,
-  showContextPanel = true,
   onGenerateFullSession,
   missionSuggestion,
   onApplyMissionSuggestion,
@@ -123,11 +114,6 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
   onRejectCard,
   onRethinkCard,
 }) => {
-  const isDynamicSwotSessionPhase =
-    toolType === 'dynamic-swot' &&
-    ['mission', 'input', 'swot', 'insights', 'outputs'].includes(stepDefinition?.id || '');
-  const shouldShowContextPanel = showContextPanel && !isDynamicSwotSessionPhase;
-
   // Render step-specific content
   const renderStepContent = () => {
     if (!stepDefinition) {
@@ -660,31 +646,7 @@ export const ToolCanvas: React.FC<ToolCanvasProps> = ({
     );
   };
 
-  return (
-    <div className="flex h-full">
-      {/* Main content area */}
-      <div className="flex-1 overflow-y-auto p-6">
-        {renderStepContent()}
-      </div>
-
-      {shouldShowContextPanel && (
-        <ToolContextPanel
-          toolType={toolType}
-          session={session}
-          currentStepId={stepDefinition?.id}
-          isPolish={isPolish}
-          orgName={orgName}
-          aiContent={isStreaming ? streamedContent : undefined}
-          onOpenChat={onOpenChat}
-          onGenerateFullSession={onGenerateFullSession}
-          onOpenInitiatives={onOpenInitiatives}
-          generatedInitiatives={generatedInitiatives}
-          recentInitiatives={recentInitiatives}
-          chatSnippets={chatSnippets}
-        />
-      )}
-    </div>
-  );
+  return <div className="h-full overflow-y-auto p-6">{renderStepContent()}</div>;
 };
 
 export default ToolCanvas;

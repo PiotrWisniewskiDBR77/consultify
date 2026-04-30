@@ -101,6 +101,8 @@ interface ModuleNavBarProps {
   toolControl?: React.ReactNode;
   // Optional AI control (rightmost in the topbar cluster)
   aiControl?: React.ReactNode;
+  // Optional right-side content in Menu 3 / Command Row, e.g. contextual AI actions.
+  commandRowRightContent?: React.ReactNode;
   /**
    * If true, `commandRowContent` overrides Search/DynamicTabs (used for multi-select bulk mode).
    * KANON v3: bulk actions row is the highest priority mode of Command Row.
@@ -178,6 +180,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   rightControls,
   toolControl,
   aiControl,
+  commandRowRightContent,
   forceCommandRow = false,
 }) => {
   const [showSearch, setShowSearch] = useState(false);
@@ -284,11 +287,12 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
           onSelectDocument={onSelectDocument}
           onCloseDocument={onCloseDocument}
           onShowList={onShowList}
+          rightContent={commandRowRightContent}
         />
       );
     }
 
-    if (!commandRowContent && activeFilters.length === 0) return null;
+    if (!commandRowContent && !commandRowRightContent && activeFilters.length === 0) return null;
 
     return (
       <div className="px-4 pb-3">
@@ -300,6 +304,11 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               onRemoveFilter={onRemoveFilter}
               onClearAll={onClearFilters}
             />
+          ) : null}
+          {commandRowRightContent ? (
+            <div className="ml-auto flex shrink-0 items-center justify-end gap-1.5">
+              {commandRowRightContent}
+            </div>
           ) : null}
         </div>
       </div>

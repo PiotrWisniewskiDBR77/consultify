@@ -20,6 +20,8 @@ interface DynamicTabsProps {
   onSelectDocument: (id: string) => void;
   onCloseDocument: (id: string) => void;
   onShowList: () => void;
+  /** Right-side actions in Menu 3. Used for contextual AI/actions; never add a second row. */
+  rightContent?: React.ReactNode;
 }
 
 // Max visible tabs before overflow
@@ -116,6 +118,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
   onSelectDocument,
   onCloseDocument,
   onShowList,
+  rightContent,
 }) => {
   const [showOverflowMenu, setShowOverflowMenu] = useState(false);
 
@@ -279,6 +282,13 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
           )}
         </div>
       )}
+
+      <div
+        id="module-command-row-right-actions"
+        className="ml-auto flex shrink-0 items-center justify-end gap-1.5"
+      >
+        {rightContent}
+      </div>
     </div>
   );
 };

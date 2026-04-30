@@ -137,6 +137,18 @@ Jeżeli dany tab modułu otwiera **specjalistyczny workspace / analysis view / m
 - **MUST:** takie przełączniki renderujemy w **toolbarze konkretnego widoku** (nagłówek timeline / heatmap / canvas), a nie w Menu 3.
 - **MUST NOT:** otwarcie panelu lub lokalnego subwidoku nie może powodować pojawienia się alternatywnego drugiego paska pod topbarem.
 
+### 3.1b Kontekstowe akcje AI w Menu 3 (MUST)
+
+Wszystkie przyciski AI, które pojawiają się kontekstowo dla otwartego dokumentu / narzędzia / sekcji, renderujemy **po prawej stronie Menu 3**.
+
+**Reguły:**
+
+- **MUST:** AI actions nie tworzą osobnego paska pod metadanymi, pod properties strip ani wewnątrz głównego canvasu.
+- **MUST:** jeśli ekran ma Dynamic Tabs, AI actions korzystają z prawego slotu tego samego rzędu (`commandRowRightContent` / `DynamicTabs.rightContent`).
+- **MUST:** jeśli ekran ma lokalne Menu 3, AI actions pozostają po prawej stronie tego lokalnego Menu 3.
+- **SHOULD:** podstawowe akcje workflow dla aktywnego dokumentu mogą być grupowane obok AI actions w tym samym prawym slocie, jeśli dzięki temu unikamy dodatkowego toolbaru.
+- **MUST NOT:** dublować tego samego przycisku AI w Menu 3 i w canvasie.
+
 **Uzasadnienie:**
 
 Specjalistyczne widoki często mają własną logikę subview (`Resources`, `Timeline`, `Completeness`, lane focus, itp.). W takich przypadkach Menu 3 jest częścią lokalnej nawigacji roboczej tego widoku i nie powinno być przejmowane przez globalne `DynamicTabs`.
