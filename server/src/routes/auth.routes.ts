@@ -37,6 +37,7 @@ import {
   setAuthCookies,
 } from '../utils/cookieAuth.js';
 import { all as _dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
+import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
 import { isForcedSuperAdminEmail, resolveAuthEffectiveRole } from '../utils/platformRoles.js';
 import {
@@ -331,17 +332,50 @@ router.get(
         profile_survey_last_dismissed_at: string | null;
       } | null = null;
 
-      const ME_SELECT_COLS = `u.id, u.email, u.role, u.organization_id, u.first_name, u.last_name,
-                   u.avatar_url, u.impersonator_id,
-                   u.display_name, u.pronouns, u.department, u.job_title,
-                   u.status_message, u.out_of_office, u.vacation_end,
-                   u.linkedin_id, u.phone, u.timezone, u.location,
-                   u.company_name, u.date_format, u.time_format, u.out_of_office_message,
-                   u.seniority_level, u.site_location, u.tenure_years,
-                   u.manages_team, u.team_size, u.expertise_tags,
-                   u.engagement_level, u.profile_survey_completed_at,
-                   u.profile_survey_dismissed_count, u.profile_survey_last_dismissed_at,
-                   o.name as organization_name, o.plan as organization_plan, o.status as organization_status`;
+      // Build a schema-aware select to avoid noisy "column does not exist" errors
+      // on legacy databases (e.g., staging snapshots used for local dev).
+      const userCols = await getTableColumns('users');
+      const ucol = (col: string, fallbackSql: string) =>
+        userCols.has(col) ? `u.${col}` : `${fallbackSql} as ${col}`;
+
+      const ME_SELECT_COLS = [
+        'u.id',
+        'u.email',
+        'u.role',
+        'u.organization_id',
+        'u.first_name',
+        'u.last_name',
+        ucol('avatar_url', 'NULL'),
+        ucol('impersonator_id', 'NULL'),
+        ucol('display_name', 'NULL'),
+        ucol('pronouns', 'NULL'),
+        ucol('department', 'NULL'),
+        ucol('job_title', 'NULL'),
+        ucol('status_message', 'NULL'),
+        ucol('out_of_office', 'NULL'),
+        ucol('vacation_end', 'NULL'),
+        ucol('linkedin_id', 'NULL'),
+        ucol('phone', 'NULL'),
+        ucol('timezone', 'NULL'),
+        ucol('location', 'NULL'),
+        ucol('company_name', 'NULL'),
+        ucol('date_format', 'NULL'),
+        ucol('time_format', 'NULL'),
+        ucol('out_of_office_message', 'NULL'),
+        ucol('seniority_level', 'NULL'),
+        ucol('site_location', 'NULL'),
+        ucol('tenure_years', 'NULL'),
+        ucol('manages_team', 'NULL'),
+        ucol('team_size', 'NULL'),
+        ucol('expertise_tags', 'NULL'),
+        ucol('engagement_level', 'NULL'),
+        ucol('profile_survey_completed_at', 'NULL'),
+        ucol('profile_survey_dismissed_count', '0'),
+        ucol('profile_survey_last_dismissed_at', 'NULL'),
+        'o.name as organization_name',
+        'o.plan as organization_plan',
+        'o.status as organization_status',
+      ].join(', ');
 
       try {
         user = await dbGet(

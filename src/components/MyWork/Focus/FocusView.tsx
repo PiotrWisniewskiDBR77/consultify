@@ -63,6 +63,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
+import { renderIconNode } from '@/components/shared/renderIconNode';
 import { PreviewPaneShell } from '@/components/ui/ResizableTable/PreviewPaneShell';
 import { useAppStore } from '@/store/useAppStore';
 
@@ -640,7 +641,7 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
       {/* Column Header */}
       <div className="flex items-center justify-between p-4 border-b border-inherit">
         <div className="flex items-center gap-2">
-          <span className={config.color}>{config.icon}</span>
+          <span className={config.color}>{renderIconNode(config.icon, { size: 16 })}</span>
           <h3 className={`font-semibold ${config.color}`}>{t(config.titleKey, config.title)}</h3>
           <span className="text-xs text-slate-500 dark:text-slate-400">
             {completedCount}/{items.length}
@@ -678,7 +679,9 @@ const FocusColumnComponent: React.FC<FocusColumnProps> = ({
 
         {items.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-center">
-            <div className={`p-3 rounded-full ${config.bgColor} mb-2`}>{config.icon}</div>
+            <div className={`p-3 rounded-full ${config.bgColor} mb-2`}>
+              {renderIconNode(config.icon, { size: 16 })}
+            </div>
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t('myWork.focus.emptyColumn', 'No items')}
             </p>

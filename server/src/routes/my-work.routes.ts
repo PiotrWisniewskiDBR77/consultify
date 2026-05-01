@@ -6362,8 +6362,24 @@ router.get(
     const decisionId = String(req.params.id || '').trim();
     if (!decisionId) return res.status(400).json({ error: 'Missing decision id' });
 
+    const decisionCols = await getTableColumns('decisions');
+    const select = [
+      'id',
+      'title',
+      'description',
+      'status',
+      'priority',
+      decisionCols.has('category') ? 'category' : 'NULL as category',
+      decisionCols.has('created_at') ? 'created_at' : 'createdAt as created_at',
+      decisionCols.has('deadline')
+        ? 'deadline'
+        : decisionCols.has('due_date')
+          ? 'due_date as deadline'
+          : 'NULL as deadline',
+    ].join(', ');
+
     const decision = await queryHelpers.queryOne<any>(
-      `SELECT id, title, description, status, priority, category, created_at, deadline
+      `SELECT ${select}
        FROM decisions WHERE id = ? AND organization_id = ? LIMIT 1`,
       [decisionId, orgId]
     );

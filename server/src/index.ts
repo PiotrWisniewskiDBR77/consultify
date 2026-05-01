@@ -971,6 +971,11 @@ app.use((req, res, next) => {
 // the rest of the deployed backend while we finish the anonymous KB packet.
 app.use('/api/public/kb-v8', v8FeatureGate, publicV8KnowledgeBaseRoutes);
 
+// MyWork Table UI expects workspace connectors endpoints to exist; when the
+// connectors subsystem isn't enabled yet the frontend can get stuck retrying 404s.
+const workspacesRoutes = await import('./routes/workspaces.routes.js').then((m) => m.default || m);
+app.use('/api/workspaces', workspacesRoutes as any);
+
 if (isTest && process.env.ENABLE_TEST_GATEWAY !== 'true') {
   const managementReportsRoutes = await import('./routes/managementReports.routes.js').then(
     (m) => m.default || m

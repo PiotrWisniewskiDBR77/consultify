@@ -17,6 +17,8 @@ import {
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { renderIconNode, type IconNode } from '@/components/shared/renderIconNode';
+
 type EmptyStateType =
   | 'focus'
   | 'inbox'
@@ -38,7 +40,7 @@ interface EmptyStateProps {
   onAISuggestion?: () => void;
   className?: string;
   // Alternative API for custom icon/action
-  icon?: React.ReactNode;
+  icon?: IconNode;
   action?: React.ReactNode;
 }
 
@@ -117,6 +119,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   const { t } = useTranslation();
   const config = typeConfig[type] || typeConfig.generic;
+  const iconNode = renderIconNode(icon ?? config.icon, { size: 32 });
 
   return (
     <motion.div
@@ -130,7 +133,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
             `}
     >
       {/* Icon */}
-      <div className="mb-4 text-slate-400 dark:text-slate-500">{icon || config.icon}</div>
+      <div className="mb-4 text-slate-400 dark:text-slate-500">{iconNode}</div>
 
       {/* Title */}
       <h3 className="text-lg font-semibold text-navy-900 dark:text-white mb-2">
