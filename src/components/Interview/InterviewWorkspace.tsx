@@ -1070,6 +1070,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         );
         void runAiQualityReview({ silent: true });
         onComplete?.(session.id);
+        onClose?.();
         return;
       }
 
@@ -1089,6 +1090,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       });
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!', { id: toastId });
       onComplete?.(session.id);
+      onClose?.();
     } catch (error: any) {
       console.error('[InterviewWorkspace] Failed to submit session:', error);
       const apiMsg =
