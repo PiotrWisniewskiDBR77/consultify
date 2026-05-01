@@ -2403,18 +2403,22 @@ function computeArtifactRunPreflight(params: {
         'Sheet materialization requires a governed table target (tableId) at materialize time',
     });
   } else if (params.run.plan.outputType === 'report') {
+    const hasGroundedSource = Boolean(params.run.contextSnapshotId);
     checks.push({
       id: 'materialization_inputs',
-      status: 'pending',
-      message:
-        'Report materialization may require explicit sourceType/sourceId unless snapshot grounding is available',
+      status: hasGroundedSource ? 'passed' : 'pending',
+      message: hasGroundedSource
+        ? 'Report materialization inputs are grounded by context snapshot'
+        : 'Report materialization may require explicit sourceType/sourceId unless snapshot grounding is available',
     });
   } else if (params.run.plan.outputType === 'presentation') {
+    const hasGroundedSource = Boolean(params.run.contextSnapshotId);
     checks.push({
       id: 'materialization_inputs',
-      status: 'pending',
-      message:
-        'Presentation materialization may require explicit sourceType/sourceId unless snapshot grounding is available',
+      status: hasGroundedSource ? 'passed' : 'pending',
+      message: hasGroundedSource
+        ? 'Presentation materialization inputs are grounded by context snapshot'
+        : 'Presentation materialization may require explicit sourceType/sourceId unless snapshot grounding is available',
     });
   }
 
@@ -2506,17 +2510,19 @@ export async function acceptArtifactRunPlan(params: {
     riskClass: current.artifactId ? 'safe_update' : 'safe_additive',
     approvalClass: 'requires_human_approval',
     previewPayload: {
-      diff: buildWave5LineDiffForPreview(
-        current.artifactId
-          ? `Existing artifact ${current.artifactId} will be updated by ArtifactRun ${current.runId}.`
-          : '',
-        [
-          `ArtifactRun ${current.runId} will create ${current.plan.outputType}.`,
-          `Family: ${current.plan.artifactFamily}`,
-          `Title: ${current.plan.titleHint}`,
-          `Visibility: ${current.plan.visibilityScope}`,
-        ].join('\n')
-      ),
+      diff: {
+        lineDiff: buildWave5LineDiffForPreview(
+          current.artifactId
+            ? `Existing artifact ${current.artifactId} will be updated by ArtifactRun ${current.runId}.`
+            : '',
+          [
+            `ArtifactRun ${current.runId} will create ${current.plan.outputType}.`,
+            `Family: ${current.plan.artifactFamily}`,
+            `Title: ${current.plan.titleHint}`,
+            `Visibility: ${current.plan.visibilityScope}`,
+          ].join('\n')
+        ),
+      },
       beforeState: current.artifactId
         ? {
             artifactId: current.artifactId,
