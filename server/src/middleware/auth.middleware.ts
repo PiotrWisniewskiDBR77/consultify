@@ -11,6 +11,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
 import logger from '../utils/Logger.js';
+import { normalizeApplicationRole, normalizePlatformRole } from '../utils/roleNormalization.js';
 import { DEMO_SESSION_ORG_HEADER } from './demoGuard.middleware.js';
 
 // Used by security integrity gate and to ensure test bypasses never run in prod.
@@ -169,26 +170,14 @@ const extractToken = (req: AuthRequest): string | null => {
  */
 const mapRole = (role?: string): UserRole => {
   if (!role) return 'team_member';
-  const r = role.toLowerCase();
-  switch (r) {
-    case 'admin':
-      return 'administrator';
-    case 'superadmin':
-    case 'super_admin':
-      return 'owner';
-    case 'user':
-      return 'team_member';
-    case 'member':
-      return 'team_member';
-    case 'client':
-      return 'guest';
-    case 'guest':
-      return 'guest';
-    case 'manager':
-      return 'project_manager';
-    default:
-      return role as UserRole;
-  }
+  const platformRole = normalizePlatformRole(role);
+  if (platformRole === 'SUPERADMIN') return 'owner';
+
+  const applicationRole = normalizeApplicationRole(role);
+  if (applicationRole === 'OWNER') return 'owner';
+  if (applicationRole === 'ADMIN') return 'administrator';
+  if (applicationRole === 'GUEST') return 'guest';
+  return 'team_member';
 };
 
 const normalizePermissionRole = (role?: string): string => {
@@ -199,7 +188,7 @@ const normalizePermissionRole = (role?: string): string => {
     case 'SUPERADMIN':
       return 'SUPERADMIN';
     case 'OWNER':
-      return 'ADMIN';
+      return 'OWNER';
     case 'ADMINISTRATOR':
     case 'ADMIN':
       return 'ADMIN';
@@ -209,7 +198,7 @@ const normalizePermissionRole = (role?: string): string => {
     case 'TEAM_MEMBER':
     case 'MEMBER':
     case 'USER':
-      return 'TEAM_MEMBER';
+      return 'USER';
     case 'VIEWER':
     case 'GUEST':
     case 'CLIENT':
@@ -269,7 +258,7 @@ const attachUser = async (
       if (membership && String(membership.status || '').toUpperCase() === 'ACTIVE') {
         resolvedOrganizationId = requestedOrgContextId;
         if (membership.role) {
-          resolvedUserRole = membership.role;
+          resolvedUserRole = normalizeApplicationRole(membership.role);
         }
       }
     } catch {
@@ -294,6 +283,10 @@ const attachUser = async (
     }
   } catch {
     // ignore
+  }
+
+  if (!normalizePlatformRole(req.userRole)) {
+    req.userRole = normalizeApplicationRole(req.userRole);
   }
 
   const user: AuthenticatedUser = {
@@ -328,7 +321,9 @@ const attachUser = async (
   }
 
   // Attach permission helper
-  const permissionRole = normalizePermissionRole(decoded.role || decoded.userRole || user.role);
+  const permissionRole = normalizePermissionRole(
+    req.userRole || decoded.role || decoded.userRole || user.role
+  );
   req.can = (capability: string): boolean => {
     return PermissionService.can(
       {

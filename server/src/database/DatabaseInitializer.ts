@@ -743,6 +743,9 @@ async function ensureProjectMembershipTables(): Promise<void> {
         consultant_profile TEXT DEFAULT 'NONE',
         engagement_type TEXT DEFAULT 'INTERNAL',
         acting_org_id TEXT,
+        role_template_id TEXT,
+        normalized_project_role TEXT,
+        legacy_project_role TEXT,
         UNIQUE(project_id, user_id)
       )
     `);
@@ -758,6 +761,55 @@ async function ensureProjectMembershipTables(): Promise<void> {
     await db.query(
       `CREATE INDEX IF NOT EXISTS idx_project_members_workstream ON project_members(workstream_id)`
     );
+    await db.query(`ALTER TABLE project_members ADD COLUMN IF NOT EXISTS role_template_id TEXT`);
+    await db.query(
+      `ALTER TABLE project_members ADD COLUMN IF NOT EXISTS normalized_project_role TEXT`
+    );
+    await db.query(`ALTER TABLE project_members ADD COLUMN IF NOT EXISTS legacy_project_role TEXT`);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS project_role_templates (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        role_key TEXT NOT NULL,
+        label TEXT NOT NULL,
+        description TEXT,
+        is_factory INTEGER DEFAULT 0,
+        is_required INTEGER DEFAULT 0,
+        is_enabled INTEGER DEFAULT 1,
+        capabilities_json TEXT DEFAULT '[]',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(organization_id, role_key)
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS project_role_overrides (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        role_key TEXT NOT NULL,
+        capabilities_json TEXT DEFAULT '[]',
+        is_enabled INTEGER DEFAULT 1,
+        fallback_role_key TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(project_id, role_key)
+      )
+    `);
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS role_change_audit_events (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        project_id TEXT,
+        actor_id TEXT,
+        action TEXT NOT NULL,
+        resource_type TEXT NOT NULL,
+        resource_id TEXT,
+        before_json TEXT,
+        after_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
     return;
   }
 
@@ -804,6 +856,9 @@ async function ensureProjectMembershipTables(): Promise<void> {
         consultant_profile TEXT DEFAULT 'NONE',
         engagement_type TEXT DEFAULT 'INTERNAL',
         acting_org_id TEXT,
+        role_template_id TEXT,
+        normalized_project_role TEXT,
+        legacy_project_role TEXT,
         UNIQUE(project_id, user_id)
       )`,
       (err: Error | null) => {
@@ -859,6 +914,75 @@ async function ensureProjectMembershipTables(): Promise<void> {
   if (!existingColumns.has('engagement_type'))
     await addColumn(`engagement_type TEXT DEFAULT 'INTERNAL'`);
   if (!existingColumns.has('acting_org_id')) await addColumn(`acting_org_id TEXT`);
+  if (!existingColumns.has('role_template_id')) await addColumn(`role_template_id TEXT`);
+  if (!existingColumns.has('normalized_project_role'))
+    await addColumn(`normalized_project_role TEXT`);
+  if (!existingColumns.has('legacy_project_role')) await addColumn(`legacy_project_role TEXT`);
+
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS project_role_templates (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        role_key TEXT NOT NULL,
+        label TEXT NOT NULL,
+        description TEXT,
+        is_factory INTEGER DEFAULT 0,
+        is_required INTEGER DEFAULT 0,
+        is_enabled INTEGER DEFAULT 1,
+        capabilities_json TEXT DEFAULT '[]',
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        UNIQUE(organization_id, role_key)
+      )`,
+      (err: Error | null) => {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS project_role_overrides (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        role_key TEXT NOT NULL,
+        capabilities_json TEXT DEFAULT '[]',
+        is_enabled INTEGER DEFAULT 1,
+        fallback_role_key TEXT,
+        created_at TEXT DEFAULT (datetime('now')),
+        updated_at TEXT DEFAULT (datetime('now')),
+        UNIQUE(project_id, role_key)
+      )`,
+      (err: Error | null) => {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    db.run(
+      `CREATE TABLE IF NOT EXISTS role_change_audit_events (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT,
+        project_id TEXT,
+        actor_id TEXT,
+        action TEXT NOT NULL,
+        resource_type TEXT NOT NULL,
+        resource_id TEXT,
+        before_json TEXT,
+        after_json TEXT,
+        created_at TEXT DEFAULT (datetime('now'))
+      )`,
+      (err: Error | null) => {
+        if (err) reject(err);
+        else resolve();
+      }
+    );
+  });
 }
 
 // ==========================================

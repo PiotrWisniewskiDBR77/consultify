@@ -14,13 +14,6 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Api } from '@/services/api';
 import { useAppStore } from '@/store/useAppStore';
 
-// Role organizacyjne z uprawnieniami do przydzielania
-// OWNER dziedziczy uprawnienia ADMIN (plus billing/ownership/deletion)
-const ORG_ROLES_WITH_ASSIGN = ['SUPERADMIN', 'OWNER', 'ADMIN', 'PROJECT_MANAGER'];
-
-// Role projektowe z uprawnieniami do przydzielania
-const PROJECT_ROLES_WITH_ASSIGN = ['PMO_LEAD', 'WORKSTREAM_OWNER', 'INITIATIVE_OWNER', 'SPONSOR'];
-
 export interface ProjectMembership {
   projectId: string;
   projectName: string;
@@ -70,6 +63,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
     [currentUser]
   );
   const [projectMemberships, setProjectMemberships] = useState<ProjectMembership[]>([]);
+  const [effectiveCapabilities, setEffectiveCapabilities] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Pobierz role projektowe użytkownika
@@ -106,23 +100,47 @@ export const useInterviewPermissions = (): InterviewPermissions => {
     fetchProjectMemberships();
   }, [currentUser?.id]);
 
-  // Sprawdź czy użytkownik ma uprawnienia do przydzielania na podstawie roli organizacyjnej
-  const hasOrgLevelAssignPermission = useMemo(() => {
-    if (!currentUser?.role) return false;
-    return ORG_ROLES_WITH_ASSIGN.includes(currentUser.role.toUpperCase());
-  }, [currentUser?.role]);
+  useEffect(() => {
+    const fetchEffectiveAccess = async () => {
+      if (!currentUser?.id) {
+        setEffectiveCapabilities([]);
+        return;
+      }
+      try {
+        const response = await Api.get('/access/effective');
+        const capabilities = response?.effectiveAccess?.capabilities;
+        setEffectiveCapabilities(Array.isArray(capabilities) ? capabilities.map(String) : []);
+      } catch (error) {
+        console.warn('[useInterviewPermissions] Failed to fetch effective access:', error);
+        setEffectiveCapabilities([]);
+      }
+    };
 
-  // Sprawdź czy użytkownik ma uprawnienia do przydzielania na podstawie ról projektowych
-  const hasProjectLevelAssignPermission = useMemo(() => {
-    return projectMemberships.some((pm) =>
-      PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase())
-    );
-  }, [projectMemberships]);
+    fetchEffectiveAccess();
+  }, [currentUser?.id, currentOrganization?.id]);
 
-  // Główne uprawnienie do przydzielania
-  const canAssign = useMemo(() => {
-    return hasOrgLevelAssignPermission || hasProjectLevelAssignPermission;
-  }, [hasOrgLevelAssignPermission, hasProjectLevelAssignPermission]);
+  const hasCapability = useCallback(
+    (capability: string) => {
+      const set = new Set(effectiveCapabilities);
+      if (set.has('*') || set.has(capability)) return true;
+      return ['.scoped', '.own', '.assigned', '.delegated'].some((suffix) =>
+        set.has(`${capability}${suffix}`)
+      );
+    },
+    [effectiveCapabilities]
+  );
+
+  const hasOrgLevelAssignPermission = useMemo(
+    () => hasCapability('interview.assignment.create') || hasCapability('admin.access'),
+    [hasCapability]
+  );
+
+  const hasProjectLevelAssignPermission = useMemo(
+    () => hasCapability('interview.assignment.create'),
+    [hasCapability]
+  );
+
+  const canAssign = useMemo(() => hasCapability('interview.assignment.create'), [hasCapability]);
 
   const hasExplicitInterviewPermission = useCallback(
     (permissionKey: string) =>
@@ -131,26 +149,39 @@ export const useInterviewPermissions = (): InterviewPermissions => {
   );
 
   const canViewInsights = useMemo(
-    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_VIEW') || canAssign,
-    [hasExplicitInterviewPermission, canAssign]
+    () =>
+      hasCapability('interview.insights.view') ||
+      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_VIEW') ||
+      canAssign,
+    [hasCapability, hasExplicitInterviewPermission, canAssign]
   );
   const canCreateInsights = useMemo(
-    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_CREATE') || canAssign,
-    [hasExplicitInterviewPermission, canAssign]
+    () =>
+      hasCapability('interview.insights.create') ||
+      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_CREATE') ||
+      canAssign,
+    [hasCapability, hasExplicitInterviewPermission, canAssign]
   );
   const canReviewInsights = useMemo(
     () =>
-      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_REVIEW') || hasOrgLevelAssignPermission,
-    [hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
+      hasCapability('interview.assignment.review') ||
+      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_REVIEW') ||
+      hasOrgLevelAssignPermission,
+    [hasCapability, hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
   );
   const canPublishInsights = useMemo(
     () =>
-      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_PUBLISH') || hasOrgLevelAssignPermission,
-    [hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
+      hasCapability('interview.insights.publish') ||
+      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_PUBLISH') ||
+      hasOrgLevelAssignPermission,
+    [hasCapability, hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
   );
   const canHandoffInsights = useMemo(
-    () => hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_HANDOFF') || canAssign,
-    [hasExplicitInterviewPermission, canAssign]
+    () =>
+      hasCapability('interview.insights.handoff') ||
+      hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_HANDOFF') ||
+      canAssign,
+    [hasCapability, hasExplicitInterviewPermission, canAssign]
   );
 
   // Scope przydziałów - komu użytkownik może przydzielać
@@ -165,13 +196,9 @@ export const useInterviewPermissions = (): InterviewPermissions => {
 
     // Jeśli ma uprawnienia na poziomie projektu - tylko członkom swoich projektów
     if (hasProjectLevelAssignPermission) {
-      const managedProjectIds = projectMemberships
-        .filter((pm) => PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase()))
-        .map((pm) => pm.projectId);
-
       return {
         type: 'projects',
-        projectIds: managedProjectIds,
+        projectIds: projectMemberships.map((pm) => pm.projectId),
       };
     }
 
@@ -218,9 +245,7 @@ export const useInterviewPermissions = (): InterviewPermissions => {
     }
 
     // Zwróć tylko projekty gdzie ma rolę zarządzającą
-    return projectMemberships.filter((pm) =>
-      PROJECT_ROLES_WITH_ASSIGN.includes((pm.projectRole ?? '').toUpperCase())
-    );
+    return projectMemberships;
   }, [canAssign, hasOrgLevelAssignPermission, projectMemberships]);
 
   return {

@@ -10,6 +10,7 @@ import { v8ShadowInterceptor } from './middleware/v8ShadowInterceptor.middleware
 import { v8ShadowModeCheck } from './middleware/v8ShadowModeCheck.middleware.js';
 import accessControlRoutes from './routes/access-control.routes.js';
 import accessCodeRoutes from './routes/accessCodes.routes.js';
+import effectiveAccessRoutes from './routes/access.routes.js';
 import _actionDecisionRoutes from './routes/actionDecisions.routes.js';
 import aiObservabilityAdminRoutes from './routes/admin/ai-observability.routes.js';
 import adminAIQualityRoutes from './routes/admin/ai-quality.routes.js';
@@ -573,6 +574,7 @@ export class ApiGateway {
       app.use('/api/change-sentiment', changeSentimentRoutes);
       app.use('/api/stakeholder-comm', stakeholderCommRoutes);
       app.use('/api/access-control', accessControlRoutes);
+      app.use('/api/access', effectiveAccessRoutes);
       mountStub('/api/permission-requests', permissionRequestsRoutes, 'permissionRequestsRoutes');
       app.use('/api/admin/integrations', adminIntegrationsRoutes);
 

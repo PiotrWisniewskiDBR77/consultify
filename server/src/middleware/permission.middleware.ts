@@ -8,9 +8,15 @@
 
 import { NextFunction, Request, Response } from 'express';
 
+import {
+  hasEffectiveCapability,
+  mapLegacyPermissionToCapability,
+  resolveEffectiveAccess,
+} from '../services/effectiveAccessService.js';
 import GovernanceAuditService from '../services/governanceAuditService.js';
 import PermissionService from '../services/permissionService.js';
 import logger from '../utils/Logger.js';
+import { getPermissionRoleCandidates } from '../utils/roleNormalization.js';
 import type { AuthRequest } from './auth.middleware.js';
 
 // ==========================================
@@ -26,32 +32,76 @@ interface PermissionService {
   ) => Promise<boolean>;
 }
 
-const normalizeRoleForDb = (role?: string): string => {
-  if (!role) return 'VIEWER';
-  const r = role.toString().trim();
-  const upper = r.toUpperCase();
-
-  // Common aliases from JWT/app layer
-  if (upper === 'ADMINISTRATOR' || upper === 'ADMIN') return 'ADMIN';
-  if (upper === 'SUPER_ADMIN' || upper === 'SUPERADMIN') return 'SUPERADMIN';
-  if (upper === 'OWNER') return 'SUPERADMIN';
-  if (upper === 'PROJECT_MANAGER' || upper === 'MANAGER') return 'PROJECT_MANAGER';
-  if (upper === 'TEAM_MEMBER' || upper === 'MEMBER') return 'TEAM_MEMBER';
-  if (upper === 'GUEST' || upper === 'CLIENT') return 'VIEWER';
-
-  // Legacy app role
-  if (upper === 'USER') return 'USER';
-
-  return upper;
-};
-
 const getRoleCandidates = (role?: string): string[] => {
-  const normalized = normalizeRoleForDb(role);
-  // Backward-compatible bridging between legacy 'USER' and newer 'TEAM_MEMBER'
-  if (normalized === 'USER') return ['USER', 'TEAM_MEMBER'];
-  if (normalized === 'TEAM_MEMBER') return ['TEAM_MEMBER', 'USER'];
-  return [normalized];
+  return getPermissionRoleCandidates(role);
 };
+
+async function shadowCompareEffectiveAccess(
+  req: AuthRequest,
+  permissionKey: string,
+  oldAllowed: boolean
+) {
+  if (process.env.EFFECTIVE_ACCESS_SHADOW !== 'true') return;
+  const userId = req.userId || req.user?.id;
+  const organizationId = req.organizationId || req.user?.organizationId;
+  const projectId = String(
+    req.params?.projectId || req.params?.id || req.query?.projectId || ''
+  ).trim();
+  if (!userId || !organizationId) return;
+
+  try {
+    const access = await resolveEffectiveAccess({
+      userId,
+      organizationId,
+      applicationRole: req.userRole || req.user?.role,
+      projectId: projectId || null,
+      isImpersonating: Boolean(req.user?.impersonatorId),
+    });
+    const capability = mapLegacyPermissionToCapability(permissionKey);
+    const newAllowed = hasEffectiveCapability(access, capability);
+    if (newAllowed !== oldAllowed) {
+      logger.warn('[PermissionMiddleware] Effective access shadow mismatch', {
+        userId,
+        organizationId,
+        projectId: projectId || null,
+        permissionKey,
+        capability,
+        oldAllowed,
+        newAllowed,
+        applicationRole: access.applicationRole,
+        projectRole: access.projectRole,
+        warnings: access.warnings,
+      });
+    }
+  } catch (error: any) {
+    logger.warn('[PermissionMiddleware] Effective access shadow check failed', {
+      permissionKey,
+      error: error?.message || String(error),
+    });
+  }
+}
+
+async function evaluateEffectiveAccess(
+  req: AuthRequest,
+  permissionKey: string
+): Promise<boolean | null> {
+  if (process.env.EFFECTIVE_ACCESS_ENFORCE !== 'true') return null;
+  const userId = req.userId || req.user?.id;
+  const organizationId = req.organizationId || req.user?.organizationId;
+  const projectId = String(
+    req.params?.projectId || req.params?.id || req.query?.projectId || ''
+  ).trim();
+  if (!userId || !organizationId) return null;
+
+  const access = await resolveEffectiveAccess({
+    userId,
+    organizationId,
+    applicationRole: req.userRole || req.user?.role,
+    projectId: projectId || null,
+    isImpersonating: Boolean(req.user?.impersonatorId),
+  });
+  return hasEffectiveCapability(access, mapLegacyPermissionToCapability(permissionKey));
+}
 
 interface GovernanceAuditService {
   logAudit: (data: {
@@ -127,7 +177,13 @@ export const requirePermission = (permissionKey: string) => {
         if (hasPermission) break;
       }
 
+      const effectiveDecision = await evaluateEffectiveAccess(req, permissionKey);
+      if (effectiveDecision !== null) {
+        hasPermission = effectiveDecision;
+      }
+
       if (!hasPermission) {
+        await shadowCompareEffectiveAccess(req, permissionKey, false);
         logger.info(`[PermissionMiddleware] Denied: ${permissionKey} for user ${userId}`);
         res.status(403).json({
           error: 'Permission denied',
@@ -138,6 +194,7 @@ export const requirePermission = (permissionKey: string) => {
       }
 
       // Attach permission info for audit logging
+      await shadowCompareEffectiveAccess(req, permissionKey, true);
       (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
       next();
     } catch (err: any) {
@@ -174,6 +231,14 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
 
       const roleCandidates = getRoleCandidates(userRole);
       for (const permissionKey of permissionKeys) {
+        const effectiveDecision = await evaluateEffectiveAccess(req, permissionKey);
+        if (effectiveDecision === true) {
+          await shadowCompareEffectiveAccess(req, permissionKey, true);
+          (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
+          next();
+          return;
+        }
+        if (effectiveDecision === false) continue;
         for (const candidateRole of roleCandidates) {
           const hasPermission = await PermissionService.hasPermission(
             userId,
@@ -182,6 +247,7 @@ export const requireAnyPermission = (permissionKeys: string[]) => {
             candidateRole
           );
           if (hasPermission) {
+            await shadowCompareEffectiveAccess(req, permissionKey, true);
             (req as AuthRequest & { permissionChecked?: string }).permissionChecked = permissionKey;
             next();
             return;

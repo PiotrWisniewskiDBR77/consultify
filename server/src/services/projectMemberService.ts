@@ -8,6 +8,8 @@ import { v4 as uuid } from 'uuid';
 
 import DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
+import { normalizeProjectRole, type ProjectRoleValue } from '../utils/roleNormalization.js';
+import { seedFactoryRoleTemplates } from './effectiveAccessService.js';
 import { PMO_DOMAIN_IDS } from './pmoDomainRegistry.js';
 import PMOStandardsMapping from './pmoStandardsMapping.js';
 
@@ -289,6 +291,26 @@ export const DEFAULT_PERMISSIONS: Record<string, any> = {
   },
 };
 
+function getDefaultPermissionsForRole(role: unknown): any {
+  const normalizedRole = normalizeProjectRole(role);
+  if (DEFAULT_PERMISSIONS[String(role)]) return DEFAULT_PERMISSIONS[String(role)];
+  if (normalizedRole === 'PROJECT_SPONSOR') return DEFAULT_PERMISSIONS[PROJECT_ROLES.SPONSOR];
+  if (normalizedRole === 'PROJECT_LEADER') return DEFAULT_PERMISSIONS[PROJECT_ROLES.PMO_LEAD];
+  if (normalizedRole === 'TASK_ASSIGNEE') return DEFAULT_PERMISSIONS[PROJECT_ROLES.TASK_ASSIGNEE];
+  if (normalizedRole === 'OBSERVER') return DEFAULT_PERMISSIONS[PROJECT_ROLES.OBSERVER];
+  if (normalizedRole === 'PMO') return DEFAULT_PERMISSIONS[PROJECT_ROLES.PMO_LEAD];
+  if (normalizedRole === 'INITIATIVE_OWNER')
+    return DEFAULT_PERMISSIONS[PROJECT_ROLES.INITIATIVE_OWNER];
+  if (normalizedRole === 'WORKSTREAM_OWNER')
+    return DEFAULT_PERMISSIONS[PROJECT_ROLES.WORKSTREAM_OWNER];
+  if (normalizedRole === 'REVIEWER') return DEFAULT_PERMISSIONS[PROJECT_ROLES.REVIEWER];
+  if (normalizedRole === 'SME') return DEFAULT_PERMISSIONS[PROJECT_ROLES.SME];
+  if (normalizedRole === 'CONSULTANT') return DEFAULT_PERMISSIONS[PROJECT_ROLES.CONSULTANT];
+  if (normalizedRole === 'BUSINESS_OWNER') return DEFAULT_PERMISSIONS[PROJECT_ROLES.SPONSOR];
+  if (normalizedRole === 'STEERING_COMMITTEE') return DEFAULT_PERMISSIONS[PROJECT_ROLES.SPONSOR];
+  return {};
+}
+
 /**
  * RACI matrix by object type and role
  */
@@ -356,10 +378,11 @@ export class ProjectMemberService {
       endDate,
     } = options;
 
-    // Validate role
-    if (!PROJECT_ROLES[projectRole as keyof typeof PROJECT_ROLES]) {
+    const normalizedProjectRole = normalizeProjectRole(projectRole);
+    if (!normalizedProjectRole) {
       throw new Error(`Invalid project role: ${projectRole}`);
     }
+    await seedFactoryRoleTemplates();
 
     // Check if user is already a member
     const existing = await DbPromise.get(
@@ -372,7 +395,7 @@ export class ProjectMemberService {
 
     // Get default permissions for role, merge with custom
     const permissions = {
-      ...DEFAULT_PERMISSIONS[projectRole],
+      ...getDefaultPermissionsForRole(projectRole),
       ...(customPermissions || {}),
     };
 
@@ -381,14 +404,18 @@ export class ProjectMemberService {
 
     await DbPromise.run(
       `INSERT INTO project_members 
-       (id, project_id, user_id, project_role, workstream_id, allocation_percent, 
-        permissions, start_date, end_date, created_at, updated_at, added_by_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, project_id, user_id, project_role, normalized_project_role, legacy_project_role,
+        role_template_id, workstream_id, allocation_percent, permissions, start_date, end_date,
+        created_at, updated_at, added_by_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         projectId,
         userId,
+        normalizedProjectRole,
+        normalizedProjectRole,
         projectRole,
+        `factory_global_${normalizedProjectRole}`.toLowerCase(),
         workstreamId || null,
         allocationPercent,
         JSON.stringify(permissions),
@@ -404,7 +431,7 @@ export class ProjectMemberService {
     await this._logAudit(projectId, 'MEMBER_ADDED', {
       memberId: id,
       userId,
-      projectRole,
+      projectRole: normalizedProjectRole,
       addedById,
     });
 
@@ -425,6 +452,9 @@ export class ProjectMemberService {
 
     const allowedFields = [
       'project_role',
+      'normalized_project_role',
+      'legacy_project_role',
+      'role_template_id',
       'workstream_id',
       'allocation_percent',
       'permissions',
@@ -437,8 +467,21 @@ export class ProjectMemberService {
     for (const [key, value] of Object.entries(updates)) {
       const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase(); // camelCase to snake_case
       if (allowedFields.includes(dbKey)) {
-        setClauses.push(`${dbKey} = ?`);
-        values.push(dbKey === 'permissions' ? JSON.stringify(value) : value);
+        if (dbKey === 'project_role') {
+          const normalizedRole = normalizeProjectRole(value);
+          if (!normalizedRole) throw new Error(`Invalid project role: ${String(value)}`);
+          setClauses.push(
+            'project_role = ?',
+            'normalized_project_role = ?',
+            'legacy_project_role = ?'
+          );
+          values.push(normalizedRole, normalizedRole, existing.project_role);
+          setClauses.push('role_template_id = ?');
+          values.push(`factory_global_${normalizedRole}`.toLowerCase());
+        } else {
+          setClauses.push(`${dbKey} = ?`);
+          values.push(dbKey === 'permissions' ? JSON.stringify(value) : value);
+        }
       }
     }
 
@@ -456,8 +499,12 @@ export class ProjectMemberService {
     );
 
     // If role changed, update permissions to new defaults
-    if (updates.projectRole && updates.projectRole !== existing.project_role) {
-      const newPermissions = DEFAULT_PERMISSIONS[updates.projectRole];
+    if (
+      updates.projectRole &&
+      normalizeProjectRole(updates.projectRole) !== existing.project_role
+    ) {
+      const newRole = normalizeProjectRole(updates.projectRole) as ProjectRoleValue;
+      const newPermissions = getDefaultPermissionsForRole(newRole);
       await DbPromise.run(
         'UPDATE project_members SET permissions = ? WHERE project_id = ? AND user_id = ?',
         [JSON.stringify(newPermissions), projectId, userId]
@@ -466,7 +513,7 @@ export class ProjectMemberService {
       await this._logAudit(projectId, 'MEMBER_ROLE_CHANGED', {
         userId,
         oldRole: existing.project_role,
-        newRole: updates.projectRole,
+        newRole,
       });
     }
 
@@ -623,14 +670,15 @@ export class ProjectMemberService {
       FROM project_members pm
       JOIN users u ON u.id = pm.user_id
       WHERE pm.project_id = ?
-        AND pm.project_role IN (?, ?, ?, ?)
+        AND COALESCE(pm.normalized_project_role, pm.project_role) IN (?, ?, ?, ?, ?)
     `;
     const params: any[] = [
       projectId,
       PROJECT_ROLES.TASK_ASSIGNEE,
       PROJECT_ROLES.INITIATIVE_OWNER,
       PROJECT_ROLES.WORKSTREAM_OWNER,
-      PROJECT_ROLES.PMO_LEAD,
+      'PROJECT_LEADER',
+      'PMO',
     ];
 
     if (options.workstreamId) {
@@ -665,7 +713,7 @@ export class ProjectMemberService {
    */
   static async getUserRole(projectId: string, userId: string): Promise<string | null> {
     const member: any = await DbPromise.get(
-      'SELECT project_role FROM project_members WHERE project_id = ? AND user_id = ?',
+      'SELECT COALESCE(normalized_project_role, project_role) as project_role FROM project_members WHERE project_id = ? AND user_id = ?',
       [projectId, userId]
     );
     return member ? member.project_role : null;
@@ -676,7 +724,8 @@ export class ProjectMemberService {
    */
   static async getUserProjects(userId: string): Promise<any[]> {
     const projects: any[] = await DbPromise.all(
-      `SELECT p.id, p.name, p.status, pm.project_role, pm.workstream_id, pm.allocation_percent
+      `SELECT p.id, p.name, p.status, COALESCE(pm.normalized_project_role, pm.project_role) as project_role,
+              pm.workstream_id, pm.allocation_percent
        FROM project_members pm
        JOIN projects p ON p.id = pm.project_id
        WHERE pm.user_id = ?
@@ -702,7 +751,9 @@ export class ProjectMemberService {
       id: row.id,
       projectId: row.project_id,
       userId: row.user_id,
-      projectRole: row.project_role,
+      projectRole: row.normalized_project_role || row.project_role,
+      rawProjectRole: row.project_role,
+      roleTemplateId: row.role_template_id || null,
       workstreamId: row.workstream_id,
       allocationPercent: row.allocation_percent,
       permissions:

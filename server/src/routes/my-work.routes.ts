@@ -28,6 +28,11 @@ import inboxService from '../services/inboxService.js';
 import NotificationService from '../services/notificationService.js';
 import organizationContextService from '../services/organizationContext/OrganizationContextService.js';
 import projectionService from '../services/tablePlatform/ProjectionService.js';
+import TaskAssignmentService from '../services/taskAssignmentService.js';
+import {
+  normalizeTaskStatus,
+  validateTaskStatusTransition,
+} from '../services/taskWorkflowService.js';
 import * as pfService from '../services/v8/processFlowService.js';
 import { getCapacityOverview, getOverloadAlerts } from '../services/workloadCapacityService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -213,10 +218,7 @@ async function applyInboxTriageSideEffects({
   if (action === 'delegate') {
     const delegateUserId = typeof params?.userId === 'string' ? params.userId : undefined;
     if (delegateUserId && kind === 'task') {
-      await queryHelpers.queryRun(
-        `UPDATE tasks SET assignee_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
-        [delegateUserId, rawId, orgId]
-      );
+      await TaskAssignmentService.assignTask(rawId, delegateUserId, { assignedById: userId });
       await NotificationService.send({
         userId: delegateUserId,
         organizationId: orgId,
@@ -255,9 +257,17 @@ async function applyInboxTriageSideEffects({
   }
 
   if (action === 'done' && kind === 'task') {
-    await queryHelpers.queryRun(
-      `UPDATE tasks SET status = 'Completed', updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+    const task = await queryHelpers.queryOne<{ status?: string }>(
+      `SELECT status FROM tasks WHERE id = ? AND organization_id = ?`,
       [rawId, orgId]
+    );
+    const transition = validateTaskStatusTransition(task?.status, 'done');
+    if (!transition.allowed) {
+      throw new Error(transition.message);
+    }
+    await queryHelpers.queryRun(
+      `UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND organization_id = ?`,
+      [normalizeTaskStatus('done'), rawId, orgId]
     );
   }
 }

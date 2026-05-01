@@ -1,10 +1,12 @@
-export function normalizePlatformRole(role: string | null | undefined): string {
-  const normalized = String(role || '')
-    .trim()
-    .toUpperCase();
+import {
+  normalizeApplicationRole,
+  normalizePlatformRole as normalizePlatformRoleCanonical,
+} from './roleNormalization.js';
 
-  if (normalized === 'SUPER_ADMIN') return 'SUPERADMIN';
-  return normalized;
+export { defaultProjectRoleForApplicationRole, normalizeApplicationRole } from './roleNormalization.js';
+
+export function normalizePlatformRole(role: string | null | undefined): string {
+  return normalizePlatformRoleCanonical(role) || normalizeApplicationRole(role);
 }
 
 export function parseForcedSuperAdminEmails(raw: string | null | undefined): Set<string> {

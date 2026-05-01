@@ -7,9 +7,56 @@ import { v4 as uuidv4 } from 'uuid';
 
 import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
-import _logger from '../utils/Logger.js';
 import { getTableColumns } from '../utils/dbSchema.js';
+import _logger from '../utils/Logger.js';
 import * as queryHelpers from '../utils/queryHelpers.js';
+
+const SUPPORT_TICKET_STATUSES = [
+  'open',
+  'triaged',
+  'in_progress',
+  'waiting',
+  'resolved',
+  'closed',
+] as const;
+type SupportTicketStatus = (typeof SUPPORT_TICKET_STATUSES)[number];
+
+const SUPPORT_TICKET_TRANSITIONS: Record<SupportTicketStatus, SupportTicketStatus[]> = {
+  open: ['triaged', 'in_progress', 'waiting', 'resolved', 'closed'],
+  triaged: ['in_progress', 'waiting', 'resolved', 'closed'],
+  in_progress: ['waiting', 'resolved', 'closed'],
+  waiting: ['in_progress', 'resolved', 'closed'],
+  resolved: ['in_progress', 'closed'],
+  closed: ['open'],
+};
+
+function normalizeSupportTicketStatus(status: unknown): SupportTicketStatus {
+  const normalized = String(status || 'open')
+    .trim()
+    .toLowerCase()
+    .replace(/[\s-]/g, '_');
+  if ((SUPPORT_TICKET_STATUSES as readonly string[]).includes(normalized)) {
+    return normalized as SupportTicketStatus;
+  }
+  if (normalized === 'new') return 'open';
+  if (normalized === 'pending') return 'waiting';
+  if (normalized === 'done') return 'resolved';
+  return 'open';
+}
+
+function validateSupportTicketTransition(from: unknown, to: unknown) {
+  const fromStatus = normalizeSupportTicketStatus(from);
+  const toStatus = normalizeSupportTicketStatus(to);
+  if (fromStatus === toStatus) return { allowed: true as const, toStatus };
+  if (SUPPORT_TICKET_TRANSITIONS[fromStatus].includes(toStatus)) {
+    return { allowed: true as const, toStatus };
+  }
+  return {
+    allowed: false as const,
+    toStatus,
+    message: `Cannot transition support ticket from ${fromStatus} to ${toStatus}`,
+  };
+}
 
 class SupportTicketServiceClass {
   private db: IDatabase;
@@ -28,7 +75,7 @@ class SupportTicketServiceClass {
     if (deps.uuidv4) this.uuidv4 = deps.uuidv4;
     if (deps.logger) this.logger = deps.logger;
   }
- 
+
   private async ensureTables(): Promise<void> {
     if (this.initialized) return;
     this.initialized = true;
@@ -192,8 +239,19 @@ class SupportTicketServiceClass {
     const params: any[] = [];
 
     if (updates.status && cols.has('status')) {
+      const existing = await this.getTicketById(id);
+      const transition = validateSupportTicketTransition(existing?.status, updates.status);
+      if (!transition.allowed) throw new Error(transition.message);
       fields.push('status = ?');
-      params.push(updates.status);
+      params.push(transition.toStatus);
+      if (transition.toStatus === 'resolved' && cols.has('resolved_at')) {
+        fields.push('resolved_at = ?');
+        params.push(new Date().toISOString());
+      }
+      if (transition.toStatus === 'closed' && cols.has('closed_at')) {
+        fields.push('closed_at = ?');
+        params.push(new Date().toISOString());
+      }
     }
     if (updates.priority && cols.has('priority')) {
       fields.push('priority = ?');
@@ -245,10 +303,13 @@ class SupportTicketServiceClass {
         .join(', ')})`,
       insertColumns.map((column) => insert[column])
     );
-    await this.db.run(
-      'UPDATE support_tickets SET last_activity_at = ?, updated_at = ? WHERE id = ?',
-      [now, now, ticketId]
-    ).catch(() => undefined);
+    await this.db
+      .run('UPDATE support_tickets SET last_activity_at = ?, updated_at = ? WHERE id = ?', [
+        now,
+        now,
+        ticketId,
+      ])
+      .catch(() => undefined);
     return {
       id,
       ticketId,
