@@ -65,6 +65,7 @@ interface InterviewSingleQuestionRuntimeProps {
   onSaveAndExit?: () => void;
   sessionName?: string;
   readOnly?: boolean;
+  isSubmitting?: boolean;
   immersive?: boolean;
 }
 
@@ -158,6 +159,7 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   onSaveAndExit,
   sessionName,
   readOnly = false,
+  isSubmitting = false,
   immersive = false,
 }) => {
   const { i18n } = useTranslation();
@@ -1232,11 +1234,21 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               <button
                 type="button"
                 onClick={() => void onSubmitSession()}
-                disabled={readOnly || isPersisting}
+                disabled={readOnly || isPersisting || isSubmitting}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/25 transition-colors"
               >
-                <Check size={16} />
-                {isPolish ? 'Zatwierdź i wyślij' : 'Submit'}
+                {isSubmitting ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Check size={16} />
+                )}
+                {isSubmitting
+                  ? isPolish
+                    ? 'Wysyłanie...'
+                    : 'Submitting...'
+                  : isPolish
+                    ? 'Zatwierdź i wyślij'
+                    : 'Submit'}
               </button>
             </div>
           </div>

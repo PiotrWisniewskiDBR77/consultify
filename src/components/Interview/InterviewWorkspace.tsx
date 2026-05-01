@@ -196,6 +196,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSubmittingSession, setIsSubmittingSession] = useState(false);
   const [sessionName, setSessionName] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [editedProfile, setEditedProfile] = useState<CompanyProfile>({});
@@ -1004,13 +1005,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
 
   // Submit session
   const handleSubmitSession = useCallback(async () => {
-    // Feedback #8f12f96f — the old code silently `return`ed when
-    // `session` was null or `isLocked` was true, so clicking
-    // "Zatwierdź i wyślij" produced no visible reaction. That is the
-    // exact symptom the tester filed. Surface the reason as a toast so
-    // the user always gets feedback for their click, and treat an
-    // already-locked state as success (nothing to do) rather than a
-    // silent fail.
+    if (isSubmittingSession) return;
     if (!session) {
       toast.error(
         isPolish
@@ -1019,6 +1014,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       );
       return;
     }
+
     if (isLocked) {
       toast(
         isPolish
@@ -1028,6 +1024,9 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
       );
       return;
     }
+
+    setIsSubmittingSession(true);
+    const toastId = toast.loading(isPolish ? 'Wysyłam wywiad...' : 'Submitting interview...');
 
     try {
       if (session.assignmentId) {
@@ -1054,15 +1053,16 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         toast.success(
           isPolish
             ? `Wywiad wysłany do review (${completeness ?? 0}%).`
-            : `Submitted for review (${completeness ?? 0}%).`
+            : `Submitted for review (${completeness ?? 0}%).`,
+          { id: toastId }
         );
-        await runAiQualityReview({ silent: true });
+        void runAiQualityReview({ silent: true });
         onComplete?.(session.id);
         return;
       }
 
       await Api.patch(`/interview/sessions/${session.id}`, { status: 'completed' });
-      toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!');
+      toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!', { id: toastId });
       onComplete?.(session.id);
     } catch (error: any) {
       console.error('[InterviewWorkspace] Failed to submit session:', error);
@@ -1075,10 +1075,21 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
             : `Failed to submit: ${apiMsg}`
           : isPolish
             ? 'Nie udało się zatwierdzić'
-            : 'Failed to submit'
+            : 'Failed to submit',
+        { id: toastId }
       );
+    } finally {
+      setIsSubmittingSession(false);
     }
-  }, [session, isLocked, isPolish, onComplete, onSessionChange, questions, runAiQualityReview]);
+  }, [
+    isLocked,
+    isPolish,
+    isSubmittingSession,
+    onComplete,
+    onSessionChange,
+    runAiQualityReview,
+    session,
+  ]);
 
   // V6-C04: Reviewer actions
   const handleSendBack = useCallback(async () => {
@@ -1521,7 +1532,8 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
           icon: Send,
           variant: 'success',
           onClick: () => handleSubmitSession(),
-          disabled: isSaving || isLocked,
+          disabled: isSaving || isLocked || isSubmittingSession,
+          loading: isSubmittingSession,
         });
       }
     }
@@ -1808,6 +1820,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               onSaveAndExit={onClose}
               sessionName={sessionName}
               readOnly={isLocked}
+              isSubmitting={isSubmittingSession}
             />
           ) : (
             <Callout
@@ -2359,6 +2372,7 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
               onSaveAndExit={onClose}
               sessionName={sessionName}
               readOnly={isLocked}
+              isSubmitting={isSubmittingSession}
               immersive
             />
           ) : (

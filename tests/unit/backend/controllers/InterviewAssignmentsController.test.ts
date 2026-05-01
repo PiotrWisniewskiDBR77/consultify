@@ -405,5 +405,54 @@ describe('InterviewController assignments', () => {
       )
     ).toBe(false);
   });
+
+  it('updateSession: allows status-only completion updates for ad-hoc sessions', async () => {
+    mockReq.params.id = 's-ad-hoc';
+    mockReq.body = { status: 'completed' };
+
+    mockQueryOne
+      // sessionCheck
+      .mockResolvedValueOnce({
+        id: 's-ad-hoc',
+        assignment_id: null,
+        status: 'active',
+      })
+      // updated session row
+      .mockResolvedValueOnce({
+        id: 's-ad-hoc',
+        organization_id: 'org-1',
+        project_id: null,
+        owner_id: 'user-1',
+        name: 'Ad-hoc interview',
+        status: 'completed',
+        assignment_id: null,
+        progress_json: '{}',
+        total_questions: 6,
+        answered_questions: 6,
+        summary_facts: '[]',
+        summary_gaps: '[]',
+        summary_constraints: '[]',
+        summary_pain_points: '[]',
+        runtime_mode_default: 'single_question',
+        started_at: '2026-05-01T00:00:00.000Z',
+        completed_at: '2026-05-01T00:10:00.000Z',
+        last_activity_at: '2026-05-01T00:10:00.000Z',
+      });
+
+    const { InterviewController } = await import('../../../../server/src/controllers/InterviewController.js');
+    await InterviewController.updateSession(mockReq, mockRes, mockNext);
+
+    expect(mockRes.status).not.toHaveBeenCalledWith(400);
+    expect(mockQueryRun).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE interview_sessions SET'),
+      expect.arrayContaining(['completed'])
+    );
+    expect(mockRes.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 's-ad-hoc',
+        status: 'completed',
+      })
+    );
+  });
 });
 

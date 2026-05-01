@@ -2093,6 +2093,15 @@ export const InterviewController = {
       params.push(JSON.stringify(summaryPainPoints));
     }
 
+    if (normalizedStatus) {
+      updates.push('status = ?');
+      params.push(normalizedStatus);
+      if (normalizedStatus === 'completed') {
+        updates.push('completed_at = ?');
+        params.push(new Date().toISOString());
+      }
+    }
+
     if (updates.length === 0) {
       res.status(400).json({ error: 'No updates provided' });
       return;
@@ -2125,15 +2134,6 @@ export const InterviewController = {
           'Assignment-backed sessions must use assignment workflow actions instead of direct status changes',
       });
       return;
-    }
-
-    if (normalizedStatus) {
-      updates.push('status = ?');
-      params.push(normalizedStatus);
-      if (normalizedStatus === 'completed') {
-        updates.push('completed_at = ?');
-        params.push(new Date().toISOString());
-      }
     }
 
     await queryHelpers.queryRun(
