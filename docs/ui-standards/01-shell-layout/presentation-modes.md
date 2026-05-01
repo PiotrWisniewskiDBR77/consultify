@@ -728,7 +728,8 @@ Oddech między warstwami jest krytyczny dla czytelności. Poniższe reguły są 
   - Przyciski akcji (Approve, Reject, etc.) siedzą bezpośrednio w kontenerze — bez dodatkowych `mt-*`, `pt-*`, `border-t` wrapperów.
   - AI buttons sekcyjne używają `ml-auto` by dociągnąć w prawo.
 - Canvas area: `pl-6 pt-1` — lewy gutter + mały top padding, żeby nagłówki sekcji nie były przyklejone do górnej krawędzi.
-- LeftNav sidebar: sticky container z `pt-1` aby wyrównać się pionowo z początkiem Canvas.
+- LeftNav sidebar: fixed `242px` sticky container z `pt-1` aby wyrównać się pionowo z początkiem Canvas.
+- LeftNav labels: muszą mieścić się w jednej linii bez zawijania; jeśli etykieta nie mieści się w `242px`, popraw copy albo lokalnie poszerz rail.
 - Tab items w LeftNav: `py-2.5 px-3` dla komfortowych klikanych celów.
 
 **Scroll behavior (MUST):**

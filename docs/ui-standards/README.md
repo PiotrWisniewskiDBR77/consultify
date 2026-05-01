@@ -43,6 +43,10 @@ docs/ui-standards/
 
 | Obszar                   | Dokument                                                                         | Zakres                                                                 |
 | ------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Operating Standard**   | [CONSULTIFY_UI_UX_OPERATING_STANDARD.md](CONSULTIFY_UI_UX_OPERATING_STANDARD.md) | Operacyjna brama dla Cursor, audytu, refactorów i zatwierdzania wyjątków |
+| **Migration audit**      | [UI_UX_MIGRATION_AUDIT.md](UI_UX_MIGRATION_AUDIT.md)                             | Mapa obecnego stanu UI/UX, migration debt, decyzje per moduł           |
+| **Migration plan**       | [UI_UX_MIGRATION_PLAN.md](UI_UX_MIGRATION_PLAN.md)                               | Fale migracji, bramki komponentów, kolejność refactorów                |
+| **Reference screens**    | [UI_UX_REFERENCE_SCREENS.md](UI_UX_REFERENCE_SCREENS.md)                         | Kandydaci na ekrany referencyjne i warunki zatwierdzenia               |
 | **Kanon v3 (SSOT)**      | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                           | Konsolidacja decyzji v3 (topbary, light mode, preview, AI, inbox)      |
 | **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                   | Paleta DBR77, semantyka, WCAG                                          |
 | **Czytelność light mode** | [00-foundation/light-mode-readability.md](00-foundation/light-mode-readability.md) | Kontrast, badge taxonomy, metadata i zasady surface hierarchy        |

@@ -3452,11 +3452,20 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   // ========================================================================
   // Render
   // ========================================================================
+  const hasRenderableMessages = displayMessages.some((message) => {
+    const metadata = (message as any)?.metadata || {};
+    return (
+      Boolean((message as any)?.isStreaming) ||
+      String((message as any)?.content || '').trim().length > 0 ||
+      Boolean(metadata.proposal || metadata.executionProposal || metadata.deepThinking)
+    );
+  });
   const isRehydratingConversation =
-    displayMessages.length === 0 && activeConversationId && isConversationLoading;
-  const isWelcomeEmptyState = displayMessages.length === 0 && !isRehydratingConversation;
-  const showFullWelcomeEmptyState = isWelcomeEmptyState && !isCompact;
-  const showCompactEmptyState = isWelcomeEmptyState && isCompact;
+    !hasRenderableMessages && activeConversationId && isConversationLoading;
+  const isWelcomeEmptyState = !hasRenderableMessages && !isRehydratingConversation;
+  // Full `/chat` must always use the rich start screen, regardless of persisted displayMode.
+  const showFullWelcomeEmptyState = isWelcomeEmptyState && mode === 'full';
+  const showCompactEmptyState = isWelcomeEmptyState && mode !== 'full';
 
   return (
     <div
@@ -3651,7 +3660,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <h3
               className={`${isCompact ? 'text-2xl' : 'text-4xl md:text-5xl'} font-semibold text-navy-900 dark:text-white`}
             >
-              {t('aiChat.welcomeHeadline', 'Good morning')}
+              {t('aiChat.teresaWelcome', 'Talk to Teresa')}
               {currentUser?.firstName && (
                 <span className="text-primary-600 dark:text-primary-400">
                   , {currentUser.firstName}

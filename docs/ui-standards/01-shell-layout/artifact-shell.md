@@ -79,7 +79,7 @@ Behavior:
 
 ## 6) N-mode left navigation standard
 
-- Same fixed width for all artifacts: **220px**
+- Same fixed width for all N-type/N-mode artifacts: **242px**
 - Section labels should be designed for one-line display
 - Drag handle for reorder: visible on hover (not permanently visible)
 - Badge counters are allowed but optional; no globally forced usage
@@ -106,7 +106,7 @@ Adopt one baseline and keep it global:
 - `--artifact-canvas-gap: 14px`
 - `--artifact-nav-canvas-gutter: 20px`
 - `--artifact-radius: 12px`
-- `--artifact-left-nav-w: 220px`
+- `--artifact-left-nav-w: 242px`
 
 Implementation note:
 
@@ -161,7 +161,7 @@ A change to artifact detail UI is done only if:
 
 - 4-layer shell is preserved
 - N/C mode behavior is unchanged and stable
-- Left nav width remains 220px
+- Left nav width remains 242px
 - Strip/control/button heights follow canonical tokens
 - Save visibility logic follows standard (visible but low prominence when clean)
 - Top CTA bar has max one AI CTA on the right

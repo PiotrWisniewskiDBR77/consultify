@@ -5,7 +5,7 @@
  * Steps: Define → Inputs & Assumptions → Work → Review → Finalize → Outputs
  *
  * Features:
- * - Step navigation sidebar (220px, NModeLeftNav pattern)
+ * - Step navigation sidebar (242px, NModeLeftNav pattern)
  * - Missing items checklist with re-process loop
  * - Work surface types: Table / Workspace / Hybrid
  * - Output creation with traceability (source_type, source_id)

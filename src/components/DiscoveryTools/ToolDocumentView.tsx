@@ -31,6 +31,7 @@ import {
 import { AppView } from '@/types';
 import { exportToPDF } from '@/utils/pdfExport';
 
+import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { EmbeddedView } from '../shared/NModeBlocks';
 import { type NModePropertyField, type NModeSection, NModeShell } from '../shared/NModeLayout';
 import {
@@ -47,6 +48,7 @@ import {
 import { countAiCardStatuses, getAiReviewTotal, scrollToAiCards } from './aiCardGovernance';
 import { GenerateInitiativesModal } from './GenerateInitiativesModal';
 import { ToolPhaseAiActions } from './shared/ToolPhaseAiActions';
+import { getToolPhaseAiActions } from './toolAiActions';
 import { ToolCanvas } from './ToolCanvas';
 import {
   computeDynamicSwotOverallReadiness,
@@ -188,6 +190,8 @@ const statusLabel = (
     }) as const
   )[status] || status;
 
+type ToolSaveState = 'saved' | 'saving' | 'dirty' | 'error';
+
 const getPriorityDotClass = (priority: CommentPriority) =>
   priority === 'high' ? 'bg-red-500' : priority === 'low' ? 'bg-emerald-500' : 'bg-blue-500';
 
@@ -289,6 +293,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const [lastModified, setLastModified] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveState, setSaveState] = useState<ToolSaveState>('saved');
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [activeSection, setActiveSection] = useState<string>(
     isStrategicPhaseTool ? 'mission' : 'work'
@@ -386,6 +391,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       toolType === 'dynamic-swot' ? (currentSession?.inputData as SWOTData | undefined) : undefined,
     [currentSession?.inputData, toolType]
   );
+  const effectivePhaseAiActions = useMemo(() => {
+    if (phaseAiActions.length > 0) return phaseAiActions;
+    return getToolPhaseAiActions(toolType, currentStepDef);
+  }, [currentStepDef, phaseAiActions, toolType]);
   const dynamicSwotPhaseSummaries = useMemo(
     () => (toolType === 'dynamic-swot' ? computeDynamicSwotPhaseSummaries(swotData, isPolish) : []),
     [isPolish, swotData, toolType]
@@ -453,6 +462,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
       setSessionName(sessionData.name || '');
       setCreatedAt(sessionData.createdAt || '');
       setLastModified(sessionData.updatedAt || '');
+      setSaveState('saved');
       setGeneratedInitiatives(sessionData.generatedInitiatives || []);
       setToolDecisions(sessionData.decisions || []);
       setToolPermissions(sessionData.permissions || {});
@@ -531,6 +541,8 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           setToolSessionId(created.id);
           setSessionName(name);
           setToolStatus('DRAFT');
+          setLastModified(new Date().toISOString());
+          setSaveState('saved');
         } catch (error) {
           console.error('Failed to create tool session:', error);
           toast.error(isPolish ? 'Nie udało się utworzyć sesji' : 'Failed to create session');
@@ -556,7 +568,9 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
 
   useEffect(() => {
     if (!currentSession || !toolSessionId) return;
+    setSaveState('dirty');
     const timeout = setTimeout(async () => {
+      setSaveState('saving');
       try {
         await Api.updateToolSession(toolSessionId, {
           answers: currentSession.inputData as Record<string, unknown>,
@@ -564,9 +578,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           missingItems: missingItemsPayload,
           wizardState: wizardStatePayload,
         });
-        setLastModified(new Date().toISOString());
+        const savedAt = new Date().toISOString();
+        setLastModified(savedAt);
+        setSaveState('saved');
       } catch (error) {
         console.error('Auto-save failed:', error);
+        setSaveState('error');
       }
     }, 2000);
 
@@ -583,6 +600,7 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
   const handleSave = async () => {
     if (!toolSessionId || !currentSession) return;
     setSaving(true);
+    setSaveState('saving');
     try {
       await Api.updateToolSession(toolSessionId, {
         answers: currentSession.inputData as Record<string, unknown>,
@@ -591,9 +609,12 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
         wizardState: wizardStatePayload,
       });
       await saveSession();
-      setLastModified(new Date().toISOString());
+      const savedAt = new Date().toISOString();
+      setLastModified(savedAt);
+      setSaveState('saved');
       toast.success(isPolish ? 'Zapisano' : 'Saved');
     } catch {
+      setSaveState('error');
       toast.error(isPolish ? 'Błąd zapisu' : 'Save failed');
     } finally {
       setSaving(false);
@@ -1191,46 +1212,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2 pt-2">
-              {toolStatus === 'DRAFT' && (
-                <button
-                  type="button"
-                  onClick={handleRequestReview}
-                  disabled={!completionReady || toolPermissions.canRequestReview === false}
-                  className="rounded-lg bg-amber-500 px-3 py-2 text-sm text-white disabled:opacity-50"
-                >
-                  {isPolish ? 'Request Review' : 'Request Review'}
-                </button>
-              )}
-              {toolStatus === 'REVIEW' && (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleApprove}
-                    disabled={toolPermissions.canApproveTool === false}
-                    className="rounded-lg bg-emerald-500 px-3 py-2 text-sm text-white disabled:opacity-50"
-                  >
-                    {isPolish ? 'Approve' : 'Approve'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleSendBack}
-                    className="rounded-lg bg-slate-100 dark:bg-navy-900/70 px-3 py-2 text-sm text-slate-700 dark:text-slate-300"
-                  >
-                    {isPolish ? 'Send back' : 'Send back'}
-                  </button>
-                </>
-              )}
-              {['APPROVED', 'GENERATED', 'COMPLETED'].includes(toolStatus) && (
-                <button
-                  type="button"
-                  onClick={() => setShowGenerateModal(true)}
-                  disabled={toolPermissions.canGenerate === false}
-                  className="rounded-lg bg-primary-500 px-3 py-2 text-sm text-white disabled:opacity-50"
-                >
-                  {isPolish ? 'Generate initiatives' : 'Generate initiatives'}
-                </button>
-              )}
+            <div className="rounded-xl border border-slate-200/70 bg-white/70 px-4 py-3 text-xs text-slate-500 dark:border-navy-700/70 dark:bg-navy-950/30 dark:text-slate-400">
+              {isPolish
+                ? 'Akcje lifecycle tej sesji są w Menu 3 po prawej: Request Review, Approve, Send back i Generate initiatives.'
+                : 'Session lifecycle actions live in Menu 3 on the right: Request Review, Approve, Send back, and Generate initiatives.'}
             </div>
           </div>
         </div>
@@ -1813,33 +1798,120 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
     [isStrategicPhaseTool, setCurrentStep, stepDefs]
   );
 
+  const lastSavedLabel = useMemo(() => {
+    if (!lastModified) return undefined;
+    return `${isPolish ? 'Zapisano' : 'Saved'} ${new Date(lastModified).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
+  }, [isPolish, lastModified]);
+
   const commandRowActions = useMemo(() => {
-    const showAiActions = phaseAiActions.length > 0 || isStreaming || aiReviewCount > 0;
-    if (!showAiActions) return null;
+    const showAiActions = effectivePhaseAiActions.length > 0 || isStreaming || aiReviewCount > 0;
 
     return (
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
-        <ToolPhaseAiActions
-          actions={phaseAiActions}
-          activeActionId={activeAiActionId}
-          isStreaming={isStreaming}
-          isPolish={isPolish}
-          onRunAction={(actionId) => void runPhaseAiAction(actionId)}
-          onAbort={abortStream}
-          aiReviewCount={aiReviewCount}
-          onReviewAiCards={scrollToAiCards}
-          className="shrink-0"
-        />
+      <div
+        className="flex flex-wrap items-center justify-end gap-1.5"
+        data-menu3-actions="tool-lifecycle-ai-chat"
+      >
+        <span
+          className="inline-flex h-8 items-center rounded-full border border-slate-200/60 bg-slate-100 px-3 text-[11px] font-semibold text-slate-500 dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300"
+          data-menu3-lifecycle-status={toolStatus}
+        >
+          {statusLabel(toolStatus, isPolish)}
+        </span>
+        {toolStatus === 'DRAFT' ? (
+          <button
+            type="button"
+            onClick={handleRequestReview}
+            disabled={!completionReady || toolPermissions.canRequestReview === false}
+            className={getMenu3AiButtonClass(false)}
+            title={
+              completionReady
+                ? isPolish
+                  ? 'Wyślij sesję do review'
+                  : 'Request review for this session'
+                : isPolish
+                  ? 'Uzupełnij wymagane elementy przed review'
+                  : 'Complete required items before review'
+            }
+          >
+            <Send size={12} />
+            {isPolish ? 'Request Review' : 'Request Review'}
+          </button>
+        ) : null}
+        {toolStatus === 'REVIEW' ? (
+          <>
+            <button
+              type="button"
+              onClick={handleApprove}
+              disabled={toolPermissions.canApproveTool === false}
+              className={getMenu3AiButtonClass(false)}
+              title={isPolish ? 'Zatwierdź sesję' : 'Approve this session'}
+            >
+              <CheckCircle2 size={12} />
+              {isPolish ? 'Approve' : 'Approve'}
+            </button>
+            <button
+              type="button"
+              onClick={handleSendBack}
+              className={getMenu3AiButtonClass(false)}
+              title={
+                isPolish ? 'Odeślij do draftu z komentarzem' : 'Send back to draft with a comment'
+              }
+            >
+              <ExternalLink size={12} />
+              {isPolish ? 'Send back' : 'Send back'}
+            </button>
+          </>
+        ) : null}
+        {['APPROVED', 'GENERATED', 'COMPLETED'].includes(toolStatus) ? (
+          <button
+            type="button"
+            onClick={() => setShowGenerateModal(true)}
+            disabled={toolPermissions.canGenerate === false}
+            className={getMenu3AiButtonClass(false)}
+            title={
+              isPolish
+                ? 'Wygeneruj inicjatywy z zatwierdzonej sesji'
+                : 'Generate initiatives from approved session'
+            }
+          >
+            <Sparkles size={12} />
+            {isPolish ? 'Generate initiatives' : 'Generate initiatives'}
+          </button>
+        ) : null}
+        {showAiActions ? (
+          <ToolPhaseAiActions
+            actions={effectivePhaseAiActions}
+            activeActionId={activeAiActionId}
+            isStreaming={isStreaming}
+            isPolish={isPolish}
+            onRunAction={(actionId) => void runPhaseAiAction(actionId)}
+            onAbort={abortStream}
+            aiReviewCount={aiReviewCount}
+            onReviewAiCards={scrollToAiCards}
+            className="shrink-0"
+          />
+        ) : null}
       </div>
     );
   }, [
     abortStream,
     activeAiActionId,
     aiReviewCount,
+    completionReady,
+    effectivePhaseAiActions,
+    handleApprove,
+    handleRequestReview,
+    handleSendBack,
     isPolish,
     isStreaming,
-    phaseAiActions,
     runPhaseAiAction,
+    toolPermissions.canApproveTool,
+    toolPermissions.canGenerate,
+    toolPermissions.canRequestReview,
+    toolStatus,
   ]);
 
   useEffect(() => {
@@ -1890,10 +1962,10 @@ export const ToolDocumentView: React.FC<ToolDocumentViewProps> = ({
           artifactType: 'tool',
           onSave: handleSave,
           saving,
-          isDirty: false,
-          onChat: handleOpenChat,
+          saveState,
+          lastSavedLabel,
+          isDirty: saveState === 'dirty' || saveState === 'error',
           onClose: onBack,
-          draftSavedLabel: statusLabel(toolStatus, isPolish),
           statusDotColor: toolMeta.statusDot,
         }}
         properties={properties}

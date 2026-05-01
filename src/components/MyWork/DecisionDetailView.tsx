@@ -4460,7 +4460,7 @@ Context: ${JSON.stringify(projectContext)}`;
           {/* ═══════════ N MODE (page-first, 2-pane) ═════════════════════════
                Layout per docs/ui-standards/01-shell-layout/presentation-modes.md §2.5:
                - PropertiesStrip (full-width, under header)
-               - 2-pane: LeftNav (fixed ~220px) | Canvas (selected section only)
+               - 2-pane: LeftNav (fixed ~242px) | Canvas (selected section only)
                Left nav click → shows ONE section at a time (no scroll-all).
                ═══════════════════════════════════════════════════════════════════ */}
           {presentationMode === 'n' && (

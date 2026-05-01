@@ -1,7 +1,7 @@
 /**
  * NModeLeftNav
  *
- * Sticky left navigation rail (~220px) for section switching.
+ * Sticky left navigation rail (242px) for section switching.
  * Shows icons + labels with active state highlighting.
  * Click → shows ONE section at a time in the Canvas (no scroll-all).
  *
@@ -30,6 +30,8 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { NModeSection } from './types';
+
+const N_MODE_LEFT_NAV_WIDTH_CLASS = 'w-[242px]';
 
 interface NModeLeftNavProps {
   /** Available sections */
@@ -94,7 +96,9 @@ const SortableNavItem: React.FC<SortableNavItemProps> = ({
                 : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
             }
           />
-          {isPolish ? section.label.pl : section.label.en}
+          <span className="whitespace-nowrap">
+            {isPolish ? section.label.pl : section.label.en}
+          </span>
           {section.badge !== undefined && section.badge > 0 && (
             <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
               {section.badge}
@@ -137,7 +141,7 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
   };
 
   return (
-    <nav className="w-[220px] flex-shrink-0 pr-4">
+    <nav className={`${N_MODE_LEFT_NAV_WIDTH_CLASS} flex-shrink-0 pr-4`}>
       <div className="sticky top-28 pt-1 space-y-1">
         {!onSectionReorder ? (
           sections.map((section) => {
@@ -163,7 +167,9 @@ export const NModeLeftNav: React.FC<NModeLeftNavProps> = ({
                         : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-500 dark:group-hover:text-slate-300'
                     }
                   />
-                  {isPolish ? section.label.pl : section.label.en}
+                  <span className="whitespace-nowrap">
+                    {isPolish ? section.label.pl : section.label.en}
+                  </span>
                   {section.badge !== undefined && section.badge > 0 && (
                     <span className="ml-auto inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-semibold bg-slate-200/80 dark:bg-navy-700/80 text-slate-500 dark:text-slate-400">
                       {section.badge}

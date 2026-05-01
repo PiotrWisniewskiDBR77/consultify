@@ -55,13 +55,21 @@ Przed każdą zmianą UI w tych obszarach — przeczytaj `FROZEN_LAYOUTS.md`.
 
 ## UI/UX Standards & Documentation
 
+**OPERACYJNE ŹRÓDŁO DLA CURSOR:** `docs/ui-standards/CONSULTIFY_UI_UX_OPERATING_STANDARD.md`
+
 **KANONICZNE ŹRÓDŁO:** `docs/ui-standards/README.md`
 
 **⚠️ NIE WYMYŚLAJ NOWYCH STANDARDÓW ANI KOMPONENTÓW.** Wszystkie komponenty UI MUSZĄ być zgodne z dokumentacją w `docs/ui-standards/`. Jeśli standard nie opisuje przypadku — ZAPYTAJ, nie wymyślaj.
 
+Core rule: feature screens do not own visual design. Feature screens compose approved Consultify layout and UI components. For all UI/UX work, first read `CONSULTIFY_UI_UX_OPERATING_STANDARD.md`, then the detailed canonical standard it references.
+
 Before modifying any UI components:
 
 1. **Read the documentation** — standards are in `docs/ui-standards/`:
+   - `CONSULTIFY_UI_UX_OPERATING_STANDARD.md` — operating standard for Cursor/refactors
+   - `UI_UX_MIGRATION_AUDIT.md` — current migration debt and target patterns
+   - `UI_UX_MIGRATION_PLAN.md` — migration waves and component approval gates
+   - `UI_UX_REFERENCE_SCREENS.md` — approved/candidate reference screens
    - `README.md` — index wszystkiego
    - `01-shell-layout/presentation-modes.md` — architecture D/N/C, N blocks kit
    - `02-components/shared-sections.md` — NModeSections (Comments, Activity, Risk, Governance, Attachments)

@@ -58,6 +58,7 @@ export const Sidebar: React.FC = () => {
   // because it can trigger "getSnapshot should be cached" warnings/loops.
   const currentView = useAppStore((s) => s.currentView);
   const setCurrentView = useAppStore((s) => s.setCurrentView);
+  const navigateWithChatContext = useAppStore((s) => s.navigateWithChatContext);
   const logout = useAppStore((s) => s.logout);
   const isSidebarOpen = useAppStore((s) => s.isSidebarOpen);
   const setIsSidebarOpen = useAppStore((s) => s.setIsSidebarOpen);
@@ -206,9 +207,12 @@ export const Sidebar: React.FC = () => {
         projectId: currentProjectId || undefined,
       });
       setWorkspaceContext(context);
-      setCurrentView(viewId);
+      navigateWithChatContext(viewId, {
+        preserveChat: true,
+        workspaceContext: context,
+      });
     },
-    [currentProjectId, setCurrentView, setDisplayMode, setWorkspaceContext]
+    [currentProjectId, navigateWithChatContext, setDisplayMode, setWorkspaceContext]
   );
 
   const handleItemClick = React.useCallback(
