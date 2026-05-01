@@ -36,9 +36,9 @@ const getRoleCandidates = (role?: string): string[] => {
   return getPermissionRoleCandidates(role);
 };
 
-export function normalizeRoleForDb(role?: string): string {
+const normalizeRoleForDb = (role?: string): string => {
   return getRoleCandidates(role)[0] || 'USER';
-}
+};
 
 async function shadowCompareEffectiveAccess(
   req: AuthRequest,
@@ -406,6 +406,6 @@ export const setDependencies = (newDeps: Partial<Dependencies>): void => {
  * Not part of the public middleware API.
  */
 export const __private__ = {
-  normalizeRoleForDb,
+  normalizeRoleForDb: (role?: string) => getRoleCandidates(role)[0] || 'USER',
   getRoleCandidates,
 };
