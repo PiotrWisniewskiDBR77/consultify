@@ -86,6 +86,18 @@ import { RuntimeMode, RuntimeModeSelector } from './RuntimeModeSelector';
 
 type PersistedLinkedItem = LinkedItem & { edgeId?: string };
 
+const withTimeout = async <T,>(promise: Promise<T>, ms: number, message: string): Promise<T> => {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  try {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    });
+    return await Promise.race([promise, timeoutPromise]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+};
+
 // ==========================================
 // TYPES
 // ==========================================
@@ -1061,7 +1073,20 @@ export const InterviewWorkspace: React.FC<InterviewWorkspaceProps> = ({
         return;
       }
 
-      await Api.patch(`/interview/sessions/${session.id}`, { status: 'completed' });
+      await withTimeout(
+        Api.patch(`/interview/sessions/${session.id}`, { status: 'completed' }),
+        15000,
+        isPolish
+          ? 'Przekroczono limit czasu podczas finalizacji wywiadu.'
+          : 'Interview finalization timed out.'
+      );
+      setSession((prev) => {
+        if (!prev) return prev;
+        const now = new Date().toISOString();
+        const nextSession = { ...prev, status: 'completed', completedAt: now, lastActivityAt: now };
+        onSessionChange?.(nextSession);
+        return nextSession;
+      });
       toast.success(isPolish ? 'Wywiad zakończony!' : 'Interview completed!', { id: toastId });
       onComplete?.(session.id);
     } catch (error: any) {

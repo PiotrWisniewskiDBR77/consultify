@@ -1233,8 +1233,23 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               </button>
               <button
                 type="button"
-                onClick={() => void onSubmitSession()}
-                disabled={readOnly || isPersisting || isSubmitting}
+                onClick={() => {
+                  void (async () => {
+                    // Always flush the latest answer before final submit.
+                    // This prevents a race where autosave keeps the button inert.
+                    const persisted = await persistCurrentQuestion();
+                    if (!persisted) {
+                      toast.error(
+                        isPolish
+                          ? 'Najpierw zapisz odpowiedzi przed wysłaniem.'
+                          : 'Save answers first before submitting.'
+                      );
+                      return;
+                    }
+                    await onSubmitSession();
+                  })();
+                }}
+                disabled={readOnly || isSubmitting}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/25 transition-colors"
               >
                 {isSubmitting ? (
