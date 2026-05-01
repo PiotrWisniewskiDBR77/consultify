@@ -4843,12 +4843,23 @@ Answer type: ${(question as any).answer_type || 'open'}`;
     const { sessionId } = req.params;
     const { language } = req.body || {};
 
-    const session = await queryHelpers.queryOne(
-      `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [sessionId, user.organizationId]
-    );
+    let session: any = null;
+    try {
+      session = await queryHelpers.queryOne(
+        `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
+         JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ? AND p.organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+    } catch {
+      // Backward compatibility for environments still using legacy user_id.
+      session = await queryHelpers.queryOne(
+        `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
+         JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ? AND p.organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+    }
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
       return;
@@ -4921,12 +4932,23 @@ Answer type: ${(question as any).answer_type || 'open'}`;
       return;
     }
 
-    const session = await queryHelpers.queryOne(
-      `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
-       JOIN projects p ON p.id = s.project_id
-       WHERE s.id = ? AND p.organization_id = ?`,
-      [sessionId, user.organizationId]
-    );
+    let session: any = null;
+    try {
+      session = await queryHelpers.queryOne(
+        `SELECT s.*, s.owner_id as owner_id FROM interview_sessions s
+         JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ? AND p.organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+    } catch {
+      // Backward compatibility for environments still using legacy user_id.
+      session = await queryHelpers.queryOne(
+        `SELECT s.*, s.user_id as owner_id FROM interview_sessions s
+         JOIN projects p ON p.id = s.project_id
+         WHERE s.id = ? AND p.organization_id = ?`,
+        [sessionId, user.organizationId]
+      );
+    }
     if (!session) {
       res.status(404).json({ error: 'Session not found' });
       return;
