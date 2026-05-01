@@ -200,7 +200,6 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
   const [isPersisting, setIsPersisting] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isFinalizingSubmit, setIsFinalizingSubmit] = useState(false);
   const [showLinkForm, setShowLinkForm] = useState(false);
   const [linkName, setLinkName] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
@@ -384,8 +383,6 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
     inputMode === 'voice_answer' &&
     voiceTranscriptDraft &&
     currentQuestion?.voiceTranscriptStatus === 'draft';
-
-  const submitBusy = isSubmitting || isFinalizingSubmit;
 
   const handleApproveTranscript = useCallback(async () => {
     if (!currentQuestion) return;
@@ -1236,53 +1233,16 @@ export const InterviewSingleQuestionRuntime: React.FC<InterviewSingleQuestionRun
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  void (async () => {
-                    if (submitBusy) return;
-                    setIsFinalizingSubmit(true);
-                    // Always flush the latest answer before final submit.
-                    // This prevents a race where autosave keeps the button inert.
-                    const persistOutcome = await Promise.race<
-                      { type: 'done'; ok: boolean } | { type: 'timeout' }
-                    >([
-                      persistCurrentQuestion().then((ok) => ({ type: 'done' as const, ok })),
-                      new Promise<{ type: 'timeout' }>((resolve) =>
-                        setTimeout(() => resolve({ type: 'timeout' }), 8000)
-                      ),
-                    ]);
-                    if (persistOutcome.type === 'done' && !persistOutcome.ok) {
-                      toast.error(
-                        isPolish
-                          ? 'Najpierw zapisz odpowiedzi przed wysłaniem.'
-                          : 'Save answers first before submitting.'
-                      );
-                      setIsFinalizingSubmit(false);
-                      return;
-                    }
-                    if (persistOutcome.type === 'timeout') {
-                      toast(
-                        isPolish
-                          ? 'Zapis trwa zbyt długo. Próbuję wysłać na podstawie ostatniego zapisu...'
-                          : 'Save is taking too long. Submitting from the last saved state...',
-                        { icon: 'ℹ️' }
-                      );
-                    }
-                    try {
-                      await onSubmitSession();
-                    } finally {
-                      setIsFinalizingSubmit(false);
-                    }
-                  })();
-                }}
-                disabled={readOnly || submitBusy}
+                onClick={() => void onSubmitSession()}
+                disabled={readOnly || isSubmitting}
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white disabled:opacity-50 shadow-lg shadow-emerald-500/25 transition-colors"
               >
-                {submitBusy ? (
+                {isSubmitting ? (
                   <Loader2 size={16} className="animate-spin" />
                 ) : (
                   <Check size={16} />
                 )}
-                {submitBusy
+                {isSubmitting
                   ? isPolish
                     ? 'Wysyłanie...'
                     : 'Submitting...'
