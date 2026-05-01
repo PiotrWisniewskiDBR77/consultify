@@ -36,6 +36,10 @@ const getRoleCandidates = (role?: string): string[] => {
   return getPermissionRoleCandidates(role);
 };
 
+export function normalizeRoleForDb(role?: string): string {
+  return getRoleCandidates(role)[0] || 'USER';
+}
+
 async function shadowCompareEffectiveAccess(
   req: AuthRequest,
   permissionKey: string,
