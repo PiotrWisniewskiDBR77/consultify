@@ -68,19 +68,18 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
         AdminApi.getPendingOwnershipTransfer(currentOrganization.id),
       ]);
 
-      if (ownershipResult.status === 'rejected' || adminsResult.status === 'rejected') {
-        throw new Error('Failed to load ownership information');
-      }
-
-      const ownershipData = ownershipResult.value;
-      const adminsData = adminsResult.value;
+      const ownershipData = ownershipResult.status === 'fulfilled' ? ownershipResult.value : null;
+      const adminsData = adminsResult.status === 'fulfilled' ? adminsResult.value : [];
 
       const resolvedOwnership = (ownershipData as any)?.ownership || null;
       const resolvedOwner = (ownershipData as any)?.owner || null;
-      const resolvedAdmins = Array.isArray(adminsData)
-        ? adminsData
-        : Array.isArray((adminsData as any)?.admins)
-          ? (adminsData as any).admins
+      const resolvedAdmins =
+        adminsResult.status === 'fulfilled'
+          ? Array.isArray(adminsData)
+            ? adminsData
+            : Array.isArray((adminsData as any)?.admins)
+              ? (adminsData as any).admins
+              : []
           : [];
 
       setOwnership(resolvedOwnership);
@@ -90,6 +89,16 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
           (admin: User) => admin.id !== (resolvedOwnership?.ownerUserId || resolvedOwner?.id)
         )
       );
+      if (ownershipResult.status === 'rejected') {
+        setLoadError(
+          ownershipResult.reason instanceof Error
+            ? ownershipResult.reason.message
+            : 'Ownership information failed to load.'
+        );
+      }
+      if (adminsResult.status === 'rejected') {
+        setPendingTransferLoadError('Admin candidates failed to load.');
+      }
       if (transferResult.status === 'fulfilled') {
         const transferData = transferResult.value;
         setPendingTransfer((transferData as any)?.pendingTransfer || (transferData as any) || null);
@@ -99,7 +108,6 @@ export const OwnershipManagementView: React.FC<OwnershipManagementViewProps> = (
       }
     } catch (error) {
       console.error('Failed to load ownership data:', error);
-      toast.error('Failed to load ownership information');
       setOwnership(null);
       setOwnerUser(null);
       setAdmins([]);
