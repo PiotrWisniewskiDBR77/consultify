@@ -27,12 +27,74 @@ router.get(
       sourceConclusionId: req.query.sourceConclusionId
         ? String(req.query.sourceConclusionId)
         : undefined,
+      sourceArtifactType: req.query.sourceArtifactType
+        ? String(req.query.sourceArtifactType)
+        : undefined,
+      sourceArtifactId: req.query.sourceArtifactId ? String(req.query.sourceArtifactId) : undefined,
       targetArtifactType: req.query.targetArtifactType
         ? String(req.query.targetArtifactType)
         : undefined,
       targetArtifactId: req.query.targetArtifactId ? String(req.query.targetArtifactId) : undefined,
     });
     res.json({ conversions });
+  })
+);
+
+router.post(
+  '/record',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const {
+      sourceConclusionId,
+      sourceArtifactType,
+      sourceArtifactId,
+      sourceArtifactTitle,
+      sourceModule,
+      targetArtifactType,
+      targetArtifactId,
+      conversionIntent,
+      projectId,
+      confidenceLevel,
+      limits,
+      evidenceRefs,
+      sourcePack,
+      payload,
+    } = req.body as Record<string, unknown>;
+
+    if (!sourceArtifactType || !sourceArtifactId || !sourceArtifactTitle) {
+      return res.status(400).json({
+        error: 'sourceArtifactType, sourceArtifactId, and sourceArtifactTitle are required',
+      });
+    }
+    if (!targetArtifactType || !targetArtifactId) {
+      return res.status(400).json({ error: 'targetArtifactType and targetArtifactId are required' });
+    }
+
+    const conversion = await artifactConversionService.recordCompletedConversion({
+      organizationId,
+      actorUserId: userId,
+      sourceConclusionId: sourceConclusionId ? String(sourceConclusionId) : null,
+      sourceArtifactType: String(sourceArtifactType),
+      sourceArtifactId: String(sourceArtifactId),
+      sourceArtifactTitle: String(sourceArtifactTitle),
+      sourceModule: sourceModule ? String(sourceModule) : 'interview',
+      targetArtifactType: String(targetArtifactType),
+      targetArtifactId: String(targetArtifactId),
+      conversionIntent: conversionIntent ? String(conversionIntent) : 'Artifact action conversion',
+      projectId: projectId ? String(projectId) : null,
+      confidenceLevel: confidenceLevel ? String(confidenceLevel) : null,
+      limits: limits ? String(limits) : null,
+      evidenceRefs: Array.isArray(evidenceRefs) ? evidenceRefs : [],
+      sourcePack:
+        sourcePack && typeof sourcePack === 'object' && !Array.isArray(sourcePack)
+          ? (sourcePack as Record<string, unknown>)
+          : {},
+      payload: payload && typeof payload === 'object' && !Array.isArray(payload)
+        ? (payload as Record<string, unknown>)
+        : {},
+    });
+
+    res.status(201).json({ conversion });
   })
 );
 

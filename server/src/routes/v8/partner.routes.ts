@@ -58,17 +58,6 @@ function partnerProgramMeta(req: AuthRequest, partnerOrgId: string) {
   };
 }
 
-function buildReferralToolsFallback() {
-  const appUrl = process.env.APP_URL || 'https://app.consultify.com';
-  return {
-    referralCode: 'ACME-2024',
-    referralLink: `${appUrl}/ref/acme-consulting`,
-    referralLinkSlug: 'acme-consulting',
-    qrCodeUrl: null,
-    campaignLinks: [],
-  };
-}
-
 /**
  * GET /api/v8/partner/program/status
  * P29 single truth: lifecycle phase (runtime) + derived ledger balances
@@ -569,14 +558,15 @@ router.get(
         code: 'PARTNER_ORG_REQUIRED',
       });
     }
-    let tools = null;
-    try {
-      tools = await PartnerReferralService.getReferralTools(partnerOrgId);
-    } catch {
-      tools = null;
+    const tools = await PartnerReferralService.getReferralTools(partnerOrgId);
+    if (!tools) {
+      return res.status(404).json({
+        error: 'Referral tools unavailable for partner organization',
+        code: 'PARTNER_REFERRAL_TOOLS_NOT_FOUND',
+      });
     }
     return res.json({
-      data: { tools: tools || buildReferralToolsFallback() },
+      data: { tools },
       meta: partnerReadMeta(req, partnerOrgId),
     });
   })

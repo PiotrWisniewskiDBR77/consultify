@@ -653,6 +653,14 @@ router.post(
     if (!finding) {
       return res.status(404).json({ error: 'Finding not found', code: 'P10_FINDING_NOT_FOUND' });
     }
+    if (finding.readback_status !== 'confirmed_by_client') {
+      return res.status(422).json({
+        error: 'Cannot handoff: client readback confirmation is required',
+        code: 'P10_READBACK_REQUIRED',
+        findingId,
+        readbackStatus: finding.readback_status,
+      });
+    }
 
     const publishCheck = canPublishFinding(
       {

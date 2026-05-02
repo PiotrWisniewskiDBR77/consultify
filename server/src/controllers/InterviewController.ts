@@ -6452,14 +6452,18 @@ ${JSON.stringify(questions || [], null, 2)}
   getCompletedSessions: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
 
-    // Filter by organization (project-scoped OR org-scoped) and return lightweight rows for Insights tab
+    // Filter by organization and return approved/completed source material only.
+    // Assigned interviews must be manager-approved; legacy/ad-hoc sessions remain eligible when completed.
     const rows = await queryHelpers.queryAll(
       `SELECT 
         s.id, s.name as name, s.template_id, s.status, s.completed_at, s.owner_id,
         s.answered_questions, s.total_questions,
+        a.status as assignment_status,
         t.name as template_name, t.category as template_category,
+        u.job_title, u.department,
         COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
        FROM interview_sessions s
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
        LEFT JOIN projects p ON p.id = s.project_id
        LEFT JOIN interview_library_templates t ON t.id = s.template_id
        LEFT JOIN users u ON u.id = s.owner_id
@@ -6467,8 +6471,9 @@ ${JSON.stringify(questions || [], null, 2)}
          p.organization_id = ?
          OR (s.project_id IS NULL AND s.organization_id = ?)
        ) AND s.status = 'completed'
+       AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))
        ORDER BY s.completed_at DESC`,
-      [user.organizationId, user.organizationId]
+      [user.organizationId, user.organizationId, user.organizationId]
     );
 
     const sessions = (rows || []).map((row: any) => ({
@@ -6478,9 +6483,13 @@ ${JSON.stringify(questions || [], null, 2)}
       templateName: row.template_name,
       templateCategory: row.template_category,
       status: row.status,
+      approvalStatus: row.assignment_status || 'completed',
+      sourceScopeStatus: 'approved_only',
       completedAt: row.completed_at,
       respondentId: row.owner_id,
       respondentName: row.respondent_name,
+      respondentRole: row.job_title,
+      department: row.department,
       answeredQuestions: row.answered_questions,
       totalQuestions: row.total_questions,
     }));
@@ -6518,7 +6527,20 @@ ${JSON.stringify(questions || [], null, 2)}
 
   createInsight: asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
     const user = requireUser(req);
-    const { title, sessionIds, sessionId, promptType, filters, customPrompt } = req.body || {};
+    const {
+      title,
+      sessionIds,
+      sessionId,
+      promptType,
+      filters,
+      analysisScope,
+      analysisMode,
+      contextMode,
+      topicFocus,
+      consultantNote,
+      leadingQuestion,
+      customPrompt,
+    } = req.body || {};
 
     const normalizedSessionIds: string[] = Array.isArray(sessionIds)
       ? sessionIds.map(String).filter(Boolean)
@@ -6528,6 +6550,32 @@ ${JSON.stringify(questions || [], null, 2)}
 
     if (normalizedSessionIds.length === 0) {
       res.status(400).json({ error: 'sessionId or sessionIds is required' });
+      return;
+    }
+
+    const placeholders = normalizedSessionIds.map(() => '?').join(',');
+    const approvedRows = await queryHelpers.queryAll<{ id: string }>(
+      `SELECT s.id
+       FROM interview_sessions s
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id IN (${placeholders})
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )
+         AND s.status = 'completed'
+         AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
+      [user.organizationId, ...normalizedSessionIds, user.organizationId, user.organizationId]
+    );
+    const approvedIds = new Set((approvedRows || []).map((row) => String(row.id)));
+    const rejectedIds = normalizedSessionIds.filter((id) => !approvedIds.has(id));
+    if (rejectedIds.length > 0) {
+      res.status(409).json({
+        error:
+          'Interview Insight can only be generated from approved/completed interview sessions',
+        rejectedSessionIds: rejectedIds,
+      });
       return;
     }
 
@@ -6559,6 +6607,12 @@ ${JSON.stringify(questions || [], null, 2)}
       sessionIds: normalizedSessionIds,
       promptType: normalizedPromptType,
       filters,
+      analysisScope,
+      analysisMode,
+      contextMode,
+      topicFocus,
+      consultantNote,
+      leadingQuestion,
       customPrompt,
       createdBy: user.id,
     });

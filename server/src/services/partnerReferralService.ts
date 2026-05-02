@@ -275,6 +275,7 @@ interface ClickRow {
 let db: IDatabase = getDatabase();
 
 const BASE_URL = process.env.APP_URL || 'https://app.consultify.com';
+let referralSchemaEnsured = false;
 
 /**
  * Set database instance (for testing)
@@ -318,6 +319,71 @@ function generateCampaignSlug(name: string): string {
   return `${base}-${suffix}`;
 }
 
+function sanitizeSlug(value: string): string {
+  const normalized = String(value || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  return normalized || `partner-${crypto.randomBytes(3).toString('hex')}`;
+}
+
+function buildReferralCodeSeed(partnerName?: string): string {
+  const fromName = String(partnerName || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '')
+    .slice(0, 6);
+  const prefix = fromName || 'PARTNER';
+  const suffix = crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `${prefix}-${suffix}`;
+}
+
+async function ensurePartnerReferralSchema(): Promise<void> {
+  if (referralSchemaEnsured) return;
+  await DbPromise.exec(`
+    ALTER TABLE partner_organizations ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100);
+    ALTER TABLE partner_organizations ADD COLUMN IF NOT EXISTS referral_link_slug VARCHAR(255);
+  `);
+  referralSchemaEnsured = true;
+}
+
+export async function ensurePartnerReferralIdentity(
+  partnerOrgId: string,
+  partnerName?: string
+): Promise<{ referralCode: string; referralLinkSlug: string }> {
+  await ensurePartnerReferralSchema();
+  const row = await DbPromise.get<{
+    referral_code?: string | null;
+    referral_link_slug?: string | null;
+  }>(
+    db,
+    `SELECT referral_code, referral_link_slug FROM partner_organizations WHERE id = ?`,
+    [partnerOrgId],
+    { fallback: false }
+  );
+  if (!row) {
+    throw new Error(`Partner organization not found: ${partnerOrgId}`);
+  }
+
+  const existingCode = String(row.referral_code || '').trim();
+  const existingSlug = String(row.referral_link_slug || '').trim();
+  if (existingCode && existingSlug) {
+    return { referralCode: existingCode, referralLinkSlug: existingSlug };
+  }
+
+  const generatedCode = existingCode || buildReferralCodeSeed(partnerName);
+  const generatedSlug =
+    existingSlug || sanitizeSlug(`${partnerName || 'partner'}-${partnerOrgId.slice(0, 6)}`);
+  await DbPromise.run(
+    db,
+    `UPDATE partner_organizations
+     SET referral_code = ?, referral_link_slug = ?, updated_at = NOW()
+     WHERE id = ?`,
+    [generatedCode, generatedSlug, partnerOrgId],
+    { fallback: false }
+  );
+  return { referralCode: generatedCode, referralLinkSlug: generatedSlug };
+}
+
 // ==========================================
 // REFERRAL CODE OPERATIONS
 // ==========================================
@@ -332,15 +398,16 @@ export async function validateReferralCode(code: string): Promise<ValidateReferr
   }
 
   const normalizedCode = code.trim().toUpperCase();
+  const normalizedSlug = code.trim().toLowerCase();
 
   try {
     const row = await DbPromise.get<PartnerOrgRow>(
       db,
       `SELECT id, name, referral_code, tier, commission_rate_percent, license_discount_percent, status
              FROM partner_organizations 
-             WHERE (upper(referral_code) = ? OR upper(referral_link_slug) = ?)
+             WHERE (upper(referral_code) = ? OR lower(referral_link_slug) = ?)
                AND status = 'active'`,
-      [normalizedCode, normalizedCode.toLowerCase()]
+      [normalizedCode, normalizedSlug]
     );
 
     if (!row) {
@@ -369,6 +436,7 @@ export async function validateReferralCode(code: string): Promise<ValidateReferr
  */
 export async function getReferralTools(partnerOrgId: string): Promise<PartnerReferralTools | null> {
   try {
+    await ensurePartnerReferralIdentity(partnerOrgId);
     // Get partner org details
     const partner = await DbPromise.get<PartnerOrgRow>(
       db,
@@ -455,6 +523,7 @@ export async function createCampaignLink(params: CreateCampaignLinkParams): Prom
   const slug = generateCampaignSlug(name);
 
   try {
+    const ensuredIdentity = await ensurePartnerReferralIdentity(partnerOrgId);
     await DbPromise.run(
       db,
       `INSERT INTO partner_campaign_links 
@@ -475,12 +544,6 @@ export async function createCampaignLink(params: CreateCampaignLinkParams): Prom
     );
 
     // Get the partner's referral slug
-    const partner = await DbPromise.get<{ referral_link_slug: string }>(
-      db,
-      `SELECT referral_link_slug FROM partner_organizations WHERE id = ?`,
-      [partnerOrgId]
-    );
-
     logger.info(
       `[PartnerReferralService] Created campaign link: ${name} for partner ${partnerOrgId}`
     );
@@ -489,9 +552,7 @@ export async function createCampaignLink(params: CreateCampaignLinkParams): Prom
       id,
       name,
       slug,
-      fullUrl: partner
-        ? `${BASE_URL}/r/${partner.referral_link_slug}?c=${slug}${utmSource ? `&utm_source=${utmSource}` : ''}${utmMedium ? `&utm_medium=${utmMedium}` : ''}${utmCampaign ? `&utm_campaign=${utmCampaign}` : ''}`
-        : `${BASE_URL}/r/unknown?c=${slug}`,
+      fullUrl: `${BASE_URL}/r/${ensuredIdentity.referralLinkSlug}?c=${slug}${utmSource ? `&utm_source=${utmSource}` : ''}${utmMedium ? `&utm_medium=${utmMedium}` : ''}${utmCampaign ? `&utm_campaign=${utmCampaign}` : ''}`,
       utmSource,
       utmMedium,
       utmCampaign,

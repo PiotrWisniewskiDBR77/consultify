@@ -357,6 +357,24 @@ export async function triageCandidate(
   };
 
   const next = statusMap[input.action];
+  if (input.action === 'mark_ready_for_review') {
+    const analysis = await buildInsightAnalysis(insightId).catch(() => null);
+    const topic = candidate.source_key
+      ? analysis?.topics.find((item) => item.sourceKey === candidate.source_key)
+      : undefined;
+    if (topic && topic.evidenceCount <= 0) {
+      return {
+        error:
+          'Candidate cannot be marked ready for review without persisted evidence pointers. Mark it as needs evidence first.',
+      };
+    }
+    if (topic?.isContradicted) {
+      return {
+        error:
+          'Contradicted candidate cannot be marked ready for review until it is split or clarified.',
+      };
+    }
+  }
   const now = new Date().toISOString();
 
   await queryHelpers.queryRun(
@@ -418,6 +436,12 @@ export async function promoteCandidateToFinding(
 
   const candidate = await getCandidateRow(insightId, candidateId);
   if (!candidate) return { error: 'Candidate not found' };
+  if (candidate.triage_status !== 'ready_for_review') {
+    return {
+      error:
+        'Candidate must be marked ready for review by an operator before it can be promoted to a P10 finding.',
+    };
+  }
 
   const insight = await getInsightById(insightId);
   if (!insight) return { error: 'Insight not found' };

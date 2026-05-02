@@ -35,6 +35,54 @@ export type InsightStatus =
   | 'in_review'
   | 'published';
 
+export type InsightAnalysisMode =
+  | 'general_consulting_synthesis'
+  | 'focused_topic_synthesis'
+  | 'contradiction_scan'
+  | 'initiative_opportunity_scan'
+  | 'material_quality_scan'
+  | 'hypothesis_validation'
+  | 'between_the_lines';
+
+export type InsightContextMode =
+  | 'selected_interview_material_only'
+  | 'selected_material_plus_approved_org_knowledge';
+
+export interface InsightAnalysisScope {
+  source_session_ids: string[];
+  source_scope_status: 'approved_only';
+  respondent_filters: string[];
+  role_filters: string[];
+  department_filters: string[];
+  template_filters: string[];
+  date_range?: { from?: string; to?: string };
+  topic_focus: string[];
+  analysis_mode: InsightAnalysisMode;
+  context_mode: InsightContextMode;
+  consultant_note?: string | null;
+  leading_question?: string | null;
+}
+
+export interface InsightMaterialQuality {
+  overall_material_score: number;
+  answer_quality_posture: 'strong' | 'usable' | 'thin' | 'poor';
+  coverage_posture:
+    | 'single_perspective'
+    | 'partial_coverage'
+    | 'good_coverage'
+    | 'strong_cross_function_coverage';
+  approved_session_count: number;
+  respondent_count: number;
+  role_coverage: string[];
+  department_coverage: string[];
+  thin_answer_count: number;
+  missing_voices: string[];
+  evidence_gap_count: number;
+  contradiction_count: number;
+  limitations: string[];
+  recommended_followups: string[];
+}
+
 export interface CreateInsightInput {
   organizationId: string;
   title: string;
@@ -50,7 +98,17 @@ export interface CreateInsightInput {
     dateFrom?: string;
     dateTo?: string;
     respondentId?: string;
+    respondentIds?: string[];
+    roles?: string[];
+    departments?: string[];
+    topicFocus?: string[];
   };
+  analysisScope?: Partial<InsightAnalysisScope>;
+  analysisMode?: InsightAnalysisMode;
+  contextMode?: InsightContextMode;
+  topicFocus?: string[];
+  consultantNote?: string;
+  leadingQuestion?: string;
   createdBy: string;
 }
 
@@ -113,6 +171,12 @@ export interface Insight {
   signals?: InsightSignal[];
   evidenceMap?: InsightEvidenceMapEntry[];
   missingData?: string[];
+  analysisScope?: InsightAnalysisScope;
+  materialQuality?: InsightMaterialQuality | null;
+  contextMode?: InsightContextMode;
+  analysisMode?: InsightAnalysisMode;
+  topicFocus?: string[];
+  generationContext?: Record<string, any>;
   status: InsightStatus;
   reviewStatus?: 'draft' | 'in_review' | 'published';
   publishedAt?: string;
@@ -295,6 +359,103 @@ Interview Data:
 Provide the analysis in a clear, professional consulting format using markdown. Include the stakeholder table.`,
 };
 
+const DEFAULT_ANALYSIS_MODE: InsightAnalysisMode = 'general_consulting_synthesis';
+const DEFAULT_CONTEXT_MODE: InsightContextMode = 'selected_interview_material_only';
+
+function safeStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+}
+
+function safeJsonObject<T extends Record<string, any>>(raw: unknown, fallback: T): T {
+  if (!raw) return fallback;
+  if (typeof raw === 'object') return raw as T;
+  if (typeof raw !== 'string' || raw.trim().length === 0) return fallback;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function safeJsonArray<T>(raw: unknown): T[] | undefined {
+  if (!raw || typeof raw !== 'string') return undefined;
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function normalizeAnalysisMode(value?: string | null): InsightAnalysisMode {
+  switch (String(value || '').trim()) {
+    case 'focused_topic_synthesis':
+    case 'contradiction_scan':
+    case 'initiative_opportunity_scan':
+    case 'material_quality_scan':
+    case 'hypothesis_validation':
+    case 'between_the_lines':
+    case 'general_consulting_synthesis':
+      return value as InsightAnalysisMode;
+    default:
+      return DEFAULT_ANALYSIS_MODE;
+  }
+}
+
+function normalizeContextMode(value?: string | null): InsightContextMode {
+  return value === 'selected_material_plus_approved_org_knowledge'
+    ? 'selected_material_plus_approved_org_knowledge'
+    : DEFAULT_CONTEXT_MODE;
+}
+
+function buildDefaultAnalysisScope(input: {
+  sessionIds: string[];
+  filters?: CreateInsightInput['filters'] | Record<string, any>;
+  analysisScope?: Partial<InsightAnalysisScope>;
+  analysisMode?: string | null;
+  contextMode?: string | null;
+  topicFocus?: string[];
+  consultantNote?: string | null;
+  leadingQuestion?: string | null;
+}): InsightAnalysisScope {
+  const filters = input.filters || {};
+  const partial = input.analysisScope || {};
+  const dateRange =
+    partial.date_range ||
+    ((filters as any).dateFrom || (filters as any).dateTo
+      ? { from: (filters as any).dateFrom || undefined, to: (filters as any).dateTo || undefined }
+      : undefined);
+  const topicFocus =
+    safeStringArray(partial.topic_focus).length > 0
+      ? safeStringArray(partial.topic_focus)
+      : safeStringArray(input.topicFocus || (filters as any).topicFocus);
+
+  return {
+    source_session_ids:
+      safeStringArray(partial.source_session_ids).length > 0
+        ? safeStringArray(partial.source_session_ids)
+        : input.sessionIds,
+    source_scope_status: 'approved_only',
+    respondent_filters: safeStringArray(
+      partial.respondent_filters || (filters as any).respondentIds || (filters as any).respondentId
+    ),
+    role_filters: safeStringArray(partial.role_filters || (filters as any).roles),
+    department_filters: safeStringArray(partial.department_filters || (filters as any).departments),
+    template_filters: safeStringArray(
+      partial.template_filters || (filters as any).templateIds || (filters as any).templateId
+    ),
+    ...(dateRange ? { date_range: dateRange } : {}),
+    topic_focus: topicFocus,
+    analysis_mode: normalizeAnalysisMode(partial.analysis_mode || input.analysisMode),
+    context_mode: normalizeContextMode(partial.context_mode || input.contextMode),
+    consultant_note: partial.consultant_note ?? input.consultantNote ?? null,
+    leading_question: partial.leading_question ?? input.leadingQuestion ?? null,
+  };
+}
+
 // ==========================================
 // SERVICE CLASS
 // ==========================================
@@ -327,13 +488,31 @@ class InterviewInsightService {
       if (customPrompt) base.customPrompt = customPrompt;
       return Object.keys(base).length > 0 ? base : undefined;
     })();
+    const analysisScope = buildDefaultAnalysisScope({
+      sessionIds: input.sessionIds,
+      filters: input.filters,
+      analysisScope: input.analysisScope,
+      analysisMode: input.analysisMode,
+      contextMode: input.contextMode,
+      topicFocus: input.topicFocus,
+      consultantNote: input.consultantNote,
+      leadingQuestion: input.leadingQuestion,
+    });
+    const generationContext = {
+      contract: 'interview_insight_scope_builder_v1',
+      contextMode: analysisScope.context_mode,
+      analysisMode: analysisScope.analysis_mode,
+      topicFocus: analysisScope.topic_focus,
+      createdAt: now,
+    };
 
     // Create insight record
     await db.run(
       `INSERT INTO interview_insights
        (id, session_id, organization_id, category, title, prompt_type, source_session_ids, filters, 
-        status, source_session_count, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        status, source_session_count, analysis_scope_json, context_mode, analysis_mode, topic_focus_json,
+        generation_context_json, created_by, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         input.sessionIds?.[0] || null,
@@ -345,6 +524,11 @@ class InterviewInsightService {
         storedFilters ? JSON.stringify(storedFilters) : null,
         'generating',
         input.sessionIds.length,
+        JSON.stringify(analysisScope),
+        analysisScope.context_mode,
+        analysisScope.analysis_mode,
+        JSON.stringify(analysisScope.topic_focus),
+        JSON.stringify(generationContext),
         input.createdBy,
         now,
         now,
@@ -352,7 +536,7 @@ class InterviewInsightService {
     );
 
     // Start async generation
-    void this.generateInsight(id, input.sessionIds, input.promptType, input.customPrompt);
+    void this.generateInsight(id, input.sessionIds, input.promptType, input.customPrompt, analysisScope);
 
     return this.getById(id) as Promise<Insight>;
   }
@@ -420,7 +604,13 @@ class InterviewInsightService {
       typeof (insight.filters as any)?.customPrompt === 'string'
         ? String((insight.filters as any).customPrompt)
         : undefined;
-    void this.generateInsight(id, insight.sourceSessionIds, insight.promptType, customPrompt);
+    void this.generateInsight(
+      id,
+      insight.sourceSessionIds,
+      insight.promptType,
+      customPrompt,
+      insight.analysisScope
+    );
 
     return this.getById(id);
   }
@@ -446,10 +636,24 @@ class InterviewInsightService {
     promptType: InsightPromptType,
     formattedData: string,
     customPrompt?: string,
-    sessionCount = 1
+    sessionCount = 1,
+    analysisScope?: InsightAnalysisScope
   ): string {
     const focusHint = PROMPT_TEMPLATES[promptType]?.split('\n')[0] || '';
     const isMultiSession = sessionCount > 1;
+    const scope = analysisScope || buildDefaultAnalysisScope({ sessionIds: [], filters: {} });
+    const scopeBlock = JSON.stringify(
+      {
+        analysis_mode: scope.analysis_mode,
+        context_mode: scope.context_mode,
+        topic_focus: scope.topic_focus,
+        leading_question: scope.leading_question,
+        consultant_note: scope.consultant_note,
+        source_scope_status: scope.source_scope_status,
+      },
+      null,
+      2
+    );
 
     const crossSessionBlock = isMultiSession
       ? `
@@ -474,6 +678,16 @@ CROSS-SESSION ANALYSIS (${sessionCount} respondents):
       : '';
 
     let prompt = `You are analyzing interview data. Your analysis focus: ${focusHint}
+
+Insight Scope:
+${scopeBlock}
+
+Context mode rules:
+- If context_mode is "selected_interview_material_only", use only the interview material below.
+- If context_mode is "selected_material_plus_approved_org_knowledge", you may use approved organizational knowledge only when it is explicitly available in the provided context; otherwise say that broader organizational knowledge was not available.
+- Never hide uncertainty. If the material is thin, contradictory, or single-perspective, say so in limits and material_quality.
+- A leading_question is optional. If absent, identify the highest-value consulting observations yourself.
+- Topic focus may be empty. If empty, create a general consulting synthesis.
 
 Each answer in the data below is tagged with an [answer_id: ...]. Use these IDs in evidence_refs and evidence_map.
 
@@ -524,7 +738,15 @@ Return ONLY a valid JSON object (no markdown fences, no commentary outside the J
       "linked_issues": ["Issue title 1"]
     }
   ],
-  "missing_data": ["Description of what data is missing or what follow-up questions would help"]
+  "missing_data": ["Description of what data is missing or what follow-up questions would help"],
+  "material_quality": {
+    "overall_material_score": 0-100,
+    "answer_quality_posture": "strong|usable|thin|poor",
+    "coverage_posture": "single_perspective|partial_coverage|good_coverage|strong_cross_function_coverage",
+    "missing_voices": ["Which roles/departments/perspectives are missing"],
+    "limitations": ["Limits on what can safely be concluded"],
+    "recommended_followups": ["Follow-up questions or interviews that would improve confidence"]
+  }
 }
 ${crossSessionInstructions}
 Rules:
@@ -534,6 +756,7 @@ Rules:
 - Preserve perspective nuance: if executives, managers, frontline users, or departments see a topic differently, encode that in perspective_labels and divergence_note instead of flattening it into one claim.
 - Do NOT provide recommendations, action plans, next steps, roadmaps, timelines, owners, or mitigation plans.
 - If evidence is weak or incomplete, note it in missing_data.
+- Material Quality is not a blocking gate. It is an honest assessment of how far the generated insight can be trusted.
 - Aim for 3-7 themes, 2-5 issues, 2-5 opportunities, 1-4 signals (scale with data volume).
 `;
 
@@ -556,6 +779,7 @@ Rules:
     signals: InsightSignal[];
     evidence_map: InsightEvidenceMapEntry[];
     missing_data: string[];
+    material_quality?: Partial<InsightMaterialQuality>;
   } {
     let cleaned = raw.trim();
     // Strip markdown code fences if present
@@ -597,6 +821,10 @@ Rules:
       signals: Array.isArray(parsed.signals) ? parsed.signals : [],
       evidence_map: Array.isArray(parsed.evidence_map) ? parsed.evidence_map : [],
       missing_data: Array.isArray(parsed.missing_data) ? parsed.missing_data : [],
+      material_quality:
+        parsed.material_quality && typeof parsed.material_quality === 'object'
+          ? parsed.material_quality
+          : undefined,
     };
   }
 
@@ -668,6 +896,82 @@ Rules:
     return lines.join('\n');
   }
 
+  private buildMaterialQuality(
+    sessionData: any[],
+    v6Data: ReturnType<typeof InterviewInsightService.prototype.parseV6Response>
+  ): InsightMaterialQuality {
+    const answeredTotal = sessionData.reduce(
+      (sum, session) => sum + Number(session.answered_questions || session.answers?.length || 0),
+      0
+    );
+    const questionTotal = sessionData.reduce(
+      (sum, session) => sum + Number(session.total_questions || session.answers?.length || 0),
+      0
+    );
+    const roles = safeStringArray(sessionData.map((session) => session.job_title));
+    const departments = safeStringArray(sessionData.map((session) => session.department));
+    const thinAnswers = sessionData
+      .flatMap((session) => session.answers || [])
+      .filter((answer) => {
+        const text = String(answer.answer_text || '').trim();
+        return text.length < 80 || (answer.confidence_score && Number(answer.confidence_score) < 3);
+      }).length;
+    const contradictionCount = (v6Data.signals || []).filter((signal) =>
+      /contradiction|tension/i.test(`${signal.type} ${signal.title} ${signal.description}`)
+    ).length;
+    const evidenceGapCount =
+      (v6Data.missing_data || []).length +
+      [...(v6Data.themes || []), ...(v6Data.issues || []), ...(v6Data.opportunities || [])].filter(
+        (item: any) => !Array.isArray(item.evidence_refs) || item.evidence_refs.length === 0
+      ).length;
+    const coverageRatio = questionTotal > 0 ? answeredTotal / questionTotal : 0;
+    const aiQuality = v6Data.material_quality || {};
+    const aiScore = Number((aiQuality as any).overall_material_score);
+    const calculatedScore = Math.max(
+      0,
+      Math.min(
+        100,
+        Math.round(
+          coverageRatio * 55 +
+            Math.min(sessionData.length, 4) * 8 +
+            Math.min(roles.length + departments.length, 6) * 3 -
+            thinAnswers * 2 -
+            evidenceGapCount * 3
+        )
+      )
+    );
+    const score = Number.isFinite(aiScore) ? Math.max(0, Math.min(100, aiScore)) : calculatedScore;
+
+    const answerQuality =
+      (aiQuality as any).answer_quality_posture ||
+      (score >= 80 ? 'strong' : score >= 60 ? 'usable' : score >= 40 ? 'thin' : 'poor');
+    const coveragePosture =
+      (aiQuality as any).coverage_posture ||
+      (sessionData.length <= 1
+        ? 'single_perspective'
+        : roles.length >= 3 || departments.length >= 3
+          ? 'strong_cross_function_coverage'
+          : sessionData.length >= 3
+            ? 'good_coverage'
+            : 'partial_coverage');
+
+    return {
+      overall_material_score: score,
+      answer_quality_posture: answerQuality,
+      coverage_posture: coveragePosture,
+      approved_session_count: sessionData.length,
+      respondent_count: new Set(sessionData.map((session) => session.owner_id || session.id)).size,
+      role_coverage: roles,
+      department_coverage: departments,
+      thin_answer_count: thinAnswers,
+      missing_voices: safeStringArray((aiQuality as any).missing_voices),
+      evidence_gap_count: evidenceGapCount,
+      contradiction_count: contradictionCount,
+      limitations: safeStringArray((aiQuality as any).limitations || v6Data.missing_data),
+      recommended_followups: safeStringArray((aiQuality as any).recommended_followups),
+    };
+  }
+
   /**
    * Generate insight content using AI (V6 three-layer truth model)
    */
@@ -675,7 +979,8 @@ Rules:
     insightId: string,
     sessionIds: string[],
     promptType: InsightPromptType,
-    customPrompt?: string
+    customPrompt?: string,
+    analysisScope?: InsightAnalysisScope
   ): Promise<void> {
     const db = await this.getDb();
     const startTime = Date.now();
@@ -692,7 +997,8 @@ Rules:
         promptType,
         formattedData,
         customPrompt,
-        sessionData.length
+        sessionData.length,
+        analysisScope
       );
 
       const systemPrompt =
@@ -723,6 +1029,7 @@ Rules:
 
       // Render markdown for the legacy `content` column (backward compat)
       const markdownContent = this.renderV6ContentAsMarkdown(v6Data);
+      const materialQuality = this.buildMaterialQuality(sessionData, v6Data);
 
       await db.run(
         `UPDATE interview_insights 
@@ -735,6 +1042,7 @@ Rules:
              signals_json = ?,
              evidence_map_json = ?,
              missing_data_json = ?,
+             material_quality_json = ?,
              tokens_used = ?,
              generation_time_ms = ?,
              updated_at = ?
@@ -748,6 +1056,7 @@ Rules:
           JSON.stringify(v6Data.signals),
           JSON.stringify(v6Data.evidence_map),
           JSON.stringify(v6Data.missing_data),
+          JSON.stringify(materialQuality),
           tokensUsed,
           generationTime,
           new Date().toISOString(),
@@ -781,13 +1090,18 @@ Rules:
 
     const sessions = await db.all<any>(
       `SELECT 
-        s.id, s.name, s.status, s.completed_at,
+        s.id, s.name, s.status, s.completed_at, s.owner_id,
+        s.answered_questions, s.total_questions,
         t.name as template_name, t.category as template_category,
+        u.job_title, u.department,
         COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
        FROM interview_sessions s
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id
        LEFT JOIN interview_library_templates t ON t.id = s.template_id
        LEFT JOIN users u ON u.id = s.owner_id
-       WHERE s.id IN (${placeholders})`,
+       WHERE s.id IN (${placeholders})
+         AND s.status = 'completed'
+         AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
       sessionIds
     );
 
@@ -803,6 +1117,7 @@ Rules:
           q.confidence_score
          FROM interview_questions q
          WHERE q.session_id = ?
+           AND q.status = 'answered'
          ORDER BY q.sort_order`,
         [session.id]
       );
@@ -836,6 +1151,8 @@ Rules:
 Template: ${session.template_name || 'Unknown'}
 Category: ${session.template_category || 'General'}
 Respondent: ${session.respondent_name || 'Anonymous'}
+Role: ${session.job_title || 'Unknown'}
+Department: ${session.department || 'Unknown'}
 Date: ${session.completed_at || 'Unknown'}
 
 ${answerText}
@@ -869,15 +1186,17 @@ ${answerText}
       return [];
     })();
 
-    const safeJsonArray = <T>(raw: unknown): T[] | undefined => {
-      if (!raw || typeof raw !== 'string') return undefined;
-      try {
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : undefined;
-      } catch {
-        return undefined;
-      }
-    };
+    const topicFocus = safeJsonArray<string>(row.topic_focus_json) || [];
+    const analysisScope = buildDefaultAnalysisScope({
+      sessionIds: sourceSessionIds,
+      filters: row.filters ? safeJsonObject<Record<string, any>>(row.filters, {}) : undefined,
+      analysisScope: safeJsonObject<Partial<InsightAnalysisScope>>(row.analysis_scope_json, {}),
+      analysisMode: row.analysis_mode || row.prompt_type,
+      contextMode: row.context_mode,
+      topicFocus,
+      consultantNote: undefined,
+      leadingQuestion: undefined,
+    });
 
     return {
       id: row.id,
@@ -902,6 +1221,19 @@ ${answerText}
       signals: safeJsonArray<InsightSignal>(row.signals_json),
       evidenceMap: safeJsonArray<InsightEvidenceMapEntry>(row.evidence_map_json),
       missingData: safeJsonArray<string>(row.missing_data_json),
+      analysisScope,
+      materialQuality:
+        Object.keys(safeJsonObject<Partial<InsightMaterialQuality>>(row.material_quality_json, {}))
+          .length > 0
+          ? (safeJsonObject<InsightMaterialQuality>(
+              row.material_quality_json,
+              {} as InsightMaterialQuality
+            ) as InsightMaterialQuality)
+          : null,
+      contextMode: analysisScope.context_mode,
+      analysisMode: analysisScope.analysis_mode,
+      topicFocus: analysisScope.topic_focus,
+      generationContext: safeJsonObject<Record<string, any>>(row.generation_context_json, {}),
       status: row.status as InsightStatus,
       reviewStatus:
         row.status === 'in_review' || row.status === 'published'

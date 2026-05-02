@@ -280,6 +280,8 @@ export class ArtifactConversionService {
   async listConversions(params: {
     organizationId: string;
     sourceConclusionId?: string;
+    sourceArtifactType?: string;
+    sourceArtifactId?: string;
     targetArtifactType?: string;
     targetArtifactId?: string;
   }): Promise<ArtifactConversion[]> {
@@ -289,6 +291,14 @@ export class ArtifactConversionService {
     if (params.sourceConclusionId) {
       clauses.push('source_conclusion_id = ?');
       values.push(params.sourceConclusionId);
+    }
+    if (params.sourceArtifactType) {
+      clauses.push('source_artifact_type = ?');
+      values.push(params.sourceArtifactType);
+    }
+    if (params.sourceArtifactId) {
+      clauses.push('source_artifact_id = ?');
+      values.push(params.sourceArtifactId);
     }
     if (params.targetArtifactType) {
       clauses.push('target_artifact_type = ?');

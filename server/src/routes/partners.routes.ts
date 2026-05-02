@@ -46,7 +46,9 @@ import {
   updatePartnerPayoutSettings,
 } from '../services/partnerPayoutSettingsService.js';
 import PartnerProgramLedgerService from '../services/partnerProgramLedgerService.js';
-import PartnerReferralService from '../services/partnerReferralService.js';
+import PartnerReferralService, {
+  ensurePartnerReferralIdentity,
+} from '../services/partnerReferralService.js';
 import { generatePartnerToolkitResourceFile } from '../services/partnerToolkitResources.js';
 import * as DbPromise from '../utils/DbPromise.js';
 import logger from '../utils/Logger.js';
@@ -139,6 +141,11 @@ async function requirePartnerOrgId(req: Request, res: Response): Promise<string 
   }
   const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
   if (!partnerOrgId) {
+    const hasPartnerUsersTable = await DbPromise.tableExists('partner_users');
+    if (!hasPartnerUsersTable) {
+      featureUnavailable(res, 'Partner access unavailable (database schema missing)');
+      return null;
+    }
     res.status(403).json({ success: false, error: 'Partner organization required' });
     return null;
   }
@@ -325,6 +332,8 @@ router.post('/connect', async (req: Request, res: Response, next: NextFunction) 
       return res.status(500).json({ success: false, error: result.error || 'Failed to connect' });
     }
 
+    const referralIdentity = await ensurePartnerReferralIdentity(partnerOrgId, name);
+
     // Return connection info (connected: true)
     const org = await DbPromise.get<any>(
       db,
@@ -354,6 +363,8 @@ router.post('/connect', async (req: Request, res: Response, next: NextFunction) 
           commissionRatePercent: org?.commission_rate_percent ?? undefined,
           performanceScore: org?.performance_score ?? undefined,
           publicListingEnabled: Boolean(org?.public_listing_enabled),
+          referralCode: referralIdentity.referralCode,
+          referralLinkSlug: referralIdentity.referralLinkSlug,
           specializations: [],
           regions: [],
         },
@@ -391,7 +402,8 @@ router.get('/organization', async (req: Request, res: Response, next: NextFuncti
        JOIN partner_organizations po ON po.id = pu.partner_org_id
        WHERE pu.user_id = ? AND pu.status = 'active'
        LIMIT 1`,
-      [userId]
+      [userId],
+      { fallback: false }
     );
 
     if (!org) {
@@ -434,6 +446,9 @@ router.get('/organization', async (req: Request, res: Response, next: NextFuncti
     });
   } catch (error: any) {
     logger.error('Error fetching partner organization:', error);
+    if (isSchemaMissingError(error)) {
+      return featureUnavailable(res, 'Partner organization unavailable (database schema missing)');
+    }
     next(error);
   }
 });
@@ -653,7 +668,8 @@ router.put('/payout-settings', async (req: Request, res: Response, next: NextFun
  */
 router.get('/referral-tools', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
 
     let tools;
     try {
@@ -663,14 +679,7 @@ router.get('/referral-tools', async (req: Request, res: Response, next: NextFunc
     }
 
     if (!tools) {
-      // Return fallback demo data when DB is unavailable
-      tools = {
-        referralCode: 'ACME-2024',
-        referralLink: `${process.env.APP_URL || 'https://app.consultify.com'}/ref/acme-consulting`,
-        referralLinkSlug: 'acme-consulting',
-        qrCodeUrl: null,
-        campaignLinks: [],
-      };
+      return res.status(404).json({ success: false, error: 'Referral tools unavailable' });
     }
 
     res.json({ success: true, data: tools });
@@ -686,7 +695,8 @@ router.get('/referral-tools', async (req: Request, res: Response, next: NextFunc
  */
 router.post('/campaign-links', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
     const { name, description, utmSource, utmMedium, utmCampaign, utmContent, destinationUrl } =
       req.body;
 
@@ -720,7 +730,8 @@ router.delete(
   '/campaign-links/:linkId',
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
       const { linkId } = req.params;
 
       const deleted = await PartnerReferralService.deleteCampaignLink(partnerOrgId, linkId);
@@ -743,7 +754,8 @@ router.delete(
  */
 router.get('/referral-analytics', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
     const days = parseInt(req.query.days as string) || 30;
 
     let analytics;
@@ -774,7 +786,8 @@ router.get('/referral-analytics', async (req: Request, res: Response, next: Next
  */
 router.get('/attributions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
     const status = req.query.status as string | undefined;
     const limit = parseInt(req.query.limit as string) || 50;
     const offset = parseInt(req.query.offset as string) || 0;
@@ -808,7 +821,8 @@ router.get('/attributions', async (req: Request, res: Response, next: NextFuncti
  */
 router.get('/earnings', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
 
     let earnings;
     try {
@@ -840,7 +854,8 @@ router.get('/earnings', async (req: Request, res: Response, next: NextFunction) 
  */
 router.get('/commission-transactions', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
     const status = req.query.status as string | undefined;
     const startDate = req.query.startDate as string | undefined;
     const endDate = req.query.endDate as string | undefined;
@@ -877,7 +892,8 @@ router.get('/commission-transactions', async (req: Request, res: Response, next:
  */
 router.post('/payouts/request', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+    const partnerOrgId = await requirePartnerOrgId(req, res);
+    if (!partnerOrgId) return;
     const userId = (req as any).user?.id;
     const { payoutAccountId, notes } = req.body;
 
@@ -977,7 +993,8 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
 
     // Try to load from database, fallback to demo data
     try {
-      const partnerOrgId = (req as any).user?.partnerOrgId || 'partner-org-001';
+      const partnerOrgId = await requirePartnerOrgId(req, res);
+      if (!partnerOrgId) return;
       const { getDatabase } = await import('../database/Database.js');
       const db = getDatabase();
       const { get: dbGet, all: dbAll } = await import('../utils/DbPromise.js');
@@ -1081,6 +1098,9 @@ router.get('/dashboard', async (req: Request, res: Response, next: NextFunction)
       fallbackDashboard.stats.revenueChange = revenueChange;
       fallbackDashboard.recentActivity = recentActivity.slice(0, 5);
     } catch (dbError: any) {
+      if (isSchemaMissingError(dbError)) {
+        return featureUnavailable(res, 'Partner dashboard unavailable (database schema missing)');
+      }
       logger.warn('Dashboard: DB query failed, using fallback data:', dbError?.message);
     }
 
