@@ -280,17 +280,24 @@ router.get('/drafts', async (req: AuthRequest, res) => {
   const { organizationId, userId } = authContext(req);
   const conversationId = req.query.conversationId ? String(req.query.conversationId) : null;
   const projectId = req.query.projectId ? String(req.query.projectId) : null;
+  const whereParts = ['organization_id = ?'];
+  const queryParams: unknown[] = [organizationId];
+  if (conversationId) {
+    whereParts.push('conversation_id = ?');
+    queryParams.push(conversationId);
+  }
+  whereParts.push('(project_id IS NULL OR created_by = ?');
+  queryParams.push(userId);
+  if (projectId) {
+    whereParts.push('OR project_id = ?');
+    queryParams.push(projectId);
+  }
+  whereParts.push(')');
   const rows = await dbAll<DraftRow>(
     `SELECT * FROM work_canvas_drafts
-     WHERE organization_id = ?
-       AND (? IS NULL OR conversation_id = ?)
-       AND (
-         project_id IS NULL
-         OR created_by = ?
-         OR (? IS NOT NULL AND project_id = ?)
-       )
+     WHERE ${whereParts.join(' AND ')}
      ORDER BY updated_at DESC`,
-    [organizationId, conversationId, conversationId, userId, projectId, projectId],
+    queryParams,
     { fallback: false }
   );
   const result = rows.map(toDraft);
