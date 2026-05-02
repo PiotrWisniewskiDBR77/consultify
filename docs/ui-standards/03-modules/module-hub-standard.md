@@ -1,4 +1,4 @@
-# UI/UX Standard dla Modułów Consultinity
+# UI/UX Standard dla Modułów Consultify
 
 > **Złoty standard referencyjny: ClickUp**
 
@@ -8,7 +8,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  Module > Surface/Tool                      [System] [LLM] [AI] [User]          │
 ├─────────────────────────────────────────────────────────────────────────────────┤
-│  🔍 │ [Tab 1] [Tab 2] [Tab 3]      │ [Filters…] [View] [Tool] [+New] [Area]     │
+│  🔍 │ [Tab 1] [Tab 2] [Tab 3]      │ [Filters…] [View icons] [Tool] [Dodaj] [Area] │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │  [≡ List] [Doc 1 ●] [Doc 2 ●] [Doc 3 ●]                    (dynamic tabs)       │
 ├─────────────────────────────────────────────────────────────────────────────────┤
@@ -60,10 +60,47 @@ Liczniki i presety filtrów żyją w **Command Row** (linia 3) jako “counter c
 | Element              | Opis                                                           |
 | -------------------- | -------------------------------------------------------------- |
 | **Area (toggle panelu lewego)** | Kanoniczny toggle lewego panelu “obszaru pracy” dla danego ekranu. **Domyślnie:** to jest split panel (AI/chat/kontekst), który można otworzyć i zamknąć. Nie dotyczy globalnego sidebara modułów. |
-| **Primary CTA (Add)** | “+ New …” / “Dodaj …” (kontekstowy). Jeśli ekran pozwala tworzyć/uruchamiać obiekt lub akcję startową — user zawsze szuka tego przycisku w tym slocie. **Kolor CTA:** kolor narzędzia/artefaktu, który tworzymy; jeśli ekran nie ma przypisanego koloru narzędzia → **purple** (fallback). Jeśli moduł nie ma własnego flow create, CTA **może prowadzić do kanonicznego flow tworzenia** innego modułu zamiast duplikować modal (np. `Execution → + New Initiative` otwiera `Initiatives`). |
+| **Primary CTA (Add)** | `Dodaj` / `New ...` (kontekstowy). Jeśli ekran pozwala tworzyć/uruchamiać obiekt lub akcję startową — user zawsze szuka tego przycisku w tym slocie. **Menu 2 rule:** nie dodajemy ikony `+` przed tekstem CTA; funkcję tworzenia komunikuje pozycja, label, kolor i ewentualny chevron. **Kolor CTA:** kolor narzędzia/artefaktu, który tworzymy; jeśli ekran nie ma przypisanego koloru narzędzia → **purple** (fallback). Jeśli moduł nie ma własnego flow create, CTA **może prowadzić do kanonicznego flow tworzenia** innego modułu zamiast duplikować modal (np. `Execution → New Initiative` otwiera `Initiatives`). |
 | **Tool (opcjonalny)** | Przycisk narzędzi specyficznych dla ekranu — tylko tam, gdzie istnieje dodatkowy panel narzędziowy (np. Notebook / IDE / prezentacje / report builder / workspace’y). |
-| **View Toggle**      | Przełącznik trybu prezentacji kolekcji (ikony). Zawsze ten sam porządek ikon (z `view-modes-standard.md`), pokazujemy tylko dostępne tryby. |
+| **View Toggle**      | Przełącznik trybu prezentacji kolekcji jako segmented icon buttons, nie dropdown. Zawsze ten sam porządek ikon (z `view-modes-standard.md`), pokazujemy tylko dostępne tryby. |
 | **Filters**          | Filtry kolekcji. **MUST:** w topbarze utrzymujemy **maksymalnie jedno** “okno wyboru” (dropdown/select), żeby nie robić bałaganu. Pozostałe presety/liczniki/filtry pokazujemy w **Command Row** jako chipy. Dla tabel: filtry i sortowanie w nagłówkach kolumn (KANON). Dla pozostałych view modes: “Filters…” może zawierać też sekcję **Sort** (bez dokładania osobnego przycisku w topbarze). **MUST NOT:** umieszczać tu lokalnych przełączników wizualizacji typu `prev/next`, `W/M`, `3M/6M/12M` - to są kontrolki konkretnego widoku i należą do jego wewnętrznego toolbara. |
+
+### 2.1 Prawy klaster Menu 2 - korekty 2026-05-01
+
+Prawy klaster `Module Topbar / Menu 2` musi być konsekwentny między modułami.
+
+Zakazy:
+
+- `Help` nie jest standardowym elementem prawego klastra `Menu 2`; Help ma swoje miejsce w globalnym shellu / sidebarze.
+- `Primary CTA` w `Menu 2` nie używa ikony `+` przed tekstem; `Dodaj` może mieć chevron, jeśli otwiera menu wariantów.
+- View toggle nie jest dropdownem typu `Table v` z menu `Table/Grid`; ma być widocznym przełącznikiem segmentowym.
+- Nie pokazujemy dwóch filtrów z prawie identycznym opisem typu `Wszystkie obszary` + `Wszystkie źródła`, jeśli użytkownik nie rozumie różnicy między nimi.
+- Nie używamy generycznych etykiet `Wszystkie ...` bez konkretnego kontekstu domenowego.
+
+View toggle:
+
+- Przełącznik widoku jest w dobrym miejscu w prawym klastrze.
+- Ma postać dwóch lub więcej sąsiadujących buttonów ikonowych / segmented controls, a nie select/dropdown.
+- Ikony mają stałą semantykę i kolejność:
+  1. `Lista` po lewej.
+  2. `Karty` / `Grid` po prawej.
+- Kolejność ikon nie zmienia się per moduł.
+- Aktywny stan musi być czytelny, ale spokojny: surface + subtelny accent, nie ciężki kolor.
+- Jeśli dostępny jest tylko jeden widok, toggle jest ukryty albo disabled z tooltipem, ale nie udaje wyboru.
+
+Filtry:
+
+- Każdy dropdown filter musi mieć specyficzny opis wynikający z domeny.
+- Trigger powinien mówić, co filtruje, a nie powtarzać generyczne `Wszystkie`.
+- Dopuszczalne przykłady:
+  - `Obszar: wszystkie`,
+  - `Źródło: wszystkie`,
+  - `Kategoria: wszystkie`,
+  - `Status: aktywne`,
+  - `Właściciel: ja`,
+  - `Typ szablonu: wszystkie`.
+- W bardzo ciasnych controls można skracać trigger do wartości, ale pełny kontekst musi być w tooltip/aria label i w menu.
+- Dwa filtry obok siebie nie mogą wyglądać jak ten sam filtr z inną ikoną.
 
 ### Kolejność elementów topbara (KANON v3)
 
@@ -79,8 +116,108 @@ W module hub (w tym samym rzędzie), zawsze trzymamy kolejność:
 | Moduł               | Przyciski                                       |
 | ------------------- | ----------------------------------------------- |
 | **Discovery Tools** | Strategy, Operations, Digital, Process Auto     |
-| **Assessment**      | + New Assessment (otwiera modal z frameworkami) |
-| **Initiatives**     | AI Generate, + New Initiative                   |
+| **Assessment**      | New Assessment (otwiera modal z frameworkami) |
+| **Initiatives**     | AI Generate, New Initiative                   |
+
+---
+
+## 2b. Negatywny przykład - Interview / Szablony 2026-05-01
+
+Na ekranie `Wywiad > Szablony` zaobserwowano układ, który nie spełnia docelowego standardu:
+
+- `Help` znajduje się w prawym klastrze topbara, mimo że Help powinien być globalny/sidebarowy.
+- View toggle jest w dobrym miejscu, ale musi utrzymywać stałą kolejność `Lista` po lewej i `Karty/Grid` po prawej.
+- Dwa filtry obok siebie mają zbyt generyczne opisy (`Wszystkie obszary`, `Wszystkie źródła`) i są zbyt podobne semantycznie.
+- Opisy filtrów powinny być bardziej specyficzne dla domeny szablonów/interview.
+
+Docelowo dla takiego ekranu filtry powinny brzmieć np.:
+
+- `Obszar pytań: wszystkie`,
+- `Źródło szablonu: wszystkie`,
+- `Status szablonu: aktywne`,
+- `Właściciel: wszyscy`.
+
+Nie chodzi o dokładne copy powyżej jako finalne, tylko o zasadę: trigger musi wyjaśniać wymiar filtrowania.
+
+---
+
+## 2c. Negatywny przykład - Tools / Biblioteka 2026-05-01
+
+Na ekranie `Tools > Biblioteka` zaobserwowano kolejny układ niezgodny z docelowym standardem:
+
+- `Dodaj` jako primary CTA jest w dobrym slocie i ma właściwą rangę, ale nie powinien mieć ikony `+`.
+- `Help` pojawia się obok CTA, mimo że w tym miejscu jest zbędny.
+- `Table` / `Grid` są ukryte pod dropdownem, a docelowo mają być stałymi przyciskami wyboru widoku.
+- Otwarty dropdown view mode wygląda jak menu akcji, przez co miesza zmianę widoku z innymi kontrolkami topbara.
+
+Docelowo prawy klaster dla takiego ekranu:
+
+`[filtry domenowe] [Lista icon button] [Karty icon button] [Dodaj v]`
+
+Jeśli `Dodaj` otwiera kilka typów tworzenia, chevron jest dopuszczalny. Ikona `+` nie jest dopuszczalna w tym slocie.
+
+---
+
+## 2d. Pozytywny przykład z korektą - Initiatives / Portfolio 2026-05-01
+
+Na ekranie `Initiatives > Portfolio` zatwierdzamy jako dobry kierunek:
+
+- przełącznik `Active / All` w `Menu 2`,
+- zestaw przycisków widoku jako ikony, bez dropdownu,
+- czytelny układ tabeli i status chips w `Menu 3`.
+
+Korekty obowiązkowe:
+
+- `Nowa inicjatywa` jest dobrym primary CTA, ale nie powinien mieć ikony `+`.
+- Między `Menu 3` a tabelą nie wolno dodawać osobnego wiersza typu `0 zaznaczone` + duży przycisk AI.
+- `AI: Analizuj zaznaczenie` należy do prawej strony `Menu 3` jako standardowy `h-8` przycisk AI, nie jako duży fioletowy CTA pod paskiem.
+- `Menu 3` pokazuje tylko aktywne statusy/presety, żeby zostawić miejsce po prawej na AI actions i inne akcje kontekstowe.
+
+Docelowy układ:
+
+`[ALL] [Draft] [Pending Review] [In Review] [Planning] [Approved] ...aktywne statusy] ─── [AI Analizuj zaznaczenie]`
+
+Jeżeli lista statusów nie mieści się w jednym wierszu, mniej istotne statusy trafiają do overflow `More`, a nie tworzą drugiego rzędu.
+
+---
+
+## 2e. Pozytywny przykład - Implementation / Zestawienie 2026-05-01
+
+Na ekranie `Implementation > Zestawienie` zatwierdzamy jako bardzo dobry wzorzec:
+
+- układ `Menu 2` z głównymi tabami po lewej,
+- `Active / Wszystkie` jako przełącznik zakresu danych,
+- segmented icon view switcher po prawej,
+- `Menu 3` jako jeden rząd preset/status chips,
+- tabela o dobrej gęstości, czytelnych kolumnach i wyraźnych statusach/progressach.
+
+Jedyna korekta:
+
+- `Nowa inicjatywa` pozostaje primary CTA, ale bez ikony `+`.
+
+Ten ekran może służyć jako referencja dla hubów operacyjnych z tabelą, po usunięciu plusa z CTA.
+
+---
+
+## 2f. Pozytywny przykład - Implementation / Timeline 2026-05-01
+
+Na ekranie `Implementation > Timeline` zatwierdzamy jako dobry kierunek:
+
+- zachowanie tego samego `Menu 2` i `Menu 3` co w widoku tabelarycznym,
+- timeline jako pełnoprawny view mode, a nie osobny ekran z własną nawigacją,
+- widoczny pasek alertów/ostrzeżeń nad osią czasu,
+- czytelne belki inicjatyw, progress, overdue/late markers i pionowa linia dnia bieżącego,
+- view-local toolbar dla zakresu czasu (`8W`, `12W`, `16W`, `24W`) wewnątrz powierzchni timeline.
+
+Korekty / doprecyzowania:
+
+- Nagłówek osi czasu nie powinien być zbyt wysoki. Miesiąc i tydzień mogą być pokazane kompaktowo.
+- Preferowany kompaktowy zapis tygodnia: `W18 (27)` albo `W18 / 27`, gdzie liczba w nawiasie oznacza pierwszy dzień tygodnia.
+- Jeśli miesiąc jest pokazany jako osobny pasek, jego wysokość powinna być minimalna i nie może dublować informacji z tygodni.
+- Dodatkowe akcje AI specyficzne dla timeline, jeśli nie są tymi samymi akcjami co w `Menu 3`, nadal trafiają po prawej stronie `Menu 3` jako standardowe przyciski AI.
+- Lokalne kontrolki timeline, takie jak filtr, zoom, zakres czasu i jump-to-today, mogą zostać w `View-local Toolbar`, ale nie zastępują prawego slotu AI w `Menu 3`.
+
+Ten widok jest dobrym kandydatem na standard timeline po zagęszczeniu headera osi czasu.
 
 ---
 
@@ -112,6 +249,8 @@ Pod Module Topbar zawsze istnieje **jeden stały rząd**, który pełni 1 z 3 r�
 - **MUST:** “counter chips” to **presety filtrów**, nie “liczniki do patrzenia”.
   - **MUST:** od lewej zawsze jest **`ALL`** — klik resetuje presety i oznacza, że **żaden preset nie filtruje**.
   - **MUST:** pozostałe chipy po kliknięciu **filtrują kolekcję** do danej grupy (np. Overdue / Critical / This week / Saved / AI).
+  - **MUST:** dla długich list statusów pokazujemy tylko aktywne/używane statusy oraz `ALL`; statusy z liczbą `0` są ukryte albo dostępne w overflow/filtrze, jeśli naprawdę są potrzebne.
+  - **MUST NOT:** status chips nie mogą wymusić drugiego rzędu ani wypchnąć prawego slotu z przyciskami AI.
   - **MUST:** tryb jest **single‑select** (aktywny jest maksymalnie 1 preset). Klik w aktywny preset wraca do `ALL`.
   - **MUST:** aktywny preset jest **wyróżniony fioletem** (spójnie z innymi stanami “selected” w aplikacji).
 - **SHOULD:** jeśli otwarty jest czat lub inny panel, ten rząd nie rozpycha layoutu — content area ma priorytet.
@@ -135,6 +274,7 @@ Jeżeli dany tab modułu otwiera **specjalistyczny workspace / analysis view / m
 - **MUST:** jeśli widok ma własne presety/chipy i własne przyciski funkcyjne po prawej stronie, stan i zachowanie są zarządzane przez ten widok lokalnie, a nie przez dynamic tabs.
 - **MUST:** jeśli prawa strona Menu 3 jest przeznaczona na AI actions, nie dokładamy tam lokalnych przełączników wizualizacji / zakresu czasu (`prev/next`, `W/M`, `3M/6M/12M`).
 - **MUST:** takie przełączniki renderujemy w **toolbarze konkretnego widoku** (nagłówek timeline / heatmap / canvas), a nie w Menu 3.
+- **MUST:** dodatkowe akcje AI widoku specjalistycznego pozostają w prawym slocie `Menu 3`; view-local toolbar służy do kontroli widoku, nie do akcji AI.
 - **MUST NOT:** otwarcie panelu lub lokalnego subwidoku nie może powodować pojawienia się alternatywnego drugiego paska pod topbarem.
 
 ### 3.1b Kontekstowe akcje AI w Menu 3 (MUST)
@@ -144,8 +284,10 @@ Wszystkie przyciski AI, które pojawiają się kontekstowo dla otwartego dokumen
 **Reguły:**
 
 - **MUST:** AI actions nie tworzą osobnego paska pod metadanymi, pod properties strip ani wewnątrz głównego canvasu.
+- **MUST:** AI actions nie tworzą dodatkowego wiersza między Menu 3 a tabelą, nawet w trybie zaznaczenia wierszy.
 - **MUST:** jeśli ekran ma Dynamic Tabs, AI actions korzystają z prawego slotu tego samego rzędu (`commandRowRightContent` / `DynamicTabs.rightContent`).
 - **MUST:** jeśli ekran ma lokalne Menu 3, AI actions pozostają po prawej stronie tego lokalnego Menu 3.
+- **MUST:** akcje typu `AI Analizuj zaznaczenie` są prawym przyciskiem Menu 3 i reagują na selection state (`disabled` przy 0 zaznaczonych), a nie dużym oddzielnym przyciskiem pod paskiem.
 - **SHOULD:** podstawowe akcje workflow dla aktywnego dokumentu mogą być grupowane obok AI actions w tym samym prawym slocie, jeśli dzięki temu unikamy dodatkowego toolbaru.
 - **MUST NOT:** dublować tego samego przycisku AI w Menu 3 i w canvasie.
 
@@ -373,6 +515,7 @@ const getMenu3AiButtonClass = (active = false) =>
 
 | Ekran / Tab                     | Przyciski AI                                |
 | ------------------------------- | ------------------------------------------- |
+| Initiatives → Portfolio         | `AI Analizuj zaznaczenie` jako prawy przycisk Menu 3; disabled przy 0 zaznaczonych |
 | Initiatives → Analysis → Completeness | `AI Auto-Fill`, `Bulk Fix`, `AI Priority Triage` |
 | Initiatives → Analysis → Timeline | `AI Auto-Schedule`, `Conflicts`, `AI Optimizer` |
 | Initiatives → Analysis → Logic | `AI Discover Dependencies`, `Detect Cycles`, `Critical Path`, `AI Sequencer` |

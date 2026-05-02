@@ -26,16 +26,23 @@ Ten dokument opisuje **standard tabel aplikacji** (UI/UX), który utrzymujemy ko
 - **Wewnątrz ramki / panelu**: jaśniejsze (`bg-navy-900`)
 - Delikatne obramowania: `border-navy-700/50` oraz separatory `border-b border-navy-700/50`
 
-### 4) Top bar (nad tabelą) – identyczna wysokość kontrolek
+### 4) Top bar / Module Topbar - identyczna wysokość kontrolek
 
 Wszystkie kontrolki w top barze mają być **tej samej wysokości**: **`h-9`**.
 
 - **Search toggle**: kwadrat `h-9 w-9`
 - **Taby (All/App/Org)**: `h-9` + badge z liczbą
 - **Selecty filtrów** (np. Module / Format): `h-9`
-- **Primary action** (np. “New …”): `h-9` + gradient (jak w Decisions)
+- **Primary action** (np. `Dodaj`, `New ...`): `h-9`, bez ikony `+` w Module Topbar, bez gradientu w operational chrome; chevron jest dozwolony, jeśli akcja otwiera warianty tworzenia
 
 Wynik: więcej miejsca na akcje po prawej i czytelne wyrównanie.
+
+**MUST (zgodność z Golden Standard):**
+
+- View mode jest widocznym segmented icon control, nie dropdownem `Table/Grid`.
+- `Help` nie występuje w prawym klastrze Module Topbar.
+- `Dodaj` / `New ...` nie używa leading plus icon w Module Topbar.
+- Akcje AI zależne od zaznaczenia trafiają do prawej strony `Menu 3`, nie do dodatkowego paska nad tabelą.
 
 **MUST (brak duplikacji kontrolek):**
 
@@ -70,14 +77,110 @@ Wynik: więcej miejsca na akcje po prawej i czytelne wyrównanie.
 
 - Ostatnia kolumna to **Actions** i zawiera **jedno** wejście do menu akcji: ikonę **kebab (⋮)**.
 - **Zawsze pionowe 3 kropki (⋮)**, nigdy poziome (⋯).
-- Menu akcji zawiera: open / quick actions / destructive (z confirm) zależnie od encji.
+- Menu akcji używa kanonicznego `RowActionsMenu` i sekcji opisanych niżej.
 - W całej aplikacji Actions column działa identycznie (miejsce, zachowanie, ikonografia).
+
+#### 6.1) Row Action Menu - sekcje kanoniczne
+
+`RowActionsMenu` jest routerem akcji dla jednego rekordu. Nie jest miejscem na wszystkie możliwe funkcje ekranu.
+
+Kolejność sekcji od góry do dołu:
+
+| Sekcja | Status | Zastosowanie |
+|---|---|---|
+| `Open` | Stała | Pierwszy blok menu. Pierwsza akcja to zawsze pełne otwarcie rekordu/artefaktu. |
+| `Tool Shortcut` | Opcjonalna | Druga akcja w tym samym bloku co `Open`, bez separatora. Bezpośrednie wejście do narzędzia rekordu, np. `Process Flow`, `Mapa rekomendacji`, `Definition`, `Lineage`. |
+| `Context Actions` | Zmienna | Najważniejsze akcje zależne od tabeli, roli i statusu rekordu. |
+| `AI` | Stała, jeśli ma sens | `AI Chat` i `AI Insights`. |
+| `Convert To` | Stała, jeśli ma sens | Konwersja do obiektu operacyjnego: inicjatywa, zadanie, decyzja, Team Chat. |
+| `Create Output` | Stała, jeśli ma sens | Prezentacja, raport, tabela. Disabled/coming soon, jeśli runtime nie jest gotowy. |
+| `Manage` | Stała, jeśli ma sens | Edycja i zarządzanie: edytuj, duplikuj, taguj, archiwizuj, zmień status. |
+| `Danger` | Stała dla destrukcji | Destrukcyjne akcje. `Usuń` zawsze ostatnie i po separatorze. |
+
+Reguła pierwszego bloku:
+
+- Pierwszy przycisk od góry to zawsze `Otwórz`.
+- Każdy item w menu ma ikonę po lewej, również `Otwórz`, żeby menu miało równy rytm wizualny.
+- Jeśli tabela ma specyficzną możliwość przejścia bezpośrednio do narzędzia, drugi przycisk to skrót do tego narzędzia, np. `Process Flow`.
+- `Otwórz` i skrót narzędziowy są w jednym bloku, bez oddzielającej linii.
+- Skrót narzędziowy nie zastępuje `Otwórz`; jest szybszą ścieżką do konkretnego trybu pracy.
+
+Przykłady kontekstu:
+
+- `Ideas`: pierwszy blok `Otwórz`, `Process Flow`; kontekstowo można dodać `Mapa rekomendacji`, jeśli jest osobnym narzędziem i ma sens dla rekordu.
+- `Tasks`: `Oznacz jako wykonane`, `Telefonowanie`, `Snooze`, `Zmień status`.
+- `Decisions`: `Akceptuj`, `Odmów`, `Przypomnij`, `Eskaluj`.
+- `Inbox`: `Focus`, `Today`, `This week`, `Later`, `Done`, `Save`, `Dismiss`, `Reject`, `Snooze`.
+- `Interview`: `Start/Continue`, `Approve`, `Send back`, `Generate AI insights`.
+- `Results/KPI`: `Record data`, `Definition`, `Lineage`, `Targets`, `History`.
+
+Zasady ograniczania złożoności:
+
+- Główne menu powinno mieć zwykle 5-7 bezpośrednich pozycji.
+- Jeśli `Convert To` lub `Create Output` ma więcej niż 3-4 opcje, pokazujemy jeden wpis `Konwertuj do...` albo `Utwórz output...`, który otwiera mały picker/modal.
+- `AI Chat` wrzuca rekord do czata jako kontekst rozmowy.
+- `AI Insights` robi krótki przegląd i wrzuca wnioski do czata.
+- Nie tworzymy custom dropdownów w tabelach, jeśli `RowActionsMenu` obsługuje wymagany przypadek.
+- Destructive action wymaga confirm/read-back zgodnie z Honest UI.
 
 **MUST (wiersz = jedna linia “primary” + reszta w kolumnach):**
 
 - Nie duplikujemy informacji w “drugiej linii” pod tytułem (np. nazwa szablonu/kategorii powtórzona pod nazwą).
 - Jeśli potrzebujesz pokazać typ/kategorię/slug — to jest **osobna kolumna** (i wtedy może być filtrowalna).
 - Domyślny rytm listy ma być stabilny (wysokość wiersza), żeby oko mogło skanować tabelę bez “falowania”.
+- Wiersz referencyjny nie może być zbyt ciasny: primary title ma mieć wyraźniejszy weight/leading, secondary text ma być spokojny, ale czytelny na hover.
+- Hover/selected state ma działać jak subtelne podświetlenie powierzchni, nie jak kolorowy pasek.
+- Reference App Table ma mieć odważny, czytelny kontrast jak narzędzia typu ClickUp/Linear: light mode nie może być wyprany, a dark mode musi mieć realne separatory wierszy.
+- Selected/focused row nie może być szarą belką. Używamy kontrolowanego tintu plus cienkiego lewego akcentu, żeby stan był widoczny i elegancki.
+
+#### 6.0a) Selection And Scrollbar Polish
+
+Checkboxy i scrollbary są utility chrome. Nie mogą konkurować z treścią tabeli.
+
+MUST:
+
+- Row checkbox w gęstej tabeli ma być mały i cichy: zwykle `h-3.5 w-3.5`, neutralny border, bez białej pełnej plamy w dark mode.
+- Header select-all może być minimalnie większy, ale nie powinien przekraczać `h-4 w-4` w standardowej tabeli.
+- Checkbox ma być widoczny, ale nie dominujący; aktywny/checked stan może używać `primary`, spoczynkowy jest neutralny.
+- Obszar tabeli musi mieć prawy gutter, jeśli na ekranie są fixed/floating przyciski (`Help`, `Zgłoś błąd`, panele boczne), żeby scrollbar nie przykrywał interakcji.
+- Scrollbar w tabeli ma być traktowany jak element systemowy: subtelny, zarezerwowany w layoucie, nie nachodzący na akcje wiersza ani floating controls.
+- Dark mode wymaga widocznych, ale cienkich separatorów (`white/[0.08-0.10]` jako praktyczny baseline dla referencyjnych tabel).
+- Light mode wymaga mocniejszego baseline kontrastu: nagłówki i secondary text nie mogą wyglądać jak disabled.
+
+SHOULD:
+
+- Preferuj `scrollbar-gutter: stable` albo lokalny padding/gutter po prawej stronie scrollowanego obszaru.
+- W dark mode unikaj dużych jasnych prostokątów przy checkboxach i scrollbarach; oko ma czytać dane, nie controls.
+- Dla premium tables checkbox w spoczynku może mieć obniżoną opacity i wzmacniać się dopiero na hover, focus albo checked.
+- Globalne floating controls w pobliżu tabel powinny być glass/outline/subtle. Pełne, jaskrawe tła są dopuszczalne dopiero na hover albo w stanie wymagającym pilnej reakcji.
+
+#### 6.2) Table Chips And Badges
+
+Chipy w tabeli muszą być czytelne, skanowalne i zgodne z DBR77 Tech Sexy 2027. Przyjmujemy kierunek ClickUp: spokojne, małe pills; kolor jako sygnał, nie dekoracja.
+
+Typy:
+
+| Typ | Zastosowanie | Kolor |
+|---|---|---|
+| `StatusChip` | Status, etap, workflow state | Kolor dozwolony jako subtelny sygnał; ikona/dot + kontrastowy tekst. |
+| `PriorityChip` | Priorytet | Jeden wzorzec per moduł: dot/ikona + label. |
+| `MetaChip` | Tagi, typ, źródło, owner shorthand | Zawsze neutralny `slate/navy`. |
+| `ToolChip` | Narzędzie, artefakt, tryb pracy | Prawie neutralny; delikatnie kolorowa ikona jest OK, fioletowe tło CTA nie. |
+| `SlaChip` / `DueChip` | SLA, termin, overdue | Kolor tylko dla ryzyka/przekroczenia. Normalne daty neutralne. |
+
+MUST:
+
+- Tekst chipa musi być czytelny w light i dark mode (`text-slate-700/800` light, `text-slate-200/300` dark jako praktyczny baseline).
+- Nie używamy “jasne tło + jasny tekst tego samego koloru”.
+- Metadata nie używa `primary`, `success`, `warning` ani `danger`.
+- `primary/violet` nie może stale dominować w kolumnie tabeli; jest zarezerwowany dla CTA, aktywnego stanu, focusu lub linku.
+- Chipy tego samego typu muszą mieć ten sam radius, padding, font-size i weight w całym module.
+
+SHOULD:
+
+- `rounded-full`, `text-[10px]` albo `text-[11px]`, `font-medium`/`font-semibold` zależnie od ważności.
+- Subtelny border jest dozwolony, gdy poprawia czytelność w light mode.
+- Jeśli chip ma ikonę, ikona może być nośnikiem koloru, a tło pozostaje neutralne.
 
 **MUST (zero ad-hoc pasów między topbarem a tabelą):**
 

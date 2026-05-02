@@ -379,6 +379,13 @@ Gdzie `{color}` jest jednym z: `emerald`, `red`, `amber`, `sky`, `indigo`, `viol
 
 Połączony widok załączników (file upload + cloud providers) i powiązanych elementów (linked items).
 
+Uwaga dla nowego standardu `N-mode`:
+
+- jeśli artefakt ma osobną kartę `Related Context` / `Powiązany kontekst`, powiązane elementy powinny żyć w tej karcie,
+- `AttachmentsLinksCanvas` może wtedy obsługiwać głównie załączniki albo być rozdzielony na osobne powierzchnie,
+- nie dublujemy pełnego bloku linked items / AI-detected links na dole innych kart,
+- wyjątek: krótki inline reference w konkretnej karcie, jeśli jest konieczny dla zrozumienia danego pola.
+
 ### 5.2 Props (kontrakt)
 
 ```typescript

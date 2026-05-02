@@ -101,7 +101,7 @@ Warunki zatwierdzenia:
 
 ### 3.4 Tool Workspace / Guided Flow
 
-Status: `STANDARD_NEEDED`
+Status: `REFINE_REFERENCE`
 
 Primary candidates:
 
@@ -175,37 +175,76 @@ Warunki zatwierdzenia:
 - potwierdzić in-app confirm modals,
 - potwierdzić read-back i degraded states.
 
-### 3.7 Contextual AI UX
+### 3.7 Global AI Workspace / Chat
 
-Status: `DO_NOT_TOUCH_FOR_GENERIC_REFACTOR`
+Status: `STANDARD_NEEDED`
 
 Primary candidates:
 
 - `src/components/AIChat/UnifiedChatPanel.tsx`
+- `src/components/AIChat/EnhancedChatInput.tsx`
+- `src/components/AIChat/ChatHistorySidebar.tsx`
 - `src/hooks/useOpenChatWithContext.ts`
 
 Dlaczego:
 
 - to nie jest zwykły ekran do kosmetycznego refactoru,
 - obejmuje AI runtime, context passing, provider failures, trust/citations, governance,
-- wymaga osobnego AI UX audit.
+- jest pierwszym ekranem w kolejności sidebara i powinien stać się referencją globalnego AI workspace.
 
 Warunki zatwierdzenia:
 
-- osobny standard/audit dla AI UX,
+- osobny standard/audit dla Global AI Workspace,
+- zatwierdzona anatomia: chat header, context/trust strip, message canvas, composer, history drawer, auxiliary panels,
+- jedna rodzina header controls i composer controls,
+- `New chat` / `Nowa rozmowa` bez leading `+`,
+- history drawer zostaje as-is na tym etapie,
+- welcome empty state zostaje as-is na tym etapie,
 - brak silent execution,
 - brak hidden learning,
 - provider failure UX,
 - source/traceability behavior.
 
+Decyzja 2026-05-01:
+
+- Piotr zatwierdził ekran Chat jako bardzo dobry na teraz.
+- Nie robimy szerokiego redesignu Chat w pierwszej fali.
+- Jedyna korekta przed przejściem dalej: usunąć `+` z `Nowa rozmowa`.
+
+### 3.8 Canvas Mode Intelligence Dashboard / Radar
+
+Status: `REFINE_REFERENCE`
+
+Primary candidates:
+
+- `src/components/MyWork/Home/HomeView.tsx`
+- `src/components/MyWork/Home/RadarTriageCard.tsx`
+- parent shell: `src/components/MyWork/MyWorkHub.tsx`
+
+Dlaczego:
+
+- `Radar` is the first `My Work` tab and the default landing surface for the module.
+- It uses `Canvas Mode`, which is explicitly allowed for Home tabs and experience-oriented surfaces.
+- It combines strategic AI signals, triage cards, KPI alerts, recent insights and block-based intelligence without pretending to be an operational table.
+- It is a good candidate for approving the pattern: `ModuleHub shell` outside, `Canvas Mode intelligence dashboard` inside.
+
+Warunki zatwierdzenia:
+
+- confirm that Radar should stay visually dark/ambient and not become an operational list surface,
+- confirm that Radar intentionally has no `Menu 3` unless a real filter/preset/action row is needed,
+- classify local card styles as approved Radar/Canvas cards or extract them into a documented component standard,
+- ensure AI actions inside cards are secondary/contextual and do not compete with the global Chat workspace,
+- keep non-UI/UX findings in `docs/ui-standards/migration-backlog/MY_WORK_RADAR.md`.
+
 ## 4. Pierwszy rekomendowany ciąg pracy
 
-1. Zatwierdzić `My Work > Decisions` jako pierwszy `REFINE_REFERENCE`.
-2. Na tej podstawie doprecyzować App Table + Preview examples.
-3. Przejść do `InterviewHub` jako pierwszego dużego huba migracyjnego.
-4. Następnie `ToolDocumentView` jako N-mode/Menu 3 reference.
-5. Potem `ToolWorkspace/ToolActionBar` jako standard control bars.
-6. Dopiero potem pierwszy Admin/SuperAdmin slice.
+1. `Chat / Global AI Workspace` - standard needed, bo to pierwszy ekran w sidebarze i osobny typ pracy.
+2. `My Work > Decisions` - pierwszy `REFINE_REFERENCE` dla App Table + Preview.
+3. Na tej podstawie doprecyzować App Table + Preview examples.
+4. Przejść do `InterviewHub` jako pierwszego dużego huba migracyjnego.
+5. Następnie `ToolDocumentView` jako N-mode/Menu 3 reference.
+6. Potem `ToolWorkspace/ToolActionBar` jako standard control bars.
+7. Dopiero potem pierwszy Admin/SuperAdmin slice.
 
 ## 5. Zasada po zatwierdzeniu reference
 

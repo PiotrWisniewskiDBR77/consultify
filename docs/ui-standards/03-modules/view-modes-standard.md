@@ -1,6 +1,6 @@
 # View Modes Standard (Table / Cards / Kanban / Timeline(Gantt) / Calendar)
 
-> **Status:** Draft (v3)  
+> **Status:** Canonical, subordinate to `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`  
 > **Cel:** Jeden kanon przełącznika “układ zestawień” w całej aplikacji.  
 > **SSOT w kodzie:** `src/components/shared/ModuleHub/types.ts` (`ViewMode`) + `src/components/shared/ModuleHub/ModuleNavBar.tsx` (UI toggle)
 
@@ -13,6 +13,7 @@ Kanon v3 zakłada, że:
 - view modes są dostępne w prawym górnym rogu topbara modułu (obok CTA “Dodaj …”)
 - zmiana view mode **nie zmienia danych**, tylko ich wizualną reprezentację i interakcje
 - każdy tryb ma spójne: typografię, kontrast, spacing, semantykę statusów oraz akcje wiersza/karty
+- przełącznik view modes jest widocznym segmented icon control, nie dropdown/select
 
 ## 2) Kanoniczny zestaw trybów (zamknięta lista)
 
@@ -39,6 +40,15 @@ Zgodnie z kodem:
 6. `grid` (cards)
 
 Reguła: nie wprowadzamy “custom view types” (np. kolejki/review-next) jako elementów view modes. Jeśli istnieją, to są osobnym flow / osobną surface’ą, a nie 4. ikoną obok table/kanban/timeline.
+
+### 2.2 Dwutryb list/cards (MUST)
+
+Jeśli ekran ma tylko dwa tryby `Lista` i `Karty/Grid`, kolejność jest zawsze:
+
+1. `Lista` po lewej.
+2. `Karty` / `Grid` po prawej.
+
+Nie używamy dropdownu `Table v` z opcją `Grid`. User ma widzieć oba tryby jako przełączniki.
 
 ## 3) Table — kanon (Golden Standard)
 

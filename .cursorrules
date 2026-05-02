@@ -55,23 +55,27 @@ Przed każdą zmianą UI w tych obszarach — przeczytaj `FROZEN_LAYOUTS.md`.
 
 ## UI/UX Standards & Documentation
 
+**NAJWYŻSZE ŹRÓDŁO UI/UX:** `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`
+
 **OPERACYJNE ŹRÓDŁO DLA CURSOR:** `docs/ui-standards/CONSULTIFY_UI_UX_OPERATING_STANDARD.md`
 
 **KANONICZNE ŹRÓDŁO:** `docs/ui-standards/README.md`
 
 **⚠️ NIE WYMYŚLAJ NOWYCH STANDARDÓW ANI KOMPONENTÓW.** Wszystkie komponenty UI MUSZĄ być zgodne z dokumentacją w `docs/ui-standards/`. Jeśli standard nie opisuje przypadku — ZAPYTAJ, nie wymyślaj.
 
-Core rule: feature screens do not own visual design. Feature screens compose approved Consultify layout and UI components. For all UI/UX work, first read `CONSULTIFY_UI_UX_OPERATING_STANDARD.md`, then the detailed canonical standard it references.
+Core rule: feature screens do not own visual design. Feature screens compose approved Consultify layout and UI components. For all UI/UX work, first read `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`, then `CONSULTIFY_UI_UX_OPERATING_STANDARD.md`, then the detailed canonical standard they reference.
 
 Before modifying any UI components:
 
 1. **Read the documentation** — standards are in `docs/ui-standards/`:
+   - `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` — highest UI/UX SSOT, DBR77 Tech Sexy 2027, Menu 2/3, N-mode, tables, timeline
    - `CONSULTIFY_UI_UX_OPERATING_STANDARD.md` — operating standard for Cursor/refactors
    - `UI_UX_MIGRATION_AUDIT.md` — current migration debt and target patterns
    - `UI_UX_MIGRATION_PLAN.md` — migration waves and component approval gates
    - `UI_UX_REFERENCE_SCREENS.md` — approved/candidate reference screens
    - `README.md` — index wszystkiego
    - `01-shell-layout/presentation-modes.md` — architecture D/N/C, N blocks kit
+   - `01-shell-layout/n-mode-card-standard.md` — SSOT kart roboczych N-mode, AI affordance, visibility, katalog kart
    - `02-components/shared-sections.md` — NModeSections (Comments, Activity, Risk, Governance, Attachments)
    - `02-components/building-blocks.md` — NModeBlocks (Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView)
 
@@ -79,10 +83,26 @@ Before modifying any UI components:
    - `src/components/shared/NModeSections/` — CommentsCanvas, ActivityLogCanvas, AttachmentsLinksCanvas, RiskCanvas, GovernanceCanvas
    - `src/components/shared/NModeBlocks/` — Callout, ToggleBlock, EmptyStateInline, ChecklistBlock, InlineTable, EmbeddedView
    - `src/components/shared/NModeLayout/` — NModeShell, NModeHeader, NModeLeftNav, NModeCanvas, NModePropertiesStrip
+   - `src/components/shared/RowActionsMenu.tsx` — canonical table row `⋮` action menu with sections: Context → Open → AI → Convert To → Create Output → Manage → Danger
 
 3. **Follow naming conventions**: `{Section}Canvas.tsx` for shared sections
 4. **Always support i18n**: PL + EN via `useTranslation`
 5. **Always support locked state**: `locked?: boolean` prop for read-only artifacts
+
+Table row actions:
+
+- New App Table / ModuleHub row menus MUST use `RowActionsMenu`.
+- Do not create custom row dropdowns in feature screens when `RowActionsMenu` can represent the menu.
+- Keep vertical kebab `⋮` in the Actions column.
+- Use the canonical section order from `docs/ui-standards/03-modules/app-table-standard.md`.
+- `Delete` / `Usuń` is always last, red, and separated.
+
+Table chips and badges:
+
+- New App Table chips MUST follow `docs/ui-standards/03-modules/app-table-standard.md` (`StatusChip`, `PriorityChip`, `MetaChip`, `ToolChip`, `SlaChip` / `DueChip`).
+- Metadata chips (tags/types/sources/tools) must stay neutral and readable in light/dark mode.
+- Do not use primary/violet backgrounds as decorative metadata pills.
+- Do not create multiple local color maps for the same chip semantics inside one module.
 
 Detailed rules are in `.cursor/rules/nmode-shared-components.mdc` and `.cursor/rules/ui-standards-documentation.mdc`.
 

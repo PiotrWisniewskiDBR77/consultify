@@ -1,8 +1,8 @@
-# UI/UX Canon v3 (Consultinity MVP) — SSOT
+# UI/UX Canon v3 (Consultify MVP) — legacy consolidated canon
 
-> **Status:** Draft (v3)  
+> **Status:** Legacy / consolidated context, subordinate to `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`  
 > **Cel:** Spisać w jednym miejscu **wszystkie kanoniczne decyzje UI/UX v3**, wynikające z feedbacku i “Phase 3” MVP.  
-> Ten dokument nie zastępuje szczegółowych standardów — on je **konsoliduje** i wskazuje SSOT.
+> Ten dokument nie zastępuje Golden Standard ani szczegółowych standardów — on historycznie konsoliduje decyzje v3 i wskazuje kontekst.
 
 ---
 

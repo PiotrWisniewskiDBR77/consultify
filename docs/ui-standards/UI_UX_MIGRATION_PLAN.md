@@ -92,10 +92,11 @@ Cel: wybrać i utwardzić wzorce referencyjne.
 
 Kandydaci:
 
-1. `My Work > Decisions` - App Table + Preview.
-2. `InterviewHub` - duży ModuleHub/list workflow.
-3. `ToolDocumentView` - N-mode + Menu 3 + AI actions.
-4. Wybrany Admin/SuperAdmin table - control plane.
+1. `Chat / Global AI Workspace` - pierwszy ekran sidebara; wymaga zatwierdzenia osobnego standardu chat workspace.
+2. `My Work > Decisions` - App Table + Preview.
+3. `InterviewHub` - duży ModuleHub/list workflow.
+4. `ToolDocumentView` - N-mode + Menu 3 + AI actions.
+5. Wybrany Admin/SuperAdmin table - control plane.
 
 Zakres prac:
 
@@ -110,6 +111,44 @@ Exit criteria:
 - mamy 2-3 zatwierdzone wzorce,
 - każdy wzorzec ma checklistę zgodności,
 - wiemy, które komponenty są kanoniczne dla kolejnych fal.
+
+### Wave 1a - Chat / Global AI Workspace
+
+Cel: zatwierdzić i uporządkować pierwszy ekran sidebara jako osobny typ ekranu.
+
+Zakres:
+
+- `/chat` i `/chat/:conversationId`,
+- `UnifiedChatPanel`,
+- `EnhancedChatInput`,
+- `ChatHistorySidebar`,
+- conversation row/actions,
+- context/trust strip,
+- welcome empty state,
+- conversation state banners,
+- auxiliary panels such as signals/history/export.
+
+Target pattern:
+
+- Global AI Workspace, nie `ModuleHub`, nie App Table i nie `N-mode`.
+- Własny chat header, ale zgodny z button/control family `DBR77 Tech Sexy 2027`.
+- Composer jako zatwierdzony AI input surface.
+- History drawer jako zatwierdzony AI workspace drawer.
+- Context/trust strip jako stały element honest AI UX.
+
+Decyzje zatwierdzone 2026-05-01:
+
+1. `Chat` jest wizualnie bardzo dobry na tym etapie i nie wymaga szerokiego redesignu.
+2. `Nowa rozmowa` / `New chat` ma stracić leading `+`.
+3. Historia rozmów zostaje as-is na tym etapie.
+4. Welcome empty state zostaje as-is na tym etapie.
+
+Exit criteria:
+
+- Chat ma opisany target standard.
+- Piotr zatwierdził zakres pierwszej korekty Chat.
+- Header controls, composer controls i drawer rows mają jedną rodzinę wizualną.
+- Nie zmieniamy runtime logiki czatu, providerów, streamingu, routingu ani permission modelu.
 
 ### Wave 2 - App Table migration
 

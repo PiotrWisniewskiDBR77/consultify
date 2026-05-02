@@ -10,6 +10,8 @@ Remote: `https://github.com/PiotrWisniewskiDBR77/consultify.git`
 
 Ten dokument jest operacyjnym źródłem prawdy dla stabilizacji UI/UX Consultify.
 
+Nadrzędnym źródłem prawdy dla decyzji produktowo-wizualnych jest `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`. Ten dokument mówi, jak Cursor i developerzy mają ten standard egzekwować w pracy.
+
 Istniejące dokumenty w `docs/ui-standards/` są wartościowe, ale rozproszone. Ten plik nie zastępuje ich szczegółów. Konsoliduje je w jeden praktyczny kontrakt dla:
 
 - pracy z Cursor,
@@ -34,7 +36,8 @@ Status: `STANDARD_EXISTS_IMPLEMENTATION_FRAGMENTED`
 
 Consultify ma już mocny fundament standardu UI/UX:
 
-- `docs/ui-standards/UI_UX_CANON_V3.md` definiuje główny kanon v3.
+- `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` definiuje najwyższy kanon UI/UX DBR77 Tech Sexy 2027.
+- `docs/ui-standards/UI_UX_CANON_V3.md` definiuje historyczny/syntetyczny kanon v3 i pozostaje podporządkowany Golden Standard.
 - `docs/ui-standards/00-foundation/visual-language.md` definiuje język wizualny DBR77 / Tech Sexy.
 - `docs/ui-standards/03-modules/module-hub-standard.md` definiuje topbary, Menu 3 / Command Row i strukturę modułów.
 - `docs/ui-standards/03-modules/app-table-standard.md` definiuje standard tabel.
@@ -73,7 +76,7 @@ Oznacza to:
 
 Te decyzje są obowiązujące od tej wersji standardu:
 
-1. `docs/ui-standards/UI_UX_CANON_V3.md` zostaje głównym kanonem UI/UX v3.
+1. `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` zostaje najwyższym kanonem UI/UX; `UI_UX_CANON_V3.md` pozostaje dokumentem historyczno-konsolidacyjnym.
 2. Ten dokument jest operacyjną bramą dla Cursor, audytu i refactorów.
 3. Nowe feature screens mają twardy zakaz tworzenia lokalnych przycisków, kart, tabel, badge/chips, toolbarów i shelli, jeśli istnieje komponent lub wzorzec wspólny.
 4. Cursor ma zawsze proponować rozwiązanie z listy zatwierdzonych komponentów i shelli. Jeśli nic nie pasuje, nie improwizuje - proponuje nowy standard lub rozszerzenie standardu.
@@ -90,12 +93,13 @@ Te decyzje są obowiązujące od tej wersji standardu:
 
 Jeśli dokumenty są sprzeczne, obowiązuje kolejność:
 
-1. `docs/ui-standards/CONSULTIFY_UI_UX_OPERATING_STANDARD.md` - ten dokument, operacyjny kontrakt pracy.
-2. `docs/ui-standards/UI_UX_CANON_V3.md` - główny kanon decyzji UI/UX v3.
+1. `docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` - nadrzędny kanon produktowo-wizualny.
+2. `docs/ui-standards/CONSULTIFY_UI_UX_OPERATING_STANDARD.md` - ten dokument, operacyjny kontrakt pracy.
 3. `docs/ui-standards/FROZEN_LAYOUTS.md` - układy zamrożone, których nie wolno rozjechać.
-4. Szczegółowe standardy z `docs/ui-standards/00-foundation`, `01-shell-layout`, `02-components`, `03-modules`.
-5. Implementacje referencyjne wskazane w dokumentach.
-6. Stare dokumenty, duplikaty ` 2.md`, ` 3.md` i lokalne snapshoty - tylko jako kontekst historyczny, nie jako standard.
+4. `docs/ui-standards/UI_UX_CANON_V3.md` - historyczny/syntetyczny kanon decyzji UI/UX v3.
+5. Szczegółowe standardy z `docs/ui-standards/00-foundation`, `01-shell-layout`, `02-components`, `03-modules`.
+6. Implementacje referencyjne wskazane w dokumentach.
+7. Stare dokumenty, duplikaty ` 2.md`, ` 3.md` i lokalne snapshoty - tylko jako kontekst historyczny, nie jako standard.
 
 Zasada rozstrzygania:
 
@@ -182,7 +186,12 @@ Module Topbar:
 
 - lewa strona: search toggle + główne taby,
 - prawa strona: `Filters -> View -> Tool -> Add -> Area` w DOM, wizualnie od prawej `Area -> Add -> Tool -> View -> Filters`,
-- AI w kontekście jest w Module Topbar, nie jako osobny globalny przycisk.
+- AI w kontekście jest w Module Topbar/Menu 3 zgodnie z typem akcji, nie jako osobny globalny przycisk,
+- `Help` nie jest standardowym elementem prawego klastra Module Topbar/Menu 2; Help należy do globalnego shellu/sidebaru,
+- `Primary CTA` w Module Topbar/Menu 2 ma label typu `Dodaj` / `New ...`, ale bez ikony `+`; chevron jest dopuszczalny, jeśli CTA otwiera menu wariantów,
+- view toggle używa stałej kolejności ikon: `Lista` po lewej, `Karty/Grid` po prawej,
+- view toggle jest segmented icon control, nie dropdown/select typu `Table` z menu `Grid`,
+- filtry w prawym klastrze mają konkretne, domenowe opisy; nie używamy kilku generycznych triggerów typu `Wszystkie ...` bez wyraźnego rozróżnienia.
 
 Źródła:
 
@@ -212,11 +221,32 @@ Zakazy:
 - brak 2-3 dodatkowych pasków między topbarem a tabelą,
 - brak lokalnych help stripów pod topbarem,
 - brak osobnych pasków AI pod metadanymi, pod properties strip albo w canvasie,
+- brak dodatkowego wiersza selection/AI między Menu 3 a tabelą,
 - brak duplikowania tej samej akcji AI w Menu 3 i w canvasie.
+
+Counter/status chips:
+
+- Menu 3 pokazuje `ALL` oraz aktywne/używane statusy/presety.
+- Statusy z liczbą `0` nie powinny zajmować stałego miejsca, jeśli wypychają prawy slot akcji.
+- Długi zestaw statusów trafia do overflow/filtra, a nie do drugiego wiersza.
 
 ### 5.3 AI actions
 
 Kontekstowe akcje AI dla aktywnego dokumentu, narzędzia lub sekcji muszą być po prawej stronie Menu 3.
+
+Akcje AI zależne od zaznaczenia, np. `AI Analizuj zaznaczenie`, też należą do prawego slotu Menu 3. Przy `0` zaznaczonych są disabled albo pokazują neutralny stan, ale nie tworzą osobnego paska nad tabelą.
+
+W `N-mode` dotyczy to szczególnie funkcjonalnych akcji AI, które tworzą albo znacząco modyfikują strukturę pracy:
+
+- `Napisz kartę`,
+- `Wygeneruj kartę`,
+- `Napisz cały artefakt`,
+- `Wygeneruj scope`,
+- `Wygeneruj ryzyka`,
+- `Zaproponuj RACI`,
+- `Uzupełnij brakujące sekcje`.
+
+Te akcje nie są inline field assist. Są context actions i dlatego należą do prawego slotu `Menu 3`, wizualnie pod głównym CTA ekranu z `Menu 2` / Module Topbar.
 
 Jeśli moduł ma `DynamicTabs`, używać prawego slotu:
 
@@ -302,8 +332,23 @@ Kanoniczne elementy:
 
 Ważne reguły:
 
+- pełny SSOT kart N-mode: `docs/ui-standards/01-shell-layout/n-mode-card-standard.md`,
+- `C-mode` jest planowanym minimalistycznym widokiem inspirowanym ClickUp; do czasu wdrożenia i zatwierdzenia wybór `C` pokazuje `C-mode wkrótce`, a aktywnym trybem pozostaje `N`,
 - lewy rail N-type: ok. `242px`,
 - tytuły w lewym railu nie powinny się zawijać,
+- lewy rail zawiera nazwy zakładek/sekcji i nie jest paskiem akcji,
+- centralny canvas jest głównym ekranem roboczym artefaktu/narzędzia i używa całej pozostałej szerokości,
+- properties/status strip jest połączony z workflow, a nie tylko pokazuje metadane,
+- status, priorytet, termin, owner/assignee/decider wpływają na dostępne akcje, walidacje, AI context i audit,
+- workflow/lifecycle action row w N-mode powinien być jednoliniowy na desktopie; akcje drugorzędne trafiają do `More` / overflow,
+- przyciski workflow używają stylu DBR77 Tech Sexy 2027, nie prostokątnych legacy controls,
+- górny obszar `N-mode` musi oszczędzać pionową przestrzeń: header/properties/workflow mają być compact, bez utraty czytelności i bez ciężkich stacked cards,
+- pierwsza karta robocza powinna być widoczna możliwie wysoko w standardowym desktop viewport,
+- jeśli istnieje karta `Related Context` / `Powiązany kontekst`, nie dublujemy pełnych powiązań ani `AI-detected links` w stopkach innych kart,
+- każde narzędzie/artefakt ma katalog potencjalnych kart N-mode,
+- domyślne karty są podpowiadane per narzędzie, ale widoczność może być konfigurowana przez ustawienia widoku,
+- ustawienia widoku kart działają jak wybór kolumn w tabeli: checkmark/checkbox pokazuje, które karty są widoczne,
+- każda karta musi mieć opis zawartości i dopuszczalnej roli AI,
 - Save state i Lifecycle state są oddzielne,
 - akcje lifecycle/governance są w Menu 3 lub właściwym slocie akcji, nie w canvasie.
 
@@ -481,6 +526,8 @@ Zasady:
 - Toolbary nie mogą tworzyć drugiego/trzeciego rzędu między Module Topbar a tabelą.
 - AI actions domyślnie należą do prawej strony Menu 3, nie do osobnego paska.
 - Kontrolki konkretnego widoku, np. zoom timeline, zakres czasu, lane focus, mogą żyć w `View-local Toolbar`, ale tylko wewnątrz powierzchni tego widoku.
+- `View-local Toolbar` nie przejmuje akcji AI; dodatkowe AI actions dla timeline/canvas/heatmap nadal trafiają do prawej strony `Menu 3`.
+- Timeline header musi być kompaktowy: miesiąc i tydzień nie mogą tworzyć nadmiernie wysokiego nagłówka, preferowany zapis tygodnia to np. `W18 (27)` / `W18 / 27`.
 
 ## 9. Refactor istniejących ekranów
 
@@ -519,6 +566,7 @@ Niedozwolone bez osobnej zgody:
 Refactor only [SCREEN/MODULE] to comply with Consultify UI/UX Operating Standard.
 
 Use:
+- docs/ui-standards/CONSULTIFY_UI_UX_GOLDEN_STANDARD.md
 - docs/ui-standards/CONSULTIFY_UI_UX_OPERATING_STANDARD.md
 - docs/ui-standards/UI_UX_CANON_V3.md
 - docs/ui-standards/03-modules/module-hub-standard.md

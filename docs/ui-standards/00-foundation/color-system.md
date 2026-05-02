@@ -1,8 +1,8 @@
 # DBR77 Color System Standard
 
-> **Wersja**: 2.0 — "Tech Sexy" Edition  
-> **Data**: 2026-02-15  
-> **Autor**: Consultinity Design System  
+> **Wersja**: 2.1 — "DBR77 Tech Sexy 2027" Edition  
+> **Data**: 2026-05-01  
+> **Autor**: Consultify Design System  
 > **Lokalizacja:** `docs/ui-standards/00-foundation/color-system.md`
 >
 > **Changelog v2.0:** Doprecyzowanie neutralnych kolorów (nigdy pure black/white), dodanie zasady monochromatycznego UI chrome, refinement tekstu w dark mode.
@@ -210,6 +210,32 @@ MINIMALNE WYMAGANIA (WCAG 2.1 AA):
 2. **Zawsze z kontekstem** - ikona lub etykieta obok
 3. **Nie tylko kolor** - dla dostępności dodaj ikony (✓, ✕, ⚠️)
 4. **Spójność** - ten sam status = ten sam kolor wszędzie
+
+### 2.6a Table Chip Color Usage
+
+Chipy w tabelach są częścią warstwy danych, nie chrome ani CTA. Kolor w chipie służy do szybkiego skanowania znaczenia.
+
+Typy chipów:
+
+- `StatusChip` - status / etap / stan workflow. Kolor dozwolony, ale jako subtelny sygnał. Ikona lub dot może nieść kolor; tekst musi mieć wysoki kontrast.
+- `PriorityChip` - priorytet. Jeden wzorzec per moduł: dot/ikona + label. Nie mieszamy dot-only, text-only i pill-only w jednej rodzinie tabel.
+- `MetaChip` - tagi, typy, źródła, skróty właścicieli. Zawsze neutralny: `slate/navy`, bez `primary`, `success`, `warning` ani `danger`.
+- `ToolChip` - narzędzie / artefakt / tryb pracy. Prawie neutralny; ikona może użyć delikatnego `primary` lub `info`, ale tło nie może wyglądać jak CTA.
+- `SlaChip` / `DueChip` - termin, SLA, overdue. Kolor tylko dla ryzyka, overdue i breach. Normalna data jest neutralna.
+
+MUST:
+
+- text contrast: minimum WCAG AA; praktycznie `text-slate-700/800` w light i `text-slate-200/300` w dark,
+- light mode: zero “jasne tło + jasny tekst tego samego koloru”,
+- dark mode: zero neonowych dużych plam; preferuj `bg-*/10` albo neutralne tło + kolorowa ikona,
+- `primary/violet` nie dominuje stale w kolumnie tabeli, chyba że oznacza aktywny stan, focus lub link,
+- kolor chipów jest spójny między table, preview i list/card wariantem tego samego modułu.
+
+MUST NOT:
+
+- nie używamy `primary` jako dekoracyjnego koloru metadata,
+- nie robimy tagów kolorowych bez semantyki,
+- nie używamy wielu lokalnych map kolorów dla tej samej encji w jednym module.
 
 ### 2.7 Przykłady poprawnego użycia
 

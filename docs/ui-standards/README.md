@@ -1,9 +1,9 @@
 # UI/UX Standards — Consultify
 
 > **JEDYNE KANONICZNE ŹRÓDŁO** wytycznych UI/UX i specyfikacji komponentów.  
-> **Data konsolidacji:** 2026-02-15 (v2.0 — "Tech Sexy" Edition)
+> **Data konsolidacji:** 2026-05-01 (v2.1 — "DBR77 Tech Sexy 2027" Edition)
 >
-> **v2.0 Changelog:** Ewolucja visual language na podstawie analizy wzorców UI 2025-2026 (ChatGPT, Notion, ClickUp, Gemini, NotebookLM). Kluczowe zmiany: invisible borders, multi-layer depth, monochromatic chrome, outline-only icons, refined hover/spacing. Nie rewolucja — refinement.
+> **v2.1 Changelog:** Golden Standard jako najwyższy SSOT, DBR77 Tech Sexy 2027, Menu 2/3 bez improwizacji, segmented view controls, primary CTA bez plusa, AI actions po prawej stronie Menu 3.
 
 ---
 
@@ -43,11 +43,14 @@ docs/ui-standards/
 
 | Obszar                   | Dokument                                                                         | Zakres                                                                 |
 | ------------------------ | -------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Golden Standard**      | [CONSULTIFY_UI_UX_GOLDEN_STANDARD.md](CONSULTIFY_UI_UX_GOLDEN_STANDARD.md)       | Najwyższy SSOT UI/UX: DBR77 Tech Sexy 2027, komponenty, Menu 2/3, N-mode, tabele, timeline |
 | **Operating Standard**   | [CONSULTIFY_UI_UX_OPERATING_STANDARD.md](CONSULTIFY_UI_UX_OPERATING_STANDARD.md) | Operacyjna brama dla Cursor, audytu, refactorów i zatwierdzania wyjątków |
+| **Documentation audit**  | [UI_UX_DOCUMENTATION_COMPLETENESS_AUDIT.md](UI_UX_DOCUMENTATION_COMPLETENESS_AUDIT.md) | Audyt kompletności, spójności i egzekwowalności dokumentacji UI/UX      |
+| **Enforcement plan**     | [UI_UX_ENFORCEMENT_PLAN.md](UI_UX_ENFORCEMENT_PLAN.md)                           | Plan bramek Cursor/CI/review, aby egzekwować Golden Standard            |
 | **Migration audit**      | [UI_UX_MIGRATION_AUDIT.md](UI_UX_MIGRATION_AUDIT.md)                             | Mapa obecnego stanu UI/UX, migration debt, decyzje per moduł           |
 | **Migration plan**       | [UI_UX_MIGRATION_PLAN.md](UI_UX_MIGRATION_PLAN.md)                               | Fale migracji, bramki komponentów, kolejność refactorów                |
 | **Reference screens**    | [UI_UX_REFERENCE_SCREENS.md](UI_UX_REFERENCE_SCREENS.md)                         | Kandydaci na ekrany referencyjne i warunki zatwierdzenia               |
-| **Kanon v3 (SSOT)**      | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                           | Konsolidacja decyzji v3 (topbary, light mode, preview, AI, inbox)      |
+| **Kanon v3 (legacy/consolidated)** | [UI_UX_CANON_V3.md](UI_UX_CANON_V3.md)                                  | Historyczna konsolidacja decyzji v3; podporządkowana Golden Standard   |
 | **Kolory**               | [00-foundation/color-system.md](00-foundation/color-system.md)                   | Paleta DBR77, semantyka, WCAG                                          |
 | **Czytelność light mode** | [00-foundation/light-mode-readability.md](00-foundation/light-mode-readability.md) | Kontrast, badge taxonomy, metadata i zasady surface hierarchy        |
 | **Język wizualny**       | [00-foundation/visual-language.md](00-foundation/visual-language.md)             | Tła, ramki, typografia, motion                                         |
@@ -55,7 +58,10 @@ docs/ui-standards/
 | **Tożsamość artefaktów** | [00-foundation/artifact-identity-map.md](00-foundation/artifact-identity-map.md) | Kanon: 1 artefakt = 1 ikona + 1 akcent kolorystyczny (v3)              |
 | **Shell artefaktu**      | [01-shell-layout/artifact-shell.md](01-shell-layout/artifact-shell.md)           | 4-warstwowy shell, tokeny rozmiaru                                     |
 | **Tryby D/N/C**          | [01-shell-layout/presentation-modes.md](01-shell-layout/presentation-modes.md)   | Architektura 3 trybów, N blocks kit                                    |
+| **N-mode cards**         | [01-shell-layout/n-mode-card-standard.md](01-shell-layout/n-mode-card-standard.md) | SSOT kart roboczych N-mode: anatomia, AI, visibility, katalog kart    |
+| **Shared N-mode sections** | [shared-nmode-sections-standard.md](shared-nmode-sections-standard.md)          | Reużywalne sekcje N-mode i zasady niedublowania powiązanego kontekstu  |
 | **App Topbar (v3)**      | [01-shell-layout/app-topbar-standard-v3.md](01-shell-layout/app-topbar-standard-v3.md) | Globalny topbar: Data/Model/Inbox/Tasks/User + zasady AI (v3)      |
+| **Artifact shell future** | [artifact-shell-future-standard.md](artifact-shell-future-standard.md)           | Future/next-iteration shell N/C; pomocniczy względem Golden Standard i artifact-shell |
 | **Współdzielone sekcje** | [02-components/shared-sections.md](02-components/shared-sections.md)             | CommentsCanvas, ActivityLog, Risk, Governance                          |
 | **Building blocks**      | [02-components/building-blocks.md](02-components/building-blocks.md)             | Callout, ToggleBlock, EmptyState, Checklist, InlineTable, EmbeddedView |
 | **AI suggestions modal** | [02-components/ai-suggestions-modal.md](02-components/ai-suggestions-modal.md)   | Standard modala do przeglądu i zastosowania sugestii AI                |

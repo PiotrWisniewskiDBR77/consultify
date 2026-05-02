@@ -1,6 +1,6 @@
 # Workspace “3‑Tools Strip” (Tools / Context / AI Suggestions)
 
-> **Status:** Draft (v3)  
+> **Status:** Canonical workspace strip standard, subordinate to `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`  
 > **Cel:** Jeden, stały “pasek 3 przycisków” dla workspace’ów i edytorów, który spina:  
 > (1) narzędzia w kontekście, (2) linki/powiązania w platformie, (3) sugestie AI “co warto przemyśleć”.
 
