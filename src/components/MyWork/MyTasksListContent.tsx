@@ -25,7 +25,7 @@ import {
   User,
   Zap,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -42,7 +42,6 @@ import {
 } from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
-import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -99,16 +98,34 @@ interface MyTasksListContentProps {
 }
 
 const TASK_TABLE_VIEW_STORAGE_KEY = 'consultify-tasks-table-view';
+const TASK_TABLE_ROW_DESCRIPTION_STORAGE_KEY = 'consultify-tasks-show-row-description';
 const TASK_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
 
 function loadTasksHiddenColumns(): string[] {
   try {
     const raw = localStorage.getItem(TASK_TABLE_VIEW_STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) return [...TASK_TABLE_DEFAULT_HIDDEN_COLUMNS];
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed.map((x) => String(x)) : [];
   } catch {
-    return [];
+    return [...TASK_TABLE_DEFAULT_HIDDEN_COLUMNS];
+  }
+}
+
+function loadTasksRowDescriptionSetting(): boolean {
+  try {
+    const raw = localStorage.getItem(TASK_TABLE_ROW_DESCRIPTION_STORAGE_KEY);
+    return raw === null ? true : raw === 'true';
+  } catch {
+    return true;
+  }
+}
+
+function saveTasksRowDescriptionSetting(showDescription: boolean) {
+  try {
+    localStorage.setItem(TASK_TABLE_ROW_DESCRIPTION_STORAGE_KEY, String(showDescription));
+  } catch {
+    // ignore
   }
 }
 
@@ -286,9 +303,10 @@ const TASK_COLUMNS: ColumnDef[] = [
   {
     id: 'title',
     label: 'Task',
-    width: 999, // flex — will stretch to fill remaining space
-    minWidth: 300,
-    resizable: false,
+    width: 560,
+    minWidth: 360,
+    maxWidth: 900,
+    resizable: true,
     filterable: false,
   },
   {
@@ -334,14 +352,24 @@ const TASK_COLUMNS: ColumnDef[] = [
   {
     id: 'actions',
     label: 'Actions',
-    width: 80,
-    minWidth: 60,
-    maxWidth: 100,
+    width: 56,
+    minWidth: 56,
+    maxWidth: 72,
     resizable: false,
     filterable: false,
     align: 'right',
   },
 ];
+
+type TaskResizableColumn = 'title' | 'status' | 'priority' | 'date' | 'assignee';
+
+const TASK_RESIZE_BOUNDS: Record<TaskResizableColumn, { min: number; max: number }> = {
+  title: { min: 360, max: 900 },
+  status: { min: 110, max: 200 },
+  priority: { min: 90, max: 160 },
+  date: { min: 100, max: 170 },
+  assignee: { min: 120, max: 220 },
+};
 
 // Default column widths
 const getDefaultColumnWidths = (): ColumnWidths =>
@@ -438,6 +466,7 @@ const TaskTableRow: React.FC<{
   columnWidths: ColumnWidths;
   hiddenColumns?: Set<string>;
   focusState?: Record<string, string>;
+  showRowDescription: boolean;
 }> = ({
   task,
   isSelected,
@@ -457,6 +486,7 @@ const TaskTableRow: React.FC<{
   columnWidths,
   hiddenColumns: hiddenCols,
   focusState,
+  showRowDescription,
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
@@ -504,11 +534,11 @@ const TaskTableRow: React.FC<{
             onSelect(task.id);
           }}
           className={`
-            w-5 h-5 rounded border flex items-center justify-center transition-all
+            h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all
             ${
               isSelected
-                ? 'bg-primary-500 border-primary-500 text-white'
-                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+                ? 'bg-primary-500 border-primary-500 text-white opacity-100'
+                : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
             }
           `}
         >
@@ -525,7 +555,7 @@ const TaskTableRow: React.FC<{
       </td>
 
       {/* Task Title */}
-      <td className="px-3 py-2.5 w-full" style={{ minWidth: 300 }}>
+      <td className="px-3 py-3" style={{ width: columnWidths.title }}>
         <div className="flex flex-col">
           <div className="flex items-center gap-1.5 min-w-0">
             <span
@@ -546,18 +576,21 @@ const TaskTableRow: React.FC<{
               </span>
             )}
           </div>
-          {task.projectName && (
-            <span className="text-xs text-slate-500 mt-0.5 truncate" title={task.projectName}>
-              {task.projectName}
+          {showRowDescription && (task.description || task.projectName) ? (
+            <span
+              className="mt-0.5 max-w-[760px] truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
+              title={task.description || task.projectName}
+            >
+              {task.description || task.projectName}
             </span>
-          )}
+          ) : null}
         </div>
       </td>
 
       {/* Status — inline editable */}
       {!hiddenCols?.has('status') && (
         <td
-          className="px-3 py-2.5 relative"
+          className="px-3 py-2.5 text-center relative"
           style={{ width: columnWidths.status }}
           onClick={(e) => {
             e.stopPropagation();
@@ -603,7 +636,7 @@ const TaskTableRow: React.FC<{
       {/* Priority — inline editable */}
       {!hiddenCols?.has('priority') && (
         <td
-          className="px-3 py-2.5 relative"
+          className="px-3 py-2.5 text-center relative"
           style={{ width: columnWidths.priority }}
           onClick={(e) => {
             e.stopPropagation();
@@ -632,7 +665,7 @@ const TaskTableRow: React.FC<{
       {/* Due Date — inline editable */}
       {!hiddenCols?.has('date') && (
         <td
-          className="px-3 py-2.5 relative"
+          className="px-3 py-2.5 text-center relative"
           style={{ width: columnWidths.date }}
           onClick={(e) => {
             e.stopPropagation();
@@ -685,8 +718,8 @@ const TaskTableRow: React.FC<{
 
       {/* Assignee */}
       {!hiddenCols?.has('assignee') && (
-        <td className="px-3 py-2.5" style={{ width: columnWidths.assignee }}>
-          <div className="flex items-center gap-2">
+        <td className="px-3 py-2.5 text-center" style={{ width: columnWidths.assignee }}>
+          <div className="flex items-center justify-center gap-2">
             {assigneeInitial ? (
               <div className="w-6 h-6 rounded-full border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] flex items-center justify-center text-[10px] font-semibold text-slate-600 dark:text-slate-200">
                 {assigneeInitial}
@@ -716,6 +749,7 @@ const TaskTableRow: React.FC<{
         >
           <RowActionsMenu
             size="sm"
+            className="opacity-40 transition-opacity group-hover:opacity-100"
             actions={
               [
                 {
@@ -846,6 +880,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   const [hiddenColumns, setHiddenColumns] = useState<string[]>(() => {
     return loadTasksHiddenColumns();
   });
+  const [showRowDescription, setShowRowDescription] = useState(loadTasksRowDescriptionSetting);
 
   const toggleColumn = useCallback((columnId: string) => {
     setHiddenColumns((prev) => {
@@ -855,6 +890,11 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
       localStorage.setItem(TASK_TABLE_VIEW_STORAGE_KEY, JSON.stringify(next));
       return next;
     });
+  }, []);
+
+  const updateRowDescriptionSetting = useCallback((next: boolean) => {
+    setShowRowDescription(next);
+    saveTasksRowDescriptionSetting(next);
   }, []);
 
   const configurableColumns: ColumnConfig[] = useMemo(
@@ -869,8 +909,48 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
   );
 
   const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
+  const isColumnVisible = useCallback((columnId: string) => !hiddenSet.has(columnId), [hiddenSet]);
+  const visibleResizableColumns = useMemo((): TaskResizableColumn[] => {
+    return TASK_COLUMNS.filter(
+      (column): column is ColumnDef & { id: TaskResizableColumn } =>
+        column.id in TASK_RESIZE_BOUNDS && isColumnVisible(column.id)
+    ).map((column) => column.id);
+  }, [isColumnVisible]);
+  const tableMinWidth = useMemo(() => {
+    const visibleWidth = TASK_COLUMNS.reduce((sum, column) => {
+      if (column.id !== 'select' && column.id !== 'indicator' && hiddenSet.has(column.id)) {
+        return sum;
+      }
+      return sum + (columnWidths[column.id] || column.width);
+    }, 0);
+
+    return Math.max(980, visibleWidth);
+  }, [columnWidths, hiddenSet]);
 
   const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
+  const viewSettingsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!isViewSettingsOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (viewSettingsRef.current?.contains(event.target as Node)) return;
+      setIsViewSettingsOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsViewSettingsOpen(false);
+      }
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isViewSettingsOpen]);
 
   // Smart sort toggle (persisted)
   const [smartSort, setSmartSort] = useState<boolean>(() => {
@@ -1220,10 +1300,42 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
   // Column resize handler
   const handleColumnResize = (columnId: string, newWidth: number) => {
-    setColumnWidths((prev) => ({
-      ...prev,
-      [columnId]: newWidth,
-    }));
+    const currentColumn = columnId as TaskResizableColumn;
+    const currentBounds = TASK_RESIZE_BOUNDS[currentColumn];
+    if (!currentBounds) {
+      setColumnWidths((prev) => ({
+        ...prev,
+        [columnId]: newWidth,
+      }));
+      return;
+    }
+
+    setColumnWidths((prev) => {
+      const currentWidth = prev[currentColumn];
+      const nextColumn =
+        visibleResizableColumns[visibleResizableColumns.indexOf(currentColumn) + 1];
+      const clampedWidth = Math.max(currentBounds.min, Math.min(currentBounds.max, newWidth));
+
+      if (!nextColumn) {
+        return { ...prev, [currentColumn]: clampedWidth };
+      }
+
+      const nextBounds = TASK_RESIZE_BOUNDS[nextColumn];
+      const nextWidth = prev[nextColumn];
+      const requestedDelta = clampedWidth - currentWidth;
+      const requestedNextWidth = nextWidth - requestedDelta;
+      const clampedNextWidth = Math.max(
+        nextBounds.min,
+        Math.min(nextBounds.max, requestedNextWidth)
+      );
+      const appliedDelta = nextWidth - clampedNextWidth;
+
+      return {
+        ...prev,
+        [currentColumn]: currentWidth + appliedDelta,
+        [nextColumn]: clampedNextWidth,
+      };
+    });
   };
 
   // Filter handler
@@ -1907,7 +2019,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
               </div>
             ) : (
               <div className="bg-white/70 dark:bg-navy-900/70 backdrop-blur border border-slate-200/70 dark:border-white/[0.06] rounded-xl overflow-hidden">
-                <table className="w-full table-fixed" style={{ minWidth: 900 }}>
+                <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
                   <thead>
                     <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-white/60 dark:bg-navy-900/60 sticky top-0 z-10">
                       {/* Select All */}
@@ -1915,7 +2027,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                         <button
                           onClick={() => handleSelectAll(!allSelected)}
                           className={`
-                          w-5 h-5 rounded border flex items-center justify-center transition-colors
+                          h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors
                           ${
                             allSelected
                               ? 'bg-primary-500 border-primary-500 text-white'
@@ -1935,16 +2047,26 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                         </button>
                       </th>
                       <th className="w-8 px-1 py-2" />
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-full">
+                      <th
+                        className="relative px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                        style={{ width: columnWidths.title }}
+                      >
                         {isPolish ? 'Zadanie' : 'Task'}
+                        <ColumnResizer
+                          columnId="title"
+                          currentWidth={columnWidths.title}
+                          minWidth={TASK_RESIZE_BOUNDS.title.min}
+                          maxWidth={TASK_RESIZE_BOUNDS.title.max}
+                          onResize={handleColumnResize}
+                        />
                       </th>
 
                       {!hiddenSet.has('status') && (
                         <th
-                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.status }}
                         >
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-center gap-1">
                             <span
                               className={
                                 (tableFilters.status as string[])?.length ? 'text-primary-500' : ''
@@ -1966,8 +2088,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           <ColumnResizer
                             columnId="status"
                             currentWidth={columnWidths.status}
-                            minWidth={100}
-                            maxWidth={160}
+                            minWidth={TASK_RESIZE_BOUNDS.status.min}
+                            maxWidth={TASK_RESIZE_BOUNDS.status.max}
                             onResize={handleColumnResize}
                           />
                         </th>
@@ -1975,10 +2097,10 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('priority') && (
                         <th
-                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.priority }}
                         >
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center justify-center gap-1">
                             <span
                               className={
                                 (tableFilters.priority as string[])?.length
@@ -2002,8 +2124,8 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           <ColumnResizer
                             columnId="priority"
                             currentWidth={columnWidths.priority}
-                            minWidth={80}
-                            maxWidth={130}
+                            minWidth={TASK_RESIZE_BOUNDS.priority.min}
+                            maxWidth={TASK_RESIZE_BOUNDS.priority.max}
                             onResize={handleColumnResize}
                           />
                         </th>
@@ -2011,49 +2133,153 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
                       {!hiddenSet.has('date') && (
                         <th
-                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.date }}
                         >
-                          <span>Due Date</span>
+                          <span>{isPolish ? 'Termin' : 'Due Date'}</span>
                           <ColumnResizer
                             columnId="date"
                             currentWidth={columnWidths.date}
-                            minWidth={90}
-                            maxWidth={140}
+                            minWidth={TASK_RESIZE_BOUNDS.date.min}
+                            maxWidth={TASK_RESIZE_BOUNDS.date.max}
                             onResize={handleColumnResize}
                           />
                         </th>
                       )}
                       {!hiddenSet.has('assignee') && (
                         <th
-                          className="px-3 py-2 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                          className="px-3 py-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
                           style={{ width: columnWidths.assignee }}
                         >
-                          <span>Assignee</span>
+                          <span>{isPolish ? 'Właściciel' : 'Assignee'}</span>
                           <ColumnResizer
                             columnId="assignee"
                             currentWidth={columnWidths.assignee}
-                            minWidth={100}
-                            maxWidth={180}
+                            minWidth={TASK_RESIZE_BOUNDS.assignee.min}
+                            maxWidth={TASK_RESIZE_BOUNDS.assignee.max}
                             onResize={handleColumnResize}
                           />
                         </th>
                       )}
                       {!hiddenSet.has('actions') && (
                         <th
-                          className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                          className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                           style={{ width: columnWidths.actions }}
                         >
-                          <button
-                            onClick={() => setIsViewSettingsOpen(true)}
-                            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-                            aria-label={
-                              isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
-                            }
-                            title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                          >
-                            <Settings2 size={14} />
-                          </button>
+                          <div ref={viewSettingsRef} className="flex items-center justify-end">
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                setIsViewSettingsOpen((open) => !open);
+                              }}
+                              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                              aria-label={
+                                isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'
+                              }
+                              aria-expanded={isViewSettingsOpen}
+                              title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                            >
+                              <Settings2 size={14} />
+                            </button>
+                            {isViewSettingsOpen ? (
+                              <div
+                                className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <div className="px-2 pb-2 pt-1">
+                                  <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                                    {isPolish ? 'Ustawienia widoku' : 'View settings'}
+                                  </div>
+                                  <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                                    {isPolish
+                                      ? 'Wybierz widoczne kolumny.'
+                                      : 'Choose visible columns.'}
+                                  </div>
+                                </div>
+                                <div className="space-y-0.5">
+                                  {TASK_COLUMNS.filter(
+                                    (c) => !['select', 'indicator'].includes(c.id)
+                                  ).map((col) => {
+                                    const alwaysVisible =
+                                      col.id === 'title' || col.id === 'actions';
+                                    const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
+                                    const label =
+                                      col.id === 'status'
+                                        ? 'Status'
+                                        : col.id === 'priority'
+                                          ? isPolish
+                                            ? 'Pilność'
+                                            : 'Priority'
+                                          : col.id === 'date'
+                                            ? isPolish
+                                              ? 'Termin'
+                                              : 'Due date'
+                                            : col.id === 'assignee'
+                                              ? isPolish
+                                                ? 'Właściciel'
+                                                : 'Assignee'
+                                              : col.label;
+
+                                    return (
+                                      <label
+                                        key={col.id}
+                                        className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
+                                          alwaysVisible ? 'opacity-55' : 'cursor-pointer'
+                                        }`}
+                                      >
+                                        <input
+                                          type="checkbox"
+                                          checked={checked}
+                                          disabled={alwaysVisible}
+                                          onChange={() => {
+                                            if (alwaysVisible) return;
+                                            setHiddenColumns((prev) => {
+                                              const set = new Set(prev);
+                                              if (set.has(col.id)) set.delete(col.id);
+                                              else set.add(col.id);
+                                              const next = Array.from(set);
+                                              localStorage.setItem(
+                                                TASK_TABLE_VIEW_STORAGE_KEY,
+                                                JSON.stringify(next)
+                                              );
+                                              return next;
+                                            });
+                                          }}
+                                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                        />
+                                        <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                          {label}
+                                        </span>
+                                        {alwaysVisible ? (
+                                          <span className="text-[10px] font-medium text-slate-400">
+                                            {isPolish ? 'Wymagane' : 'Required'}
+                                          </span>
+                                        ) : null}
+                                      </label>
+                                    );
+                                  })}
+                                </div>
+                                <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
+                                  <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
+                                    <input
+                                      type="checkbox"
+                                      checked={showRowDescription}
+                                      onChange={(event) =>
+                                        updateRowDescriptionSetting(event.target.checked)
+                                      }
+                                      className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                                    />
+                                    <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                                      {isPolish
+                                        ? 'Pokaż opis / uzasadnienie'
+                                        : 'Show row description'}
+                                    </span>
+                                  </label>
+                                </div>
+                              </div>
+                            ) : null}
+                          </div>
                         </th>
                       )}
                     </tr>
@@ -2092,6 +2318,7 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
                           columnWidths={columnWidths}
                           hiddenColumns={hiddenSet}
                           focusState={focusState}
+                          showRowDescription={showRowDescription}
                         />
                       ))}
                     </AnimatePresence>
@@ -2126,92 +2353,6 @@ export const MyTasksListContent: React.FC<MyTasksListContentProps> = ({
 
       {/* Keyboard Shortcuts Help Modal */}
       <KeyboardShortcutsHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
-
-      {/* Table View Settings (standard) */}
-      <Modal
-        open={isViewSettingsOpen}
-        onClose={() => setIsViewSettingsOpen(false)}
-        title={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-        description={
-          isPolish
-            ? 'Wybierz, które kolumny są widoczne w tabeli.'
-            : 'Choose which columns are visible in the table.'
-        }
-        size="sm"
-        footer={
-          <>
-            <button
-              onClick={() => setHiddenColumns([...TASK_TABLE_DEFAULT_HIDDEN_COLUMNS])}
-              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            >
-              {isPolish ? 'Reset' : 'Reset'}
-            </button>
-            <button
-              onClick={() => setIsViewSettingsOpen(false)}
-              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            >
-              {isPolish ? 'Gotowe' : 'Done'}
-            </button>
-          </>
-        }
-      >
-        <div className="space-y-2">
-          {TASK_COLUMNS.filter((c) => !['select', 'indicator'].includes(c.id)).map((col) => {
-            const alwaysVisible = col.id === 'title' || col.id === 'actions';
-            const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-            return (
-              <label
-                key={col.id}
-                className={`flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 ${
-                  alwaysVisible ? 'opacity-60' : 'cursor-pointer'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={alwaysVisible}
-                  onChange={() => {
-                    if (alwaysVisible) return;
-                    setHiddenColumns((prev) => {
-                      const set = new Set(prev);
-                      if (set.has(col.id)) set.delete(col.id);
-                      else set.add(col.id);
-                      const next = Array.from(set);
-                      localStorage.setItem(TASK_TABLE_VIEW_STORAGE_KEY, JSON.stringify(next));
-                      return next;
-                    });
-                  }}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
-                />
-                <span className="text-sm text-slate-800 dark:text-slate-200 flex-1">
-                  {col.id === 'status'
-                    ? isPolish
-                      ? 'Status'
-                      : 'Status'
-                    : col.id === 'priority'
-                      ? isPolish
-                        ? 'Pilność'
-                        : 'Priority'
-                      : col.id === 'date'
-                        ? isPolish
-                          ? 'Termin'
-                          : 'Due date'
-                        : col.id === 'assignee'
-                          ? isPolish
-                            ? 'Właściciel'
-                            : 'Assignee'
-                          : col.label}
-                </span>
-                {alwaysVisible ? (
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                    {isPolish ? 'Wymagane' : 'Required'}
-                  </span>
-                ) : null}
-              </label>
-            );
-          })}
-        </div>
-      </Modal>
     </div>
   );
 };

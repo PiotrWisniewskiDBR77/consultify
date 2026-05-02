@@ -207,28 +207,35 @@ export const InitiativePreviewV3Body: React.FC<{
       {/* Financial Analysis Card (V3 position 4, 19.3) */}
       <FinancialAnalysisCard initiativeId={initiative.id} />
 
-      {(initiative.sourceType === 'conclusion' || lineage.length > 0) && (
+      {(['interview_insight', 'insight', 'interview', 'conclusion'].includes(
+        String(initiative.sourceType || '').toLowerCase()
+      ) ||
+        lineage.length > 0) && (
         <div className="rounded-xl border border-purple-200/70 dark:border-purple-500/20 bg-purple-50/70 dark:bg-purple-500/[0.08] p-3">
           <div className="flex items-center gap-2 mb-2">
             <Link2 size={14} className="text-purple-500" />
             <span className="text-[11px] font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
-              {isPolish ? 'Pochodzenie z Wniosków' : 'Wnioski lineage'}
+              {isPolish ? 'Pochodzenie z Interview Insight' : 'Interview Insight lineage'}
             </span>
           </div>
           <div className="space-y-1.5 text-xs text-purple-800 dark:text-purple-200">
-            {initiative.sourceType === 'conclusion' && initiative.sourceId ? (
+            {initiative.sourceId ? (
               <button
                 type="button"
-                onClick={() => window.location.assign(`/wnioski?conclusionId=${initiative.sourceId}`)}
+                onClick={() =>
+                  window.location.assign(
+                    `/interview?insightId=${encodeURIComponent(String(initiative.sourceId))}`
+                  )
+                }
                 className="flex items-center gap-2 hover:underline"
               >
                 <ExternalLink size={12} />
-                {isPolish ? 'Otwórz źródłowy wniosek' : 'Open source conclusion'}
+                {isPolish ? 'Otwórz źródłowy insight' : 'Open source insight'}
               </button>
             ) : null}
             {lineage.map((item) => (
               <div key={item.id}>
-                {item.conversionIntent} • {item.conversionStatus}
+                {item.sourceArtifactTitle || item.conversionIntent} • {item.conversionStatus}
               </div>
             ))}
           </div>

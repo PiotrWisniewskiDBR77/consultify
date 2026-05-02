@@ -36,18 +36,6 @@ const CITATION_ICONS: Record<string, React.ElementType> = {
   external: Globe,
 };
 
-const CITATION_COLORS: Record<string, string> = {
-  assessment: 'text-blue-500 bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800',
-  initiative:
-    'text-green-500 bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800',
-  report:
-    'text-orange-500 bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800',
-  roadmap:
-    'text-purple-500 bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800',
-  external:
-    'text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700',
-};
-
 function sanitizeCitationText(value: unknown): string {
   return String(value || '')
     .replace(/\s*\[(?:MEM|DT|BM|KB|WEB|ASS|FIN)\](?=[\s.,;:!?)]|$)/gi, '')
@@ -76,8 +64,18 @@ export const CitationList: React.FC<CitationListProps> = ({
 }) => {
   const { t } = useTranslation();
   const { setCurrentView } = useAppStore();
+  const [internalCollapsed, setInternalCollapsed] = React.useState(collapsed);
 
   if (!citations || citations.length === 0) return null;
+
+  const isCollapsed = onToggle ? collapsed : internalCollapsed;
+  const handleToggle = () => {
+    if (onToggle) {
+      onToggle();
+      return;
+    }
+    setInternalCollapsed((value) => !value);
+  };
 
   const handleCitationClick = (citation: ChatCitation) => {
     // Navigate to source based on type
@@ -103,25 +101,24 @@ export const CitationList: React.FC<CitationListProps> = ({
   };
 
   return (
-    <div className="mt-3 pt-3 border-t border-slate-200 dark:border-navy-700">
+    <div className="mt-2 border-t border-slate-200/60 pt-2 dark:border-navy-700/50">
       {/* Header */}
       <button
-        onClick={onToggle}
-        className="flex items-center gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+        onClick={handleToggle}
+        className="flex items-center gap-2 text-[11px] font-medium text-slate-400 transition-colors hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
       >
-        <span>{t('aiChat.sources', 'Sources')}</span>
-        <span className="px-1.5 py-0.5 bg-slate-200 dark:bg-navy-700 rounded text-[10px]">
+        <span>{t('aiChat.deepSearchSources', 'Deep search sources')}</span>
+        <span className="rounded border border-slate-200/70 px-1.5 py-0.5 text-[10px] text-slate-400 dark:border-navy-700 dark:text-slate-500">
           {citations.length}
         </span>
-        {onToggle && (collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />)}
+        {isCollapsed ? <ChevronDown size={13} /> : <ChevronUp size={13} />}
       </button>
 
       {/* Citations List */}
-      {!collapsed && (
+      {!isCollapsed && (
         <div className="mt-2 space-y-1.5">
           {citations.map((citation, index) => {
             const Icon = CITATION_ICONS[citation.type] || FileText;
-            const colorClass = CITATION_COLORS[citation.type] || CITATION_COLORS.external;
             const title = getUserFacingCitationTitle(citation);
 
             return (
@@ -129,23 +126,25 @@ export const CitationList: React.FC<CitationListProps> = ({
                 key={citation.id}
                 onClick={() => handleCitationClick(citation)}
                 className={`
-                                    w-full flex items-start gap-2 p-2 rounded-lg border text-left
-                                    hover:shadow-sm transition-all
-                                    ${colorClass}
+                                    w-full flex items-start gap-2 rounded-lg border border-slate-200/70
+                                    bg-slate-50/50 p-2 text-left text-slate-500
+                                    transition-colors hover:bg-slate-100/70 hover:text-slate-700
+                                    dark:border-navy-700/70 dark:bg-navy-900/30
+                                    dark:text-slate-400 dark:hover:bg-navy-800/50
                                 `}
               >
                 {/* Citation Number */}
-                <span className="shrink-0 w-5 h-5 flex items-center justify-center text-[10px] font-bold bg-white dark:bg-navy-900 rounded border border-current">
+                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded border border-slate-200 bg-white text-[10px] font-semibold text-slate-400 dark:border-navy-700 dark:bg-navy-900">
                   {index + 1}
                 </span>
 
                 {/* Icon */}
-                <Icon size={14} className="shrink-0 mt-0.5" />
+                <Icon size={13} className="mt-0.5 shrink-0 text-slate-400 dark:text-slate-500" />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5">
-                    <div className="text-xs font-medium text-navy-900 dark:text-white truncate">
+                    <div className="truncate text-xs font-medium text-slate-600 dark:text-slate-300">
                       {title}
                     </div>
                     {/* Feedback #1cbe2baa — explicit "External" tag so
@@ -154,7 +153,7 @@ export const CitationList: React.FC<CitationListProps> = ({
                         icon alone was ambiguous and users asked whether
                         external links were even supposed to appear. */}
                     {citation.type === 'external' && (
-                      <span className="shrink-0 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                      <span className="shrink-0 rounded border border-slate-200 bg-white/60 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-slate-400 dark:border-navy-700 dark:bg-navy-900/50 dark:text-slate-500">
                         {t('aiChat.citationExternalBadge', 'External')}
                       </span>
                     )}

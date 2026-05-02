@@ -25,12 +25,14 @@ import {
   CheckCircle2,
   History,
   MessageSquare,
+  PanelRight,
   Plus,
   Search,
   Sparkles,
   Volume2,
   VolumeX,
   Wrench,
+  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -383,6 +385,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editingText, setEditingText] = useState<string>('');
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
+  const [isWorkPanelOpen, setIsWorkPanelOpen] = useState(false);
   const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
   const lastKickoffSentRef = useRef<string | null>(null);
@@ -581,7 +584,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   }, []);
 
   // Computed values
-  const isSplitMode = mode === 'split' || (mode !== 'full' && displayMode === 'split');
+  const isWorkPanelMode = mode === 'full' && isWorkPanelOpen;
+  const isSplitMode =
+    isWorkPanelMode || mode === 'split' || (mode !== 'full' && displayMode === 'split');
   const isCompact = isSplitMode;
   const isDisabled = disabled || aiFreezeStatus.isFrozen;
   const isPrivateMode = Boolean((aiConfig as any)?.privateMode);
@@ -1821,8 +1826,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         consumeAIInteraction();
       }
 
-      // Create conversation if none exists
-      let conversationId = activeConversationId;
+      // Read the active conversation from the store at send time. A quick
+      // "new chat -> send" can otherwise reuse the previous render's id.
+      let conversationId = useConversationStore.getState().activeConversationId;
       if (!conversationId) {
         try {
           const conv = await createConversation();
@@ -1831,12 +1837,18 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           console.error('[UnifiedChatPanel] Failed to create conversation:', err);
         }
       }
+      const liveConversationMessages =
+        useConversationStore.getState().activeConversationId === conversationId
+          ? useConversationStore.getState().activeMessages
+          : [];
+      const sourceMessages =
+        customMessages || (activeConversationId === conversationId ? messages : liveConversationMessages);
 
       // Conversation-scoped attachments: upload supported files to Knowledge Base and
       // pass doc filters to the backend so RAG only searches within these attachments.
       const existingAttachmentDocIds = Array.from(
         new Set(
-          (customMessages || messages || [])
+          (sourceMessages || [])
             .flatMap((m: any) =>
               Array.isArray(m?.metadata?.attachments) ? m.metadata.attachments : []
             )
@@ -2098,7 +2110,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       };
 
       // Backend expects history roles as: user | model (Gemini-style)
-      const history = (customMessages || messages).map((m) => ({
+      const history = sourceMessages.map((m) => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }],
       }));
@@ -2121,7 +2133,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       // Deep Thinking: force-depth triggers bypass Confirm (they are a quality control action)
       if ((aiConfig?.deepResearch || (aiConfig as any)?.marketResearch) && isForceDepth) {
-        const base = (customMessages || messages).filter(
+        const base = sourceMessages.filter(
           (m) => !((m as any).metadata?.deepThinking?.kind === 'confirm')
         );
         const history = base.map((m) => ({
@@ -2130,7 +2142,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         }));
 
         // Reuse last confirm payload if present (keeps flow deterministic while not blocking)
-        const lastConfirm = (customMessages || messages)
+        const lastConfirm = sourceMessages
           .slice()
           .reverse()
           .find((m: any) => m?.metadata?.deepThinking?.kind === 'confirm') as any;
@@ -3463,19 +3475,31 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const isRehydratingConversation =
     !hasRenderableMessages && activeConversationId && isConversationLoading;
   const isWelcomeEmptyState = !hasRenderableMessages && !isRehydratingConversation;
+  const canUseWorkPanel = mode === 'full';
+  const showWorkPanel = isWorkPanelMode;
   // Full `/chat` must always use the rich start screen, regardless of persisted displayMode.
-  const showFullWelcomeEmptyState = isWelcomeEmptyState && mode === 'full';
+  // Once the work panel is open, the left side behaves like an active conversation panel:
+  // no marketing welcome surface, input stays pinned at the bottom.
+  const showFullWelcomeEmptyState = isWelcomeEmptyState && mode === 'full' && !isCompact;
+  const showWorkPanelEmptyState = isWelcomeEmptyState && showWorkPanel;
   const showCompactEmptyState = isWelcomeEmptyState && mode !== 'full';
 
   return (
     <div
-      className={`relative flex flex-col h-full overflow-hidden bg-slate-50 dark:bg-navy-950 ${
+      className={`relative flex h-full overflow-hidden bg-slate-50 dark:bg-navy-950 ${
         isPrivateMode
           ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
           : 'ring-1 ring-transparent'
       } ${className}`}
       style={{ maxHeight: maxHeight || '100%' }}
     >
+      <div
+        className={`flex min-w-0 flex-col h-full transition-[width] duration-200 ${
+          showWorkPanel
+            ? 'w-full lg:w-[48%] lg:max-w-[720px] lg:border-r lg:border-slate-200/60 lg:dark:border-white/[0.06]'
+            : 'w-full'
+        }`}
+      >
       {/* Skip links for keyboard users */}
       <a
         href="#chat-input"
@@ -3571,6 +3595,22 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               the component renders the original read-only chip with the
               same classes, so disabling the flag is visually invisible. */}
           {isPrivateMode && <PrivateModeDetails />}
+          {canUseWorkPanel && (
+            <button
+              onClick={() => setIsWorkPanelOpen((open) => !open)}
+              data-testid="chat-work-panel-button"
+              aria-pressed={showWorkPanel}
+              className={`p-1.5 rounded-lg transition-colors ${
+                showWorkPanel
+                  ? 'text-primary-600 dark:text-primary-400 bg-primary-50/40 dark:bg-primary-900/15'
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/[0.06] hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
+              title={t('aiChat.workPanel.open', 'Open work panel')}
+              aria-label={t('aiChat.workPanel.open', 'Open work panel')}
+            >
+              <PanelRight size={18} strokeWidth={1.75} />
+            </button>
+          )}
           {ttsSupported && (
             <button
               onClick={() => {
@@ -3867,6 +3907,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
               </p>
             </div>
           </div>
+        ) : showWorkPanelEmptyState ? (
+          <div data-testid="chat-work-panel-empty-state" className="min-h-full" />
         ) : showCompactEmptyState ? (
           <div
             data-testid="chat-compact-empty-state"
@@ -4087,6 +4129,52 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
         onSelectConversation={handleSelectConversation}
         activeConversationId={activeConversationId}
       />
+      </div>
+
+      {showWorkPanel && (
+        <aside
+          data-testid="chat-work-panel"
+          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-slate-200/70 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-navy-950 lg:relative lg:z-auto lg:w-[52%] lg:shadow-none"
+          aria-label={t('aiChat.workPanel.title', 'Work panel')}
+        >
+          <div className="flex items-center justify-between border-b border-slate-200/70 px-4 py-3 dark:border-white/[0.08]">
+            <div>
+              <div className="text-sm font-semibold text-navy-900 dark:text-white">
+                {t('aiChat.workPanel.title', 'Work panel')}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {t('aiChat.workPanel.subtitle', 'Empty workspace for documents and canvas')}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsWorkPanelOpen(false)}
+              className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
+              title={t('common.close', 'Close')}
+              aria-label={t('common.close', 'Close')}
+            >
+              <X size={18} strokeWidth={1.75} />
+            </button>
+          </div>
+
+          <div className="flex flex-1 items-center justify-center p-8">
+            <div className="max-w-sm rounded-2xl border border-dashed border-slate-300/80 bg-slate-50/70 p-6 text-center dark:border-white/15 dark:bg-white/[0.03]">
+              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-300">
+                <PanelRight size={20} strokeWidth={1.75} />
+              </div>
+              <div className="text-sm font-medium text-navy-900 dark:text-white">
+                {t('aiChat.workPanel.emptyTitle', 'Clean work window')}
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                {t(
+                  'aiChat.workPanel.emptyDescription',
+                  'This is the placeholder for documents, previews, and canvas work. We will decide the exact content next.'
+                )}
+              </p>
+            </div>
+          </div>
+        </aside>
+      )}
 
       {/* Important signals panel (T012) */}
       {signalsEnabled && (

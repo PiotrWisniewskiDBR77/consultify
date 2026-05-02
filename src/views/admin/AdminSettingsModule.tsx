@@ -2,6 +2,7 @@ import { Menu, X } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
+import { AdminBillingFinOpsPanel } from '../../components/Admin/AdminBillingFinOpsPanel';
 import { AdminMembersRolesPanel } from '../../components/Admin/AdminMembersRolesPanel';
 import {
   AdminSettingsSection,
@@ -19,12 +20,16 @@ interface AdminSettingsModuleProps {
   currentUser: User;
 }
 
-const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people'];
+const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people', 'billing'];
 
 const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
   people: {
     title: 'Team & Access',
     subtitle: 'Membership operations, role changes, ownership transfer, and team invite codes.',
+  },
+  billing: {
+    title: 'Billing & FinOps',
+    subtitle: 'Subscription, invoices, payment methods, and spend governance for your workspace.',
   },
 };
 
@@ -36,7 +41,7 @@ const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
   people: 'people',
   access: 'people',
   security: 'people',
-  billing: 'people',
+  billing: 'billing',
   ai: 'people',
   integrations: 'people',
   audit: 'people',
@@ -97,6 +102,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
     switch (resolvedState.section) {
       case 'people':
         return <AdminMembersRolesPanel />;
+      case 'billing':
+        return <AdminBillingFinOpsPanel />;
       default:
         return <AdminMembersRolesPanel />;
     }

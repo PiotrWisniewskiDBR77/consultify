@@ -1,9 +1,9 @@
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft, CreditCard, Users } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '../../utils/cn';
 
-export type AdminSettingsSection = 'people';
+export type AdminSettingsSection = 'people' | 'billing';
 
 interface AdminSettingsSidebarProps {
   activeSection: AdminSettingsSection;
@@ -23,6 +23,12 @@ const NAV_ITEMS: Array<{
     label: 'Team & Access',
     description: 'Members, roles, ownership, and team invite codes',
     icon: Users,
+  },
+  {
+    id: 'billing',
+    label: 'Billing & FinOps',
+    description: 'Plans, invoices, payment methods, and spend controls',
+    icon: CreditCard,
   },
 ];
 
@@ -49,9 +55,9 @@ export const AdminSettingsSidebar: React.FC<AdminSettingsSidebarProps> = ({
             Back
           </button>
         )}
-        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Team Admin</h2>
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Admin Panel</h2>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          Manage the team, member roles, ownership, and invite access.
+          Manage team access and commercial controls for your organization.
         </p>
       </div>
 

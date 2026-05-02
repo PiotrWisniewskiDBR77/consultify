@@ -4925,24 +4925,34 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
         const srcId = initiative?.source_id || initiative?.sourceId;
         if (!srcType || !srcId) return [];
         const normalizedSourceType = String(srcType).toLowerCase();
-        if (!['interview', 'conclusion', 'conclusion_readout'].includes(normalizedSourceType)) {
+        if (
+          !['interview', 'interview_insight', 'insight', 'conclusion', 'conclusion_readout'].includes(
+            normalizedSourceType
+          )
+        ) {
           return [];
         }
         const sourceTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
         const sourcePath =
-          normalizedSourceType === 'interview'
+          normalizedSourceType === 'interview' ||
+          normalizedSourceType === 'interview_insight' ||
+          normalizedSourceType === 'insight' ||
+          normalizedSourceType === 'conclusion'
             ? getArtifactPath('insight', srcId)
             : normalizedSourceType === 'conclusion_readout'
-              ? `/wnioski?readoutId=${encodeURIComponent(String(srcId))}`
-              : `/wnioski?conclusionId=${encodeURIComponent(String(srcId))}`;
+              ? '/presentations?tab=documents'
+              : getArtifactPath('insight', srcId);
         const sourceLabel =
-          normalizedSourceType === 'interview'
+          normalizedSourceType === 'interview' ||
+          normalizedSourceType === 'interview_insight' ||
+          normalizedSourceType === 'insight' ||
+          normalizedSourceType === 'conclusion'
             ? isPolish
               ? 'Z Insightu: '
               : 'From Insight: '
             : isPolish
-              ? 'Z Wniosku: '
-              : 'From Conclusion: ';
+              ? 'Z readoutu: '
+              : 'From readout: ';
         return [
           {
             id: 'sourceInsight',

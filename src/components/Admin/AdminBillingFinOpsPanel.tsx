@@ -20,6 +20,11 @@ const DEFAULT_BILLING_ALERTS = [
 ];
 
 export const AdminBillingFinOpsPanel: React.FC = () => {
+  const stripeEnabled = ['true', '1', 'yes'].includes(
+    String(import.meta.env.VITE_STRIPE_ENABLED || '')
+      .trim()
+      .toLowerCase()
+  );
   const [activeTab, setActiveTab] = useState<TabId>('summary');
   const [summary, setSummary] = useState<any>(null);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
@@ -339,6 +344,14 @@ export const AdminBillingFinOpsPanel: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {!stripeEnabled && (
+        <div className="rounded-2xl border border-amber-300/60 bg-amber-50 px-5 py-4 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200">
+          <p className="text-sm font-semibold">Self-service checkout is currently disabled.</p>
+          <p className="mt-1 text-sm">
+            Enjoy your 7-day trial. To securely activate an enterprise tier, please contact sales.
+          </p>
+        </div>
+      )}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-white/10 dark:bg-white/5">
         <div className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white">
           <CreditCard className="h-5 w-5 text-violet-500" />

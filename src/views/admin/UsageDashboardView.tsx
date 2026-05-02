@@ -21,6 +21,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import {
   Area,
   AreaChart,
@@ -92,7 +93,13 @@ const COLORS = ['#64748b', '#94a3b8', '#475569', '#334155', '#1e293b', '#0f172a'
 
 export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { currentOrganization } = useAppStore();
+  const stripeEnabled = ['true', '1', 'yes'].includes(
+    String(import.meta.env.VITE_STRIPE_ENABLED || '')
+      .trim()
+      .toLowerCase()
+  );
 
   const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -264,6 +271,17 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
 
       {!loadError && (
         <>
+          {!stripeEnabled && (
+            <div className="admin-card border border-amber-400/30 bg-amber-500/10 p-4">
+              <p className="text-sm font-medium text-amber-300">
+                Self-service checkout is currently disabled.
+              </p>
+              <p className="mt-1 text-xs text-amber-200/90">
+                To activate an enterprise tier, use Billing & FinOps and contact sales.
+              </p>
+            </div>
+          )}
+
           {/* Main Metrics Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Tokens */}
@@ -650,7 +668,12 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
                     )}
                   </p>
                 </div>
-                <button className="admin-btn admin-btn-accent text-sm">Upgrade Plan</button>
+                <button
+                  onClick={() => navigate('/admin/billing')}
+                  className="admin-btn admin-btn-accent text-sm"
+                >
+                  {stripeEnabled ? 'Upgrade Plan' : 'Contact Sales'}
+                </button>
               </div>
             </div>
           )}

@@ -42,14 +42,27 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
   const langRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const currentCode =
+    normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || SUPPORTED_LANGUAGES[0];
+
+  const localizedNavLabel = (key: string, fallbackEn: string, fallbackPl: string, fallbackDe: string) => {
+    const translated = t(key, fallbackEn);
+    if (translated !== fallbackEn) return translated;
+    if (currentCode === 'pl') return fallbackPl;
+    if (currentCode === 'de') return fallbackDe;
+    return fallbackEn;
+  };
 
   const navLinks = [
-    { label: t('nav.product', 'Product'), href: ROUTES.WELCOME },
-    { label: t('nav.knowledgeBase', 'Knowledge Base'), href: ROUTES.KNOWLEDGE_BASE_PUBLIC },
-    { label: t('nav.pricing', 'Pricing'), href: ROUTES.PRICING },
-    { label: t('nav.partners', 'Partners'), href: ROUTES.BECOME_PARTNER },
-    { label: t('nav.vector', 'Vector AI'), href: ROUTES.VECTOR },
-    { label: t('nav.security', 'Security'), href: ROUTES.LEGAL.SECURITY },
+    { label: localizedNavLabel('nav.product', 'Product', 'Produkt', 'Produkt'), href: ROUTES.WELCOME },
+    {
+      label: localizedNavLabel('nav.knowledgeBase', 'Knowledge Base', 'Baza wiedzy', 'Wissensdatenbank'),
+      href: ROUTES.KNOWLEDGE_BASE_PUBLIC,
+    },
+    { label: localizedNavLabel('nav.pricing', 'Pricing', 'Cennik', 'Preise'), href: ROUTES.PRICING },
+    { label: localizedNavLabel('nav.partners', 'Partners', 'Partnerzy', 'Partner'), href: ROUTES.BECOME_PARTNER },
+    { label: localizedNavLabel('nav.vector', 'Vector AI', 'Vector AI', 'Vector AI'), href: ROUTES.VECTOR },
+    { label: localizedNavLabel('nav.security', 'Security', 'Bezpieczeństwo', 'Sicherheit'), href: ROUTES.LEGAL.SECURITY },
   ];
   const { theme, toggleTheme } = useAppStore();
   const effectiveTheme = forceDark ? 'dark' : theme;
@@ -60,8 +73,6 @@ export const EntryTopBar: React.FC<EntryTopBarProps> = ({
     displayCode: LANGUAGE_DISPLAY_CODES[code],
   }));
 
-  const currentCode =
-    normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || SUPPORTED_LANGUAGES[0];
   const currentLang = languages.find((l) => l.code === currentCode) || languages[0];
   const languageMatches = (code: string) =>
     currentCode === code || String(i18n.language || '').startsWith(code);

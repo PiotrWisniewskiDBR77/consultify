@@ -106,9 +106,9 @@ const COPY: Record<AnnaUiLanguage, AnnaCopy> = {
     subtitle: 'Asystentka wejścia produktowego',
     intro:
       'Moge wyjasnic Consultify, program partnerski i pomóc wybrać właściwy kolejny krok: demo, trial, aplikacje partnerska albo kontakt. Nie mam dostepu do danych klienta ani projektow.',
-    placeholder: 'Zapytaj Anne o produkt...',
+    placeholder: 'Zapytaj Annę o produkt...',
     send: 'Wyslij',
-    open: 'Zapytaj Anne najpierw',
+    open: 'Zapytaj Annę najpierw',
     loading: 'Anna analizuje...',
     suggestionsLabel: 'Mozesz zapytac:',
     privacyBadge: 'Tylko wiedza publiczna',

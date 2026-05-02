@@ -125,6 +125,12 @@ export interface V8InterviewInsight {
   title: string;
   promptType: string;
   sourceSessionIds: string[];
+  analysisScope?: V8InsightAnalysisScope;
+  materialQuality?: V8InsightMaterialQuality | null;
+  contextMode?: V8InsightContextMode;
+  analysisMode?: V8InsightAnalysisMode;
+  topicFocus?: string[];
+  generationContext?: Record<string, unknown>;
   content?: string;
   executiveSummary?: string;
   themes?: Array<{
@@ -163,6 +169,54 @@ export interface V8InterviewInsight {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export type V8InsightAnalysisMode =
+  | 'general_consulting_synthesis'
+  | 'focused_topic_synthesis'
+  | 'contradiction_scan'
+  | 'initiative_opportunity_scan'
+  | 'material_quality_scan'
+  | 'hypothesis_validation'
+  | 'between_the_lines';
+
+export type V8InsightContextMode =
+  | 'selected_interview_material_only'
+  | 'selected_material_plus_approved_org_knowledge';
+
+export interface V8InsightAnalysisScope {
+  source_session_ids: string[];
+  source_scope_status: 'approved_only';
+  respondent_filters: string[];
+  role_filters: string[];
+  department_filters: string[];
+  template_filters: string[];
+  date_range?: { from?: string; to?: string };
+  topic_focus: string[];
+  analysis_mode: V8InsightAnalysisMode;
+  context_mode: V8InsightContextMode;
+  consultant_note?: string | null;
+  leading_question?: string | null;
+}
+
+export interface V8InsightMaterialQuality {
+  overall_material_score: number;
+  answer_quality_posture: 'strong' | 'usable' | 'thin' | 'poor';
+  coverage_posture:
+    | 'single_perspective'
+    | 'partial_coverage'
+    | 'good_coverage'
+    | 'strong_cross_function_coverage';
+  approved_session_count: number;
+  respondent_count: number;
+  role_coverage: string[];
+  department_coverage: string[];
+  thin_answer_count: number;
+  missing_voices: string[];
+  evidence_gap_count: number;
+  contradiction_count: number;
+  limitations: string[];
+  recommended_followups: string[];
 }
 
 export interface V8InsightEvidencePointer {
@@ -455,6 +509,12 @@ export const V8InterviewApi = {
     sessionId?: string;
     promptType?: string;
     filters?: Record<string, unknown>;
+    analysisScope?: Partial<V8InsightAnalysisScope>;
+    analysisMode?: V8InsightAnalysisMode;
+    contextMode?: V8InsightContextMode;
+    topicFocus?: string[];
+    consultantNote?: string;
+    leadingQuestion?: string;
     customPrompt?: string;
   }) => v8Post<{ insight: V8InterviewInsight }>('/interview/insights', payload),
 

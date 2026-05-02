@@ -397,6 +397,10 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
   const hasArtifacts = msg.artifacts && msg.artifacts.length > 0;
   const hasThinkingSteps = msg.thinkingSteps && msg.thinkingSteps.length > 0;
   const hasCitations = Array.isArray(msg.citations) && msg.citations.length > 0;
+  const metadata = (msg as any).metadata || {};
+  const isDeepSearchAnswer = Boolean(metadata?.deepThinking?.kind === 'report');
+  const visibleCitations = isDeepSearchAnswer && Array.isArray(msg.citations) ? msg.citations : [];
+  const hasVisibleCitations = visibleCitations.length > 0;
   const isCopied = copiedMessageId === msg.id;
   const isContextSaveBusy = contextSaveBusyMessageId === msg.id;
   const isContextSaved = contextSavedMessageIds.has(msg.id);
@@ -603,7 +607,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                     It is intentionally not rendered in the normal chat UX. */}
 
                 {/* Deep Thinking: Research progress (SSE events) */}
-                {(msg as any).metadata?.researchVisibility?.items && (
+                {isDeepSearchAnswer && (msg as any).metadata?.researchVisibility?.items && (
                   <div className={`${isCompact ? 'mb-2' : 'mb-3'} not-prose`}>
                     <div className="mb-2 text-[11px] font-medium text-slate-600 dark:text-slate-300">
                       Research & Sources (planned)
@@ -922,7 +926,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                       // to `msg.citations[N-1]` so tappers actually open the
                       // source card. Empty/missing citations fall through to a
                       // muted non-clickable pill (see renderNodesWithCitations).
-                      const inlineCitations = Array.isArray(msg.citations) ? msg.citations : [];
+                      const inlineCitations = visibleCitations;
                       const handleInlineCitationClick = (citation: any) => {
                         if (!citation) return;
                         if (citation.type === 'external' && citation.link) {
@@ -1625,17 +1629,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         </div>
       )}
 
-      {/* TRUST T-TR1 — compact always-visible summary chip. Sits above
-          the full `CitationList` so skim-reading the conversation shows
-          "this reply cites N sources" without expanding anything. The
-          chip also renders for replies with ZERO citations (the "No
-          cited sources" tone) so users never silently assume a reply is
-          backed by retrieved material when it isn't. Flag-gated; when
-          off the component returns null and the layout is unchanged. */}
-      {msg.role === 'ai' && !msg.isStreaming && (
+      {/* TRUST T-TR1 — compact summary chip. In regular chat we keep the
+          answer visually quiet; source disclosure appears only for deep
+          search/research outputs where citations are part of the workflow. */}
+      {msg.role === 'ai' && !msg.isStreaming && isDeepSearchAnswer && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}>
           <TrustBadge
-            citations={msg.citations}
+            citations={visibleCitations}
             modelUsed={
               typeof (msg as { metadata?: { modelUsed?: unknown } }).metadata?.modelUsed ===
               'string'
@@ -1647,13 +1647,13 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
       )}
 
       {/* Citations */}
-      {msg.role === 'ai' && hasCitations && (
+      {msg.role === 'ai' && hasVisibleCitations && (
         <div
           className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1`}
           data-message-id={msg.id}
           data-citations-list="true"
         >
-          <CitationList citations={msg.citations!} />
+          <CitationList citations={visibleCitations} collapsed />
         </div>
       )}
 
@@ -1664,19 +1664,19 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
         unaffected. Skipped while streaming — the bundle is only sealed
         at DONE.
       */}
-      {msg.role === 'ai' && !msg.isStreaming && (msg as any).metadata?.trustBundle && (
+      {msg.role === 'ai' && !msg.isStreaming && isDeepSearchAnswer && metadata?.trustBundle && (
         <div className={`${isCompact ? 'ml-7' : 'ml-9'} mt-1 flex flex-col gap-1`}>
           {/* Chat V9 / TRUST TS1 — post-send sources aggregate. Silent when
               the bundle has no meaningful breakdown, so single-class turns
               still read exactly like pre-TS1 (TrustPanel primary pill
               carries the signal). */}
           <SourcesStrip
-            bundle={(msg as any).metadata.trustBundle}
+            bundle={metadata.trustBundle}
             messageId={msg.id || null}
             isCompact={isCompact}
           />
           <TrustPanel
-            bundle={(msg as any).metadata.trustBundle}
+            bundle={metadata.trustBundle}
             isCompact={isCompact}
             isRtl={isRtlChatLanguage}
             showOperatorDetail={showOperatorDetail}

@@ -40,7 +40,6 @@ import {
   Copy,
   Eye,
   FileText,
-  HelpCircle,
   Inbox,
   Layers,
   Lightbulb,
@@ -74,7 +73,6 @@ import {
   type RelationItem,
 } from '@/components/shared/PreviewPane';
 import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
-import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -756,7 +754,15 @@ const INBOX_COLUMNS: ColumnDef[] = [
     resizable: false,
     filterable: false,
   },
-  { id: 'title', label: 'Title', width: 999, minWidth: 300, resizable: false, filterable: false },
+  {
+    id: 'title',
+    label: 'Title',
+    width: 560,
+    minWidth: 360,
+    maxWidth: 900,
+    resizable: true,
+    filterable: false,
+  },
   {
     id: 'status',
     label: 'Status',
@@ -843,10 +849,32 @@ const INBOX_COLUMNS: ColumnDef[] = [
   },
 ];
 
+type InboxResizableColumn =
+  | 'title'
+  | 'status'
+  | 'urgency'
+  | 'type'
+  | 'section'
+  | 'source'
+  | 'received'
+  | 'sla';
+
+const INBOX_RESIZE_BOUNDS: Record<InboxResizableColumn, { min: number; max: number }> = {
+  title: { min: 360, max: 900 },
+  status: { min: 80, max: 140 },
+  urgency: { min: 80, max: 150 },
+  type: { min: 90, max: 160 },
+  section: { min: 110, max: 220 },
+  source: { min: 90, max: 170 },
+  received: { min: 90, max: 160 },
+  sla: { min: 70, max: 140 },
+};
+
 const getDefaultColumnWidths = (): ColumnWidths =>
   INBOX_COLUMNS.reduce((acc, col) => ({ ...acc, [col.id]: col.width }), {});
 
 const INBOX_TABLE_VIEW_STORAGE_KEY = 'consultify-inbox-table-view';
+const INBOX_TABLE_ROW_DESCRIPTION_STORAGE_KEY = 'consultify-inbox-show-row-description';
 const INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS = ['type', 'section', 'source'] as const;
 
 function loadInboxHiddenColumns(): string[] {
@@ -868,6 +896,23 @@ function saveInboxHiddenColumns(hiddenColumns: string[]) {
       INBOX_TABLE_VIEW_STORAGE_KEY,
       JSON.stringify({ hiddenColumns: Array.from(new Set(hiddenColumns)).sort() })
     );
+  } catch {
+    // ignore
+  }
+}
+
+function loadInboxRowDescriptionSetting(): boolean {
+  try {
+    const raw = localStorage.getItem(INBOX_TABLE_ROW_DESCRIPTION_STORAGE_KEY);
+    return raw === null ? true : raw === 'true';
+  } catch {
+    return true;
+  }
+}
+
+function saveInboxRowDescriptionSetting(showDescription: boolean) {
+  try {
+    localStorage.setItem(INBOX_TABLE_ROW_DESCRIPTION_STORAGE_KEY, String(showDescription));
   } catch {
     // ignore
   }
@@ -1526,12 +1571,56 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // View settings (Columns) — persisted
   const [isViewSettingsOpen, setIsViewSettingsOpen] = useState(false);
+  const viewSettingsRef = useRef<HTMLDivElement | null>(null);
   const [hiddenColumns, setHiddenColumns] = useState<string[]>(loadInboxHiddenColumns);
+  const [showRowDescription, setShowRowDescription] = useState(loadInboxRowDescriptionSetting);
   const hiddenSet = useMemo(() => new Set(hiddenColumns), [hiddenColumns]);
+  const isColumnVisible = useCallback((columnId: string) => !hiddenSet.has(columnId), [hiddenSet]);
+
+  const visibleResizableColumns = useMemo((): InboxResizableColumn[] => {
+    return INBOX_COLUMNS.filter(
+      (column): column is ColumnDef & { id: InboxResizableColumn } =>
+        column.id in INBOX_RESIZE_BOUNDS && isColumnVisible(column.id)
+    ).map((column) => column.id);
+  }, [isColumnVisible]);
+
+  const tableMinWidth = useMemo(() => {
+    const visibleWidth = INBOX_COLUMNS.reduce((sum, column) => {
+      if (column.id !== 'select' && column.id !== 'actions' && hiddenSet.has(column.id)) return sum;
+      return sum + (columnWidths[column.id] || column.width);
+    }, 0);
+
+    return Math.max(1080, visibleWidth);
+  }, [columnWidths, hiddenSet]);
 
   useEffect(() => {
     saveInboxHiddenColumns(hiddenColumns);
   }, [hiddenColumns]);
+
+  const updateRowDescriptionSetting = useCallback((next: boolean) => {
+    setShowRowDescription(next);
+    saveInboxRowDescriptionSetting(next);
+  }, []);
+
+  useEffect(() => {
+    if (!isViewSettingsOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (viewSettingsRef.current?.contains(event.target as Node)) return;
+      setIsViewSettingsOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsViewSettingsOpen(false);
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isViewSettingsOpen]);
 
   // Filters
   const [tableFilters, setTableFilters] = useState<TableFilters>({});
@@ -2054,7 +2143,39 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
   // ── Column resize ──
   const handleColumnResize = (columnId: string, newWidth: number) => {
-    setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
+    const currentColumn = columnId as InboxResizableColumn;
+    const currentBounds = INBOX_RESIZE_BOUNDS[currentColumn];
+    if (!currentBounds) {
+      setColumnWidths((prev) => ({ ...prev, [columnId]: newWidth }));
+      return;
+    }
+
+    setColumnWidths((prev) => {
+      const currentWidth = prev[currentColumn];
+      const nextColumn =
+        visibleResizableColumns[visibleResizableColumns.indexOf(currentColumn) + 1];
+      const clampedWidth = Math.max(currentBounds.min, Math.min(currentBounds.max, newWidth));
+
+      if (!nextColumn) {
+        return { ...prev, [currentColumn]: clampedWidth };
+      }
+
+      const nextBounds = INBOX_RESIZE_BOUNDS[nextColumn];
+      const nextWidth = prev[nextColumn];
+      const requestedDelta = clampedWidth - currentWidth;
+      const requestedNextWidth = nextWidth - requestedDelta;
+      const clampedNextWidth = Math.max(
+        nextBounds.min,
+        Math.min(nextBounds.max, requestedNextWidth)
+      );
+      const appliedDelta = nextWidth - clampedNextWidth;
+
+      return {
+        ...prev,
+        [currentColumn]: currentWidth + appliedDelta,
+        [nextColumn]: clampedNextWidth,
+      };
+    });
   };
 
   const getColumnLabel = useCallback(
@@ -2215,10 +2336,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               e.stopPropagation();
               handleSelectItem(item.id);
             }}
-            className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+            className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-all ${
               isSelected
-                ? 'bg-primary-500 border-primary-500 text-white'
-                : 'border-slate-300 dark:border-navy-500 hover:border-primary-400'
+                ? 'bg-primary-500 border-primary-500 text-white opacity-100'
+                : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
             }`}
           >
             {isSelected && <CheckSquare size={12} />}
@@ -2226,7 +2347,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         </td>
 
         {/* Title */}
-        <td className="px-3 py-2 w-full">
+        <td className="px-3 py-3" style={{ width: columnWidths.title }}>
           <div className="flex items-center gap-2">
             <span
               className="text-sm font-medium text-slate-900 dark:text-white truncate block"
@@ -2269,18 +2390,16 @@ export const InboxContent: React.FC<InboxContentProps> = ({
               </button>
             )}
           </div>
-          {/* N7: reason chip — visible on hover */}
-          {item.reason && (
-            <span className="hidden group-hover:inline-flex items-center gap-1 text-[10px] text-sky-600 dark:text-sky-400 mt-0.5">
-              <HelpCircle size={10} className="shrink-0" />
-              {item.reason}
-            </span>
-          )}
+          {showRowDescription && (item.description || item.reason) ? (
+            <div className="mt-0.5 max-w-[760px] truncate pr-6 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
+              {item.description || item.reason}
+            </div>
+          ) : null}
         </td>
 
         {/* Status */}
         {!hiddenSet.has('status') && (
-          <td className="px-3 py-2" style={{ width: columnWidths.status }}>
+          <td className="px-3 py-2 text-center" style={{ width: columnWidths.status }}>
             {(() => {
               const st = item.itemStatus || (item.triaged ? 'done' : 'open');
               const cfg: Record<string, { color: string; dot: string; label: string }> = {
@@ -2326,7 +2445,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Urgency */}
         {!hiddenSet.has('urgency') && (
-          <td className="px-3 py-2" style={{ width: columnWidths.urgency }}>
+          <td className="px-3 py-2 text-center" style={{ width: columnWidths.urgency }}>
             <span
               className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium whitespace-nowrap ${u.pill}`}
             >
@@ -2338,7 +2457,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Type */}
         {!hiddenSet.has('type') && (
-          <td className="px-3 py-2" style={{ width: columnWidths.type }}>
+          <td className="px-3 py-2 text-center" style={{ width: columnWidths.type }}>
             <span className="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
               <span className="truncate">
                 {typeLabel[item.type] || item.type.replace(/_/g, ' ')}
@@ -2349,7 +2468,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Section */}
         {!hiddenSet.has('section') && (
-          <td className="px-3 py-2" style={{ width: columnWidths.section }}>
+          <td className="px-3 py-2 text-center" style={{ width: columnWidths.section }}>
             <span className="text-xs text-slate-600 dark:text-slate-400">
               {SMART_SECTIONS.find((s) => s.id === item.section)?.[
                 isPolish ? 'labelPl' : 'labelEn'
@@ -2360,7 +2479,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Source */}
         {!hiddenSet.has('source') && (
-          <td className="px-3 py-2" style={{ width: columnWidths.source }}>
+          <td className="px-3 py-2 text-center" style={{ width: columnWidths.source }}>
             {(() => {
               const src = item.source?.type || 'system';
               const cfg: Record<string, { icon: typeof Bell; color: string; label: string }> = {
@@ -2390,7 +2509,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* Received (relative + aging) */}
         {!hiddenSet.has('received') && (
-          <td className="px-3 py-2" style={{ width: columnWidths.received }}>
+          <td className="px-3 py-2 text-center" style={{ width: columnWidths.received }}>
             <span className={`text-xs font-medium whitespace-nowrap ${AGING_STYLES[agingLevel]}`}>
               {receivedText}
             </span>
@@ -2399,7 +2518,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
 
         {/* SLA */}
         {!hiddenSet.has('sla') && (
-          <td className="px-3 py-2" style={{ width: columnWidths.sla }}>
+          <td className="px-3 py-2 text-center" style={{ width: columnWidths.sla }}>
             {sla.label === '-' ? (
               <span className={sla.className}>{sla.label}</span>
             ) : (
@@ -2502,7 +2621,13 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                 onClick: () => handleSnooze(item, p.id),
               })),
             ];
-            return <RowActionsMenu actions={actions} iconVariant="vertical" />;
+            return (
+              <RowActionsMenu
+                actions={actions}
+                iconVariant="vertical"
+                className="opacity-40 transition-opacity group-hover:opacity-100"
+              />
+            );
           })()}
         </td>
       </tr>
@@ -2517,12 +2642,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         <th className="w-10 px-2 py-2 border-l-[3px] border-l-transparent">
           <button
             onClick={() => handleSelectAll(!allSelected)}
-            className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+            className={`h-3.5 w-3.5 rounded-[4px] border flex items-center justify-center transition-colors ${
               allSelected
                 ? 'bg-primary-500 border-primary-500 text-white'
                 : someSelected
                   ? 'bg-primary-500/50 border-primary-500 text-white'
-                  : 'border-slate-300 dark:border-navy-500 hover:border-primary-400 text-transparent hover:text-slate-400'
+                  : 'border-slate-300 text-transparent hover:border-primary-400 hover:text-slate-400 dark:border-white/[0.10] dark:text-slate-400'
             }`}
           >
             {allSelected ? (
@@ -2535,8 +2660,18 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           </button>
         </th>
 
-        <th className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider w-full">
+        <th
+          className="relative px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
+          style={{ width: columnWidths.title }}
+        >
           {isPolish ? 'Tytuł' : 'Title'}
+          <ColumnResizer
+            columnId="title"
+            currentWidth={columnWidths.title}
+            minWidth={INBOX_RESIZE_BOUNDS.title.min}
+            maxWidth={INBOX_RESIZE_BOUNDS.title.max}
+            onResize={handleColumnResize}
+          />
         </th>
 
         {INBOX_COLUMNS.filter(
@@ -2549,10 +2684,10 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           return (
             <th
               key={colId}
-              className="px-3 py-2 text-left text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
+              className="px-3 py-2 text-center text-xs font-medium text-slate-500 uppercase tracking-wider relative group/header"
               style={{ width: columnWidths[colId] }}
             >
-              <div className="flex items-center gap-1">
+              <div className="flex items-center justify-center gap-1">
                 <span
                   className={(tableFilters[colId] as string[])?.length ? 'text-primary-500' : ''}
                 >
@@ -2583,17 +2718,90 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         })}
 
         <th
-          className="px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
+          className="relative px-3 py-2 text-right text-xs font-medium text-slate-500 uppercase tracking-wider"
           style={{ width: columnWidths.actions }}
         >
-          <button
-            onClick={() => setIsViewSettingsOpen(true)}
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-            aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-            title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-          >
-            <Settings2 size={14} />
-          </button>
+          <div ref={viewSettingsRef} className="flex items-center justify-end">
+            <button
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                setIsViewSettingsOpen((open) => !open);
+              }}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.06]"
+              aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+              aria-expanded={isViewSettingsOpen}
+              title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+            >
+              <Settings2 size={14} />
+            </button>
+            {isViewSettingsOpen ? (
+              <div
+                className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <div className="px-2 pb-2 pt-1">
+                  <div className="text-[12px] font-semibold text-slate-900 dark:text-slate-100">
+                    {isPolish ? 'Ustawienia widoku' : 'View settings'}
+                  </div>
+                  <div className="mt-0.5 text-[11px] font-medium leading-4 text-slate-500 dark:text-slate-400">
+                    {isPolish ? 'Wybierz widoczne kolumny.' : 'Choose visible columns.'}
+                  </div>
+                </div>
+                <div className="space-y-0.5">
+                  {INBOX_COLUMNS.filter((c) => c.id !== 'select').map((col) => {
+                    const alwaysVisible = col.id === 'title' || col.id === 'actions';
+                    const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
+                    return (
+                      <label
+                        key={col.id}
+                        className={`flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055] ${
+                          alwaysVisible ? 'opacity-55' : 'cursor-pointer'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          disabled={alwaysVisible}
+                          onChange={() => {
+                            if (alwaysVisible) return;
+                            setHiddenColumns((prev) => {
+                              const set = new Set(prev);
+                              if (set.has(col.id)) set.delete(col.id);
+                              else set.add(col.id);
+                              return Array.from(set);
+                            });
+                          }}
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                        />
+                        <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                          {getColumnLabel(col.id)}
+                        </span>
+                        {alwaysVisible ? (
+                          <span className="text-[10px] font-medium text-slate-400">
+                            {isPolish ? 'Wymagane' : 'Required'}
+                          </span>
+                        ) : null}
+                      </label>
+                    );
+                  })}
+                </div>
+                <div className="mt-2 border-t border-slate-200/70 pt-2 dark:border-white/[0.08]">
+                  <label className="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-slate-100/70 dark:hover:bg-white/[0.055]">
+                    <input
+                      type="checkbox"
+                      checked={showRowDescription}
+                      onChange={(event) => updateRowDescriptionSetting(event.target.checked)}
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-navy-700"
+                    />
+                    <span className="flex-1 text-[12px] font-medium text-slate-800 dark:text-slate-200">
+                      {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            ) : null}
+          </div>
         </th>
       </tr>
     </thead>
@@ -2781,8 +2989,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             </div>
 
             {/* Row 2: Brief */}
-            {cardBriefText ? (
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed line-clamp-2 -mt-0.5">
+            {showRowDescription && cardBriefText ? (
+              <p className="-mt-0.5 line-clamp-2 text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55">
                 {cardBriefText}
               </p>
             ) : null}
@@ -2957,7 +3165,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
   const renderFlatView = () => {
     let globalIndex = 0;
     return (
-      <table className="w-full table-fixed" style={{ minWidth: 900 }}>
+      <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
         {renderTableHeader()}
         <tbody>
           {displayItems.map((group) => {
@@ -3074,74 +3282,6 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           </div>
         )}
       </div>
-
-      {/* Table View Settings (standard) */}
-      <Modal
-        open={isViewSettingsOpen}
-        onClose={() => setIsViewSettingsOpen(false)}
-        title={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-        description={
-          isPolish
-            ? 'Wybierz, które kolumny są widoczne w tabeli.'
-            : 'Choose which columns are visible in the table.'
-        }
-        size="sm"
-        footer={
-          <>
-            <button
-              onClick={() => setHiddenColumns([...INBOX_TABLE_DEFAULT_HIDDEN_COLUMNS])}
-              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            >
-              {isPolish ? 'Reset' : 'Reset'}
-            </button>
-            <button
-              onClick={() => setIsViewSettingsOpen(false)}
-              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            >
-              {isPolish ? 'Gotowe' : 'Done'}
-            </button>
-          </>
-        }
-      >
-        <div className="space-y-2">
-          {INBOX_COLUMNS.filter((c) => c.id !== 'select').map((col) => {
-            const alwaysVisible = col.id === 'title' || col.id === 'actions';
-            const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-            return (
-              <label
-                key={col.id}
-                className={`flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 ${
-                  alwaysVisible ? 'opacity-60' : 'cursor-pointer'
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  disabled={alwaysVisible}
-                  onChange={() => {
-                    if (alwaysVisible) return;
-                    setHiddenColumns((prev) => {
-                      const set = new Set(prev);
-                      if (set.has(col.id)) set.delete(col.id);
-                      else set.add(col.id);
-                      return Array.from(set);
-                    });
-                  }}
-                  className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
-                />
-                <span className="text-sm text-slate-800 dark:text-slate-200 flex-1">
-                  {getColumnLabel(col.id)}
-                </span>
-                {alwaysVisible ? (
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                    {isPolish ? 'Wymagane' : 'Required'}
-                  </span>
-                ) : null}
-              </label>
-            );
-          })}
-        </div>
-      </Modal>
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { useConversationStore } from '@/store/useConversationStore';
 import { AppView } from '@/types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 
@@ -95,16 +96,28 @@ ${title}
 `;
 }
 
-function createLocalDraft(kind: CanvasKind, title: string): Draft {
+function createLocalDraft(kind: CanvasKind, title: string, conversationId: string): Draft {
   return {
     id: `local-${Date.now()}`,
-    conversationId: `conversation-${Date.now()}`,
+    conversationId,
     kind,
     title,
     content: buildContent(kind, title),
     saveState: 'unsaved',
     lifecycleState: 'draft',
   };
+}
+
+function defaultTitleForKind(kind: CanvasKind): string {
+  return kind === 'research'
+    ? 'Uruchom głębsze badanie i pokaż evidence.'
+    : 'Start a company work note';
+}
+
+function isUuidLike(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value.trim()
+  );
 }
 
 function canvasText(draft: Draft): string {
@@ -206,10 +219,15 @@ function ReadBackView({ readBack }: { readBack: Record<string, unknown> }) {
 export function WorkCanvasRuntime() {
   const [params, setParams] = useSearchParams();
   const initialKind = (params.get('kind') || 'document') as CanvasKind;
+  const conversationIdParam = params.get('conversationId') || '';
+  const activeConversationId = useConversationStore((state) => state.activeConversationId);
+  const setActiveConversation = useConversationStore((state) => state.setActiveConversation);
+  const createConversation = useConversationStore((state) => state.createConversation);
   const [draft, setDraft] = React.useState<Draft>(() =>
     createLocalDraft(
       initialKind,
-      initialKind === 'markdown' ? 'Start a company work note' : 'Start a company work note'
+      defaultTitleForKind(initialKind),
+      conversationIdParam || activeConversationId || ''
     )
   );
   const [proposals, setProposals] = React.useState<Proposal[]>([]);
@@ -218,10 +236,16 @@ export function WorkCanvasRuntime() {
   const [activeKind, setActiveKind] = React.useState<CanvasKind>(initialKind);
   const [error, setError] = React.useState<string | null>(null);
   const [isHydrating, setIsHydrating] = React.useState(false);
+  const [isConversationSynced, setIsConversationSynced] = React.useState(false);
+  const [isMobileChatOpen, setIsMobileChatOpen] = React.useState(false);
   const draftRef = React.useRef(draft);
+  const initialDraftPromiseRef = React.useRef<Promise<Draft> | null>(null);
   const draftIdParam = params.get('draftId');
   const workspaceContext = React.useMemo(
-    () => createWorkspaceContext(AppView.WORDY, getDefaultWorkspaceType(AppView.WORDY), {}),
+    () =>
+      createWorkspaceContext(AppView.WORDY, getDefaultWorkspaceType(AppView.WORDY), {
+        entityName: 'Work Canvas',
+      }),
     []
   );
 
@@ -230,9 +254,108 @@ export function WorkCanvasRuntime() {
   }, [draft]);
 
   React.useEffect(() => {
+    const clearInvalidActiveConversation = (conversationId: string | null) => {
+      if (conversationId && !isUuidLike(conversationId)) {
+        setActiveConversation(null);
+      }
+    };
+
+    clearInvalidActiveConversation(useConversationStore.getState().activeConversationId);
+    const unsubscribe = useConversationStore.subscribe((state) => {
+      clearInvalidActiveConversation(state.activeConversationId);
+    });
+    return unsubscribe;
+  }, [setActiveConversation]);
+
+  const updateCanvasParams = React.useCallback(
+    (updates: Partial<Record<'draftId' | 'conversationId' | 'kind', string | null>>) => {
+      setParams((current) => {
+        const next = new URLSearchParams(current);
+        let changed = false;
+        Object.entries(updates).forEach(([key, value]) => {
+          if (value === null || value === undefined || value === '') {
+            if (next.has(key)) changed = true;
+            next.delete(key);
+          } else {
+            if (next.get(key) !== value) changed = true;
+            next.set(key, value);
+          }
+        });
+        if (!changed) return current;
+        return next;
+      });
+    },
+    [setParams]
+  );
+
+  const ensureCanvasConversation = React.useCallback(
+    async (preferredConversationId?: string | null) => {
+      const preferred = String(preferredConversationId || '').trim();
+      if (preferred) {
+        const currentActive = useConversationStore.getState().activeConversationId;
+        if (!isUuidLike(preferred)) {
+          if (currentActive && !isUuidLike(currentActive)) {
+            setActiveConversation(null);
+          }
+          return preferred;
+        }
+        if (
+          isUuidLike(preferred) &&
+          useConversationStore.getState().activeConversationId !== preferred
+        ) {
+          setActiveConversation(preferred);
+        }
+        return preferred;
+      }
+
+      const existing = useConversationStore.getState().activeConversationId;
+      if (existing) return existing;
+
+      const conversation = await createConversation({
+        title: 'Work Canvas',
+      });
+      return conversation.id;
+    },
+    [createConversation, setActiveConversation]
+  );
+
+  const createInitialDraft = React.useCallback(
+    async (kind: CanvasKind, conversationId: string) => {
+      const title = defaultTitleForKind(kind);
+      const localDraft = createLocalDraft(kind, title, conversationId);
+      setDraft(localDraft);
+      draftRef.current = localDraft;
+      setActiveKind(kind);
+
+      const result = await api<{ data: Draft }>('/drafts', {
+        method: 'POST',
+        body: JSON.stringify({
+          conversationId,
+          kind,
+          title,
+          content: localDraft.content,
+          sources: [],
+          provenance: { source: 'work-canvas-runtime', conversationId },
+        }),
+      });
+      setDraft(result.data);
+      draftRef.current = result.data;
+      setActiveKind(result.data.kind);
+      updateCanvasParams({
+        draftId: result.data.id,
+        conversationId: result.data.conversationId,
+        kind: result.data.kind,
+      });
+      return result.data;
+    },
+    [updateCanvasParams]
+  );
+
+  React.useEffect(() => {
     let cancelled = false;
     const hydrate = async () => {
       setIsHydrating(true);
+      setIsConversationSynced(false);
       setError(null);
       try {
         const draftId = draftIdParam;
@@ -242,23 +365,33 @@ export function WorkCanvasRuntime() {
           );
           if (cancelled) return;
           setDraft(result.data.draft);
+          draftRef.current = result.data.draft;
           setActiveKind(result.data.draft.kind);
           setProposals(result.data.proposals || []);
+          await ensureCanvasConversation(result.data.draft.conversationId);
+          if (cancelled) return;
+          setIsConversationSynced(true);
+          updateCanvasParams({
+            draftId: result.data.draft.id,
+            conversationId: result.data.draft.conversationId,
+            kind: result.data.draft.kind,
+          });
           return;
         }
-        const list = await api<{ success: true; data: Draft[] }>('/drafts');
-        const latest = Array.isArray(list.data) ? list.data[0] : null;
-        if (cancelled || !latest) return;
-        setDraft(latest);
-        setActiveKind(latest.kind);
-        setParams((next) => {
-          next.set('draftId', latest.id);
-          next.set('conversationId', latest.conversationId);
-          next.set('kind', latest.kind);
-          return next;
-        });
+
+        const conversationId = await ensureCanvasConversation(
+          conversationIdParam || useConversationStore.getState().activeConversationId
+        );
+        if (cancelled) return;
+        setIsConversationSynced(true);
+        updateCanvasParams({ conversationId, kind: initialKind });
+        if (!initialDraftPromiseRef.current) {
+          initialDraftPromiseRef.current = createInitialDraft(initialKind, conversationId);
+        }
+        await initialDraftPromiseRef.current;
       } catch (caught) {
         if (cancelled) return;
+        setIsConversationSynced(true);
         setError(caught instanceof Error ? caught.message : 'Failed to hydrate Work Canvas');
       } finally {
         if (!cancelled) setIsHydrating(false);
@@ -268,35 +401,47 @@ export function WorkCanvasRuntime() {
     return () => {
       cancelled = true;
     };
-  }, [draftIdParam, setParams]);
+  }, [
+    createInitialDraft,
+    draftIdParam,
+    ensureCanvasConversation,
+    conversationIdParam,
+    initialKind,
+    updateCanvasParams,
+  ]);
 
   const persistDraft = React.useCallback(async () => {
     const current = draftRef.current;
     if (!current.id.startsWith('local-')) return current;
+    const conversationId = await ensureCanvasConversation(
+      current.conversationId ||
+        conversationIdParam ||
+        useConversationStore.getState().activeConversationId
+    );
     const result = await api<{ data: Draft }>('/drafts', {
       method: 'POST',
       body: JSON.stringify({
-        conversationId: current.conversationId,
+        conversationId,
         kind: current.kind,
         title: current.title,
         content: current.content,
         sources: [],
-        provenance: { source: 'work-canvas-runtime' },
+        provenance: { source: 'work-canvas-runtime', conversationId },
       }),
     });
     setDraft(result.data);
-    setParams((next) => {
-      next.set('draftId', result.data.id);
-      next.set('conversationId', result.data.conversationId);
-      next.set('kind', result.data.kind);
-      return next;
+    draftRef.current = result.data;
+    updateCanvasParams({
+      draftId: result.data.id,
+      conversationId: result.data.conversationId,
+      kind: result.data.kind,
     });
     return result.data;
-  }, [setParams]);
+  }, [conversationIdParam, ensureCanvasConversation, updateCanvasParams]);
 
   const switchKind = (kind: CanvasKind) => {
     setActiveKind(kind);
-    const title = kind === 'research' ? 'Uruchom głębsze badanie i pokaż evidence.' : draft.title;
+    const title = kind === 'research' ? defaultTitleForKind(kind) : draft.title;
     setDraft((current) => {
       const updated = {
         ...current,
@@ -309,6 +454,7 @@ export function WorkCanvasRuntime() {
       draftRef.current = updated;
       return updated;
     });
+    updateCanvasParams({ kind });
     if (!draftRef.current.id.startsWith('local-')) {
       void api<{ data: Draft }>(`/drafts/${encodeURIComponent(draftRef.current.id)}`, {
         method: 'PUT',
@@ -319,6 +465,14 @@ export function WorkCanvasRuntime() {
           saveState: 'unsaved',
           lifecycleState: 'draft',
         }),
+      }).then((result) => {
+        setDraft(result.data);
+        draftRef.current = result.data;
+        updateCanvasParams({
+          draftId: result.data.id,
+          conversationId: result.data.conversationId,
+          kind: result.data.kind,
+        });
       });
     }
     setProposals([]);
@@ -381,6 +535,7 @@ export function WorkCanvasRuntime() {
       { method: 'POST', body: JSON.stringify({}) }
     );
     setDraft(result.data);
+    draftRef.current = result.data;
     setSaveReadBack(result.readBack || null);
   };
 
@@ -398,19 +553,48 @@ export function WorkCanvasRuntime() {
     URL.revokeObjectURL(url);
   };
 
+  const renderChatPanel = () => (
+    isConversationSynced ? (
+      <UnifiedChatPanel
+        mode="split"
+        workspaceContext={workspaceContext}
+        showModeToggle={false}
+        showHistoryTrigger={true}
+        showFocusMode={false}
+        systemPrompt={`You are Teresa assisting with Work Canvas draft titled: ${displayDraft.title}`}
+        roleName="Teresa"
+      />
+    ) : (
+      <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-500">
+        Connecting Work Canvas to the current chat...
+      </div>
+    )
+  );
+
   return (
     <div className="relative flex h-[calc(100vh-6rem)] min-h-[720px] overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
-      <aside className="w-full shrink-0 border-r border-slate-200 bg-white lg:w-[420px]">
-        <div className="h-[45vh] min-h-[340px] lg:h-full">
-          <UnifiedChatPanel
-            mode="split"
-            workspaceContext={workspaceContext}
-            showModeToggle={false}
-            showHistoryTrigger={true}
-            showFocusMode={false}
-            systemPrompt={`You are Teresa assisting with Work Canvas draft titled: ${displayDraft.title}`}
-          />
+      {isMobileChatOpen ? (
+        <div className="absolute inset-0 z-20 flex flex-col bg-white lg:hidden">
+          <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Work Canvas chat
+              </p>
+              <p className="text-sm font-semibold text-slate-950">{displayDraft.title}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsMobileChatOpen(false)}
+              className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700"
+            >
+              Close
+            </button>
+          </div>
+          <div className="min-h-0 flex-1">{renderChatPanel()}</div>
         </div>
+      ) : null}
+      <aside className="hidden w-[420px] shrink-0 border-r border-slate-200 bg-white lg:block">
+        <div className="h-full">{renderChatPanel()}</div>
       </aside>
 
       <section className="flex min-w-0 flex-1 flex-col">
@@ -423,6 +607,13 @@ export function WorkCanvasRuntime() {
               <h1 className="mt-1 text-lg font-semibold text-slate-950">{displayDraft.title}</h1>
             </div>
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setIsMobileChatOpen(true)}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 lg:hidden"
+              >
+                Chat
+              </button>
               {(
                 [
                   'markdown',

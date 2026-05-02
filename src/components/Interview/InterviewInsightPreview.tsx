@@ -16,6 +16,7 @@ import {
   PreviewDetailsSection,
   PreviewMetaCard,
 } from '@/components/shared/PreviewPane';
+import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 
 // ── Body ───────────────────────────────────────────────────────────────────
 
@@ -45,6 +46,7 @@ export interface InterviewInsightPreviewBodyProps {
   detailsExpanded: boolean;
   onToggleDetailsExpanded: () => void;
   onDetailsAction: (action: string) => void;
+  showActionPanel?: boolean;
 }
 
 export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyProps> = ({
@@ -59,6 +61,7 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
   detailsExpanded,
   onToggleDetailsExpanded,
   onDetailsAction,
+  showActionPanel = false,
 }) => {
   const pills: MetaPill[] = [
     {
@@ -126,6 +129,22 @@ export const InterviewInsightPreviewBody: React.FC<InterviewInsightPreviewBodyPr
           },
         ]}
       />
+      {showActionPanel && (
+        <ArtifactActionPanel
+          variant="compact"
+          isPolish={isPolish}
+          source={{
+            type: 'interview_insight',
+            id: insight.id,
+            title: insight.title || (isPolish ? 'Insight' : 'Insight'),
+            status: insight.status,
+            content: detailsText,
+            confidence: insight.confidence || null,
+            evidenceCount: 0,
+            sourceSessionCount: insight.sourceSessionCount || (insight.sessionId ? 1 : 0),
+          }}
+        />
+      )}
     </div>
   );
 };

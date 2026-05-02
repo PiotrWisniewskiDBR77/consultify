@@ -198,15 +198,41 @@ function getToolConfig(tool?: string | null) {
 }
 
 const IDEAS_TABLE_VIEW_STORAGE_KEY = 'consultify.mywork.ideas.tableView';
+const IDEAS_TABLE_COLUMN_WIDTH_VERSION = 3;
 const DEFAULT_IDEAS_TABLE_FILTERS: TableFilters = {};
 const DEFAULT_IDEAS_COLUMN_WIDTHS = {
   select: 40,
-  stage: 140,
-  tags: 180,
-  tool: 170,
-  date: 120,
-  actions: 68,
+  title: 560,
+  stage: 150,
+  tags: 230,
+  tool: 190,
+  date: 128,
+  actions: 56,
 };
+
+function normalizeIdeasColumnWidths(
+  widths?: Partial<typeof DEFAULT_IDEAS_COLUMN_WIDTHS>,
+  options: { migrateFromLegacy?: boolean } = {}
+): typeof DEFAULT_IDEAS_COLUMN_WIDTHS {
+  if (!options.migrateFromLegacy) {
+    return {
+      ...DEFAULT_IDEAS_COLUMN_WIDTHS,
+      ...(widths || {}),
+      select: DEFAULT_IDEAS_COLUMN_WIDTHS.select,
+      actions: DEFAULT_IDEAS_COLUMN_WIDTHS.actions,
+    };
+  }
+
+  return {
+    select: DEFAULT_IDEAS_COLUMN_WIDTHS.select,
+    title: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.title, widths?.title || 0),
+    stage: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.stage, widths?.stage || 0),
+    tags: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.tags, widths?.tags || 0),
+    tool: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.tool, widths?.tool || 0),
+    date: Math.max(DEFAULT_IDEAS_COLUMN_WIDTHS.date, widths?.date || 0),
+    actions: DEFAULT_IDEAS_COLUMN_WIDTHS.actions,
+  };
+}
 
 function getIdeasTableViewStorageKey(): string {
   try {
@@ -235,7 +261,7 @@ function loadIdeasTableViewState(): {
         sortField: 'date',
         sortDir: 'desc',
         tableFilters: DEFAULT_IDEAS_TABLE_FILTERS,
-        columnWidths: DEFAULT_IDEAS_COLUMN_WIDTHS,
+        columnWidths: normalizeIdeasColumnWidths(),
       };
     }
 
@@ -244,23 +270,22 @@ function loadIdeasTableViewState(): {
       sortDir: SortDir;
       tableFilters: TableFilters;
       columnWidths: Partial<typeof DEFAULT_IDEAS_COLUMN_WIDTHS>;
+      columnWidthVersion: number;
     }>;
+    const migrateFromLegacy = parsed.columnWidthVersion !== IDEAS_TABLE_COLUMN_WIDTH_VERSION;
 
     return {
       sortField: parsed.sortField || 'date',
       sortDir: parsed.sortDir || 'desc',
       tableFilters: parsed.tableFilters || DEFAULT_IDEAS_TABLE_FILTERS,
-      columnWidths: {
-        ...DEFAULT_IDEAS_COLUMN_WIDTHS,
-        ...(parsed.columnWidths || {}),
-      },
+      columnWidths: normalizeIdeasColumnWidths(parsed.columnWidths, { migrateFromLegacy }),
     };
   } catch {
     return {
       sortField: 'date',
       sortDir: 'desc',
       tableFilters: DEFAULT_IDEAS_TABLE_FILTERS,
-      columnWidths: DEFAULT_IDEAS_COLUMN_WIDTHS,
+      columnWidths: normalizeIdeasColumnWidths(),
     };
   }
 }
@@ -376,6 +401,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           sortDir,
           tableFilters,
           columnWidths,
+          columnWidthVersion: IDEAS_TABLE_COLUMN_WIDTH_VERSION,
         })
       );
     } catch {
@@ -815,7 +841,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
           },
         });
       } catch (err: any) {
-        toast.error(err?.message || (isPolish ? 'Nie udało się otworzyć czata' : 'Failed to open chat'));
+        toast.error(
+          err?.message || (isPolish ? 'Nie udało się otworzyć czata' : 'Failed to open chat')
+        );
       }
     },
     [isPolish, openChatWithContext]
@@ -839,7 +867,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         });
       } catch (err: any) {
         toast.error(
-          err?.message || (isPolish ? 'Nie udało się otworzyć AI Insights' : 'Failed to open AI Insights')
+          err?.message ||
+            (isPolish ? 'Nie udało się otworzyć AI Insights' : 'Failed to open AI Insights')
         );
       }
     },

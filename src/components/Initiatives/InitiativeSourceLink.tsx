@@ -16,9 +16,11 @@ export function getSourceDisplayLabel(sourceType: string, isPolish = false): str
     return isPolish ? 'Workspace pomysłu' : 'Idea Workspace';
   }
   if (t === 'assessment') return isPolish ? 'Ocena' : 'Assessment';
-  if (t === 'interview') return isPolish ? 'Wywiad' : 'Interview';
-  if (t === 'conclusion') return isPolish ? 'Wniosek' : 'Conclusion';
-  if (t === 'conclusion_readout') return isPolish ? 'Readout wniosków' : 'Conclusion readout';
+  if (t === 'interview' || t === 'interview_insight' || t === 'insight') {
+    return isPolish ? 'Interview Insight' : 'Interview Insight';
+  }
+  if (t === 'conclusion') return isPolish ? 'Insight' : 'Insight';
+  if (t === 'conclusion_readout') return isPolish ? 'Readout audytu' : 'Audit readout';
   return sourceType || '';
 }
 import React from 'react';
@@ -52,6 +54,8 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
       case 'assessment':
         return <FileText size={16} className="text-blue-400" />;
       case 'interview':
+      case 'interview_insight':
+      case 'insight':
         return <ClipboardList size={16} className="text-green-400" />;
       case 'conclusion':
       case 'conclusion_readout':
@@ -72,13 +76,13 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
         navigate(`/interview?assessmentId=${sourceId}`);
         break;
       case 'interview':
-        navigate(`/interview?interviewId=${sourceId}`);
-        break;
+      case 'interview_insight':
+      case 'insight':
       case 'conclusion':
-        navigate(`/wnioski?conclusionId=${sourceId}`);
+        navigate(`/interview?insightId=${sourceId}`);
         break;
       case 'conclusion_readout':
-        navigate(`/wnioski?readoutId=${sourceId}`);
+        navigate('/presentations?tab=documents');
         break;
       default:
         break;

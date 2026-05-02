@@ -122,7 +122,6 @@ export function createWorkspaceContext(
 export function getDefaultWorkspaceType(view: AppView): WorkspaceType {
   const viewTypeMap: Partial<Record<AppView, WorkspaceType>> = {
     [AppView.MY_WORK]: 'task',
-    [AppView.CONCLUSIONS]: 'artifact',
     [AppView.FULL_STEP2_INITIATIVES]: 'initiative',
     [AppView.INITIATIVE_GENERATOR]: 'initiative',
     [AppView.ASSESSMENT_DRD]: 'assessment',

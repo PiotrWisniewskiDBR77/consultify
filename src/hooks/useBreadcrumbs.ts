@@ -86,12 +86,6 @@ export const useBreadcrumbs = (): string[] | null => {
     return null;
   }
   // =====================================================
-  // WNIOSKI
-  // =====================================================
-  else if (currentView === AppView.CONCLUSIONS) {
-    return null;
-  }
-  // =====================================================
   // DASHBOARD VIEWS
   // =====================================================
   else if (

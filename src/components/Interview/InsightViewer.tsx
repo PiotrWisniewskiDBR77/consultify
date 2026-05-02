@@ -30,6 +30,7 @@ import {
   Plus,
   Radio,
   RefreshCw,
+  Rocket,
   Send,
   ShieldAlert,
   Sparkles,
@@ -68,11 +69,13 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
+import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import {
   type V8InsightAnalysis,
   type V8InsightAnalysisMatrixCell,
   type V8InsightCandidate,
   type V8InsightFinding,
+  type V8InsightMaterialQuality,
   type V8InsightSourcePack,
   V8InterviewApi,
 } from '@/services/api/v8/interview';
@@ -175,6 +178,7 @@ interface Insight {
   signals?: InsightSignal[];
   evidenceMap?: InsightEvidenceMapEntry[];
   missingData?: string[];
+  materialQuality?: V8InsightMaterialQuality | null;
   status: InsightStatus;
   reviewStatus?: InsightReviewStatus;
   publishedAt?: string;
@@ -386,11 +390,17 @@ const STATUS_CONFIG: Record<
 // ── N-mode section definitions (without component — assigned later) ──────────
 
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
+  { id: 'artifact-actions', icon: Rocket, label: { en: 'Next Actions', pl: 'Dalsze akcje' } },
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
   {
     id: 'consulting-readout',
     icon: Sparkles,
     label: { en: 'Consulting Readout', pl: 'Odczyt konsultingowy' },
+  },
+  {
+    id: 'material-quality',
+    icon: AlertCircle,
+    label: { en: 'Material Quality', pl: 'Jakość materiału' },
   },
   { id: 'candidate-triage', icon: Eye, label: { en: 'Candidate Triage', pl: 'Triage kandydatów' } },
   { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
@@ -826,6 +836,41 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     () => insight?.evidenceMap ?? [],
     [insight?.evidenceMap]
   );
+  const materialQuality = useMemo<V8InsightMaterialQuality | null>(() => {
+    if (insight?.materialQuality) return insight.materialQuality;
+    if (!insight || insight.status === 'generating') return null;
+    return {
+      overall_material_score: Math.max(
+        0,
+        Math.min(
+          100,
+          Math.round(
+            (insight.sourceSessionIds?.length || 0) * 12 +
+              Math.min(v6EvidenceMap.length, 12) * 4 -
+              (insight.missingData?.length || 0) * 5
+          )
+        )
+      ),
+      answer_quality_posture:
+        v6EvidenceMap.length >= 10 ? 'strong' : v6EvidenceMap.length >= 4 ? 'usable' : 'thin',
+      coverage_posture:
+        (insight.sourceSessionIds?.length || 0) <= 1
+          ? 'single_perspective'
+          : (insight.sourceSessionIds?.length || 0) >= 4
+            ? 'good_coverage'
+            : 'partial_coverage',
+      approved_session_count: insight.sourceSessionIds?.length || 0,
+      respondent_count: insight.sourceSessionIds?.length || 0,
+      role_coverage: [],
+      department_coverage: [],
+      thin_answer_count: 0,
+      missing_voices: [],
+      evidence_gap_count: insight.missingData?.length || 0,
+      contradiction_count: v6Signals.filter((signal) => signal.type === 'contradiction').length,
+      limitations: insight.missingData || [],
+      recommended_followups: [],
+    };
+  }, [insight, v6EvidenceMap.length, v6Signals]);
   const sourcePackByAnswerId = useMemo(
     () =>
       (sourcePack?.entries || []).reduce<Record<string, V8InsightSourcePack['entries'][number]>>(
@@ -1458,11 +1503,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
           },
         };
         toast.success(isPolish ? labels[action].pl : labels[action].en);
-      } catch (err) {
+      } catch (err: any) {
         toast.error(
-          isPolish
-            ? 'Nie udało się zaktualizować triage kandydata'
-            : 'Failed to update candidate triage'
+          err?.response?.data?.error ||
+            err?.message ||
+            (isPolish
+              ? 'Nie udało się zaktualizować triage kandydata'
+              : 'Failed to update candidate triage')
         );
       } finally {
         setCandidateActionLoadingId(null);
@@ -1890,6 +1937,33 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       let component: React.ReactNode = null;
 
       switch (section.id) {
+        case 'artifact-actions': {
+          const primaryConfidence =
+            findings[0]?.confidence_level ||
+            analysis?.topics?.[0]?.confidenceLevel ||
+            (insight as any)?.confidence ||
+            null;
+          const limits = uniqueNonEmpty(findings.map((finding) => finding.limits)).join('\n');
+          component = (
+            <ArtifactActionPanel
+              isPolish={isPolish}
+              source={{
+                type: 'interview_insight',
+                id: insight?.id || insightId,
+                title: insight?.title || title || (isPolish ? 'Insight' : 'Insight'),
+                status: insight?.status,
+                content: insight?.content || executiveSummary,
+                confidence: primaryConfidence,
+                limits: limits || null,
+                evidenceCount: sourcePack?.activePointerCount ?? findingsSummary.activeEvidence,
+                sourceSessionCount: sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0,
+                sourcePack: sourcePack ? (sourcePack as unknown as Record<string, unknown>) : null,
+              }}
+            />
+          );
+          break;
+        }
+
         case 'executive-summary':
           component = (
             <div className="space-y-4">
@@ -2047,6 +2121,165 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                   )}
                 </div>
               </div>
+            </div>
+          );
+          break;
+        }
+
+        case 'material-quality': {
+          const quality = materialQuality;
+          const score = quality?.overall_material_score ?? 0;
+          const postureColor =
+            score >= 80
+              ? 'text-emerald-400'
+              : score >= 60
+                ? 'text-blue-400'
+                : score >= 40
+                  ? 'text-amber-400'
+                  : 'text-red-400';
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant={score >= 60 ? 'info' : 'warning'}
+                title={isPolish ? 'Material Quality nie blokuje insightu' : 'Material Quality is not a gate'}
+              >
+                {isPolish
+                  ? 'Ta karta mówi, jak daleko można bezpiecznie ufać analizie. Słabszy materiał nie zatrzymuje pracy, ale musi jawnie pokazać ograniczenia.'
+                  : 'This card explains how far the analysis can be trusted. Weak material does not stop the work, but it must show its limitations clearly.'}
+              </Callout>
+
+              {quality ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Wynik' : 'Score'}
+                      </div>
+                      <div className={`mt-1 text-2xl font-semibold ${postureColor}`}>
+                        {score}/100
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Jakość odpowiedzi' : 'Answer quality'}
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {quality.answer_quality_posture}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Pokrycie' : 'Coverage'}
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {quality.coverage_posture}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Sesje / respondenci' : 'Sessions / respondents'}
+                      </div>
+                      <div className="mt-1 text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        {quality.approved_session_count} / {quality.respondent_count}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="rounded-2xl border border-navy-700 bg-navy-900/40 p-4">
+                      <h4 className="text-sm font-semibold text-white">
+                        {isPolish ? 'Ograniczenia materiału' : 'Material limitations'}
+                      </h4>
+                      {quality.limitations.length > 0 ? (
+                        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                          {quality.limitations.map((item) => (
+                            <li key={item} className="flex gap-2">
+                              <AlertTriangle size={15} className="mt-0.5 shrink-0 text-amber-400" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-3 text-sm text-slate-500">
+                          {isPolish
+                            ? 'Brak jawnych ograniczeń poza standardową ostrożnością interpretacji.'
+                            : 'No explicit limitations beyond normal interpretation caution.'}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="rounded-2xl border border-navy-700 bg-navy-900/40 p-4">
+                      <h4 className="text-sm font-semibold text-white">
+                        {isPolish ? 'Braki i follow-up' : 'Gaps and follow-up'}
+                      </h4>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
+                        <div>
+                          {isPolish ? 'Cienkie odpowiedzi' : 'Thin answers'}:{' '}
+                          <span className="text-slate-200">{quality.thin_answer_count}</span>
+                        </div>
+                        <div>
+                          {isPolish ? 'Luki dowodowe' : 'Evidence gaps'}:{' '}
+                          <span className="text-slate-200">{quality.evidence_gap_count}</span>
+                        </div>
+                        <div>
+                          {isPolish ? 'Sprzeczności' : 'Contradictions'}:{' '}
+                          <span className="text-slate-200">{quality.contradiction_count}</span>
+                        </div>
+                        <div>
+                          {isPolish ? 'Brakujące głosy' : 'Missing voices'}:{' '}
+                          <span className="text-slate-200">{quality.missing_voices.length}</span>
+                        </div>
+                      </div>
+                      {quality.recommended_followups.length > 0 && (
+                        <ul className="mt-3 space-y-2 text-sm text-slate-300">
+                          {quality.recommended_followups.map((item) => (
+                            <li key={item} className="flex gap-2">
+                              <MessageSquare size={15} className="mt-0.5 shrink-0 text-blue-400" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Role w materiale' : 'Roles covered'}
+                      </div>
+                      <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                        {quality.role_coverage.length > 0
+                          ? quality.role_coverage.join(', ')
+                          : isPolish
+                            ? 'Brak metadanych ról'
+                            : 'No role metadata'}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Działy w materiale' : 'Departments covered'}
+                      </div>
+                      <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                        {quality.department_coverage.length > 0
+                          ? quality.department_coverage.join(', ')
+                          : isPolish
+                            ? 'Brak metadanych działów'
+                            : 'No department metadata'}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <EmptyStateInline
+                  icon={AlertCircle}
+                  message={
+                    isPolish
+                      ? 'Jakość materiału pojawi się po zakończeniu generowania insightu.'
+                      : 'Material quality will appear after insight generation completes.'
+                  }
+                />
+              )}
             </div>
           );
           break;
@@ -3881,7 +4114,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 onClick={() =>
                                   handleCandidateAction(candidate, 'promote_to_finding')
                                 }
-                                disabled={isBusy}
+                                disabled={
+                                  isBusy || candidate.triage_status !== 'ready_for_review'
+                                }
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20 text-xs font-medium disabled:opacity-50"
                               >
                                 {isBusy ? (
@@ -3889,7 +4124,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 ) : (
                                   <Target size={12} />
                                 )}
-                                {isPolish ? 'Promuj do findingu' : 'Promote to finding'}
+                                {candidate.triage_status === 'ready_for_review'
+                                  ? isPolish
+                                    ? 'Promuj do findingu'
+                                    : 'Promote to finding'
+                                  : isPolish
+                                    ? 'Najpierw recenzja'
+                                    : 'Review first'}
                               </button>
                             )}
                         </div>
@@ -4464,7 +4705,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   }, [
     executiveSummary,
     insight,
+    insightId,
     isPolish,
+    title,
     officialAnswers,
     issuesReadout,
     hiddenSignals,
@@ -4473,6 +4716,10 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     traceabilityRows,
     sourceSessions,
     sourceSessionSummaries,
+    sourcePack,
+    analysis,
+    findings,
+    findingsSummary.activeEvidence,
     candidates,
     candidateSummary,
     candidateActionLoadingId,

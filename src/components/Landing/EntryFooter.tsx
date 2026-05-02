@@ -61,6 +61,20 @@ interface EntryFooterProps {
 export const EntryFooter: React.FC<EntryFooterProps> = () => {
   const { t, i18n } = useTranslation();
   const lang = normalizeLanguageCode(i18n.resolvedLanguage || i18n.language) || 'en';
+  const legalOperatorLine =
+    lang === 'pl'
+      ? 'Operatorem platformy Consultify jest'
+      : lang === 'de'
+        ? 'Betreiber der Consultify-Plattform ist'
+        : 'Consultify platform operator';
+  const localizedPricingLabel =
+    lang === 'pl' ? 'Cennik' : lang === 'de' ? 'Preise' : t('pricing.badge', 'Pricing');
+  const localizedBusinessCasesLabel =
+    lang === 'pl'
+      ? 'Przypadki biznesowe'
+      : lang === 'de'
+        ? 'Business Cases'
+        : t('landing.footer.caseStudies.businessCases', 'Business Cases');
 
   const sections = useMemo(
     () => [
@@ -114,7 +128,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
         title: t('landing.footer.caseStudies.title', 'Case Studies'),
         links: [
           {
-            label: t('landing.footer.caseStudies.businessCases', 'Business Cases'),
+            label: localizedBusinessCasesLabel,
             href: ROUTES.CASE_STUDIES,
           },
           { label: 'Atelier Toys', href: 'https://ateliertoys.com', external: true },
@@ -123,7 +137,7 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
       {
         title: t('landing.footer.documentation.title', 'Documentation'),
         links: [
-          { label: t('pricing.badge', 'Pricing'), href: ROUTES.PRICING },
+          { label: localizedPricingLabel, href: ROUTES.PRICING },
           {
             label: t('landing.footer.legal.subscription', 'Subscription Terms'),
             href: ROUTES.LEGAL.SUBSCRIPTION,
@@ -364,9 +378,17 @@ export const EntryFooter: React.FC<EntryFooterProps> = () => {
             ))}
           </div>
 
+          <p className="mt-7 text-center text-[11px] text-slate-500 dark:text-slate-400">
+            {legalOperatorLine}:{' '}
+            <span className="font-semibold text-slate-700 dark:text-slate-300">
+              {COMPANY.headquarters.name}
+            </span>
+            {` (${COMPANY.headquarters.address}, ${COMPANY.headquarters.city}, NIP ${COMPANY.headquarters.nip}, KRS ${COMPANY.headquarters.krs})`}
+          </p>
+
           {/* Copyright */}
           <p className="mt-4 text-center text-[11px] font-medium text-slate-400 dark:text-slate-500">
-            © 2026 DBR77 Robotics Sp. z o.o. {t('landing.footer.copyright', 'All rights reserved.')}
+            © 2026 {COMPANY.headquarters.name} {t('landing.footer.copyright', 'All rights reserved.')}
           </p>
         </div>
       </div>

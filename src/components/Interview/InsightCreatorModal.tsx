@@ -46,6 +46,19 @@ export type InsightPromptType =
   | 'stakeholder_map'
   | 'between_the_lines';
 
+type InsightAnalysisMode =
+  | 'general_consulting_synthesis'
+  | 'focused_topic_synthesis'
+  | 'contradiction_scan'
+  | 'initiative_opportunity_scan'
+  | 'material_quality_scan'
+  | 'hypothesis_validation'
+  | 'between_the_lines';
+
+type InsightContextMode =
+  | 'selected_interview_material_only'
+  | 'selected_material_plus_approved_org_knowledge';
+
 interface CompletedSession {
   id: string;
   name: string;
@@ -53,9 +66,13 @@ interface CompletedSession {
   templateName?: string;
   templateCategory?: string;
   status: string;
+  approvalStatus?: string;
+  sourceScopeStatus?: 'approved_only';
   completedAt?: string;
   respondentId?: string;
   respondentName?: string;
+  respondentRole?: string;
+  department?: string;
   answeredQuestions: number;
   totalQuestions: number;
 }
@@ -200,6 +217,76 @@ const ANALYSIS_TYPES: AnalysisType[] = [
   },
 ];
 
+const ANALYSIS_MODE_OPTIONS: Array<{
+  id: InsightAnalysisMode;
+  labelPl: string;
+  labelEn: string;
+  hintPl: string;
+  hintEn: string;
+}> = [
+  {
+    id: 'general_consulting_synthesis',
+    labelPl: 'Ogólna synteza konsultingowa',
+    labelEn: 'General consulting synthesis',
+    hintPl: 'AI wybiera najważniejsze obserwacje z całego koszyka.',
+    hintEn: 'AI selects the highest-value observations from the full source basket.',
+  },
+  {
+    id: 'focused_topic_synthesis',
+    labelPl: 'Synteza ukierunkowana',
+    labelEn: 'Focused topic synthesis',
+    hintPl: 'Analiza koncentruje się na wybranych wątkach.',
+    hintEn: 'Analysis focuses on selected topic groups.',
+  },
+  {
+    id: 'contradiction_scan',
+    labelPl: 'Skan sprzeczności',
+    labelEn: 'Contradiction scan',
+    hintPl: 'Szukamy napięć, rozbieżności i niespójnych perspektyw.',
+    hintEn: 'Find tensions, divergent views, and inconsistent perspectives.',
+  },
+  {
+    id: 'initiative_opportunity_scan',
+    labelPl: 'Skan inicjatyw i szans',
+    labelEn: 'Initiative opportunity scan',
+    hintPl: 'Wydobywa materiał, który może przejść do inicjatyw.',
+    hintEn: 'Surfaces material that can become initiatives.',
+  },
+  {
+    id: 'material_quality_scan',
+    labelPl: 'Ocena jakości materiału',
+    labelEn: 'Material quality scan',
+    hintPl: 'Skupia się na sile, brakach i wiarygodności materiału.',
+    hintEn: 'Focuses on evidence strength, gaps, and reliability.',
+  },
+  {
+    id: 'hypothesis_validation',
+    labelPl: 'Walidacja hipotezy',
+    labelEn: 'Hypothesis validation',
+    hintPl: 'Sprawdza pytanie przewodnie lub hipotezę konsultanta.',
+    hintEn: 'Tests a consultant question or hypothesis.',
+  },
+  {
+    id: 'between_the_lines',
+    labelPl: 'Między wierszami',
+    labelEn: 'Between the lines',
+    hintPl: 'Analizuje sygnały ukryte, uniki i niewypowiedziane napięcia.',
+    hintEn: 'Analyzes hidden signals, evasions, and unspoken tensions.',
+  },
+];
+
+const TOPIC_FOCUS_OPTIONS = [
+  { id: 'risks', labelPl: 'Ryzyka', labelEn: 'Risks' },
+  { id: 'opportunities', labelPl: 'Szanse', labelEn: 'Opportunities' },
+  { id: 'contradictions', labelPl: 'Sprzeczności', labelEn: 'Contradictions' },
+  { id: 'process', labelPl: 'Procesy', labelEn: 'Process' },
+  { id: 'people', labelPl: 'Ludzie i role', labelEn: 'People and roles' },
+  { id: 'technology', labelPl: 'Technologia', labelEn: 'Technology' },
+  { id: 'governance', labelPl: 'Decyzyjność i governance', labelEn: 'Governance' },
+  { id: 'customer_value', labelPl: 'Wartość dla klienta', labelEn: 'Customer value' },
+  { id: 'operating_model', labelPl: 'Model operacyjny', labelEn: 'Operating model' },
+];
+
 // ==========================================
 // COMPONENT
 // ==========================================
@@ -215,6 +302,15 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   // State
   const [title, setTitle] = useState('');
   const [selectedType, setSelectedType] = useState<InsightPromptType>('summary');
+  const [analysisMode, setAnalysisMode] = useState<InsightAnalysisMode>(
+    'general_consulting_synthesis'
+  );
+  const [contextMode, setContextMode] = useState<InsightContextMode>(
+    'selected_interview_material_only'
+  );
+  const [topicFocus, setTopicFocus] = useState<string[]>([]);
+  const [consultantNote, setConsultantNote] = useState('');
+  const [leadingQuestion, setLeadingQuestion] = useState('');
   const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [customPrompt, setCustomPrompt] = useState('');
 
@@ -264,6 +360,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   };
   const [showFilters, setShowFilters] = useState(false);
   const [filterTemplate, setFilterTemplate] = useState<string>('');
+  const [filterRespondent, setFilterRespondent] = useState('');
+  const [filterRole, setFilterRole] = useState('');
+  const [filterDepartment, setFilterDepartment] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [showTypeDropdown, setShowTypeDropdown] = useState(false);
@@ -327,10 +426,18 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     if (!isOpen) {
       setTitle('');
       setSelectedType('summary');
+      setAnalysisMode('general_consulting_synthesis');
+      setContextMode('selected_interview_material_only');
+      setTopicFocus([]);
+      setConsultantNote('');
+      setLeadingQuestion('');
       setSelectedSessions([]);
       setCustomPrompt('');
       setShowFilters(false);
       setFilterTemplate('');
+      setFilterRespondent('');
+      setFilterRole('');
+      setFilterDepartment('');
       setFilterDateFrom('');
       setFilterDateTo('');
       setLoadError(null);
@@ -345,6 +452,18 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       sessions = sessions.filter((s) => s.templateId === filterTemplate);
     }
 
+    if (filterRespondent) {
+      sessions = sessions.filter((s) => s.respondentId === filterRespondent);
+    }
+
+    if (filterRole) {
+      sessions = sessions.filter((s) => s.respondentRole === filterRole);
+    }
+
+    if (filterDepartment) {
+      sessions = sessions.filter((s) => s.department === filterDepartment);
+    }
+
     if (filterDateFrom) {
       const from = new Date(filterDateFrom);
       sessions = sessions.filter((s) => s.completedAt && new Date(s.completedAt) >= from);
@@ -357,10 +476,44 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     }
 
     return sessions;
-  }, [completedSessions, filterTemplate, filterDateFrom, filterDateTo]);
+  }, [
+    completedSessions,
+    filterTemplate,
+    filterRespondent,
+    filterRole,
+    filterDepartment,
+    filterDateFrom,
+    filterDateTo,
+  ]);
+
+  const respondentOptions = useMemo(
+    () =>
+      Array.from(
+        new Map(
+          completedSessions
+            .filter((s) => s.respondentId && s.respondentName)
+            .map((s) => [s.respondentId as string, s.respondentName as string])
+        ).entries()
+      ),
+    [completedSessions]
+  );
+
+  const roleOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(completedSessions.map((s) => s.respondentRole).filter(Boolean) as string[])
+      ),
+    [completedSessions]
+  );
+
+  const departmentOptions = useMemo(
+    () => Array.from(new Set(completedSessions.map((s) => s.department).filter(Boolean) as string[])),
+    [completedSessions]
+  );
 
   // Get selected analysis type
   const selectedAnalysisType = ANALYSIS_TYPES.find((t) => t.id === selectedType);
+  const selectedAnalysisMode = ANALYSIS_MODE_OPTIONS.find((mode) => mode.id === analysisMode);
 
   // Color classes helper
   const getColorClasses = (color: string, variant: 'bg' | 'border' | 'text' | 'ring') => {
@@ -455,9 +608,35 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         promptType: selectedType,
         filters: {
           templateId: filterTemplate || undefined,
+          respondentId: filterRespondent || undefined,
+          roles: filterRole ? [filterRole] : undefined,
+          departments: filterDepartment ? [filterDepartment] : undefined,
           dateFrom: filterDateFrom || undefined,
           dateTo: filterDateTo || undefined,
+          topicFocus,
         },
+        analysisScope: {
+          source_session_ids: selectedSessions,
+          source_scope_status: 'approved_only',
+          respondent_filters: filterRespondent ? [filterRespondent] : [],
+          role_filters: filterRole ? [filterRole] : [],
+          department_filters: filterDepartment ? [filterDepartment] : [],
+          template_filters: filterTemplate ? [filterTemplate] : [],
+          date_range:
+            filterDateFrom || filterDateTo
+              ? { from: filterDateFrom || undefined, to: filterDateTo || undefined }
+              : undefined,
+          topic_focus: topicFocus,
+          analysis_mode: analysisMode,
+          context_mode: contextMode,
+          consultant_note: consultantNote.trim() || null,
+          leading_question: leadingQuestion.trim() || null,
+        },
+        analysisMode,
+        contextMode,
+        topicFocus,
+        consultantNote: consultantNote.trim() || undefined,
+        leadingQuestion: leadingQuestion.trim() || undefined,
         customPrompt: customPrompt.trim() || undefined,
       }).catch(() =>
         Api.post('/interview/insights', {
@@ -466,9 +645,35 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           promptType: selectedType,
           filters: {
             templateId: filterTemplate || undefined,
+            respondentId: filterRespondent || undefined,
+            roles: filterRole ? [filterRole] : undefined,
+            departments: filterDepartment ? [filterDepartment] : undefined,
             dateFrom: filterDateFrom || undefined,
             dateTo: filterDateTo || undefined,
+            topicFocus,
           },
+          analysisScope: {
+            source_session_ids: selectedSessions,
+            source_scope_status: 'approved_only',
+            respondent_filters: filterRespondent ? [filterRespondent] : [],
+            role_filters: filterRole ? [filterRole] : [],
+            department_filters: filterDepartment ? [filterDepartment] : [],
+            template_filters: filterTemplate ? [filterTemplate] : [],
+            date_range:
+              filterDateFrom || filterDateTo
+                ? { from: filterDateFrom || undefined, to: filterDateTo || undefined }
+                : undefined,
+            topic_focus: topicFocus,
+            analysis_mode: analysisMode,
+            context_mode: contextMode,
+            consultant_note: consultantNote.trim() || null,
+            leading_question: leadingQuestion.trim() || null,
+          },
+          analysisMode,
+          contextMode,
+          topicFocus,
+          consultantNote: consultantNote.trim() || undefined,
+          leadingQuestion: leadingQuestion.trim() || undefined,
           customPrompt: customPrompt.trim() || undefined,
         })
       );
@@ -490,6 +695,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const toggleSession = (sessionId: string) => {
     setSelectedSessions((prev) =>
       prev.includes(sessionId) ? prev.filter((id) => id !== sessionId) : [...prev, sessionId]
+    );
+  };
+
+  const toggleTopicFocus = (topicId: string) => {
+    setTopicFocus((prev) =>
+      prev.includes(topicId) ? prev.filter((id) => id !== topicId) : [...prev, topicId]
     );
   };
 
@@ -704,6 +915,148 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             </div>
           </div>
 
+          {/* Scope Builder */}
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-4">
+            <div>
+              <div className="flex items-center gap-2 text-sm font-semibold text-amber-300">
+                <Target size={16} />
+                {isPolish ? 'Zakres insightu' : 'Insight scope'}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                {isPolish
+                  ? 'Insight powstaje wyłącznie z zatwierdzonych, zakończonych wywiadów. Nie wybieramy pojedynczych odpowiedzi, tylko koszyk materiału i kierunek analizy.'
+                  : 'Insights are generated only from approved completed interviews. Select a source basket and analysis direction, not individual answers.'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-1">
+                {isPolish ? 'Tryb analizy' : 'Analysis mode'}
+              </label>
+              <select
+                value={analysisMode}
+                onChange={(e) => setAnalysisMode(e.target.value as InsightAnalysisMode)}
+                className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
+              >
+                {ANALYSIS_MODE_OPTIONS.map((mode) => (
+                  <option key={mode.id} value={mode.id}>
+                    {isPolish ? mode.labelPl : mode.labelEn}
+                  </option>
+                ))}
+              </select>
+              {selectedAnalysisMode && (
+                <p className="mt-1 text-xs text-slate-500">
+                  {isPolish ? selectedAnalysisMode.hintPl : selectedAnalysisMode.hintEn}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-2">
+                {isPolish ? 'Wątki tematyczne' : 'Topic focus'}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {TOPIC_FOCUS_OPTIONS.map((topic) => {
+                  const selected = topicFocus.includes(topic.id);
+                  return (
+                    <button
+                      key={topic.id}
+                      type="button"
+                      onClick={() => toggleTopicFocus(topic.id)}
+                      className={`px-3 py-1.5 rounded-full border text-xs transition-colors ${
+                        selected
+                          ? 'border-amber-400 bg-amber-500/20 text-amber-200'
+                          : 'border-navy-600 bg-navy-800 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {isPolish ? topic.labelPl : topic.labelEn}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1 text-xs text-slate-500">
+                {isPolish
+                  ? 'Brak wyboru oznacza analizę ogólną, w której AI samo wskaże najważniejsze obserwacje.'
+                  : 'No selection means a general synthesis where AI identifies the highest-value observations.'}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-slate-500 mb-2">
+                {isPolish ? 'Kontekst AI' : 'AI context'}
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {[
+                  {
+                    id: 'selected_interview_material_only' as InsightContextMode,
+                    titlePl: 'Tylko wybrany materiał',
+                    titleEn: 'Selected material only',
+                    hintPl: 'Najbezpieczniejsze do audytu źródłowego.',
+                    hintEn: 'Best for strict source audit.',
+                  },
+                  {
+                    id: 'selected_material_plus_approved_org_knowledge' as InsightContextMode,
+                    titlePl: 'Materiał + wiedza organizacji',
+                    titleEn: 'Material + org knowledge',
+                    hintPl: 'Dobre dla szerszej syntezy i inicjatyw.',
+                    hintEn: 'Better for broader synthesis and initiatives.',
+                  },
+                ].map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setContextMode(option.id)}
+                    className={`rounded-lg border p-3 text-left transition-colors ${
+                      contextMode === option.id
+                        ? 'border-primary-400 bg-primary-500/15'
+                        : 'border-navy-700 bg-navy-800/70 hover:border-navy-500'
+                    }`}
+                  >
+                    <div className="text-sm font-medium text-white">
+                      {isPolish ? option.titlePl : option.titleEn}
+                    </div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {isPolish ? option.hintPl : option.hintEn}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  {isPolish ? 'Pytanie przewodnie (opcjonalnie)' : 'Leading question (optional)'}
+                </label>
+                <input
+                  value={leadingQuestion}
+                  onChange={(e) => setLeadingQuestion(e.target.value)}
+                  placeholder={
+                    isPolish
+                      ? 'np. Czy problemem jest governance czy kompetencje?'
+                      : 'e.g. Is the problem governance or capabilities?'
+                  }
+                  className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-sm text-white placeholder-slate-500 focus:border-primary-500 transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-slate-500 mb-1">
+                  {isPolish ? 'Notatka konsultanta (opcjonalnie)' : 'Consultant note (optional)'}
+                </label>
+                <input
+                  value={consultantNote}
+                  onChange={(e) => setConsultantNote(e.target.value)}
+                  placeholder={
+                    isPolish
+                      ? 'Co może być ciekawe w tej analizie?'
+                      : 'What may be interesting in this analysis?'
+                  }
+                  className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-sm text-white placeholder-slate-500 focus:border-primary-500 transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+
           {/* Filters Toggle */}
           <div>
             <button
@@ -736,6 +1089,60 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       {templates.map((t) => (
                         <option key={t.id} value={t.id}>
                           {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      {isPolish ? 'Osoba' : 'Person'}
+                    </label>
+                    <select
+                      value={filterRespondent}
+                      onChange={(e) => setFilterRespondent(e.target.value)}
+                      className="w-full px-2 py-1.5 rounded bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
+                    >
+                      <option value="">{isPolish ? 'Wszystkie' : 'All'}</option>
+                      {respondentOptions.map(([id, name]) => (
+                        <option key={id} value={id}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      {isPolish ? 'Rola' : 'Role'}
+                    </label>
+                    <select
+                      value={filterRole}
+                      onChange={(e) => setFilterRole(e.target.value)}
+                      className="w-full px-2 py-1.5 rounded bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
+                    >
+                      <option value="">{isPolish ? 'Wszystkie' : 'All'}</option>
+                      {roleOptions.map((role) => (
+                        <option key={role} value={role}>
+                          {role}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">
+                      {isPolish ? 'Dział' : 'Department'}
+                    </label>
+                    <select
+                      value={filterDepartment}
+                      onChange={(e) => setFilterDepartment(e.target.value)}
+                      className="w-full px-2 py-1.5 rounded bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
+                    >
+                      <option value="">{isPolish ? 'Wszystkie' : 'All'}</option>
+                      {departmentOptions.map((department) => (
+                        <option key={department} value={department}>
+                          {department}
                         </option>
                       ))}
                     </select>
@@ -809,8 +1216,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 }
                 hint={
                   isPolish
-                    ? 'To nie oznacza, że nie ma zakończonych sesji. Spróbuj ponownie wczytać dane.'
-                    : 'This does not mean there are no completed sessions. Retry loading the data.'
+                ? 'To nie oznacza, że nie ma zakończonych sesji. Spróbuj ponownie wczytać dane.'
+                : 'This does not mean there are no completed sessions. Retry loading the data.'
                 }
                 action={{
                   label: isPolish ? 'Ponów' : 'Retry',
@@ -858,9 +1265,16 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               <div className="text-center py-8 text-slate-500 bg-navy-800/50 rounded-lg border border-navy-700">
                 <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
                 <p className="text-sm">
-                  {isPolish ? 'Brak zakończonych sesji' : 'No completed sessions'}
+                  {isPolish
+                    ? 'Brak zatwierdzonych i zakończonych sesji'
+                    : 'No approved completed sessions'}
                 </p>
-                {(filterTemplate || filterDateFrom || filterDateTo) && (
+                {(filterTemplate ||
+                  filterRespondent ||
+                  filterRole ||
+                  filterDepartment ||
+                  filterDateFrom ||
+                  filterDateTo) && (
                   <p className="text-xs mt-1">
                     {isPolish ? 'Spróbuj zmienić filtry' : 'Try changing filters'}
                   </p>
@@ -900,6 +1314,18 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                               <span>{session.templateName}</span>
                             </>
                           )}
+                          {session.respondentRole && (
+                            <>
+                              <span>•</span>
+                              <span>{session.respondentRole}</span>
+                            </>
+                          )}
+                          {session.department && (
+                            <>
+                              <span>•</span>
+                              <span>{session.department}</span>
+                            </>
+                          )}
                           {session.completedAt && (
                             <>
                               <span>•</span>
@@ -911,7 +1337,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/20">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                         <span className="text-xs text-emerald-400">
-                          {isPolish ? 'Zakończona' : 'Completed'}
+                          {isPolish ? 'Zatwierdzona' : 'Approved'}
                         </span>
                       </div>
                     </label>
