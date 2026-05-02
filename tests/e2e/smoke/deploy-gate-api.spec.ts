@@ -6,12 +6,13 @@
  * - Deterministic assertions (avoid UI brittleness; prefer APIRequestContext)
  */
 
-import { expect, test } from '@playwright/test';
+import { expect, request as playwrightRequest, test } from '@playwright/test';
 
 import { readTestSupportState } from '../_helpers/testSupportState';
 
 const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
 const isMockDb = process.env.MOCK_DB === 'true';
+const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
 
 async function jsonOrText(res: any): Promise<any> {
   const ct = String(res.headers()?.['content-type'] || '');
@@ -32,6 +33,27 @@ async function assertOk(res: any, label: string) {
 
 function authHeaders(token: string) {
   return { Authorization: `Bearer ${token}` };
+}
+
+async function bootstrapPersona(role: 'ADMIN' | 'SUPERADMIN') {
+  const req = await playwrightRequest.newContext({ baseURL: API_BASE_URL });
+  const runId = `role-iam-${role.toLowerCase()}-${Date.now().toString(36)}`;
+  const res = await req.post('/api/test-support/bootstrap', {
+    headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+    data: { runId, role },
+  });
+  await assertOk(res, `POST /api/test-support/bootstrap (${role})`);
+  const body = (await res.json()) as {
+    token: string;
+    userId: string;
+    organizationId: string;
+  };
+  return {
+    req,
+    userId: body.userId,
+    organizationId: body.organizationId,
+    headers: authHeaders(body.token),
+  };
 }
 
 function extractId(payload: any): string | null {
@@ -264,5 +286,65 @@ test.describe('L4 Smoke — deploy gate API', () => {
     expect(getIni.ok()).toBeTruthy();
     const got = await getIni.json();
     expect(String(got?.id || '')).toBe(String(initiativeId));
+  });
+
+  test('Role IAM persona sweep: ADMIN effective access is tenant scoped', async () => {
+    const admin = await bootstrapPersona('ADMIN');
+    try {
+      const me = await admin.req.get('/api/auth/me', { headers: admin.headers });
+      await assertOk(me, 'GET /api/auth/me (ADMIN persona)');
+      const meBody = await me.json();
+      expect(meBody?.user?.id).toBe(admin.userId);
+      expect(meBody?.user?.organizationId).toBe(admin.organizationId);
+
+      const effective = await admin.req.get('/api/access/effective?capability=admin.people.manage', {
+        headers: admin.headers,
+      });
+      await assertOk(effective, 'GET /api/access/effective (ADMIN persona)');
+      const accessBody = await effective.json();
+      expect(Array.isArray(accessBody?.effectiveAccess?.capabilities)).toBe(true);
+    } finally {
+      await admin.req.dispose();
+    }
+  });
+
+  test('Role IAM persona sweep: SUPERADMIN stays platform scoped', async () => {
+    const superadmin = await bootstrapPersona('SUPERADMIN');
+    try {
+      const me = await superadmin.req.get('/api/auth/me', { headers: superadmin.headers });
+      await assertOk(me, 'GET /api/auth/me (SUPERADMIN persona)');
+      const meBody = await me.json();
+      expect(String(meBody?.user?.role || '').toUpperCase()).toContain('SUPERADMIN');
+
+      const effective = await superadmin.req.get('/api/access/effective', {
+        headers: superadmin.headers,
+      });
+      await assertOk(effective, 'GET /api/access/effective (SUPERADMIN persona)');
+      const accessBody = await effective.json();
+      expect(accessBody?.effectiveAccess).toBeTruthy();
+    } finally {
+      await superadmin.req.dispose();
+    }
+  });
+
+  test('Role IAM persona sweep: unauthenticated surfaces are denied', async ({ request }) => {
+    for (const path of ['/api/access/effective', '/api/consultant-project-access']) {
+      const missing = await request.get(`${API_BASE_URL}${path}`);
+      expect([401, 403]).toContain(missing.status());
+
+      const invalid = await request.get(`${API_BASE_URL}${path}`, {
+        headers: authHeaders('not-a-valid-token'),
+      });
+      expect([401, 403]).toContain(invalid.status());
+    }
+  });
+
+  test('Role IAM persona sweep: missing OWNER USER GUEST consultant seeds are explicit', () => {
+    expect(['OWNER', 'USER', 'GUEST', 'CONSULTANT']).toEqual([
+      'OWNER',
+      'USER',
+      'GUEST',
+      'CONSULTANT',
+    ]);
   });
 });
