@@ -18,12 +18,32 @@ export interface RowAction {
   onClick: () => void;
   variant?: 'default' | 'danger' | 'primary';
   disabled?: boolean;
+  hidden?: boolean;
+  description?: string;
+  rightLabel?: string;
   /** If true, shows a divider above this action */
   divider?: boolean;
 }
 
-interface RowActionsMenuProps {
+export type RowActionSectionKind =
+  | 'context'
+  | 'open'
+  | 'ai'
+  | 'convert'
+  | 'output'
+  | 'manage'
+  | 'danger';
+
+export interface RowActionSection {
+  id: string;
+  label?: string;
+  kind?: RowActionSectionKind;
   actions: RowAction[];
+}
+
+interface RowActionsMenuProps {
+  actions?: RowAction[];
+  sections?: RowActionSection[];
   /** Size variant */
   size?: 'sm' | 'md';
   className?: string;
@@ -32,7 +52,8 @@ interface RowActionsMenuProps {
 }
 
 export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
-  actions,
+  actions = [],
+  sections,
   size = 'sm',
   className = '',
   // App Table Standard (v3): always prefer vertical kebab (⋮)
@@ -113,8 +134,28 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
     return () => document.removeEventListener('keydown', handler);
   }, [isOpen]);
 
-  const visibleActions = useMemo(() => actions.filter((a) => !a.disabled), [actions]);
-  if (visibleActions.length === 0) return null;
+  const visibleSections = useMemo<RowActionSection[]>(() => {
+    if (sections?.length) {
+      return sections
+        .map((section) => ({
+          ...section,
+          actions: section.actions.filter((action) => !action.hidden),
+        }))
+        .filter((section) => section.actions.length > 0);
+    }
+
+    const legacyActions = actions.filter((action) => !action.disabled && !action.hidden);
+    return legacyActions.length
+      ? [
+          {
+            id: 'legacy',
+            actions: legacyActions,
+          },
+        ]
+      : [];
+  }, [actions, sections]);
+
+  if (visibleSections.length === 0) return null;
 
   const iconSize = size === 'sm' ? 14 : 16;
   const buttonPadding = size === 'sm' ? 'p-1' : 'p-1.5';
@@ -169,25 +210,54 @@ export const RowActionsMenu: React.FC<RowActionsMenuProps> = ({
                 e.stopPropagation();
               }}
             >
-              {visibleActions.map((action) => {
-                const Icon = action.icon;
+              {visibleSections.map((section, sectionIndex) => {
                 return (
-                  <React.Fragment key={action.id}>
-                    {action.divider && (
+                  <React.Fragment key={section.id}>
+                    {sectionIndex > 0 && (
                       <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
                     )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        action.onClick();
-                        setIsOpen(false);
-                      }}
-                      className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs font-medium transition-colors ${variantStyles[action.variant || 'default']}`}
-                      role="menuitem"
-                    >
-                      {Icon && <Icon size={14} />}
-                      {action.label}
-                    </button>
+                    {section.label ? (
+                      <div className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                        {section.label}
+                      </div>
+                    ) : null}
+                    {section.actions.map((action) => {
+                      const Icon = action.icon;
+                      return (
+                        <React.Fragment key={action.id}>
+                          {action.divider && (
+                            <div className="my-1 border-t border-slate-200 dark:border-navy-700" />
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (action.disabled) return;
+                              action.onClick();
+                              setIsOpen(false);
+                            }}
+                            disabled={action.disabled}
+                            className={`w-full flex items-center gap-2 px-3 py-1.5 text-left text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${variantStyles[action.variant || 'default']}`}
+                            role="menuitem"
+                            title={action.description}
+                          >
+                            {Icon && <Icon size={14} className="shrink-0" />}
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate">{action.label}</span>
+                              {action.description ? (
+                                <span className="mt-0.5 block truncate text-[10px] font-normal text-slate-400 dark:text-slate-500">
+                                  {action.description}
+                                </span>
+                              ) : null}
+                            </span>
+                            {action.rightLabel ? (
+                              <span className="shrink-0 rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] font-semibold text-slate-500 dark:bg-white/[0.06] dark:text-slate-400">
+                                {action.rightLabel}
+                              </span>
+                            ) : null}
+                          </button>
+                        </React.Fragment>
+                      );
+                    })}
                   </React.Fragment>
                 );
               })}

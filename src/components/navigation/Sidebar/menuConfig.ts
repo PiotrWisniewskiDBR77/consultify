@@ -67,6 +67,13 @@ export function getMenuStructure(t: TranslationFn, journeyState?: string): MenuI
       icon: React.createElement(ClipboardList, { size: 20 }),
       viewId: AppView.DISCOVERY_CONSULTANT,
     },
+    // 4. Wnioski - cross-module synthesis and artifact conversion
+    {
+      id: 'CONCLUSIONS',
+      label: t('sidebar.conclusions', 'Wnioski'),
+      icon: React.createElement(Lightbulb, { size: 20 }),
+      viewId: AppView.CONCLUSIONS,
+    },
     // 3. Narzędzia (v3): jeden obszar Tools (Discovery + Assessments)
     {
       id: 'TOOLS',
@@ -300,6 +307,7 @@ export function getViewName(view: AppView, t: TranslationFn): string {
     [AppView.PORTFOLIO_ROADMAP]: t('sidebar.portfolioRoadmap', 'Portfolio & Roadmap'),
     [AppView.FULL_STEP5_EXECUTION]: t('sidebar.realization'),
     [AppView.MY_WORK]: t('myWork.title', 'My Work'),
+    [AppView.CONCLUSIONS]: t('sidebar.conclusions', 'Wnioski'),
     [AppView.MCP_IRIS_COMING_SOON]: t('sidebar.mcpIris', 'MCP IRIS'),
     [AppView.MCP_MARKETPLACE_COMING_SOON]: t('sidebar.mcpMarketplace', 'MCP Marketplace'),
     [AppView.PRESENTATIONS]: t('sidebar.outputsLibrary', 'Outputs'),

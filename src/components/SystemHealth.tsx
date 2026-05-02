@@ -131,12 +131,10 @@ export const SystemHealth = () => {
       <div className="relative" ref={dropdownRef}>
         <button
           disabled
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 bg-transparent border-slate-200 dark:border-navy-700 opacity-70 cursor-not-allowed"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-slate-200 bg-transparent px-3 text-xs font-medium text-navy-900 opacity-70 transition-colors duration-150 cursor-not-allowed dark:border-white/[0.08] dark:text-white"
         >
           <div className="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600" />
-          <span className="text-xs font-medium text-navy-900 dark:text-white">
-            {t('system.data', 'Data')}
-          </span>
+          <span>{t('system.data', 'Data')}</span>
           <ChevronDown size={14} className="text-slate-400" />
         </button>
       </div>
@@ -151,13 +149,13 @@ export const SystemHealth = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border transition-all duration-200 ${
+        className={`inline-flex h-9 items-center gap-2 rounded-full border px-3 text-xs font-medium transition-colors duration-150 ${
           status === 'offline'
             ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
             : status === 'degraded'
               ? 'bg-amber-50/70 dark:bg-amber-500/10 border-amber-400/50 dark:border-amber-500/40 hover:bg-amber-100/70 dark:hover:bg-amber-500/15'
               : 'bg-transparent border-slate-200 dark:border-navy-700 hover:border-brand/50 hover:bg-slate-50 dark:hover:bg-white/5'
-        }`}
+        } text-navy-900 dark:text-white`}
       >
         <div
           className={`w-2 h-2 rounded-full ${
@@ -168,9 +166,7 @@ export const SystemHealth = () => {
                 : 'bg-red-500'
           }`}
         />
-        <span className="text-xs font-medium text-navy-900 dark:text-white">
-          {t('system.data', 'Data')}
-        </span>
+        <span>{t('system.data', 'Data')}</span>
         <ChevronDown
           size={14}
           className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}

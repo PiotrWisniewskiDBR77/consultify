@@ -3588,6 +3588,7 @@ export const InterviewHub: React.FC = () => {
         <InterviewWorkspace
           sessionId={doc.id}
           projectId={currentProjectId || undefined}
+          onClose={() => handleCloseDocument(doc.id)}
           onComplete={handleSessionComplete}
           onSessionChange={handleSessionChange}
         />

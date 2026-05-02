@@ -1,11 +1,18 @@
 import {
+  Bot,
   CheckCircle2,
+  ExternalLink,
+  FileText,
   Lightbulb,
+  MessageSquare,
+  MessageSquarePlus,
   Network,
   PenTool,
+  Presentation,
   Rocket,
   Sparkles,
   Sprout,
+  Star,
   Table2,
   Trash2,
   TreePine,
@@ -23,7 +30,10 @@ import {
   PreviewRelations,
   type RelationItem,
 } from '@/components/shared/PreviewPane';
-import { type RowAction, RowActionsMenu } from '@/components/shared/RowActionsMenu';
+import {
+  type RowActionSection,
+  RowActionsMenu,
+} from '@/components/shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import type {
   ColumnDef,
@@ -36,6 +46,8 @@ import { ColumnResizer, FilterDropdown } from '@/components/ui/ResizableTable';
 import { ConvertToOutputMenu } from './ConvertToOutputMenu';
 import type { IdeaStage, MyIdea, SortDir, SortField } from './myIdeasTypes';
 
+type IdeaConvertTarget = 'initiative' | 'task_set' | 'decision' | 'team_chat';
+
 const STAGE_META: Record<
   IdeaStage,
   {
@@ -43,37 +55,48 @@ const STAGE_META: Record<
     labelPl: string;
     icon: React.ElementType;
     badge: string;
+    iconClass: string;
   }
 > = {
   spark: {
     label: 'Spark',
     labelPl: 'Iskra',
     icon: Lightbulb,
-    badge: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+    badge:
+      'border border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
+    iconClass: 'text-amber-600 dark:text-amber-300',
   },
   incubating: {
     label: 'Growing',
     labelPl: 'Rosnie',
     icon: Sprout,
-    badge: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+    badge:
+      'border border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
+    iconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   shaping: {
     label: 'Shaping',
     labelPl: 'Ksztaltuje',
     icon: TreePine,
-    badge: 'bg-blue-500/15 text-blue-700 dark:text-blue-300',
+    badge:
+      'border border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
+    iconClass: 'text-blue-600 dark:text-blue-300',
   },
   ready: {
     label: 'Ready',
     labelPl: 'Gotowy',
     icon: CheckCircle2,
-    badge: 'bg-purple-500/15 text-purple-700 dark:text-purple-300',
+    badge:
+      'border border-violet-300/80 bg-violet-50 text-violet-900 dark:border-violet-300/[0.25] dark:bg-violet-300/[0.12] dark:text-violet-100',
+    iconClass: 'text-violet-600 dark:text-violet-300',
   },
   promoted: {
     label: 'Promoted',
     labelPl: 'Promowany',
     icon: Rocket,
-    badge: 'bg-rose-500/15 text-rose-700 dark:text-rose-300',
+    badge:
+      'border border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
+    iconClass: 'text-rose-600 dark:text-rose-300',
   },
 };
 
@@ -84,31 +107,40 @@ const TOOL_META: Record<
     labelPl: string;
     icon: React.ElementType;
     badge: string;
+    iconClass: string;
   }
 > = {
   mindmap: {
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
     icon: Network,
-    badge: 'bg-violet-500/15 text-violet-700 dark:text-violet-300',
+    badge:
+      'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+    iconClass: 'text-primary-600 dark:text-primary-300',
   },
   table: {
     label: 'Table',
     labelPl: 'Tabela',
     icon: Table2,
-    badge: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
+    badge:
+      'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+    iconClass: 'text-sky-600 dark:text-sky-300',
   },
   process_flow: {
     label: 'Process Flow',
     labelPl: 'Proces',
     icon: Workflow,
-    badge: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+    badge:
+      'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+    iconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   whiteboard: {
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
     icon: PenTool,
-    badge: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+    badge:
+      'border border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100',
+    iconClass: 'text-amber-600 dark:text-amber-300',
   },
 };
 
@@ -135,7 +167,10 @@ interface IdeasTableContentProps {
   onTableFilterChange: (columnId: 'stage' | 'tags' | 'tool', value: string[]) => void;
   onOpenIdea: (idea: MyIdea) => void;
   onOpenIdeaInProcessFlow: (idea: MyIdea) => void;
+  onOpenIdeaAiChat?: (idea: MyIdea) => void;
+  onOpenIdeaAiInsights?: (idea: MyIdea) => void;
   onStartConvert: (idea: MyIdea) => void;
+  onConvertIdeaToTarget?: (idea: MyIdea, target: IdeaConvertTarget) => void;
   onDeleteIdea: (idea: MyIdea) => void;
   onRefresh: () => void;
 }
@@ -187,7 +222,10 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
   onTableFilterChange,
   onOpenIdea,
   onOpenIdeaInProcessFlow,
+  onOpenIdeaAiChat,
+  onOpenIdeaAiInsights,
   onStartConvert,
+  onConvertIdeaToTarget,
   onDeleteIdea,
   onRefresh,
 }) => {
@@ -264,9 +302,9 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     const Icon = meta.icon;
     return (
       <span
-        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.badge}`}
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none ${meta.badge}`}
       >
-        <Icon size={10} />
+        <Icon size={11} className={meta.iconClass} />
         {isPolish ? meta.labelPl : meta.label}
       </span>
     );
@@ -277,9 +315,9 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
     const Icon = meta.icon;
     return (
       <span
-        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.badge}`}
+        className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-semibold leading-none ${meta.badge}`}
       >
-        <Icon size={10} />
+        <Icon size={11} className={meta.iconClass} />
         {isPolish ? meta.labelPl : meta.label}
       </span>
     );
@@ -295,7 +333,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         {tags.slice(0, max).map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-navy-800 dark:text-slate-300"
+            className="inline-flex items-center rounded-full border border-slate-300/80 bg-slate-100 px-2 py-1 text-[10px] font-medium leading-none text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200"
           >
             {tag}
           </span>
@@ -465,11 +503,14 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
         renderPreview={renderPreview}
         renderPreviewFooter={renderPreviewFooter}
       >
-        <div className="h-full overflow-x-auto">
+        <div
+          className="h-full overflow-x-auto bg-slate-50/40 pr-4 [scrollbar-gutter:stable] dark:bg-navy-950"
+          style={{ scrollbarGutter: 'stable' }}
+        >
           <table className="w-full table-fixed" style={{ minWidth: 980 }}>
-            <thead className="sticky top-0 z-10 bg-slate-50/95 dark:bg-navy-900/90 backdrop-blur">
-              <tr className="border-b border-slate-200/70 dark:border-white/[0.06]">
-                <th className="w-10 px-2 py-2.5">
+            <thead className="sticky top-0 z-10 bg-slate-100/95 shadow-[0_1px_0_rgba(15,23,42,0.08)] backdrop-blur dark:bg-navy-900 dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]">
+              <tr className="border-b border-slate-300/70 dark:border-white/[0.10]">
+                <th className="w-9 px-2 py-3">
                   <button
                     onClick={() => {
                       if (allSelected) {
@@ -478,19 +519,19 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                         onSelectAllVisible();
                       }
                     }}
-                    className={`flex h-5 w-5 items-center justify-center rounded border transition-colors ${
+                    className={`flex h-4 w-4 items-center justify-center rounded-[4px] border text-[10px] transition-colors ${
                       allSelected
                         ? 'border-primary-500 bg-primary-500 text-white'
                         : someSelected
                           ? 'border-primary-500 bg-primary-500/50 text-white'
-                          : 'border-slate-300 text-transparent hover:border-primary-400 hover:text-slate-400 dark:border-white/[0.10]'
+                          : 'border-slate-400/70 bg-white/70 text-transparent opacity-80 hover:border-primary-500 hover:bg-white hover:text-slate-500 dark:border-white/[0.14] dark:bg-white/[0.03] dark:hover:bg-white/[0.07]'
                     }`}
                     title={isPolish ? 'Zaznacz widoczne' : 'Select visible'}
                   >
                     {allSelected ? '✓' : someSelected ? '−' : '□'}
                   </button>
                 </th>
-                <th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <th className="px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
                   <button
                     onClick={() => onSort('title')}
                     className="inline-flex items-center text-left transition-colors hover:text-slate-700 dark:hover:text-slate-200"
@@ -500,7 +541,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   </button>
                 </th>
                 <th
-                  className="relative px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.stage }}
                 >
                   <div className="flex items-center gap-1">
@@ -537,7 +578,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   />
                 </th>
                 <th
-                  className="relative px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.tags }}
                 >
                   <div className="flex items-center gap-1">
@@ -574,7 +615,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   />
                 </th>
                 <th
-                  className="relative px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.tool }}
                 >
                   <div className="flex items-center gap-1">
@@ -611,7 +652,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   />
                 </th>
                 <th
-                  className="relative px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="relative px-3 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.date }}
                 >
                   <button
@@ -630,7 +671,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                   />
                 </th>
                 <th
-                  className="px-3 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+                  className="px-3 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300"
                   style={{ width: columnWidths.actions }}
                 >
                   {isPolish ? 'Akcje' : 'Actions'}
@@ -642,32 +683,138 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 const isChecked = selectedIds.has(idea.id);
                 const isPreviewSelected = previewIdeaId === idea.id;
                 const isFocused = focusedIndex === index;
+                const rowAccentClass = isPreviewSelected
+                  ? 'bg-primary-500 dark:bg-primary-300'
+                  : isFocused
+                    ? 'bg-cyan-500 dark:bg-cyan-300'
+                    : isChecked
+                      ? 'bg-primary-400/70 dark:bg-primary-300/70'
+                      : null;
 
-                const rowActions: RowAction[] = [
+                const rowActionSections: RowActionSection[] = [
                   {
                     id: 'open',
-                    label: isPolish ? 'Otwórz' : 'Open',
-                    onClick: () => onOpenIdea(idea),
+                    kind: 'open',
+                    actions: [
+                      {
+                        id: 'open',
+                        label: isPolish ? 'Otwórz' : 'Open',
+                        icon: ExternalLink,
+                        onClick: () => onOpenIdea(idea),
+                      },
+                      {
+                        id: 'flow',
+                        label: 'Process Flow',
+                        icon: Workflow,
+                        onClick: () => onOpenIdeaInProcessFlow(idea),
+                      },
+                    ],
+                  },
+                  {
+                    id: 'ai',
+                    kind: 'ai',
+                    actions: [
+                      {
+                        id: 'ai_chat',
+                        label: 'AI Chat',
+                        icon: MessageSquare,
+                        onClick: () => onOpenIdeaAiChat?.(idea),
+                        disabled: !onOpenIdeaAiChat,
+                      },
+                      {
+                        id: 'ai_insights',
+                        label: 'AI Insights',
+                        icon: Bot,
+                        onClick: () => onOpenIdeaAiInsights?.(idea),
+                        disabled: !onOpenIdeaAiInsights,
+                      },
+                    ],
                   },
                   {
                     id: 'convert',
-                    label: isPolish ? 'Konwertuj' : 'Convert',
-                    icon: Sparkles,
-                    onClick: () => onStartConvert(idea),
+                    kind: 'convert',
+                    label: isPolish ? 'Konwertuj do' : 'Convert to',
+                    actions: [
+                      {
+                        id: 'convert_initiative',
+                        label: isPolish ? 'Inicjatywa' : 'Initiative',
+                        icon: Rocket,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'initiative')
+                            : onStartConvert(idea),
+                      },
+                      {
+                        id: 'convert_tasks',
+                        label: isPolish ? 'Zadania' : 'Tasks',
+                        icon: CheckCircle2,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'task_set')
+                            : onStartConvert(idea),
+                      },
+                      {
+                        id: 'convert_decision',
+                        label: isPolish ? 'Decyzja' : 'Decision',
+                        icon: Star,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'decision')
+                            : onStartConvert(idea),
+                      },
+                      {
+                        id: 'convert_team_chat',
+                        label: 'Team Chat',
+                        icon: MessageSquarePlus,
+                        onClick: () =>
+                          onConvertIdeaToTarget
+                            ? onConvertIdeaToTarget(idea, 'team_chat')
+                            : onStartConvert(idea),
+                      },
+                    ],
                   },
                   {
-                    id: 'flow',
-                    label: isPolish ? 'Otwórz w Process Flow' : 'Open in Process Flow',
-                    icon: Workflow,
-                    onClick: () => onOpenIdeaInProcessFlow(idea),
+                    id: 'output',
+                    kind: 'output',
+                    actions: [
+                      {
+                        id: 'output_presentation',
+                        label: isPolish ? 'Prezentacja' : 'Presentation',
+                        icon: Presentation,
+                        disabled: true,
+                        rightLabel: isPolish ? 'wkrótce' : 'soon',
+                        onClick: () => undefined,
+                      },
+                      {
+                        id: 'output_report',
+                        label: isPolish ? 'Raport' : 'Report',
+                        icon: FileText,
+                        disabled: true,
+                        rightLabel: isPolish ? 'wkrótce' : 'soon',
+                        onClick: () => undefined,
+                      },
+                      {
+                        id: 'output_table',
+                        label: isPolish ? 'Tabela' : 'Table',
+                        icon: Table2,
+                        disabled: true,
+                        rightLabel: isPolish ? 'wkrótce' : 'soon',
+                        onClick: () => undefined,
+                      },
+                    ],
                   },
                   {
-                    id: 'delete',
-                    label: isPolish ? 'Usuń' : 'Delete',
-                    icon: Trash2,
-                    variant: 'danger',
-                    divider: true,
-                    onClick: () => onDeleteIdea(idea),
+                    id: 'danger',
+                    kind: 'danger',
+                    actions: [
+                      {
+                        id: 'delete',
+                        label: isPolish ? 'Usuń' : 'Delete',
+                        icon: Trash2,
+                        variant: 'danger',
+                        onClick: () => onDeleteIdea(idea),
+                      },
+                    ],
                   },
                 ];
 
@@ -679,17 +826,23 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                       onFocusIndexChange(index);
                     }}
                     onDoubleClick={() => onOpenIdea(idea)}
-                    className={`group cursor-pointer border-b border-slate-200/60 transition-colors dark:border-white/[0.06] ${
+                    className={`group cursor-pointer border-b border-slate-200/95 transition-colors dark:border-white/[0.085] ${
                       isPreviewSelected
-                        ? 'bg-primary-50 dark:bg-primary-500/10'
+                        ? 'bg-primary-50/95 dark:bg-primary-400/[0.105]'
                         : isChecked
-                          ? 'bg-primary-50/60 dark:bg-primary-500/6'
+                          ? 'bg-primary-50/65 dark:bg-primary-400/[0.07]'
                           : isFocused
-                            ? 'bg-amber-50/50 dark:bg-amber-500/5'
-                            : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]'
+                            ? 'bg-cyan-50/80 dark:bg-cyan-400/[0.075]'
+                            : 'bg-white hover:bg-slate-100/80 dark:bg-navy-950 dark:hover:bg-white/[0.04]'
                     }`}
                   >
-                    <td className="px-2 py-2.5 align-top">
+                    <td className="relative px-2 py-3.5 align-top">
+                      {rowAccentClass ? (
+                        <span
+                          aria-hidden="true"
+                          className={`absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full ${rowAccentClass}`}
+                        />
+                      ) : null}
                       <input
                         type="checkbox"
                         checked={isChecked}
@@ -698,40 +851,40 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           onToggleSelect(idea.id);
                         }}
                         onClick={(event) => event.stopPropagation()}
-                        className="mt-1 h-4 w-4 rounded border-slate-300 text-primary-500 focus:ring-primary-500/30 dark:border-white/[0.10]"
+                        className="mt-1 h-3.5 w-3.5 rounded-[4px] border-slate-400/70 bg-white/80 text-primary-500 opacity-60 shadow-none transition-all checked:border-primary-500 checked:bg-primary-500 checked:opacity-100 group-hover:opacity-100 focus:opacity-100 focus:ring-2 focus:ring-primary-500/25 focus:ring-offset-0 dark:border-white/[0.14] dark:bg-white/[0.035] dark:checked:bg-primary-500 dark:group-hover:bg-white/[0.08]"
                       />
                     </td>
-                    <td className="px-3 py-2.5 align-top">
-                      <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <td className="px-3 py-3.5 align-top">
+                      <div className="truncate text-[13px] font-semibold leading-5 text-slate-950 dark:text-slate-100">
                         {idea.title || (isPolish ? 'Bez tytulu' : 'Untitled')}
                       </div>
                       {idea.body ? (
-                        <div className="mt-0.5 truncate text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="mt-1 truncate text-[11px] leading-4 text-slate-600 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300">
                           {idea.body}
                         </div>
                       ) : null}
                     </td>
-                    <td className="px-3 py-2.5 align-top" style={{ width: columnWidths.stage }}>
+                    <td className="px-3 py-3.5 align-top" style={{ width: columnWidths.stage }}>
                       {renderStageBadge(idea.stage)}
                     </td>
-                    <td className="px-3 py-2.5 align-top" style={{ width: columnWidths.tags }}>
+                    <td className="px-3 py-3.5 align-top" style={{ width: columnWidths.tags }}>
                       {renderTagBadges(idea.tags)}
                     </td>
-                    <td className="px-3 py-2.5 align-top" style={{ width: columnWidths.tool }}>
+                    <td className="px-3 py-3.5 align-top" style={{ width: columnWidths.tool }}>
                       {renderToolBadge(idea.preferredTool)}
                     </td>
                     <td
-                      className="px-3 py-2.5 align-top text-[11px] text-slate-500 dark:text-slate-400"
+                      className="px-3 py-3.5 align-top text-[11px] leading-5 text-slate-600 dark:text-slate-400"
                       style={{ width: columnWidths.date }}
                     >
                       {formatIdeaDate(idea)}
                     </td>
                     <td
-                      className="px-3 py-2.5 text-right align-top"
+                      className="px-3 py-3 text-right align-top"
                       style={{ width: columnWidths.actions }}
                       onClick={(event) => event.stopPropagation()}
                     >
-                      <RowActionsMenu actions={rowActions} iconVariant="vertical" />
+                      <RowActionsMenu sections={rowActionSections} iconVariant="vertical" />
                     </td>
                   </tr>
                 );

@@ -1,5 +1,4 @@
 import {
-  Bot,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -11,7 +10,6 @@ import {
   MessageSquarePlus,
   Network,
   PenTool,
-  Plus,
   Rocket,
   Sparkles,
   Sprout,
@@ -29,6 +27,7 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import type { FilterOption, TableFilters } from '@/components/ui/ResizableTable';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { Api } from '@/services/api';
 import { trackFunnelEvent } from '@/services/funnelAnalytics';
 import { tokenService } from '@/services/tokenService';
@@ -95,40 +94,42 @@ const STAGE_CONFIG: Record<
     color: 'text-amber-500',
     bgColor: 'bg-amber-500/10 dark:bg-amber-500/15',
     borderColor: 'border-amber-400/30 dark:border-amber-500/20',
-    badgeBg: 'bg-amber-500/15',
-    badgeText: 'text-amber-600 dark:text-amber-400',
+    badgeBg: 'border border-amber-200/70 bg-amber-50 dark:border-amber-300/15 dark:bg-amber-300/10',
+    badgeText: 'text-amber-800 dark:text-amber-200',
   },
   incubating: {
     icon: Sprout,
     color: 'text-emerald-500',
     bgColor: 'bg-emerald-500/10 dark:bg-emerald-500/15',
     borderColor: 'border-emerald-400/30 dark:border-emerald-500/20',
-    badgeBg: 'bg-emerald-500/15',
-    badgeText: 'text-emerald-600 dark:text-emerald-400',
+    badgeBg:
+      'border border-emerald-200/70 bg-emerald-50 dark:border-emerald-300/15 dark:bg-emerald-300/10',
+    badgeText: 'text-emerald-800 dark:text-emerald-200',
   },
   shaping: {
     icon: TreePine,
     color: 'text-blue-500',
     bgColor: 'bg-blue-500/10 dark:bg-blue-500/15',
     borderColor: 'border-blue-400/30 dark:border-blue-500/20',
-    badgeBg: 'bg-blue-500/15',
-    badgeText: 'text-blue-600 dark:text-blue-400',
+    badgeBg: 'border border-blue-200/70 bg-blue-50 dark:border-blue-300/15 dark:bg-blue-300/10',
+    badgeText: 'text-blue-800 dark:text-blue-200',
   },
   ready: {
     icon: CheckCircle2,
     color: 'text-purple-500',
     bgColor: 'bg-purple-500/10 dark:bg-purple-500/15',
     borderColor: 'border-purple-400/30 dark:border-purple-500/20',
-    badgeBg: 'bg-purple-500/15',
-    badgeText: 'text-purple-600 dark:text-purple-400',
+    badgeBg:
+      'border border-violet-200/70 bg-violet-50 dark:border-violet-300/15 dark:bg-violet-300/10',
+    badgeText: 'text-violet-800 dark:text-violet-200',
   },
   promoted: {
     icon: Rocket,
     color: 'text-rose-500',
     bgColor: 'bg-rose-500/10 dark:bg-rose-500/15',
     borderColor: 'border-rose-400/30 dark:border-rose-500/20',
-    badgeBg: 'bg-rose-500/15',
-    badgeText: 'text-rose-600 dark:text-rose-400',
+    badgeBg: 'border border-rose-200/70 bg-rose-50 dark:border-rose-300/15 dark:bg-rose-300/10',
+    badgeText: 'text-rose-800 dark:text-rose-200',
   },
 };
 
@@ -141,6 +142,8 @@ const TOOL_CONFIG: Record<
     borderColor: string;
     label: string;
     labelPl: string;
+    badgeClass: string;
+    badgeIconClass: string;
   }
 > = {
   mindmap: {
@@ -150,6 +153,9 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-violet-400/30',
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
+    badgeClass:
+      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeIconClass: 'text-primary-600 dark:text-primary-300',
   },
   table: {
     icon: Table2,
@@ -158,6 +164,9 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-sky-400/30',
     label: 'Table',
     labelPl: 'Tabela',
+    badgeClass:
+      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeIconClass: 'text-sky-600 dark:text-sky-300',
   },
   process_flow: {
     icon: Workflow,
@@ -166,6 +175,9 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-emerald-400/30',
     label: 'Process Flow',
     labelPl: 'Proces',
+    badgeClass:
+      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeIconClass: 'text-emerald-600 dark:text-emerald-300',
   },
   whiteboard: {
     icon: PenTool,
@@ -174,6 +186,9 @@ const TOOL_CONFIG: Record<
     borderColor: 'border-amber-400/30',
     label: 'Whiteboard',
     labelPl: 'Whiteboard',
+    badgeClass:
+      'border border-slate-200/70 bg-slate-100/80 text-slate-700 dark:border-white/[0.06] dark:bg-white/[0.06] dark:text-slate-200',
+    badgeIconClass: 'text-amber-600 dark:text-amber-300',
   },
 };
 
@@ -262,6 +277,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const isPolish = i18n.language?.startsWith('pl');
+  const openChatWithContext = useOpenChatWithContext();
   const persistedTableView = useMemo(() => loadIdeasTableViewState(), []);
   const [ideas, setIdeas] = useState<MyIdea[]>([]);
   const [loading, setLoading] = useState(true);
@@ -745,17 +761,18 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
   }, [onCreateIdea, openConvertForSelection, openFocusedIdea]);
 
   const handleConvert = useCallback(
-    async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat') => {
-      if (!convertIdea?.id) return;
+    async (target: 'initiative' | 'task_set' | 'decision' | 'team_chat', ideaOverride?: MyIdea) => {
+      const sourceIdea = ideaOverride ?? convertIdea;
+      if (!sourceIdea?.id) return;
       try {
         setConverting(true);
         trackFunnelEvent('mywork_convert_clicked', { from: 'idea', to: target });
-        const result = await Api.convertMyIdea(convertIdea.id, {
+        const result = await Api.convertMyIdea(sourceIdea.id, {
           target,
           options: { language: i18n.language },
         });
         trackFunnelEvent(`idea_converted_${target}`, {
-          ideaId: convertIdea.id,
+          ideaId: sourceIdea.id,
           surface: 'ideas-list',
         });
         trackFunnelEvent('mywork_convert_completed', {
@@ -766,13 +783,15 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         if (result?.sourceSessionId) {
           trackFunnelEvent('mywork_session_materialized', {
             source: 'idea_convert',
-            sourceEntityId: convertIdea.id,
+            sourceEntityId: sourceIdea.id,
             target,
             sessionId: result.sourceSessionId,
           });
         }
         toast.success(isPolish ? 'Gotowe' : 'Done');
-        setConvertIdea(null);
+        if (!ideaOverride) {
+          setConvertIdea(null);
+        }
         await fetchIdeas();
       } catch (err: any) {
         toast.error(err?.message || (isPolish ? 'Nie udało się' : 'Failed'));
@@ -780,7 +799,51 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         setConverting(false);
       }
     },
-    [convertIdea?.id, fetchIdeas, i18n.language, isPolish]
+    [convertIdea, fetchIdeas, i18n.language, isPolish]
+  );
+
+  const handleOpenIdeaAiChat = useCallback(
+    async (idea: MyIdea) => {
+      try {
+        await openChatWithContext({
+          entityType: 'idea',
+          entityId: idea.id,
+          entityName: idea.title,
+          contextData: {
+            ...idea,
+            source: 'my-work-ideas-row-menu',
+          },
+        });
+      } catch (err: any) {
+        toast.error(err?.message || (isPolish ? 'Nie udało się otworzyć czata' : 'Failed to open chat'));
+      }
+    },
+    [isPolish, openChatWithContext]
+  );
+
+  const handleOpenIdeaAiInsights = useCallback(
+    async (idea: MyIdea) => {
+      try {
+        await openChatWithContext({
+          entityType: 'idea',
+          entityId: idea.id,
+          entityName: `${idea.title} - AI Insights`,
+          contextData: {
+            ...idea,
+            source: 'my-work-ideas-row-menu',
+            requestedAnalysis: 'ai_insights',
+            promptHint: isPolish
+              ? 'Przygotuj krótkie AI Insights dla tego pomysłu: potencjał, ryzyka, następne kroki i możliwe konwersje.'
+              : 'Prepare concise AI insights for this idea: potential, risks, next steps and possible conversions.',
+          },
+        });
+      } catch (err: any) {
+        toast.error(
+          err?.message || (isPolish ? 'Nie udało się otworzyć AI Insights' : 'Failed to open AI Insights')
+        );
+      }
+    },
+    [isPolish, openChatWithContext]
   );
 
   const handleSort = useCallback((field: SortField) => {
@@ -830,9 +893,9 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
     const Icon = tc.icon;
     return (
       <span
-        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tc.bgColor} ${tc.color}`}
+        className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${tc.badgeClass}`}
       >
-        <Icon size={10} />
+        <Icon size={10} className={tc.badgeIconClass} />
         {isPolish ? tc.labelPl : tc.label}
       </span>
     );
@@ -845,7 +908,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
         {ideaTags.slice(0, max).map((tag) => (
           <span
             key={tag}
-            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border border-slate-200/60 dark:border-navy-700"
+            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-slate-100/80 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 border border-slate-200/70 dark:border-white/[0.06]"
           >
             {tag}
           </span>
@@ -1062,9 +1125,8 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       </p>
       <button
         onClick={onCreateIdea}
-        className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transition-all"
+        className="inline-flex h-9 items-center justify-center rounded-full border border-violet-500/30 bg-violet-600 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-violet-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-violet-400/20 dark:bg-violet-500/80 dark:hover:bg-violet-500"
       >
-        <Plus size={16} />
         {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
       </button>
     </div>
@@ -1128,7 +1190,10 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
             }
             onOpenIdea={(idea) => onIdeaClick(idea.id, idea)}
             onOpenIdeaInProcessFlow={openIdeaInProcessFlow}
+            onOpenIdeaAiChat={handleOpenIdeaAiChat}
+            onOpenIdeaAiInsights={handleOpenIdeaAiInsights}
             onStartConvert={setConvertIdea}
+            onConvertIdeaToTarget={(idea, target) => handleConvert(target, idea)}
             onDeleteIdea={handleDeleteSingleIdea}
             onRefresh={fetchIdeas}
           />

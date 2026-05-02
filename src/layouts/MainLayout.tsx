@@ -168,7 +168,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
       {/* Global Floating Action Buttons - Order: Help, Feedback, Docs */}
       <div
         data-testid="global-fab-rail"
-        className={`fixed z-50 flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-2' : 'right-0 top-[70%]'}`}
+        className={`fixed z-50 flex flex-col gap-1 items-end pointer-events-none ${isMobile ? 'right-3' : 'right-4 top-[70%]'}`}
         style={
           mobileGlobalRailBottomOffset ? { bottom: `${mobileGlobalRailBottomOffset}px` } : undefined
         }

@@ -246,6 +246,9 @@ const ProjectIntelligenceView = React.lazy(() =>
 const InterviewHub = React.lazy(() =>
   import('@/components/Interview/InterviewHub').then((m) => ({ default: m.InterviewHub }))
 );
+const ConclusionsHub = React.lazy(() =>
+  import('@/components/Conclusions/ConclusionsHub').then((m) => ({ default: m.ConclusionsHub }))
+);
 
 // AI Actions
 const ActionProposalView = React.lazy(() =>
@@ -1306,6 +1309,16 @@ export const AppRoutes: React.FC = () => {
             <MainLayout breadcrumbs={breadcrumbs || ['Interview']} noPadding>
               <RouteErrorBoundary>
                 <InterviewHub />
+              </RouteErrorBoundary>
+            </MainLayout>
+          }
+        />
+        <Route
+          path={ROUTES.CONCLUSIONS}
+          element={
+            <MainLayout breadcrumbs={breadcrumbs || ['Wnioski']} noPadding>
+              <RouteErrorBoundary>
+                <ConclusionsHub />
               </RouteErrorBoundary>
             </MainLayout>
           }

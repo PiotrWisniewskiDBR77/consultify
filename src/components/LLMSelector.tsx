@@ -248,7 +248,7 @@ export const LLMSelector: React.FC<LLMSelectorProps> = ({ compact = false }) => 
         onClick={() => setIsOpen(!isOpen)}
         data-testid="llm-tier-selector"
         title={buttonTitle}
-        className={`flex items-center gap-2 ${compact ? 'px-2 py-1' : 'px-3 py-1.5'} rounded-lg border transition-all duration-200 ${
+        className={`inline-flex h-9 items-center gap-2 rounded-full border ${compact ? 'px-2' : 'px-3'} transition-colors duration-150 ${
           isUnavailable
             ? 'bg-red-50/70 dark:bg-red-500/10 border-red-400/50 dark:border-red-500/40 hover:bg-red-100/70 dark:hover:bg-red-500/15'
             : isDegraded

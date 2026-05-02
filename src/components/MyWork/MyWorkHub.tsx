@@ -39,7 +39,6 @@ import {
   List,
   Loader2,
   Lock,
-  Plus,
   Rocket,
   Scale,
   Search,
@@ -488,9 +487,25 @@ const TOPBAR_PILL_BASE =
   'inline-flex items-center gap-2 h-9 rounded-full border px-3 text-xs font-medium transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 const TOPBAR_PILL_INACTIVE = `${TOPBAR_PILL_BASE} bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.06]`;
 
+const CTA_BASE =
+  'inline-flex items-center justify-center h-9 rounded-full border px-4 text-sm font-semibold text-white transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
+const CTA_TONE: Record<
+  'violet' | 'emerald' | 'amber' | 'indigo',
+  string
+> = {
+  violet:
+    'border-violet-500/30 bg-violet-600 hover:bg-violet-700 dark:border-violet-400/20 dark:bg-violet-500/80 dark:hover:bg-violet-500',
+  emerald:
+    'border-emerald-500/30 bg-emerald-600 hover:bg-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/80 dark:hover:bg-emerald-500',
+  amber:
+    'border-amber-500/30 bg-amber-600 hover:bg-amber-700 dark:border-amber-400/20 dark:bg-amber-500/85 dark:hover:bg-amber-500',
+  indigo:
+    'border-indigo-500/30 bg-indigo-600 hover:bg-indigo-700 dark:border-indigo-400/20 dark:bg-indigo-500/80 dark:hover:bg-indigo-500',
+};
+
 // Tab styles for dynamic tabs
 const TAB_BASE = `
-  flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] font-medium
+  inline-flex h-8 items-center gap-2 px-2.5 rounded-full text-[11px] font-medium
   border border-l-2 transition-all duration-200 cursor-pointer
 `;
 
@@ -505,7 +520,6 @@ const TAB_INACTIVE = `
 const TAB_ACTIVE = `
   ${TAB_BASE}
   bg-primary-500/15 border-primary-500 text-primary-400
-  shadow-sm shadow-primary-500/10
 `;
 
 // Type colors for dynamic tabs
@@ -1043,7 +1057,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
   // Update breadcrumbs for the app topbar
   useEffect(() => {
     const TAB_LABELS: Record<ModuleTab, string> = {
-      home: isPolish ? 'Start' : 'Home',
+      home: 'Radar',
       ideas: isPolish ? 'Pomysły' : 'Ideas',
       notebook: isPolish ? 'Notatnik' : 'Notebook',
       inbox: isPolish ? 'Skrzynka' : 'Inbox',
@@ -1052,7 +1066,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       decisions: isPolish ? 'Decyzje' : 'Decisions',
       manager: isPolish ? 'Menedżer' : 'Manager',
     };
-    const base = isPolish ? 'Moja praca' : 'My Work';
+    const base = isPolish ? 'Moja Praca' : 'My Work';
     const tabLabel = TAB_LABELS[activeTab] || activeTab;
     const crumbs = [base, tabLabel];
 
@@ -2005,45 +2019,36 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       case 'calendar':
         return {
           label: isPolish ? 'Dodaj wydarzenie' : 'Add event',
-          icon: <Plus size={16} />,
           onClick: () => setCalendarCreateReqId((v) => v + 1),
-          color: 'from-violet-500 to-purple-600',
+          tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'tasks':
         return {
           label: isPolish ? 'Nowe zadanie' : 'New Task',
-          icon: <Plus size={16} />,
           onClick: handleCreateTask,
-          // v3 identity map: Task = emerald
-          color: 'from-emerald-500 to-emerald-600',
+          tone: 'emerald' as const,
           variant: 'primary' as const,
         };
       case 'ideas':
         return {
           label: isPolish ? 'Nowy pomysł' : 'New Idea',
-          icon: <Plus size={16} />,
           onClick: handleCreateIdea,
-          // v3 identity map: Idea = violet
-          color: 'from-violet-500 to-violet-600',
+          tone: 'violet' as const,
           variant: 'primary' as const,
         };
       case 'decisions':
         return {
           label: isPolish ? 'Nowa decyzja' : 'New Decision',
-          icon: <Plus size={16} />,
           onClick: handleCreateDecision,
-          // v3 identity map: Decision = amber
-          color: 'from-amber-500 to-amber-600',
+          tone: 'amber' as const,
           variant: 'primary' as const,
         };
       case 'notebook':
         return {
           label: isPolish ? 'Nowa notatka' : 'New note',
-          icon: <Plus size={16} />,
           onClick: () => setNotebookCreateReqId((v) => v + 1),
-          // v3 identity map: Notebook page = indigo
-          color: 'from-indigo-500 to-indigo-600',
+          tone: 'indigo' as const,
           variant: 'primary' as const,
         };
       default:
@@ -3460,10 +3465,9 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
             {actionButton && (
               <button
                 onClick={actionButton.onClick}
-                className={`flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r ${actionButton.color} text-white border border-white/20 hover:brightness-110 shadow-lg shadow-black/10 dark:shadow-black/30 transition-all duration-200`}
+                className={`${CTA_BASE} ${CTA_TONE[actionButton.tone]}`}
                 data-testid="mywork-action-button"
               >
-                {actionButton.icon}
                 <span>{actionButton.label}</span>
               </button>
             )}

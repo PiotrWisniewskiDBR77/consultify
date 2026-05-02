@@ -34,6 +34,7 @@ export const ROUTES = {
   EXCELE: '/excele',
   PREZENTACJE_GEN: '/prezentacje',
   INTERVIEW: '/interview',
+  CONCLUSIONS: '/wnioski',
   DISCOVERY_CONSULTANT: '/discovery', // Legacy alias for Interview
 
   // Discovery Tools Module
@@ -217,6 +218,7 @@ export const ROUTES = {
     ACTIONS_ALIAS: '/ai/actions',
     RESEARCH: '/ai/research-sessions',
     ARTIFACTS: '/ai/artifacts',
+    WORK_CANVAS: '/ai/work-canvas',
     CONTEXT: '/ai/context',
     MEMORY_ALIAS: '/ai/memory',
     CONNECTORS: '/ai/connectors',
@@ -348,6 +350,7 @@ export const APP_VIEW_TO_ROUTE: Record<AppView, string> = {
   [AppView.PROJECT_INTELLIGENCE]: ROUTES.PROJECT_INTELLIGENCE,
   [AppView.INTERVIEW]: ROUTES.INTERVIEW,
   [AppView.DISCOVERY_CONSULTANT]: ROUTES.DISCOVERY_CONSULTANT,
+  [AppView.CONCLUSIONS]: ROUTES.CONCLUSIONS,
 
   // Discovery Tools Module
   [AppView.DISCOVERY_TOOLS]: ROUTES.DISCOVERY_TOOLS.ROOT,

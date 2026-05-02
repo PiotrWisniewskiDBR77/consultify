@@ -24,6 +24,7 @@ export enum AppView {
   APP_INTRO = 'APP_INTRO', // In-app orientation screen
   INTERVIEW = 'INTERVIEW', // AI Interview - structured knowledge gathering (was Project Intelligence)
   DISCOVERY_CONSULTANT = 'DISCOVERY_CONSULTANT', // AI Discovery with Canvas (legacy alias for INTERVIEW)
+  CONCLUSIONS = 'CONCLUSIONS', // Wnioski - cross-module conclusions and conversions
 
   // Discovery Tools Module - 31 AI-powered strategic/operational/digital tools
   DISCOVERY_TOOLS = 'DISCOVERY_TOOLS', // Discovery Tools landing page

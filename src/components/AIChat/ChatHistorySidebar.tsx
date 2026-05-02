@@ -25,7 +25,6 @@ import {
   Folder,
   FolderPlus,
   MoreHorizontal,
-  Plus,
   Search,
   Trash2,
   Users,
@@ -687,7 +686,6 @@ export const ChatHistorySidebar: React.FC<ChatHistorySidebarProps> = ({
               data-testid="chat-history-new-chat"
               className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-primary-600 hover:bg-primary-500 text-white rounded-xl font-medium text-sm transition-colors shadow-sm hover:shadow-md"
             >
-              <Plus size={18} />
               {t('aiChat.newChat', 'Nowy czat')}
             </button>
           </div>
