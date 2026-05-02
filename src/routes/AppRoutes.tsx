@@ -1180,7 +1180,17 @@ export const AppRoutes: React.FC = () => {
         {/* V10 Work Canvas - split chat/canvas runtime */}
         <Route
           path="/ai/work-canvas"
-          element={renderInternalToolsShell(['AI', 'Work Canvas'], <WorkCanvasRuntime />)}
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <MainLayout breadcrumbs={breadcrumbs || ['AI', 'Work Canvas']}>
+                <RouteErrorBoundary>
+                  <AnimationWrapper variant="fade">
+                    <WorkCanvasRuntime />
+                  </AnimationWrapper>
+                </RouteErrorBoundary>
+              </MainLayout>
+            </ProtectedRoute>
+          }
         />
 
         {/* Wave 6 - Org, Project, User Context and Controlled Learning */}

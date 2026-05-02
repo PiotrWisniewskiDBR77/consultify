@@ -21,16 +21,21 @@ function csv(value: unknown, fallback: string[]): string[] {
 }
 
 function emailDomain(email?: string | null): string {
-  return String(email || '')
-    .split('@')
-    .pop()
-    ?.trim()
-    .toLowerCase() || '';
+  return (
+    String(email || '')
+      .split('@')
+      .pop()
+      ?.trim()
+      .toLowerCase() || ''
+  );
 }
 
 export function isInternalToolsPath(pathname: string): boolean {
   const path = pathname.replace(/\/+$/, '') || '/';
-  return path === '/ai' || path.startsWith('/ai/') || path === '/ai-os' || path.startsWith('/ai-os/');
+  if (path === '/ai/work-canvas' || path.startsWith('/ai/work-canvas/')) return false;
+  return (
+    path === '/ai' || path.startsWith('/ai/') || path === '/ai-os' || path.startsWith('/ai-os/')
+  );
 }
 
 export function canUseInternalTools(user?: InternalToolsUser | null): boolean {
@@ -53,9 +58,15 @@ export function canUseInternalTools(user?: InternalToolsUser | null): boolean {
   ).map((role) => role.toUpperCase());
 
   const userOrgNames = [user.companyName, user.organizationName]
-    .map((name) => String(name || '').trim().toLowerCase())
+    .map((name) =>
+      String(name || '')
+        .trim()
+        .toLowerCase()
+    )
     .filter(Boolean);
-  const userOrgId = String(user.organizationId || '').trim().toLowerCase();
+  const userOrgId = String(user.organizationId || '')
+    .trim()
+    .toLowerCase();
   const hasAllowedOrgName = userOrgNames.some((name) => allowedOrgNames.includes(name));
   const hasAllowedOrgId = allowedOrgIds.length === 0 || allowedOrgIds.includes(userOrgId);
 
