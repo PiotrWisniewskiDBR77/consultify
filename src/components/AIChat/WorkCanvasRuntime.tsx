@@ -66,7 +66,9 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   });
   const json = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(json?.error?.message || json?.error || `Work Canvas request failed: ${response.status}`);
+    throw new Error(
+      json?.error?.message || json?.error || `Work Canvas request failed: ${response.status}`
+    );
   }
   return json as T;
 }
@@ -105,7 +107,12 @@ function canvasText(draft: Draft): string {
 }
 
 function filenameFor(title: string) {
-  return `${title.trim().replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '') || 'work-canvas'}.txt`;
+  return `${
+    title
+      .trim()
+      .replace(/[^a-z0-9]+/gi, '-')
+      .replace(/^-|-$/g, '') || 'work-canvas'
+  }.txt`;
 }
 
 function WorkCanvasPreview({ draft }: { draft: Draft }) {
@@ -135,7 +142,8 @@ function WorkCanvasPreview({ draft }: { draft: Draft }) {
         <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4">
           <div className="text-sm font-semibold text-indigo-800">{kindLabels[draft.kind]}</div>
           <p className="mt-2 text-sm text-indigo-900">
-            Use the left chat to shape this output. This right side stays the governed canvas preview.
+            Use the left chat to shape this output. This right side stays the governed canvas
+            preview.
           </p>
         </div>
         <RenderedMarkdown text={canvasText(draft)} />
@@ -180,7 +188,9 @@ function ReadBackView({ readBack }: { readBack: Record<string, unknown> }) {
     <dl className="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-white/70 p-3 text-xs">
       {Object.entries(readBack).map(([key, value]) => (
         <React.Fragment key={key}>
-          <dt className="font-semibold capitalize text-slate-500">{key.replace(/([A-Z])/g, ' $1')}</dt>
+          <dt className="font-semibold capitalize text-slate-500">
+            {key.replace(/([A-Z])/g, ' $1')}
+          </dt>
           <dd className="text-slate-800">{String(value)}</dd>
         </React.Fragment>
       ))}
@@ -192,16 +202,19 @@ export function WorkCanvasRuntime() {
   const [params, setParams] = useSearchParams();
   const initialKind = (params.get('kind') || 'document') as CanvasKind;
   const [draft, setDraft] = React.useState<Draft>(() =>
-    createLocalDraft(initialKind, initialKind === 'markdown' ? 'Start a company work note' : 'Start a company work note')
+    createLocalDraft(
+      initialKind,
+      initialKind === 'markdown' ? 'Start a company work note' : 'Start a company work note'
+    )
   );
-  const [proposal, setProposal] = React.useState<Proposal | null>(null);
+  const [proposals, setProposals] = React.useState<Proposal[]>([]);
   const [saveReadBack, setSaveReadBack] = React.useState<Record<string, unknown> | null>(null);
   const [mode, setMode] = React.useState<'preview' | 'source'>('preview');
   const [activeKind, setActiveKind] = React.useState<CanvasKind>(initialKind);
   const [mobileChatOpen, setMobileChatOpen] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [isHydrating, setIsHydrating] = React.useState(false);
   const draftRef = React.useRef(draft);
-  const localOverrideRef = React.useRef(false);
   const draftIdParam = params.get('draftId');
 
   React.useEffect(() => {
@@ -209,21 +222,45 @@ export function WorkCanvasRuntime() {
   }, [draft]);
 
   React.useEffect(() => {
-    const draftId = draftIdParam;
-    if (!draftId) return;
     let cancelled = false;
-    api<{ data: { draft: Draft; proposals: Proposal[] } }>(`/drafts/${encodeURIComponent(draftId)}`)
-      .then((result) => {
-        if (cancelled || localOverrideRef.current) return;
-        setDraft(result.data.draft);
-        setActiveKind(result.data.draft.kind);
-        setProposal(result.data.proposals?.[0] || null);
-      })
-      .catch((caught: Error) => setError(caught.message));
+    const hydrate = async () => {
+      setIsHydrating(true);
+      setError(null);
+      try {
+        const draftId = draftIdParam;
+        if (draftId) {
+          const result = await api<{ data: { draft: Draft; proposals: Proposal[] } }>(
+            `/drafts/${encodeURIComponent(draftId)}`
+          );
+          if (cancelled) return;
+          setDraft(result.data.draft);
+          setActiveKind(result.data.draft.kind);
+          setProposals(result.data.proposals || []);
+          return;
+        }
+        const list = await api<{ success: true; data: Draft[] }>('/drafts');
+        const latest = Array.isArray(list.data) ? list.data[0] : null;
+        if (cancelled || !latest) return;
+        setDraft(latest);
+        setActiveKind(latest.kind);
+        setParams((next) => {
+          next.set('draftId', latest.id);
+          next.set('conversationId', latest.conversationId);
+          next.set('kind', latest.kind);
+          return next;
+        });
+      } catch (caught) {
+        if (cancelled) return;
+        setError(caught instanceof Error ? caught.message : 'Failed to hydrate Work Canvas');
+      } finally {
+        if (!cancelled) setIsHydrating(false);
+      }
+    };
+    void hydrate();
     return () => {
       cancelled = true;
     };
-  }, [draftIdParam]);
+  }, [draftIdParam, setParams]);
 
   const persistDraft = React.useCallback(async () => {
     const current = draftRef.current;
@@ -250,7 +287,6 @@ export function WorkCanvasRuntime() {
   }, [setParams]);
 
   const switchKind = (kind: CanvasKind) => {
-    localOverrideRef.current = true;
     setActiveKind(kind);
     const title = kind === 'research' ? 'Uruchom głębsze badanie i pokaż evidence.' : draft.title;
     setDraft((current) => {
@@ -277,13 +313,14 @@ export function WorkCanvasRuntime() {
         }),
       });
     }
-    setProposal(null);
+    setProposals([]);
     setSaveReadBack(null);
   };
 
   const displayDraft = React.useMemo<Draft>(() => {
     if (activeKind === draft.kind) return draft;
-    const title = activeKind === 'research' ? 'Uruchom głębsze badanie i pokaż evidence.' : draft.title;
+    const title =
+      activeKind === 'research' ? 'Uruchom głębsze badanie i pokaż evidence.' : draft.title;
     return {
       ...draft,
       kind: activeKind,
@@ -297,20 +334,35 @@ export function WorkCanvasRuntime() {
   const propose = async (target: string) => {
     setError(null);
     const persisted = await persistDraft();
-    const result = await api<{ data: Proposal }>(`/drafts/${encodeURIComponent(persisted.id)}/proposals`, {
-      method: 'POST',
-      body: JSON.stringify({ target, payload: { title: `${targetLabels[target] || target}: ${persisted.title}` } }),
-    });
-    setProposal(result.data);
+    const result = await api<{ data: Proposal }>(
+      `/drafts/${encodeURIComponent(persisted.id)}/proposals`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          target,
+          payload: { title: `${targetLabels[target] || target}: ${persisted.title}` },
+        }),
+      }
+    );
+    setProposals((current) => [
+      result.data,
+      ...current.filter((item) => item.id !== result.data.id),
+    ]);
   };
 
-  const decide = async (decision: 'approve' | 'reject') => {
-    if (!proposal) return;
-    const result = await api<{ data: Proposal }>(`/proposals/${encodeURIComponent(proposal.id)}/${decision}`, {
-      method: 'POST',
-      body: JSON.stringify({ reason: decision === 'reject' ? 'Rejected from Work Canvas' : undefined }),
-    });
-    setProposal(result.data);
+  const decide = async (proposalId: string, decision: 'approve' | 'reject') => {
+    const result = await api<{ data: Proposal }>(
+      `/proposals/${encodeURIComponent(proposalId)}/${decision}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          reason: decision === 'reject' ? 'Rejected from Work Canvas' : undefined,
+        }),
+      }
+    );
+    setProposals((current) =>
+      current.map((item) => (item.id === result.data.id ? result.data : item))
+    );
   };
 
   const saveArtifact = async () => {
@@ -386,20 +438,29 @@ export function WorkCanvasRuntime() {
               >
                 Chat
               </button>
-              {(['markdown', 'table', 'checklist', 'research', 'decision', 'document', 'sheet', 'deck'] as CanvasKind[]).map(
-                (kind) => (
-                  <button
-                    key={kind}
-                    type="button"
-                    onClick={() => switchKind(kind)}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                      activeKind === kind ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'
-                    }`}
-                  >
-                    {kind}
-                  </button>
-                )
-              )}
+              {(
+                [
+                  'markdown',
+                  'table',
+                  'checklist',
+                  'research',
+                  'decision',
+                  'document',
+                  'sheet',
+                  'deck',
+                ] as CanvasKind[]
+              ).map((kind) => (
+                <button
+                  key={kind}
+                  type="button"
+                  onClick={() => switchKind(kind)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
+                    activeKind === kind ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'
+                  }`}
+                >
+                  {kind}
+                </button>
+              ))}
               <button
                 type="button"
                 onClick={() => void saveArtifact()}
@@ -433,16 +494,21 @@ export function WorkCanvasRuntime() {
               </span>
             </div>
           </div>
-          {error ? <div className="mt-3 rounded-xl bg-red-50 p-2 text-xs text-red-700">{error}</div> : null}
+          {error ? (
+            <div className="mt-3 rounded-xl bg-red-50 p-2 text-xs text-red-700">{error}</div>
+          ) : null}
         </header>
 
         <main className="min-h-0 flex-1 overflow-auto p-5">
           <div className="grid max-w-7xl gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
             <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              {displayDraft.kind === 'document' || displayDraft.kind === 'sheet' || displayDraft.kind === 'deck' ? (
+              {displayDraft.kind === 'document' ||
+              displayDraft.kind === 'sheet' ||
+              displayDraft.kind === 'deck' ? (
                 <div className="mb-4 rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-3 text-xs text-indigo-800">
-                  This lane now uses the shared split screen: chat on the left, canvas preview on the right.
-                  Native KIMI export remains available through the dedicated lane runtime.
+                  This lane now uses the shared split screen: chat on the left, canvas preview on
+                  the right. Native KIMI export remains available through the dedicated lane
+                  runtime.
                 </div>
               ) : null}
               <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -467,10 +533,18 @@ export function WorkCanvasRuntime() {
                   </button>
                 </div>
                 <div className="flex gap-2">
-                  <button type="button" onClick={() => void copy()} className="rounded-full border px-3 py-1.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => void copy()}
+                    className="rounded-full border px-3 py-1.5 text-xs"
+                  >
                     Copy
                   </button>
-                  <button type="button" onClick={download} className="rounded-full border px-3 py-1.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={download}
+                    className="rounded-full border px-3 py-1.5 text-xs"
+                  >
                     Download
                   </button>
                 </div>
@@ -491,39 +565,50 @@ export function WorkCanvasRuntime() {
                   Lightweight chips stay simple in UI, but every durable conversion is treated as a
                   preview/proposal before it becomes a business mutation.
                 </p>
-                {proposal ? (
-                  <div className="mt-4 rounded-2xl border border-indigo-200 bg-indigo-50 p-3">
-                    <p className="text-sm font-semibold text-indigo-950">{proposal.title}</p>
-                    <p className="mt-1 text-xs leading-5 text-indigo-800">{proposal.summary}</p>
-                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-indigo-700">
-                      Status: {proposal.status}
-                    </p>
-                    {proposal.readBack ? <ReadBackView readBack={proposal.readBack} /> : null}
-                    {proposal.status === 'proposed' ? (
-                      <div className="mt-3 flex flex-wrap gap-2">
+                {proposals.length ? (
+                  <div className="mt-4 space-y-3">
+                    {proposals.map((proposal) => (
+                      <div
+                        key={proposal.id}
+                        className="rounded-2xl border border-indigo-200 bg-indigo-50 p-3"
+                      >
+                        <p className="text-sm font-semibold text-indigo-950">{proposal.title}</p>
+                        <p className="mt-1 text-xs leading-5 text-indigo-800">{proposal.summary}</p>
+                        <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-indigo-700">
+                          Status: {proposal.status}
+                        </p>
+                        {proposal.readBack ? <ReadBackView readBack={proposal.readBack} /> : null}
+                        {proposal.status === 'proposed' ? (
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => void decide(proposal.id, 'approve')}
+                              className="rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white"
+                            >
+                              Approve proposal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => void decide(proposal.id, 'reject')}
+                              className="rounded-full border border-indigo-200 px-3 py-1.5 text-xs font-semibold text-indigo-700"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        ) : null}
                         <button
                           type="button"
-                          onClick={() => void decide('approve')}
-                          className="rounded-full bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white"
+                          onClick={() =>
+                            setProposals((current) =>
+                              current.filter((item) => item.id !== proposal.id)
+                            )
+                          }
+                          className="mt-3 text-xs font-semibold text-indigo-700"
                         >
-                          Approve proposal
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => void decide('reject')}
-                          className="rounded-full border border-indigo-200 px-3 py-1.5 text-xs font-semibold text-indigo-700"
-                        >
-                          Reject
+                          Dismiss proposal
                         </button>
                       </div>
-                    ) : null}
-                    <button
-                      type="button"
-                      onClick={() => setProposal(null)}
-                      className="mt-3 text-xs font-semibold text-indigo-700"
-                    >
-                      Dismiss proposal
-                    </button>
+                    ))}
                   </div>
                 ) : (
                   <p className="mt-4 rounded-2xl border border-dashed border-slate-300 p-3 text-xs text-slate-500">
@@ -540,6 +625,13 @@ export function WorkCanvasRuntime() {
             </aside>
           </div>
         </main>
+        {isHydrating ? (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center bg-white/40">
+            <div className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white">
+              Loading canvas...
+            </div>
+          </div>
+        ) : null}
       </section>
     </div>
   );

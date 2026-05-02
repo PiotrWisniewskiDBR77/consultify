@@ -658,7 +658,21 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
                   (msg as any).metadata?.proposal &&
                   (msg as any).metadata?.type !== 'table_proposal' && (
                     <div className="not-prose mb-3">
-                      <TeresaProposalCard proposal={(msg as any).metadata.proposal} />
+                      <TeresaProposalCard
+                        proposal={(msg as any).metadata.proposal}
+                        onNavigate={(proposal) => {
+                          const targetModule = String(proposal?.targetModule || '').toLowerCase();
+                          if (targetModule.includes('canvas')) {
+                            window.location.href = '/ai/work-canvas';
+                            return;
+                          }
+                          if (targetModule.includes('action')) {
+                            window.location.href = '/ai/action-center';
+                            return;
+                          }
+                          window.location.href = '/chat';
+                        }}
+                      />
                     </div>
                   )}
 
