@@ -171,10 +171,9 @@ function getDefaultPermissionsForUser(
 ): FrameworkPermissions {
   if (!user) return DEFAULT_PERMISSIONS;
 
-  const role = user.role || 'VIEWER';
+  const role = (user.role || 'VIEWER').toUpperCase();
 
-  // Super admin has all permissions
-  if (role === 'SUPER_ADMIN' || role === 'ADMIN') {
+  if (['SUPERADMIN', 'SUPER_ADMIN', 'OWNER', 'ADMIN'].includes(role)) {
     return {
       canCreate: true,
       canEdit: true,

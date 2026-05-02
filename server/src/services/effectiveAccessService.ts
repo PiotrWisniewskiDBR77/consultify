@@ -597,13 +597,19 @@ export async function resolveEffectiveAccess(params: {
   }
 
   if (platformRole === 'SUPERADMIN') {
-    capabilities = dedupe([...capabilities, 'superadmin.access', 'audit.project.view']);
+    capabilities = dedupe([...capabilities, '*', 'superadmin.access', 'audit.project.view']);
   }
   if (applicationRole === 'OWNER') {
-    capabilities = dedupe([...capabilities, 'admin.access', 'admin.project_roles.manage']);
+    capabilities = dedupe([
+      ...capabilities,
+      '*',
+      'admin.access',
+      'admin.people.manage',
+      'admin.project_roles.manage',
+    ]);
   }
   if (applicationRole === 'ADMIN') {
-    capabilities = dedupe([...capabilities, 'admin.access']);
+    capabilities = dedupe([...capabilities, '*', 'admin.access', 'admin.people.manage']);
   }
 
   return {

@@ -55,6 +55,17 @@ export interface InterviewPermissions {
 
 export const useInterviewPermissions = (): InterviewPermissions => {
   const { currentUser, currentOrganization } = useAppStore();
+
+  const orgRole = useMemo(() => {
+    const r = ((currentUser as any)?.role || '').toUpperCase();
+    return r;
+  }, [currentUser]);
+
+  const isPrivilegedOrgRole = useMemo(
+    () => ['SUPERADMIN', 'OWNER', 'ADMIN'].includes(orgRole),
+    [orgRole]
+  );
+
   const explicitPermissions = useMemo(
     () =>
       Array.isArray((currentUser as any)?.permissions)
@@ -131,16 +142,19 @@ export const useInterviewPermissions = (): InterviewPermissions => {
   );
 
   const hasOrgLevelAssignPermission = useMemo(
-    () => hasCapability('interview.assignment.create') || hasCapability('admin.access'),
-    [hasCapability]
+    () => isPrivilegedOrgRole || hasCapability('interview.assignment.create') || hasCapability('admin.access'),
+    [isPrivilegedOrgRole, hasCapability]
   );
 
   const hasProjectLevelAssignPermission = useMemo(
-    () => hasCapability('interview.assignment.create'),
-    [hasCapability]
+    () => isPrivilegedOrgRole || hasCapability('interview.assignment.create'),
+    [isPrivilegedOrgRole, hasCapability]
   );
 
-  const canAssign = useMemo(() => hasCapability('interview.assignment.create'), [hasCapability]);
+  const canAssign = useMemo(
+    () => isPrivilegedOrgRole || hasCapability('interview.assignment.create') || hasCapability('admin.access'),
+    [isPrivilegedOrgRole, hasCapability]
+  );
 
   const hasExplicitInterviewPermission = useCallback(
     (permissionKey: string) =>
@@ -150,38 +164,43 @@ export const useInterviewPermissions = (): InterviewPermissions => {
 
   const canViewInsights = useMemo(
     () =>
+      isPrivilegedOrgRole ||
       hasCapability('interview.insights.view') ||
       hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_VIEW') ||
       canAssign,
-    [hasCapability, hasExplicitInterviewPermission, canAssign]
+    [isPrivilegedOrgRole, hasCapability, hasExplicitInterviewPermission, canAssign]
   );
   const canCreateInsights = useMemo(
     () =>
+      isPrivilegedOrgRole ||
       hasCapability('interview.insights.create') ||
       hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_CREATE') ||
       canAssign,
-    [hasCapability, hasExplicitInterviewPermission, canAssign]
+    [isPrivilegedOrgRole, hasCapability, hasExplicitInterviewPermission, canAssign]
   );
   const canReviewInsights = useMemo(
     () =>
+      isPrivilegedOrgRole ||
       hasCapability('interview.assignment.review') ||
       hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_REVIEW') ||
       hasOrgLevelAssignPermission,
-    [hasCapability, hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
+    [isPrivilegedOrgRole, hasCapability, hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
   );
   const canPublishInsights = useMemo(
     () =>
+      isPrivilegedOrgRole ||
       hasCapability('interview.insights.publish') ||
       hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_PUBLISH') ||
       hasOrgLevelAssignPermission,
-    [hasCapability, hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
+    [isPrivilegedOrgRole, hasCapability, hasExplicitInterviewPermission, hasOrgLevelAssignPermission]
   );
   const canHandoffInsights = useMemo(
     () =>
+      isPrivilegedOrgRole ||
       hasCapability('interview.insights.handoff') ||
       hasExplicitInterviewPermission('INTERVIEW_INSIGHTS_HANDOFF') ||
       canAssign,
-    [hasCapability, hasExplicitInterviewPermission, canAssign]
+    [isPrivilegedOrgRole, hasCapability, hasExplicitInterviewPermission, canAssign]
   );
 
   // Scope przydziałów - komu użytkownik może przydzielać
@@ -217,22 +236,14 @@ export const useInterviewPermissions = (): InterviewPermissions => {
 
   // Sprawdź czy można przydzielić do konkretnego użytkownika
   const canAssignToUser = useCallback(
-    (userId: string, projectId?: string): boolean => {
+    (_userId: string, projectId?: string): boolean => {
       if (!canAssign) return false;
-
-      // Jeśli ma uprawnienia na poziomie organizacji - może wszystkim
-      if (assignmentScope.type === 'organization') {
-        return true;
-      }
-
-      // Jeśli ma uprawnienia na poziomie projektu - sprawdź czy projekt jest w scope
-      if (projectId && assignmentScope.projectIds?.includes(projectId)) {
-        return true;
-      }
-
+      if (isPrivilegedOrgRole) return true;
+      if (assignmentScope.type === 'organization') return true;
+      if (projectId && assignmentScope.projectIds?.includes(projectId)) return true;
       return false;
     },
-    [canAssign, assignmentScope]
+    [canAssign, isPrivilegedOrgRole, assignmentScope]
   );
 
   // Pobierz projekty, do których użytkownik może przydzielać

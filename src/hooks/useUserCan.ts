@@ -28,35 +28,25 @@ type Capability =
   | 'generate_steering_reports'
   | 'view_reports';
 
+const ALL_CAPABILITIES: Capability[] = [
+  'manage_users',
+  'edit_organization_settings',
+  'edit_project_settings',
+  'manage_roadmap',
+  'approve_changes',
+  'manage_stage_gates',
+  'manage_ai_policy',
+  'view_audit_logs',
+  'delete_items',
+  'generate_team_reports',
+  'generate_steering_reports',
+  'view_reports',
+];
+
 const ROLE_CAPABILITIES: Record<string, Capability[]> = {
-  SUPERADMIN: [
-    'manage_users',
-    'edit_organization_settings',
-    'edit_project_settings',
-    'manage_roadmap',
-    'approve_changes',
-    'manage_stage_gates',
-    'manage_ai_policy',
-    'view_audit_logs',
-    'delete_items',
-    'generate_team_reports',
-    'generate_steering_reports',
-    'view_reports',
-  ],
-  ADMIN: [
-    'manage_users',
-    'edit_organization_settings',
-    'edit_project_settings',
-    'manage_roadmap',
-    'approve_changes',
-    'manage_stage_gates',
-    'manage_ai_policy',
-    'view_audit_logs',
-    'delete_items',
-    'generate_team_reports',
-    'generate_steering_reports',
-    'view_reports',
-  ],
+  SUPERADMIN: ALL_CAPABILITIES,
+  OWNER: ALL_CAPABILITIES,
+  ADMIN: ALL_CAPABILITIES,
   MANAGER: [
     'edit_project_settings',
     'manage_roadmap',
@@ -91,7 +81,7 @@ export const useUserCan = (): UseUserCanResult => {
   const currentUser = useAppStore((state) => state.currentUser);
   const permissions = usePermissions();
 
-  const role = (currentUser?.role as string) || 'USER';
+  const role = ((currentUser?.role as string) || 'USER').toUpperCase();
   const capabilities = ROLE_CAPABILITIES[role] || ROLE_CAPABILITIES.USER;
 
   const can = (capability: Capability): boolean => {
