@@ -187,6 +187,9 @@ const Wave5ArtifactRuntimePanel = React.lazy(() =>
     default: m.Wave5ArtifactRuntimePanel,
   }))
 );
+const WorkCanvasRuntime = React.lazy(() =>
+  import('@/components/AIChat/WorkCanvasRuntime').then((m) => ({ default: m.WorkCanvasRuntime }))
+);
 const Wave6ContextLearningPanel = React.lazy(() =>
   import('@/components/AIChat/Wave6ContextLearningPanel').then((m) => ({
     default: m.Wave6ContextLearningPanel,
@@ -1120,6 +1123,7 @@ export const AppRoutes: React.FC = () => {
             </MainLayout>
           }
         />
+        <Route path="/decisions" element={<Navigate to="/my-work/decisions" replace />} />
 
         {/* AI Chat - Full Screen Chat View */}
         <Route
@@ -1171,6 +1175,12 @@ export const AppRoutes: React.FC = () => {
         <Route
           path={ROUTES.AI_OS.ARTIFACTS}
           element={renderInternalToolsShell(['AI', 'Artifacts'], <Wave5ArtifactRuntimePanel />)}
+        />
+
+        {/* V10 Work Canvas - split chat/canvas runtime */}
+        <Route
+          path="/ai/work-canvas"
+          element={renderInternalToolsShell(['AI', 'Work Canvas'], <WorkCanvasRuntime />)}
         />
 
         {/* Wave 6 - Org, Project, User Context and Controlled Learning */}

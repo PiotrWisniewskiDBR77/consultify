@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 
 import { AccessBlockedModal } from '../components/access/AccessBlockedModal';
+import { ForbiddenAccessBanner } from '../components/access/ForbiddenAccessBanner';
 import { UnifiedChatPanel } from '../components/AIChat/UnifiedChatPanel';
 import { AIFreezeBanner } from '../components/AIFreezeBanner';
 import { DemoSessionManager } from '../components/demo/DemoSessionManager';
@@ -190,6 +191,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
       {/* Global access/paywall modal */}
       <AccessBlockedModal />
+      <ForbiddenAccessBanner />
 
       {/* Demo Session Manager - Handles banner, tour, prompts, exit intent */}
       <DemoSessionManager />

@@ -163,6 +163,17 @@ export const handleResponse = async <T = unknown>(
   err.url = res.url;
   err.data = data;
   if (parsed.kind === 'text') err.bodyText = parsed.text;
+  if (res.status === 403 && typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('api:forbidden', {
+        detail: {
+          status: res.status,
+          url: res.url,
+          message,
+        },
+      })
+    );
+  }
   throw err;
 };
 

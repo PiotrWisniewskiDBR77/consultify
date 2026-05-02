@@ -476,7 +476,8 @@ router.get(
         try {
           const orgMembership = await dbGet<{ role: string }>(
             `SELECT role FROM organization_members
-             WHERE user_id = ? AND organization_id = ? AND status = 'ACTIVE'`,
+             WHERE user_id = ? AND organization_id = ?
+               AND UPPER(COALESCE(status, '')) = 'ACTIVE'`,
             [user.id, user.organization_id]
           );
           if (orgMembership?.role) {
@@ -656,7 +657,7 @@ router.post(
         [userId, organizationId]
       );
 
-      if (!membership || membership.status !== 'ACTIVE') {
+      if (!membership || String(membership.status || '').trim().toUpperCase() !== 'ACTIVE') {
         return res.status(403).json({
           error: 'You do not have access to this organization',
           code: 'ORG_ACCESS_DENIED',
