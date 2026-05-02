@@ -37,6 +37,12 @@ describe('Sidebar menuConfig (L2)', () => {
     expect(menu.some((item) => item.id === 'INTERNAL_TOOLS')).toBe(false);
   });
 
+  it('does not expose Wnioski as a top-level module', () => {
+    const menu = getMenuStructure(t);
+    expect(menu.some((item) => item.id === 'CONCLUSIONS')).toBe(false);
+    expect(menu.some((item) => item.label === 'Wnioski')).toBe(false);
+  });
+
   it('exposes AI OS manual-test entrypoints as an internal tools footer item', () => {
     const aiOs = getInternalToolsMenuItem(t);
 

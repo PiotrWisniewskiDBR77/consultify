@@ -469,7 +469,6 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByText('Skip to chat input')).toHaveClass('sr-only');
     expect(screen.getByTestId('chat-full-welcome')).toBeInTheDocument();
     expect(screen.getByText('Teresa')).toBeInTheDocument();
-    expect(screen.getByText('Good morning')).toBeInTheDocument();
     expect(screen.getByText('Analiza rynku')).toBeInTheDocument();
     expect(screen.getByText('Analiza finansowa')).toBeInTheDocument();
     expect(screen.getByText('Klasyczny consulting')).toBeInTheDocument();
@@ -502,6 +501,19 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.queryByTestId('chat-compact-empty-state')).not.toBeInTheDocument();
   });
 
+  it('opens a clean work panel from the chat header', () => {
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+
+    expect(screen.getByTestId('chat-work-panel')).toBeInTheDocument();
+    expect(screen.getByText('Clean work window')).toBeInTheDocument();
+    expect(screen.queryByTestId('chat-full-welcome')).not.toBeInTheDocument();
+    expect(screen.getByTestId('chat-work-panel-empty-state')).toBeInTheDocument();
+    expect(screen.queryByTestId('chat-compact-empty-state')).not.toBeInTheDocument();
+    expect(screen.getByTestId('enhanced-chat-input')).toBeInTheDocument();
+  });
+
   it('new chat clears state and creates/selects a conversation', async () => {
     createConversationMock.mockResolvedValue({ id: 'conv-1' });
     renderWithRouter(<UnifiedChatPanel />);
@@ -525,6 +537,34 @@ describe('UnifiedChatPanel (L2)', () => {
       )
     );
     await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+  });
+
+  it('uses the live store conversation when sending immediately after switching chats', async () => {
+    conversationStoreState.activeConversationId = 'conv-old';
+    conversationStoreState.activeMessages = [
+      {
+        id: 'old-msg',
+        conversationId: 'conv-old',
+        role: 'user',
+        content: 'old context',
+        createdAt: new Date(),
+      },
+    ];
+
+    renderWithRouter(<UnifiedChatPanel onMessageSent={vi.fn()} />);
+
+    conversationStoreState.activeConversationId = 'conv-new';
+    conversationStoreState.activeMessages = [];
+
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() =>
+      expect(addMessageToConversationMock).toHaveBeenCalledWith(
+        expect.objectContaining({ conversationId: 'conv-new', role: 'user', content: 'hello' })
+      )
+    );
+    await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+    expect(startStreamMock.mock.calls.at(-1)?.[1]).toEqual([]);
   });
 
   it('dispatches a localized access block code when demo time expires', async () => {

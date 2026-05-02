@@ -27,6 +27,11 @@ describe('routeConfig helpers', () => {
     expect(getAppViewFromPath('/chat/abc')).toBe(AppView.AI_CHAT);
   });
 
+  it('does not expose the removed Wnioski route', () => {
+    expect('CONCLUSIONS' in ROUTES).toBe(false);
+    expect(getAppViewFromPath('/wnioski')).toBeNull();
+  });
+
   it('maps AI OS manual-test modules to mounted runtime panels', () => {
     expect(getRouteFromAppView(AppView.AI_OS_HOME)).toBe('/ai');
     expect(getRouteFromAppView(AppView.AI_OS_ACTION_CENTER)).toBe('/ai/action-center');

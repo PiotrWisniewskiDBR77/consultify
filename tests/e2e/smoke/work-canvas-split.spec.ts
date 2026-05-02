@@ -1,6 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { collectPageSignals, expectNoRawInternals, loginAsOwner } from './work-canvas-helpers';
+import {
+  collectPageSignals,
+  createConversationWithMessage,
+  createWorkCanvasDraft,
+  expectNoRawInternals,
+  loginAsOwner,
+} from './work-canvas-helpers';
 
 const kindLabels = [
   { kind: 'document', label: 'Document canvas' },
@@ -47,6 +53,43 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
     });
   }
 
+  test('deep-linked canvas uses the existing conversation in the left chat pane', async ({
+    page,
+  }, testInfo) => {
+    const signals = collectPageSignals(page);
+    const token = await loginAsOwner(page);
+    const conversation = await createConversationWithMessage(page.request, token, {
+      title: 'Existing chat for Work Canvas',
+      content: 'Existing chat message visible in the Work Canvas left pane.',
+    });
+    const draft = await createWorkCanvasDraft(page.request, token, {
+      conversationId: conversation.id,
+      kind: 'document',
+      title: 'Canvas linked to existing chat',
+      content:
+        '# Canvas linked to existing chat\n\nThe right canvas must stay connected to the existing chat.',
+    });
+
+    await page.goto(`/ai/work-canvas?draftId=${draft.id}&conversationId=${conversation.id}`, {
+      waitUntil: 'domcontentloaded',
+      timeout: 60000,
+    });
+
+    await expect(page.getByText('Consultify Work Canvas')).toBeVisible();
+    await expect(page.getByText('Canvas linked to existing chat').first()).toBeVisible();
+    await expect(page.getByText(conversation.content)).toBeVisible();
+    await expect(page.getByText('Governance preview')).toBeVisible();
+    expect(page.url()).toContain(`conversationId=${conversation.id}`);
+
+    await testInfo.attach('work-canvas-existing-chat-link', {
+      body: await page.screenshot({ fullPage: true }),
+      contentType: 'image/png',
+    });
+
+    await expectNoRawInternals(page);
+    signals.assertClean();
+  });
+
   test('mobile can open chat overlay without losing canvas', async ({ page }, testInfo) => {
     const signals = collectPageSignals(page);
     await loginAsOwner(page);
@@ -60,7 +103,8 @@ test.describe('V10 Work Canvas split-screen smoke', () => {
     await expect(page.getByText('Consultify Work Canvas')).toBeVisible();
     await expect(page.getByText('Document canvas')).toBeVisible();
     await page.locator('main').getByRole('button', { name: 'Chat' }).click();
-    await expect(page.getByText(/AI sees: Work Canvas|Teresa/).first()).toBeVisible();
+    await expect(page.getByText('Work Canvas chat')).toBeVisible();
+    await expect(page.getByRole('button', { name: /AI sees: .*Work Canvas/ })).toBeVisible();
 
     await testInfo.attach('work-canvas-mobile-chat-overlay', {
       body: await page.screenshot({ fullPage: true }),

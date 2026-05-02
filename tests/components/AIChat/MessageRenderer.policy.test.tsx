@@ -211,6 +211,7 @@ describe('MessageRenderer policy UX (P34-B)', () => {
       timestamp: new Date(),
       isStreaming: false,
       metadata: {
+        deepThinking: { kind: 'report' },
         trustBundle: {
           version: 'TrustBundleV1',
           answerId: 'answer-1',
@@ -258,6 +259,7 @@ describe('MessageRenderer policy UX (P34-B)', () => {
         },
       ],
       metadata: {
+        deepThinking: { kind: 'report' },
         policyNotices: [
           {
             type: 'policy_notice',
@@ -271,7 +273,32 @@ describe('MessageRenderer policy UX (P34-B)', () => {
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
     expect(screen.queryByText('No sources found')).not.toBeInTheDocument();
-    expect(screen.getByText('Sources')).toBeInTheDocument();
+    expect(screen.getByText('Deep search sources')).toBeInTheDocument();
+  });
+
+  it('keeps source cards hidden for regular chat answers even when citations are attached', () => {
+    const msg = {
+      id: 'm-ai-regular-with-sources',
+      role: 'ai',
+      content: 'A regular cited answer [1]',
+      timestamp: new Date(),
+      isStreaming: false,
+      citations: [
+        {
+          id: 'c1',
+          title: 'Regular chat source',
+          type: 'external',
+          reference: 'example.com',
+          link: 'https://example.com',
+        },
+      ],
+      metadata: {},
+    } as any;
+
+    render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
+
+    expect(screen.queryByText('Deep search sources')).not.toBeInTheDocument();
+    expect(screen.queryByText('Regular chat source')).not.toBeInTheDocument();
   });
 
   it('sanitizes internal source/debug markers from user-visible AI text', () => {
@@ -338,11 +365,12 @@ describe('MessageRenderer policy UX (P34-B)', () => {
           excerpt: 'Repeated risk pattern [DT]',
         },
       ],
-      metadata: {},
+      metadata: { deepThinking: { kind: 'report' } },
     } as any;
 
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
+    fireEvent.click(screen.getByText('Deep search sources'));
     expect(screen.getByText('Decision memory')).toBeInTheDocument();
     expect(screen.getByText('prior decision log')).toBeInTheDocument();
     expect(screen.getByText('"Repeated risk pattern"')).toBeInTheDocument();
@@ -365,11 +393,12 @@ describe('MessageRenderer policy UX (P34-B)', () => {
           excerpt: 'Relevant source summary',
         },
       ],
-      metadata: {},
+      metadata: { deepThinking: { kind: 'report' } },
     } as any;
 
     render(<MessageRenderer {...buildProps({ msg, displayMessages: [msg] })} />);
 
+    fireEvent.click(screen.getByText('Deep search sources'));
     expect(screen.getAllByText('External source').length).toBeGreaterThan(0);
     expect(screen.queryByText(/\brag_2\b/)).not.toBeInTheDocument();
   });

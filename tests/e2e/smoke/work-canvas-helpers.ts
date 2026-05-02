@@ -51,13 +51,21 @@ export async function createWorkCanvasDraft(
   }>
 ) {
   const title = input?.title || 'Zrób z tej rozmowy krótką notatkę po prawej stronie.';
+  const conversationId =
+    input?.conversationId ||
+    (
+      await createConversationWithMessage(request, token, {
+        title: `Work Canvas source: ${title}`,
+        content: 'Source conversation for a Work Canvas draft.',
+      })
+    ).id;
   const response = await request.post(`${API_BASE_URL}/api/work-canvas/drafts`, {
     headers: {
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
     data: {
-      conversationId: input?.conversationId || `pw-${Date.now()}`,
+      conversationId,
       kind: input?.kind || 'markdown',
       title,
       content:
@@ -73,6 +81,48 @@ export async function createWorkCanvasDraft(
   const json = await response.json();
   expect(json?.data?.id).toBeTruthy();
   return json.data as { id: string; conversationId: string; title: string };
+}
+
+export async function createConversationWithMessage(
+  request: APIRequestContext,
+  token: string,
+  input?: Partial<{
+    title: string;
+    content: string;
+  }>
+) {
+  const title = input?.title || 'Work Canvas linked conversation';
+  const content =
+    input?.content || 'This message proves the left Work Canvas pane uses the existing chat.';
+  const conversationResponse = await request.post(`${API_BASE_URL}/api/conversations`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    data: { title, language: 'en' },
+  });
+
+  expect(conversationResponse.ok()).toBe(true);
+  const conversation = await conversationResponse.json();
+  expect(conversation?.id).toBeTruthy();
+
+  const messageResponse = await request.post(
+    `${API_BASE_URL}/api/conversations/${conversation.id}/messages`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      data: {
+        role: 'user',
+        content,
+        messageType: 'text',
+      },
+    }
+  );
+
+  expect(messageResponse.ok()).toBe(true);
+  return { id: String(conversation.id), title, content };
 }
 
 export function collectPageSignals(page: Page) {
