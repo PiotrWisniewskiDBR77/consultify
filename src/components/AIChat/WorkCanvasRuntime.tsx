@@ -1,6 +1,11 @@
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { AppView } from '@/types';
+import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
+
+import { UnifiedChatPanel } from './UnifiedChatPanel';
+
 type CanvasKind =
   | 'markdown'
   | 'table'
@@ -211,11 +216,14 @@ export function WorkCanvasRuntime() {
   const [saveReadBack, setSaveReadBack] = React.useState<Record<string, unknown> | null>(null);
   const [mode, setMode] = React.useState<'preview' | 'source'>('preview');
   const [activeKind, setActiveKind] = React.useState<CanvasKind>(initialKind);
-  const [mobileChatOpen, setMobileChatOpen] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isHydrating, setIsHydrating] = React.useState(false);
   const draftRef = React.useRef(draft);
   const draftIdParam = params.get('draftId');
+  const workspaceContext = React.useMemo(
+    () => createWorkspaceContext(AppView.WORDY, getDefaultWorkspaceType(AppView.WORDY), {}),
+    []
+  );
 
   React.useEffect(() => {
     draftRef.current = draft;
@@ -392,31 +400,15 @@ export function WorkCanvasRuntime() {
 
   return (
     <div className="relative flex h-[calc(100vh-6rem)] min-h-[720px] overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
-      <aside
-        className={`${
-          mobileChatOpen ? 'fixed inset-4 z-40 flex' : 'hidden'
-        } w-[360px] shrink-0 flex-col border-r border-slate-200 bg-white p-4 shadow-sm lg:relative lg:inset-auto lg:z-auto lg:flex`}
-      >
-        <button
-          type="button"
-          className="absolute right-3 top-3 rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold text-white lg:hidden"
-          onClick={() => setMobileChatOpen(false)}
-        >
-          Close chat
-        </button>
-        <button className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50 p-3 text-left text-xs font-semibold text-indigo-800">
-          AI sees: Work Canvas: {displayDraft.title}
-        </button>
-        <div>
-          <div className="text-lg font-semibold text-slate-950">Teresa</div>
-          <p className="mt-1 text-sm text-slate-500">
-            Ask Teresa from this side panel when you need quick context or next-step help.
-          </p>
-        </div>
-        <div className="mt-auto rounded-2xl border border-slate-200 bg-slate-50 p-3">
-          <textarea
-            className="h-24 w-full resize-none bg-transparent text-sm outline-none"
-            placeholder={`How can Teresa help with ${displayDraft.title}?`}
+      <aside className="w-full shrink-0 border-r border-slate-200 bg-white lg:w-[420px]">
+        <div className="h-[45vh] min-h-[340px] lg:h-full">
+          <UnifiedChatPanel
+            mode="split"
+            workspaceContext={workspaceContext}
+            showModeToggle={false}
+            showHistoryTrigger={true}
+            showFocusMode={false}
+            systemPrompt={`You are Teresa assisting with Work Canvas draft titled: ${displayDraft.title}`}
           />
         </div>
       </aside>
@@ -431,13 +423,6 @@ export function WorkCanvasRuntime() {
               <h1 className="mt-1 text-lg font-semibold text-slate-950">{displayDraft.title}</h1>
             </div>
             <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold lg:hidden"
-                onClick={() => setMobileChatOpen(true)}
-              >
-                Chat
-              </button>
               {(
                 [
                   'markdown',
