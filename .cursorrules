@@ -83,7 +83,7 @@ Before modifying any UI components:
    - `src/components/shared/NModeSections/` — CommentsCanvas, ActivityLogCanvas, AttachmentsLinksCanvas, RiskCanvas, GovernanceCanvas
    - `src/components/shared/NModeBlocks/` — Callout, ToggleBlock, EmptyStateInline, ChecklistBlock, InlineTable, EmbeddedView
    - `src/components/shared/NModeLayout/` — NModeShell, NModeHeader, NModeLeftNav, NModeCanvas, NModePropertiesStrip
-   - `src/components/shared/RowActionsMenu.tsx` — canonical table row `⋮` action menu with sections: Context → Open → AI → Convert To → Create Output → Manage → Danger
+   - `src/components/shared/RowActionsMenu.tsx` — canonical table row `⋮` action menu with sections: Open → Tool Shortcut → Context → AI → Convert To → Create Output → Manage → Danger
 
 3. **Follow naming conventions**: `{Section}Canvas.tsx` for shared sections
 4. **Always support i18n**: PL + EN via `useTranslation`
@@ -103,6 +103,28 @@ Table chips and badges:
 - Metadata chips (tags/types/sources/tools) must stay neutral and readable in light/dark mode.
 - Do not use primary/violet backgrounds as decorative metadata pills.
 - Do not create multiple local color maps for the same chip semantics inside one module.
+
+App Table color grid:
+
+- New and migrated App Tables MUST use the enforced `Accepted App Table Color Grid` from `docs/ui-standards/00-foundation/color-system.md`.
+- Do not create local table surface, separator, selected/focused/checked row, text, or chip color grids.
+- Selected/focused rows must be immediately visible: brand `primary/violet-blue` tint, `4px` left accent, and visible inset ring.
+- Do not use random cyan/amber/gray row-state colors for App Table selected/focused/checked states.
+
+App Table column mechanics:
+
+- New and migrated App Tables MUST follow the approved `My Work > Pomysły` golden reference in `docs/ui-standards/03-modules/app-table-standard.md`.
+- New operational record lists in `My Work`, `Wywiad`, queues, sessions, templates, insights and initiatives MUST start from the App Table canon; do not create local card-list/table hybrids unless a compliant App Table view already exists.
+- Column resize MUST behave like Excel boundaries: dragging a separator moves that separator; one adjacent column grows by the same amount the other adjacent column shrinks.
+- Do not implement table resize as changing only one column and letting the browser recalculate the rest.
+- App Tables must keep stable full-width layout (`table-fixed` or equivalent fixed column contract).
+- `Title` / primary object must have a real width contract and a boundary resizer before the first metadata column.
+- Metadata headers/cells are centered; `Title` remains left-aligned.
+- Simple table column settings open as a compact anchored popover under the settings icon, not a modal.
+- Do not show redundant `Actions/Akcje` text in the actions header when the table settings icon owns that corner.
+- Row description/justification is visible by default under the primary title, uses the same neutral text family with lighter opacity/weight, and must not appear only on hover.
+- Table settings popovers include a persisted `Pokaż opis / uzasadnienie` / `Show row description` checkbox at the bottom instead of a simple reset button in lightweight tables.
+- If row descriptions are hidden, keep calm row padding; do not collapse rows into cramped spreadsheet density.
 
 Detailed rules are in `.cursor/rules/nmode-shared-components.mdc` and `.cursor/rules/ui-standards-documentation.mdc`.
 

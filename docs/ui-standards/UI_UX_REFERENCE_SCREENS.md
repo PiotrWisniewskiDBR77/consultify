@@ -18,40 +18,52 @@ Reference screen nie oznacza, że ekran jest już idealny. Oznacza, że:
 
 ## 2. Statusy referencji
 
-| Status | Znaczenie |
-|---|---|
-| `CANDIDATE` | Kandydat do oceny. |
-| `REFINE_REFERENCE` | Może być wzorcem po drobnych korektach i dokumentacji. |
-| `APPROVED_REFERENCE` | Zatwierdzony wzorzec do kopiowania. |
+| Status                  | Znaczenie                                                 |
+| ----------------------- | --------------------------------------------------------- |
+| `CANDIDATE`             | Kandydat do oceny.                                        |
+| `REFINE_REFERENCE`      | Może być wzorcem po drobnych korektach i dokumentacji.    |
+| `APPROVED_REFERENCE`    | Zatwierdzony wzorzec do kopiowania.                       |
 | `REJECTED_AS_REFERENCE` | Nie używać jako wzorca, tylko jako legacy/migration debt. |
 
 ## 3. Kandydaci główni
 
 ### 3.1 App Table + Preview
 
-Status: `REFINE_REFERENCE`
+Status: `APPROVED_REFERENCE` for table anatomy, row color grid, metadata alignment, column resize, table view settings and action-column chrome. Preview-pane parity remains separately reviewed per module.
 
 Primary candidate:
+
+- `src/components/MyWork/IdeasTableContent.tsx`
+- `src/components/MyWork/MyIdeasListContent.tsx`
+- visual references:
+  - `docs/ui-standards/assets/app-table-golden-reference-dark-2026-05-02.png`
+  - `docs/ui-standards/assets/app-table-golden-reference-light-2026-05-02.png`
+
+Secondary/legacy candidates:
 
 - `src/components/MyWork/DecisionsPanelContent.tsx`
 - `src/components/MyWork/DecisionPreviewPanel.tsx`
 
 Dlaczego:
 
-- używa table + preview flow,
-- ma preview state i quick actions,
-- korzysta z `TableWithPreviewLayout`,
-- korzysta z `ResizableTable`, `ColumnResizer`, `FilterDropdown`,
-- jest najlepszym punktem startowym dla App Table + Preview.
+- `My Work > Pomysły` jest zatwierdzonym wzorcem dla App Table visual anatomy i column mechanics,
+- ma zaakceptowany dark/light contrast,
+- ma zaakceptowaną siatkę kolorów row states i chips,
+- ma stabilny `table-fixed`/fixed column contract,
+- ma excelowy boundary resize: jedna kolumna rośnie o tyle, o ile sąsiednia maleje,
+- ma `Title` jako realną kolumnę z resizerem na granicy `Title -> metadata`,
+- ma metadata headers/cells centrowane,
+- ma icon-only prawy header corner dla ustawień widoku,
+- ma mały anchored table settings popover zamiast modala,
+- korzysta z `TableWithPreviewLayout`, `RowActionsMenu`, `ColumnResizer`, `FilterDropdown`.
 
 Warunki zatwierdzenia:
 
-- sklasyfikować wszystkie raw `<button>`: low-level table/tab control vs one-off feature button,
-- potwierdzić action column/kebab pattern,
-- potwierdzić preview default OFF,
-- potwierdzić preview action parity,
-- potwierdzić read-back po approve/reject/snooze/remind,
-- dopisać ewentualne wyjątki do standardu.
+- dla każdej kolejnej tabeli porównać dark/light z referencją,
+- zachować excelowy boundary resize i stabilną szerokość tabeli,
+- nie wracać do modalnego wyboru prostych kolumn,
+- nie pokazywać tekstu `Actions/Akcje` w headerze, jeśli prawy corner ma ikonę ustawień widoku,
+- preview default/parity i mutacje nadal zatwierdzać per moduł.
 
 ### 3.2 Large Module Hub / Multi-tab List
 

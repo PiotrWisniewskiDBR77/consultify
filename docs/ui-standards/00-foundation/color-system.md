@@ -237,6 +237,68 @@ MUST NOT:
 - nie robimy tagów kolorowych bez semantyki,
 - nie używamy wielu lokalnych map kolorów dla tej samej encji w jednym module.
 
+### 2.6b Accepted App Table Color Grid
+
+Status: `APPROVED / ENFORCED`
+
+Ta siatka kolorów została zaakceptowana jako docelowy standard dla referencyjnych tabel App Table. Stosuj ją przy nowych tabelach i przy migracji istniejących tabel po zakończeniu odbioru pozostałych aspektów UI/UX.
+
+Kierunek: ClickUp High Contrast + DBR77 Tech Sexy 2027. Stan ma być widoczny natychmiast, ale nadal premium: mocny kontrast, brandowy akcent, bez neonów i bez szarych legacy belek.
+
+#### Table Surface
+
+| Element | Light mode | Dark mode |
+|---|---|---|
+| Table scroll surface | `bg-slate-50/40` | `dark:bg-navy-950` |
+| Default row | `bg-white` | `dark:bg-navy-950` |
+| Row hover | `hover:bg-slate-100/80` | `dark:hover:bg-white/[0.04]` |
+| Header | `bg-slate-100/95` + `shadow-[0_1px_0_rgba(15,23,42,0.08)]` | `dark:bg-navy-900` + `dark:shadow-[0_1px_0_rgba(255,255,255,0.10)]` |
+| Row separator | `border-slate-200/95` | `dark:border-white/[0.085]` |
+| Header separator | `border-slate-300/70` | `dark:border-white/[0.10]` |
+
+#### Row State Grid
+
+| State | Light mode | Dark mode | Accent |
+|---|---|---|---|
+| Selected / preview | `bg-primary-200/70` + `shadow-[inset_0_0_0_1px_rgba(124,58,237,0.28),inset_4px_0_0_rgba(124,58,237,0.95)]` | `dark:bg-primary-500/[0.20]` + `dark:shadow-[inset_0_0_0_1px_rgba(196,181,253,0.30),inset_4px_0_0_rgba(196,181,253,0.95)]` | `bg-primary-600 dark:bg-primary-300` |
+| Focused row | `bg-primary-100/95` + `shadow-[inset_0_0_0_1px_rgba(124,58,237,0.24),inset_4px_0_0_rgba(124,58,237,0.82)]` | `dark:bg-primary-500/[0.16]` + `dark:shadow-[inset_0_0_0_1px_rgba(196,181,253,0.24),inset_4px_0_0_rgba(196,181,253,0.80)]` | `bg-primary-500 dark:bg-primary-300` |
+| Checked / multi-select | `bg-primary-100/85` + `shadow-[inset_0_0_0_1px_rgba(124,58,237,0.18),inset_4px_0_0_rgba(124,58,237,0.75)]` | `dark:bg-primary-500/[0.13]` + `dark:shadow-[inset_0_0_0_1px_rgba(196,181,253,0.20),inset_4px_0_0_rgba(196,181,253,0.70)]` | `bg-primary-500 dark:bg-primary-300` |
+
+MUST:
+
+- Selected/focused row uses `primary/violet-blue`, never random cyan/amber/gray.
+- The left accent is `4px` for reference App Tables.
+- A state that is only technically present but invisible on a screenshot is not accepted.
+- Do not replace this grid with local module colors. If a table needs a new state, document it here first.
+
+#### Table Text
+
+| Element | Light mode | Dark mode |
+|---|---|---|
+| Row primary title | `text-slate-950` | `dark:text-slate-100` |
+| Row secondary text | `text-slate-600` | `dark:text-slate-400` |
+| Row secondary hover | `group-hover:text-slate-700` | `dark:group-hover:text-slate-300` |
+| Header label | `text-slate-600` | `dark:text-slate-300` |
+| Date / quiet metadata | `text-slate-600` | `dark:text-slate-400` |
+
+#### Table Chip Grid
+
+| Chip type | Light mode | Dark mode |
+|---|---|---|
+| Tool / neutral chip | `border-slate-300/80 bg-slate-100 text-slate-800` | `dark:border-white/[0.11] dark:bg-white/[0.075] dark:text-slate-100` |
+| Meta tag chip | `border-slate-300/80 bg-slate-100 text-slate-800` | `dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200` |
+| Amber status | `border-amber-300/80 bg-amber-50 text-amber-900` | `dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100` |
+| Emerald status | `border-emerald-300/80 bg-emerald-50 text-emerald-900` | `dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100` |
+| Blue status | `border-blue-300/80 bg-blue-50 text-blue-900` | `dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100` |
+| Violet status | `border-violet-300/80 bg-violet-50 text-violet-900` | `dark:border-violet-300/[0.25] dark:bg-violet-300/[0.12] dark:text-violet-100` |
+| Rose status | `border-rose-300/80 bg-rose-50 text-rose-900` | `dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100` |
+
+MUST NOT:
+
+- Do not use unstable shorthand opacity when it is not generated reliably by Tailwind. Prefer explicit arbitrary opacity like `dark:bg-primary-500/[0.20]`.
+- Do not use bright full-row fills for non-selected states.
+- Do not use `primary/violet` as decorative metadata chip background.
+
 ### 2.7 Przykłady poprawnego użycia
 
 ```jsx

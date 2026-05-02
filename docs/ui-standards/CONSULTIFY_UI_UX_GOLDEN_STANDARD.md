@@ -313,12 +313,24 @@ Not allowed:
 
 App tables are the default for dense operational lists.
 
+Approved visual reference:
+
+- `My Work > Pomysły` App Table, accepted 2026-05-02.
+- Dark reference: `docs/ui-standards/assets/app-table-golden-reference-dark-2026-05-02.png`.
+- Light reference: `docs/ui-standards/assets/app-table-golden-reference-light-2026-05-02.png`.
+
+Enforcement scope:
+
+- every new operational record list/table in `My Work`, `Wywiad`, queues, sessions, templates, insights and initiatives starts from this App Table canon,
+- do not create local card-list/table hybrids for operational records unless a compliant App Table view already exists,
+- module-local UI may define data semantics, but not its own table anatomy, row chrome, menu settings, checkbox behavior or metadata alignment.
+
 Rules:
 
 - use almost full available width,
 - stable row height,
 - readable columns,
-- resizable columns,
+- resizable columns with intuitive drag direction,
 - header filters where useful,
 - vertical kebab `⋮` as the row action menu,
 - table settings / columns control exists where columns are configurable,
@@ -369,10 +381,46 @@ Table chips and badges:
 - status and priority chips may use color only as a compact signal with readable text,
 - the same module must not define multiple local color maps for the same chip meaning.
 
+Accepted App Table color grid:
+
+- all App Tables must use the approved color grid from `00-foundation/color-system.md`,
+- selected, focused and checked rows use brand-aligned `primary/violet-blue` tint, a `4px` left accent and visible inset ring,
+- light mode table contrast must be ClickUp/Linear-level readable, not washed out,
+- dark mode tables must have real but thin separators and calm high-contrast chips,
+- local feature screens must not define their own table surface, row-state or chip color grid.
+
+App Table row anatomy:
+
+- each row is a compact operational record, not an Excel-like grid line,
+- title is the primary object; description is short contextual support,
+- description/justification is visible by default as the second line under the title,
+- secondary row text uses the same neutral color family as the title with lighter weight/opacity, not a separate accent color,
+- secondary text must not appear only on hover and hover must not change row height,
+- the table settings popover exposes a persisted `Show row description` / `Pokaż opis / uzasadnienie` checkbox at the bottom; disabling it hides the second line while keeping calm row padding,
+- metadata columns are vertically centered and scan like signals,
+- overflow counts use pills/counters, not loose text,
+- row actions are quiet utility chrome until hover/open.
+
+Column behavior:
+
+- App Tables fill the available width; resizing one column must not make the whole table collapse or stop filling the screen,
+- the primary/title column has a real width contract and a right-edge resizer, so the boundary between `Title` and the first metadata column is controllable,
+- metadata headers are centered inside their columns; the title header remains left-aligned,
+- App Tables prefer content-aware defaults: metadata columns start wide enough for common chips, dates and tools, and chip cells do not wrap unless unavoidable,
+- horizontal scroll is acceptable when it preserves scan quality; forced two-line metadata is not a premium default,
+- resize handles must behave like Excel boundaries: dragging a separator moves that separator, so one adjacent column grows by the same amount the other adjacent column shrinks,
+- resize handles are small boundary grips, not wide invisible overlays; the user must know exactly which separator is being dragged,
+- total table width remains stable during boundary resize; do not implement resize as “change one column and let the browser recalculate the rest,”
+- configurable tables expose a `Settings2` table view settings button in the right header/action corner,
+- simple column visibility settings open as a small anchored menu/popover under the icon, not a blocking modal,
+- required columns are visible and disabled in the settings menu,
+- the actions header may be icon-only; do not show redundant `Actions/Akcje` text when the table settings icon owns that corner.
+
 Selection and scroll chrome:
 
 - table checkboxes are utility controls and must stay visually quiet,
 - dense row checkboxes should be small, neutral and never dominate the row,
+- unchecked row checkboxes in premium App Tables reveal on hover/focus like ClickUp; checked/selected/focused rows keep them visible,
 - scrollbars must have reserved space/gutter and must not cover row actions, help, bug-report or side floating controls.
 
 ## 9. Cards, Grid And Kanban
