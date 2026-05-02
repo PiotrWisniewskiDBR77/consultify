@@ -286,13 +286,13 @@ router.get('/drafts', async (req: AuthRequest, res) => {
     whereParts.push('conversation_id = ?');
     queryParams.push(conversationId);
   }
-  whereParts.push('(project_id IS NULL OR created_by = ?');
+  const accessParts = ['project_id IS NULL', 'created_by = ?'];
   queryParams.push(userId);
   if (projectId) {
-    whereParts.push('OR project_id = ?');
+    accessParts.push('project_id = ?');
     queryParams.push(projectId);
   }
-  whereParts.push(')');
+  whereParts.push(`(${accessParts.join(' OR ')})`);
   const rows = await dbAll<DraftRow>(
     `SELECT * FROM work_canvas_drafts
      WHERE ${whereParts.join(' AND ')}
