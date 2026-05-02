@@ -204,6 +204,7 @@ router.use(verifyToken);
  */
 router.get(
   '/',
+  verifyAdmin,
   asyncHandler(async (req: AuthRequest, res: Response) => {
     await ensureTableExists();
 
@@ -271,7 +272,6 @@ router.get(
         permissions: JSON.parse(record.permissions || '{}'),
         invited_at: record.invited_at,
         accepted_at: record.accepted_at,
-        access_code: record.access_code,
       });
     }
 
@@ -340,6 +340,14 @@ router.post(
 
     if (!email || !projectId) {
       return res.status(400).json({ error: 'Email and project ID are required' });
+    }
+
+    const project = await dbGet<{ id: string }>(
+      `SELECT id FROM projects WHERE id = ? AND organization_id = ? LIMIT 1`,
+      [projectId, orgId]
+    );
+    if (!project) {
+      return res.status(404).json({ error: 'Project not found in this organization' });
     }
 
     // Check if access already exists

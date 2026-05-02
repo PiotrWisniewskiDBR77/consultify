@@ -45,6 +45,7 @@ import analyticsRoutes from './routes/analytics.routes.js';
 import analyticsSuperadminRoutes from './routes/analytics-superadmin.routes.js';
 import advancedAnalyticsRoutes from './routes/analyticsAdvanced.routes.js';
 import apiKeysRoutes from './routes/apiKeys.routes.js';
+import artifactConversionsRoutes from './routes/artifact-conversions.routes.js';
 import artifactRunsRoutes from './routes/artifact-runs.routes.js';
 import artifactsRoutes from './routes/artifacts.routes.js';
 import assessmentRoutes from './routes/assessment/assessment.routes.js';
@@ -83,6 +84,7 @@ import consultantProjectAccessRoutes from './routes/consultant-project-access.ro
 import consultantRoutes from './routes/consultants.routes.js';
 import consultingTemplatesRoutes from './routes/consultingTemplates.routes.js';
 import contentRoutes from './routes/content.routes.js';
+import conclusionsRoutes from './routes/conclusions.routes.js';
 import contextRoutes from './routes/context.routes.js';
 import conversationsRoutes from './routes/conversations.routes.js';
 import coreDocsRoutes from './routes/core-docs.routes.js';
@@ -271,6 +273,7 @@ import webauthnRoutes from './routes/webauthn.routes.js';
 import sellixInboundWebhookRoutes from './routes/webhooks/sellix.routes.js';
 import v8SyncInboundWebhookRoutes from './routes/webhooks/v8-sync-inbound.routes.js';
 import workbookRoutes from './routes/workbook.routes.js';
+import workCanvasRoutes from './routes/work-canvas.routes.js';
 import workModeRoutes from './routes/workMode.routes.js';
 import workqueueRoutes from './routes/workqueue.routes.js';
 import workspaceDefaultsRoutes from './routes/workspace-defaults.routes.js';
@@ -334,6 +337,7 @@ export class ApiGateway {
       app.use('/api/research', ...internalToolsGuard);
       app.use('/api/artifacts', ...internalToolsGuard);
       app.use('/api/artifact-runs', ...internalToolsGuard);
+      app.use('/api/work-canvas', workCanvasRoutes);
       app.use('/api/agents', ...internalToolsGuard);
       app.use('/api/ai-operator', ...internalToolsGuard);
       app.use('/api/ai-memory', ...internalToolsGuard);
@@ -556,6 +560,8 @@ export class ApiGateway {
       });
 
       // Core API routes
+      app.use('/api/conclusions', conclusionsRoutes);
+      app.use('/api/artifact-conversions', artifactConversionsRoutes);
       app.use('/api/projects', projectRoutes);
       app.use('/api/knowledge', knowledgeRoutes);
       app.use('/api/knowledge-graph', knowledgeGraphRoutes);

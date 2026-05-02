@@ -171,7 +171,7 @@ const extractToken = (req: AuthRequest): string | null => {
 const mapRole = (role?: string): UserRole => {
   if (!role) return 'team_member';
   const platformRole = normalizePlatformRole(role);
-  if (platformRole === 'SUPERADMIN') return 'owner';
+  if (platformRole === 'SUPERADMIN') return 'superadmin';
 
   const applicationRole = normalizeApplicationRole(role);
   if (applicationRole === 'OWNER') return 'owner';
