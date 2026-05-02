@@ -4923,9 +4923,26 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
       ...(() => {
         const srcType = initiative?.source_type || initiative?.sourceType;
         const srcId = initiative?.source_id || initiative?.sourceId;
-        if (srcType !== 'interview' || !srcId) return [];
-        const insightTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
-        const insightPath = getArtifactPath('insight', srcId);
+        if (!srcType || !srcId) return [];
+        const normalizedSourceType = String(srcType).toLowerCase();
+        if (!['interview', 'conclusion', 'conclusion_readout'].includes(normalizedSourceType)) {
+          return [];
+        }
+        const sourceTitle = initiative?.source_title || initiative?.sourceTitle || srcId;
+        const sourcePath =
+          normalizedSourceType === 'interview'
+            ? getArtifactPath('insight', srcId)
+            : normalizedSourceType === 'conclusion_readout'
+              ? `/wnioski?readoutId=${encodeURIComponent(String(srcId))}`
+              : `/wnioski?conclusionId=${encodeURIComponent(String(srcId))}`;
+        const sourceLabel =
+          normalizedSourceType === 'interview'
+            ? isPolish
+              ? 'Z Insightu: '
+              : 'From Insight: '
+            : isPolish
+              ? 'Z Wniosku: '
+              : 'From Conclusion: ';
         return [
           {
             id: 'sourceInsight',
@@ -4936,16 +4953,16 @@ export const InitiativeDocumentView: React.FC<InitiativeDocumentViewProps> = ({
             readOnly: true,
             render: () => (
               <a
-                href={insightPath}
+                href={sourcePath}
                 title={
-                  isPolish ? `Otwórz insight: ${insightTitle}` : `Open insight: ${insightTitle}`
+                  isPolish ? `Otwórz źródło: ${sourceTitle}` : `Open source: ${sourceTitle}`
                 }
-                className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-sky-500/10 border border-sky-500/30 text-sky-400 hover:bg-sky-500/20 transition-colors truncate"
+                className="flex h-8 items-center gap-2 w-full px-2.5 rounded-lg text-xs font-semibold bg-purple-500/10 border border-purple-500/30 text-purple-400 hover:bg-purple-500/20 transition-colors truncate"
               >
                 <Sparkles size={12} className="shrink-0" />
                 <span className="truncate">
-                  {isPolish ? 'Z Insightu: ' : 'From Insight: '}
-                  {insightTitle}
+                  {sourceLabel}
+                  {sourceTitle}
                 </span>
                 <ExternalLink size={10} className="shrink-0 ml-auto opacity-60" />
               </a>

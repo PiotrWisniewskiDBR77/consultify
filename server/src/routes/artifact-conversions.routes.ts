@@ -27,6 +27,10 @@ router.get(
       sourceConclusionId: req.query.sourceConclusionId
         ? String(req.query.sourceConclusionId)
         : undefined,
+      targetArtifactType: req.query.targetArtifactType
+        ? String(req.query.targetArtifactType)
+        : undefined,
+      targetArtifactId: req.query.targetArtifactId ? String(req.query.targetArtifactId) : undefined,
     });
     res.json({ conversions });
   })

@@ -37,6 +37,30 @@ export interface ArtifactConversion {
   updatedAt: string;
 }
 
+export interface ConclusionReadout {
+  id: string;
+  organizationId: string;
+  projectId?: string | null;
+  title: string;
+  sourceConclusionIds: string[];
+  summary: string;
+  sections: {
+    researchSummary: string;
+    strongestConclusions: string[];
+    risks: string[];
+    opportunities: string[];
+    contradictions: string[];
+    coverageGaps: string[];
+    decisionsNeeded: string[];
+    proposedConversions: string[];
+  };
+  visibilityScope: 'private' | 'project' | 'organization' | 'review_shared';
+  outputArtifactRefs: Array<{ type: string; id: string; title?: string; url?: string }>;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 async function apiGet<T>(path: string): Promise<T> {
   const res = await fetchWithRetry(`/api${path}`, {
     method: 'GET',
@@ -67,6 +91,41 @@ export const ConclusionsApi = {
   get: (id: string) =>
     apiGet<{ conclusion: Conclusion; conversions: ArtifactConversion[] }>(
       `/conclusions/${encodeURIComponent(id)}`
+    ),
+
+  listReadouts: () => apiGet<{ readouts: ConclusionReadout[] }>('/conclusions/readouts'),
+
+  listConversions: (params?: {
+    sourceConclusionId?: string;
+    targetArtifactType?: string;
+    targetArtifactId?: string;
+  }) => {
+    const search = new URLSearchParams();
+    if (params?.sourceConclusionId) search.set('sourceConclusionId', params.sourceConclusionId);
+    if (params?.targetArtifactType) search.set('targetArtifactType', params.targetArtifactType);
+    if (params?.targetArtifactId) search.set('targetArtifactId', params.targetArtifactId);
+    const qs = search.toString();
+    return apiGet<{ conversions: ArtifactConversion[] }>(
+      `/artifact-conversions${qs ? `?${qs}` : ''}`
+    );
+  },
+
+  createReadout: (payload: {
+    title?: string;
+    conclusionIds: string[];
+    visibilityScope?: 'private' | 'project' | 'organization' | 'review_shared';
+  }) => apiPost<{ readout: ConclusionReadout }>('/conclusions/readouts', payload),
+
+  generateReadoutReport: (readoutId: string) =>
+    apiPost<{ reportId: string; readout: ConclusionReadout }>(
+      `/conclusions/readouts/${encodeURIComponent(readoutId)}/generate-report`,
+      {}
+    ),
+
+  getReadoutChatContext: (readoutId: string) =>
+    apiPost<{ context: Record<string, unknown> }>(
+      `/conclusions/readouts/${encodeURIComponent(readoutId)}/chat-context`,
+      {}
     ),
 
   proposeInitiativeConversion: (conclusionId: string) =>

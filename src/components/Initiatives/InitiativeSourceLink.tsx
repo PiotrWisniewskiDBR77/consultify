@@ -17,6 +17,8 @@ export function getSourceDisplayLabel(sourceType: string, isPolish = false): str
   }
   if (t === 'assessment') return isPolish ? 'Ocena' : 'Assessment';
   if (t === 'interview') return isPolish ? 'Wywiad' : 'Interview';
+  if (t === 'conclusion') return isPolish ? 'Wniosek' : 'Conclusion';
+  if (t === 'conclusion_readout') return isPolish ? 'Readout wniosków' : 'Conclusion readout';
   return sourceType || '';
 }
 import React from 'react';
@@ -51,6 +53,9 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
         return <FileText size={16} className="text-blue-400" />;
       case 'interview':
         return <ClipboardList size={16} className="text-green-400" />;
+      case 'conclusion':
+      case 'conclusion_readout':
+        return <FileText size={16} className="text-purple-400" />;
       default:
         return <ExternalLink size={16} className="text-slate-400" />;
     }
@@ -68,6 +73,12 @@ export const InitiativeSourceLink: React.FC<InitiativeSourceLinkProps> = ({
         break;
       case 'interview':
         navigate(`/interview?interviewId=${sourceId}`);
+        break;
+      case 'conclusion':
+        navigate(`/wnioski?conclusionId=${sourceId}`);
+        break;
+      case 'conclusion_readout':
+        navigate(`/wnioski?readoutId=${sourceId}`);
         break;
       default:
         break;

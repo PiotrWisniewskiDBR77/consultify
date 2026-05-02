@@ -9,12 +9,18 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 import { ConvertToButton } from '@/components/shared/artifact-conversion/ConvertToButton';
 import { ArtifactConversionModal } from '@/components/shared/artifact-conversion/ArtifactConversionModal';
 import { ModuleHub } from '@/components/shared/ModuleHub';
 import type { FilterChip, ModuleTab, ViewMode } from '@/components/shared/ModuleHub';
-import { ConclusionsApi, type Conclusion } from '@/services/api/conclusions.api';
+import {
+  ConclusionsApi,
+  type Conclusion,
+  type ConclusionReadout,
+} from '@/services/api/conclusions.api';
 
 const TABS: Array<{ id: ModuleTab; label: string; icon: React.ReactNode }> = [
   { id: 'inbox', label: 'Do przeglądu', icon: <Inbox size={16} /> },
@@ -55,13 +61,18 @@ function confidenceBadge(confidence: string): string {
 }
 
 export const ConclusionsHub: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ModuleTab>('library');
   const [viewMode, setViewMode] = useState<ViewMode>('table');
   const [search, setSearch] = useState('');
   const [conclusions, setConclusions] = useState<Conclusion[]>([]);
+  const [readouts, setReadouts] = useState<ConclusionReadout[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedReadoutId, setSelectedReadoutId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [readoutLoading, setReadoutLoading] = useState(false);
   const [convertConclusion, setConvertConclusion] = useState<Conclusion | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -77,6 +88,23 @@ export const ConclusionsHub: React.FC = () => {
   useEffect(() => {
     load();
   }, [load]);
+
+  const loadReadouts = useCallback(async () => {
+    setReadoutLoading(true);
+    try {
+      const res = await ConclusionsApi.listReadouts();
+      setReadouts(res.readouts || []);
+      setSelectedReadoutId((current) => current || res.readouts?.[0]?.id || null);
+    } finally {
+      setReadoutLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'readout' || activeTab === 'documents') {
+      loadReadouts();
+    }
+  }, [activeTab, loadReadouts]);
 
   const visibleConclusions = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -97,6 +125,11 @@ export const ConclusionsHub: React.FC = () => {
   const selected = useMemo(
     () => conclusions.find((item) => item.id === selectedId) || visibleConclusions[0] || null,
     [conclusions, selectedId, visibleConclusions]
+  );
+
+  const selectedReadout = useMemo(
+    () => readouts.find((item) => item.id === selectedReadoutId) || readouts[0] || null,
+    [readouts, selectedReadoutId]
   );
 
   const counts = useMemo(
@@ -127,6 +160,55 @@ export const ConclusionsHub: React.FC = () => {
     </div>
   );
 
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleCreateReadout = async () => {
+    const ids = selectedIds.size > 0 ? Array.from(selectedIds) : selected ? [selected.id] : [];
+    if (ids.length === 0) {
+      toast.error('Wybierz co najmniej jeden wniosek');
+      return;
+    }
+    try {
+      const res = await ConclusionsApi.createReadout({ conclusionIds: ids });
+      toast.success('Readout utworzony');
+      setSelectedIds(new Set());
+      setActiveTab('readout');
+      setSelectedReadoutId(res.readout.id);
+      await loadReadouts();
+    } catch (err: any) {
+      toast.error(err?.message || 'Nie udało się utworzyć readout');
+    }
+  };
+
+  const handleGenerateReport = async (readoutId: string) => {
+    try {
+      const res = await ConclusionsApi.generateReadoutReport(readoutId);
+      toast.success('Raport utworzony w Outputs');
+      await loadReadouts();
+      navigate(`/reports/builder/${encodeURIComponent(res.reportId)}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Nie udało się wygenerować raportu');
+    }
+  };
+
+  const handleDiscussWithChat = async (readoutId: string) => {
+    try {
+      const res = await ConclusionsApi.getReadoutChatContext(readoutId);
+      sessionStorage.setItem('consultify_chat_context_pack', JSON.stringify(res.context));
+      toast.success('Kontekst readout przygotowany dla czatu');
+      navigate('/chat');
+    } catch (err: any) {
+      toast.error(err?.message || 'Nie udało się przygotować kontekstu czatu');
+    }
+  };
+
   return (
     <ModuleHub
       tabs={TABS}
@@ -144,6 +226,18 @@ export const ConclusionsHub: React.FC = () => {
       activeFilters={activeFilters}
       onRemoveFilter={() => setSearch('')}
       onClearFilters={() => setSearch('')}
+      primaryCta={
+        activeTab === 'library' || activeTab === 'inbox' ? (
+          <button
+            type="button"
+            onClick={handleCreateReadout}
+            className="inline-flex items-center gap-2 rounded-xl bg-purple-600 px-3 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+          >
+            <MessageSquare size={15} />
+            Create readout
+          </button>
+        ) : null
+      }
       commandRowContent={
         <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
           <span>{counts.total} wniosków</span>
@@ -156,16 +250,137 @@ export const ConclusionsHub: React.FC = () => {
         </div>
       }
     >
-      {activeTab === 'documents' &&
-        renderPlaceholder(
-          'Dokumenty z wniosków',
-          'W kolejnym pakiecie readout będzie generował raporty, prezentacje i tabele zapisywane w Outputs Library.'
-        )}
-      {activeTab === 'readout' &&
-        renderPlaceholder(
-          'Readout sponsora',
-          'Ten widok będzie układał opublikowane wnioski w narrację: wynik badania, ryzyka, szanse, luki i decyzje.'
-        )}
+      {activeTab === 'documents' && (
+        <div className="p-5 space-y-3">
+          <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Dokumenty z Wniosków
+          </h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Raporty wygenerowane z readoutów są zapisywane w Report Builder / Outputs.
+          </p>
+          {readoutLoading ? (
+            <Loader2 className="animate-spin text-slate-400" size={22} />
+          ) : (
+            readouts.flatMap((readout) =>
+              readout.outputArtifactRefs.map((ref) => (
+                <button
+                  key={`${readout.id}-${ref.id}`}
+                  type="button"
+                  onClick={() => navigate(ref.url || `/reports/builder/${ref.id}`)}
+                  className="w-full rounded-2xl border border-slate-200/70 dark:border-navy-800 bg-white dark:bg-navy-900/40 p-4 text-left hover:border-purple-300"
+                >
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {ref.title || readout.title}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">Readout: {readout.title}</div>
+                </button>
+              ))
+            )
+          )}
+          {!readoutLoading && readouts.every((r) => r.outputArtifactRefs.length === 0) &&
+            renderPlaceholder(
+              'Brak dokumentów',
+              'Wygeneruj raport z readoutu, aby pojawił się w tej sekcji i w Outputs Library.'
+            )}
+        </div>
+      )}
+      {activeTab === 'readout' && (
+        <div className="grid grid-cols-1 xl:grid-cols-[360px_1fr] h-full min-h-0">
+          <div className="border-r border-slate-200/70 dark:border-navy-800 min-h-0 overflow-auto p-4 space-y-2">
+            {readoutLoading ? (
+              <div className="py-16 flex justify-center">
+                <Loader2 className="animate-spin text-slate-400" size={22} />
+              </div>
+            ) : readouts.length === 0 ? (
+              renderPlaceholder(
+                'Brak readoutów',
+                'Zaznacz jeden lub kilka wniosków w Bibliotece i utwórz readout dla sponsora lub zespołu.'
+              )
+            ) : (
+              readouts.map((readout) => (
+                <button
+                  key={readout.id}
+                  type="button"
+                  onClick={() => setSelectedReadoutId(readout.id)}
+                  className={`w-full rounded-2xl border p-4 text-left ${
+                    selectedReadout?.id === readout.id
+                      ? 'border-purple-400 bg-purple-500/5'
+                      : 'border-slate-200/70 dark:border-navy-800 bg-white dark:bg-navy-900/40'
+                  }`}
+                >
+                  <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {readout.title}
+                  </div>
+                  <div className="mt-1 text-xs text-slate-500">
+                    {readout.sourceConclusionIds.length} wniosków • {readout.visibilityScope}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+          <div className="min-h-0 overflow-auto p-6">
+            {selectedReadout ? (
+              <div className="max-w-4xl space-y-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs uppercase tracking-[0.18em] text-slate-400">
+                      Readout
+                    </div>
+                    <h2 className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                      {selectedReadout.title}
+                    </h2>
+                    <p className="mt-2 text-sm text-slate-500">{selectedReadout.summary}</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleGenerateReport(selectedReadout.id)}
+                      className="rounded-xl bg-purple-600 px-3 py-2 text-sm font-semibold text-white hover:bg-purple-700"
+                    >
+                      Generate report
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDiscussWithChat(selectedReadout.id)}
+                      className="rounded-xl border border-slate-200 dark:border-navy-700 px-3 py-2 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-navy-900"
+                    >
+                      Discuss with chat
+                    </button>
+                  </div>
+                </div>
+
+                {[
+                  ['Research summary', [selectedReadout.sections.researchSummary]],
+                  ['Strongest conclusions', selectedReadout.sections.strongestConclusions],
+                  ['Risks and limits', selectedReadout.sections.risks],
+                  ['Opportunities', selectedReadout.sections.opportunities],
+                  ['Contradictions', selectedReadout.sections.contradictions],
+                  ['Coverage gaps', selectedReadout.sections.coverageGaps],
+                  ['Decisions needed', selectedReadout.sections.decisionsNeeded],
+                ].map(([title, items]) => (
+                  <section
+                    key={String(title)}
+                    className="rounded-3xl border border-slate-200/70 dark:border-navy-800 bg-white dark:bg-navy-900/40 p-5"
+                  >
+                    <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {String(title)}
+                    </h3>
+                    <ul className="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+                      {(items as string[]).length ? (
+                        (items as string[]).map((item, idx) => <li key={idx}>• {item}</li>)
+                      ) : (
+                        <li>• Brak danych.</li>
+                      )}
+                    </ul>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              renderPlaceholder('Wybierz readout', 'Readout będzie miejscem rozmowy z zespołem i sponsorem.')
+            )}
+          </div>
+        </div>
+      )}
       {activeTab !== 'documents' && activeTab !== 'readout' && (
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] h-full min-h-0">
           <div className="min-h-0 overflow-auto">
@@ -187,7 +402,8 @@ export const ConclusionsHub: React.FC = () => {
               </div>
             ) : (
               <div className="p-4 space-y-2">
-                <div className="grid grid-cols-[1fr_130px_120px_120px] gap-3 px-4 py-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                <div className="grid grid-cols-[36px_1fr_130px_120px_120px] gap-3 px-4 py-2 text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                  <div></div>
                   <div>Tytuł</div>
                   <div>Status</div>
                   <div>Confidence</div>
@@ -198,12 +414,19 @@ export const ConclusionsHub: React.FC = () => {
                     key={item.id}
                     type="button"
                     onClick={() => setSelectedId(item.id)}
-                    className={`w-full grid grid-cols-[1fr_130px_120px_120px] gap-3 items-center rounded-2xl border px-4 py-3 text-left transition ${
+                    className={`w-full grid grid-cols-[36px_1fr_130px_120px_120px] gap-3 items-center rounded-2xl border px-4 py-3 text-left transition ${
                       selected?.id === item.id
                         ? 'border-purple-400 bg-purple-500/5'
                         : 'border-slate-200/70 dark:border-navy-800 bg-white/70 dark:bg-navy-900/30 hover:bg-slate-50 dark:hover:bg-navy-900/70'
                     }`}
                   >
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(item.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      onChange={() => toggleSelected(item.id)}
+                      className="h-4 w-4 rounded border-slate-300 text-purple-600"
+                    />
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {item.title}

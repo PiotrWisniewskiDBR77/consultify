@@ -4,6 +4,7 @@ import type { AuthRequest } from '../middleware/auth.middleware.js';
 import verifyToken from '../middleware/auth.middleware.js';
 import { artifactConversionService } from '../services/artifacts/ArtifactConversionService.js';
 import { conclusionService } from '../services/conclusions/ConclusionService.js';
+import { conclusionReadoutService } from '../services/conclusions/ConclusionReadoutService.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 const router = Router();
@@ -35,6 +36,77 @@ router.get(
 );
 
 router.get(
+  '/readouts',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { organizationId } = getAuthContext(req);
+    const readouts = await conclusionReadoutService.listReadouts(organizationId);
+    res.json({ readouts });
+  })
+);
+
+router.post(
+  '/readouts',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const { title, conclusionIds, visibilityScope } = req.body as {
+      title?: string;
+      conclusionIds?: string[];
+      visibilityScope?: 'private' | 'project' | 'organization' | 'review_shared';
+    };
+    if (!Array.isArray(conclusionIds) || conclusionIds.length === 0) {
+      return res.status(400).json({ error: 'conclusionIds are required' });
+    }
+    const readout = await conclusionReadoutService.createReadout({
+      organizationId,
+      actorUserId: userId,
+      title,
+      conclusionIds,
+      visibilityScope,
+    });
+    res.status(201).json({ readout });
+  })
+);
+
+router.get(
+  '/readouts/:readoutId',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { organizationId } = getAuthContext(req);
+    const readout = await conclusionReadoutService.getReadout(
+      organizationId,
+      req.params.readoutId
+    );
+    if (!readout) return res.status(404).json({ error: 'Readout not found' });
+    res.json({ readout });
+  })
+);
+
+router.post(
+  '/readouts/:readoutId/generate-report',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { organizationId, userId } = getAuthContext(req);
+    const result = await conclusionReadoutService.generateReportFromReadout({
+      organizationId,
+      actorUserId: userId,
+      readoutId: req.params.readoutId,
+    });
+    res.json(result);
+  })
+);
+
+router.post(
+  '/readouts/:readoutId/chat-context',
+  asyncHandler(async (req: AuthRequest, res) => {
+    const { organizationId } = getAuthContext(req);
+    const readout = await conclusionReadoutService.getReadout(
+      organizationId,
+      req.params.readoutId
+    );
+    if (!readout) return res.status(404).json({ error: 'Readout not found' });
+    res.json({ context: conclusionReadoutService.buildChatContext(readout) });
+  })
+);
+
+router.get(
   '/:id',
   asyncHandler(async (req: AuthRequest, res) => {
     const { organizationId, userId } = getAuthContext(req);
@@ -44,7 +116,10 @@ router.get(
       organizationId,
       sourceConclusionId: conclusion.id,
     });
-    res.json({ conclusion, conversions });
+    const sourcePack = conclusion.sourcePackId
+      ? await conclusionService.getSourcePack(organizationId, conclusion.sourcePackId)
+      : null;
+    res.json({ conclusion, sourcePack, conversions });
   })
 );
 

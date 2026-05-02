@@ -280,6 +280,8 @@ export class ArtifactConversionService {
   async listConversions(params: {
     organizationId: string;
     sourceConclusionId?: string;
+    targetArtifactType?: string;
+    targetArtifactId?: string;
   }): Promise<ArtifactConversion[]> {
     await ensureTables();
     const clauses = ['organization_id = ?'];
@@ -288,11 +290,91 @@ export class ArtifactConversionService {
       clauses.push('source_conclusion_id = ?');
       values.push(params.sourceConclusionId);
     }
+    if (params.targetArtifactType) {
+      clauses.push('target_artifact_type = ?');
+      values.push(params.targetArtifactType);
+    }
+    if (params.targetArtifactId) {
+      clauses.push('target_artifact_id = ?');
+      values.push(params.targetArtifactId);
+    }
     const rows = await queryHelpers.queryAll<ArtifactConversionRow>(
       `SELECT * FROM artifact_conversions WHERE ${clauses.join(' AND ')} ORDER BY updated_at DESC`,
       values
     );
     return rows.map(rowToConversion);
+  }
+
+  async recordCompletedConversion(params: {
+    organizationId: string;
+    actorUserId: string;
+    sourceConclusionId?: string | null;
+    sourceArtifactType: string;
+    sourceArtifactId: string;
+    sourceArtifactTitle: string;
+    sourceModule: string;
+    targetArtifactType: string;
+    targetArtifactId: string;
+    conversionIntent: string;
+    projectId?: string | null;
+    confidenceLevel?: string | null;
+    limits?: string | null;
+    evidenceRefs?: unknown[];
+    sourcePack?: Record<string, unknown>;
+    payload?: Record<string, unknown>;
+  }): Promise<ArtifactConversion> {
+    await ensureTables();
+    const id = uuidv4();
+    const now = new Date().toISOString();
+    await queryHelpers.queryRun(
+      `INSERT INTO artifact_conversions (
+        id, organization_id, project_id, source_conclusion_id, source_artifact_type,
+        source_artifact_id, source_artifact_title, source_module, target_artifact_type,
+        target_artifact_id, conversion_intent, conversion_status, confidence_level, limits_text,
+        evidence_refs_json, source_pack_json, payload_json, created_by, approved_by,
+        created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'converted', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        id,
+        params.organizationId,
+        params.projectId ?? null,
+        params.sourceConclusionId ?? null,
+        params.sourceArtifactType,
+        params.sourceArtifactId,
+        params.sourceArtifactTitle,
+        params.sourceModule,
+        params.targetArtifactType,
+        params.targetArtifactId,
+        params.conversionIntent,
+        params.confidenceLevel ?? null,
+        params.limits ?? null,
+        JSON.stringify(params.evidenceRefs || []),
+        JSON.stringify(params.sourcePack || {}),
+        JSON.stringify(params.payload || {}),
+        params.actorUserId,
+        params.actorUserId,
+        now,
+        now,
+      ]
+    );
+    await queryHelpers.queryRun(
+      `INSERT INTO artifact_conversion_events (id, organization_id, conversion_id, event_type, actor_id, payload_json, created_at)
+       VALUES (?, ?, ?, 'conversion.recorded', ?, ?, ?)`,
+      [
+        uuidv4(),
+        params.organizationId,
+        id,
+        params.actorUserId,
+        JSON.stringify({
+          targetArtifactType: params.targetArtifactType,
+          targetArtifactId: params.targetArtifactId,
+        }),
+        now,
+      ]
+    );
+    const conversion = await this.getConversion(params.organizationId, id);
+    if (!conversion) throw new Error('Failed to load recorded conversion');
+    return conversion;
   }
 
   async executeConversion(params: {
