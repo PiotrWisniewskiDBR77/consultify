@@ -2,8 +2,10 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useConversationStore } from '@/store/useConversationStore';
+import type { ArtifactContentEnvelope, CanonicalFormat } from '@/types/artifactContent';
 import { AppView } from '@/types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
+import { envelopeToMarkdown, projectToMarkdown } from '@/utils/artifacts/projectToMarkdown';
 
 import { UnifiedChatPanel } from './UnifiedChatPanel';
 
@@ -23,6 +25,13 @@ type Draft = {
   kind: CanvasKind;
   title: string;
   content: unknown;
+  contentEnvelope?: ArtifactContentEnvelope;
+  canonicalFormat?: CanonicalFormat;
+  contentMd?: string;
+  contentJson?: unknown;
+  markdownProjectionStatus?: ArtifactContentEnvelope['markdownProjectionStatus'];
+  markdownProjectedAt?: string | null;
+  projectionError?: string | null;
   saveState: string;
   lifecycleState: string;
   artifactId?: string | null;
@@ -96,13 +105,50 @@ ${title}
 `;
 }
 
+function isJsonNativeKind(kind: CanvasKind): boolean {
+  return ['table', 'sheet', 'deck', 'research'].includes(kind);
+}
+
+function createDraftEnvelope(kind: CanvasKind, title: string, content: unknown): ArtifactContentEnvelope {
+  const canonicalFormat: CanonicalFormat = isJsonNativeKind(kind) ? 'json' : 'markdown';
+  const contentMd = typeof content === 'string' ? content : projectToMarkdown(kind, content);
+  return {
+    canonicalFormat,
+    artifactType: kind,
+    contentMd,
+    contentJson: canonicalFormat === 'json' ? content : undefined,
+    markdownProjectionStatus: contentMd.trim() ? 'synced' : 'missing',
+    markdownProjectedAt: new Date().toISOString(),
+  };
+}
+
+function contentFieldsForDraft(draft: Draft) {
+  const envelope =
+    draft.contentEnvelope || createDraftEnvelope(draft.kind, draft.title, draft.content ?? '');
+  return {
+    canonicalFormat: envelope.canonicalFormat,
+    contentMd: envelope.contentMd,
+    contentJson: envelope.contentJson,
+    contentSchemaVersion: envelope.contentSchemaVersion,
+  };
+}
+
 function createLocalDraft(kind: CanvasKind, title: string, conversationId: string): Draft {
+  const content = buildContent(kind, title);
+  const contentEnvelope = createDraftEnvelope(kind, title, content);
   return {
     id: `local-${Date.now()}`,
     conversationId,
     kind,
     title,
-    content: buildContent(kind, title),
+    content,
+    contentEnvelope,
+    canonicalFormat: contentEnvelope.canonicalFormat,
+    contentMd: contentEnvelope.contentMd,
+    contentJson: contentEnvelope.contentJson,
+    markdownProjectionStatus: contentEnvelope.markdownProjectionStatus,
+    markdownProjectedAt: contentEnvelope.markdownProjectedAt,
+    projectionError: contentEnvelope.projectionError,
     saveState: 'unsaved',
     lifecycleState: 'draft',
   };
@@ -121,7 +167,11 @@ function isUuidLike(value: string): boolean {
 }
 
 function canvasText(draft: Draft): string {
-  return typeof draft.content === 'string' ? draft.content : JSON.stringify(draft.content, null, 2);
+  return (
+    draft.contentMd ||
+    envelopeToMarkdown(draft.contentEnvelope, '') ||
+    (typeof draft.content === 'string' ? draft.content : projectToMarkdown(draft.kind, draft.content))
+  );
 }
 
 function filenameFor(title: string) {
@@ -170,6 +220,70 @@ function WorkCanvasPreview({ draft }: { draft: Draft }) {
   }
 
   return <RenderedMarkdown text={canvasText(draft)} />;
+}
+
+export function WorkCanvasDocumentPanel() {
+  const [mode, setMode] = React.useState<'document' | 'md'>('document');
+  const [draft] = React.useState(() =>
+    createLocalDraft('document', 'Start a company work note', '')
+  );
+
+  return (
+    <div className="flex h-full min-h-0 flex-col bg-slate-50">
+      <div className="border-b border-slate-200 bg-white px-5 py-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Canvas document
+            </p>
+            <h2 className="mt-1 text-base font-semibold text-slate-950">{draft.title}</h2>
+          </div>
+          <div className="flex rounded-full bg-slate-100 p-1">
+            <button
+              type="button"
+              onClick={() => setMode('document')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                mode === 'document' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600'
+              }`}
+            >
+              Document
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('md')}
+              className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                mode === 'md' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-600'
+              }`}
+            >
+              MD
+            </button>
+          </div>
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium">
+          <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">
+            Markdown canonical
+          </span>
+          <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-600">
+            Projection synced
+          </span>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1 overflow-auto p-5">
+        {mode === 'md' ? (
+          <textarea
+            value={canvasText(draft)}
+            readOnly
+            data-testid="canvas-md-view"
+            className="h-full min-h-[360px] w-full resize-none rounded-2xl border border-slate-200 bg-white p-4 font-mono text-sm leading-6 text-slate-800 shadow-sm outline-none"
+          />
+        ) : (
+          <div data-testid="canvas-document-view" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <RenderedMarkdown text={canvasText(draft)} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function RenderedMarkdown({ text }: { text: string }) {
@@ -232,7 +346,7 @@ export function WorkCanvasRuntime() {
   );
   const [proposals, setProposals] = React.useState<Proposal[]>([]);
   const [saveReadBack, setSaveReadBack] = React.useState<Record<string, unknown> | null>(null);
-  const [mode, setMode] = React.useState<'preview' | 'source'>('preview');
+  const [mode, setMode] = React.useState<'document' | 'md'>('document');
   const [activeKind, setActiveKind] = React.useState<CanvasKind>(initialKind);
   const [error, setError] = React.useState<string | null>(null);
   const [isHydrating, setIsHydrating] = React.useState(false);
@@ -334,6 +448,7 @@ export function WorkCanvasRuntime() {
           kind,
           title,
           content: localDraft.content,
+          ...contentFieldsForDraft(localDraft),
           sources: [],
           provenance: { source: 'work-canvas-runtime', conversationId },
         }),
@@ -425,6 +540,7 @@ export function WorkCanvasRuntime() {
         kind: current.kind,
         title: current.title,
         content: current.content,
+        ...contentFieldsForDraft(current),
         sources: [],
         provenance: { source: 'work-canvas-runtime', conversationId },
       }),
@@ -442,12 +558,21 @@ export function WorkCanvasRuntime() {
   const switchKind = (kind: CanvasKind) => {
     setActiveKind(kind);
     const title = kind === 'research' ? defaultTitleForKind(kind) : draft.title;
+    const content = buildContent(kind, title);
+    const contentEnvelope = createDraftEnvelope(kind, title, content);
     setDraft((current) => {
       const updated = {
         ...current,
         kind,
         title,
-        content: buildContent(kind, title),
+        content,
+        contentEnvelope,
+        canonicalFormat: contentEnvelope.canonicalFormat,
+        contentMd: contentEnvelope.contentMd,
+        contentJson: contentEnvelope.contentJson,
+        markdownProjectionStatus: contentEnvelope.markdownProjectionStatus,
+        markdownProjectedAt: contentEnvelope.markdownProjectedAt,
+        projectionError: contentEnvelope.projectionError,
         saveState: 'unsaved',
         lifecycleState: 'draft',
       } as Draft;
@@ -461,7 +586,10 @@ export function WorkCanvasRuntime() {
         body: JSON.stringify({
           kind,
           title,
-          content: buildContent(kind, title),
+          content,
+          canonicalFormat: contentEnvelope.canonicalFormat,
+          contentMd: contentEnvelope.contentMd,
+          contentJson: contentEnvelope.contentJson,
           saveState: 'unsaved',
           lifecycleState: 'draft',
         }),
@@ -488,6 +616,7 @@ export function WorkCanvasRuntime() {
       kind: activeKind,
       title,
       content: buildContent(activeKind, title),
+      contentEnvelope: createDraftEnvelope(activeKind, title, buildContent(activeKind, title)),
       saveState: 'unsaved',
       lifecycleState: 'draft',
     };
@@ -552,6 +681,31 @@ export function WorkCanvasRuntime() {
     link.click();
     URL.revokeObjectURL(url);
   };
+
+  const updateMarkdownDraft = (contentMd: string) => {
+    if (canonicalFormat === 'json') return;
+    setDraft((current) => {
+      const contentEnvelope = createDraftEnvelope(current.kind, current.title, contentMd);
+      const updated = {
+        ...current,
+        content: contentMd,
+        contentEnvelope,
+        contentMd,
+        canonicalFormat: contentEnvelope.canonicalFormat,
+        markdownProjectionStatus: contentEnvelope.markdownProjectionStatus,
+        markdownProjectedAt: contentEnvelope.markdownProjectedAt,
+        projectionError: contentEnvelope.projectionError,
+        saveState: 'unsaved',
+      } as Draft;
+      draftRef.current = updated;
+      return updated;
+    });
+  };
+
+  const projectionStatus =
+    displayDraft.markdownProjectionStatus || displayDraft.contentEnvelope?.markdownProjectionStatus || 'synced';
+  const canonicalFormat =
+    displayDraft.canonicalFormat || displayDraft.contentEnvelope?.canonicalFormat || 'markdown';
 
   const renderChatPanel = () => (
     isConversationSynced ? (
@@ -691,24 +845,36 @@ export function WorkCanvasRuntime() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => setMode('preview')}
+                    onClick={() => setMode('document')}
                     className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                      mode === 'preview' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'
+                      mode === 'document' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'
                     }`}
                   >
-                    Preview
+                    Document
                   </button>
                   <button
                     type="button"
-                    onClick={() => setMode('source')}
+                    onClick={() => setMode('md')}
                     className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                      mode === 'source' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'
+                      mode === 'md' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'
                     }`}
                   >
-                    Source
+                    MD
                   </button>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-600">
+                    {canonicalFormat === 'json' ? 'Native JSON canonical' : 'Markdown canonical'}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-1 text-[11px] font-medium ${
+                      projectionStatus === 'synced'
+                        ? 'bg-emerald-50 text-emerald-700'
+                        : 'bg-amber-50 text-amber-700'
+                    }`}
+                  >
+                    Projection {projectionStatus}
+                  </span>
                   <button
                     type="button"
                     onClick={() => void copy()}
@@ -725,10 +891,14 @@ export function WorkCanvasRuntime() {
                   </button>
                 </div>
               </div>
-              {mode === 'source' ? (
-                <pre className="max-h-[70vh] overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">
-                  {canvasText(displayDraft)}
-                </pre>
+              {mode === 'md' ? (
+                <textarea
+                  value={canvasText(displayDraft)}
+                  onChange={(event) => updateMarkdownDraft(event.target.value)}
+                  readOnly={canonicalFormat === 'json'}
+                  data-testid="work-canvas-md-view"
+                  className="min-h-[520px] w-full resize-y rounded-2xl border border-slate-200 bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100 outline-none"
+                />
               ) : (
                 <WorkCanvasPreview draft={displayDraft} />
               )}

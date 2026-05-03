@@ -253,6 +253,21 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     }
   }, []);
 
+  const getEarningsSummaryWithFallback = useCallback(async (): Promise<{
+    earnings: V8PartnerEarningsSummary | EarningsSummary;
+  }> => {
+    try {
+      return await V8PartnerApi.getEarningsSummary();
+    } catch (error) {
+      if (!shouldFallbackToLegacyPartner(error)) {
+        throw error;
+      }
+      const response = await Api.get('/api/partners/earnings');
+      const legacy = response?.data ?? response?.earnings ?? response;
+      return { earnings: legacy };
+    }
+  }, []);
+
   const savePayoutSettingsWithFallback = useCallback(async (settings: PayoutSettings) => {
     try {
       const response = await V8PartnerApi.updatePayoutSettings(settings);
@@ -273,7 +288,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
       setError(null);
       const [summaryResponse, txResponse, payoutsResponse, programResponse] =
         await Promise.allSettled([
-          V8PartnerApi.getEarningsSummary(),
+          getEarningsSummaryWithFallback(),
           getCommissionTransactionsWithFallback(),
           getPayoutsWithFallback(),
           V8PartnerApi.getProgramStatus(),
@@ -324,7 +339,12 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
     } finally {
       setLoading(false);
     }
-  }, [getCommissionTransactionsWithFallback, getPayoutsWithFallback, t]);
+  }, [
+    getCommissionTransactionsWithFallback,
+    getEarningsSummaryWithFallback,
+    getPayoutsWithFallback,
+    t,
+  ]);
 
   useEffect(() => {
     fetchEarnings();

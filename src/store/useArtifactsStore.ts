@@ -6,7 +6,9 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import type { ArtifactContentEnvelope, CanonicalFormat } from '../types/artifactContent';
 import { Artifact } from '../types';
+import { projectToMarkdown } from '../utils/artifacts/projectToMarkdown';
 
 // ==================== TYPES ====================
 
@@ -34,6 +36,58 @@ interface ArtifactsState {
   getArtifactsByType: (type: Artifact['type']) => Artifact[];
 }
 
+const JSON_NATIVE_TYPES = new Set(['diagram', 'table', 'comparison-matrix', 'decision-timeline']);
+
+function tryParseJson(value: string): unknown | undefined {
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+function buildArtifactEnvelope(artifact: Artifact): ArtifactContentEnvelope {
+  const existing = (artifact as any).contentEnvelope as ArtifactContentEnvelope | undefined;
+  if (existing?.contentMd) return existing;
+
+  const type = String((artifact as any).type || 'markdown');
+  const diagramData = (artifact as any).diagramData;
+  const parsedContent =
+    typeof artifact.content === 'string' && artifact.content.trim().startsWith('{')
+      ? tryParseJson(artifact.content)
+      : undefined;
+  const isJsonNative = JSON_NATIVE_TYPES.has(type) || diagramData || parsedContent !== undefined;
+  const canonicalFormat: CanonicalFormat = isJsonNative ? 'json' : 'markdown';
+  const contentJson = diagramData || parsedContent;
+  const contentMd =
+    canonicalFormat === 'markdown'
+      ? artifact.content
+      : projectToMarkdown(type, contentJson || artifact.content);
+
+  return {
+    canonicalFormat,
+    artifactType: type,
+    contentMd,
+    contentJson,
+    markdownProjectionStatus: contentMd.trim() ? 'synced' : 'missing',
+    markdownProjectedAt: new Date().toISOString(),
+  };
+}
+
+function normalizeArtifactContentContract(artifact: Artifact): Artifact {
+  const contentEnvelope = buildArtifactEnvelope(artifact);
+  return {
+    ...artifact,
+    content: contentEnvelope.contentMd || artifact.content,
+    metadata: {
+      ...((artifact as any).metadata || {}),
+      contentEnvelope,
+    },
+    ...(contentEnvelope as any),
+    contentEnvelope,
+  } as Artifact;
+}
+
 // ==================== STORE ====================
 
 export const useArtifactsStore = create<ArtifactsState>()(
@@ -49,7 +103,8 @@ export const useArtifactsStore = create<ArtifactsState>()(
       // Actions
       addArtifact: (artifact, conversationId) =>
         set((state) => {
-          const newArtifacts = [...state.artifacts, artifact];
+          const normalizedArtifact = normalizeArtifactContentContract(artifact);
+          const newArtifacts = [...state.artifacts, normalizedArtifact];
 
           // Also store in conversation artifacts if conversationId provided
           let newConversationArtifacts = state.conversationArtifacts;
@@ -57,14 +112,14 @@ export const useArtifactsStore = create<ArtifactsState>()(
             const existing = state.conversationArtifacts[conversationId] || [];
             newConversationArtifacts = {
               ...state.conversationArtifacts,
-              [conversationId]: [...existing, artifact],
+              [conversationId]: [...existing, normalizedArtifact],
             };
           }
 
           return {
             artifacts: newArtifacts,
             conversationArtifacts: newConversationArtifacts,
-            activeArtifactId: artifact.id,
+            activeArtifactId: normalizedArtifact.id,
             isPanelOpen: true, // Auto-open panel when artifact is added
           };
         }),
@@ -232,16 +287,19 @@ export const createArtifact = (
   title: string,
   content: string,
   options: Partial<Artifact> = {}
-): Artifact => ({
-  id: `artifact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-  type,
-  title,
-  content,
-  editable: true,
-  version: 1,
-  createdAt: new Date(),
-  ...options,
-});
+): Artifact => {
+  const artifact = {
+    id: `artifact-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    type,
+    title,
+    content,
+    editable: true,
+    version: 1,
+    createdAt: new Date(),
+    ...options,
+  } as Artifact;
+  return normalizeArtifactContentContract(artifact);
+};
 
 /**
  * Parse AI response for artifacts

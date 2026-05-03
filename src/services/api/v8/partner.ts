@@ -308,6 +308,11 @@ export interface V8PartnerPayoutSettingsUpdatePayload {
 
 export const shouldFallbackToLegacyPartner = (error: unknown): boolean => {
   const status = Number((error as { status?: number })?.status);
+  const data = (error as { data?: { code?: string } })?.data;
+  const code = String(data?.code || '').toUpperCase();
+  if (status === 403 && code === 'PARTNER_ORG_REQUIRED') {
+    return true;
+  }
   return [400, 404, 405, 501].includes(status);
 };
 

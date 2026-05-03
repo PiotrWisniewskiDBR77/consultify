@@ -12551,6 +12551,10 @@ export const Api = {
     artifactType: string;
     title: string;
     content: string;
+    canonicalFormat?: 'markdown' | 'json';
+    contentMd?: string;
+    contentJson?: unknown;
+    contentSchemaVersion?: string;
     projectId?: string | null;
     conversationId?: string | null;
     researchSessionId?: string | null;

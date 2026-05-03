@@ -22,7 +22,6 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
-  CircleHelp,
   ClipboardList,
   Clock,
   Columns3,
@@ -41,7 +40,6 @@ import {
   Loader2,
   MessageSquare,
   MoreVertical,
-  Plus,
   Rocket,
   RotateCcw,
   Send,
@@ -58,7 +56,6 @@ import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { useHelpSidePanel } from '@/contexts/HelpContext';
 import { useInterviewPermissions } from '@/hooks/useInterviewPermissions';
 import { Api, shouldAllowDemoData } from '@/services/api';
 import { V8InterviewApi } from '@/services/api/v8/interview';
@@ -493,18 +490,6 @@ export const InterviewHub: React.FC = () => {
     currentUser,
     setInterviewBreadcrumbs,
   } = useAppStore();
-  const {
-    setOpen: setHelpOpen,
-    setActiveTab: setHelpTab,
-    setKnowledgeModuleIdOverride,
-  } = useHelpSidePanel();
-
-  const openContextualHelp = useCallback(() => {
-    setKnowledgeModuleIdOverride('interview');
-    setHelpTab('knowledge');
-    setHelpOpen(true);
-  }, [setHelpOpen, setHelpTab, setKnowledgeModuleIdOverride]);
-
   // Permissions hook
   const {
     canAssign: permissionsCanAssign,
@@ -5791,11 +5776,6 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="h-full flex flex-col">
-          <div className="mx-4 mt-3 rounded-xl border border-slate-200/70 dark:border-white/[0.06] bg-slate-50/80 dark:bg-navy-900/50 px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
-            {isPolish
-              ? 'Assigned służy do administracji przypisaniami. Główny workflow review i akceptacji managera jest teraz w zakładce Sessions.'
-              : 'Assigned is for assignment administration. The primary manager review and approval workflow now lives in Sessions.'}
-          </div>
           <div className="flex-1 min-h-0 flex flex-col">
             <TableWithPreviewLayout<InterviewAssignment & { title: string }>
               selectedId={previewAssignmentId}
@@ -6554,7 +6534,6 @@ Return ONLY the answer text (no markdown fences).`;
           onClick={handleNewSession}
           className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-purple-500 to-purple-600 text-white border border-purple-400/30 hover:from-purple-400 hover:to-purple-500 shadow-lg shadow-purple-500/20 transition-colors"
         >
-          <Plus size={16} />
           <span>{isPolish ? 'Nowa sesja' : 'New session'}</span>
         </button>
       );
@@ -6565,7 +6544,6 @@ Return ONLY the answer text (no markdown fences).`;
           onClick={handleNewTemplate}
           className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors"
         >
-          <Plus size={16} />
           <span>{isPolish ? 'Nowy szablon' : 'New template'}</span>
         </button>
       );
@@ -6581,7 +6559,6 @@ Return ONLY the answer text (no markdown fences).`;
           disabled={!canCreateInsights}
           className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <Plus size={16} />
           <span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
         </button>
       );
@@ -6595,30 +6572,12 @@ Return ONLY the answer text (no markdown fences).`;
           }}
           className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors"
         >
-          <Plus size={16} />
           <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
         </button>
       );
     }
     return null;
   }, [activeDocumentId, activeTab, isPolish, canAssign, handleNewSession, handleNewTemplate]);
-
-  // Tool control: Contextual Help
-  const toolControl = useMemo(() => {
-    if (activeDocumentId) return null;
-    return (
-      <button
-        type="button"
-        onClick={openContextualHelp}
-        className="inline-flex items-center gap-2 pr-3 pl-3 h-9 rounded-full text-xs font-medium border bg-white/70 dark:bg-white/[0.04] border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
-        title={isPolish ? 'Pomoc kontekstowa' : 'Contextual help'}
-        data-testid="contextual-help-entry-interview"
-      >
-        <CircleHelp size={16} />
-        <span>{t('help.entrypoint.contextual', 'Help')}</span>
-      </button>
-    );
-  }, [activeDocumentId, openContextualHelp, isPolish, t]);
 
   // Command row content (from renderCommandRow, minus search/dynamic tabs which ModuleHub handles)
   const commandRowContent = useMemo(() => {
@@ -6646,7 +6605,7 @@ Return ONLY the answer text (no markdown fences).`;
         onClearFilters={handleClearFilters}
         rightControls={rightControls}
         primaryCta={primaryCta}
-        toolControl={toolControl}
+        toolControl={null}
         commandRowContent={commandRowContent}
         availableViewModes={['table']}
         showTabCounts={false}

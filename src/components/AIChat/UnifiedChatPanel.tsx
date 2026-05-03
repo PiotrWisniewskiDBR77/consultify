@@ -92,6 +92,7 @@ import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './t
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
+import { WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
 
 // ============================================================================
 // Types
@@ -1143,10 +1144,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       setThinkingSteps(steps);
     },
     onArtifactDetected: (artifact, artifactMeta) => {
+      const contentEnvelope = (artifact as any).contentEnvelope || (artifact as any).metadata?.contentEnvelope;
       const governedDraft = {
         ...artifact,
         metadata: {
           ...((artifact as any).metadata || {}),
+          contentEnvelope,
           wave5Governance: {
             localDraftOnly: true,
             requiresMutationProposal: true,
@@ -1165,7 +1168,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       void Api.createWave5Artifact({
         artifactType: mapChatArtifactToWave5Type(artifact),
         title: artifact.title || 'Chat artifact',
-        content: artifact.content || '',
+        content: contentEnvelope?.contentMd || artifact.content || '',
+        canonicalFormat: contentEnvelope?.canonicalFormat,
+        contentMd: contentEnvelope?.contentMd,
+        contentJson: contentEnvelope?.contentJson,
+        contentSchemaVersion: contentEnvelope?.contentSchemaVersion,
         conversationId: activeConversationId || undefined,
         projectId: (workspaceContext as any)?.projectId || undefined,
         trustBundleId:
@@ -4157,21 +4164,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             </button>
           </div>
 
-          <div className="flex flex-1 items-center justify-center p-8">
-            <div className="max-w-sm rounded-2xl border border-dashed border-slate-300/80 bg-slate-50/70 p-6 text-center dark:border-white/15 dark:bg-white/[0.03]">
-              <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary-50 text-primary-600 dark:bg-primary-900/20 dark:text-primary-300">
-                <PanelRight size={20} strokeWidth={1.75} />
-              </div>
-              <div className="text-sm font-medium text-navy-900 dark:text-white">
-                {t('aiChat.workPanel.emptyTitle', 'Clean work window')}
-              </div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
-                {t(
-                  'aiChat.workPanel.emptyDescription',
-                  'This is the placeholder for documents, previews, and canvas work. We will decide the exact content next.'
-                )}
-              </p>
-            </div>
+          <div className="min-h-0 flex-1">
+            <WorkCanvasDocumentPanel />
           </div>
         </aside>
       )}
