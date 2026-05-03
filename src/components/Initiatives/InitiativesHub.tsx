@@ -17,6 +17,7 @@ import {
   Plus,
   RefreshCw,
   Shield,
+  Sparkles,
   Target,
   Users,
 } from 'lucide-react';
@@ -83,6 +84,7 @@ import {
 } from './InitiativePreviewV3';
 import { createInitiativesDemoDataset, isShowcaseInitiativeId } from './initiativesDemoData';
 import { InitiativesTimelineView } from './InitiativesTimelineView';
+import { InitiativeWizardModal } from './Wizard/InitiativeWizardModal';
 
 const MODULE_STATUSES = getStatusesForModule('initiatives');
 const MIN_SHOWCASE_INITIATIVES = 10;
@@ -199,6 +201,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   const [isV8InitiativeSnapshotLoading, setIsV8InitiativeSnapshotLoading] = useState(false);
   const v8SnapshotRequestRef = useRef(0);
   const [showNewModal, setShowNewModal] = useState(false);
+  const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [users, setUsers] = useState<any[]>([]);
@@ -1027,8 +1030,9 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   useEffect(() => {
     if (!isPilotParticipant) return;
     if (showNewModal) setShowNewModal(false);
+    if (showInitiativeWizard) setShowInitiativeWizard(false);
     if (showBulkModal) setShowBulkModal(false);
-  }, [isPilotParticipant, showBulkModal, showNewModal]);
+  }, [isPilotParticipant, showBulkModal, showInitiativeWizard, showNewModal]);
 
   // ============================================
   // CONTENT RENDERING - Original Portfolio Components
@@ -1472,104 +1476,120 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
   );
 
   const commandRowContent = (
-    <div className={MENU_3_LEFT_CLASS}>
-      <button
-        type="button"
-        onClick={() => setActiveStatusFilter(null)}
-        className={!activeStatusFilter ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
-      >
-        <span className={MENU_3_ALL_DOT_CLASS} />
-        <span>ALL</span>
-        <span className={!activeStatusFilter ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
-          {statusCounts.all ?? 0}
-        </span>
-      </button>
-      {ALLOWED_STATUSES.map((s) => {
-        const meta = STATUS_METADATA[s];
-        const isActive = activeStatusFilter === s;
-        const count = statusCounts[s] ?? 0;
-        return (
+    <div className="flex items-center justify-between gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
+        <button
+          type="button"
+          onClick={() => setActiveStatusFilter(null)}
+          className={!activeStatusFilter ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+        >
+          <span className={MENU_3_ALL_DOT_CLASS} />
+          <span>ALL</span>
+          <span className={!activeStatusFilter ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+            {statusCounts.all ?? 0}
+          </span>
+        </button>
+        {ALLOWED_STATUSES.map((s) => {
+          const meta = STATUS_METADATA[s];
+          const isActive = activeStatusFilter === s;
+          const count = statusCounts[s] ?? 0;
+          return (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setActiveStatusFilter(isActive ? null : s)}
+              className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            >
+              <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
+              <span>{meta?.label || s}</span>
+              <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
+        {v8PendingDecisionChains.length > 0 && (
+          <>
+            <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+            <div className={MENU_3_CHIP_INACTIVE}>
+              <span className="w-2 h-2 rounded-full bg-violet-400" />
+              <span>{t('initiatives.v8.pendingChains', 'V8 pending chains')}</span>
+              <span className={MENU_3_BADGE_INACTIVE}>{v8PendingDecisionChains.length}</span>
+            </div>
+            <div className={MENU_3_CHIP_INACTIVE}>
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span>{t('initiatives.v8.pendingDecisions', 'V8 pending decisions')}</span>
+              <span className={MENU_3_BADGE_INACTIVE}>{totalPendingDecisionEntries}</span>
+            </div>
+          </>
+        )}
+        {v8SnapshotTargetId && (isV8InitiativeSnapshotLoading || hasActiveV8Snapshot) && (
+          <>
+            <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
+            <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-violet-200/80 dark:border-violet-400/20 text-violet-700 dark:text-violet-200 bg-violet-50/80 dark:bg-violet-500/10">
+              <Shield className="w-3 h-3" />
+              <span>{t('initiatives.v8.snapshot', 'V8 snapshot')}</span>
+              <span className="rounded-full bg-white/80 dark:bg-violet-950/50 px-2 py-0.5 text-[10px] text-violet-700 dark:text-violet-100">
+                {isV8InitiativeSnapshotLoading
+                  ? t('initiatives.v8.loading', 'loading')
+                  : t('initiatives.v8.ready', 'ready')}
+              </span>
+            </div>
+            {hasActiveV8Snapshot && (
+              <>
+                <div className={MENU_3_CHIP_INACTIVE}>
+                  <span
+                    className={`w-2 h-2 rounded-full ${
+                      v8InitiativeSnapshot.wbsCompleteness.complete
+                        ? 'bg-emerald-400'
+                        : 'bg-amber-400'
+                    }`}
+                  />
+                  <span>{t('initiatives.v8.wbs', 'V8 WBS')}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>
+                    {v8InitiativeSnapshot.wbsCompleteness.complete
+                      ? t('initiatives.v8.complete', 'complete')
+                      : t('initiatives.v8.gaps', {
+                          count: v8SnapshotGapCount,
+                          defaultValue: '{{count}} gaps',
+                        })}
+                  </span>
+                </div>
+                <div className={MENU_3_CHIP_INACTIVE}>
+                  <span className="w-2 h-2 rounded-full bg-sky-400" />
+                  <span>{t('initiatives.v8.criticalPath', 'V8 critical path')}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>
+                    {v8InitiativeSnapshot.criticalPath.length}
+                  </span>
+                </div>
+                <div className={MENU_3_CHIP_INACTIVE}>
+                  <span className="w-2 h-2 rounded-full bg-fuchsia-400" />
+                  <span>{t('initiatives.v8.dependencies', 'V8 dependencies')}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>
+                    {v8InitiativeSnapshot.crossInitiativeDependencies.length}
+                  </span>
+                </div>
+                <div className={MENU_3_CHIP_INACTIVE}>
+                  <span className="w-2 h-2 rounded-full bg-amber-400" />
+                  <span>{t('initiatives.v8.snapshotDecisions', 'V8 initiative decisions')}</span>
+                  <span className={MENU_3_BADGE_INACTIVE}>{v8SnapshotPendingDecisionEntries}</span>
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+      {!isPilotParticipant && (
+        <div className={MENU_3_RIGHT_CLASS}>
           <button
-            key={s}
             type="button"
-            onClick={() => setActiveStatusFilter(isActive ? null : s)}
-            className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            onClick={() => setShowInitiativeWizard(true)}
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-cyan-300/70 bg-cyan-500/10 px-3 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-500/15 dark:border-cyan-400/25 dark:text-cyan-200"
           >
-            <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
-            <span>{meta?.label || s}</span>
-            <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>{count}</span>
+            <Sparkles className="h-3.5 w-3.5" />
+            AI Initiative Wizard
           </button>
-        );
-      })}
-      {v8PendingDecisionChains.length > 0 && (
-        <>
-          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-          <div className={MENU_3_CHIP_INACTIVE}>
-            <span className="w-2 h-2 rounded-full bg-violet-400" />
-            <span>{t('initiatives.v8.pendingChains', 'V8 pending chains')}</span>
-            <span className={MENU_3_BADGE_INACTIVE}>{v8PendingDecisionChains.length}</span>
-          </div>
-          <div className={MENU_3_CHIP_INACTIVE}>
-            <span className="w-2 h-2 rounded-full bg-amber-400" />
-            <span>{t('initiatives.v8.pendingDecisions', 'V8 pending decisions')}</span>
-            <span className={MENU_3_BADGE_INACTIVE}>{totalPendingDecisionEntries}</span>
-          </div>
-        </>
-      )}
-      {v8SnapshotTargetId && (isV8InitiativeSnapshotLoading || hasActiveV8Snapshot) && (
-        <>
-          <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-violet-200/80 dark:border-violet-400/20 text-violet-700 dark:text-violet-200 bg-violet-50/80 dark:bg-violet-500/10">
-            <Shield className="w-3 h-3" />
-            <span>{t('initiatives.v8.snapshot', 'V8 snapshot')}</span>
-            <span className="rounded-full bg-white/80 dark:bg-violet-950/50 px-2 py-0.5 text-[10px] text-violet-700 dark:text-violet-100">
-              {isV8InitiativeSnapshotLoading
-                ? t('initiatives.v8.loading', 'loading')
-                : t('initiatives.v8.ready', 'ready')}
-            </span>
-          </div>
-          {hasActiveV8Snapshot && (
-            <>
-              <div className={MENU_3_CHIP_INACTIVE}>
-                <span
-                  className={`w-2 h-2 rounded-full ${
-                    v8InitiativeSnapshot.wbsCompleteness.complete
-                      ? 'bg-emerald-400'
-                      : 'bg-amber-400'
-                  }`}
-                />
-                <span>{t('initiatives.v8.wbs', 'V8 WBS')}</span>
-                <span className={MENU_3_BADGE_INACTIVE}>
-                  {v8InitiativeSnapshot.wbsCompleteness.complete
-                    ? t('initiatives.v8.complete', 'complete')
-                    : t('initiatives.v8.gaps', {
-                        count: v8SnapshotGapCount,
-                        defaultValue: '{{count}} gaps',
-                      })}
-                </span>
-              </div>
-              <div className={MENU_3_CHIP_INACTIVE}>
-                <span className="w-2 h-2 rounded-full bg-sky-400" />
-                <span>{t('initiatives.v8.criticalPath', 'V8 critical path')}</span>
-                <span className={MENU_3_BADGE_INACTIVE}>
-                  {v8InitiativeSnapshot.criticalPath.length}
-                </span>
-              </div>
-              <div className={MENU_3_CHIP_INACTIVE}>
-                <span className="w-2 h-2 rounded-full bg-fuchsia-400" />
-                <span>{t('initiatives.v8.dependencies', 'V8 dependencies')}</span>
-                <span className={MENU_3_BADGE_INACTIVE}>
-                  {v8InitiativeSnapshot.crossInitiativeDependencies.length}
-                </span>
-              </div>
-              <div className={MENU_3_CHIP_INACTIVE}>
-                <span className="w-2 h-2 rounded-full bg-amber-400" />
-                <span>{t('initiatives.v8.snapshotDecisions', 'V8 initiative decisions')}</span>
-                <span className={MENU_3_BADGE_INACTIVE}>{v8SnapshotPendingDecisionEntries}</span>
-              </div>
-            </>
-          )}
-        </>
+        </div>
       )}
     </div>
   );
@@ -1601,6 +1621,35 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
       >
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
+
+      <InitiativeWizardModal
+        isOpen={showInitiativeWizard}
+        projectId={currentProjectId || undefined}
+        existingInitiatives={allInitiatives}
+        onClose={() => setShowInitiativeWizard(false)}
+        onCreated={(created) => {
+          if (!created.length) return;
+          setAllInitiatives((prev) =>
+            created.reduce((next, initiative) => upsertPortfolioInitiative(next, initiative), prev)
+          );
+          setInitiatives((prev) =>
+            created.reduce((next, initiative) => upsertPortfolioInitiative(next, initiative), prev)
+          );
+          const first = created[0];
+          if (first?.id) {
+            const revealState = getCreatedInitiativeRevealState(
+              {
+                scope,
+                activeStatusFilter,
+              },
+              first.status
+            );
+            setScope(revealState.scope);
+            setActiveStatusFilter(revealState.activeStatusFilter);
+            setPreviewInitiativeId(first.id);
+          }
+        }}
+      />
 
       {/* New Initiative Modal — D1.1: includes type/level selector */}
       {showNewModal && (

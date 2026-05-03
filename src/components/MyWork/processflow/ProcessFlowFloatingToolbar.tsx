@@ -127,7 +127,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
       {onDelete && (
         <button
           type="button"
-          className={`${BTN} hover:text-red-500 dark:hover:text-red-400`}
+          className={`${BTN} hover:text-rose-500 dark:hover:text-rose-400`}
           onClick={onDelete}
           disabled={locked}
           title={isPl ? 'Usuń' : 'Delete'}
@@ -160,7 +160,7 @@ export const ProcessFlowFloatingToolbar: React.FC<ProcessFlowFloatingToolbarProp
                   </span>
                   <button
                     type="button"
-                    className="text-red-400 hover:text-red-600 ml-1"
+                    className="text-rose-400 hover:text-rose-600 ml-1"
                     onClick={() => {
                       const next = artifactLinks!.filter((_, i) => i !== idx);
                       onArtifactLinksChange(next);

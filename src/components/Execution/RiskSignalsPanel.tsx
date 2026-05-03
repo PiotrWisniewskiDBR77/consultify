@@ -47,17 +47,17 @@ interface RiskSignalsPanelProps {
 
 const SEVERITY_CONFIG = {
   CRITICAL: {
-    bg: 'bg-red-500/10',
-    border: 'border-red-500/30',
-    text: 'text-red-400',
-    badge: 'bg-red-500/20 text-red-400',
+    bg: 'bg-rose-500/10',
+    border: 'border-rose-500/30',
+    text: 'text-rose-400',
+    badge: 'bg-rose-500/20 text-rose-400',
     icon: ShieldAlert,
   },
   HIGH: {
-    bg: 'bg-orange-500/10',
-    border: 'border-orange-500/30',
-    text: 'text-orange-400',
-    badge: 'bg-orange-500/20 text-orange-400',
+    bg: 'bg-amber-500/10',
+    border: 'border-amber-500/30',
+    text: 'text-amber-400',
+    badge: 'bg-amber-500/20 text-amber-400',
     icon: AlertTriangle,
   },
   MEDIUM: {

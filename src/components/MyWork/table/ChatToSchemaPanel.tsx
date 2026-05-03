@@ -204,7 +204,7 @@ const QuickActionChip: React.FC<{
   <button
     onClick={onClick}
     disabled={disabled}
-    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 text-[10px] font-medium text-slate-500 dark:text-zinc-400 hover:border-violet-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-violet-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 text-[10px] font-medium text-slate-500 dark:text-zinc-400 hover:border-primary-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
   >
     {icon}
     {label}
@@ -279,7 +279,7 @@ const ProposalHistoryList: React.FC<{
                   entry.status === 'executed'
                     ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
                     : entry.status === 'rejected'
-                      ? 'bg-red-500/15 text-red-600 dark:text-red-400'
+                      ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
                       : entry.status === 'refined'
                         ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400'
                         : 'bg-slate-100 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400'
@@ -547,12 +547,12 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
     >
       {/* Panel header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-200 dark:border-zinc-700 bg-gradient-to-r from-violet-50 to-transparent dark:from-violet-950/20 flex-shrink-0">
-        <Sparkles size={16} className="text-violet-500" />
+        <Sparkles size={16} className="text-primary-500" />
         <span className="text-sm font-semibold text-slate-800 dark:text-zinc-100">
           {isPl ? 'AI Kreator Tabel' : 'AI Table Builder'}
         </span>
         {companyContext?.workspaceName && (
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400">
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
             {companyContext.workspaceName}
           </span>
         )}
@@ -571,8 +571,8 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
         {conversation.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center h-full text-center py-8">
-            <div className="w-12 h-12 rounded-2xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center mb-3">
-              <Table2 size={24} className="text-violet-500" />
+            <div className="w-12 h-12 rounded-2xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center mb-3">
+              <Table2 size={24} className="text-primary-500" />
             </div>
             <p className="text-sm font-medium text-slate-700 dark:text-zinc-200 mb-1">
               {isPl ? 'Opisz swoją tabelę' : 'Describe your table'}
@@ -593,7 +593,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
             <div
               className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 ${
                 msg.role === 'user'
-                  ? 'bg-violet-600 text-white rounded-br-md'
+                  ? 'bg-primary-600 text-white rounded-br-md'
                   : 'bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 rounded-bl-md'
               }`}
             >
@@ -605,7 +605,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
         {loading && (
           <div className="flex justify-start mb-3">
             <div className="flex items-center gap-2 rounded-2xl rounded-bl-md bg-slate-100 dark:bg-zinc-800 px-3.5 py-2.5">
-              <Loader2 size={14} className="animate-spin text-violet-500" />
+              <Loader2 size={14} className="animate-spin text-primary-500" />
               <span className="text-xs text-slate-500 dark:text-zinc-400">
                 {isPl ? 'Generuję propozycję...' : 'Generating proposal...'}
               </span>
@@ -655,12 +655,12 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
 
       {/* Error */}
       {error && (
-        <div className="px-4 py-2 bg-red-500/10 border-t border-red-500/20 flex-shrink-0">
+        <div className="px-4 py-2 bg-rose-500/10 border-t border-rose-500/20 flex-shrink-0">
           <div className="flex items-start justify-between gap-2">
-            <p className="text-xs text-red-700 dark:text-red-300">{error}</p>
+            <p className="text-xs text-rose-700 dark:text-rose-300">{error}</p>
             <button
               onClick={clearError}
-              className="p-0.5 text-red-400 hover:text-red-600 dark:hover:text-red-300 transition-colors flex-shrink-0"
+              className="p-0.5 text-rose-400 hover:text-rose-600 dark:hover:text-rose-300 transition-colors flex-shrink-0"
             >
               <X size={12} />
             </button>
@@ -696,13 +696,13 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
               }
               disabled={loading}
               rows={1}
-              className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 outline-none text-sm text-slate-800 dark:text-zinc-200 placeholder-slate-400 resize-none leading-relaxed focus:border-violet-400 dark:focus:border-violet-500 transition-colors"
+              className="w-full bg-slate-50 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 rounded-xl px-3 py-2 outline-none text-sm text-slate-800 dark:text-zinc-200 placeholder-slate-400 resize-none leading-relaxed focus:border-primary-400 dark:focus:border-primary-500 transition-colors"
             />
           </div>
           <button
             onClick={() => handleSubmit()}
             disabled={!inputValue.trim() || loading}
-            className="p-2.5 rounded-xl bg-violet-500 text-white hover:bg-violet-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex-shrink-0"
+            className="p-2.5 rounded-xl bg-primary-500 text-white hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex-shrink-0"
           >
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
           </button>
@@ -769,7 +769,7 @@ export const ChatToSchemaPanel: React.FC<ChatToSchemaPanelProps> = ({
 
   // modal (default)
   return (
-    <div className="rounded-2xl border border-violet-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
+    <div className="rounded-2xl border border-primary-500/30 bg-white dark:bg-zinc-900 dark:border-zinc-700 shadow-xl overflow-hidden transition-all duration-200">
       {panelContent}
     </div>
   );

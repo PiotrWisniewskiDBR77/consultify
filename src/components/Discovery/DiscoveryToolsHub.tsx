@@ -157,8 +157,8 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
   {
     id: 'pending_review',
     label: 'Pending Review',
-    color: 'text-orange-400',
-    bgColor: 'bg-orange-500',
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500',
   },
   {
     id: 'executing',
@@ -172,18 +172,18 @@ const DISCOVERY_STATUSES: StatusFilterOption[] = [
 const REPORTS_STATUSES: StatusFilterOption[] = [
   { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
   { id: 'approved', label: 'Approved', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
-  { id: 'completed', label: 'Completed', color: 'text-blue-400', bgColor: 'bg-blue-500' },
+  { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
 ];
 
 // Initiatives tab: DRAFT, PROPOSED, PLANNED, IN_PROGRESS, COMPLETED, CANCELLED
 const INITIATIVES_STATUSES: StatusFilterOption[] = [
   { id: 'all', label: 'All', color: 'text-slate-400', bgColor: 'bg-slate-500' },
   { id: 'draft', label: 'Draft', color: 'text-slate-400', bgColor: 'bg-slate-500' },
-  { id: 'proposed', label: 'Proposed', color: 'text-purple-400', bgColor: 'bg-purple-500' },
+  { id: 'proposed', label: 'Proposed', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'planned', label: 'Planned', color: 'text-blue-400', bgColor: 'bg-blue-500' },
   { id: 'in_progress', label: 'In Progress', color: 'text-amber-400', bgColor: 'bg-amber-500' },
   { id: 'completed', label: 'Completed', color: 'text-emerald-400', bgColor: 'bg-emerald-500' },
-  { id: 'cancelled', label: 'Cancelled', color: 'text-red-400', bgColor: 'bg-red-500' },
+  { id: 'cancelled', label: 'Cancelled', color: 'text-rose-400', bgColor: 'bg-rose-500' },
 ];
 
 // Tool type codes
@@ -249,7 +249,7 @@ const CATEGORY_META: Record<
   digital: {
     name: 'Digital',
     icon: <Cpu size={16} />,
-    textClass: 'text-purple-400',
+    textClass: 'text-blue-400',
     count: 10,
   },
   automation: {
@@ -1810,9 +1810,9 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         ],
         render: (row) => {
           const axisColors: Record<string, string> = {
-            strategic: 'text-emerald-400',
-            operational: 'text-blue-400',
-            digital: 'text-purple-400',
+            strategic: 'text-slate-600 dark:text-slate-300',
+            operational: 'text-slate-600 dark:text-slate-300',
+            digital: 'text-slate-600 dark:text-slate-300',
           };
           return (
             <span
@@ -1829,18 +1829,17 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
         width: '100px',
         render: (row) => {
           const priority = row._fullData?.priority || 'MEDIUM';
-          const priorityColors: Record<string, string> = {
-            CRITICAL: 'bg-red-500/20 text-red-400',
-            HIGH: 'bg-orange-500/20 text-orange-400',
-            MEDIUM: 'bg-amber-500/20 text-amber-400',
-            LOW: 'bg-slate-500/20 text-slate-400',
+          const priorityDots: Record<string, string> = {
+            CRITICAL: 'bg-rose-500',
+            HIGH: 'bg-amber-500',
+            MEDIUM: 'bg-blue-500',
+            LOW: 'bg-slate-400',
           };
           return (
-            <span
-              className={`px-2 py-0.5 text-[11px] font-medium rounded-full ${
-                priorityColors[priority] || priorityColors.MEDIUM
-              }`}
-            >
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200">
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${priorityDots[priority] || priorityDots.MEDIUM}`}
+              />
               {priority}
             </span>
           );
@@ -1900,7 +1899,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
             assessment_report: {
               icon: <Activity size={14} />,
               label: isPolish ? 'Raport assessment' : 'Assessment report',
-              color: 'text-purple-400',
+              color: 'text-blue-400',
             },
             report_builder: {
               icon: <FileText size={14} />,
@@ -2718,11 +2717,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const getTaskStatusColor = (status: string) => {
     switch (status) {
       case 'DONE':
-        return 'bg-green-500/20 text-green-400';
+        return 'bg-emerald-500/20 text-emerald-400';
       case 'IN_PROGRESS':
         return 'bg-blue-500/20 text-blue-400';
       case 'BLOCKED':
-        return 'bg-red-500/20 text-red-400';
+        return 'bg-rose-500/20 text-rose-400';
       default:
         return 'bg-slate-500/20 text-slate-400';
     }
@@ -2731,11 +2730,11 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'CRITICAL':
-        return 'text-red-400';
+        return 'text-rose-400';
       case 'HIGH':
-        return 'text-orange-400';
-      case 'MEDIUM':
         return 'text-amber-400';
+      case 'MEDIUM':
+        return 'text-blue-400';
       default:
         return 'text-slate-400';
     }
@@ -2810,7 +2809,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                   DRAFT
                 </span>
                 {selectedInitiative.axis && (
-                  <span className="px-2 py-0.5 text-xs font-medium rounded bg-purple-500/20 text-purple-400 capitalize">
+                  <span className="px-2 py-0.5 text-xs font-medium rounded bg-blue-500/20 text-blue-400 capitalize">
                     {selectedInitiative.axis}
                   </span>
                 )}
@@ -2844,7 +2843,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </button>
               <button
                 onClick={handleSubmitForReview}
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors flex items-center gap-2"
+                className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-500 rounded-lg transition-colors flex items-center gap-2"
               >
                 <ArrowRight size={16} />
                 Submit for Review
@@ -2882,7 +2881,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     <span className="text-green-400">{taskStats.done} Done</span>
                     <span className="text-blue-400">{taskStats.inProgress} In Progress</span>
                     {taskStats.blocked > 0 && (
-                      <span className="text-red-400">{taskStats.blocked} Blocked</span>
+                      <span className="text-rose-400">{taskStats.blocked} Blocked</span>
                     )}
                   </div>
                 </div>
@@ -2896,7 +2895,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     </div>
                     <div className="h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-purple-500 to-purple-400 rounded-full transition-all"
+                        className="h-full bg-gradient-to-r from-primary-500 to-primary-400 rounded-full transition-all"
                         style={{ width: `${completionPercent}%` }}
                       />
                     </div>
@@ -2917,7 +2916,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                     {initiativeTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-purple-500/30 transition-colors"
+                        className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-navy-800 rounded-lg border border-slate-200 dark:border-navy-700 hover:border-primary-500/30 transition-colors"
                       >
                         <div
                           className={`w-2 h-2 rounded-full ${
@@ -2926,7 +2925,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                               : task.status === 'IN_PROGRESS'
                                 ? 'bg-blue-400'
                                 : task.status === 'BLOCKED'
-                                  ? 'bg-red-400'
+                                  ? 'bg-rose-400'
                                   : 'bg-slate-400'
                           }`}
                         />
@@ -3086,11 +3085,13 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
               </div>
 
               {/* Next Steps */}
-              <div className="bg-purple-500/10 rounded-xl border border-purple-500/20 p-5">
-                <h3 className="text-xs font-semibold text-purple-400 uppercase mb-3">Next Steps</h3>
+              <div className="bg-primary-500/10 rounded-xl border border-primary-500/20 p-5">
+                <h3 className="text-xs font-semibold text-primary-400 uppercase mb-3">
+                  Next Steps
+                </h3>
                 <ul className="space-y-2 text-sm text-slate-700 dark:text-slate-300">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={14} className="mt-0.5 text-purple-400" />
+                    <CheckCircle2 size={14} className="mt-0.5 text-primary-400" />
                     <span>Review initiative details</span>
                   </li>
                   <li className="flex items-start gap-2">
@@ -4461,7 +4462,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 id: 'digital' as const,
                 label: 'Digital',
                 count: libraryCategoryCounts.digital,
-                dot: 'bg-purple-500',
+                dot: 'bg-blue-500',
               },
               {
                 id: 'automation' as const,

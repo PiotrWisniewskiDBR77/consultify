@@ -150,6 +150,11 @@ export const Sidebar: React.FC = () => {
   const superAdminMenuItem = React.useMemo(() => getSuperAdminMenuItem(t), [t]);
   const showInternalToolsMenu = canUseInternalTools(currentUser);
   const shouldLockFooterAdminMenus = !isSuperAdminRole(currentUser?.role);
+  const canAttemptPartnerPortal = React.useMemo(
+    () => !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role),
+    [currentUser?.role]
+  );
+  const [hasPartnerPortalAccess, setHasPartnerPortalAccess] = React.useState(false);
   const lockedOrganizationMenuItem = React.useMemo<MenuItem>(() => {
     if (!shouldLockFooterAdminMenus) return organizationMenuItem;
     return {
@@ -403,6 +408,35 @@ export const Sidebar: React.FC = () => {
   const sidebarWidthClass = showFull ? 'w-64' : 'w-16';
 
   React.useEffect(() => {
+    let isMounted = true;
+
+    const refreshPartnerPortalAccess = async () => {
+      if (!canAttemptPartnerPortal || !currentUser?.id) {
+        if (isMounted) setHasPartnerPortalAccess(false);
+        return;
+      }
+
+      try {
+        const response = await Api.get('/api/partners/connection');
+        const payload = (response as { data?: unknown })?.data;
+        const resolvedData =
+          payload && typeof payload === 'object' && 'data' in (payload as Record<string, unknown>)
+            ? (payload as { data?: { connected?: unknown } })?.data
+            : (payload as { connected?: unknown } | null);
+        const connected = Boolean(resolvedData?.connected);
+        if (isMounted) setHasPartnerPortalAccess(connected);
+      } catch {
+        if (isMounted) setHasPartnerPortalAccess(false);
+      }
+    };
+
+    void refreshPartnerPortalAccess();
+    return () => {
+      isMounted = false;
+    };
+  }, [canAttemptPartnerPortal, currentUser?.id]);
+
+  React.useEffect(() => {
     if (!isSidebarOpen || (!isMobile && !isTablet)) return;
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -486,9 +520,7 @@ export const Sidebar: React.FC = () => {
           onLogout={logout}
           onNavigate={handleFooterNavigate}
           t={t as any}
-          showPartnerPortal={
-            !isSuperAdminRole(currentUser?.role) && !isPilotRestrictedRole(currentUser?.role)
-          }
+          showPartnerPortal={canAttemptPartnerPortal && hasPartnerPortalAccess}
         >
           {isAdminOwnerOrSuperAdminRole(currentUser?.role) &&
             renderNavItem(lockedOrganizationMenuItem)}

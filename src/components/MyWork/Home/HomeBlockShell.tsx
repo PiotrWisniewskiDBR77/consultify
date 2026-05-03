@@ -96,8 +96,8 @@ export const HomeBlockShell: React.FC<HomeBlockShellProps> = ({
           <div className="min-w-0">
             <div className={cn('flex items-center gap-1.5', isCompact ? 'mb-0.5' : 'mb-1.5')}>
               {isLive && (
-                <span className="inline-flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider text-cyan-300/70">
-                  <Activity size={8} className="text-cyan-300/80" />
+                <span className="inline-flex items-center gap-1 font-mono text-[8px] uppercase tracking-wider text-blue-300/70">
+                  <Activity size={8} className="text-blue-300/80" />
                   {t('myWork.radar.live')}
                 </span>
               )}

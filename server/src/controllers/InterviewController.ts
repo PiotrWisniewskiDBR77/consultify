@@ -6541,6 +6541,7 @@ ${JSON.stringify(questions || [], null, 2)}
       consultantNote,
       leadingQuestion,
       customPrompt,
+      selectedContextDocumentIds,
     } = req.body || {};
 
     const normalizedSessionIds: string[] = Array.isArray(sessionIds)
@@ -6573,8 +6574,7 @@ ${JSON.stringify(questions || [], null, 2)}
     const rejectedIds = normalizedSessionIds.filter((id) => !approvedIds.has(id));
     if (rejectedIds.length > 0) {
       res.status(409).json({
-        error:
-          'Interview Insight can only be generated from approved/completed interview sessions',
+        error: 'Interview Insight can only be generated from approved/completed interview sessions',
         rejectedSessionIds: rejectedIds,
       });
       return;
@@ -6615,6 +6615,9 @@ ${JSON.stringify(questions || [], null, 2)}
       consultantNote,
       leadingQuestion,
       customPrompt,
+      selectedContextDocumentIds: Array.isArray(selectedContextDocumentIds)
+        ? selectedContextDocumentIds.map(String).filter(Boolean)
+        : [],
       createdBy: user.id,
     });
 

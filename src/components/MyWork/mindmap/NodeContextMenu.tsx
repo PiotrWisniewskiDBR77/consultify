@@ -489,7 +489,7 @@ export const NodeContextMenu: React.FC<NodeContextMenuProps> = ({
       >
         <Icon
           size={13}
-          className={`shrink-0 ${item.danger ? 'text-red-500' : 'text-slate-400 dark:text-slate-500'}`}
+          className={`shrink-0 ${item.danger ? 'text-rose-500' : 'text-slate-400 dark:text-slate-500'}`}
         />
         <span className="flex-1 truncate">{isPl ? item.labelPl : item.labelEn}</span>
         {item.shortcut && (

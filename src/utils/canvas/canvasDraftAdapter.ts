@@ -5,7 +5,10 @@ import type {
   CanvasProjectionStatus,
   CanvasSaveState,
   CanvasStarterId,
+  CanvasWorkflowRun,
 } from '@/types/canvasWorkspace';
+
+import { normalizeCanvasArtifactBlocks } from './canvasArtifactBlocks';
 
 interface WorkCanvasDraftLike {
   id?: unknown;
@@ -14,6 +17,7 @@ interface WorkCanvasDraftLike {
   kind?: unknown;
   content?: unknown;
   contentMd?: unknown;
+  blocks?: unknown;
   canonicalFormat?: unknown;
   markdownProjectionStatus?: unknown;
   projectionError?: unknown;
@@ -23,6 +27,8 @@ interface WorkCanvasDraftLike {
   linkedIdeaId?: unknown;
   linkedNoteId?: unknown;
   linkedInitiativeId?: unknown;
+  workflowRuns?: unknown;
+  provenance?: unknown;
 }
 
 function asString(value: unknown): string | undefined {
@@ -60,6 +66,29 @@ function asDocumentKind(value: unknown, fallback: CanvasDocumentKind): CanvasDoc
     : fallback;
 }
 
+function workflowRunsFrom(value: unknown): CanvasWorkflowRun[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is CanvasWorkflowRun => {
+    if (!item || typeof item !== 'object') return false;
+    const record = item as Record<string, unknown>;
+    return (
+      typeof record.id === 'string' &&
+      typeof record.draftId === 'string' &&
+      typeof record.conversationId === 'string' &&
+      Array.isArray(record.steps)
+    );
+  });
+}
+
+function workflowRunsFromDraft(draft: WorkCanvasDraftLike): CanvasWorkflowRun[] {
+  const direct = workflowRunsFrom(draft.workflowRuns);
+  if (direct.length > 0) return direct;
+  if (draft.provenance && typeof draft.provenance === 'object') {
+    return workflowRunsFrom((draft.provenance as Record<string, unknown>).workflowRuns);
+  }
+  return [];
+}
+
 export function mapDraftResponseToCanvasDocumentState(
   draft: WorkCanvasDraftLike | null | undefined,
   fallback: CanvasDocumentState
@@ -79,6 +108,7 @@ export function mapDraftResponseToCanvasDocumentState(
     title: asString(draft.title) || fallback.title,
     kind: asDocumentKind(draft.kind, fallback.kind),
     contentMd,
+    blocks: normalizeCanvasArtifactBlocks(draft.blocks ?? fallback.blocks),
     canonicalFormat: draft.canonicalFormat === 'json' ? 'json' : 'markdown',
     saveState: asSaveState(draft.saveState, fallback.saveState),
     lifecycleState: asLifecycleState(draft.lifecycleState, fallback.lifecycleState),
@@ -92,6 +122,7 @@ export function mapDraftResponseToCanvasDocumentState(
     linkedIdeaId: asString(draft.linkedIdeaId) || fallback.linkedIdeaId,
     linkedNoteId: asString(draft.linkedNoteId) || fallback.linkedNoteId,
     linkedInitiativeId: asString(draft.linkedInitiativeId) || fallback.linkedInitiativeId,
+    workflowRuns: workflowRunsFromDraft(draft),
   };
 }
 

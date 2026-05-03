@@ -396,8 +396,13 @@ Program kończy się, gdy istnieją:
 
 - zatwierdzony operating standard,
 - aktualny audyt migracyjny,
+- aktywny board wykonawczy audytu z kolejką kart i statusami postępu,
 - lista ekranów referencyjnych,
 - plan fal migracji,
 - opisane brakujące komponenty i control bary,
 - reguły Cursor egzekwujące standard,
 - zestaw checklist używany przy każdym nowym ekranie.
+
+Board wykonawczy:
+
+- `docs/ui-standards/UI_UX_AUDIT_EXECUTION_BOARD.md`

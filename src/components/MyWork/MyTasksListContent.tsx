@@ -100,6 +100,10 @@ interface MyTasksListContentProps {
 const TASK_TABLE_VIEW_STORAGE_KEY = 'consultify-tasks-table-view';
 const TASK_TABLE_ROW_DESCRIPTION_STORAGE_KEY = 'consultify-tasks-show-row-description';
 const TASK_TABLE_DEFAULT_HIDDEN_COLUMNS: string[] = [];
+const TASK_SELECTED_ROW_CLASS =
+  'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset';
+const TASK_PREVIEW_ROW_CLASS =
+  'bg-primary-50/70 dark:bg-primary-500/[0.10] ring-1 ring-primary-500/20 ring-inset';
 
 function loadTasksHiddenColumns(): string[] {
   try {
@@ -129,27 +133,27 @@ function saveTasksRowDescriptionSetting(showDescription: boolean) {
   }
 }
 
-// Priority colors — 5-color semantic palette
+// Priority stays neutral; only the dot carries semantic signal.
 const getPriorityConfig = (priority?: string) => {
   switch (priority?.toLowerCase()) {
     case 'urgent':
     case 'critical':
       return {
-        color: 'text-red-600 dark:text-red-400',
-        bg: 'bg-red-500',
-        dot: 'bg-red-500',
+        color: 'text-slate-700 dark:text-slate-200',
+        bg: 'bg-slate-400',
+        dot: 'bg-rose-500',
         label: 'Critical',
       };
     case 'high':
       return {
-        color: 'text-amber-600 dark:text-amber-400',
+        color: 'text-slate-700 dark:text-slate-200',
         bg: 'bg-amber-500',
         dot: 'bg-amber-500',
         label: 'High',
       };
     case 'medium':
       return {
-        color: 'text-blue-600 dark:text-blue-400',
+        color: 'text-slate-700 dark:text-slate-200',
         bg: 'bg-blue-500',
         dot: 'bg-blue-500',
         label: 'Medium',
@@ -208,9 +212,9 @@ const getStatusConfig = (status?: string) => {
       };
     case 'blocked':
       return {
-        color: 'text-red-700 dark:text-red-400',
-        bg: 'bg-red-100 dark:bg-red-500/20',
-        dot: 'bg-red-500',
+        color: 'text-rose-700 dark:text-rose-300',
+        bg: 'bg-rose-100 dark:bg-rose-500/20',
+        dot: 'bg-rose-500',
         label: 'Blocked',
       };
     case 'cancelled':
@@ -387,12 +391,12 @@ const INLINE_STATUS_OPTIONS = [
   { value: 'todo', label: 'To Do', dot: 'bg-slate-400' },
   { value: 'in_progress', label: 'In Progress', dot: 'bg-blue-500' },
   { value: 'review', label: 'Review', dot: 'bg-amber-500' },
-  { value: 'blocked', label: 'Blocked', dot: 'bg-red-500' },
+  { value: 'blocked', label: 'Blocked', dot: 'bg-rose-500' },
   { value: 'completed', label: 'Done', dot: 'bg-emerald-500' },
 ];
 
 const INLINE_PRIORITY_OPTIONS = [
-  { value: 'critical', label: 'Critical', dot: 'bg-red-500' },
+  { value: 'critical', label: 'Critical', dot: 'bg-rose-500' },
   { value: 'high', label: 'High', dot: 'bg-amber-500' },
   { value: 'medium', label: 'Medium', dot: 'bg-blue-500' },
   { value: 'low', label: 'Low', dot: 'bg-slate-400' },
@@ -519,8 +523,8 @@ const TaskTableRow: React.FC<{
       className={`
         group cursor-pointer border-b border-slate-200/70 dark:border-white/[0.06]
         ${isCompleted ? 'opacity-60' : ''}
-        ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
-        ${isPreviewed ? 'ring-2 ring-cyan-400/30 ring-inset bg-cyan-50/30 dark:bg-cyan-500/5' : ''}
+        ${isSelected ? TASK_SELECTED_ROW_CLASS : ''}
+        ${isPreviewed ? TASK_PREVIEW_ROW_CLASS : ''}
         ${isFocused ? 'ring-2 ring-primary-500/35 ring-inset' : ''}
         transition-colors duration-150
         hover:bg-slate-50/70 dark:hover:bg-white/[0.03]
@@ -568,7 +572,7 @@ const TaskTableRow: React.FC<{
               {task.title}
             </span>
             {focusState?.[task.id] && (
-              <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
+              <span className="ml-1.5 px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200">
                 {focusState[task.id] === 'today'
                   ? '📌 Today'
                   : focusState[task.id] === 'thisWeek'
@@ -607,7 +611,7 @@ const TaskTableRow: React.FC<{
             </span>
             {(task as any).triageAction && (
               <span
-                className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-teal-100 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400"
+                className="px-1.5 py-0.5 text-[10px] font-medium rounded-full border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200"
                 title={
                   (task as any).triaged_at
                     ? `Triaged ${new Date((task as any).triaged_at).toLocaleDateString()}`
@@ -678,7 +682,7 @@ const TaskTableRow: React.FC<{
               !task.dueDate
                 ? 'text-slate-700 dark:text-slate-300 dark:text-slate-600 italic'
                 : overdue
-                  ? 'text-red-700 dark:text-red-400 font-medium'
+                  ? 'text-rose-700 dark:text-rose-300 font-medium'
                   : 'text-slate-600 dark:text-slate-400'
             }`}
           >

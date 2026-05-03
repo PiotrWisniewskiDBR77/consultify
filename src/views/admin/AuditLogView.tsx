@@ -16,9 +16,11 @@ import {
   Edit,
   Eye,
   FileText,
+  HardDrive,
   History,
   LogIn,
   LogOut,
+  PlayCircle,
   Plus,
   RefreshCw,
   Search,
@@ -33,6 +35,7 @@ import { DegradedState } from '../../components/Admin/AdminState';
 import { InfoButton } from '../../components/shared/InfoButton';
 import { Api } from '../../services/api';
 import { normalizeApiErrorMessage } from '../../utils/apiError';
+import { OrganizationContextWorkerOperationsPanel } from './OrganizationContextWorkerOperationsPanel';
 
 interface AuditLogEntry {
   id: string;
@@ -73,6 +76,66 @@ interface AuditLogViewProps {
   className?: string;
 }
 
+type ContextLineageAuditEvent = {
+  id: string;
+  targetId: string;
+  eventType: string;
+  selectedDocumentIds?: string[];
+  degraded?: boolean;
+  degradedReasons?: string[];
+  usedChunks?: Array<Record<string, unknown>>;
+  createdAt: string;
+};
+
+type ContextStorageAuditEvent = {
+  id: string;
+  documentId: string;
+  projectId?: string | null;
+  bytesDelta: number;
+  eventType: string;
+  sourceUpload?: string | null;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+};
+
+type ContextProcessingJob = {
+  id: string;
+  documentId: string;
+  status: string;
+  attemptCount: number;
+  pipelineType?: string;
+  errorCode?: string | null;
+  lockedAt?: string | null;
+  lockedBy?: string | null;
+  createdAt: string;
+};
+
+type ContextProcessingQueueSummary = {
+  adapter: string;
+  configuredBackend?: string;
+  queueBackendReady?: boolean;
+  queueBackendReason?: string | null;
+  externalQueueName?: string | null;
+  schedulerEnabled?: boolean;
+  statusCounts?: Record<string, number>;
+  pendingCount: number;
+  blockedCount: number;
+  claimedCount?: number;
+  staleClaimedCount?: number;
+  oldestClaimedAt?: string | null;
+  deadLetterCount?: number;
+  latestDeadLetterAt?: string | null;
+  staleLockMs?: number;
+  generatedAt: string;
+};
+
+type ContextWorkerRunResult = {
+  processed?: number;
+  retried?: number;
+  deadLettered?: number;
+  recoveredLocks?: number;
+};
+
 export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) => {
   const { t } = useTranslation();
 
@@ -85,6 +148,17 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [contextAuditLoading, setContextAuditLoading] = useState(true);
+  const [contextAuditError, setContextAuditError] = useState<string | null>(null);
+  const [contextLineage, setContextLineage] = useState<ContextLineageAuditEvent[]>([]);
+  const [contextStorageEvents, setContextStorageEvents] = useState<ContextStorageAuditEvent[]>([]);
+  const [contextProcessingJobs, setContextProcessingJobs] = useState<ContextProcessingJob[]>([]);
+  const [contextProcessingSummary, setContextProcessingSummary] =
+    useState<ContextProcessingQueueSummary | null>(null);
+  const [lastWorkerRunResult, setLastWorkerRunResult] = useState<ContextWorkerRunResult | null>(
+    null
+  );
+  const [contextWorkerRunning, setContextWorkerRunning] = useState(false);
 
   const parseMetadata = useCallback((row: TenantAdminAuditLogRow): Record<string, unknown> => {
     const raw = row.metadataJson ?? row.metadata_json ?? row.metadata;
@@ -180,9 +254,42 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
     setLoading(false);
   }, [actionFilter, normalizeAuditLog, searchTerm]);
 
+  const loadContextAudit = useCallback(async () => {
+    setContextAuditLoading(true);
+    try {
+      setContextAuditError(null);
+      const [lineageResponse, storageResponse, processingJobsResponse, queueSummaryResponse] =
+        await Promise.all([
+          Api.getOrganizationContextLineageAudit({ limit: 8 }),
+          Api.getOrganizationContextStorageAudit({ limit: 8 }),
+          Api.getOrganizationContextProcessingJobsAudit({ limit: 8 }),
+          Api.getOrganizationContextProcessingQueueSummary(),
+        ]);
+      setContextLineage(Array.isArray(lineageResponse?.data) ? lineageResponse.data : []);
+      setContextStorageEvents(Array.isArray(storageResponse?.data) ? storageResponse.data : []);
+      setContextProcessingJobs(
+        Array.isArray(processingJobsResponse?.data) ? processingJobsResponse.data : []
+      );
+      setContextProcessingSummary(queueSummaryResponse?.data || null);
+    } catch (error: unknown) {
+      const message = normalizeApiErrorMessage(error, 'Organization context audit unavailable');
+      setContextAuditError(message);
+      setContextLineage([]);
+      setContextStorageEvents([]);
+      setContextProcessingJobs([]);
+      setContextProcessingSummary(null);
+    } finally {
+      setContextAuditLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadLogs();
   }, [loadLogs]);
+
+  useEffect(() => {
+    loadContextAudit();
+  }, [loadContextAudit]);
 
   const handleExport = async () => {
     setExporting(true);
@@ -199,6 +306,30 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       toast.error(normalizeApiErrorMessage(error, 'Audit log export failed'));
     }
     setExporting(false);
+  };
+
+  const handleRunContextWorkerOnce = async () => {
+    const confirmed = window.confirm(
+      'Run the organization context worker once? This will claim queued document processing jobs and write an audit event.'
+    );
+    if (!confirmed) return;
+
+    setContextWorkerRunning(true);
+    try {
+      const response = await Api.runOrganizationContextWorkerOnce({ limit: 5 });
+      const result = response?.data || {};
+      setLastWorkerRunResult(result);
+      toast.success(
+        `Context worker completed: ${Number(result.processed || 0)} processed, ${Number(
+          result.retried || 0
+        )} retried, ${Number(result.deadLettered || 0)} dead-lettered.`
+      );
+      await loadContextAudit();
+    } catch (error: unknown) {
+      toast.error(normalizeApiErrorMessage(error, 'Context worker run failed'));
+    } finally {
+      setContextWorkerRunning(false);
+    }
   };
 
   const getActionIcon = (actionType: AuditLogEntry['actionType']) => {
@@ -269,6 +400,18 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
     });
   };
 
+  const formatBytes = (bytes: number) => {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let value = bytes;
+    let unit = 0;
+    while (value >= 1024 && unit < units.length - 1) {
+      value /= 1024;
+      unit += 1;
+    }
+    return `${value.toFixed(value >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
+  };
+
   const filteredLogs = logs.filter((log) => {
     if (actionFilter !== 'all' && log.actionType !== actionFilter) return false;
     if (resourceFilter !== 'all' && log.resource !== resourceFilter) return false;
@@ -319,6 +462,137 @@ export const AuditLogView: React.FC<AuditLogViewProps> = ({ className = '' }) =>
       </div>
 
       {loadError && <DegradedState title="Audit logs unavailable" description={loadError} />}
+
+      <div className="bg-white dark:bg-navy-800 rounded-xl border border-slate-200 dark:border-navy-700 p-4">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+              <Shield size={18} />
+              Organization Context Audit
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              Trace AI document lineage and storage events for organization context.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={handleRunContextWorkerOnce}
+              disabled={contextAuditLoading || contextWorkerRunning}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-violet-600 hover:bg-violet-500 text-white rounded-lg disabled:opacity-50"
+            >
+              {contextWorkerRunning ? (
+                <RefreshCw size={14} className="animate-spin" />
+              ) : (
+                <PlayCircle size={14} />
+              )}
+              Run worker once
+            </button>
+            <button
+              type="button"
+              onClick={loadContextAudit}
+              disabled={contextAuditLoading}
+              className="flex items-center gap-2 px-3 py-2 text-sm border border-slate-200 dark:border-navy-600 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-700 disabled:opacity-50"
+            >
+              <RefreshCw size={14} className={contextAuditLoading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {contextAuditError ? (
+          <DegradedState
+            title="Organization context audit unavailable"
+            description={contextAuditError}
+          />
+        ) : contextAuditLoading ? (
+          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <RefreshCw size={16} className="animate-spin" />
+            Loading context audit...
+          </div>
+        ) : (
+          <div className="grid gap-4 xl:grid-cols-3">
+            <div className="rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
+              <div className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                  <FileText size={14} />
+                  AI Lineage Events
+                </p>
+              </div>
+              {contextLineage.length === 0 ? (
+                <p className="p-3 text-sm text-slate-500 dark:text-slate-400">
+                  No context lineage events found.
+                </p>
+              ) : (
+                <div className="divide-y divide-slate-200 dark:divide-navy-700">
+                  {contextLineage.map((event) => (
+                    <div key={event.id} className="p-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {event.eventType.replaceAll('_', ' ')}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {formatTimestamp(event.createdAt)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-slate-600 dark:text-slate-300">
+                        Insight: <span className="font-mono">{event.targetId}</span>
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        Documents: {(event.selectedDocumentIds || []).length} · Chunks:{' '}
+                        {(event.usedChunks || []).length}
+                        {event.degraded ? ' · Degraded' : ''}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-lg border border-slate-200 dark:border-navy-700 overflow-hidden">
+              <div className="px-3 py-2 bg-slate-50 dark:bg-navy-900 border-b border-slate-200 dark:border-navy-700">
+                <p className="text-sm font-medium text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                  <HardDrive size={14} />
+                  Storage Events
+                </p>
+              </div>
+              {contextStorageEvents.length === 0 ? (
+                <p className="p-3 text-sm text-slate-500 dark:text-slate-400">
+                  No context storage events found.
+                </p>
+              ) : (
+                <div className="divide-y divide-slate-200 dark:divide-navy-700">
+                  {contextStorageEvents.map((event) => (
+                    <div key={event.id} className="p-3 text-sm">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="font-medium text-slate-900 dark:text-white">
+                          {event.eventType.replaceAll('_', ' ')}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          {formatTimestamp(event.createdAt)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-slate-600 dark:text-slate-300">
+                        Document: <span className="font-mono">{event.documentId}</span>
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        {formatBytes(event.bytesDelta)} · {event.sourceUpload || 'unknown source'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <OrganizationContextWorkerOperationsPanel
+              jobs={contextProcessingJobs}
+              summary={contextProcessingSummary}
+              lastRunResult={lastWorkerRunResult}
+              formatTimestamp={formatTimestamp}
+            />
+          </div>
+        )}
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4">

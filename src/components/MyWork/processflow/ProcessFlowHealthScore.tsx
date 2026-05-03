@@ -18,13 +18,13 @@ interface HealthMetric {
 function scoreColor(score: number): string {
   if (score >= 80) return 'text-emerald-600 dark:text-emerald-400';
   if (score >= 50) return 'text-amber-600 dark:text-amber-400';
-  return 'text-red-500 dark:text-red-400';
+  return 'text-rose-500 dark:text-rose-400';
 }
 
 function scoreBg(score: number): string {
   if (score >= 80) return 'bg-emerald-500';
   if (score >= 50) return 'bg-amber-500';
-  return 'bg-red-500';
+  return 'bg-rose-500';
 }
 
 export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
@@ -193,7 +193,7 @@ export const ProcessFlowHealthScore: React.FC<ProcessFlowHealthScoreProps> = ({
               ) : m.score >= 50 ? (
                 <Activity size={12} className="text-amber-500 flex-shrink-0" />
               ) : (
-                <AlertTriangle size={12} className="text-red-500 flex-shrink-0" />
+                <AlertTriangle size={12} className="text-rose-500 flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
                 <div className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate">

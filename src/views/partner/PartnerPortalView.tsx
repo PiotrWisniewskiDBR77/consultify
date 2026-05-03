@@ -224,8 +224,18 @@ const DashboardSection: React.FC = () => {
     try {
       const response = await V8PartnerApi.getOnboardingStatus();
       setOnboardingStatus(response?.status || null);
-    } catch {
-      setOnboardingStatus(null);
+    } catch (error) {
+      if (!shouldFallbackToLegacyPartner(error)) {
+        setOnboardingStatus(null);
+        return;
+      }
+      try {
+        const legacy = await Api.get('/onboarding/status');
+        const payload = legacy?.data?.status ?? legacy?.status ?? legacy?.data ?? legacy;
+        setOnboardingStatus(payload || null);
+      } catch {
+        setOnboardingStatus(null);
+      }
     }
   }, []);
 

@@ -812,7 +812,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 {!locked && (
                   <button
                     onClick={() => onAddSubItem?.(node.id)}
-                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                    className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-[10px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
                   >
                     <Plus size={10} />
                     {isPl ? 'Dodaj podelement' : 'Add sub-item'}
@@ -964,7 +964,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <div ref={relationDropdownRef} className="relative mt-2">
                       <button
                         onClick={() => setRelationDropdownOpen(!relationDropdownOpen)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
                       >
                         <Plus size={12} />
                         {isPl ? 'Dodaj powiązanie' : 'Add relation'}
@@ -1121,7 +1121,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                       type="button"
                       onClick={() => void handleAddComment()}
                       disabled={!newComment.trim()}
-                      className="p-2 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 hover:bg-violet-500/20 disabled:opacity-40 transition-colors flex-shrink-0"
+                      className="p-2 rounded-xl bg-primary-500/10 text-primary-600 dark:text-primary-400 hover:bg-primary-500/20 disabled:opacity-40 transition-colors flex-shrink-0"
                     >
                       <Send size={14} />
                     </button>
@@ -1183,7 +1183,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     <div ref={artifactDropdownRef} className="relative mt-2">
                       <button
                         onClick={() => setArtifactDropdownOpen(!artifactDropdownOpen)}
-                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
                       >
                         <Paperclip size={12} />
                         {isPl ? 'Dołącz artefakt' : 'Attach artifact'}
@@ -1292,7 +1292,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     {!locked && (
                       <button
                         onClick={() => handleRemoveAttachment(att.id)}
-                        className="p-1 rounded text-slate-400 hover:text-red-500 transition-colors"
+                        className="p-1 rounded text-slate-400 hover:text-rose-500 transition-colors"
                       >
                         <Trash2 size={12} />
                       </button>
@@ -1303,7 +1303,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                   <div className="flex items-center gap-2 pt-2">
                     <button
                       onClick={handleAddAttachmentLink}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-violet-600 dark:text-violet-400 bg-violet-500/10 hover:bg-violet-500/20 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-[10px] font-semibold text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 transition-colors"
                     >
                       <Link2 size={12} />
                       {isPl ? 'Dodaj link' : 'Add link'}
@@ -1409,7 +1409,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                 <button
                   onClick={handleGenerateAI}
                   disabled={aiLoading}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-violet-500/10 to-indigo-500/10 text-violet-600 dark:text-violet-400 text-xs font-bold hover:from-violet-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-primary-500/10 to-indigo-500/10 text-primary-600 dark:text-primary-400 text-xs font-bold hover:from-primary-500/20 hover:to-indigo-500/20 transition-colors disabled:opacity-50"
                 >
                   {aiLoading ? (
                     <Loader2 size={14} className="animate-spin" />
@@ -1429,10 +1429,10 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                     {aiInsights.map((insight, idx) => (
                       <div
                         key={idx}
-                        className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-3"
+                        className="rounded-xl border border-primary-500/20 bg-primary-500/5 p-3"
                       >
                         <div className="flex items-start gap-2">
-                          <Sparkles size={12} className="text-violet-500 mt-0.5 flex-shrink-0" />
+                          <Sparkles size={12} className="text-primary-500 mt-0.5 flex-shrink-0" />
                           <p className="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
                             {insight}
                           </p>
@@ -1487,7 +1487,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
                         key={chip.id}
                         type="button"
                         onClick={() => onNodeClick?.(chip.id)}
-                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-navy-800/90 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-navy-600/60 hover:bg-violet-500/10 hover:border-violet-300/50 dark:hover:border-violet-500/30 hover:text-violet-800 dark:hover:text-violet-200 transition-colors truncate"
+                        className="inline-flex items-center gap-1 max-w-full px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 dark:bg-navy-800/90 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-navy-600/60 hover:bg-primary-500/10 hover:border-primary-300/50 dark:hover:border-primary-500/30 hover:text-primary-800 dark:hover:text-primary-200 transition-colors truncate"
                       >
                         <span className="truncate">{chip.label}</span>
                       </button>
@@ -1504,7 +1504,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           <div className="flex-1 flex items-center justify-center">
             <button
               onClick={onExpand}
-              className="text-[11px] text-slate-400 hover:text-violet-500 transition-colors"
+              className="text-[11px] text-slate-400 hover:text-primary-500 transition-colors"
             >
               {isPl
                 ? 'Kliknij dwukrotnie lub rozwiń, aby zobaczyć pełne szczegóły'
@@ -1518,7 +1518,7 @@ export const RowDetailPanel: React.FC<RowDetailPanelProps> = ({
           <div className="px-5 py-2 border-t border-slate-200/30 dark:border-white/[0.04] flex-shrink-0">
             <div className="flex flex-wrap gap-1.5">
               {node.data?.aiGenerated && (
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-violet-100 dark:bg-violet-500/10 text-violet-600 dark:text-violet-400">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[8px] font-bold bg-primary-100 dark:bg-primary-500/10 text-primary-600 dark:text-primary-400">
                   <Sparkles size={8} />
                   {isPl ? 'Wygenerowane AI' : 'AI Generated'}
                 </span>

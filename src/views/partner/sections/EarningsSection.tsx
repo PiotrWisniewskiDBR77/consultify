@@ -99,6 +99,11 @@ interface EarningsSectionProps {
   subsection?: 'earnings' | 'statements' | 'payouts' | 'payout-settings';
 }
 
+const unwrapApiData = (response: any) => {
+  const descriptor = response ? Object.getOwnPropertyDescriptor(response, 'data') : undefined;
+  return descriptor?.value ?? response?.data ?? response;
+};
+
 const normalizeEarningsSummary = (payload: any): EarningsSummary | null => {
   const data = payload?.data && payload?.data !== payload ? payload.data : payload;
   if (!data) return null;
@@ -217,8 +222,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.get('/api/partners/commission-transactions');
-      return response?.success && Array.isArray(response?.data)
-        ? response.data.map((tx: CommissionTransaction) => normalizeCommissionTransaction(tx))
+      const legacyTransactions = unwrapApiData(response);
+      return response?.success && Array.isArray(legacyTransactions)
+        ? legacyTransactions.map((tx: CommissionTransaction) => normalizeCommissionTransaction(tx))
         : [];
     }
   }, []);
@@ -234,8 +240,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.get('/api/partners/payouts');
-      return response?.success && Array.isArray(response?.data)
-        ? response.data.map((payout: Payout) => normalizePayout(payout))
+      const legacyPayouts = unwrapApiData(response);
+      return response?.success && Array.isArray(legacyPayouts)
+        ? legacyPayouts.map((payout: Payout) => normalizePayout(payout))
         : [];
     }
   }, []);
@@ -249,7 +256,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.get('/api/partners/payout-settings');
-      return normalizePayoutSettings(response?.data ?? response);
+      return normalizePayoutSettings(unwrapApiData(response) ?? response);
     }
   }, []);
 
@@ -263,7 +270,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.get('/api/partners/earnings');
-      const legacy = response?.data ?? response?.earnings ?? response;
+      const legacy = unwrapApiData(response) ?? response?.earnings ?? response;
       return { earnings: legacy };
     }
   }, []);
@@ -277,7 +284,7 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         throw error;
       }
       const response = await Api.put('/api/partners/payout-settings', settings);
-      return normalizePayoutSettings(response?.data ?? response);
+      return normalizePayoutSettings(unwrapApiData(response) ?? response);
     }
   }, []);
 
@@ -509,8 +516,9 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
   const handleSavePayoutSettings = async () => {
     try {
       setSavingPayoutSettings(true);
-      const saved = await savePayoutSettingsWithFallback(payoutSettings);
-      setPayoutSettings(saved);
+      await savePayoutSettingsWithFallback(payoutSettings);
+      const readBack = await getPayoutSettingsWithFallback();
+      setPayoutSettings(readBack);
       toast.success(t('partner.payoutSettings.saved', 'Payout settings updated'));
     } catch (err: any) {
       console.error('Error saving payout settings:', err);

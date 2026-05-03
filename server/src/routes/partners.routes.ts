@@ -134,6 +134,66 @@ function resourceTypeLabel(mimeType?: string | null, fileType?: string | null): 
   return 'FILE';
 }
 
+const hasReferralIdentity = (input: { referralCode?: string; referralLink?: string } | null) =>
+  Boolean(String(input?.referralCode || '').trim() && String(input?.referralLink || '').trim());
+
+async function normalizeReferralToolsForPartner(partnerOrgId: string, baseTools: any | null) {
+  let orgName = '';
+  try {
+    const orgRow = await DbPromise.get<{ name?: string | null }>(
+      getDatabase(),
+      `SELECT name FROM partner_organizations WHERE id = ? LIMIT 1`,
+      [partnerOrgId]
+    );
+    orgName = String(orgRow?.name || '').trim();
+  } catch (error: any) {
+    logger.warn('Referral tools: failed to read partner organization name', error?.message);
+  }
+
+  let ensuredIdentity: any = null;
+  try {
+    ensuredIdentity = await ensurePartnerReferralIdentity(partnerOrgId, orgName || undefined);
+  } catch (error: any) {
+    logger.warn('Referral tools: identity self-heal failed, using deterministic fallback', {
+      partnerOrgId,
+      error: error?.message,
+    });
+  }
+
+  const prefix = String(orgName || 'partner')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, '')
+    .slice(0, 6);
+  const fallbackCode = `${prefix || 'PARTNER'}-${String(partnerOrgId).slice(0, 4).toUpperCase()}`;
+  const fallbackSlug = String(orgName || 'partner')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .concat(`-${String(partnerOrgId).slice(0, 6).toLowerCase()}`);
+
+  const referralCode =
+    String(baseTools?.referralCode || '').trim() ||
+    String(ensuredIdentity?.referralCode || '').trim() ||
+    fallbackCode;
+  const referralLinkSlug =
+    String(baseTools?.referralLinkSlug || '').trim() ||
+    String(ensuredIdentity?.referralLinkSlug || '').trim() ||
+    fallbackSlug;
+
+  return {
+    ...baseTools,
+    referralCode,
+    referralLink:
+      String(baseTools?.referralLink || '').trim() ||
+      `${process.env.APP_BASE_URL || 'https://consultify.ai'}/r/${referralLinkSlug}`,
+    referralLinkSlug,
+    qrCodeUrl:
+      String(baseTools?.qrCodeUrl || '').trim() ||
+      `${process.env.APP_BASE_URL || 'https://consultify.ai'}/api/partner/qr/${referralLinkSlug}`,
+    campaignLinks: Array.isArray(baseTools?.campaignLinks) ? baseTools.campaignLinks : [],
+  };
+}
+
 async function requirePartnerOrgId(req: Request, res: Response): Promise<string | null> {
   const userId = (req as any).user?.id || (req as any).userId;
   if (!userId) {
@@ -675,15 +735,16 @@ router.get('/referral-tools', async (req: Request, res: Response, next: NextFunc
     const partnerOrgId = await requirePartnerOrgId(req, res);
     if (!partnerOrgId) return;
 
-    let tools;
+    let tools: any = null;
     try {
       tools = await PartnerReferralService.getReferralTools(partnerOrgId);
     } catch (dbError: any) {
       logger.warn('Referral tools: DB query failed, using fallback data:', dbError?.message);
     }
 
-    if (!tools) {
-      return res.status(404).json({ success: false, error: 'Referral tools unavailable' });
+    if (!tools || !hasReferralIdentity(tools)) {
+      const normalizedTools = await normalizeReferralToolsForPartner(partnerOrgId, tools);
+      return res.json({ success: true, data: normalizedTools });
     }
 
     res.json({ success: true, data: tools });
@@ -703,14 +764,15 @@ router.post('/campaign-links', async (req: Request, res: Response, next: NextFun
     if (!partnerOrgId) return;
     const { name, description, utmSource, utmMedium, utmCampaign, utmContent, destinationUrl } =
       req.body;
+    const campaignName = String(name || '').trim();
 
-    if (!name) {
+    if (!campaignName) {
       return res.status(400).json({ success: false, error: 'Campaign name is required' });
     }
 
     const campaignLink = await PartnerReferralService.createCampaignLink({
       partnerOrgId,
-      name,
+      name: campaignName,
       description,
       utmSource,
       utmMedium,

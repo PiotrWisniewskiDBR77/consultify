@@ -199,6 +199,30 @@ export interface V8InsightAnalysisScope {
   leading_question?: string | null;
 }
 
+export type V8ContextDocumentStatus =
+  | 'uploaded'
+  | 'processing'
+  | 'ready'
+  | 'ocr_required'
+  | 'unreadable'
+  | 'failed';
+
+export interface V8ContextDocument {
+  id: string;
+  filename: string;
+  mimeType: string;
+  fileSize: number;
+  status: V8ContextDocumentStatus;
+  scope: 'project' | 'user';
+  projectId?: string | null;
+  ownerId: string;
+  sourceUpload?: string;
+  processingError?: string | null;
+  chunkCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface V8InsightMaterialQuality {
   overall_material_score: number;
   answer_quality_posture: 'strong' | 'usable' | 'thin' | 'poor';
@@ -217,6 +241,97 @@ export interface V8InsightMaterialQuality {
   contradiction_count: number;
   limitations: string[];
   recommended_followups: string[];
+}
+
+export type V8InterviewReportWorksheetStatus = 'generated' | 'partial' | 'empty' | 'degraded';
+
+export interface V8InterviewReportWorksheet {
+  key: string;
+  title: string;
+  required: boolean;
+  status: V8InterviewReportWorksheetStatus;
+  completenessScore: number;
+  warnings: string[];
+  rows: Array<Record<string, unknown>>;
+  markdown?: string;
+}
+
+export interface V8InterviewReportPack {
+  id: string;
+  insightId: string;
+  title: string;
+  status: 'draft' | 'in_review' | 'published';
+  worksheets: V8InterviewReportWorksheet[];
+  completenessScore: number;
+  degraded: boolean;
+  degradedReasons: string[];
+}
+
+export interface V8InterviewReportReadinessIssue {
+  worksheetKey?: string;
+  severity: 'blocker' | 'warning';
+  message: string;
+}
+
+export interface V8InterviewReportReadiness {
+  reportPackId: string;
+  insightId: string;
+  status: 'blocked' | 'ready_with_warnings' | 'ready_for_review';
+  completenessScore: number;
+  blockers: V8InterviewReportReadinessIssue[];
+  warnings: V8InterviewReportReadinessIssue[];
+  worksheetBreakdown: Array<{
+    key: string;
+    title: string;
+    status: V8InterviewReportWorksheetStatus;
+    completenessScore: number;
+    ready: boolean;
+  }>;
+}
+
+export interface V8InterviewReportReviewSubmitResult {
+  reportPack: V8InterviewReportPack;
+  readiness: V8InterviewReportReadiness;
+  submitted: boolean;
+  blocked: boolean;
+  alreadyInReview: boolean;
+}
+
+export interface V8InterviewReportPublishResult {
+  reportPack: V8InterviewReportPack;
+  readiness: V8InterviewReportReadiness;
+  published: boolean;
+  blocked: boolean;
+  alreadyPublished: boolean;
+}
+
+export interface V8InterviewReportExportManifest {
+  reportPackId: string;
+  insightId: string;
+  title: string;
+  status: 'published';
+  exportedAt: string;
+  manifestHash: string;
+  completenessScore: number;
+  degraded: boolean;
+  degradedReasons: string[];
+  readiness: V8InterviewReportReadiness;
+  worksheetCount: number;
+  worksheets: V8InterviewReportWorksheet[];
+}
+
+export interface V8InterviewReportRevision {
+  id: string;
+  reportPackId: string;
+  insightId: string;
+  version: number;
+  manifestHash: string;
+  createdAt: string;
+}
+
+export interface V8InterviewReportRevisionResult {
+  reportPack: V8InterviewReportPack;
+  revision: V8InterviewReportRevision;
 }
 
 export interface V8InsightEvidencePointer {
@@ -503,6 +618,57 @@ export const V8InterviewApi = {
   getInsight: (id: string) =>
     v8Get<{ insight: V8InterviewInsight }>(`/interview/insights/${encodeURIComponent(id)}`),
 
+  getInsightReportPack: (id: string) =>
+    v8Get<{ reportPack: V8InterviewReportPack }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack`
+    ),
+
+  getInsightReportReadiness: (id: string) =>
+    v8Get<{ readiness: V8InterviewReportReadiness }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/readiness`
+    ),
+
+  submitInsightReportForReview: (id: string) =>
+    v8Post<{ result: V8InterviewReportReviewSubmitResult }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/submit-review`,
+      {}
+    ),
+
+  publishInsightReportPack: (id: string) =>
+    v8Post<{ result: V8InterviewReportPublishResult }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/publish`,
+      {}
+    ),
+
+  getInsightReportExportManifest: (id: string) =>
+    v8Get<{ exportManifest: V8InterviewReportExportManifest }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/export-manifest`
+    ),
+
+  createInsightReportRevision: (id: string) =>
+    v8Post<{ result: V8InterviewReportRevisionResult }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/revisions`,
+      {}
+    ),
+
+  updateInsightReportWorksheet: (
+    id: string,
+    worksheetKey: string,
+    payload: {
+      status?: V8InterviewReportWorksheetStatus;
+      completenessScore?: number;
+      warnings?: string[];
+      rows?: Array<Record<string, unknown>>;
+      markdown?: string | null;
+    }
+  ) =>
+    v8Patch<{ reportPack: V8InterviewReportPack }>(
+      `/interview/insights/${encodeURIComponent(id)}/report-pack/worksheets/${encodeURIComponent(
+        worksheetKey
+      )}`,
+      payload
+    ),
+
   createInsight: (payload: {
     title?: string;
     sessionIds?: string[];
@@ -516,7 +682,23 @@ export const V8InterviewApi = {
     consultantNote?: string;
     leadingQuestion?: string;
     customPrompt?: string;
+    selectedContextDocumentIds?: string[];
   }) => v8Post<{ insight: V8InterviewInsight }>('/interview/insights', payload),
+
+  listContextDocuments: (params?: { scope?: 'project' | 'user' | 'all'; projectId?: string }) =>
+    v8Get<{ documents: V8ContextDocument[] }>('/interview/context-documents', params),
+
+  uploadContextDocument: (payload: {
+    file: File;
+    scope?: 'project' | 'user';
+    projectId?: string;
+  }) => {
+    const form = new FormData();
+    form.append('file', payload.file);
+    form.append('scope', payload.scope || 'user');
+    if (payload.projectId) form.append('projectId', payload.projectId);
+    return v8Post<{ document: V8ContextDocument }>('/interview/context-documents/upload', form);
+  },
 
   regenerateInsight: (id: string) =>
     v8Post<{ insight: V8InterviewInsight }>(

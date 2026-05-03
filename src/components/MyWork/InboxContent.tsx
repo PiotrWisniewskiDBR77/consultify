@@ -155,8 +155,8 @@ const ENTITY_KIND_CONFIG: Record<
     icon: CheckCircle2,
     labelEn: 'Survey',
     labelPl: 'Ankieta',
-    pill: 'bg-cyan-50 text-cyan-700 dark:bg-cyan-500/10 dark:text-cyan-300',
-    borderLeft: 'border-l-cyan-500 dark:border-l-cyan-400',
+    pill: 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
+    borderLeft: 'border-l-slate-400 dark:border-l-slate-500',
   },
   decision: {
     icon: Scale,
@@ -169,8 +169,8 @@ const ENTITY_KIND_CONFIG: Record<
     icon: Bell,
     labelEn: 'Notification',
     labelPl: 'Notyfikacja',
-    pill: 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300',
-    borderLeft: 'border-l-red-500 dark:border-l-red-400',
+    pill: 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
+    borderLeft: 'border-l-slate-400 dark:border-l-slate-500',
   },
 };
 
@@ -513,9 +513,9 @@ const urgencyConfig: Record<
 > = {
   critical: {
     icon: AlertTriangle,
-    pill: 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300',
+    pill: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300',
     label: 'Critical',
-    heatColor: 'border-l-red-500',
+    heatColor: 'border-l-rose-500',
   },
   high: {
     icon: AlertCircle,
@@ -575,7 +575,7 @@ const SMART_SECTIONS: {
     labelEn: 'Requires Your Decision',
     labelPl: 'Wymaga Twojej decyzji',
     icon: Scale,
-    color: 'text-purple-500',
+    color: 'text-amber-500',
   },
   {
     id: 'approvals_gates',
@@ -589,14 +589,14 @@ const SMART_SECTIONS: {
     labelEn: 'Blocked — Needs Unblocking',
     labelPl: 'Zablokowane — do odblokowania',
     icon: AlertTriangle,
-    color: 'text-red-500',
+    color: 'text-rose-500',
   },
   {
     id: 'overdue_sla_breach',
     labelEn: 'Overdue / SLA Breach',
     labelPl: 'Po terminie / SLA',
     icon: Clock,
-    color: 'text-red-600',
+    color: 'text-rose-600',
   },
   {
     id: 'assigned_tasks',
@@ -610,7 +610,7 @@ const SMART_SECTIONS: {
     labelEn: 'AI Insights & Signals',
     labelPl: 'AI Insights i sygnały',
     icon: AlertCircle,
-    color: 'text-cyan-500',
+    color: 'text-blue-500',
   },
   {
     id: 'fyi_system',
@@ -663,8 +663,8 @@ const formatRelativeTime = (
 const AGING_STYLES = {
   fresh: 'text-emerald-600 dark:text-emerald-400',
   warm: 'text-amber-600 dark:text-amber-400',
-  hot: 'text-orange-600 dark:text-orange-400',
-  critical: 'text-red-600 dark:text-red-400 animate-pulse',
+  hot: 'text-amber-700 dark:text-amber-300',
+  critical: 'text-rose-700 dark:text-rose-300 animate-pulse',
 };
 
 // ── SLA pill ──
@@ -685,7 +685,7 @@ const slaPill = (sla: InboxItem['sla']): { label: string; className: string; tit
       ? 'bg-slate-100 text-slate-700 dark:bg-navy-800 dark:text-slate-200'
       : sla.level === 'L1'
         ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300'
-        : 'bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300';
+        : 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300';
   return { label, className, title: sla.dueAt ? `due: ${sla.dueAt}` : undefined };
 };
 
@@ -706,7 +706,7 @@ const INBOX_STATUS_FILTER_OPTIONS = [
 ];
 
 const INBOX_URGENCY_FILTER_OPTIONS = [
-  { value: 'critical', label: 'Critical', color: 'text-red-500' },
+  { value: 'critical', label: 'Critical', color: 'text-rose-500' },
   { value: 'high', label: 'High', color: 'text-amber-500' },
   { value: 'normal', label: 'Normal', color: 'text-slate-500' },
   { value: 'low', label: 'Low', color: 'text-slate-400' },
@@ -1034,7 +1034,6 @@ const PreviewPane: React.FC<{
     setAiResult(null);
     setAiError(null);
     setDetailsOverride(null);
-    runAi();
   }, [item._key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const descriptionTrimmed = (item.description || '').trim();
@@ -1328,7 +1327,7 @@ const PreviewPane: React.FC<{
             <div className="pt-2 border-t border-slate-200/50 dark:border-white/[0.06]">
               <button
                 onClick={onUndoLastAI}
-                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-300 transition-colors"
               >
                 <Minus size={12} />
                 {isPolish ? 'Cofnij ostatnią sugestię AI' : 'Undo last AI suggestion'}
@@ -1434,7 +1433,7 @@ const AIHintStrip: React.FC<{
           {result ? (
             <button
               onClick={() => onApplyAction(result.recommendedAction)}
-              className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[11px] font-medium border border-purple-400/30 dark:border-purple-500/20 bg-transparent text-purple-600 dark:text-purple-400 hover:bg-purple-50/50 dark:hover:bg-purple-500/10 transition-colors"
+              className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[11px] font-medium border border-primary-400/30 dark:border-primary-500/20 bg-transparent text-primary-600 dark:text-primary-300 hover:bg-primary-50/50 dark:hover:bg-primary-500/10 transition-colors"
             >
               <Check size={11} />
               {actionLabel(result.recommendedAction)}
@@ -1457,7 +1456,7 @@ const AIHintStrip: React.FC<{
                   }}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-colors"
                 >
-                  <Sparkles size={12} className="text-purple-500" />
+                  <Sparkles size={12} className="text-primary-500" />
                   {isPolish ? 'Regeneruj' : 'Regenerate'}
                 </button>
                 <button
@@ -1497,7 +1496,7 @@ const AIHintStrip: React.FC<{
       <div className="flex flex-wrap gap-1.5">
         {hints.map((hint, idx) => (
           <button key={idx} onClick={onRun} disabled={loading} className={AI_HINT_CHIPCLASS}>
-            <Sparkles size={10} className="text-purple-400/70 dark:text-purple-500/70" />
+            <Sparkles size={10} className="text-primary-400/80 dark:text-primary-400/80" />
             {hint}
           </button>
         ))}
@@ -2319,10 +2318,18 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         data-index={index}
         className={`
           group cursor-pointer border-b border-slate-200 dark:border-navy-700/50
-          border-l-[3px] ${u.heatColor}
-          ${isSelected ? 'bg-primary-50 dark:bg-primary-500/10' : ''}
-          ${isPreviewed ? 'bg-cyan-50/50 dark:bg-cyan-500/5 border-l-cyan-500!' : ''}
-          ${isFocused && !isPreviewed ? 'ring-2 ring-inset ring-cyan-400/50 bg-cyan-50/30 dark:bg-cyan-500/5' : ''}
+          border-l-[4px] ${u.heatColor}
+          ${
+            isSelected
+              ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
+              : ''
+          }
+          ${
+            isPreviewed
+              ? 'bg-primary-50/70 dark:bg-primary-500/[0.10] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/20 ring-inset border-l-primary-500!'
+              : ''
+          }
+          ${isFocused && !isPreviewed ? 'ring-2 ring-inset ring-primary-500/35 bg-primary-50/30 dark:bg-primary-500/[0.08]' : ''}
           transition-colors duration-150
           hover:bg-slate-50 dark:hover:bg-navy-800/50
         `}
@@ -2357,7 +2364,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             </span>
             {item.suggestedAction && (
               <span
-                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-purple-50 dark:bg-purple-500/10 text-[10px] font-medium text-purple-600 dark:text-purple-300 cursor-help"
+                className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-slate-300/80 bg-slate-100 text-[10px] font-medium text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200 cursor-help"
                 title={item.suggestedReason || (isPolish ? 'Sugestia AI' : 'AI suggestion')}
               >
                 AI:{' '}
@@ -2409,8 +2416,9 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   label: isPolish ? 'Otwarte' : 'Open',
                 },
                 done: {
-                  color: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
-                  dot: 'bg-green-500',
+                  color:
+                    'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+                  dot: 'bg-emerald-500',
                   label: isPolish ? 'Gotowe' : 'Done',
                 },
                 saved: {
@@ -2419,8 +2427,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   label: isPolish ? 'Zapisane' : 'Saved',
                 },
                 snoozed: {
-                  color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
-                  dot: 'bg-purple-500',
+                  color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+                  dot: 'bg-amber-500',
                   label: isPolish ? 'Odłożone' : 'Snoozed',
                 },
                 dismissed: {
@@ -2488,7 +2496,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   color: 'text-slate-500',
                   label: isPolish ? 'System' : 'System',
                 },
-                ai: { icon: Star, color: 'text-purple-500', label: 'AI' },
+                ai: { icon: Star, color: 'text-primary-500', label: 'AI' },
                 user: {
                   icon: MessageSquare,
                   color: 'text-blue-500',
@@ -2819,8 +2827,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           label: isPolish ? 'Otwarte' : 'Open',
         },
         done: {
-          color: 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-300',
-          dot: 'bg-green-500',
+          color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
+          dot: 'bg-emerald-500',
           label: isPolish ? 'Gotowe' : 'Done',
         },
         saved: {
@@ -2829,8 +2837,8 @@ export const InboxContent: React.FC<InboxContentProps> = ({
           label: isPolish ? 'Zapisane' : 'Saved',
         },
         snoozed: {
-          color: 'bg-purple-100 text-purple-700 dark:bg-purple-500/15 dark:text-purple-300',
-          dot: 'bg-purple-500',
+          color: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300',
+          dot: 'bg-amber-500',
           label: isPolish ? 'Odłożone' : 'Snoozed',
         },
         dismissed: {
@@ -2877,12 +2885,12 @@ export const InboxContent: React.FC<InboxContentProps> = ({
         <div
           key={item.id}
           className={[
-            'group relative rounded-xl border-l-[3px] border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
+            'group relative rounded-xl border-l-[4px] border border-slate-200/60 dark:border-white/[0.06] transition-all duration-150 overflow-hidden',
             kindCfg.borderLeft,
             'bg-slate-50/80 dark:bg-navy-800/60',
             'hover:bg-white dark:hover:bg-navy-800/80 hover:shadow-sm',
             isSelected ? 'ring-2 ring-primary-400/50' : '',
-            isPreviewed ? 'ring-2 ring-cyan-400/40' : '',
+            isPreviewed ? 'ring-2 ring-primary-400/40' : '',
           ].join(' ')}
           onClick={() => preview(item)}
           onDoubleClick={() => open(item)}
@@ -3078,7 +3086,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
                   e.stopPropagation();
                   triage(item, 'done');
                 }}
-                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-green-300/40 dark:border-green-500/20 bg-transparent text-green-700 dark:text-green-400 hover:bg-green-50/50 dark:hover:bg-green-500/10 transition-colors"
+                className="inline-flex items-center gap-1 h-6 px-2 rounded-full text-[10px] font-medium border border-emerald-300/40 dark:border-emerald-500/20 bg-transparent text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-500/10 transition-colors"
               >
                 <CheckCircle2 size={10} />
                 {isPolish ? 'Gotowe' : 'Done'}
@@ -3204,7 +3212,7 @@ export const InboxContent: React.FC<InboxContentProps> = ({
             <div className="py-16 text-center text-slate-600 dark:text-slate-300">
               {statusTab === 'done' ? (
                 <>
-                  <CheckCircle2 size={40} className="mx-auto mb-4 text-green-400" />
+                  <CheckCircle2 size={40} className="mx-auto mb-4 text-emerald-400" />
                   <p className="text-base font-semibold mb-1">
                     {isPolish ? 'Brak zakończonych elementów' : 'No completed items'}
                   </p>

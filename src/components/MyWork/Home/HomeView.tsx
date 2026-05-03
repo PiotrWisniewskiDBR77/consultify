@@ -162,7 +162,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1.2, repeat: Infinity, ease: 'linear' }}
-          className="h-8 w-8 rounded-full border-2 border-violet-500 border-t-transparent dark:border-violet-400"
+          className="h-8 w-8 rounded-full border-2 border-primary-500 border-t-transparent dark:border-primary-400"
         />
       </div>
     );
@@ -310,7 +310,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ userName, refreshTrigger, on
                 <span
                   className={cn(
                     'h-2 w-2 rounded-full shrink-0',
-                    alert.severity === 'RED' ? 'bg-red-500' : 'bg-amber-500'
+                    alert.severity === 'RED' ? 'bg-rose-500' : 'bg-amber-500'
                   )}
                 />
                 <div className="min-w-0 flex-1">
@@ -400,7 +400,7 @@ function RadarExecutiveBrief({
 
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-2">
-      <Sparkles className="h-3.5 w-3.5 shrink-0 text-violet-300/70" />
+      <Sparkles className="h-3.5 w-3.5 shrink-0 text-primary-300/70" />
       <p className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-200">{lead}</p>
       <span className="shrink-0 font-mono text-[10px] tabular-nums text-slate-500">
         {t('myWork.radar.pulse')}{' '}
@@ -442,7 +442,7 @@ function RadarExecutiveBrief({
             },
           })
         }
-        className="shrink-0 rounded bg-violet-500/80 px-2 py-1 text-[10px] font-semibold text-white transition hover:bg-violet-500"
+        className="shrink-0 rounded bg-primary-500/80 px-2 py-1 text-[10px] font-semibold text-white transition hover:bg-primary-500"
       >
         AI
         <ArrowRight className="ml-1 inline h-3 w-3" />

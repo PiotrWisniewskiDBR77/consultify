@@ -14,13 +14,14 @@ import { cn } from '../../lib/utils';
 import { ROUTES } from '../../routes/routeConfig';
 import { useAppStore } from '../../store/useAppStore';
 import { AppView, User } from '../../types';
+import { OrganizationContextWorkerOperationsView } from './OrganizationContextWorkerOperationsView';
 
 interface AdminSettingsModuleProps {
   initialTab?: AdminSettingsSection;
   currentUser: User;
 }
 
-const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people', 'billing'];
+const PRIMARY_SECTIONS: AdminSettingsSection[] = ['people', 'billing', 'operations'];
 
 const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: string }> = {
   people: {
@@ -30,6 +31,10 @@ const SECTION_META: Record<AdminSettingsSection, { title: string; subtitle: stri
   billing: {
     title: 'Billing & FinOps',
     subtitle: 'Subscription, invoices, payment methods, and spend governance for your workspace.',
+  },
+  operations: {
+    title: 'Operations',
+    subtitle: 'Worker queues, processing jobs, and explicit operational controls.',
   },
 };
 
@@ -45,7 +50,10 @@ const SECTION_ALIASES: Record<string, AdminSettingsSection> = {
   ai: 'people',
   integrations: 'people',
   audit: 'people',
-  operations: 'people',
+  operations: 'operations',
+  worker: 'operations',
+  workers: 'operations',
+  queue: 'operations',
   workspace: 'people',
   organization: 'people',
   feedback: 'people',
@@ -104,6 +112,8 @@ export const AdminSettingsModule: React.FC<AdminSettingsModuleProps> = ({
         return <AdminMembersRolesPanel />;
       case 'billing':
         return <AdminBillingFinOpsPanel />;
+      case 'operations':
+        return <OrganizationContextWorkerOperationsView />;
       default:
         return <AdminMembersRolesPanel />;
     }

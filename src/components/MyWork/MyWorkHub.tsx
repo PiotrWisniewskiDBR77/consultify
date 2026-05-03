@@ -488,7 +488,7 @@ const CTA_BASE =
   'inline-flex items-center justify-center h-9 rounded-full border px-4 text-sm font-semibold text-white transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 const CTA_TONE: Record<'violet' | 'emerald' | 'amber' | 'indigo', string> = {
   violet:
-    'border-violet-500/30 bg-violet-600 hover:bg-violet-700 dark:border-violet-400/20 dark:bg-violet-500/80 dark:hover:bg-violet-500',
+    'border-primary-500/30 bg-primary-600 hover:bg-primary-700 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500',
   emerald:
     'border-emerald-500/30 bg-emerald-600 hover:bg-emerald-700 dark:border-emerald-400/20 dark:bg-emerald-500/80 dark:hover:bg-emerald-500',
   amber:
@@ -505,20 +505,20 @@ const TAB_ACTIVE = MENU_3_CHIP_ACTIVE;
 const TYPE_COLORS = {
   // v3 identity map (docs/ui-standards/00-foundation/artifact-identity-map.md)
   task: 'border-l-emerald-500',
-  idea: 'border-l-violet-500',
+  idea: 'border-l-blue-500',
   decision: 'border-l-amber-500',
-  notification: 'border-l-red-500',
+  notification: 'border-l-rose-500',
 };
 
 const STATUS_COLORS: Record<ItemStatus, string> = {
   todo: 'bg-slate-400',
   in_progress: 'bg-blue-400',
   completed: 'bg-emerald-400',
-  blocked: 'bg-red-400',
+  blocked: 'bg-rose-400',
   idea: 'bg-amber-400',
   pending: 'bg-amber-400',
   approved: 'bg-emerald-400',
-  rejected: 'bg-red-400',
+  rejected: 'bg-rose-400',
   read: 'bg-slate-500',
   unread: 'bg-amber-400',
 };
@@ -1325,7 +1325,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: 'Inbox',
         icon: <Inbox size={16} />,
         count: tabCounts.inbox,
-        color: 'bg-red-500',
+        color: 'bg-blue-500',
         requiresManagerAccess: false,
       },
       {
@@ -1349,7 +1349,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: isPolish ? 'Decyzje' : 'Decisions',
         icon: <Scale size={16} />,
         count: tabCounts.decisions,
-        color: 'bg-purple-500',
+        color: 'bg-blue-500',
         requiresManagerAccess: false,
       },
       {
@@ -1357,7 +1357,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         label: 'Manager',
         icon: <Users size={16} />,
         count: tabCounts.manager,
-        color: 'bg-violet-500',
+        color: 'bg-primary-500',
         requiresManagerAccess: true,
       },
     ];
@@ -1381,7 +1381,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         id: 'overdue' as TaskFilter,
         label: isPolish ? 'Zaległe' : 'Overdue',
         icon: <AlertCircle size={14} />,
-        color: 'bg-red-500',
+        color: 'bg-rose-500',
         count: taskFilterCounts.overdue,
       },
       {
@@ -1402,7 +1402,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         id: 'urgent' as TaskFilter,
         label: isPolish ? 'Pilne' : 'Urgent',
         icon: <Flame size={14} />,
-        color: 'bg-orange-500',
+        color: 'bg-amber-500',
         count: taskFilterCounts.urgent,
       },
       {
@@ -1430,7 +1430,7 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         id: 'my' as DecisionFilter,
         label: isPolish ? 'Moje do decyzji' : 'My decisions to make',
         icon: <User size={12} />,
-        color: 'bg-purple-500',
+        color: 'bg-blue-500',
         count: decisionFilterCounts.my,
       },
       {
@@ -1803,6 +1803,67 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     setInboxSection(next === 'today' ? 'today' : next === 'this_week' ? 'this_week' : 'all');
     setInboxActionRequiredOnly(next === 'action_required');
   }, []);
+
+  const handleInboxStatusTabSelect = useCallback(
+    (next: 'open' | 'done' | 'saved' | 'all') => {
+      setInboxStatusTab(next);
+      if (next === 'saved') {
+        setInboxPreset('saved');
+        setInboxSection('all');
+        setInboxActionRequiredOnly(false);
+        return;
+      }
+      if (inboxPreset === 'saved') {
+        setInboxPreset('all');
+      }
+      if (next === 'done' || next === 'all') {
+        setInboxSection('all');
+        setInboxActionRequiredOnly(false);
+      }
+    },
+    [inboxPreset]
+  );
+
+  const openTabAiContext = useCallback(
+    async (tab: 'inbox' | 'tasks') => {
+      const isInbox = tab === 'inbox';
+      await openChatWithContext({
+        entityType: isInbox ? 'notification' : 'task',
+        entityId: isInbox ? 'my-work-inbox' : 'my-work-tasks',
+        entityName: isInbox ? (isPolish ? 'Skrzynka' : 'Inbox') : isPolish ? 'Zadania' : 'Tasks',
+        contextData: {
+          module: 'my_work',
+          tab,
+          inboxStatusTab: isInbox ? inboxStatusTab : undefined,
+          taskFilter: !isInbox ? taskFilter : undefined,
+          tasksViewMode: !isInbox ? tasksViewMode : undefined,
+          source: 'menu3',
+        },
+      });
+      setChatKickoffMessage(
+        isInbox
+          ? isPolish
+            ? 'Przeanalizuj moją skrzynkę i zaproponuj kolejną najlepszą akcję.'
+            : 'Analyze my inbox and propose the next best action.'
+          : isPolish
+            ? 'Przeanalizuj moje zadania i zaproponuj priorytety na dziś.'
+            : 'Analyze my tasks and propose priorities for today.'
+      );
+      if (isChatCollapsed) {
+        toggleChatCollapse();
+      }
+    },
+    [
+      inboxStatusTab,
+      isChatCollapsed,
+      isPolish,
+      openChatWithContext,
+      setChatKickoffMessage,
+      taskFilter,
+      tasksViewMode,
+      toggleChatCollapse,
+    ]
+  );
 
   const handleInboxBulkBarChange = useCallback((payload: InboxBulkBarPayload | null) => {
     if (!payload) {
@@ -2309,7 +2370,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 );
               })}
             </div>
-            <div className="shrink-0" />
+            <div className={MENU_3_RIGHT_CLASS}>
+              <button
+                onClick={() => void openTabAiContext('tasks')}
+                className={MENU_3_ACTION_NEUTRAL}
+                type="button"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'AI Priorytety' : 'AI Priorities'}
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -2443,7 +2513,52 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                 );
               })}
             </div>
-            <div className="shrink-0" />
+            <div className={MENU_3_RIGHT_CLASS}>
+              <div className="inline-flex items-center gap-1 rounded-full border border-slate-200/80 bg-white/80 p-1 dark:border-white/[0.08] dark:bg-navy-900/70">
+                {(
+                  [
+                    {
+                      id: 'open',
+                      label: isPolish ? 'Otwarte' : 'Open',
+                      count: c?.counts.open ?? 0,
+                    },
+                    {
+                      id: 'done',
+                      label: isPolish ? 'Gotowe' : 'Done',
+                      count: c?.counts.done ?? 0,
+                    },
+                    {
+                      id: 'saved',
+                      label: isPolish ? 'Zapisane' : 'Saved',
+                      count: c?.counts.saved ?? 0,
+                    },
+                  ] as const
+                ).map((statusChip) => {
+                  const isActive = inboxStatusTab === statusChip.id;
+                  return (
+                    <button
+                      key={statusChip.id}
+                      type="button"
+                      onClick={() => handleInboxStatusTabSelect(statusChip.id)}
+                      className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
+                    >
+                      <span>{statusChip.label}</span>
+                      <span className={`${badgeBase} ${isActive ? badgeActive : badgeInactive}`}>
+                        {statusChip.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                onClick={() => void openTabAiContext('inbox')}
+                className={MENU_3_ACTION_NEUTRAL}
+                type="button"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'AI Triage' : 'AI Triage'}
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -2634,13 +2749,13 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
         {
           id: 'shaping',
           label: isPolish ? 'Kształtuje' : 'Shaping',
-          icon: <TreePine size={14} className="text-violet-400" />,
+          icon: <TreePine size={14} className="text-blue-400" />,
           count: ideasStageCounts.shaping,
         },
         {
           id: 'ready',
           label: isPolish ? 'Gotowy' : 'Ready',
-          icon: <CheckCircle2 size={14} className="text-cyan-400" />,
+          icon: <CheckCircle2 size={14} className="text-blue-400" />,
           count: ideasStageCounts.ready,
         },
         {

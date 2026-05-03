@@ -28,7 +28,6 @@ import { AddFilesMenu } from './AddFilesMenu';
 import { CloudFilePicker } from './CloudFilePicker';
 import { CoThinkerMenu } from './CoThinkerMenu';
 import { InputCharCounter } from './InputCharCounter';
-import { InputHintStrip } from './InputHintStrip';
 import { InputSoftLimitToast } from './InputSoftLimitToast';
 import { MoveToProjectModal } from './MoveToProjectModal';
 import { NextModelChip } from './NextModelChip';
@@ -984,13 +983,6 @@ export const EnhancedChatInput: React.FC<EnhancedChatInputProps> = ({
           </div>
         </div>
       </div>
-
-      {/* C-IN4-lite — Keyboard-affordance hint strip. Passive,
-          decorative, aria-hidden (every hinted key is already
-          announced by screen readers via textarea role). Self-
-          gates on `isInputHintStripEnabled()`; kill-switch OFF
-          restores the pre-C-IN4 layout pixel-for-pixel. */}
-      <InputHintStrip />
 
       {/* Cloud File Picker Modal */}
       {activeProvider && (

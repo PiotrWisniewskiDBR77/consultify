@@ -101,7 +101,7 @@ function ToolbarIconButton({
       disabled={disabled}
       className={`p-1.5 rounded-lg transition-colors ${
         active
-          ? 'text-violet-600 dark:text-violet-400 bg-violet-500/10'
+          ? 'text-primary-600 dark:text-primary-400 bg-primary-500/10'
           : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
       } ${disabled ? 'opacity-30 cursor-not-allowed' : ''} ${className ?? ''}`}
       title={title}
@@ -495,7 +495,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               {isPl ? 'Aktualizuj' : 'Update'}
             </button>
             <button
-              className="w-full px-3 py-1.5 text-xs text-left hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600"
+              className="w-full px-3 py-1.5 text-xs text-left hover:bg-rose-50 dark:hover:bg-rose-900/20 text-rose-600"
               onClick={() => {
                 deleteSavedView(viewContextMenu.viewId);
                 toast.success(isPl ? 'Widok usunięty' : 'View deleted');
@@ -535,7 +535,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
           onClick={() => setShowFilterPanel(!showFilterPanel)}
           className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors ${
             filters.rules.length > 0
-              ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400'
               : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-navy-800'
           }`}
         >
@@ -867,7 +867,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   },
                   {
                     onClick: props.onShowSyncManager,
-                    icon: <Link2 size={14} className="text-cyan-500" />,
+                    icon: <Link2 size={14} className="text-blue-500" />,
                     label: isPl ? 'Synchronizacja danych' : 'Data Sync',
                   },
                   {
@@ -915,7 +915,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                         panel: 'showInterfaceDesigner',
                         value: true,
                       }),
-                    icon: <Layout size={14} className="text-violet-500" />,
+                    icon: <Layout size={14} className="text-blue-500" />,
                     label: isPl ? 'Interfejsy' : 'Interfaces',
                   },
                   {
@@ -926,7 +926,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   },
                   {
                     onClick: props.onShowConnectorWizard,
-                    icon: <Download size={14} className="text-teal-500" />,
+                    icon: <Download size={14} className="text-blue-500" />,
                     label: isPl ? 'Konektory' : 'Connectors',
                   },
                 ].map((item, i) => (
@@ -1074,7 +1074,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
               <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
             )}
             {props.connectors.connectors.some((c) => c.lastRunStatus === 'failed') && (
-              <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-red-500" />
+              <span className="absolute top-0.5 right-0.5 h-1.5 w-1.5 rounded-full bg-rose-500" />
             )}
           </button>
         )}
@@ -1147,7 +1147,7 @@ export const TableToolbar: React.FC<TableToolbarProps> = (props) => {
                   setShowColumnConfig(false);
                   uiDispatch({ type: 'SET_PANEL', panel: 'showAddColumn', value: true });
                 }}
-                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-violet-600 dark:text-violet-400 hover:bg-violet-500/10 transition-colors"
+                className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-[11px] font-semibold text-primary-600 dark:text-primary-400 hover:bg-primary-500/10 transition-colors"
               >
                 <Plus size={12} /> {isPl ? 'Nowa kolumna' : 'New column'}
               </button>

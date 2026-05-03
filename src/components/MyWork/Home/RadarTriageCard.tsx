@@ -47,7 +47,7 @@ const DEGRADED_META: Record<
   },
   blocked_permission: {
     icon: <Lock className="size-3.5 shrink-0 text-slate-300" aria-hidden />,
-    bannerClass: 'border-violet-400/25 bg-violet-500/10 text-violet-100',
+    bannerClass: 'border-primary-400/25 bg-primary-500/10 text-primary-100',
   },
 };
 

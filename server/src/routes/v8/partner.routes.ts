@@ -1,9 +1,11 @@
 /**
  * V8 read-only Partner bridge — data scoped by `partner_users.partner_org_id`.
- * Namespace: /api/v8/partner (mounted by v8/index after v8OrgGate).
+ * Namespace: /api/v8/partner (mounted by v8/index before v8OrgGate).
  *
  * Auth model:
- * - Same stack as other V8 routes: JWT, `req.organizationId` (tenant) for V8 org gate + context.
+ * - Same auth/context stack as other V8 routes: JWT + `req.organizationId` tenant context.
+ * - This bridge bypasses tenant-wide v8OrgGate because partner access is scoped
+ *   by partner membership, not by the tenant-wide V8 rollout flag.
  * - Partner rows are loaded only for `partnerOrgId` from `getActivePartnerOrgIdForUser(userId)`.
  * - `v8TenantOrganizationId` in meta is the JWT org (V8 gate); it must not be used as partner scope.
  *
@@ -573,12 +575,77 @@ router.get(
       });
     }
     const tools = await PartnerReferralService.getReferralTools(partnerOrgId);
+    const hasIdentity = (input: { referralCode?: string; referralLink?: string } | null) =>
+      Boolean(String(input?.referralCode || '').trim() && String(input?.referralLink || '').trim());
+
+    const normalizeWithEnsuredIdentity = async (
+      baseTools: {
+        referralCode?: string;
+        referralLink?: string;
+        referralLinkSlug?: string;
+        qrCodeUrl?: string;
+        campaignLinks?: unknown[];
+      } | null
+    ) => {
+      const orgRow = await DbPromise.get<{ name?: string | null }>(
+        getDatabase(),
+        `SELECT name FROM partner_organizations WHERE id = ? LIMIT 1`,
+        [partnerOrgId]
+      );
+      const ensuredIdentity =
+        typeof (PartnerReferralService as any).ensurePartnerReferralIdentity === 'function'
+          ? await (PartnerReferralService as any).ensurePartnerReferralIdentity(
+              partnerOrgId,
+              orgRow?.name || undefined
+            )
+          : null;
+      const prefix = String(orgRow?.name || 'partner')
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, '')
+        .slice(0, 6);
+      const fallbackCode = `${prefix || 'PARTNER'}-${String(partnerOrgId).slice(0, 4).toUpperCase()}`;
+      const fallbackSlug = String(orgRow?.name || 'partner')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .concat(`-${String(partnerOrgId).slice(0, 6).toLowerCase()}`);
+      const referralCode =
+        String(baseTools?.referralCode || '').trim() ||
+        String(ensuredIdentity?.referralCode || '').trim() ||
+        fallbackCode;
+      const referralLinkSlug =
+        String(baseTools?.referralLinkSlug || '').trim() ||
+        String(ensuredIdentity?.referralLinkSlug || '').trim() ||
+        fallbackSlug;
+      return {
+        referralCode,
+        referralLink: `${process.env.APP_BASE_URL || 'https://consultify.ai'}/r/${referralLinkSlug}`,
+        referralLinkSlug,
+        qrCodeUrl: `${
+          process.env.APP_BASE_URL || 'https://consultify.ai'
+        }/api/partner/qr/${referralLinkSlug}`,
+        campaignLinks: Array.isArray(baseTools?.campaignLinks) ? baseTools?.campaignLinks : [],
+      };
+    };
+
     if (!tools) {
-      return res.status(404).json({
-        error: 'Referral tools unavailable for partner organization',
-        code: 'PARTNER_REFERRAL_TOOLS_NOT_FOUND',
+      // Compatibility guard: preserve a usable shape for clients even when
+      // campaign rows are unavailable.
+      const fallbackTools = await normalizeWithEnsuredIdentity(null);
+      return res.json({
+        data: { tools: fallbackTools },
+        meta: partnerReadMeta(req, partnerOrgId),
       });
     }
+
+    if (!hasIdentity(tools)) {
+      const healedTools = await normalizeWithEnsuredIdentity(tools);
+      return res.json({
+        data: { tools: healedTools },
+        meta: partnerReadMeta(req, partnerOrgId),
+      });
+    }
+
     return res.json({
       data: { tools },
       meta: partnerReadMeta(req, partnerOrgId),
@@ -680,7 +747,7 @@ router.get(
       thisMonth: legacySummary.thisMonth,
       thisMonthCount: legacySummary.thisMonthCount,
       lastMonth: legacySummary.lastMonth,
-      readyForPayout: legacySummary.readyForPayout,
+      readyForPayout: detail.balances.availableToPayout,
       currency: detail.balances.currency || legacySummary.currency || 'EUR',
       lifecyclePhase: detail.runtime.lifecycle_phase,
       whatNext: detail.whatNext,

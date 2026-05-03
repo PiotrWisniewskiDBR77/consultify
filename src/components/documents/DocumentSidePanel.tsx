@@ -135,6 +135,35 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const getStatusBadge = (status?: string) => {
+    const normalized = String(status || '').toLowerCase();
+    if (normalized === 'ready' || normalized === 'active') {
+      return {
+        label: t('documents.ready', 'Ready'),
+        className: 'bg-emerald-500/10 text-emerald-500',
+      };
+    }
+    if (normalized === 'processing' || normalized === 'uploaded') {
+      return {
+        label: t('documents.processing', 'Processing'),
+        className: 'bg-amber-500/10 text-amber-500',
+      };
+    }
+    if (normalized === 'ocr_required') {
+      return {
+        label: t('documents.ocrRequired', 'OCR required'),
+        className: 'bg-orange-500/10 text-orange-500',
+      };
+    }
+    if (normalized === 'unreadable' || normalized === 'failed') {
+      return {
+        label: t('documents.unreadable', 'Unreadable'),
+        className: 'bg-rose-500/10 text-rose-500',
+      };
+    }
+    return { label: normalized || 'unknown', className: 'bg-slate-500/10 text-slate-500' };
+  };
+
   const toggleSection = (section: string) => {
     const newSet = new Set(expandedSections);
     if (newSet.has(section)) {
@@ -250,6 +279,21 @@ export const DocumentSidePanel: React.FC<DocumentSidePanelProps> = ({ projectId 
                         {formatFileSize(doc.fileSize)} •{' '}
                         {new Date(doc.createdAt).toLocaleDateString()}
                       </p>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <span
+                          className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${getStatusBadge(doc.status).className}`}
+                        >
+                          {getStatusBadge(doc.status).label}
+                        </span>
+                        {doc.chunkCount !== undefined && doc.chunkCount > 0 && (
+                          <span className="text-[10px] text-slate-400">
+                            {doc.chunkCount} chunks
+                          </span>
+                        )}
+                      </div>
+                      {doc.processingError && (
+                        <p className="mt-1 text-[10px] text-rose-500">{doc.processingError}</p>
+                      )}
                     </div>
                   </div>
 

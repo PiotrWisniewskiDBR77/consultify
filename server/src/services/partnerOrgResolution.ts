@@ -38,7 +38,45 @@ export async function getActivePartnerOrgIdForUser(userId: string): Promise<stri
   );
 
   if (!fallbackOrg?.id) {
-    return null;
+    // Secondary self-heal for workspace member accounts:
+    // if any colleague in the same organization already has an active partner_org,
+    // inherit that scope and persist a local partner_users link for this user.
+    const orgScopedPartner = await DbPromise.get<{ partner_org_id: string }>(
+      db,
+      `SELECT pu.partner_org_id
+       FROM partner_users pu
+       JOIN organization_members owner_member ON owner_member.user_id = pu.user_id
+       JOIN organization_members candidate_member
+         ON candidate_member.organization_id = owner_member.organization_id
+        AND candidate_member.user_id = ?
+       WHERE LOWER(COALESCE(pu.status, 'active')) = 'active'
+         AND LOWER(COALESCE(owner_member.status, 'active')) IN ('active', 'accepted')
+         AND LOWER(COALESCE(candidate_member.status, 'active')) IN ('active', 'accepted')
+       ORDER BY COALESCE(pu.updated_at, pu.joined_at, pu.created_at) DESC
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (!orgScopedPartner?.partner_org_id) {
+      return null;
+    }
+
+    try {
+      await DbPromise.run(
+        db,
+        `INSERT INTO partner_users
+           (id, partner_org_id, user_id, role, status, joined_at, created_at, updated_at)
+         VALUES (?, ?, ?, 'member', 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+         ON CONFLICT (partner_org_id, user_id) DO UPDATE SET
+           status = 'active',
+           updated_at = CURRENT_TIMESTAMP`,
+        [crypto.randomUUID(), orgScopedPartner.partner_org_id, userId]
+      );
+    } catch {
+      // Non-fatal: keep resolved partner_org even when link backfill cannot be persisted.
+    }
+
+    return orgScopedPartner.partner_org_id;
   }
 
   try {

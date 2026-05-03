@@ -101,7 +101,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
             ) : row.type === 'sheet' ? (
               <FileSpreadsheet size={14} className="text-emerald-400 shrink-0" />
             ) : (
-              <Presentation size={14} className="text-purple-400 shrink-0" />
+              <Presentation size={14} className="text-blue-400 shrink-0" />
             )}
             <span className="text-sm font-medium text-slate-700 dark:text-slate-200 truncate">
               {row.title}
@@ -120,7 +120,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
           {
             value: 'presentation',
             label: isPolish ? 'Prezentacja' : 'Presentation',
-            color: 'bg-purple-400',
+            color: 'bg-blue-400',
           },
         ],
         render: (row: TemplateItem) => {
@@ -142,7 +142,7 @@ export const TemplatesTabContent: React.FC<TemplatesTabContentProps> = ({
         filterable: true,
         filterOptions: [
           { value: 'R1', label: 'R1 — Weekly', color: 'bg-blue-400' },
-          { value: 'R2', label: 'R2 — Steering', color: 'bg-purple-400' },
+          { value: 'R2', label: 'R2 — Steering', color: 'bg-blue-400' },
           { value: 'R3', label: 'R3 — Benefits', color: 'bg-emerald-400' },
           { value: 'R4', label: 'R4 — Portfolio', color: 'bg-amber-400' },
           { value: 'executive_update', label: 'Executive Update' },

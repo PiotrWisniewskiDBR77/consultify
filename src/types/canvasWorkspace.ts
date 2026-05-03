@@ -10,6 +10,49 @@ export type CanvasProjectionStatus = 'synced' | 'stale' | 'failed' | 'missing';
 
 export type CanvasCanonicalFormat = 'markdown' | 'json';
 
+export type CanvasArtifactBlockKind =
+  | 'table'
+  | 'chart'
+  | 'diagram'
+  | 'decision'
+  | 'research'
+  | 'dashboard';
+
+export type CanvasArtifactBlockStatus = 'draft' | 'ready' | 'stale' | 'failed';
+
+export type CanvasArtifactBlockCapability =
+  | 'view'
+  | 'edit'
+  | 'filter'
+  | 'sort'
+  | 'export'
+  | 'rerun'
+  | 'convert';
+
+export interface CanvasArtifactBlockProvenance {
+  source: 'user' | 'assistant' | 'import' | 'system';
+  conversationId?: string;
+  draftId?: string;
+  operationId?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CanvasArtifactBlock<TData = unknown> {
+  id: string;
+  kind: CanvasArtifactBlockKind;
+  schemaVersion: 'canvas-block/v1';
+  title: string;
+  status: CanvasArtifactBlockStatus;
+  capabilities: CanvasArtifactBlockCapability[];
+  data: TData;
+  provenance: CanvasArtifactBlockProvenance;
+  markdownProjection: string;
+  markdownProjectionStatus: CanvasProjectionStatus;
+  projectionError?: string | null;
+}
+
 export type CanvasDocumentKind =
   | 'document'
   | 'research'
@@ -25,10 +68,17 @@ export interface ActiveCanvasDocument {
   saveState: CanvasSaveState;
   lifecycleState: CanvasLifecycleState;
   activeStarterId: CanvasStarterId;
+  kind?: CanvasDocumentKind;
+  contentMd?: string;
+  markdownProjectionStatus?: CanvasProjectionStatus;
+  blocks?: CanvasArtifactBlock[];
+  workflowRuns?: CanvasWorkflowRun[];
+  linkedOutputs?: CanvasContextPacket['linkedOutputs'];
 }
 
 export interface CanvasDocumentState extends ActiveCanvasDocument {
   contentMd: string;
+  blocks?: CanvasArtifactBlock[];
   canonicalFormat: CanvasCanonicalFormat;
   kind: CanvasDocumentKind;
   markdownProjectionStatus: CanvasProjectionStatus;
@@ -37,6 +87,7 @@ export interface CanvasDocumentState extends ActiveCanvasDocument {
   linkedIdeaId?: string | null;
   linkedNoteId?: string | null;
   linkedInitiativeId?: string | null;
+  workflowRuns?: CanvasWorkflowRun[];
 }
 
 export interface CanvasSelection {
@@ -54,6 +105,7 @@ export interface CanvasVersionSummary {
   operationType: string;
   summary: string;
   contentMd: string;
+  blocks?: CanvasArtifactBlock[];
   createdBy: string;
   createdAt: string;
 }
@@ -62,6 +114,171 @@ export interface CanvasDiffSummary {
   addedLines: number;
   removedLines: number;
   summary: string;
+}
+
+export type CanvasWorkflowStepKind =
+  | 'teresa_action'
+  | 'user_approval'
+  | 'generated_artifact'
+  | 'failed_retry'
+  | 'downstream_conversion';
+
+export type CanvasWorkflowStepStatus = 'pending' | 'completed' | 'failed' | 'skipped';
+
+export interface CanvasWorkflowStep {
+  id: string;
+  kind: CanvasWorkflowStepKind;
+  title: string;
+  summary: string;
+  status: CanvasWorkflowStepStatus;
+  approvalRequired?: boolean;
+  approvedAt?: string | null;
+  outputType?: string | null;
+  outputId?: string | null;
+  blockId?: string | null;
+  versionId?: string | null;
+  createdAt: string;
+}
+
+export interface CanvasWorkflowRun {
+  id: string;
+  draftId: string;
+  conversationId: string;
+  template: string;
+  title: string;
+  status: 'active' | 'paused' | 'completed' | 'failed';
+  steps: CanvasWorkflowStep[];
+  approvals: Array<{
+    stepId: string;
+    status: 'pending' | 'approved' | 'rejected';
+    requiredCapability: string;
+  }>;
+  outputs: Array<{
+    stepId: string;
+    type: string;
+    id: string;
+    title: string;
+    url?: string;
+  }>;
+  events?: Array<{
+    id: string;
+    type:
+      | 'created'
+      | 'resumed'
+      | 'approval_required'
+      | 'approved'
+      | 'output_created'
+      | 'collaboration_updated'
+      | 'comment_added';
+    actorId: string;
+    summary: string;
+    createdAt: string;
+    metadata?: Record<string, unknown>;
+  }>;
+  collaboration?: {
+    ownerId?: string | null;
+    reviewerId?: string | null;
+    lifecycle?: 'draft' | 'in_review' | 'approved';
+    comments?: Array<{
+      id: string;
+      authorId: string;
+      body: string;
+      createdAt: string;
+    }>;
+  };
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CanvasContextBlockSummary {
+  blockId: string;
+  kind: CanvasArtifactBlockKind;
+  title: string;
+  status: CanvasArtifactBlockStatus;
+  projectionStatus: CanvasProjectionStatus;
+  markdownProjection: string;
+}
+
+export interface CanvasContextWorkflowEventSummary {
+  workflowRunId: string;
+  workflowTitle: string;
+  eventType: string;
+  actorId: string;
+  summary: string;
+  createdAt: string;
+}
+
+export interface CanvasContextWorkflowOutputSummary {
+  workflowRunId: string;
+  workflowTitle: string;
+  stepId: string;
+  type: string;
+  id: string;
+  title: string;
+  url?: string;
+}
+
+export interface CanvasContextWorkflowRunSummary {
+  id: string;
+  draftId: string;
+  conversationId: string;
+  template: string;
+  title: string;
+  status: CanvasWorkflowRun['status'];
+  lifecycle?: 'draft' | 'in_review' | 'approved';
+  stepSummaries: Array<{
+    id: string;
+    kind: CanvasWorkflowStepKind;
+    title: string;
+    status: CanvasWorkflowStepStatus;
+    approvalRequired?: boolean;
+    outputType?: string | null;
+    outputId?: string | null;
+  }>;
+  approvalStatuses: Array<{
+    stepId: string;
+    status: 'pending' | 'approved' | 'rejected';
+  }>;
+  outputCount: number;
+  updatedAt: string;
+}
+
+export interface CanvasMemorySnapshot {
+  summary: string;
+  anchors: {
+    draftId?: string | null;
+    title: string;
+    kind?: CanvasDocumentKind;
+    workflowRunIds: string[];
+    blockIds: string[];
+  };
+  limitations: string[];
+}
+
+export interface CanvasContextPacket {
+  schemaVersion: 'canvas-context/v1';
+  activeDraft: {
+    draftId?: string | null;
+    title: string;
+    kind?: CanvasDocumentKind;
+    lifecycleState: CanvasLifecycleState;
+    saveState: CanvasSaveState;
+    markdownProjectionStatus?: CanvasProjectionStatus;
+  };
+  markdownProjection: string;
+  selection?: CanvasSelection | null;
+  blockSummaries: CanvasContextBlockSummary[];
+  workflowRuns: CanvasContextWorkflowRunSummary[];
+  workflowEventSummaries?: CanvasContextWorkflowEventSummary[];
+  workflowOutputSummaries?: CanvasContextWorkflowOutputSummary[];
+  linkedOutputs: Array<{
+    type: string;
+    id: string;
+    title?: string;
+    url?: string;
+  }>;
+  memorySnapshot: CanvasMemorySnapshot;
 }
 
 export type CanvasEditOperation =
@@ -123,6 +340,17 @@ export type CanvasOperation =
       draftId?: string;
       selection: CanvasSelection;
       replacementMd: string;
+    }
+  | {
+      type: 'append_section';
+      draftId?: string;
+      heading: string;
+      contentMd: string;
+    }
+  | {
+      type: 'update_document';
+      draftId?: string;
+      contentMd: string;
     };
 
 export type CanvasActionGroup = 'file' | 'view' | 'output' | 'workspace';

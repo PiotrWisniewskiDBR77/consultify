@@ -528,7 +528,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                       <button
                         type="button"
                         aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
-                        className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-violet-400/50"
+                        className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-primary-400/50"
                         onMouseDown={(e) => onResizeMouseDown(e, col.key)}
                       />
                     </th>
@@ -553,7 +553,7 @@ const DataGrid: React.FC<DataGridProps> = ({
                     <button
                       type="button"
                       aria-label={isPl ? 'Zmień szerokość' : 'Resize column'}
-                      className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-violet-400/50"
+                      className="absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize hover:bg-primary-400/50"
                       onMouseDown={(e) => onResizeMouseDown(e, col.key)}
                     />
                   </th>

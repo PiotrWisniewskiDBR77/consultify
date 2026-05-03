@@ -1,13 +1,18 @@
 import { randomUUID } from 'node:crypto';
 
 import { Router } from 'express';
+import * as XLSX from 'xlsx';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
 import {
-  createArtifactContentEnvelope,
   type ArtifactContentEnvelope,
   type CanonicalFormat,
+  type CanvasArtifactBlock,
+  type CanvasArtifactBlockKind,
+  createArtifactContentEnvelope,
   type MarkdownProjectionStatus,
+  normalizeCanvasArtifactBlocks,
+  projectCanvasArtifactBlockToMarkdown,
 } from '../services/artifacts/contentProjectionService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 import { getTableColumns } from '../utils/dbSchema.js';
@@ -27,7 +32,22 @@ type DraftKind =
 type ProposalStatus = 'proposed' | 'approved' | 'rejected';
 type WorkspaceTarget = 'idea' | 'note' | 'initiative';
 type OutputType = 'presentation' | 'table' | 'report';
+type ExportFormat = 'markdown' | 'csv' | 'json' | 'pdf' | 'docx' | 'xlsx' | 'pptx';
+type WorkflowTemplate =
+  | 'market_research_to_report'
+  | 'meeting_note_to_initiatives'
+  | 'kpi_review_to_dashboard'
+  | 'client_proposal_to_deck'
+  | 'decision_memo_to_execution_plan';
 type EditOperationType = 'replace_selection' | 'append_section' | 'update_document';
+type BlockOperationType =
+  | 'insert_block'
+  | 'update_block'
+  | 'delete_block'
+  | 'convert_block'
+  | 'generate_block_from_selection'
+  | 'generate_artifact_from_dataset'
+  | 'regenerate_projection';
 
 interface WorkCanvasDraft {
   id: string;
@@ -41,6 +61,7 @@ interface WorkCanvasDraft {
   canonicalFormat: CanonicalFormat;
   contentMd: string;
   contentJson: unknown;
+  blocks: CanvasArtifactBlock[];
   contentSchemaVersion: string | null;
   markdownProjectionStatus: MarkdownProjectionStatus;
   markdownProjectedAt: string | null;
@@ -80,6 +101,118 @@ interface WorkCanvasProposal {
   updatedAt: string;
 }
 
+interface WorkCanvasWorkflowStep {
+  id: string;
+  kind:
+    | 'teresa_action'
+    | 'user_approval'
+    | 'generated_artifact'
+    | 'failed_retry'
+    | 'downstream_conversion';
+  title: string;
+  summary: string;
+  status: 'pending' | 'completed' | 'failed' | 'skipped';
+  approvalRequired?: boolean;
+  approvedAt?: string | null;
+  outputType?: string | null;
+  outputId?: string | null;
+  blockId?: string | null;
+  versionId?: string | null;
+  createdAt: string;
+}
+
+interface WorkCanvasWorkflowRun {
+  id: string;
+  draftId: string;
+  conversationId: string;
+  template: WorkflowTemplate;
+  title: string;
+  status: 'active' | 'paused' | 'completed' | 'failed';
+  steps: WorkCanvasWorkflowStep[];
+  approvals: Array<{
+    stepId: string;
+    status: 'pending' | 'approved' | 'rejected';
+    requiredCapability: string;
+  }>;
+  outputs: Array<{
+    stepId: string;
+    type: string;
+    id: string;
+    title: string;
+    url?: string;
+  }>;
+  events?: Array<{
+    id: string;
+    type:
+      | 'created'
+      | 'resumed'
+      | 'approval_required'
+      | 'approved'
+      | 'output_created'
+      | 'collaboration_updated'
+      | 'comment_added';
+    actorId: string;
+    summary: string;
+    createdAt: string;
+    metadata?: Record<string, unknown>;
+  }>;
+  collaboration?: {
+    ownerId?: string | null;
+    reviewerId?: string | null;
+    lifecycle?: 'draft' | 'in_review' | 'approved';
+    comments?: Array<{
+      id: string;
+      authorId: string;
+      body: string;
+      createdAt: string;
+    }>;
+  };
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const CANVAS_DRAFT_CONFLICT_CODE = 'CANVAS_DRAFT_CONFLICT';
+
+function requestedBaseUpdatedAt(body: unknown): string | null {
+  if (!body || typeof body !== 'object') return null;
+  const record = body as Record<string, any>;
+  const direct = record.baseUpdatedAt;
+  const operationBase = record.operation?.baseUpdatedAt;
+  const value =
+    typeof direct === 'string' ? direct : typeof operationBase === 'string' ? operationBase : '';
+  return value.trim() ? value.trim() : null;
+}
+
+function hasDraftConflict(draft: WorkCanvasDraft, baseUpdatedAt: string | null): boolean {
+  return Boolean(baseUpdatedAt && draft.updatedAt && baseUpdatedAt !== draft.updatedAt);
+}
+
+function sendDraftConflict(
+  res: any,
+  draft: WorkCanvasDraft,
+  baseUpdatedAt: string | null,
+  action: string
+) {
+  return res.status(409).json({
+    error:
+      'Canvas changed since this action started. Reload the latest draft or retry from the current version.',
+    code: CANVAS_DRAFT_CONFLICT_CODE,
+    recoverable: true,
+    action,
+    data: {
+      currentDraft: {
+        id: draft.id,
+        title: draft.title,
+        updatedAt: draft.updatedAt,
+        saveState: draft.saveState,
+        markdownProjectionStatus: draft.markdownProjectionStatus,
+      },
+      baseUpdatedAt,
+    },
+  });
+}
+
 type DraftRow = {
   id: string;
   organization_id: string;
@@ -91,6 +224,7 @@ type DraftRow = {
   canonical_format: CanonicalFormat | null;
   content_md: string | null;
   content_json_native: string | null;
+  blocks_json: string | null;
   content_schema_version: string | null;
   markdown_projection_status: MarkdownProjectionStatus | null;
   markdown_projected_at: string | null;
@@ -137,6 +271,7 @@ type VersionRow = {
   summary: string;
   content_md: string;
   content_json_native: string | null;
+  blocks_json: string | null;
   created_by: string;
   created_at: string;
 };
@@ -152,6 +287,158 @@ const targetLabels: Record<string, string> = {
   research_report: 'Research Report',
   client_deliverable: 'Client Deliverable',
 };
+
+const workflowTemplateTitles: Record<WorkflowTemplate, string> = {
+  market_research_to_report: 'Market research to report',
+  meeting_note_to_initiatives: 'Meeting note to initiatives',
+  kpi_review_to_dashboard: 'KPI review to dashboard',
+  client_proposal_to_deck: 'Client proposal to deck',
+  decision_memo_to_execution_plan: 'Decision memo to execution plan',
+};
+
+const workflowTemplatePlans: Record<
+  WorkflowTemplate,
+  Array<{
+    kind: WorkCanvasWorkflowStep['kind'];
+    title: string;
+    summary: string;
+    approvalRequired?: boolean;
+  }>
+> = {
+  market_research_to_report: [
+    {
+      kind: 'teresa_action',
+      title: 'Frame research question',
+      summary: 'Extract the market question, audience and decision criteria from Canvas context.',
+    },
+    {
+      kind: 'teresa_action',
+      title: 'Structure evidence map',
+      summary:
+        'Organize available evidence into findings, gaps, risks and recommended next research.',
+    },
+    {
+      kind: 'user_approval',
+      title: 'Approve research narrative',
+      summary: 'User approves the report angle before a durable research output is created.',
+      approvalRequired: true,
+    },
+    {
+      kind: 'generated_artifact',
+      title: 'Generate research report',
+      summary: 'Create a report output linked back to this source Canvas and workflow run.',
+    },
+  ],
+  meeting_note_to_initiatives: [
+    {
+      kind: 'teresa_action',
+      title: 'Extract decisions and owners',
+      summary: 'Identify decisions, open questions, owners and due signals from the meeting note.',
+    },
+    {
+      kind: 'teresa_action',
+      title: 'Cluster initiative candidates',
+      summary: 'Group action items into candidate initiatives with business rationale.',
+    },
+    {
+      kind: 'user_approval',
+      title: 'Approve initiative shortlist',
+      summary: 'User approves the candidate initiatives before generating a durable summary.',
+      approvalRequired: true,
+    },
+    {
+      kind: 'generated_artifact',
+      title: 'Generate initiative brief',
+      summary: 'Create a report-style initiative brief with owners, risks and next steps.',
+    },
+  ],
+  kpi_review_to_dashboard: [
+    {
+      kind: 'teresa_action',
+      title: 'Identify KPI signals',
+      summary: 'Read the Canvas context and detect KPI names, thresholds and owners.',
+    },
+    {
+      kind: 'teresa_action',
+      title: 'Prepare dashboard structure',
+      summary: 'Create a dashboard plan with KPIs, charts, caveats and required source checks.',
+    },
+    {
+      kind: 'user_approval',
+      title: 'Approve KPI dashboard plan',
+      summary: 'User approves the KPI framing before a durable table/dashboard output is linked.',
+      approvalRequired: true,
+    },
+    {
+      kind: 'generated_artifact',
+      title: 'Generate KPI output',
+      summary: 'Create a table output that can be opened from the workflow ledger.',
+    },
+  ],
+  client_proposal_to_deck: [
+    {
+      kind: 'teresa_action',
+      title: 'Extract proposal storyline',
+      summary: 'Identify client problem, promised outcome, proof points and commercial ask.',
+    },
+    {
+      kind: 'teresa_action',
+      title: 'Plan deck narrative',
+      summary: 'Prepare slide flow, objections, evidence and final recommendation.',
+    },
+    {
+      kind: 'user_approval',
+      title: 'Approve deck outline',
+      summary: 'User approves the proposal storyline before a durable presentation is created.',
+      approvalRequired: true,
+    },
+    {
+      kind: 'generated_artifact',
+      title: 'Generate proposal deck',
+      summary: 'Create a presentation output linked back to the source Canvas.',
+    },
+  ],
+  decision_memo_to_execution_plan: [
+    {
+      kind: 'teresa_action',
+      title: 'Extract decision logic',
+      summary: 'Identify recommendation, alternatives, risks, assumptions and decision owner.',
+    },
+    {
+      kind: 'teresa_action',
+      title: 'Translate into execution plan',
+      summary: 'Convert the decision memo into milestones, dependencies and operating checks.',
+    },
+    {
+      kind: 'user_approval',
+      title: 'Approve execution plan',
+      summary: 'User approves scope and accountability before a durable execution plan is created.',
+      approvalRequired: true,
+    },
+    {
+      kind: 'generated_artifact',
+      title: 'Generate execution plan',
+      summary: 'Create a report output for downstream execution.',
+    },
+  ],
+};
+
+function workflowEvent(params: {
+  type: NonNullable<WorkCanvasWorkflowRun['events']>[number]['type'];
+  actorId: string;
+  summary: string;
+  createdAt: string;
+  metadata?: Record<string, unknown>;
+}): NonNullable<WorkCanvasWorkflowRun['events']>[number] {
+  return {
+    id: randomUUID(),
+    type: params.type,
+    actorId: params.actorId,
+    summary: params.summary,
+    createdAt: params.createdAt,
+    ...(params.metadata ? { metadata: params.metadata } : {}),
+  };
+}
 
 function authContext(req: AuthRequest) {
   return {
@@ -173,17 +460,135 @@ function parseJson(value: string | null, fallback: unknown): unknown {
   }
 }
 
+function workflowRunsFromProvenance(provenance: Record<string, unknown>): WorkCanvasWorkflowRun[] {
+  const value = provenance.workflowRuns;
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is WorkCanvasWorkflowRun => {
+    if (!item || typeof item !== 'object') return false;
+    const record = item as Record<string, unknown>;
+    return (
+      typeof record.id === 'string' &&
+      typeof record.draftId === 'string' &&
+      typeof record.conversationId === 'string' &&
+      Array.isArray(record.steps)
+    );
+  });
+}
+
+function createWorkflowRun(params: {
+  draft: WorkCanvasDraft;
+  template: WorkflowTemplate;
+  userId: string;
+  now: string;
+}): WorkCanvasWorkflowRun {
+  const step = (
+    kind: WorkCanvasWorkflowStep['kind'],
+    title: string,
+    summary: string,
+    status: WorkCanvasWorkflowStep['status'] = 'pending',
+    approvalRequired = false
+  ): WorkCanvasWorkflowStep => ({
+    id: randomUUID(),
+    kind,
+    title,
+    summary,
+    status,
+    approvalRequired,
+    createdAt: params.now,
+  });
+  const run: WorkCanvasWorkflowRun = {
+    id: randomUUID(),
+    draftId: params.draft.id,
+    conversationId: params.draft.conversationId,
+    template: params.template,
+    title: workflowTemplateTitles[params.template],
+    status: 'active',
+    steps: [],
+    approvals: [],
+    outputs: [],
+    events: [
+      workflowEvent({
+        type: 'created',
+        actorId: params.userId,
+        summary: `Workflow created from template: ${workflowTemplateTitles[params.template]}.`,
+        createdAt: params.now,
+        metadata: { template: params.template, draftId: params.draft.id },
+      }),
+      workflowEvent({
+        type: 'approval_required',
+        actorId: params.userId,
+        summary: 'Workflow requires approval before durable output creation.',
+        createdAt: params.now,
+      }),
+    ],
+    collaboration: {
+      ownerId: params.userId,
+      reviewerId: null,
+      lifecycle: 'draft',
+      comments: [],
+    },
+    createdBy: params.userId,
+    createdAt: params.now,
+    updatedAt: params.now,
+  };
+  run.steps = [
+    ...workflowTemplatePlans[params.template].map((plannedStep, index) =>
+      step(
+        plannedStep.kind,
+        plannedStep.title,
+        plannedStep.summary,
+        index === 0 ? 'completed' : 'pending',
+        plannedStep.approvalRequired || false
+      )
+    ),
+    step(
+      'downstream_conversion',
+      'Link downstream output',
+      'Attach generated output ids and links back to this workflow step.',
+      'pending'
+    ),
+  ];
+  const approvalStep = run.steps.find((plannedStep) => plannedStep.approvalRequired);
+  run.approvals = [
+    {
+      stepId: approvalStep?.id || run.steps[0].id,
+      status: 'pending',
+      requiredCapability: 'work_canvas.workflow.approve',
+    },
+  ];
+  return run;
+}
+
+function appendWorkflowRun(
+  draft: WorkCanvasDraft,
+  workflowRun: WorkCanvasWorkflowRun
+): Record<string, unknown> {
+  return {
+    ...(draft.provenance || {}),
+    workflowRuns: [...workflowRunsFromProvenance(draft.provenance || {}), workflowRun],
+  };
+}
+
+function workflowOutputType(template: WorkflowTemplate): OutputType {
+  if (template === 'client_proposal_to_deck') return 'presentation';
+  if (template === 'kpi_review_to_dashboard') return 'table';
+  return 'report';
+}
+
 function toDraft(row: DraftRow): WorkCanvasDraft {
   const legacyContent = parseJson(row.content_json, '');
   const contentJson = parseJson(row.content_json_native, undefined);
+  const blocks = normalizeCanvasArtifactBlocks(parseJson(row.blocks_json, []));
   const contentEnvelope = createArtifactContentEnvelope({
     artifactType: row.kind,
     canonicalFormat: row.canonical_format || undefined,
     contentMd: row.content_md || (typeof legacyContent === 'string' ? legacyContent : ''),
     contentJson: contentJson ?? (row.canonical_format === 'json' ? legacyContent : undefined),
+    blocks,
     contentSchemaVersion: row.content_schema_version || undefined,
   });
-  const projectionStatus = row.markdown_projection_status || contentEnvelope.markdownProjectionStatus;
+  const projectionStatus =
+    row.markdown_projection_status || contentEnvelope.markdownProjectionStatus;
   return {
     id: row.id,
     organizationId: row.organization_id,
@@ -201,6 +606,7 @@ function toDraft(row: DraftRow): WorkCanvasDraft {
     canonicalFormat: contentEnvelope.canonicalFormat,
     contentMd: contentEnvelope.contentMd,
     contentJson: contentEnvelope.contentJson,
+    blocks: contentEnvelope.blocks || blocks,
     contentSchemaVersion: row.content_schema_version,
     markdownProjectionStatus: projectionStatus,
     markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
@@ -251,6 +657,7 @@ function toVersion(row: VersionRow) {
     summary: row.summary,
     contentMd: row.content_md,
     contentJson: parseJson(row.content_json_native, undefined),
+    blocks: normalizeCanvasArtifactBlocks(parseJson(row.blocks_json, [])),
     createdBy: row.created_by,
     createdAt: row.created_at,
   };
@@ -291,6 +698,691 @@ function markdownSections(markdown: string): Array<{ heading: string; body: stri
     .filter((section) => section.heading);
 }
 
+function sourceCanvasUrl(draftId: string): string {
+  return `/work-canvas?draftId=${encodeURIComponent(draftId)}`;
+}
+
+function outputMetadata(
+  draft: WorkCanvasDraft,
+  params: {
+    outputType?: OutputType;
+    outputId?: string;
+    outputTitle?: string;
+    sourceVersionId?: string;
+    createdBy: string;
+    createdAt: string;
+    lifecycleState?: WorkCanvasDraft['lifecycleState'];
+  }
+) {
+  const lifecycleState = params.lifecycleState || draft.lifecycleState || 'draft';
+  return {
+    ownerId: draft.ownerId || draft.createdBy,
+    lifecycleState,
+    approvedFinalStatus: lifecycleState === 'approved' ? 'approved' : 'draft',
+    source: {
+      type: 'work_canvas',
+      draftId: draft.id,
+      title: draft.title,
+      conversationId: draft.conversationId,
+      versionId: params.sourceVersionId || null,
+      url: sourceCanvasUrl(draft.id),
+    },
+    createdFrom: {
+      operation: params.outputType ? `create_output:${params.outputType}` : 'work_canvas_export',
+      outputType: params.outputType || null,
+      outputId: params.outputId || null,
+      outputTitle: params.outputTitle || null,
+      createdBy: params.createdBy,
+      createdAt: params.createdAt,
+    },
+    openInSourceCanvasUrl: sourceCanvasUrl(draft.id),
+  };
+}
+
+function csvCell(value: unknown): string {
+  const textValue = String(value ?? '');
+  if (/[",\n\r]/.test(textValue)) return `"${textValue.replace(/"/g, '""')}"`;
+  return textValue;
+}
+
+function tableBlockToCsv(block: CanvasArtifactBlock): string | null {
+  const data =
+    typeof block.data === 'object' && block.data !== null
+      ? (block.data as Record<string, unknown>)
+      : {};
+  const rows = Array.isArray(data.rows) ? data.rows : [];
+  const columns = Array.isArray(data.columns) ? data.columns : [];
+  const columnNames =
+    columns.length > 0
+      ? columns.map((column) =>
+          typeof column === 'object' && column !== null
+            ? String(
+                (column as Record<string, unknown>).label ||
+                  (column as Record<string, unknown>).name ||
+                  (column as Record<string, unknown>).id ||
+                  'Column'
+              )
+            : String(column)
+        )
+      : rows.length > 0 && typeof rows[0] === 'object' && rows[0] !== null
+        ? Object.keys(rows[0])
+        : ['Item'];
+  if (rows.length === 0) return null;
+  return [
+    columnNames.map(csvCell).join(','),
+    ...rows.map((row) => {
+      const record =
+        typeof row === 'object' && row !== null ? (row as Record<string, unknown>) : { Item: row };
+      return columnNames.map((column) => csvCell(record[column])).join(',');
+    }),
+  ].join('\n');
+}
+
+function exportMarkdown(draft: WorkCanvasDraft): string {
+  const projections = draft.blocks.map(projectCanvasArtifactBlockToMarkdown).filter(Boolean);
+  const metadata = [
+    `Source Canvas: ${draft.id}`,
+    `Owner: ${draft.ownerId || draft.createdBy}`,
+    `Lifecycle: ${draft.lifecycleState}`,
+    `Version: ${draft.artifactVersion || 'draft'}`,
+  ];
+  return [`<!-- ${metadata.join(' | ')} -->`, draft.contentMd, ...projections].join('\n\n').trim();
+}
+
+function exportCsv(draft: WorkCanvasDraft): string {
+  const tableBlock = draft.blocks.find((block) => block.kind === 'table');
+  const tableCsv = tableBlock ? tableBlockToCsv(tableBlock) : null;
+  if (tableCsv) return tableCsv;
+
+  const sections = markdownSections(draft.contentMd);
+  const rows = sections.length
+    ? sections.map((section) => [section.heading, markdownSummary(section.body, 500), draft.title])
+    : [[draft.title, markdownSummary(draft.contentMd, 500), 'Canvas']];
+  return [['Topic', 'Detail', 'Source'], ...rows]
+    .map((row) => row.map(csvCell).join(','))
+    .join('\n');
+}
+
+function exportJson(draft: WorkCanvasDraft, userId: string) {
+  const metadata = outputMetadata(draft, {
+    createdBy: userId,
+    createdAt: new Date().toISOString(),
+  });
+  return {
+    schemaVersion: 'work-canvas-export/v1',
+    metadata,
+    draft: {
+      id: draft.id,
+      title: draft.title,
+      kind: draft.kind,
+      canonicalFormat: draft.canonicalFormat,
+      lifecycleState: draft.lifecycleState,
+      ownerId: draft.ownerId,
+      contentMd: draft.contentMd,
+      contentJson: draft.contentJson,
+      blocks: draft.blocks,
+      sources: draft.sources,
+      provenance: draft.provenance,
+      updatedAt: draft.updatedAt,
+    },
+  };
+}
+
+async function exportPdfBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
+  const PDFDocument = (await import('pdfkit')).default as any;
+  const doc = new PDFDocument({ margin: 48 });
+  const chunks: Buffer[] = [];
+  doc.on('data', (chunk: Buffer) => chunks.push(chunk));
+  const finished = new Promise<Buffer>((resolve, reject) => {
+    doc.on('end', () => resolve(Buffer.concat(chunks)));
+    doc.on('error', reject);
+  });
+  doc.fontSize(18).text(draft.title, { underline: true });
+  doc.moveDown();
+  doc.fontSize(9).fillColor('#475569').text(`Source Canvas: ${draft.id}`);
+  doc.text(`Lifecycle: ${draft.lifecycleState}`);
+  doc.text(`Updated: ${draft.updatedAt}`);
+  doc.moveDown();
+  doc.fillColor('#111827').fontSize(11).text(exportMarkdown(draft), {
+    width: 500,
+    lineGap: 3,
+  });
+  doc.end();
+  return finished;
+}
+
+async function exportDocxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
+  const docx = await import('docx');
+  const paragraphs = [
+    new docx.Paragraph({
+      children: [new docx.TextRun({ text: draft.title, bold: true, size: 32 })],
+    }),
+    new docx.Paragraph(`Source Canvas: ${draft.id}`),
+    new docx.Paragraph(`Lifecycle: ${draft.lifecycleState}`),
+    new docx.Paragraph(''),
+    ...exportMarkdown(draft)
+      .split('\n')
+      .slice(0, 500)
+      .map((line) => new docx.Paragraph(line || ' ')),
+  ];
+  const document = new docx.Document({ sections: [{ properties: {}, children: paragraphs }] });
+  return Buffer.from(await docx.Packer.toBuffer(document));
+}
+
+async function exportXlsxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
+  const ExcelJS = (await import('exceljs')).default as any;
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Business Work Canvas';
+  workbook.created = new Date();
+  const sheet = workbook.addWorksheet('Canvas Export');
+  exportCsv(draft)
+    .split('\n')
+    .forEach((line) => {
+      sheet.addRow(line.split(',').map((cell) => cell.replace(/^"|"$/g, '').replace(/""/g, '"')));
+    });
+  sheet.addRow([]);
+  sheet.addRow(['Source Canvas', draft.id]);
+  sheet.addRow(['Lifecycle', draft.lifecycleState]);
+  const buffer = await workbook.xlsx.writeBuffer();
+  return Buffer.from(buffer);
+}
+
+async function exportPptxBuffer(draft: WorkCanvasDraft): Promise<Buffer> {
+  const module = await import('pptxgenjs');
+  const PptxGenJS = (module.default || module) as any;
+  const pptx = new PptxGenJS();
+  pptx.author = 'Business Work Canvas';
+  const sections = markdownSections(draft.contentMd);
+  const slides = sections.length
+    ? sections.map((section, index) => ({
+        title: section.heading || `Slide ${index + 1}`,
+        body: markdownSummary(section.body, 700),
+      }))
+    : [{ title: draft.title, body: markdownSummary(draft.contentMd, 700) }];
+  slides.slice(0, 20).forEach((slide, index) => {
+    const page = pptx.addSlide();
+    page.addText(slide.title, { x: 0.5, y: 0.4, w: 9, h: 0.5, fontSize: 24, bold: true });
+    page.addText(slide.body || 'No slide body available.', {
+      x: 0.5,
+      y: 1.1,
+      w: 9,
+      h: 4.5,
+      fontSize: 13,
+      fit: 'shrink',
+    });
+    page.addText(`Source Canvas: ${draft.id} · Slide ${index + 1}`, {
+      x: 0.5,
+      y: 6.8,
+      w: 9,
+      h: 0.3,
+      fontSize: 8,
+      color: '64748B',
+    });
+  });
+  const output = await pptx.write({ outputType: 'nodebuffer' });
+  return Buffer.from(output);
+}
+
+async function exportFormatPayload(draft: WorkCanvasDraft, userId: string, format: ExportFormat) {
+  if (format === 'json') {
+    return {
+      body: JSON.stringify(exportJson(draft, userId), null, 2),
+      contentType: 'application/json; charset=utf-8',
+      extension: 'metadata.json',
+    };
+  }
+  if (format === 'csv') {
+    return { body: exportCsv(draft), contentType: 'text/csv; charset=utf-8', extension: 'csv' };
+  }
+  if (format === 'pdf') {
+    return { body: await exportPdfBuffer(draft), contentType: 'application/pdf', extension: 'pdf' };
+  }
+  if (format === 'docx') {
+    return {
+      body: await exportDocxBuffer(draft),
+      contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      extension: 'docx',
+    };
+  }
+  if (format === 'xlsx') {
+    return {
+      body: await exportXlsxBuffer(draft),
+      contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      extension: 'xlsx',
+    };
+  }
+  if (format === 'pptx') {
+    return {
+      body: await exportPptxBuffer(draft),
+      contentType: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      extension: 'pptx',
+    };
+  }
+  return {
+    body: exportMarkdown(draft),
+    contentType: 'text/markdown; charset=utf-8',
+    extension: 'md',
+  };
+}
+
+type DatasetFormat = 'csv' | 'json' | 'xlsx';
+type DatasetArtifactKind = 'table' | 'chart' | 'dashboard' | 'research';
+type DatasetAnalysisKind = 'profile_summary' | 'aggregate_numeric' | 'filtered_table';
+
+interface DatasetProfile {
+  datasetId: string;
+  filename: string;
+  format: DatasetFormat;
+  rowCount: number;
+  columns: Array<{
+    name: string;
+    type: 'number' | 'boolean' | 'date' | 'text' | 'empty';
+    missingValues: number;
+    sampleValues: unknown[];
+  }>;
+  sampleRows: Record<string, unknown>[];
+  limitations: string[];
+}
+
+interface DatasetAnalysisResult {
+  profile: DatasetProfile;
+  rows: Record<string, unknown>[];
+  summary: string;
+}
+
+function parseCsvRows(content: string): Record<string, unknown>[] {
+  const rows: string[][] = [];
+  let current = '';
+  let row: string[] = [];
+  let inQuotes = false;
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
+    const next = content[index + 1];
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      index += 1;
+      continue;
+    }
+    if (char === '"') {
+      inQuotes = !inQuotes;
+      continue;
+    }
+    if (char === ',' && !inQuotes) {
+      row.push(current);
+      current = '';
+      continue;
+    }
+    if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && next === '\n') index += 1;
+      row.push(current);
+      if (row.some((cell) => cell.trim())) rows.push(row);
+      row = [];
+      current = '';
+      continue;
+    }
+    current += char;
+  }
+  row.push(current);
+  if (row.some((cell) => cell.trim())) rows.push(row);
+  if (rows.length < 2) return [];
+  const headers = rows[0].map((header, index) => header.trim() || `Column ${index + 1}`);
+  return rows.slice(1).map((cells) =>
+    headers.reduce<Record<string, unknown>>((record, header, index) => {
+      record[header] = cells[index] ?? '';
+      return record;
+    }, {})
+  );
+}
+
+function parseDatasetRows(params: {
+  format: DatasetFormat;
+  content: string;
+}): Record<string, unknown>[] {
+  if (params.format === 'csv') return parseCsvRows(params.content);
+  if (params.format === 'xlsx') {
+    const workbook = XLSX.read(Buffer.from(params.content, 'base64'), { type: 'buffer' });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) return [];
+    const sheet = workbook.Sheets[sheetName];
+    return XLSX.utils
+      .sheet_to_json<Record<string, unknown>>(sheet, { defval: '' })
+      .filter((row) => row && typeof row === 'object' && !Array.isArray(row));
+  }
+  const parsed = JSON.parse(params.content);
+  const rows = Array.isArray(parsed)
+    ? parsed
+    : Array.isArray(parsed?.rows)
+      ? parsed.rows
+      : Array.isArray(parsed?.data)
+        ? parsed.data
+        : [];
+  return rows
+    .filter((row: unknown) => row && typeof row === 'object' && !Array.isArray(row))
+    .map((row: unknown) => row as Record<string, unknown>);
+}
+
+function inferColumnType(values: unknown[]): DatasetProfile['columns'][number]['type'] {
+  const present = values.filter(
+    (value) => value !== null && value !== undefined && String(value).trim() !== ''
+  );
+  if (present.length === 0) return 'empty';
+  if (present.every((value) => !Number.isNaN(Number(value)))) return 'number';
+  if (present.every((value) => ['true', 'false'].includes(String(value).toLowerCase())))
+    return 'boolean';
+  if (present.every((value) => !Number.isNaN(Date.parse(String(value))))) return 'date';
+  return 'text';
+}
+
+function createDatasetProfileFromRows(params: {
+  filename: string;
+  format: DatasetFormat;
+  parsedRows: Record<string, unknown>[];
+  limitations: string[];
+}): {
+  profile: DatasetProfile;
+  rows: Record<string, unknown>[];
+} {
+  const rows = params.parsedRows.slice(0, 500);
+  const columns = Array.from(new Set(rows.flatMap((row) => Object.keys(row)))).slice(0, 50);
+  const limitations = [...params.limitations];
+  if (params.parsedRows.length > rows.length) {
+    limitations.push(
+      `Profile limited to first ${rows.length} of ${params.parsedRows.length} rows.`
+    );
+  }
+  if (columns.length >= 50) limitations.push('Column profile limited to first 50 columns.');
+  const profile: DatasetProfile = {
+    datasetId: randomUUID(),
+    filename: params.filename,
+    format: params.format,
+    rowCount: params.parsedRows.length,
+    columns: columns.map((name) => {
+      const values = rows.map((row) => row[name]);
+      return {
+        name,
+        type: inferColumnType(values),
+        missingValues: values.filter(
+          (value) => value === null || value === undefined || String(value).trim() === ''
+        ).length,
+        sampleValues: values
+          .filter((value) => value !== null && value !== undefined && String(value).trim() !== '')
+          .slice(0, 3),
+      };
+    }),
+    sampleRows: rows.slice(0, 10),
+    limitations,
+  };
+  return { profile, rows };
+}
+
+function createDatasetProfile(params: { filename?: string; format?: string; content?: string }): {
+  profile: DatasetProfile;
+  rows: Record<string, unknown>[];
+} {
+  const format = String(params.format || '').toLowerCase() as DatasetFormat;
+  if (!['csv', 'json', 'xlsx'].includes(format)) {
+    throw new Error('Dataset format must be csv, json, or xlsx');
+  }
+  const content = String(params.content || '');
+  if (!content.trim()) throw new Error('Dataset content is required');
+  if (content.length > 3_000_000) {
+    throw new Error('Dataset content exceeds the 3MB Stage 16 import limit');
+  }
+  const parsedRows = parseDatasetRows({ format, content });
+  if (parsedRows.length === 0) throw new Error('Dataset has no readable rows');
+  return createDatasetProfileFromRows({
+    filename: String(params.filename || `canvas-dataset.${format}`),
+    format,
+    parsedRows,
+    limitations: [
+      'Stage 7 uses deterministic server-side profiling only; no arbitrary code execution was run.',
+    ],
+  });
+}
+
+function numericValue(value: unknown): number {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function applyDatasetAnalysis(params: {
+  analysisKind?: string;
+  profile: DatasetProfile;
+  rows: Record<string, unknown>[];
+}): DatasetAnalysisResult {
+  const analysisKind = String(params.analysisKind || '').trim() as DatasetAnalysisKind | '';
+  if (!analysisKind) {
+    return {
+      profile: params.profile,
+      rows: params.rows,
+      summary: 'Dataset profiled without an additional Stage 18 transformation.',
+    };
+  }
+  if (!['profile_summary', 'aggregate_numeric', 'filtered_table'].includes(analysisKind)) {
+    throw new Error(
+      'Dataset analysis kind must be profile_summary, aggregate_numeric, or filtered_table'
+    );
+  }
+  const numericColumn = params.profile.columns.find((column) => column.type === 'number');
+  const groupColumn =
+    params.profile.columns.find((column) => column.type === 'text') || params.profile.columns[0];
+
+  if (analysisKind === 'aggregate_numeric') {
+    if (!numericColumn || !groupColumn) {
+      throw new Error(
+        'Aggregate analysis requires at least one numeric column and one grouping column'
+      );
+    }
+    const grouped = new Map<string, { total: number; count: number }>();
+    params.rows.forEach((row, index) => {
+      const rawLabel = String(row[groupColumn.name] || `Group ${index + 1}`).trim();
+      const label = rawLabel || `Group ${index + 1}`;
+      const current = grouped.get(label) || { total: 0, count: 0 };
+      grouped.set(label, {
+        total: current.total + numericValue(row[numericColumn.name]),
+        count: current.count + 1,
+      });
+    });
+    const aggregateRows = Array.from(grouped.entries())
+      .map(([label, value]) => ({
+        [groupColumn.name]: label,
+        [`${numericColumn.name} total`]: Number(value.total.toFixed(2)),
+        'Row count': value.count,
+      }))
+      .sort(
+        (left, right) =>
+          numericValue(right[`${numericColumn.name} total`]) -
+          numericValue(left[`${numericColumn.name} total`])
+      )
+      .slice(0, 50);
+    const { profile, rows } = createDatasetProfileFromRows({
+      filename: `${params.profile.filename} aggregate`,
+      format: params.profile.format,
+      parsedRows: aggregateRows,
+      limitations: [
+        ...params.profile.limitations,
+        `Stage 18 aggregate grouped by "${groupColumn.name}" and summed "${numericColumn.name}".`,
+      ],
+    });
+    return {
+      profile,
+      rows,
+      summary: `Aggregated ${numericColumn.name} by ${groupColumn.name}.`,
+    };
+  }
+
+  if (analysisKind === 'filtered_table') {
+    const scoredRows = params.rows.map((row) => {
+      const missingValues = params.profile.columns.filter((column) => {
+        const value = row[column.name];
+        return value === null || value === undefined || String(value).trim() === '';
+      }).length;
+      return { ...row, 'Completeness score': params.profile.columns.length - missingValues };
+    });
+    const filteredRows = scoredRows
+      .filter((row) => numericValue(row['Completeness score']) > 0)
+      .sort(
+        (left, right) =>
+          numericValue(right['Completeness score']) - numericValue(left['Completeness score'])
+      )
+      .slice(0, 100);
+    const { profile, rows } = createDatasetProfileFromRows({
+      filename: `${params.profile.filename} filtered`,
+      format: params.profile.format,
+      parsedRows: filteredRows,
+      limitations: [
+        ...params.profile.limitations,
+        'Stage 18 filtered table keeps rows with at least one populated value and ranks completeness.',
+      ],
+    });
+    return {
+      profile,
+      rows,
+      summary: 'Filtered rows by deterministic completeness score.',
+    };
+  }
+
+  const completeness = params.profile.columns.map((column) => ({
+    Column: column.name,
+    Type: column.type,
+    'Missing values': column.missingValues,
+    'Sample values': column.sampleValues.join(', '),
+  }));
+  const { profile, rows } = createDatasetProfileFromRows({
+    filename: `${params.profile.filename} summary`,
+    format: params.profile.format,
+    parsedRows: completeness,
+    limitations: [
+      ...params.profile.limitations,
+      'Stage 18 profile summary converts column profile metadata into a reviewable table.',
+    ],
+  });
+  return {
+    profile,
+    rows,
+    summary: 'Created a column-level profile summary.',
+  };
+}
+
+function createDatasetArtifactBlock(params: {
+  artifactKind: DatasetArtifactKind;
+  profile: DatasetProfile;
+  rows: Record<string, unknown>[];
+  title: string;
+  analysisKind?: DatasetAnalysisKind | null;
+  analysisSummary?: string;
+  conversationId: string;
+  draftId: string;
+  userId: string;
+}): CanvasArtifactBlock {
+  const numericColumns = params.profile.columns.filter((column) => column.type === 'number');
+  const firstTextColumn =
+    params.profile.columns.find((column) => column.type === 'text') || params.profile.columns[0];
+  const firstNumericColumn = numericColumns[0];
+  const common = {
+    id: randomUUID(),
+    kind: params.artifactKind,
+    schemaVersion: 'canvas-block/v1' as const,
+    title: params.title,
+    status: 'ready' as const,
+    capabilities: ['view', 'export', 'convert'] as const,
+    provenance: {
+      source: 'import',
+      conversationId: params.conversationId,
+      draftId: params.draftId,
+      datasetId: params.profile.datasetId,
+      filename: params.profile.filename,
+      analysisKind: params.analysisKind || null,
+      createdBy: params.userId,
+      createdAt: new Date().toISOString(),
+    },
+    markdownProjection: '',
+    markdownProjectionStatus: 'synced' as const,
+  };
+  let data: Record<string, unknown>;
+  if (params.artifactKind === 'table') {
+    data = {
+      columns: params.profile.columns.map((column) => column.name),
+      rows: params.rows.slice(0, 100),
+      profile: params.profile,
+      analysis: params.analysisSummary,
+    };
+  } else if (params.artifactKind === 'chart') {
+    data = {
+      chartType: 'bar',
+      insight: firstNumericColumn
+        ? `Quick distribution for ${firstNumericColumn.name}.`
+        : 'No numeric column was detected; chart uses row count preview.',
+      metrics: params.rows.slice(0, 12).map((row, index) => ({
+        label: String(row[firstTextColumn?.name || ''] || `Row ${index + 1}`).slice(0, 48),
+        value: firstNumericColumn ? Number(row[firstNumericColumn.name]) || 0 : index + 1,
+      })),
+      profile: params.profile,
+      limitations: params.profile.limitations,
+      analysis: params.analysisSummary,
+    };
+  } else if (params.artifactKind === 'dashboard') {
+    data = {
+      kpis: [
+        { label: 'Rows', value: params.profile.rowCount },
+        { label: 'Columns', value: params.profile.columns.length },
+        { label: 'Numeric columns', value: numericColumns.length },
+        {
+          label: 'Missing values',
+          value: params.profile.columns.reduce((sum, column) => sum + column.missingValues, 0),
+        },
+      ],
+      charts: firstNumericColumn
+        ? [
+            {
+              title: `${firstNumericColumn.name} preview`,
+              metrics: params.rows.slice(0, 8).map((row, index) => ({
+                label: String(row[firstTextColumn?.name || ''] || `Row ${index + 1}`).slice(0, 32),
+                value: Number(row[firstNumericColumn.name]) || 0,
+              })),
+            },
+          ]
+        : [],
+      table: {
+        columns: params.profile.columns.map((column) => column.name),
+        rows: params.rows.slice(0, 10),
+      },
+      insights: [
+        `Dataset "${params.profile.filename}" has ${params.profile.rowCount} rows and ${params.profile.columns.length} columns.`,
+        firstNumericColumn
+          ? `Numeric analysis can start from "${firstNumericColumn.name}".`
+          : 'No numeric column was detected, so dashboard metrics are structural only.',
+      ],
+      recommendedActions: [
+        'Validate column meanings with the business owner.',
+        'Confirm missing values before making operational decisions.',
+      ],
+      limitations: params.profile.limitations,
+      profile: params.profile,
+      analysis: params.analysisSummary,
+    };
+  } else {
+    data = {
+      question: `What business findings are visible in ${params.profile.filename}?`,
+      confidence: 'medium',
+      facts: params.profile.columns.map(
+        (column) => `${column.name}: ${column.type}, ${column.missingValues} missing`
+      ),
+      findings: [
+        `Dataset contains ${params.profile.rowCount} rows.`,
+        `Detected ${numericColumns.length} numeric columns.`,
+      ],
+      sources: [params.profile.filename],
+      gaps: params.profile.limitations,
+      recommendations: ['Review sample rows before treating this as a final finding.'],
+      analysis: params.analysisSummary,
+    };
+  }
+  const [block] = normalizeCanvasArtifactBlocks([{ ...common, data }]);
+  if (!block) throw new Error('Dataset artifact block failed validation');
+  return block;
+}
+
 function diffSummary(before: string, after: string) {
   const beforeLines = String(before || '').split('\n');
   const afterLines = String(after || '').split('\n');
@@ -305,7 +1397,191 @@ function diffSummary(before: string, after: string) {
   };
 }
 
-function applyEditOperation(draft: WorkCanvasDraft, operation: any): { contentMd: string; summary: string } {
+function selectionLines(selectedText: string): string[] {
+  return String(selectedText || '')
+    .split('\n')
+    .map((line) => line.replace(/^[-*]\s+/, '').trim())
+    .filter(Boolean);
+}
+
+function generatedBlockFromSelection(params: {
+  kind: CanvasArtifactBlockKind;
+  selectedText: string;
+  title: string;
+  conversationId: string;
+  draftId: string;
+  userId: string;
+}): CanvasArtifactBlock {
+  const lines = selectionLines(params.selectedText);
+  if (lines.length === 0) throw new Error('selectedText is required for block generation');
+  const id = randomUUID();
+  const common = {
+    id,
+    kind: params.kind,
+    schemaVersion: 'canvas-block/v1' as const,
+    title: params.title,
+    status: 'draft' as const,
+    capabilities:
+      params.kind === 'table'
+        ? ['view', 'sort', 'filter', 'export', 'convert']
+        : ['view', 'convert'],
+    provenance: {
+      source: 'user',
+      conversationId: params.conversationId,
+      draftId: params.draftId,
+      createdBy: params.userId,
+      createdAt: new Date().toISOString(),
+    },
+    markdownProjection: '',
+    markdownProjectionStatus: 'synced' as const,
+  };
+  let data: Record<string, unknown>;
+  if (params.kind === 'table') {
+    data = {
+      columns: ['Item', 'Source'],
+      rows: lines.map((line) => ({ Item: line, Source: 'Canvas selection' })),
+    };
+  } else if (params.kind === 'chart') {
+    data = {
+      chartType: 'bar',
+      metrics: lines.map((line, index) => ({ label: line.slice(0, 48), value: index + 1 })),
+    };
+  } else if (params.kind === 'diagram') {
+    data = {
+      nodes: lines.map((line, index) => ({ id: `step-${index + 1}`, label: line })),
+      edges: lines.slice(1).map((_, index) => ({
+        from: `step-${index + 1}`,
+        to: `step-${index + 2}`,
+        label: 'then',
+      })),
+    };
+  } else if (params.kind === 'research') {
+    data = {
+      question: lines[0],
+      hypotheses: lines.slice(1, 3),
+      facts: lines.slice(0, 5),
+      findings: lines.slice(0, 5),
+      contradictions: [],
+      confidence: 'medium',
+      gaps: ['Needs source validation'],
+      implications: lines.slice(0, 2),
+      recommendations: ['Validate findings before making a durable decision'],
+      sources: ['Canvas selection'],
+    };
+  } else {
+    data = {
+      question: lines[0],
+      options: lines
+        .slice(0, 4)
+        .map((line, index) => ({ label: line, score: index === 0 ? 1 : 0 })),
+      criteria: ['Business impact', 'Execution risk', 'Evidence quality'],
+      assumptions: ['Generated from selected Canvas text'],
+      risks: ['Needs owner review before approval'],
+      recommendation: lines[0],
+      approvalStatus: 'draft',
+    };
+  }
+  const [block] = normalizeCanvasArtifactBlocks([{ ...common, data }]);
+  if (!block) throw new Error('Generated block failed validation');
+  return block;
+}
+
+function convertTableBlock(
+  block: CanvasArtifactBlock,
+  targetKind: CanvasArtifactBlockKind
+): CanvasArtifactBlock {
+  if (block.kind !== 'table') throw new Error('Only table blocks can be converted in Stage 4');
+  const data =
+    block.data && typeof block.data === 'object' && !Array.isArray(block.data) ? block.data : {};
+  const rows = Array.isArray((data as any).rows)
+    ? ((data as any).rows as Record<string, unknown>[])
+    : [];
+  const id = randomUUID();
+  const converted =
+    targetKind === 'chart'
+      ? {
+          id,
+          kind: 'chart',
+          schemaVersion: 'canvas-block/v1',
+          title: `Chart from ${block.title}`,
+          status: 'draft',
+          capabilities: ['view', 'convert'],
+          data: {
+            chartType: 'bar',
+            metrics: rows.slice(0, 12).map((row, index) => ({
+              label: String(Object.values(row)[0] ?? `Row ${index + 1}`).slice(0, 48),
+              value: index + 1,
+            })),
+          },
+          provenance: {
+            ...block.provenance,
+            sourceBlockId: block.id,
+            convertedAt: new Date().toISOString(),
+          },
+          markdownProjection: '',
+          markdownProjectionStatus: 'synced',
+        }
+      : {
+          id,
+          kind: 'diagram',
+          schemaVersion: 'canvas-block/v1',
+          title: `Diagram from ${block.title}`,
+          status: 'draft',
+          capabilities: ['view', 'convert'],
+          data: {
+            nodes: rows.slice(0, 12).map((row, index) => ({
+              id: `row-${index + 1}`,
+              label: String(Object.values(row)[0] ?? `Row ${index + 1}`).slice(0, 80),
+            })),
+            edges: rows.slice(1, 12).map((_, index) => ({
+              from: `row-${index + 1}`,
+              to: `row-${index + 2}`,
+              label: 'then',
+            })),
+          },
+          provenance: {
+            ...block.provenance,
+            sourceBlockId: block.id,
+            convertedAt: new Date().toISOString(),
+          },
+          markdownProjection: '',
+          markdownProjectionStatus: 'synced',
+        };
+  const [normalized] = normalizeCanvasArtifactBlocks([converted]);
+  if (!normalized) throw new Error('Converted block failed validation');
+  return normalized;
+}
+
+function operationPreview(params: {
+  proposedChange: string;
+  affectedBlocks: string[];
+  beforeMd: string;
+  afterMd: string;
+  approvalRequired: boolean;
+}) {
+  return {
+    proposedChange: params.proposedChange,
+    affectedBlocks: params.affectedBlocks,
+    markdownDiff: diffSummary(params.beforeMd, params.afterMd),
+    approvalRequired: params.approvalRequired,
+    validationResult: {
+      status: 'passed',
+      message: 'Operation validated against the Stage 4 Canvas transformation contract.',
+    },
+  };
+}
+
+function applyEditOperation(
+  draft: WorkCanvasDraft,
+  operation: any
+): {
+  contentMd: string;
+  blocks: CanvasArtifactBlock[];
+  summary: string;
+  affectedBlocks: string[];
+  proposedChange: string;
+  approvalRequired: boolean;
+} {
   const operationType = String(operation?.type || '') as EditOperationType;
   if (operationType === 'replace_selection') {
     const selectedText = String(operation?.selectedText || '');
@@ -316,7 +1592,11 @@ function applyEditOperation(draft: WorkCanvasDraft, operation: any): { contentMd
     }
     return {
       contentMd: draft.contentMd.replace(selectedText, replacementMd),
+      blocks: draft.blocks,
       summary: operation?.reason || 'Replaced selected Canvas text',
+      affectedBlocks: [],
+      proposedChange: 'Replace selected Canvas text',
+      approvalRequired: false,
     };
   }
   if (operationType === 'append_section') {
@@ -325,7 +1605,11 @@ function applyEditOperation(draft: WorkCanvasDraft, operation: any): { contentMd
     if (!heading) throw new Error('heading is required for append_section');
     return {
       contentMd: `${draft.contentMd.trim()}\n\n## ${heading}\n\n${contentMd}\n`,
+      blocks: draft.blocks,
       summary: operation?.reason || `Appended section: ${heading}`,
+      affectedBlocks: [],
+      proposedChange: `Append section: ${heading}`,
+      approvalRequired: false,
     };
   }
   if (operationType === 'update_document') {
@@ -333,10 +1617,174 @@ function applyEditOperation(draft: WorkCanvasDraft, operation: any): { contentMd
     if (!contentMd.trim()) throw new Error('contentMd is required for update_document');
     return {
       contentMd,
+      blocks: draft.blocks,
       summary: operation?.reason || 'Updated Canvas document',
+      affectedBlocks: [],
+      proposedChange: 'Update Canvas document',
+      approvalRequired: false,
     };
   }
   throw new Error('operation.type must be replace_selection, append_section, or update_document');
+}
+
+function applyBlockOperation(
+  draft: WorkCanvasDraft,
+  operation: any,
+  userId: string
+): {
+  contentMd: string;
+  blocks: CanvasArtifactBlock[];
+  summary: string;
+  affectedBlocks: string[];
+  proposedChange: string;
+  approvalRequired: boolean;
+} {
+  const operationType = String(operation?.type || '') as BlockOperationType;
+  const blocks = [...draft.blocks];
+
+  if (operationType === 'generate_block_from_selection') {
+    const kind = String(operation?.kind || 'table') as CanvasArtifactBlockKind;
+    if (!['table', 'chart', 'diagram', 'decision', 'research', 'dashboard'].includes(kind)) {
+      throw new Error('Unsupported block kind');
+    }
+    const block = generatedBlockFromSelection({
+      kind,
+      selectedText: String(operation?.selectedText || ''),
+      title: String(operation?.title || `${kind} from selection`),
+      conversationId: draft.conversationId,
+      draftId: draft.id,
+      userId,
+    });
+    return {
+      contentMd: draft.contentMd,
+      blocks: [...blocks, block],
+      summary: operation?.reason || `Generated ${kind} block from Canvas selection`,
+      affectedBlocks: [block.id],
+      proposedChange: `Create ${kind} block "${block.title}" from selected Canvas text`,
+      approvalRequired: true,
+    };
+  }
+
+  if (operationType === 'generate_artifact_from_dataset') {
+    const artifactKind = String(operation?.artifactKind || 'dashboard') as DatasetArtifactKind;
+    if (!['table', 'chart', 'dashboard', 'research'].includes(artifactKind)) {
+      throw new Error('Dataset artifact kind must be table, chart, dashboard, or research');
+    }
+    const { profile, rows } = createDatasetProfile({
+      filename: operation?.dataset?.filename,
+      format: operation?.dataset?.format,
+      content: operation?.dataset?.content,
+    });
+    const analysis = applyDatasetAnalysis({
+      analysisKind: operation?.analysis?.kind,
+      profile,
+      rows,
+    });
+    const block = createDatasetArtifactBlock({
+      artifactKind,
+      profile: analysis.profile,
+      rows: analysis.rows,
+      title: String(operation?.title || `${artifactKind} from ${profile.filename}`),
+      analysisKind: operation?.analysis?.kind,
+      analysisSummary: analysis.summary,
+      conversationId: draft.conversationId,
+      draftId: draft.id,
+      userId,
+    });
+    return {
+      contentMd: draft.contentMd,
+      blocks: [...blocks, block],
+      summary:
+        operation?.reason ||
+        `Generated ${artifactKind} block from dataset ${profile.filename}. ${analysis.summary}`,
+      affectedBlocks: [block.id],
+      proposedChange: `Create ${artifactKind} block "${block.title}" from dataset "${profile.filename}"`,
+      approvalRequired: true,
+    };
+  }
+
+  if (operationType === 'insert_block') {
+    const [block] = normalizeCanvasArtifactBlocks([operation?.block]);
+    if (!block) throw new Error('A valid block is required for insert_block');
+    return {
+      contentMd: draft.contentMd,
+      blocks: [...blocks, block],
+      summary: operation?.reason || `Inserted block: ${block.title}`,
+      affectedBlocks: [block.id],
+      proposedChange: `Insert block "${block.title}"`,
+      approvalRequired: true,
+    };
+  }
+
+  if (operationType === 'update_block') {
+    const blockId = String(operation?.blockId || '');
+    const index = blocks.findIndex((block) => block.id === blockId);
+    if (index < 0) throw new Error('Block not found for update_block');
+    const [updatedBlock] = normalizeCanvasArtifactBlocks([
+      { ...blocks[index], ...(operation?.patch || {}) },
+    ]);
+    if (!updatedBlock) throw new Error('Updated block failed validation');
+    blocks[index] = updatedBlock;
+    return {
+      contentMd: draft.contentMd,
+      blocks,
+      summary: operation?.reason || `Updated block: ${updatedBlock.title}`,
+      affectedBlocks: [updatedBlock.id],
+      proposedChange: `Update block "${updatedBlock.title}"`,
+      approvalRequired: true,
+    };
+  }
+
+  if (operationType === 'delete_block') {
+    const blockId = String(operation?.blockId || '');
+    const target = blocks.find((block) => block.id === blockId);
+    if (!target) throw new Error('Block not found for delete_block');
+    return {
+      contentMd: draft.contentMd,
+      blocks: blocks.filter((block) => block.id !== blockId),
+      summary: operation?.reason || `Deleted block: ${target.title}`,
+      affectedBlocks: [target.id],
+      proposedChange: `Delete block "${target.title}"`,
+      approvalRequired: true,
+    };
+  }
+
+  if (operationType === 'regenerate_projection') {
+    const blockId = String(operation?.blockId || '');
+    const index = blocks.findIndex((block) => block.id === blockId);
+    if (index < 0) throw new Error('Block not found for regenerate_projection');
+    const [regenerated] = normalizeCanvasArtifactBlocks([
+      { ...blocks[index], markdownProjection: '' },
+    ]);
+    if (!regenerated) throw new Error('Regenerated block failed validation');
+    blocks[index] = regenerated;
+    return {
+      contentMd: draft.contentMd,
+      blocks,
+      summary: operation?.reason || `Regenerated projection for block: ${regenerated.title}`,
+      affectedBlocks: [regenerated.id],
+      proposedChange: `Regenerate Markdown projection for "${regenerated.title}"`,
+      approvalRequired: true,
+    };
+  }
+
+  if (operationType === 'convert_block') {
+    const blockId = String(operation?.blockId || '');
+    const targetKind = String(operation?.targetKind || 'chart') as CanvasArtifactBlockKind;
+    const target = blocks.find((block) => block.id === blockId);
+    if (!target) throw new Error('Block not found for convert_block');
+    const converted = convertTableBlock(target, targetKind);
+    return {
+      contentMd: draft.contentMd,
+      blocks: [...blocks, converted],
+      summary: operation?.reason || `Converted ${target.title} to ${targetKind}`,
+      affectedBlocks: [target.id, converted.id],
+      proposedChange: `Create ${targetKind} block from "${target.title}"`,
+      approvalRequired: true,
+    };
+  }
+
+  throw new Error('Unsupported block operation type');
 }
 
 async function insertDynamic(
@@ -409,13 +1857,14 @@ async function createVersionSnapshot(
     summary,
     content_md: draft.contentMd || '',
     content_json_native: draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
+    blocks_json: draft.blocks.length > 0 ? JSON.stringify(draft.blocks) : null,
     created_by: userId,
     created_at: now,
   };
   await dbRun(
     `INSERT INTO work_canvas_versions (
-      id, draft_id, operation_type, summary, content_md, content_json_native, created_by, created_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, draft_id, operation_type, summary, content_md, content_json_native, blocks_json, created_by, created_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       version.id,
       version.draft_id,
@@ -423,6 +1872,7 @@ async function createVersionSnapshot(
       version.summary,
       version.content_md,
       version.content_json_native,
+      version.blocks_json,
       version.created_by,
       version.created_at,
     ],
@@ -446,6 +1896,7 @@ async function ensureStorage(): Promise<void> {
           canonical_format TEXT NOT NULL DEFAULT 'markdown',
           content_md TEXT,
           content_json_native TEXT,
+          blocks_json TEXT,
           content_schema_version TEXT,
           markdown_projection_status TEXT NOT NULL DEFAULT 'synced',
           markdown_projected_at TEXT,
@@ -474,6 +1925,7 @@ async function ensureStorage(): Promise<void> {
         "ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT NOT NULL DEFAULT 'markdown'",
         'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT',
         'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_json_native TEXT',
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS blocks_json TEXT',
         'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_schema_version TEXT',
         "ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT NOT NULL DEFAULT 'synced'",
         'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT',
@@ -524,9 +1976,15 @@ async function ensureStorage(): Promise<void> {
           summary TEXT NOT NULL,
           content_md TEXT NOT NULL,
           content_json_native TEXT,
+          blocks_json TEXT,
           created_by TEXT NOT NULL,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )`,
+        [],
+        { fallback: false }
+      );
+      await dbRun(
+        'ALTER TABLE work_canvas_versions ADD COLUMN IF NOT EXISTS blocks_json TEXT',
         [],
         { fallback: false }
       );
@@ -694,7 +2152,9 @@ function buildTableOutputMarkdown(draft: WorkCanvasDraft): string {
         (section) =>
           `| ${section.heading.replace(/\|/g, '/')} | ${markdownSummary(section.body, 180).replace(/\|/g, '/')} | ${draft.title.replace(/\|/g, '/')} |`
       )
-    : [`| ${draft.title.replace(/\|/g, '/')} | ${markdownSummary(draft.contentMd, 180).replace(/\|/g, '/')} | Canvas |`];
+    : [
+        `| ${draft.title.replace(/\|/g, '/')} | ${markdownSummary(draft.contentMd, 180).replace(/\|/g, '/')} | Canvas |`,
+      ];
   return `# Table from ${draft.title}
 
 | Topic | Detail | Source |
@@ -716,10 +2176,12 @@ Generated from Work Canvas draft \`${draft.id}\`.
 
 ## Key Points
 
-${markdownSections(draft.contentMd)
-  .slice(0, 8)
-  .map((section) => `- **${section.heading}:** ${markdownSummary(section.body, 220) || 'TBD'}`)
-  .join('\n') || '- TBD'}
+${
+  markdownSections(draft.contentMd)
+    .slice(0, 8)
+    .map((section) => `- **${section.heading}:** ${markdownSummary(section.body, 220) || 'TBD'}`)
+    .join('\n') || '- TBD'
+}
 
 ## Next Steps
 
@@ -764,7 +2226,8 @@ async function createOutputResource(
   draft: WorkCanvasDraft,
   outputType: OutputType,
   userId: string,
-  organizationId: string
+  organizationId: string,
+  sourceVersionId?: string
 ) {
   const title = firstMarkdownHeading(draft.contentMd, draft.title || 'Canvas output');
   const now = new Date().toISOString();
@@ -772,6 +2235,15 @@ async function createOutputResource(
   if (outputType === 'presentation') {
     const deckId = randomUUID().replace(/-/g, '');
     const slides = buildPresentationSlides(draft);
+    const metadata = outputMetadata(draft, {
+      outputType,
+      outputId: deckId,
+      outputTitle: `Presentation: ${title}`,
+      sourceVersionId,
+      createdBy: userId,
+      createdAt: now,
+      lifecycleState: 'draft',
+    });
     await insertDynamic(
       'presentation_decks',
       {
@@ -784,7 +2256,7 @@ async function createOutputResource(
         slide_count: slides.length,
         status: 'draft',
         source_id: draft.id,
-        source_refs_json: JSON.stringify({ source: 'work_canvas', draftId: draft.id }),
+        source_refs_json: JSON.stringify(metadata),
         created_at: now,
         updated_at: now,
       },
@@ -811,7 +2283,8 @@ async function createOutputResource(
       id: deckId,
       title: `Presentation: ${title}`,
       url: `/presentations/builder/${deckId}`,
-      readBack: { outputType, deckId, slideCount: slides.length, status: 'created' },
+      metadata,
+      readBack: { outputType, deckId, slideCount: slides.length, status: 'created', metadata },
     };
   }
 
@@ -831,16 +2304,28 @@ async function createOutputResource(
     contentMd,
     contentJson,
   });
+  const outputDraftId = randomUUID();
+  const outputDraftTitle = `${outputType === 'table' ? 'Table' : 'Report'}: ${title}`;
+  const metadata = outputMetadata(draft, {
+    outputType,
+    outputId: outputDraftId,
+    outputTitle: outputDraftTitle,
+    sourceVersionId,
+    createdBy: userId,
+    createdAt: now,
+    lifecycleState: 'draft',
+  });
   const outputDraft: WorkCanvasDraft = {
     ...draft,
-    id: randomUUID(),
+    id: outputDraftId,
     kind,
-    title: `${outputType === 'table' ? 'Table' : 'Report'}: ${title}`,
+    title: outputDraftTitle,
     content: outputType === 'table' ? contentJson : contentMd,
     contentEnvelope: envelopeForOutput,
     canonicalFormat: envelopeForOutput.canonicalFormat,
     contentMd: envelopeForOutput.contentMd,
     contentJson: envelopeForOutput.contentJson,
+    blocks: envelopeForOutput.blocks || [],
     contentSchemaVersion: envelopeForOutput.contentSchemaVersion || null,
     markdownProjectionStatus: envelopeForOutput.markdownProjectionStatus,
     markdownProjectedAt: envelopeForOutput.markdownProjectedAt || null,
@@ -848,12 +2333,15 @@ async function createOutputResource(
     provenance: {
       source: 'work_canvas_create_output',
       sourceDraftId: draft.id,
+      sourceVersionId: sourceVersionId || null,
       outputType,
+      metadata,
     },
     artifactId: null,
     artifactRunId: null,
     artifactVersion: null,
     saveState: 'saved',
+    lifecycleState: 'draft',
     dirtyState: 'clean',
     auditStatus: 'logged',
     createdAt: now,
@@ -863,12 +2351,12 @@ async function createOutputResource(
   await dbRun(
     `INSERT INTO work_canvas_drafts (
       id, organization_id, created_by, conversation_id, kind, title, content_json,
-      canonical_format, content_md, content_json_native, content_schema_version,
+      canonical_format, content_md, content_json_native, blocks_json, content_schema_version,
       markdown_projection_status, markdown_projected_at, projection_error,
       sources_json, provenance_json, project_id, owner_id, research_session_id,
       artifact_id, artifact_run_id, artifact_version, save_state, lifecycle_state,
       dirty_state, visibility, audit_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       outputDraft.id,
       outputDraft.organizationId,
@@ -880,6 +2368,7 @@ async function createOutputResource(
       outputDraft.canonicalFormat,
       outputDraft.contentMd,
       outputDraft.contentJson === undefined ? null : JSON.stringify(outputDraft.contentJson),
+      outputDraft.blocks.length > 0 ? JSON.stringify(outputDraft.blocks) : null,
       outputDraft.contentSchemaVersion,
       outputDraft.markdownProjectionStatus,
       outputDraft.markdownProjectedAt,
@@ -908,7 +2397,13 @@ async function createOutputResource(
     id: outputDraft.id,
     title: outputDraft.title,
     url: `/work-canvas?draftId=${encodeURIComponent(outputDraft.id)}`,
-    readBack: { outputType, draftId: outputDraft.id, status: 'created' },
+    metadata,
+    readBack: {
+      outputType,
+      draftId: outputDraft.id,
+      status: 'created',
+      metadata,
+    },
   };
 }
 
@@ -958,13 +2453,16 @@ router.post('/drafts', async (req: AuthRequest, res) => {
     contentEnvelope: createArtifactContentEnvelope({
       artifactType: String(req.body?.kind || 'markdown'),
       canonicalFormat: req.body?.canonicalFormat,
-      contentMd: req.body?.contentMd ?? (typeof req.body?.content === 'string' ? req.body.content : ''),
+      contentMd:
+        req.body?.contentMd ?? (typeof req.body?.content === 'string' ? req.body.content : ''),
       contentJson: req.body?.contentJson,
+      blocks: req.body?.blocks,
       contentSchemaVersion: req.body?.contentSchemaVersion,
     }),
     canonicalFormat: 'markdown',
     contentMd: '',
     contentJson: undefined,
+    blocks: [],
     contentSchemaVersion: req.body?.contentSchemaVersion || null,
     markdownProjectionStatus: 'synced',
     markdownProjectedAt: null,
@@ -989,18 +2487,19 @@ router.post('/drafts', async (req: AuthRequest, res) => {
   draft.canonicalFormat = draft.contentEnvelope.canonicalFormat;
   draft.contentMd = draft.contentEnvelope.contentMd;
   draft.contentJson = draft.contentEnvelope.contentJson;
+  draft.blocks = draft.contentEnvelope.blocks || [];
   draft.markdownProjectionStatus = draft.contentEnvelope.markdownProjectionStatus;
   draft.markdownProjectedAt = draft.contentEnvelope.markdownProjectedAt || null;
   draft.projectionError = draft.contentEnvelope.projectionError || null;
   await dbRun(
     `INSERT INTO work_canvas_drafts (
       id, organization_id, created_by, conversation_id, kind, title, content_json,
-      canonical_format, content_md, content_json_native, content_schema_version,
+      canonical_format, content_md, content_json_native, blocks_json, content_schema_version,
       markdown_projection_status, markdown_projected_at, projection_error,
       sources_json, provenance_json, project_id, owner_id, research_session_id,
       artifact_id, artifact_run_id, artifact_version, save_state, lifecycle_state,
       dirty_state, visibility, audit_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       draft.id,
       draft.organizationId,
@@ -1012,6 +2511,7 @@ router.post('/drafts', async (req: AuthRequest, res) => {
       draft.canonicalFormat,
       draft.contentMd,
       draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
+      draft.blocks.length > 0 ? JSON.stringify(draft.blocks) : null,
       draft.contentSchemaVersion,
       draft.markdownProjectionStatus,
       draft.markdownProjectedAt,
@@ -1043,9 +2543,434 @@ router.get('/drafts/:draftId', async (req: AuthRequest, res) => {
   return res.json(envelope({ draft, proposals: await draftProposals(draft.id) }));
 });
 
+router.get('/drafts/:draftId/workflows', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  return res.json(envelope(workflowRunsFromProvenance(draft.provenance || {})));
+});
+
+router.post('/drafts/:draftId/workflows', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
+  if (hasDraftConflict(draft, baseUpdatedAt)) {
+    return sendDraftConflict(res, draft, baseUpdatedAt, 'start_workflow');
+  }
+  const { userId } = authContext(req);
+  const template = String(req.body?.template || '') as WorkflowTemplate;
+  if (!Object.keys(workflowTemplateTitles).includes(template)) {
+    return res.status(400).json({ error: 'Unsupported workflow template' });
+  }
+
+  const workflowRun = createWorkflowRun({
+    draft,
+    template,
+    userId,
+    now: new Date().toISOString(),
+  });
+  const updatedDraft = await updateDraftAfterOperation(
+    draft,
+    appendWorkflowRun(draft, workflowRun)
+  );
+  return res.status(201).json(
+    envelope({
+      draft: updatedDraft,
+      workflowRun,
+      readBack: {
+        status: 'created',
+        workflowRunId: workflowRun.id,
+        draftId: draft.id,
+        conversationId: draft.conversationId,
+        approvalRequired: true,
+      },
+    })
+  );
+});
+
+router.post('/drafts/:draftId/workflows/:workflowRunId/resume', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
+  if (hasDraftConflict(draft, baseUpdatedAt)) {
+    return sendDraftConflict(res, draft, baseUpdatedAt, 'resume_workflow');
+  }
+  const runs = workflowRunsFromProvenance(draft.provenance || {});
+  const index = runs.findIndex((run) => run.id === req.params.workflowRunId);
+  if (index < 0) return res.status(404).json({ error: 'Workflow run not found' });
+  const run = runs[index];
+  if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
+    return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
+  }
+  const now = new Date().toISOString();
+  const resumeStep: WorkCanvasWorkflowStep = {
+    id: randomUUID(),
+    kind: 'teresa_action',
+    title: 'Resume workflow',
+    summary: String(req.body?.note || 'Workflow resumed from source Canvas context.'),
+    status: 'completed',
+    createdAt: now,
+  };
+  const resumed: WorkCanvasWorkflowRun = {
+    ...run,
+    status: 'active',
+    steps: [...run.steps, resumeStep],
+    events: [
+      ...(run.events || []),
+      workflowEvent({
+        type: 'resumed',
+        actorId: authContext(req).userId,
+        summary: resumeStep.summary,
+        createdAt: now,
+      }),
+    ],
+    updatedAt: now,
+  };
+  runs[index] = resumed;
+  const updatedDraft = await updateDraftAfterOperation(draft, { workflowRuns: runs });
+  return res.json(
+    envelope({
+      draft: updatedDraft,
+      workflowRun: resumed,
+      readBack: {
+        status: 'resumed',
+        workflowRunId: resumed.id,
+        draftId: draft.id,
+        conversationId: draft.conversationId,
+      },
+    })
+  );
+});
+
+router.post('/drafts/:draftId/workflows/:workflowRunId/run-next', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
+  if (hasDraftConflict(draft, baseUpdatedAt)) {
+    return sendDraftConflict(res, draft, baseUpdatedAt, 'run_workflow_step');
+  }
+  const { userId, organizationId } = authContext(req);
+  const runs = workflowRunsFromProvenance(draft.provenance || {});
+  const index = runs.findIndex((run) => run.id === req.params.workflowRunId);
+  if (index < 0) return res.status(404).json({ error: 'Workflow run not found' });
+  const run = runs[index];
+  if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
+    return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
+  }
+
+  const pendingApproval = run.approvals.find((approval) => approval.status === 'pending');
+  if (pendingApproval && req.body?.approved !== true) {
+    return res.status(409).json({
+      error: 'Workflow step requires approval before generating a durable output',
+      code: 'CANVAS_WORKFLOW_APPROVAL_REQUIRED',
+      recoverable: true,
+      data: { workflowRunId: run.id, approval: pendingApproval },
+    });
+  }
+
+  const now = new Date().toISOString();
+  const version = await createVersionSnapshot(
+    draft,
+    'workflow_run_next_step',
+    `Workflow step executed for ${run.title}`,
+    userId
+  );
+  const outputType = workflowOutputType(run.template);
+  const output = await createOutputResource(draft, outputType, userId, organizationId, version.id);
+  const approvalStepId = pendingApproval?.stepId;
+  const nextSteps = run.steps.map((step) => {
+    if (approvalStepId && step.id === approvalStepId) {
+      return { ...step, status: 'completed' as const, approvedAt: now };
+    }
+    if (step.kind === 'generated_artifact' && step.status === 'pending') {
+      return {
+        ...step,
+        status: 'completed' as const,
+        outputType: output.type,
+        outputId: output.id,
+        versionId: version.id,
+      };
+    }
+    if (step.kind === 'downstream_conversion' && step.status === 'pending') {
+      return {
+        ...step,
+        status: 'completed' as const,
+        outputType: output.type,
+        outputId: output.id,
+        versionId: version.id,
+      };
+    }
+    return step;
+  });
+  const completed: WorkCanvasWorkflowRun = {
+    ...run,
+    status: 'completed',
+    steps: nextSteps,
+    approvals: run.approvals.map((approval) =>
+      pendingApproval && approval.stepId === pendingApproval.stepId
+        ? { ...approval, status: 'approved' as const }
+        : approval
+    ),
+    outputs: [
+      ...run.outputs,
+      {
+        stepId:
+          nextSteps.find(
+            (step) => step.kind === 'generated_artifact' && step.outputId === output.id
+          )?.id || run.id,
+        type: output.type,
+        id: output.id,
+        title: output.title,
+        url: output.url,
+      },
+    ],
+    events: [
+      ...(run.events || []),
+      workflowEvent({
+        type: 'approved',
+        actorId: userId,
+        summary: `Approved workflow checkpoint for ${run.title}.`,
+        createdAt: now,
+        metadata: { approvalStepId },
+      }),
+      workflowEvent({
+        type: 'output_created',
+        actorId: userId,
+        summary: `Created ${output.type} output: ${output.title}.`,
+        createdAt: now,
+        metadata: { outputId: output.id, outputType: output.type, versionId: version.id },
+      }),
+    ],
+    updatedAt: now,
+  };
+  runs[index] = completed;
+  const updatedDraft = await updateDraftAfterOperation(draft, { workflowRuns: runs });
+  return res.json(
+    envelope({
+      draft: updatedDraft,
+      workflowRun: completed,
+      outputResource: output,
+      version,
+      readBack: {
+        status: 'completed',
+        workflowRunId: completed.id,
+        outputId: output.id,
+        outputType: output.type,
+        sourceVersionId: version.id,
+      },
+    })
+  );
+});
+
+router.patch(
+  '/drafts/:draftId/workflows/:workflowRunId/collaboration',
+  async (req: AuthRequest, res) => {
+    const draft = await ownedDraft(req, req.params.draftId);
+    if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+    const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
+    if (hasDraftConflict(draft, baseUpdatedAt)) {
+      return sendDraftConflict(res, draft, baseUpdatedAt, 'update_workflow_collaboration');
+    }
+    const runs = workflowRunsFromProvenance(draft.provenance || {});
+    const index = runs.findIndex((run) => run.id === req.params.workflowRunId);
+    if (index < 0) return res.status(404).json({ error: 'Workflow run not found' });
+    const run = runs[index];
+    if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
+      return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
+    }
+    const lifecycle = String(req.body?.lifecycle || run.collaboration?.lifecycle || 'draft');
+    if (!['draft', 'in_review', 'approved'].includes(lifecycle)) {
+      return res
+        .status(400)
+        .json({ error: 'Workflow lifecycle must be draft, in_review, or approved' });
+    }
+    const now = new Date().toISOString();
+    const updatedRun: WorkCanvasWorkflowRun = {
+      ...run,
+      collaboration: {
+        ...(run.collaboration || {}),
+        ownerId:
+          typeof req.body?.ownerId === 'string'
+            ? req.body.ownerId.trim() || null
+            : run.collaboration?.ownerId || run.createdBy,
+        reviewerId:
+          typeof req.body?.reviewerId === 'string'
+            ? req.body.reviewerId.trim() || null
+            : run.collaboration?.reviewerId || null,
+        lifecycle: lifecycle as 'draft' | 'in_review' | 'approved',
+        comments: run.collaboration?.comments || [],
+      },
+      events: [
+        ...(run.events || []),
+        workflowEvent({
+          type: 'collaboration_updated',
+          actorId: authContext(req).userId,
+          summary: `Workflow review metadata updated to ${lifecycle}.`,
+          createdAt: now,
+          metadata: {
+            reviewerId:
+              typeof req.body?.reviewerId === 'string'
+                ? req.body.reviewerId.trim() || null
+                : run.collaboration?.reviewerId || null,
+          },
+        }),
+      ],
+      updatedAt: now,
+    };
+    runs[index] = updatedRun;
+    const updatedDraft = await updateDraftAfterOperation(draft, { workflowRuns: runs });
+    return res.json(
+      envelope({
+        draft: updatedDraft,
+        workflowRun: updatedRun,
+        readBack: { status: 'updated', workflowRunId: updatedRun.id },
+      })
+    );
+  }
+);
+
+router.post('/drafts/:draftId/workflows/:workflowRunId/comments', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
+  if (hasDraftConflict(draft, baseUpdatedAt)) {
+    return sendDraftConflict(res, draft, baseUpdatedAt, 'add_workflow_comment');
+  }
+  const { userId } = authContext(req);
+  const runs = workflowRunsFromProvenance(draft.provenance || {});
+  const index = runs.findIndex((run) => run.id === req.params.workflowRunId);
+  if (index < 0) return res.status(404).json({ error: 'Workflow run not found' });
+  const run = runs[index];
+  if (run.draftId !== draft.id || run.conversationId !== draft.conversationId) {
+    return res.status(409).json({ error: 'Workflow context does not match this Canvas draft' });
+  }
+  const body = String(req.body?.body || '').trim();
+  if (!body) return res.status(400).json({ error: 'Comment body is required' });
+  const now = new Date().toISOString();
+  const comment = {
+    id: randomUUID(),
+    authorId: userId,
+    body: body.slice(0, 2000),
+    createdAt: now,
+  };
+  const updatedRun: WorkCanvasWorkflowRun = {
+    ...run,
+    collaboration: {
+      ownerId: run.collaboration?.ownerId || run.createdBy,
+      reviewerId: run.collaboration?.reviewerId || null,
+      lifecycle: run.collaboration?.lifecycle || 'draft',
+      comments: [...(run.collaboration?.comments || []), comment],
+    },
+    events: [
+      ...(run.events || []),
+      workflowEvent({
+        type: 'comment_added',
+        actorId: userId,
+        summary: 'Workflow comment added.',
+        createdAt: now,
+        metadata: { commentId: comment.id },
+      }),
+    ],
+    updatedAt: now,
+  };
+  runs[index] = updatedRun;
+  const updatedDraft = await updateDraftAfterOperation(draft, { workflowRuns: runs });
+  return res.status(201).json(
+    envelope({
+      draft: updatedDraft,
+      workflowRun: updatedRun,
+      comment,
+      readBack: { status: 'commented', workflowRunId: updatedRun.id, commentId: comment.id },
+    })
+  );
+});
+
+router.get('/drafts/:draftId/source-canvas', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+
+  const metadata = draft.provenance?.metadata as Record<string, unknown> | undefined;
+  const source = metadata?.source as Record<string, unknown> | undefined;
+  const sourceDraftId =
+    typeof draft.provenance?.sourceDraftId === 'string'
+      ? draft.provenance.sourceDraftId
+      : typeof source?.draftId === 'string'
+        ? source.draftId
+        : null;
+
+  if (!sourceDraftId) {
+    return res.status(404).json({
+      error: 'This Canvas draft does not have a source Canvas lineage.',
+    });
+  }
+
+  const sourceDraft = await ownedDraft(req, sourceDraftId);
+  if (!sourceDraft) return res.status(404).json({ error: 'Source Canvas draft not found' });
+
+  return res.json(
+    envelope({
+      sourceDraft: {
+        id: sourceDraft.id,
+        title: sourceDraft.title,
+        kind: sourceDraft.kind,
+        lifecycleState: sourceDraft.lifecycleState,
+        ownerId: sourceDraft.ownerId,
+        updatedAt: sourceDraft.updatedAt,
+        url: sourceCanvasUrl(sourceDraft.id),
+      },
+      sourceVersionId: typeof source?.versionId === 'string' ? source.versionId : null,
+      openInSourceCanvasUrl: sourceCanvasUrl(sourceDraft.id),
+    })
+  );
+});
+
+router.get('/drafts/:draftId/export', async (req: AuthRequest, res) => {
+  const draft = await ownedDraft(req, req.params.draftId);
+  if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const { userId } = authContext(req);
+  const format = String(req.query.format || 'markdown').toLowerCase() as ExportFormat;
+  const supportedFormats: ExportFormat[] = [
+    'markdown',
+    'csv',
+    'json',
+    'pdf',
+    'docx',
+    'xlsx',
+    'pptx',
+  ];
+
+  if (!supportedFormats.includes(format)) {
+    return res.status(422).json({
+      error: `Canvas export format "${format}" is not available yet.`,
+      recoverable: true,
+      supportedFormats,
+      message: 'Use Markdown, CSV, metadata JSON, PDF, DOCX, XLSX, or PPTX export.',
+    });
+  }
+
+  const filenameBase = draft.title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 80);
+  const safeFilename = filenameBase || draft.id;
+
+  const payload = await exportFormatPayload(draft, userId, format);
+  res.setHeader('Content-Type', payload.contentType);
+  res.setHeader(
+    'Content-Disposition',
+    `attachment; filename="${safeFilename}.${payload.extension}"`
+  );
+  res.setHeader('X-Canvas-Source-Draft', draft.id);
+  return res.send(payload.body);
+});
+
 router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
+  const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
+  if (hasDraftConflict(draft, baseUpdatedAt)) {
+    return sendDraftConflict(res, draft, baseUpdatedAt, 'save_draft');
+  }
   const updated: WorkCanvasDraft = {
     ...draft,
     ...req.body,
@@ -1057,13 +2982,18 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
   updated.contentEnvelope = createArtifactContentEnvelope({
     artifactType: updated.kind,
     canonicalFormat: req.body?.canonicalFormat || updated.canonicalFormat,
-    contentMd: req.body?.contentMd ?? (typeof updated.content === 'string' ? updated.content : updated.contentMd),
+    contentMd:
+      req.body?.contentMd ??
+      (typeof updated.content === 'string' ? updated.content : updated.contentMd),
     contentJson: req.body?.contentJson ?? updated.contentJson,
-    contentSchemaVersion: req.body?.contentSchemaVersion || updated.contentSchemaVersion || undefined,
+    blocks: req.body?.blocks ?? updated.blocks,
+    contentSchemaVersion:
+      req.body?.contentSchemaVersion || updated.contentSchemaVersion || undefined,
   });
   updated.canonicalFormat = updated.contentEnvelope.canonicalFormat;
   updated.contentMd = updated.contentEnvelope.contentMd;
   updated.contentJson = updated.contentEnvelope.contentJson;
+  updated.blocks = updated.contentEnvelope.blocks || [];
   updated.contentSchemaVersion = updated.contentEnvelope.contentSchemaVersion || null;
   updated.markdownProjectionStatus = updated.contentEnvelope.markdownProjectionStatus;
   updated.markdownProjectedAt = updated.contentEnvelope.markdownProjectedAt || null;
@@ -1074,7 +3004,7 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
          provenance_json = ?, project_id = ?, owner_id = ?, research_session_id = ?,
          artifact_id = ?, artifact_run_id = ?, artifact_version = ?, save_state = ?,
          lifecycle_state = ?, dirty_state = ?, visibility = ?, audit_status = ?,
-         canonical_format = ?, content_md = ?, content_json_native = ?, content_schema_version = ?,
+         canonical_format = ?, content_md = ?, content_json_native = ?, blocks_json = ?, content_schema_version = ?,
          markdown_projection_status = ?, markdown_projected_at = ?, projection_error = ?, updated_at = ?
      WHERE id = ? AND organization_id = ?`,
     [
@@ -1098,6 +3028,7 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
       updated.canonicalFormat,
       updated.contentMd,
       updated.contentJson === undefined ? null : JSON.stringify(updated.contentJson),
+      updated.blocks.length > 0 ? JSON.stringify(updated.blocks) : null,
       updated.contentSchemaVersion,
       updated.markdownProjectionStatus,
       updated.markdownProjectedAt,
@@ -1264,21 +3195,48 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const { userId } = authContext(req);
   try {
+    const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
+    if (hasDraftConflict(draft, baseUpdatedAt)) {
+      return sendDraftConflict(res, draft, baseUpdatedAt, 'apply_operation');
+    }
     const operation = req.body?.operation;
-    const operationType = String(operation?.type || '') as EditOperationType;
-    const applied = applyEditOperation(draft, operation);
-    const version = await createVersionSnapshot(
-      draft,
-      operationType,
-      applied.summary,
-      userId
-    );
+    const operationType = String(operation?.type || '');
+    const isBlockOperation = [
+      'insert_block',
+      'update_block',
+      'delete_block',
+      'convert_block',
+      'generate_block_from_selection',
+      'generate_artifact_from_dataset',
+      'regenerate_projection',
+    ].includes(operationType);
+    const applied = isBlockOperation
+      ? applyBlockOperation(draft, operation, userId)
+      : applyEditOperation(draft, operation);
+    const preview = operationPreview({
+      proposedChange: applied.proposedChange,
+      affectedBlocks: applied.affectedBlocks,
+      beforeMd: draft.contentMd,
+      afterMd: applied.contentMd,
+      approvalRequired: applied.approvalRequired,
+    });
+    if (req.body?.previewOnly) {
+      return res.json(envelope({ draft, preview }));
+    }
+    if (applied.approvalRequired && operation?.approved !== true) {
+      return res.status(409).json({
+        error: 'Canvas transformation requires approval before applying',
+        data: { preview },
+      });
+    }
+    const version = await createVersionSnapshot(draft, operationType, applied.summary, userId);
     const now = new Date().toISOString();
     const updatedEnvelope = createArtifactContentEnvelope({
       artifactType: draft.kind,
       canonicalFormat: draft.canonicalFormat,
       contentMd: applied.contentMd,
       contentJson: draft.contentJson,
+      blocks: applied.blocks,
       contentSchemaVersion: draft.contentSchemaVersion || undefined,
     });
     const updated: WorkCanvasDraft = {
@@ -1288,6 +3246,7 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
       canonicalFormat: updatedEnvelope.canonicalFormat,
       contentMd: updatedEnvelope.contentMd,
       contentJson: updatedEnvelope.contentJson,
+      blocks: updatedEnvelope.blocks || [],
       contentSchemaVersion: updatedEnvelope.contentSchemaVersion || null,
       markdownProjectionStatus: updatedEnvelope.markdownProjectionStatus,
       markdownProjectedAt: updatedEnvelope.markdownProjectedAt || null,
@@ -1298,7 +3257,7 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
     };
     await dbRun(
       `UPDATE work_canvas_drafts
-       SET content_json = ?, canonical_format = ?, content_md = ?, content_json_native = ?,
+       SET content_json = ?, canonical_format = ?, content_md = ?, content_json_native = ?, blocks_json = ?,
            content_schema_version = ?, markdown_projection_status = ?, markdown_projected_at = ?,
            projection_error = ?, save_state = ?, dirty_state = ?, updated_at = ?
        WHERE id = ? AND organization_id = ?`,
@@ -1307,6 +3266,7 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
         updated.canonicalFormat,
         updated.contentMd,
         updated.contentJson === undefined ? null : JSON.stringify(updated.contentJson),
+        updated.blocks.length > 0 ? JSON.stringify(updated.blocks) : null,
         updated.contentSchemaVersion,
         updated.markdownProjectionStatus,
         updated.markdownProjectedAt,
@@ -1324,6 +3284,10 @@ router.post('/drafts/:draftId/operations', async (req: AuthRequest, res) => {
         draft: updated,
         version,
         diff: diffSummary(draft.contentMd, updated.contentMd),
+        preview: {
+          ...preview,
+          markdownDiff: diffSummary(draft.contentMd, updated.contentMd),
+        },
       })
     );
   } catch (error) {
@@ -1337,6 +3301,10 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
   const draft = await ownedDraft(req, req.params.draftId);
   if (!draft) return res.status(404).json({ error: 'Canvas draft not found' });
   const { userId } = authContext(req);
+  const baseUpdatedAt = requestedBaseUpdatedAt(req.body);
+  if (hasDraftConflict(draft, baseUpdatedAt)) {
+    return sendDraftConflict(res, draft, baseUpdatedAt, 'restore_version');
+  }
   const versionRow = await dbGet<VersionRow>(
     `SELECT * FROM work_canvas_versions WHERE id = ? AND draft_id = ?`,
     [req.params.versionId, draft.id],
@@ -1351,6 +3319,7 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
     canonicalFormat: draft.canonicalFormat,
     contentMd: version.contentMd,
     contentJson: version.contentJson,
+    blocks: version.blocks,
   });
   const restored: WorkCanvasDraft = {
     ...draft,
@@ -1359,6 +3328,7 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
     canonicalFormat: restoredEnvelope.canonicalFormat,
     contentMd: restoredEnvelope.contentMd,
     contentJson: restoredEnvelope.contentJson,
+    blocks: restoredEnvelope.blocks || [],
     markdownProjectionStatus: restoredEnvelope.markdownProjectionStatus,
     markdownProjectedAt: restoredEnvelope.markdownProjectedAt || null,
     projectionError: restoredEnvelope.projectionError || null,
@@ -1368,7 +3338,7 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
   };
   await dbRun(
     `UPDATE work_canvas_drafts
-     SET content_json = ?, canonical_format = ?, content_md = ?, content_json_native = ?,
+     SET content_json = ?, canonical_format = ?, content_md = ?, content_json_native = ?, blocks_json = ?,
          markdown_projection_status = ?, markdown_projected_at = ?, projection_error = ?,
          save_state = ?, dirty_state = ?, updated_at = ?
      WHERE id = ? AND organization_id = ?`,
@@ -1377,6 +3347,7 @@ router.post('/drafts/:draftId/versions/:versionId/restore', async (req: AuthRequ
       restored.canonicalFormat,
       restored.contentMd,
       restored.contentJson === undefined ? null : JSON.stringify(restored.contentJson),
+      restored.blocks.length > 0 ? JSON.stringify(restored.blocks) : null,
       restored.markdownProjectionStatus,
       restored.markdownProjectedAt,
       restored.projectionError,
@@ -1474,9 +3445,16 @@ router.post('/drafts/:draftId/create-output', async (req: AuthRequest, res) => {
       `Created ${outputType} output from Canvas draft`,
       userId
     );
-    const outputResource = await createOutputResource(draft, outputType, userId, organizationId);
-    const previousOutputs =
-      Array.isArray(draft.provenance?.createdOutputs) ? draft.provenance.createdOutputs : [];
+    const outputResource = await createOutputResource(
+      draft,
+      outputType,
+      userId,
+      organizationId,
+      version.id
+    );
+    const previousOutputs = Array.isArray(draft.provenance?.createdOutputs)
+      ? draft.provenance.createdOutputs
+      : [];
     const updatedDraft = await updateDraftAfterOperation(draft, {
       createdOutputs: [
         ...previousOutputs,
@@ -1485,6 +3463,7 @@ router.post('/drafts/:draftId/create-output', async (req: AuthRequest, res) => {
           id: outputResource.id,
           title: outputResource.title,
           url: outputResource.url,
+          metadata: outputResource.metadata,
           createdAt: new Date().toISOString(),
         },
       ],
@@ -1497,6 +3476,7 @@ router.post('/drafts/:draftId/create-output', async (req: AuthRequest, res) => {
           id: outputResource.id,
           title: outputResource.title,
           url: outputResource.url,
+          metadata: outputResource.metadata,
         },
         readBack: outputResource.readBack,
         version,

@@ -292,6 +292,49 @@ const ANALYSIS_MODE_OPTIONS: Array<{
   },
 ];
 
+const TOPIC_FOCUS_OPTIONS: Array<{ id: string; labelPl: string; labelEn: string }> = [
+  { id: 'strategy_and_goals', labelPl: 'Strategia i cele', labelEn: 'Strategy and goals' },
+  {
+    id: 'process_and_operations',
+    labelPl: 'Procesy i operacje',
+    labelEn: 'Process and operations',
+  },
+  {
+    id: 'technology_and_systems',
+    labelPl: 'Technologia i systemy',
+    labelEn: 'Technology and systems',
+  },
+  { id: 'data_and_reporting', labelPl: 'Dane i raportowanie', labelEn: 'Data and reporting' },
+  { id: 'people_and_roles', labelPl: 'Ludzie i role', labelEn: 'People and roles' },
+  {
+    id: 'ownership_and_decision_rights',
+    labelPl: 'Własność i decyzje',
+    labelEn: 'Ownership and decision rights',
+  },
+  { id: 'risks_and_blockers', labelPl: 'Ryzyka i blokery', labelEn: 'Risks and blockers' },
+  {
+    id: 'opportunities_and_improvements',
+    labelPl: 'Szanse i usprawnienia',
+    labelEn: 'Opportunities and improvements',
+  },
+  {
+    id: 'customer_user_impact',
+    labelPl: 'Wpływ na klienta/użytkownika',
+    labelEn: 'Customer/user impact',
+  },
+  {
+    id: 'compliance_governance',
+    labelPl: 'Compliance i governance',
+    labelEn: 'Compliance/governance',
+  },
+  { id: 'change_readiness', labelPl: 'Gotowość do zmiany', labelEn: 'Change readiness' },
+  {
+    id: 'hidden_signals_and_contradictions',
+    labelPl: 'Ukryte sygnały i sprzeczności',
+    labelEn: 'Hidden signals and contradictions',
+  },
+];
+
 const CREATOR_STEPS: Array<{
   id: CreatorStepId;
   labelPl: string;
@@ -358,6 +401,8 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   const [selectedAnalysisModes, setSelectedAnalysisModes] = useState<InsightAnalysisMode[]>([
     'general_consulting_synthesis',
   ]);
+  const [selectedTopicFocus, setSelectedTopicFocus] = useState<string[]>([]);
+  const [leadingQuestion, setLeadingQuestion] = useState('');
   const [contextMode, setContextMode] = useState<InsightContextMode>(
     'selected_material_plus_approved_org_knowledge'
   );
@@ -430,6 +475,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setAnalysisMode(normalized[0]);
       return normalized;
     });
+  };
+
+  const toggleTopicFocus = (topicId: string) => {
+    setSelectedTopicFocus((prev) =>
+      prev.includes(topicId) ? prev.filter((item) => item !== topicId) : [...prev, topicId]
+    );
   };
   const [filterTemplate, setFilterTemplate] = useState<string>('');
   const [filterRespondent, setFilterRespondent] = useState('');
@@ -641,6 +692,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setSelectedTypes(['summary']);
       setAnalysisMode('general_consulting_synthesis');
       setSelectedAnalysisModes(['general_consulting_synthesis']);
+      setSelectedTopicFocus([]);
+      setLeadingQuestion('');
       setContextMode('selected_material_plus_approved_org_knowledge');
       setSelectedRespondents([]);
       setSelectedSessions([]);
@@ -761,6 +814,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     );
     const customPromptWithAttachments = buildPromptWithAttachmentContext();
     const artifactLinks = getInternalArtifactLinks();
+    const normalizedLeadingQuestion = leadingQuestion.trim();
+    const normalizedConsultantNote = customPrompt.trim();
 
     try {
       await V8InterviewApi.createInsight({
@@ -778,6 +833,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           respondentIds: selectedRespondents.length > 0 ? selectedRespondents : undefined,
           dateFrom: useDateFilter ? filterDateFrom || undefined : undefined,
           dateTo: useDateFilter ? filterDateTo || undefined : undefined,
+          topicFocus: selectedTopicFocus.length > 0 ? selectedTopicFocus : undefined,
           internalArtifactLinks: artifactLinks.length > 0 ? artifactLinks : undefined,
           outputTypes: selectedTypes,
           analysisModes: selectedAnalysisModes,
@@ -798,13 +854,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             useDateFilter && (filterDateFrom || filterDateTo)
               ? { from: filterDateFrom || undefined, to: filterDateTo || undefined }
               : undefined,
-          topic_focus: [],
+          topic_focus: selectedTopicFocus,
           analysis_mode: analysisMode,
           context_mode: contextMode,
+          consultant_note: normalizedConsultantNote || null,
+          leading_question: normalizedLeadingQuestion || null,
         },
         analysisMode,
         contextMode,
-        topicFocus: [],
+        topicFocus: selectedTopicFocus,
+        consultantNote: normalizedConsultantNote || undefined,
+        leadingQuestion: normalizedLeadingQuestion || undefined,
         customPrompt: customPromptWithAttachments,
         selectedContextDocumentIds,
       }).catch(() =>
@@ -823,6 +883,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             respondentIds: selectedRespondents.length > 0 ? selectedRespondents : undefined,
             dateFrom: useDateFilter ? filterDateFrom || undefined : undefined,
             dateTo: useDateFilter ? filterDateTo || undefined : undefined,
+            topicFocus: selectedTopicFocus.length > 0 ? selectedTopicFocus : undefined,
             internalArtifactLinks: artifactLinks.length > 0 ? artifactLinks : undefined,
             outputTypes: selectedTypes,
             analysisModes: selectedAnalysisModes,
@@ -843,13 +904,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               useDateFilter && (filterDateFrom || filterDateTo)
                 ? { from: filterDateFrom || undefined, to: filterDateTo || undefined }
                 : undefined,
-            topic_focus: [],
+            topic_focus: selectedTopicFocus,
             analysis_mode: analysisMode,
             context_mode: contextMode,
+            consultant_note: normalizedConsultantNote || null,
+            leading_question: normalizedLeadingQuestion || null,
           },
           analysisMode,
           contextMode,
-          topicFocus: [],
+          topicFocus: selectedTopicFocus,
+          consultantNote: normalizedConsultantNote || undefined,
+          leadingQuestion: normalizedLeadingQuestion || undefined,
           customPrompt: customPromptWithAttachments,
           selectedContextDocumentIds,
         })
@@ -1460,6 +1525,51 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="text-xs font-medium text-slate-500">
+            {isPolish ? 'Zakres tematyczny' : 'Topic focus'}
+          </label>
+          {selectedTopicFocus.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedTopicFocus([])}
+              className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+            >
+              {isPolish ? 'Ogólnie' : 'General'}
+            </button>
+          )}
+        </div>
+        <div className="grid max-h-28 grid-cols-2 gap-1.5 overflow-auto pr-1">
+          {TOPIC_FOCUS_OPTIONS.map((topic) => {
+            const selected = selectedTopicFocus.includes(topic.id);
+            return (
+              <button
+                key={topic.id}
+                type="button"
+                onClick={() => toggleTopicFocus(topic.id)}
+                className={`truncate rounded-lg border px-2.5 py-1.5 text-left text-xs transition-all ${
+                  selected
+                    ? 'border-primary-500/50 bg-primary-50 text-primary-700 dark:bg-primary-500/15 dark:text-primary-200'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70 dark:text-slate-200'
+                }`}
+              >
+                {isPolish ? topic.labelPl : topic.labelEn}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-1.5 text-xs text-primary-400">
+          {selectedTopicFocus.length === 0
+            ? isPolish
+              ? 'Brak wyboru = ogólna synteza konsultingowa'
+              : 'No selection = general consulting synthesis'
+            : isPolish
+              ? `Wybrano: ${selectedTopicFocus.length}`
+              : `Selected: ${selectedTopicFocus.length}`}
+        </p>
+      </div>
+
+      <div>
         <div className="mb-2 text-xs font-medium text-slate-500">
           {isPolish ? 'Zakres kontekstu AI' : 'AI context boundary'}
         </div>
@@ -1505,6 +1615,23 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const renderContextStep = () => (
     <div className="space-y-3">
+      <div>
+        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+          {isPolish ? 'Pytanie prowadzące' : 'Leading question'}
+        </label>
+        <input
+          type="text"
+          value={leadingQuestion}
+          onChange={(event) => setLeadingQuestion(event.target.value)}
+          placeholder={
+            isPolish
+              ? 'np. Gdzie najczęściej pękają odpowiedzialności między działami?'
+              : 'e.g. Where do ownership handoffs most often break?'
+          }
+          className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+        />
+      </div>
+
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           {isPolish ? 'Uwagi' : 'Notes'}

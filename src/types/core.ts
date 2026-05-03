@@ -5078,7 +5078,16 @@ export interface ContentAnalyticsDashboard {
 
 // Document Library
 export type DocumentScope = 'project' | 'user';
-export type DocumentStatus = 'active' | 'archived' | 'deleted';
+export type DocumentStatus =
+  | 'active'
+  | 'archived'
+  | 'deleted'
+  | 'uploaded'
+  | 'processing'
+  | 'ready'
+  | 'ocr_required'
+  | 'unreadable'
+  | 'failed';
 
 export interface Document {
   id: string;
@@ -5095,6 +5104,9 @@ export interface Document {
   description?: string;
   tags?: string[];
   status: DocumentStatus;
+  processingError?: string | null;
+  chunkCount?: number;
+  sourceUpload?: string;
   createdAt: string;
   updatedAt: string;
 }

@@ -248,17 +248,15 @@ vi.doMock('../../../src/components/AIChat/EnhancedChatInput', () => ({
       <div data-testid="chat-lang">{chatLanguage}</div>
       <div data-testid="chat-placeholder">{placeholder}</div>
       <textarea data-testid="chat-input" disabled={disabled} defaultValue="hello" />
-      <button
-        data-testid="send-button"
-        disabled={disabled}
-        onClick={() => onSend('hello')}
-      >
+      <button data-testid="send-button" disabled={disabled} onClick={() => onSend('hello')}>
         send
       </button>
       <button
         data-testid="send-pdf"
         disabled={disabled}
-        onClick={() => onSend('with pdf', [new File(['x'], 'test.pdf', { type: 'application/pdf' })])}
+        onClick={() =>
+          onSend('with pdf', [new File(['x'], 'test.pdf', { type: 'application/pdf' })])
+        }
       >
         send-pdf
       </button>
@@ -318,9 +316,7 @@ vi.mock('../../../src/components/AIChat/MessageRenderer', () => ({
           onChange={(e) => setEditingText(e.target.value)}
         />
         <button
-          onClick={() =>
-            handleViewArtifacts([{ id: 'a1', type: 'md', title: 'A', content: 'X' }])
-          }
+          onClick={() => handleViewArtifacts([{ id: 'a1', type: 'md', title: 'A', content: 'X' }])}
         >
           view-artifacts
         </button>
@@ -362,6 +358,7 @@ vi.mock('../../../src/components/AIChat/V8ContextIndicator', () => ({
 }));
 
 let UnifiedChatPanel: any;
+let buildCanvasContextPacket: any;
 
 describe('UnifiedChatPanel (L2)', () => {
   beforeEach(async () => {
@@ -388,7 +385,8 @@ describe('UnifiedChatPanel (L2)', () => {
       consumeAIInteraction: vi.fn(),
     };
 
-    ({ UnifiedChatPanel } = await import('../../../src/components/AIChat/UnifiedChatPanel'));
+    ({ UnifiedChatPanel, buildCanvasContextPacket } =
+      await import('../../../src/components/AIChat/UnifiedChatPanel'));
 
     appStoreState = {
       ...appStoreState,
@@ -427,7 +425,9 @@ describe('UnifiedChatPanel (L2)', () => {
 
     h.apiMock.uploadChatAttachment.mockResolvedValue({ docId: 'doc-1' });
     h.apiMock.chatConfirm.mockResolvedValue({
-      confirm: { understanding: { goal: 'G', context: 'C', constraints: ['X'], expectedOutput: 'O' } },
+      confirm: {
+        understanding: { goal: 'G', context: 'C', constraints: ['X'], expectedOutput: 'O' },
+      },
     });
     h.apiMock.agentAuditSuggest.mockResolvedValue({
       suggested: {
@@ -511,9 +511,9 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.queryByText('Work panel')).not.toBeInTheDocument();
     expect(screen.queryByText('Empty workspace for documents and canvas')).not.toBeInTheDocument();
     expect(screen.getByTestId('chat-work-panel')).toHaveAttribute('aria-label', 'Canvas work area');
-    expect(screen.getByText('Active document:')).toBeInTheDocument();
-    expect(screen.getAllByText('Company Work Note').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Document view' })).toBeInTheDocument();
+    expect(screen.queryByText('Active document:')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Canvas document title')).toHaveValue('Company Work Note');
+    expect(screen.getByRole('button', { name: 'Dock view' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Markdown view' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
     expect(screen.getByText('Markdown canonical')).toBeInTheDocument();
@@ -523,7 +523,7 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('enhanced-chat-input')).toBeInTheDocument();
   });
 
-  it('shows selected Canvas context in the chat side', async () => {
+  it('does not render selected Canvas context chrome in the chat side', async () => {
     renderWithRouter(<UnifiedChatPanel mode="full" />);
 
     fireEvent.click(screen.getByTestId('chat-work-panel-button'));
@@ -534,15 +534,220 @@ describe('UnifiedChatPanel (L2)', () => {
     const start = textarea.value.indexOf(selected);
     textarea.setSelectionRange(start, start + selected.length);
     fireEvent.select(textarea);
-    fireEvent.click(await screen.findByRole('button', { name: /Ask Teresa/i }));
 
-    expect(screen.getByTestId('chat-canvas-selection-context')).toHaveTextContent(
-      'Selected from Canvas'
-    );
-    expect(screen.getByTestId('chat-canvas-selection-context')).toHaveTextContent(selected);
+    expect(screen.queryByTestId('chat-canvas-selection-context')).not.toBeInTheDocument();
+    expect(screen.queryByText('Selected from Canvas')).not.toBeInTheDocument();
   });
 
-  it('lets users resize the chat and Canvas split with the divider', () => {
+  it('passes active Canvas document context to Teresa without creating context chrome', async () => {
+    conversationStoreState.activeConversationId = 'conv-1';
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+    await waitFor(() =>
+      expect(screen.getByLabelText('Canvas document title')).toHaveValue('Company Work Note')
+    );
+
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+    const context = startStreamMock.mock.calls.at(-1)?.[3];
+    expect(context).toEqual(
+      expect.objectContaining({
+        conversationId: 'conv-1',
+        canvasContext: expect.objectContaining({
+          draftId: null,
+          title: 'Company Work Note',
+          packetSchemaVersion: 'canvas-context/v1',
+        }),
+        canvasContextPacket: expect.objectContaining({
+          schemaVersion: 'canvas-context/v1',
+          activeDraft: expect.objectContaining({
+            draftId: null,
+            title: 'Company Work Note',
+            lifecycleState: 'draft',
+          }),
+          markdownProjection: expect.stringContaining('# Company Work Note'),
+          memorySnapshot: expect.objectContaining({
+            summary: expect.stringContaining('Company Work Note'),
+            limitations: expect.arrayContaining([
+              expect.stringContaining('raw native block JSON is not included'),
+            ]),
+          }),
+        }),
+      })
+    );
+    expect(addMessageToConversationMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        conversationId: 'conv-1',
+        role: 'user',
+        metadata: expect.objectContaining({
+          canvasContext: expect.objectContaining({
+            schemaVersion: 'canvas-context/v1',
+            activeDraft: expect.objectContaining({ title: 'Company Work Note' }),
+          }),
+        }),
+      })
+    );
+    expect(screen.queryByText('Active document:')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('chat-canvas-selection-context')).not.toBeInTheDocument();
+  });
+
+  it('passes selected Canvas text to Teresa as the active Canvas context', async () => {
+    conversationStoreState.activeConversationId = 'conv-1';
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
+    const mdView = (await screen.findByTestId('canvas-md-view')) as HTMLTextAreaElement;
+    const selected = 'Operating workspace';
+    const start = mdView.value.indexOf(selected);
+    mdView.setSelectionRange(start, start + selected.length);
+    fireEvent.select(mdView);
+
+    fireEvent.click(screen.getByTestId('send-button'));
+
+    await waitFor(() => expect(startStreamMock).toHaveBeenCalled());
+    const context = startStreamMock.mock.calls.at(-1)?.[3];
+    expect(context?.canvasContext).toEqual(
+      expect.objectContaining({
+        draftId: null,
+        title: 'Company Work Note',
+        mode: 'md',
+        selectedText: selected,
+        packetSchemaVersion: 'canvas-context/v1',
+      })
+    );
+    expect(context?.canvasContextPacket).toEqual(
+      expect.objectContaining({
+        schemaVersion: 'canvas-context/v1',
+        selection: expect.objectContaining({
+          mode: 'md',
+          selectedText: selected,
+        }),
+        memorySnapshot: expect.objectContaining({
+          anchors: expect.objectContaining({ title: 'Company Work Note' }),
+        }),
+      })
+    );
+    expect(screen.queryByText('Selected from Canvas')).not.toBeInTheDocument();
+  });
+
+  it('summarizes recent workflow timeline events in the Canvas context packet', () => {
+    const packet = buildCanvasContextPacket(
+      {
+        draftId: 'draft-1',
+        title: 'Client proposal',
+        saveState: 'saved',
+        lifecycleState: 'draft',
+        activeStarterId: 'work-note',
+        kind: 'document',
+        contentMd: '# Client proposal',
+        markdownProjectionStatus: 'synced',
+        blocks: [],
+        linkedOutputs: [],
+        workflowRuns: [
+          {
+            id: 'workflow-1',
+            draftId: 'draft-1',
+            conversationId: 'conv-1',
+            template: 'client_proposal_to_deck',
+            title: 'Client proposal to deck',
+            status: 'active',
+            steps: [],
+            approvals: [],
+            outputs: [
+              {
+                stepId: 'step-2',
+                type: 'presentation',
+                id: 'output-1',
+                title: 'Presentation: Client proposal',
+                url: '/work-canvas?draftId=output-1',
+              },
+            ],
+            collaboration: {
+              ownerId: 'user-1',
+              reviewerId: 'reviewer-1',
+              lifecycle: 'in_review',
+              comments: [
+                {
+                  id: 'comment-1',
+                  authorId: 'reviewer-1',
+                  body: 'Sensitive reviewer comment should not be copied into workflowRuns.',
+                  createdAt: '2026-05-03T00:02:00.000Z',
+                },
+              ],
+            },
+            events: [
+              {
+                id: 'event-1',
+                type: 'created',
+                actorId: 'user-1',
+                summary: 'Workflow created from template: Client proposal to deck.',
+                createdAt: '2026-05-03T00:00:00.000Z',
+                metadata: { raw: 'not projected' },
+              },
+              {
+                id: 'event-2',
+                type: 'output_created',
+                actorId: 'user-1',
+                summary: 'Created presentation output: Presentation: Client proposal.',
+                createdAt: '2026-05-03T00:01:00.000Z',
+                metadata: { outputId: 'output-1' },
+              },
+            ],
+            createdBy: 'user-1',
+            createdAt: '2026-05-03T00:00:00.000Z',
+            updatedAt: '2026-05-03T00:01:00.000Z',
+          },
+        ],
+      },
+      null
+    );
+
+    expect(packet?.workflowEventSummaries).toEqual([
+      expect.objectContaining({
+        workflowRunId: 'workflow-1',
+        workflowTitle: 'Client proposal to deck',
+        eventType: 'created',
+        actorId: 'user-1',
+        summary: 'Workflow created from template: Client proposal to deck.',
+      }),
+      expect.objectContaining({
+        workflowRunId: 'workflow-1',
+        eventType: 'output_created',
+        summary: 'Created presentation output: Presentation: Client proposal.',
+      }),
+    ]);
+    expect(packet?.workflowEventSummaries?.[0]).not.toHaveProperty('metadata');
+    expect(packet?.workflowRuns).toEqual([
+      expect.objectContaining({
+        id: 'workflow-1',
+        title: 'Client proposal to deck',
+        lifecycle: 'in_review',
+        outputCount: 1,
+        stepSummaries: [],
+        approvalStatuses: [],
+      }),
+    ]);
+    expect(packet?.workflowRuns?.[0]).not.toHaveProperty('events');
+    expect(packet?.workflowRuns?.[0]).not.toHaveProperty('collaboration');
+    expect(JSON.stringify(packet?.workflowRuns)).not.toContain('Sensitive reviewer comment');
+    expect(packet?.workflowOutputSummaries).toEqual([
+      expect.objectContaining({
+        workflowRunId: 'workflow-1',
+        workflowTitle: 'Client proposal to deck',
+        stepId: 'step-2',
+        type: 'presentation',
+        id: 'output-1',
+        title: 'Presentation: Client proposal',
+        url: '/work-canvas?draftId=output-1',
+      }),
+    ]);
+    expect(packet?.memorySnapshot.anchors.workflowRunIds).toEqual(['workflow-1']);
+  });
+
+  it('lets users resize the chat and Canvas split from the Canvas edge', () => {
     const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0,
       y: 0,
@@ -558,20 +763,21 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel mode="full" />);
     fireEvent.click(screen.getByTestId('chat-work-panel-button'));
 
-    const resizer = screen.getByTestId('chat-work-panel-resizer');
-    expect(resizer).toHaveAttribute('role', 'separator');
+    expect(screen.getByTestId('chat-work-panel')).toBeInTheDocument();
+    expect(screen.queryByTestId('chat-work-panel-resizer')).not.toBeInTheDocument();
+    const edgeResizer = screen.getByTestId('chat-work-panel-edge-resizer');
+    expect(edgeResizer).toHaveAttribute('role', 'separator');
 
-    fireEvent.mouseDown(resizer, { clientX: 420 });
+    fireEvent.mouseDown(edgeResizer, { clientX: 420 });
     fireEvent.mouseMove(window, { clientX: 360 });
     fireEvent.mouseUp(window);
-
     expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('64');
 
-    fireEvent.keyDown(resizer, { key: 'ArrowLeft' });
+    fireEvent.keyDown(edgeResizer, { key: 'ArrowLeft' });
     expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('66');
 
-    fireEvent.doubleClick(resizer);
-    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('56');
+    fireEvent.doubleClick(edgeResizer);
+    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('60');
 
     rectSpy.mockRestore();
   });
@@ -715,24 +921,29 @@ describe('UnifiedChatPanel (L2)', () => {
     renderWithRouter(<UnifiedChatPanel />);
     expect(aiStreamOptionsCaptured?.onStreamDone).toBeTypeOf('function');
 
-    await aiStreamOptionsCaptured.onStreamDone('', [], [{ id: 'ar1', type: 'md', title: 'T', content: 'C' }], {
-      citations: [{ url: 'x' }],
-      proposal: {
-        proposalId: 'proposal-1',
-        title: 'Create initiative',
-        summary: 'Proposal summary',
-        state: 'proposal',
-        approvalState: 'awaiting_review',
-        allowedActions: ['approve'],
-        targetModule: 'initiatives',
-        targetLabel: 'Initiatives',
-        handoffIntent: 'create',
-        previewLines: ['Approval required'],
-        auditCount: 1,
-        resultRef: null,
-        degraded: null,
-      },
-    });
+    await aiStreamOptionsCaptured.onStreamDone(
+      '',
+      [],
+      [{ id: 'ar1', type: 'md', title: 'T', content: 'C' }],
+      {
+        citations: [{ url: 'x' }],
+        proposal: {
+          proposalId: 'proposal-1',
+          title: 'Create initiative',
+          summary: 'Proposal summary',
+          state: 'proposal',
+          approvalState: 'awaiting_review',
+          allowedActions: ['approve'],
+          targetModule: 'initiatives',
+          targetLabel: 'Initiatives',
+          handoffIntent: 'create',
+          previewLines: ['Approval required'],
+          auditCount: 1,
+          resultRef: null,
+          degraded: null,
+        },
+      }
+    );
 
     expect(addMessageToConversationMock).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -802,7 +1013,10 @@ describe('UnifiedChatPanel (L2)', () => {
     await aiStreamOptionsCaptured.onStreamDone('report', [], [], {});
     expect(h.apiMock.agentAuditReview).not.toHaveBeenCalled();
     expect(addMessageToConversationMock).toHaveBeenCalledWith(
-      expect.objectContaining({ role: 'ai', content: expect.stringContaining('Agent Audit (post Deep Thinking)') })
+      expect.objectContaining({
+        role: 'ai',
+        content: expect.stringContaining('Agent Audit (post Deep Thinking)'),
+      })
     );
   });
 
@@ -819,7 +1033,9 @@ describe('UnifiedChatPanel (L2)', () => {
       expect(h.apiMock.agentAuditAcceptRun).toHaveBeenCalledWith({ runId: 'run-1' })
     );
     expect(addChatMessageMock).toHaveBeenCalledWith(
-      expect.objectContaining({ metadata: expect.objectContaining({ agentAudit: expect.anything() }) })
+      expect.objectContaining({
+        metadata: expect.objectContaining({ agentAudit: expect.anything() }),
+      })
     );
   });
 

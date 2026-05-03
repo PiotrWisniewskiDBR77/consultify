@@ -37,6 +37,7 @@ import {
 
 import { DegradedState } from '../../components/Admin/AdminState';
 import { useAppStore } from '../../store/useAppStore';
+import { getOrganizationContextQuotaCopy } from '../../utils/organizationContextQuotaCopy';
 
 interface UsageSummary {
   currentPeriod: {
@@ -200,6 +201,8 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
       color: COLORS[index % COLORS.length],
     }));
   }, [currentBreakdown]);
+
+  const organizationContextQuota = getOrganizationContextQuotaCopy(usage?.storage.percentage || 0);
 
   if (loading) {
     return (
@@ -404,6 +407,75 @@ export const UsageDashboardView: React.FC<UsageDashboardViewProps> = ({ classNam
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                 Base plan: ${usage?.cost.planBase || 0}/mo
               </p>
+            </div>
+          </div>
+
+          {/* Organization Context Storage */}
+          <div
+            className={`admin-card p-4 border ${
+              organizationContextQuota.tone === 'critical'
+                ? 'border-red-500/30 bg-red-500/5'
+                : organizationContextQuota.tone === 'warning'
+                  ? 'border-amber-500/30 bg-amber-500/5'
+                  : 'border-white/[0.08]'
+            }`}
+          >
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-start gap-3">
+                <HardDrive
+                  size={20}
+                  className={
+                    organizationContextQuota.tone === 'critical'
+                      ? 'text-red-400'
+                      : organizationContextQuota.tone === 'warning'
+                        ? 'text-amber-400'
+                        : 'text-slate-400'
+                  }
+                />
+                <div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    Organization Context Storage
+                  </p>
+                  <h3
+                    className={`text-sm font-medium mt-1 ${
+                      organizationContextQuota.tone === 'critical'
+                        ? 'text-red-300'
+                        : organizationContextQuota.tone === 'warning'
+                          ? 'text-amber-300'
+                          : 'text-white'
+                    }`}
+                  >
+                    {organizationContextQuota.title}
+                  </h3>
+                  <p className="text-sm text-slate-400 dark:text-slate-500 mt-1 max-w-3xl">
+                    {organizationContextQuota.description}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
+                    Counts backend-uploaded context files and derived knowledge artifacts used by
+                    document library, Interview Insight Creator, chat, reports, and future AI
+                    workflows.
+                  </p>
+                </div>
+              </div>
+              <div className="min-w-[220px]">
+                <div className="flex items-baseline justify-between mb-2">
+                  <span className="text-lg font-semibold text-white">
+                    {usage?.storage.usedFormatted || '0 B'}
+                  </span>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    / {usage?.storage.limitFormatted || '5 GB'}
+                  </span>
+                </div>
+                <div className="w-full bg-white/[0.05] rounded-full h-1.5 mb-2">
+                  <div
+                    className={`${getProgressBarColor(usage?.storage.percentage || 0)} rounded-full h-1.5 transition-all`}
+                    style={{ width: `${Math.min(usage?.storage.percentage || 0, 100)}%` }}
+                  />
+                </div>
+                <p className={`text-xs ${getUsageStatusColor(usage?.storage.percentage || 0)}`}>
+                  {usage?.storage.percentage || 0}% used
+                </p>
+              </div>
             </div>
           </div>
 

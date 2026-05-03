@@ -37,16 +37,62 @@ Ten dokument konsoliduje:
 - `consultify/docs/product/WORKSTATION_CANVAS_FINAL_MASTER_PLAN_2026-03-16.md`
 - `consultify/docs/product/WORKSTATION_CANVAS_RECOMMENDED_FEATURES_2026-03-16.md`
 - `consultify/docs/product/IDEA_WORKSPACE_NAVIGATION_AND_CANVAS_ORCHESTRATION_V8.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_CANON.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_IMPLEMENTATION_PLAN.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_0_BASELINE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_1_PREMIUM_SURFACE_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_2_ARTIFACT_BLOCK_CONTRACT_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_3_NATIVE_BLOCK_RENDERERS_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_4_BUSINESS_TRANSFORMATIONS_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_5_RESEARCH_DECISION_WORKSPACE_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_6_OUTPUT_LIBRARY_EXPORT_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_7_DATA_ANALYSIS_DASHBOARD_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_8_TEAM_WORKFLOW_RUNTIME_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_9_DEEP_CONTEXT_MEMORY_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_14_FINAL_ROLLOUT_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_15_RENDERER_RUNTIME_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_16_DATA_IMPORT_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_17_WORKFLOW_COLLABORATION_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_18_CONTROLLED_DATA_ANALYSIS_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_19_MULTI_TEMPLATE_WORKFLOW_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_20_WORKFLOW_TIMELINE_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_21_WORKFLOW_CONTEXT_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_22_WORKFLOW_OUTPUT_LEDGER_GATE.md`
+- `consultify/docs/product/BUSINESS_WORK_CANVAS_STAGE_23_SAFE_WORKFLOW_CONTEXT_GATE.md`
+- `consultify/docs/product/CANVAS_INTERACTIVITY_RESEARCH_AND_IMPLEMENTATION_BLUEPRINT.md`
 - obecny kod: `WorkCanvasRuntime`, `UnifiedChatPanel`, `ResearchSessionsDock`, `Wave5ArtifactRuntimePanel`, `work-canvas.routes.ts`
 
 Jeśli dokumenty są sprzeczne, obowiązuje kolejność:
 
 1. `UI_UX_SOURCE_OF_TRUTH.md` dla invariantów UI, governance, traceability i severity.
 2. `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` dla visual language i shelli.
-3. Ten dokument dla produktu Canvas.
-4. Najnowsze acceptance matrices / test packs dla Canvas.
-5. Starsze dokumenty Workstation Canvas / Idea Workspace jako inspiracja i backlog funkcji.
-6. Aktualny kod jako stan implementacji, nie jako prawda produktowa.
+3. `BUSINESS_WORK_CANVAS_CANON.md` dla strategicznego produktu, zakresu funkcjonalnego, UI/UX i technologii Business Work Canvas.
+4. `BUSINESS_WORK_CANVAS_IMPLEMENTATION_PLAN.md` dla etapowego planu realizacji, quality gates i ochrony kontekstu w trakcie wdrożenia.
+5. `BUSINESS_WORK_CANVAS_STAGE_0_BASELINE.md` dla zamrożonego baseline obecnego runtime przed dalszym wdrożeniem.
+6. `BUSINESS_WORK_CANVAS_STAGE_1_PREMIUM_SURFACE_GATE.md` dla zamrożonego kontraktu premium work surface przed Stage 2.
+7. `BUSINESS_WORK_CANVAS_STAGE_2_ARTIFACT_BLOCK_CONTRACT_GATE.md` dla zamrożonego kontraktu typed artifact blocks przed Stage 3.
+8. `BUSINESS_WORK_CANVAS_STAGE_3_NATIVE_BLOCK_RENDERERS_GATE.md` dla zamrożonego kontraktu pierwszych natywnych rendererów bloków przed Stage 4.
+9. `BUSINESS_WORK_CANVAS_STAGE_4_BUSINESS_TRANSFORMATIONS_GATE.md` dla zamrożonego kontraktu governed block-aware transformations przed Stage 5.
+10. `BUSINESS_WORK_CANVAS_STAGE_5_RESEARCH_DECISION_WORKSPACE_GATE.md` dla zamrożonego kontraktu research/decision workspace przed Stage 6.
+11. `BUSINESS_WORK_CANVAS_STAGE_6_OUTPUT_LIBRARY_EXPORT_GATE.md` dla zamrożonego kontraktu output metadata, lineage i export maturity przed Stage 7.
+12. `BUSINESS_WORK_CANVAS_STAGE_7_DATA_ANALYSIS_DASHBOARD_GATE.md` dla zamrożonego kontraktu data analysis/dashboard runtime przed Stage 8.
+13. `BUSINESS_WORK_CANVAS_STAGE_8_TEAM_WORKFLOW_RUNTIME_GATE.md` dla zamrożonego kontraktu workflow ledger przed Stage 9.
+14. `BUSINESS_WORK_CANVAS_STAGE_9_DEEP_CONTEXT_MEMORY_GATE.md` dla zamrożonego kontraktu deep context/memory przed dalszym hardeningiem.
+15. `BUSINESS_WORK_CANVAS_STAGE_14_FINAL_ROLLOUT_GATE.md` dla finalnego rollout gate po pięciu etapach domknięcia.
+16. `BUSINESS_WORK_CANVAS_STAGE_15_RENDERER_RUNTIME_GATE.md` dla domknięcia runtime rendererów chart/diagram.
+17. `BUSINESS_WORK_CANVAS_STAGE_16_DATA_IMPORT_GATE.md` dla dojrzałości importu danych XLSX.
+18. `BUSINESS_WORK_CANVAS_STAGE_17_WORKFLOW_COLLABORATION_GATE.md` dla metadanych review/collaboration workflow.
+19. `BUSINESS_WORK_CANVAS_STAGE_18_CONTROLLED_DATA_ANALYSIS_GATE.md` dla kontrolowanych transformacji analitycznych.
+20. `BUSINESS_WORK_CANVAS_STAGE_19_MULTI_TEMPLATE_WORKFLOW_GATE.md` dla wieloszablonowych planów workflow.
+21. `BUSINESS_WORK_CANVAS_STAGE_20_WORKFLOW_TIMELINE_GATE.md` dla audytowego timeline workflow.
+22. `BUSINESS_WORK_CANVAS_STAGE_21_WORKFLOW_CONTEXT_GATE.md` dla integracji timeline workflow z kontekstem AI.
+23. `BUSINESS_WORK_CANVAS_STAGE_22_WORKFLOW_OUTPUT_LEDGER_GATE.md` dla widocznego ledgeru outputów workflow.
+24. `BUSINESS_WORK_CANVAS_STAGE_23_SAFE_WORKFLOW_CONTEXT_GATE.md` dla bezpiecznej projekcji workflow w kontekście AI.
+25. Ten dokument dla skonsolidowanej definicji produktu Canvas.
+26. `CANVAS_INTERACTIVITY_RESEARCH_AND_IMPLEMENTATION_BLUEPRINT.md` dla szczegółowej macierzy konkurencji, bloków artefaktów i rendererów.
+27. Najnowsze acceptance matrices / test packs dla Canvas.
+28. Starsze dokumenty Workstation Canvas / Idea Workspace jako inspiracja i backlog funkcji.
+29. Aktualny kod jako stan implementacji, nie jako prawda produktowa.
 
 Decyzja formatu treści jest zamrożona w `docs/architecture/adr/0001-markdown-first-json-native-markdown-projection.md`.
 
@@ -268,17 +314,17 @@ W głównej części ekranu powinny być widoczne tylko akcje, które pomagają 
 
 Proponowany zestaw pierwszego poziomu:
 
-| Akcja | Cel | Docelowy runtime |
-|---|---|---|
-| `Note` | szybkie zebranie myśli / meeting note / discovery note | MarkdownCanvas |
-| `Document` | dokument roboczy, brief, memo, plan | DocumentCanvas / Artifact |
-| `Research` | research mission, market research, evidence report | ResearchCanvas + ResearchSession |
-| `Decision` | decision memo, opcje, ryzyka, confidence | DecisionCanvas / Artifact |
-| `Presentation` | outline decka, potem deck artifact | DeckCanvas / KIMI lane when real |
-| `Table / Checklist` | plan działań, porównanie, backlog | TableCanvas / ChecklistCanvas |
-| `Whiteboard` | luźna praca warsztatowa, sticky, clustering | Workstation Canvas |
-| `Mind Map` | mapowanie problemu, hipotez, opcji | Workstation Canvas |
-| `Process` | proces, BPMN-ready flow, value stream | Workstation Canvas |
+| Akcja               | Cel                                                    | Docelowy runtime                 |
+| ------------------- | ------------------------------------------------------ | -------------------------------- |
+| `Note`              | szybkie zebranie myśli / meeting note / discovery note | MarkdownCanvas                   |
+| `Document`          | dokument roboczy, brief, memo, plan                    | DocumentCanvas / Artifact        |
+| `Research`          | research mission, market research, evidence report     | ResearchCanvas + ResearchSession |
+| `Decision`          | decision memo, opcje, ryzyka, confidence               | DecisionCanvas / Artifact        |
+| `Presentation`      | outline decka, potem deck artifact                     | DeckCanvas / KIMI lane when real |
+| `Table / Checklist` | plan działań, porównanie, backlog                      | TableCanvas / ChecklistCanvas    |
+| `Whiteboard`        | luźna praca warsztatowa, sticky, clustering            | Workstation Canvas               |
+| `Mind Map`          | mapowanie problemu, hipotez, opcji                     | Workstation Canvas               |
+| `Process`           | proces, BPMN-ready flow, value stream                  | Workstation Canvas               |
 
 Nie wszystko musi być produkcyjne od razu. Każda akcja ma mieć etykietę capability:
 
@@ -648,4 +694,3 @@ Najmniejszy sensowny Canvas, od którego warto zacząć:
 7. `Save as artifact` jest uczciwie oznaczone jako draft artifact albo realnie spięte z artifact runtime.
 
 To jest baza. Dopiero potem dokładamy governance, research lifecycle, deliverables i workstation canvases.
-

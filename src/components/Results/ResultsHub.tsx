@@ -1044,43 +1044,31 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'results_kpi') {
       return (
-        <div className="flex w-full items-center justify-between gap-3">
-          <div className={MENU_3_LEFT_CLASS}>
-            {actionButton(
-              t('results.kpi.workspace.catalog', 'KPI List'),
-              () => setKpiWorkspaceMode('catalog'),
-              kpiWorkspaceMode === 'catalog'
-            )}
-            {actionButton(
-              t('results.kpi.workspace.queue', 'Data / Signals'),
-              () => setKpiWorkspaceMode('queue'),
-              kpiWorkspaceMode === 'queue'
-            )}
-            {actionButton(
-              t('results.kpi.workspace.overview', 'Overview'),
-              () => setKpiWorkspaceMode('overview'),
-              kpiWorkspaceMode === 'overview'
-            )}
-            {actionButton(
-              t('results.kpi.workspace.scorecards', 'Goals'),
-              () => setKpiWorkspaceMode('scorecards'),
-              kpiWorkspaceMode === 'scorecards'
-            )}
-            {actionButton(
-              t('results.actions.recordValue', 'Record value'),
-              openFirstFilteredKpiRecord
-            )}
-          </div>
-          {kpiWorkspaceMode === 'queue' ? (
-            <button
-              type="button"
-              onClick={() => setSignalSheetCreateNonce(Date.now())}
-              className={MENU_3_ACTION_NEUTRAL}
-            >
-              <Plus size={14} />
-              <span>{t('results.kpi.signals.addSheet', '+ Add sheet')}</span>
-            </button>
-          ) : null}
+        <div className={MENU_3_LEFT_CLASS}>
+          {actionButton(
+            t('results.kpi.workspace.catalog', 'KPI List'),
+            () => setKpiWorkspaceMode('catalog'),
+            kpiWorkspaceMode === 'catalog'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.queue', 'Data / Signals'),
+            () => setKpiWorkspaceMode('queue'),
+            kpiWorkspaceMode === 'queue'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.overview', 'Overview'),
+            () => setKpiWorkspaceMode('overview'),
+            kpiWorkspaceMode === 'overview'
+          )}
+          {actionButton(
+            t('results.kpi.workspace.scorecards', 'Goals'),
+            () => setKpiWorkspaceMode('scorecards'),
+            kpiWorkspaceMode === 'scorecards'
+          )}
+          {actionButton(
+            t('results.actions.recordValue', 'Record value'),
+            openFirstFilteredKpiRecord
+          )}
         </div>
       );
     }
@@ -1191,6 +1179,22 @@ export const ResultsHub: React.FC = () => {
     t,
   ]);
 
+  const commandRowRightContent = useMemo(() => {
+    if (activeTab === 'results_kpi' && kpiWorkspaceMode === 'queue') {
+      return (
+        <button
+          type="button"
+          onClick={() => setSignalSheetCreateNonce(Date.now())}
+          className={MENU_3_ACTION_NEUTRAL}
+        >
+          <Plus size={14} />
+          <span>{t('results.kpi.signals.addSheet', 'Add sheet')}</span>
+        </button>
+      );
+    }
+    return null;
+  }, [activeTab, kpiWorkspaceMode, t]);
+
   return (
     <>
       <ModuleHub
@@ -1247,19 +1251,19 @@ export const ResultsHub: React.FC = () => {
         }
         newItemLabel={
           activeTab === 'results_initiatives' || activeTab === 'results_kpi'
-            ? t('results.addKpi', '+ Add KPI')
+            ? t('results.addKpi', 'Add KPI')
             : activeTab === 'results_reports'
               ? reportWorkspaceMode === 'tracked'
-                ? t('results.addKpi', '+ Add KPI')
+                ? t('results.addKpi', 'Add KPI')
                 : reportWorkspaceMode === 'reports'
-                  ? t('results.kpiReports.new', '+ New report')
+                  ? t('results.kpiReports.new', 'New report')
                   : reportWorkspaceMode === 'schedules'
-                    ? t('results.reporting.addSchedule', '+ Add schedule')
+                    ? t('results.reporting.addSchedule', 'Add schedule')
                     : reportWorkspaceMode === 'wallboards'
-                      ? t('results.reporting.addWallboard', '+ Add wallboard')
-                      : t('results.reporting.addConnector', '+ Add connector')
+                      ? t('results.reporting.addWallboard', 'Add wallboard')
+                      : t('results.reporting.addConnector', 'Add connector')
               : activeTab === 'roi'
-                ? t('results.roi.add', '+ Record ROI')
+                ? t('results.roi.add', 'Record ROI')
                 : undefined
         }
         availableViewModes={
@@ -1269,6 +1273,7 @@ export const ResultsHub: React.FC = () => {
         }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
+        commandRowRightContent={commandRowRightContent}
       >
         {activeDocumentId ? (
           <Suspense
@@ -1276,7 +1281,9 @@ export const ResultsHub: React.FC = () => {
               <div className="flex items-center justify-center py-24">
                 <div className="flex items-center gap-3 text-slate-400">
                   <BarChart3 size={20} className="animate-pulse" />
-                  <span className="text-sm">{t('common.loading', 'Loading...')}</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-300">
+                    {t('common.loading', 'Loading...')}
+                  </span>
                 </div>
               </div>
             }
@@ -1353,7 +1360,9 @@ export const ResultsHub: React.FC = () => {
           <div className="flex items-center justify-center py-24">
             <div className="flex items-center gap-3 text-slate-400">
               <BarChart3 size={20} className="animate-pulse" />
-              <span className="text-sm">{t('common.loading', 'Loading...')}</span>
+              <span className="text-sm text-slate-500 dark:text-slate-300">
+                {t('common.loading', 'Loading...')}
+              </span>
             </div>
           </div>
         ) : activeTab === 'results_kpi' && kpiWorkspaceMode === 'overview' ? (

@@ -407,6 +407,54 @@ Accepted App Table color grid:
 - dark mode tables must have real but thin separators and calm high-contrast chips,
 - local feature screens must not define their own table surface, row-state or chip color grid.
 
+### 8.2 DBR77 2027 App Table Color Contract
+
+Status: `APPROVED / ENFORCED`
+
+This contract is mandatory for every operational table in Consultify (`My Work`, `Wywiad`, queues, sessions, templates, insights, initiatives, and all future table-first modules).
+
+#### Assumptions
+
+- Table color is semantic signal only. It is not visual decoration.
+- Chrome stays monochromatic (`slate/navy`) and color appears mainly in data/state chips.
+- A module may define domain labels, but not its own color grammar.
+- The same meaning must use the same color in table, preview pane, list rows, and card variant.
+- Light mode must stay high-contrast; dark mode must avoid neon/glow surfaces.
+
+#### Canonical semantic mapping (single map for whole product)
+
+| Semantic meaning | Allowed palette | Typical examples |
+|---|---|---|
+| Neutral / informational / inactive | `slate` | `draft`, `paused`, `archived`, metadata-only states |
+| Active execution / assigned work | `blue` | `in_progress`, `assigned`, `working`, `started` |
+| Attention / pending review / near due | `amber` | `submitted`, `in_review`, `pending_review`, `generating`, due in `1-3 days` |
+| Positive completion / approved outcome | `emerald` | `approved`, `completed`, `accepted`, `promoted` |
+| Risk / failure / rejection / overdue | `rose` | `failed`, `rejected`, `sent_back`, `blocked`, overdue or due today |
+| Brand selection/focus only | `primary/violet` | selected/focused/checked row state, focus rings, primary CTA |
+
+Rules:
+
+- `primary/violet` is forbidden as decorative metadata chip fill.
+- `blue/amber/emerald/rose` are signal palettes, never full-row decorative backgrounds.
+- If a new domain status appears, map it to one of the six rows above; do not add a seventh palette locally.
+
+#### Chip contract by chip type
+
+| Chip type | Contract |
+|---|---|
+| `MetaChip` | Always neutral (`slate/navy`). No semantic color fills. |
+| `ToolChip` | Neutral surface; optional subtle colored icon only when it clarifies tool meaning. |
+| `StatusChip` | Uses canonical semantic mapping table above; readable contrast in both modes. |
+| `PriorityChip` | Neutral pill + small semantic dot/icon. Do not encode priority with a full bright background. |
+| `DueChip` / `SlaChip` | Neutral when healthy; `amber` for near due, `rose` for overdue/today. |
+
+#### Enforcement
+
+- Screen acceptance is blocked if any table uses local ad-hoc status colors.
+- Screen acceptance is blocked if the same status meaning has different colors across views in one module.
+- Every table migration/review must include an explicit color audit against this contract and `00-foundation/color-system.md`.
+- Any requested exception must be added to this file first; code cannot become the precedent.
+
 App Table row anatomy:
 
 - each row is a compact operational record, not an Excel-like grid line,

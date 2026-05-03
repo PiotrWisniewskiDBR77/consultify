@@ -2,6 +2,14 @@ import { AlertTriangle, ChevronRight, ClipboardList, Scale, Shield, Users } from
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '@/components/shared/ModuleMenu3';
 import { Callout } from '@/components/shared/NModeBlocks';
 
 import { type ManagerModuleId, ManagerModuleView } from './ManagerModuleView';
@@ -18,14 +26,11 @@ interface ExecutionManagementViewProps {
   searchQuery: string;
   hasExecutingInitiatives: boolean;
   onOpenEntity?: (entityType: string, entityId: string) => void;
+  onRegisterCommandRowContent?: (node: React.ReactNode) => void;
+  onRegisterCommandRowRightContent?: (node: React.ReactNode) => void;
 }
 
 type ManagementSubview = 'all' | ManagerModuleId;
-
-const CHIP_BASE =
-  'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
-
-const BADGE_BASE = 'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
 
 export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = ({
   managerLaneCounts,
@@ -33,6 +38,8 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
   searchQuery,
   hasExecutingInitiatives,
   onOpenEntity,
+  onRegisterCommandRowContent,
+  onRegisterCommandRowRightContent,
 }) => {
   const { t } = useTranslation();
   const [subview, setSubview] = useState<ManagementSubview>('all');
@@ -62,7 +69,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         id: 'action-queue' as const,
         label: 'Action Queue',
         count: laneCount('action-queue').total,
-        icon: <ClipboardList size={14} className="text-cyan-400" />,
+        icon: <ClipboardList size={14} className="text-blue-400" />,
       },
       {
         id: 'decisions' as const,
@@ -86,7 +93,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
         id: 'workload' as const,
         label: 'Workload',
         count: laneCount('workload').total,
-        icon: <Users size={14} className="text-violet-400" />,
+        icon: <Users size={14} className="text-blue-400" />,
       },
       {
         id: 'people-change' as const,
@@ -102,7 +109,7 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
     () => [
       {
         id: 'action-queue' as ManagerModuleId,
-        icon: <ClipboardList size={20} className="text-cyan-500" />,
+        icon: <ClipboardList size={20} className="text-blue-500" />,
         title: t('execution.manager.tile.actionQueue', 'Action Queue'),
         description: t(
           'execution.manager.tile.actionQueueDesc',
@@ -239,45 +246,40 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
     );
   }, [searchQuery, tiles]);
 
+  useEffect(() => {
+    if (!onRegisterCommandRowRightContent) return;
+    onRegisterCommandRowRightContent(actionButtons);
+    return () => onRegisterCommandRowRightContent(null);
+  }, [actionButtons, onRegisterCommandRowRightContent]);
+
+  useEffect(() => {
+    if (!onRegisterCommandRowContent) return;
+    onRegisterCommandRowContent(
+      <div className={MENU_3_LEFT_CLASS}>
+        {presets.map((preset) => {
+          const active = subview === preset.id;
+          return (
+            <button
+              key={preset.id}
+              type="button"
+              onClick={() => setSubview((prev) => (prev === preset.id ? 'all' : preset.id))}
+              className={active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
+            >
+              {preset.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : preset.icon}
+              <span>{preset.label}</span>
+              <span className={active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
+                {preset.count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    );
+    return () => onRegisterCommandRowContent(null);
+  }, [onRegisterCommandRowContent, presets, subview]);
+
   return (
     <div className="flex flex-col h-full min-h-0">
-      <div className="shrink-0 bg-white dark:bg-navy-900 border-b border-slate-200/60 dark:border-white/5">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
-            {presets.map((preset) => {
-              const active = subview === preset.id;
-              return (
-                <button
-                  key={preset.id}
-                  type="button"
-                  onClick={() => setSubview((prev) => (prev === preset.id ? 'all' : preset.id))}
-                  className={`${CHIP_BASE} ${
-                    active
-                      ? 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-200 border-cyan-500/40'
-                      : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-                  }`}
-                >
-                  {preset.icon}
-                  <span>{preset.label}</span>
-                  <span
-                    className={`${BADGE_BASE} ${
-                      active
-                        ? 'bg-cyan-500/30 text-cyan-700 dark:text-cyan-200'
-                        : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                    }`}
-                  >
-                    {preset.count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          {actionButtons ? (
-            <div className="flex items-center gap-1.5 shrink-0">{actionButtons}</div>
-          ) : null}
-        </div>
-      </div>
-
       <div className="flex-1 min-h-0 overflow-hidden">
         {subview === 'all' ? (
           <div className="p-4 space-y-5 h-full overflow-auto">
@@ -303,19 +305,19 @@ export const ExecutionManagementView: React.FC<ExecutionManagementViewProps> = (
                     key={tile.id}
                     type="button"
                     onClick={() => setSubview(tile.id)}
-                    className={`group text-left rounded-xl border bg-white dark:bg-navy-900 p-5 transition-all hover:shadow-md hover:border-cyan-500/40 dark:hover:border-cyan-400/30 ${
+                    className={`group text-left rounded-xl border bg-white dark:bg-navy-900 p-5 transition-all hover:shadow-md hover:border-primary-500/40 dark:hover:border-primary-400/30 ${
                       hasAlerts
                         ? 'border-amber-200 dark:border-amber-800/40'
                         : 'border-slate-200 dark:border-navy-700'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
+                      <div className="shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-navy-800 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
                         {tile.icon}
                       </div>
                       <ChevronRight
                         size={14}
-                        className="text-slate-300 dark:text-slate-600 group-hover:text-cyan-500 transition-colors mt-1"
+                        className="text-slate-300 dark:text-slate-600 group-hover:text-primary-500 transition-colors mt-1"
                       />
                     </div>
                     <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-1">

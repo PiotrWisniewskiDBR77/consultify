@@ -299,6 +299,35 @@ MUST NOT:
 - Do not use bright full-row fills for non-selected states.
 - Do not use `primary/violet` as decorative metadata chip background.
 
+### 2.6c DBR77 2027 canonical semantic status map (global)
+
+Status: `APPROVED / ENFORCED`
+
+This is the only allowed semantic status map for Consultify App Tables.
+
+| Semantic bucket | Palette | Examples |
+|---|---|---|
+| Neutral state | `slate` | `draft`, `paused`, `archived`, neutral informational statuses |
+| Active execution | `blue` | `assigned`, `in_progress`, `working`, `started` |
+| Pending attention/review | `amber` | `submitted`, `in_review`, `pending_review`, `generating`, near due |
+| Positive completion | `emerald` | `approved`, `completed`, `accepted`, `promoted` |
+| Risk/failure | `rose` | `failed`, `rejected`, `sent_back`, `blocked`, overdue |
+| Selection/focus only | `primary/violet` | selected/focused/checked row state, focus ring, primary CTA |
+
+MUST:
+
+- Map every table status to one of the buckets above.
+- Keep the same mapping for table rows, preview pane, and list/card variants in the same module.
+- Keep `MetaChip` and `ToolChip` neutral by default.
+
+MUST NOT:
+
+- Do not create module-local seventh/eighth status palettes.
+- Do not use `primary/violet` as decorative status or metadata fill.
+- Do not keep conflicting old color maps after migration.
+
+If any older section in this file conflicts with this map for App Tables, this section wins.
+
 ### 2.7 Przykłady poprawnego użycia
 
 ```jsx

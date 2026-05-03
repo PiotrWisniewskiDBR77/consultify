@@ -182,7 +182,7 @@ describe('virtualWorkerService release and evaluation gates', () => {
     );
     expect(mockQuery).toHaveBeenCalledWith(
       expect.stringContaining(
-        'UPDATE virtual_worker_profiles SET is_active = TRUE, activated_at = NOW()'
+        'UPDATE virtual_worker_profiles SET is_active = 1, activated_at = NOW()'
       ),
       ['profile-1']
     );

@@ -363,6 +363,34 @@ const handleResponse = async (res: Response, defaultError: string) => {
   // If payload isn't helpful, include HTTP status (avoids generic "Request failed").
   const fallbackHttp = `HTTP ${res.status}${res.statusText ? ` ${res.statusText}` : ''}`;
   const normalizedMessage = normalizeApiErrorMessage(errorInput, fallbackHttp || defaultError);
+  const errorCode = String((data as any)?.code || (data as any)?.errorCode || '').toUpperCase();
+  const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
+  const authMessage = String(
+    (data as any)?.error || (data as any)?.message || normalizedMessage || ''
+  ).toLowerCase();
+  const authRevocationCodes = new Set([
+    'TOKEN_REVOKED',
+    'AUTH_TOKEN_REVOKED',
+    'SESSION_REVOKED',
+    'AUTH_SESSION_REVOKED',
+  ]);
+
+  // Keep auth state honest: when backend confirms revocation, force a clean logout flow.
+  if (
+    hasStoredAuth &&
+    (res.status === 401 || res.status === 403) &&
+    (authRevocationCodes.has(errorCode) ||
+      authMessage.includes('token has been revoked') ||
+      authMessage.includes('all sessions have been revoked') ||
+      authMessage.includes('session revoked'))
+  ) {
+    try {
+      tokenService.clearTokens();
+      window.dispatchEvent(new CustomEvent('auth:token-expired'));
+    } catch {
+      // no-op
+    }
+  }
 
   // Check for Demo Block
   if (
@@ -4179,7 +4207,12 @@ export const Api = {
     success: boolean;
     data: {
       draft: any;
-      linkedResource: { type: 'idea' | 'note' | 'initiative'; id: string; title: string; url?: string };
+      linkedResource: {
+        type: 'idea' | 'note' | 'initiative';
+        id: string;
+        title: string;
+        url?: string;
+      };
       readBack: Record<string, unknown>;
       version?: any;
     };
@@ -4207,6 +4240,7 @@ export const Api = {
         id: string;
         title: string;
         url?: string;
+        metadata?: Record<string, unknown>;
       };
       readBack: Record<string, unknown>;
       version?: any;
@@ -4223,6 +4257,26 @@ export const Api = {
     return handleResponse(res, 'Failed to create Canvas output');
   },
 
+  workCanvasExportDraft: async (
+    draftId: string,
+    format: 'markdown' | 'csv' | 'json' | 'pdf' | 'docx' | 'xlsx' | 'pptx'
+  ): Promise<{ blob: Blob; filename: string }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/export?format=${encodeURIComponent(format)}`,
+      { headers: getHeaders() }
+    );
+    if (!res.ok) {
+      await handleResponse(res, 'Failed to export Canvas draft');
+    }
+    const disposition = res.headers.get('content-disposition') || '';
+    const filenameMatch = disposition.match(/filename="([^"]+)"/);
+    const blob = await res.blob();
+    return {
+      blob,
+      filename: filenameMatch?.[1] || `work-canvas.${format === 'json' ? 'metadata.json' : format}`,
+    };
+  },
+
   workCanvasGetVersions: async (draftId: string): Promise<any[]> => {
     const res = await fetch(
       `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/versions`,
@@ -4232,15 +4286,166 @@ export const Api = {
     return Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
   },
 
+  workCanvasGetWorkflows: async (draftId: string): Promise<any[]> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows`,
+      { headers: getHeaders() }
+    );
+    const result = await handleResponse(res, 'Failed to fetch Canvas workflows');
+    return Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
+  },
+
+  workCanvasCreateWorkflow: async (
+    draftId: string,
+    payload: {
+      baseUpdatedAt?: string | null;
+      template:
+        | 'market_research_to_report'
+        | 'meeting_note_to_initiatives'
+        | 'kpi_review_to_dashboard'
+        | 'client_proposal_to_deck'
+        | 'decision_memo_to_execution_plan';
+    }
+  ): Promise<{ success: boolean; data: { draft: any; workflowRun: any; readBack: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to create Canvas workflow');
+  },
+
+  workCanvasResumeWorkflow: async (
+    draftId: string,
+    workflowRunId: string,
+    payload: { baseUpdatedAt?: string | null; note?: string } = {}
+  ): Promise<{ success: boolean; data: { draft: any; workflowRun: any; readBack: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows/${encodeURIComponent(workflowRunId)}/resume`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to resume Canvas workflow');
+  },
+
+  workCanvasRunWorkflowStep: async (
+    draftId: string,
+    workflowRunId: string,
+    payload: { baseUpdatedAt?: string | null; approved?: boolean } = {}
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; workflowRun: any; outputResource?: any; version?: any; readBack: any };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows/${encodeURIComponent(workflowRunId)}/run-next`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to run Canvas workflow step');
+  },
+
+  workCanvasUpdateWorkflowCollaboration: async (
+    draftId: string,
+    workflowRunId: string,
+    payload: {
+      baseUpdatedAt?: string | null;
+      ownerId?: string | null;
+      reviewerId?: string | null;
+      lifecycle?: string;
+    }
+  ): Promise<{ success: boolean; data: { draft: any; workflowRun: any; readBack: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows/${encodeURIComponent(workflowRunId)}/collaboration`,
+      {
+        method: 'PATCH',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to update Canvas workflow collaboration');
+  },
+
+  workCanvasAddWorkflowComment: async (
+    draftId: string,
+    workflowRunId: string,
+    payload: { baseUpdatedAt?: string | null; body: string }
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; workflowRun: any; comment: any; readBack: any };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/workflows/${encodeURIComponent(workflowRunId)}/comments`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to add Canvas workflow comment');
+  },
+
   workCanvasApplyOperation: async (
     draftId: string,
     payload: {
+      baseUpdatedAt?: string | null;
       operation:
-        | { type: 'replace_selection'; selectedText: string; replacementMd: string; reason?: string }
+        | {
+            type: 'replace_selection';
+            selectedText: string;
+            replacementMd: string;
+            reason?: string;
+          }
         | { type: 'append_section'; heading: string; contentMd: string; reason?: string }
-        | { type: 'update_document'; contentMd: string; reason?: string };
+        | { type: 'update_document'; contentMd: string; reason?: string }
+        | {
+            type: 'generate_block_from_selection';
+            kind: 'table' | 'chart' | 'diagram' | 'decision' | 'research' | 'dashboard';
+            selectedText: string;
+            title?: string;
+            approved?: boolean;
+            reason?: string;
+          }
+        | {
+            type: 'generate_artifact_from_dataset';
+            artifactKind: 'table' | 'chart' | 'dashboard' | 'research';
+            dataset: { filename?: string; format: 'csv' | 'json' | 'xlsx'; content: string };
+            analysis?: { kind: 'profile_summary' | 'aggregate_numeric' | 'filtered_table' };
+            title?: string;
+            approved?: boolean;
+            reason?: string;
+          }
+        | { type: 'insert_block'; block: any; approved?: boolean; reason?: string }
+        | {
+            type: 'update_block';
+            blockId: string;
+            patch: Record<string, unknown>;
+            approved?: boolean;
+            reason?: string;
+          }
+        | { type: 'delete_block'; blockId: string; approved?: boolean; reason?: string }
+        | {
+            type: 'convert_block';
+            blockId: string;
+            targetKind: 'chart' | 'diagram';
+            approved?: boolean;
+            reason?: string;
+          }
+        | { type: 'regenerate_projection'; blockId: string; approved?: boolean; reason?: string };
+      previewOnly?: boolean;
     }
-  ): Promise<{ success: boolean; data: { draft: any; version?: any; diff?: any } }> => {
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; version?: any; diff?: any; preview?: any };
+  }> => {
     const res = await fetch(
       `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/operations`,
       {
@@ -4254,7 +4459,10 @@ export const Api = {
 
   workCanvasShare: async (
     draftId: string
-  ): Promise<{ success: boolean; data: { draft: any; share: { token: string; url: string; title: string } } }> => {
+  ): Promise<{
+    success: boolean;
+    data: { draft: any; share: { token: string; url: string; title: string } };
+  }> => {
     const res = await fetch(`${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/share`, {
       method: 'POST',
       headers: getHeaders(),
@@ -4264,13 +4472,15 @@ export const Api = {
 
   workCanvasRestoreVersion: async (
     draftId: string,
-    versionId: string
+    versionId: string,
+    payload: { baseUpdatedAt?: string | null } = {}
   ): Promise<{ success: boolean; data: { draft: any; restoredVersion: any } }> => {
     const res = await fetch(
       `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/versions/${encodeURIComponent(versionId)}/restore`,
       {
         method: 'POST',
         headers: getHeaders(),
+        body: JSON.stringify(payload),
       }
     );
     return handleResponse(res, 'Failed to restore Canvas version');
@@ -7161,6 +7371,86 @@ export const Api = {
       headers: getHeaders(),
     });
     return handleResponse(res, 'Failed to fetch admin audit logs');
+  },
+
+  getOrganizationContextLineageAudit: async (filters?: any): Promise<any> => {
+    const params = new URLSearchParams();
+    if (filters?.targetId) params.set('targetId', String(filters.targetId));
+    if (filters?.eventType) params.set('eventType', String(filters.eventType));
+    if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
+    const res = await fetch(
+      `${API_URL}/audit-logs/organization-context/lineage?${params.toString()}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch organization context lineage');
+  },
+
+  getOrganizationContextStorageAudit: async (filters?: any): Promise<any> => {
+    const params = new URLSearchParams();
+    if (filters?.documentId) params.set('documentId', String(filters.documentId));
+    if (filters?.projectId) params.set('projectId', String(filters.projectId));
+    if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
+    const res = await fetch(
+      `${API_URL}/audit-logs/organization-context/storage-events?${params.toString()}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch organization context storage audit');
+  },
+
+  getOrganizationContextProcessingJobsAudit: async (filters?: any): Promise<any> => {
+    const params = new URLSearchParams();
+    if (filters?.documentId) params.set('documentId', String(filters.documentId));
+    if (filters?.status) params.set('status', String(filters.status));
+    if (filters?.limit !== undefined) params.set('limit', String(filters.limit));
+    const res = await fetch(
+      `${API_URL}/audit-logs/organization-context/processing-jobs?${params.toString()}`,
+      {
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to fetch organization context processing jobs');
+  },
+
+  getOrganizationContextProcessingQueueSummary: async (): Promise<any> => {
+    const res = await fetch(`${API_URL}/audit-logs/organization-context/processing-jobs/summary`, {
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to fetch organization context processing summary');
+  },
+
+  requeueOrganizationContextProcessingJob: async (jobId: string): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/audit-logs/organization-context/processing-jobs/${encodeURIComponent(
+        jobId
+      )}/requeue`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          confirmation: 'requeue_context_processing_job',
+        }),
+      }
+    );
+    return handleResponse(res, 'Failed to requeue organization context processing job');
+  },
+
+  runOrganizationContextWorkerOnce: async (payload?: any): Promise<any> => {
+    const res = await fetch(
+      `${API_URL}/audit-logs/organization-context/processing-jobs/run-worker`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify({
+          confirmation: 'run_context_worker_once',
+          limit: payload?.limit ?? 5,
+        }),
+      }
+    );
+    return handleResponse(res, 'Failed to run organization context worker');
   },
 
   getAdminOverview: async (): Promise<any> => {

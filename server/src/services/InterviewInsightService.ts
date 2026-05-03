@@ -11,6 +11,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 import { llmService } from './ai/llmService.js';
+import { canonicalizeContextDocumentStatus } from './organizationContext/ContextDocumentService.js';
 import organizationContextService from './organizationContext/OrganizationContextService.js';
 
 // ==========================================
@@ -19,6 +20,7 @@ import organizationContextService from './organizationContext/OrganizationContex
 
 export type InsightPromptType =
   | 'summary'
+  | 'general_analysis'
   | 'trends'
   | 'problems'
   | 'recommendations'
@@ -48,6 +50,11 @@ export type InsightAnalysisMode =
 export type InsightContextMode =
   | 'selected_interview_material_only'
   | 'selected_material_plus_approved_org_knowledge';
+
+export interface InsightContextDocumentSelection {
+  requestedIds: string[];
+  selectedIds: string[];
+}
 
 export interface InsightAnalysisScope {
   source_session_ids: string[];
@@ -82,6 +89,26 @@ export interface InsightMaterialQuality {
   contradiction_count: number;
   limitations: string[];
   recommended_followups: string[];
+}
+
+export interface InsightSourceMaterialSummary {
+  requestedSessionCount: number;
+  includedSessionCount: number;
+  excludedSessionCount: number;
+  includedAnswerCount: number;
+  includedSessionIds: string[];
+  appliedFilters: {
+    respondents: string[];
+    roles: string[];
+    departments: string[];
+    templates: string[];
+    dateRange?: { from?: string; to?: string };
+  };
+}
+
+export interface InsightGenerationPreferences {
+  outputTypes: string[];
+  analysisModes: InsightAnalysisMode[];
 }
 
 export interface ApprovedOrgKnowledgePack {
@@ -123,6 +150,8 @@ export interface CreateInsightInput {
     roles?: string[];
     departments?: string[];
     topicFocus?: string[];
+    outputTypes?: string[];
+    analysisModes?: string[];
   };
   analysisScope?: Partial<InsightAnalysisScope>;
   analysisMode?: InsightAnalysisMode;
@@ -130,7 +159,65 @@ export interface CreateInsightInput {
   topicFocus?: string[];
   consultantNote?: string;
   leadingQuestion?: string;
+  selectedContextDocumentIds?: string[];
   createdBy: string;
+}
+
+export interface ContextDocumentPack {
+  requestedIds: string[];
+  selectedIds: string[];
+  degraded: boolean;
+  degradedReasons: string[];
+  documents: Array<{
+    id: string;
+    filename: string;
+    status: string;
+    scope: string;
+    projectId: string | null;
+    ownerId: string | null;
+    version: number;
+    uploadedAt: string;
+    usedChunks: Array<{
+      chunkId: string | null;
+      content: string;
+      source: string;
+      chunkIndex: number | null;
+    }>;
+  }>;
+}
+
+export function buildInsightContextLineagePayload(contextDocumentPack: ContextDocumentPack): {
+  requestedDocumentIds: string[];
+  selectedDocumentIds: string[];
+  usedChunks: Array<{
+    documentId: string;
+    filename: string;
+    version: number;
+    chunkId: string | null;
+    chunkIndex: number | null;
+    source: string;
+    excerpt: string;
+  }>;
+  degraded: boolean;
+  degradedReasons: string[];
+} {
+  return {
+    requestedDocumentIds: contextDocumentPack.requestedIds,
+    selectedDocumentIds: contextDocumentPack.selectedIds,
+    usedChunks: contextDocumentPack.documents.flatMap((doc) =>
+      doc.usedChunks.map((chunk) => ({
+        documentId: doc.id,
+        filename: doc.filename,
+        version: doc.version,
+        chunkId: chunk.chunkId,
+        chunkIndex: chunk.chunkIndex,
+        source: chunk.source,
+        excerpt: chunk.content.slice(0, 260),
+      }))
+    ),
+    degraded: contextDocumentPack.degraded,
+    degradedReasons: contextDocumentPack.degradedReasons,
+  };
 }
 
 export interface InsightTheme {
@@ -175,6 +262,25 @@ export interface InsightEvidenceMapEntry {
   answer_snippet: string;
   linked_themes: string[];
   linked_issues: string[];
+}
+
+export interface ParsedInsightGenerationData {
+  executive_summary: string;
+  themes: InsightTheme[];
+  issues: InsightIssue[];
+  opportunities: InsightOpportunity[];
+  signals: InsightSignal[];
+  evidence_map: InsightEvidenceMapEntry[];
+  missing_data: string[];
+  material_quality?: Partial<InsightMaterialQuality>;
+}
+
+export interface InsightEvidenceValidationResult {
+  availableAnswerCount: number;
+  invalidRefs: string[];
+  invalidEvidenceMapRefs: string[];
+  degraded: boolean;
+  warnings: string[];
 }
 
 export interface Insight {
@@ -225,6 +331,23 @@ Structure your response as follows:
 2. **Main Themes** - The dominant themes that emerged from the interviews
 3. **Key Quotes** - Notable quotes from respondents (anonymized)
 4. **Observations** - Additional observations worth noting
+
+Interview Data:
+{DATA}
+
+Provide the analysis in a clear, professional consulting format using markdown.`,
+
+  general_analysis: `Analyze the following interview responses and provide a broad, non-targeted consulting readout.
+
+This mode is intentionally open-ended. Do not lock onto one theme only.
+Cover the most important observations across operations, people, risks, opportunities, and inconsistencies.
+
+Structure your response as follows:
+1. **Overall Situation Snapshot** - neutral readout of what the material says
+2. **Key Signals Across Topics** - strongest cross-cutting observations
+3. **What Looks Stable vs. What Looks Fragile** - strengths and weak points
+4. **Open Questions & Blind Spots** - where evidence is thin or missing
+5. **Suggested Next Investigation Directions** - what should be explored next
 
 Interview Data:
 {DATA}
@@ -382,6 +505,15 @@ Provide the analysis in a clear, professional consulting format using markdown. 
 
 const DEFAULT_ANALYSIS_MODE: InsightAnalysisMode = 'general_consulting_synthesis';
 const DEFAULT_CONTEXT_MODE: InsightContextMode = 'selected_interview_material_only';
+const VALID_ANALYSIS_MODES = new Set<InsightAnalysisMode>([
+  'general_consulting_synthesis',
+  'focused_topic_synthesis',
+  'contradiction_scan',
+  'initiative_opportunity_scan',
+  'material_quality_scan',
+  'hypothesis_validation',
+  'between_the_lines',
+]);
 
 function safeStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
@@ -430,6 +562,15 @@ function normalizeContextMode(value?: string | null): InsightContextMode {
     : DEFAULT_CONTEXT_MODE;
 }
 
+function normalizeDateBound(value: unknown, bound: 'from' | 'to'): string | undefined {
+  const raw = typeof value === 'string' ? value.trim() : '';
+  if (!raw) return undefined;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return bound === 'from' ? `${raw}T00:00:00.000Z` : `${raw}T23:59:59.999Z`;
+  }
+  return raw;
+}
+
 function buildDefaultAnalysisScope(input: {
   sessionIds: string[];
   filters?: CreateInsightInput['filters'] | Record<string, any>;
@@ -475,6 +616,174 @@ function buildDefaultAnalysisScope(input: {
   };
 }
 
+export function buildInsightSourceMaterialSummary(params: {
+  requestedSessionIds: string[];
+  sessionData: Array<{ id: string; answers?: unknown[] }>;
+  analysisScope: InsightAnalysisScope;
+}): InsightSourceMaterialSummary {
+  const includedSessionIds = params.sessionData.map((session) => String(session.id));
+  return {
+    requestedSessionCount: safeStringArray(params.requestedSessionIds).length,
+    includedSessionCount: includedSessionIds.length,
+    excludedSessionCount: Math.max(
+      0,
+      safeStringArray(params.requestedSessionIds).length - includedSessionIds.length
+    ),
+    includedAnswerCount: params.sessionData.reduce(
+      (count, session) => count + (Array.isArray(session.answers) ? session.answers.length : 0),
+      0
+    ),
+    includedSessionIds,
+    appliedFilters: {
+      respondents: params.analysisScope.respondent_filters,
+      roles: params.analysisScope.role_filters,
+      departments: params.analysisScope.department_filters,
+      templates: params.analysisScope.template_filters,
+      ...(params.analysisScope.date_range ? { dateRange: params.analysisScope.date_range } : {}),
+    },
+  };
+}
+
+export function buildInsightScopeSessionWhereClause(analysisScope?: InsightAnalysisScope): {
+  whereSql: string;
+  params: unknown[];
+} {
+  const scopeFilters: string[] = [];
+  const scopeParams: unknown[] = [];
+
+  const respondentFilters = safeStringArray(analysisScope?.respondent_filters);
+  if (respondentFilters.length > 0) {
+    scopeFilters.push(`s.owner_id IN (${respondentFilters.map(() => '?').join(',')})`);
+    scopeParams.push(...respondentFilters);
+  }
+
+  const roleFilters = safeStringArray(analysisScope?.role_filters);
+  if (roleFilters.length > 0) {
+    scopeFilters.push(`u.job_title IN (${roleFilters.map(() => '?').join(',')})`);
+    scopeParams.push(...roleFilters);
+  }
+
+  const departmentFilters = safeStringArray(analysisScope?.department_filters);
+  if (departmentFilters.length > 0) {
+    scopeFilters.push(`upe.department IN (${departmentFilters.map(() => '?').join(',')})`);
+    scopeParams.push(...departmentFilters);
+  }
+
+  const templateFilters = safeStringArray(analysisScope?.template_filters);
+  if (templateFilters.length > 0) {
+    scopeFilters.push(`s.template_id IN (${templateFilters.map(() => '?').join(',')})`);
+    scopeParams.push(...templateFilters);
+  }
+
+  const dateFrom = normalizeDateBound(analysisScope?.date_range?.from, 'from');
+  if (dateFrom) {
+    scopeFilters.push(`datetime(s.completed_at) >= datetime(?)`);
+    scopeParams.push(dateFrom);
+  }
+
+  const dateTo = normalizeDateBound(analysisScope?.date_range?.to, 'to');
+  if (dateTo) {
+    scopeFilters.push(`datetime(s.completed_at) <= datetime(?)`);
+    scopeParams.push(dateTo);
+  }
+
+  return {
+    whereSql: scopeFilters.length > 0 ? `AND ${scopeFilters.join(' AND ')}` : '',
+    params: scopeParams,
+  };
+}
+
+export function buildInsightGenerationPreferences(params: {
+  promptType: InsightPromptType;
+  filters?: CreateInsightInput['filters'] | Record<string, unknown>;
+  analysisScope: InsightAnalysisScope;
+}): InsightGenerationPreferences {
+  const filters = params.filters || {};
+  const outputTypes = safeStringArray((filters as any).outputTypes);
+  const analysisModes = safeStringArray((filters as any).analysisModes)
+    .filter((mode) => VALID_ANALYSIS_MODES.has(mode as InsightAnalysisMode))
+    .map((mode) => normalizeAnalysisMode(mode))
+    .filter((mode, index, all) => all.indexOf(mode) === index);
+
+  return {
+    outputTypes: outputTypes.length > 0 ? outputTypes : [params.promptType],
+    analysisModes:
+      analysisModes.length > 0
+        ? analysisModes
+        : [normalizeAnalysisMode(params.analysisScope.analysis_mode)],
+  };
+}
+
+export function validateInsightEvidenceRefs(
+  data: ParsedInsightGenerationData,
+  availableAnswerIds: string[]
+): { data: ParsedInsightGenerationData; result: InsightEvidenceValidationResult } {
+  const available = new Set(safeStringArray(availableAnswerIds));
+  const invalidRefs = new Set<string>();
+
+  const sanitizeRefs = (refs: unknown): string[] =>
+    safeStringArray(refs).filter((ref) => {
+      const isValid = available.has(ref);
+      if (!isValid) invalidRefs.add(ref);
+      return isValid;
+    });
+
+  const themes = data.themes.map((theme) => ({
+    ...theme,
+    evidence_refs: sanitizeRefs(theme.evidence_refs),
+  }));
+  const issues = data.issues.map((issue) => ({
+    ...issue,
+    evidence_refs: sanitizeRefs(issue.evidence_refs),
+  }));
+  const opportunities = data.opportunities.map((opportunity) => ({
+    ...opportunity,
+    evidence_refs: sanitizeRefs(opportunity.evidence_refs),
+  }));
+
+  const invalidEvidenceMapRefs = new Set<string>();
+  const evidenceMap = data.evidence_map.filter((entry) => {
+    const answerId = String(entry.answer_id || '').trim();
+    const isValid = available.has(answerId);
+    if (!isValid && answerId) invalidEvidenceMapRefs.add(answerId);
+    return isValid;
+  });
+
+  const warnings: string[] = [];
+  if (invalidRefs.size > 0) {
+    warnings.push(
+      `Removed invalid evidence_refs that did not match scoped answer IDs: ${Array.from(
+        invalidRefs
+      ).join(', ')}`
+    );
+  }
+  if (invalidEvidenceMapRefs.size > 0) {
+    warnings.push(
+      `Removed evidence_map rows with unknown answer IDs: ${Array.from(invalidEvidenceMapRefs).join(
+        ', '
+      )}`
+    );
+  }
+
+  return {
+    data: {
+      ...data,
+      themes,
+      issues,
+      opportunities,
+      evidence_map: evidenceMap,
+      missing_data: warnings.length > 0 ? [...data.missing_data, ...warnings] : data.missing_data,
+    },
+    result: {
+      availableAnswerCount: available.size,
+      invalidRefs: Array.from(invalidRefs),
+      invalidEvidenceMapRefs: Array.from(invalidEvidenceMapRefs),
+      degraded: warnings.length > 0,
+      warnings,
+    },
+  };
+}
+
 // ==========================================
 // SERVICE CLASS
 // ==========================================
@@ -489,10 +798,145 @@ class InterviewInsightService {
     return this.db;
   }
 
+  private async ensureContextLineageSchema(db: IDatabase): Promise<void> {
+    await db.run(
+      `CREATE TABLE IF NOT EXISTS organization_context_lineage_events (
+        id TEXT PRIMARY KEY,
+        organization_id TEXT NOT NULL,
+        user_id TEXT,
+        target_type TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        workflow TEXT NOT NULL,
+        event_type TEXT NOT NULL,
+        requested_document_ids_json TEXT,
+        selected_document_ids_json TEXT,
+        used_chunks_json TEXT,
+        degraded INTEGER DEFAULT 0,
+        degraded_reasons_json TEXT,
+        metadata_json TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )`,
+      []
+    );
+    await db.run(
+      `CREATE INDEX IF NOT EXISTS idx_context_lineage_org_target
+       ON organization_context_lineage_events(organization_id, target_type, target_id)`,
+      []
+    );
+  }
+
+  private async recordInsightContextLineage(params: {
+    insightId: string;
+    organizationId: string;
+    userId: string;
+    eventType: 'interview_insight_context_selected' | 'interview_insight_completed';
+    contextDocumentPack: ContextDocumentPack;
+    metadata?: Record<string, unknown>;
+  }): Promise<void> {
+    if (
+      params.contextDocumentPack.requestedIds.length === 0 &&
+      params.contextDocumentPack.selectedIds.length === 0 &&
+      params.contextDocumentPack.documents.length === 0
+    ) {
+      return;
+    }
+
+    try {
+      const db = await this.getDb();
+      await this.ensureContextLineageSchema(db);
+      const payload = buildInsightContextLineagePayload(params.contextDocumentPack);
+      await db.run(
+        `INSERT INTO organization_context_lineage_events
+         (id, organization_id, user_id, target_type, target_id, workflow, event_type,
+          requested_document_ids_json, selected_document_ids_json, used_chunks_json,
+          degraded, degraded_reasons_json, metadata_json, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          uuidv4(),
+          params.organizationId,
+          params.userId,
+          'interview_insight',
+          params.insightId,
+          'interview_insight_creator',
+          params.eventType,
+          JSON.stringify(payload.requestedDocumentIds),
+          JSON.stringify(payload.selectedDocumentIds),
+          JSON.stringify(payload.usedChunks),
+          payload.degraded ? 1 : 0,
+          JSON.stringify(payload.degradedReasons),
+          JSON.stringify(params.metadata || {}),
+          new Date().toISOString(),
+        ]
+      );
+    } catch (error) {
+      logger.warn('[InterviewInsightService] Context lineage write failed:', error);
+    }
+  }
+
+  async listContextLineage(
+    organizationId: string,
+    insightId: string
+  ): Promise<
+    Array<{
+      id: string;
+      targetType: string;
+      targetId: string;
+      workflow: string;
+      eventType: string;
+      requestedDocumentIds: string[];
+      selectedDocumentIds: string[];
+      usedChunks: Array<Record<string, unknown>>;
+      degraded: boolean;
+      degradedReasons: string[];
+      metadata: Record<string, unknown>;
+      createdAt: string;
+    }>
+  > {
+    const db = await this.getDb();
+    await this.ensureContextLineageSchema(db);
+    const rows = await db.all<any>(
+      `SELECT id, target_type, target_id, workflow, event_type,
+              requested_document_ids_json, selected_document_ids_json, used_chunks_json,
+              degraded, degraded_reasons_json, metadata_json, created_at
+       FROM organization_context_lineage_events
+       WHERE organization_id = ?
+         AND target_type = 'interview_insight'
+         AND target_id = ?
+       ORDER BY created_at ASC`,
+      [organizationId, insightId]
+    );
+
+    return (rows || []).map((row) => {
+      const usedChunks = safeJsonArray<Record<string, unknown>>(row.used_chunks_json) || [];
+      return {
+        id: String(row.id || ''),
+        targetType: String(row.target_type || 'interview_insight'),
+        targetId: String(row.target_id || ''),
+        workflow: String(row.workflow || 'interview_insight_creator'),
+        eventType: String(row.event_type || ''),
+        requestedDocumentIds: safeStringArray(
+          safeJsonArray<string>(row.requested_document_ids_json) || []
+        ),
+        selectedDocumentIds: safeStringArray(
+          safeJsonArray<string>(row.selected_document_ids_json) || []
+        ),
+        usedChunks,
+        degraded: Boolean(Number(row.degraded || 0)),
+        degradedReasons: safeStringArray(safeJsonArray<string>(row.degraded_reasons_json) || []),
+        metadata: safeJsonObject<Record<string, unknown>>(row.metadata_json, {}),
+        createdAt: String(row.created_at || new Date().toISOString()),
+      };
+    });
+  }
+
   private buildGenerationContext(params: {
     createdAt: string;
     analysisScope: InsightAnalysisScope;
+    generationPreferences?: InsightGenerationPreferences;
     approvedOrgKnowledgePack: ApprovedOrgKnowledgePack;
+    contextDocumentPack: ContextDocumentPack;
+    sourceMaterialSummary?: InsightSourceMaterialSummary;
+    evidenceValidation?: InsightEvidenceValidationResult;
   }): Record<string, any> {
     return {
       contract: 'interview_insight_scope_builder_v1',
@@ -500,6 +944,11 @@ class InterviewInsightService {
       analysisMode: params.analysisScope.analysis_mode,
       topicFocus: params.analysisScope.topic_focus,
       createdAt: params.createdAt,
+      ...(params.generationPreferences
+        ? { generationPreferences: params.generationPreferences }
+        : {}),
+      ...(params.sourceMaterialSummary ? { sourceMaterial: params.sourceMaterialSummary } : {}),
+      ...(params.evidenceValidation ? { evidenceValidation: params.evidenceValidation } : {}),
       approvedOrgKnowledgePack: {
         requested: params.approvedOrgKnowledgePack.requested,
         available: params.approvedOrgKnowledgePack.available,
@@ -517,6 +966,35 @@ class InterviewInsightService {
           reviewStatus: entry.reviewStatus,
           createdAt: entry.createdAt,
         })),
+      },
+      contextDocuments: {
+        requestedIds: params.contextDocumentPack.requestedIds,
+        selectedIds: params.contextDocumentPack.selectedIds,
+        degraded: params.contextDocumentPack.degraded,
+        degradedReasons: params.contextDocumentPack.degradedReasons,
+        documents: params.contextDocumentPack.documents.map((doc) => ({
+          id: doc.id,
+          filename: doc.filename,
+          status: doc.status,
+          scope: doc.scope,
+          projectId: doc.projectId,
+          ownerId: doc.ownerId,
+          version: doc.version,
+          uploadedAt: doc.uploadedAt,
+          usedChunkCount: doc.usedChunks.length,
+          chunks: doc.usedChunks.map((chunk) => ({
+            chunkId: chunk.chunkId,
+            source: chunk.source,
+            chunkIndex: chunk.chunkIndex,
+            excerpt: chunk.content.slice(0, 260),
+          })),
+        })),
+      },
+      lineageLedger: {
+        workflow: 'interview_insight_creator',
+        targetType: 'interview_insight',
+        eventTable: 'organization_context_lineage_events',
+        status: 'write_best_effort',
       },
     };
   }
@@ -584,6 +1062,177 @@ class InterviewInsightService {
     }
   }
 
+  private async buildContextDocumentPack(input: {
+    organizationId: string;
+    userId: string;
+    selectedContextDocumentIds?: string[];
+    promptType: InsightPromptType;
+    analysisScope: InsightAnalysisScope;
+    customPrompt?: string;
+  }): Promise<ContextDocumentPack> {
+    const requestedIds = safeStringArray(input.selectedContextDocumentIds);
+    if (requestedIds.length === 0) {
+      return {
+        requestedIds: [],
+        selectedIds: [],
+        degraded: false,
+        degradedReasons: [],
+        documents: [],
+      };
+    }
+
+    const db = await this.getDb();
+    const placeholders = requestedIds.map(() => '?').join(',');
+    const rows = await db.all<any>(
+      `SELECT id, filename, status, scope, project_id, owner_id, version, created_at
+       FROM knowledge_docs
+       WHERE id IN (${placeholders})
+         AND organization_id = ?
+         AND (scope = 'project' OR (scope = 'user' AND owner_id = ?))`,
+      [...requestedIds, input.organizationId, input.userId]
+    );
+
+    const byId = new Map<string, any>((rows || []).map((row) => [String(row.id), row]));
+    const selectedRows = requestedIds.map((id) => byId.get(id)).filter(Boolean);
+    const selectedIds = selectedRows.map((row) => String(row.id));
+
+    const degradedReasons: string[] = [];
+    if (selectedIds.length !== requestedIds.length) {
+      degradedReasons.push('some_documents_not_accessible');
+    }
+    const notReadyRows = selectedRows.filter(
+      (row) => canonicalizeContextDocumentStatus(row.status) !== 'ready'
+    );
+    if (notReadyRows.length > 0) {
+      degradedReasons.push('some_documents_not_ready');
+    }
+
+    const readyRows = selectedRows.filter(
+      (row) => canonicalizeContextDocumentStatus(row.status) === 'ready'
+    );
+    if (readyRows.length === 0) {
+      return {
+        requestedIds,
+        selectedIds,
+        degraded: degradedReasons.length > 0,
+        degradedReasons:
+          degradedReasons.length > 0 ? degradedReasons : ['no_ready_documents_selected'],
+        documents: selectedRows.map((row) => ({
+          id: String(row.id),
+          filename: String(row.filename || ''),
+          status: canonicalizeContextDocumentStatus(row.status),
+          scope: String(row.scope || 'user'),
+          projectId: row.project_id ? String(row.project_id) : null,
+          ownerId: row.owner_id ? String(row.owner_id) : null,
+          version: Number(row.version || 1),
+          uploadedAt: String(row.created_at || new Date().toISOString()),
+          usedChunks: [],
+        })),
+      };
+    }
+
+    const ragModule = await import('./ragService.js');
+    const ragService = (ragModule.default || ragModule) as any;
+    const searchQuery = [
+      input.promptType,
+      input.analysisScope.analysis_mode,
+      input.analysisScope.leading_question || '',
+      input.analysisScope.topic_focus.join(' '),
+      input.customPrompt || '',
+    ]
+      .join(' ')
+      .trim();
+    let ragChunks: Array<{ id?: string; content?: string; filename?: string; source?: string }> =
+      [];
+    try {
+      ragChunks = (await ragService.hybridSearch(searchQuery || 'interview insight context', {
+        limit: 12,
+        organizationId: input.organizationId,
+        documentIds: readyRows.map((row) => String(row.id)),
+      })) as any[];
+    } catch (err) {
+      logger.warn('[InterviewInsightService] Context doc RAG failed, fallback to raw chunks', err);
+    }
+
+    const usedChunkMap = new Map<string, ContextDocumentPack['documents'][number]['usedChunks']>();
+    if (Array.isArray(ragChunks) && ragChunks.length > 0) {
+      for (const chunk of ragChunks) {
+        const sourceName = String(chunk?.filename || chunk?.source || 'Context document');
+        const ownerDoc = readyRows.find((row) => String(row.filename || '') === sourceName);
+        const docId = ownerDoc ? String(ownerDoc.id) : String(readyRows[0].id);
+        const list = usedChunkMap.get(docId) || [];
+        list.push({
+          chunkId: chunk?.id ? String(chunk.id) : null,
+          content: String(chunk?.content || '').trim(),
+          source: sourceName,
+          chunkIndex: null,
+        });
+        usedChunkMap.set(docId, list);
+      }
+    }
+
+    if (usedChunkMap.size === 0) {
+      let chunkRows: any[] = [];
+      try {
+        chunkRows = await db.all<any>(
+          `SELECT c.id, COALESCE(c.doc_id, c.document_id) as document_ref, c.content, c.chunk_index, d.filename
+           FROM knowledge_chunks c
+           JOIN knowledge_docs d ON (d.id = c.doc_id OR d.id = c.document_id)
+           WHERE (c.doc_id IN (${readyRows.map(() => '?').join(',')})
+              OR c.document_id IN (${readyRows.map(() => '?').join(',')}))
+           ORDER BY document_ref, c.chunk_index
+           LIMIT 40`,
+          [...readyRows.map((row) => String(row.id)), ...readyRows.map((row) => String(row.id))]
+        );
+      } catch {
+        chunkRows = await db.all<any>(
+          `SELECT c.id, c.doc_id as document_ref, c.content, c.chunk_index, d.filename
+           FROM knowledge_chunks c
+           JOIN knowledge_docs d ON d.id = c.doc_id
+           WHERE c.doc_id IN (${readyRows.map(() => '?').join(',')})
+           ORDER BY c.doc_id, c.chunk_index
+           LIMIT 40`,
+          readyRows.map((row) => String(row.id))
+        );
+      }
+      for (const row of chunkRows || []) {
+        const docId = String(row.document_ref);
+        const list = usedChunkMap.get(docId) || [];
+        if (list.length >= 5) continue;
+        list.push({
+          chunkId: row.id ? String(row.id) : null,
+          content: String(row.content || ''),
+          source: String(row.filename || 'Context document'),
+          chunkIndex: Number(row.chunk_index || 0),
+        });
+        usedChunkMap.set(docId, list);
+      }
+    }
+
+    const documents = selectedRows.map((row) => ({
+      id: String(row.id),
+      filename: String(row.filename || ''),
+      status: canonicalizeContextDocumentStatus(row.status),
+      scope: String(row.scope || 'user'),
+      projectId: row.project_id ? String(row.project_id) : null,
+      ownerId: row.owner_id ? String(row.owner_id) : null,
+      version: Number(row.version || 1),
+      uploadedAt: String(row.created_at || new Date().toISOString()),
+      usedChunks: usedChunkMap.get(String(row.id)) || [],
+    }));
+    if (documents.some((doc) => doc.status === 'ready' && doc.usedChunks.length === 0)) {
+      degradedReasons.push('no_chunks_for_ready_documents');
+    }
+
+    return {
+      requestedIds,
+      selectedIds,
+      degraded: degradedReasons.length > 0,
+      degradedReasons,
+      documents,
+    };
+  }
+
   // ==========================================
   // CRUD OPERATIONS
   // ==========================================
@@ -640,14 +1289,29 @@ class InterviewInsightService {
       consultantNote: input.consultantNote,
       leadingQuestion: input.leadingQuestion,
     });
+    const generationPreferences = buildInsightGenerationPreferences({
+      promptType: input.promptType,
+      filters: input.filters,
+      analysisScope,
+    });
     const approvedOrgKnowledgePack = await this.buildApprovedOrgKnowledgePack(
       input.organizationId,
       analysisScope.context_mode
     );
+    const contextDocumentPack = await this.buildContextDocumentPack({
+      organizationId: input.organizationId,
+      userId: input.createdBy,
+      selectedContextDocumentIds: input.selectedContextDocumentIds,
+      promptType: input.promptType,
+      analysisScope,
+      customPrompt: input.customPrompt,
+    });
     const generationContext = this.buildGenerationContext({
       createdAt: now,
       analysisScope,
+      generationPreferences,
       approvedOrgKnowledgePack,
+      contextDocumentPack,
     });
 
     // Create insight record
@@ -679,6 +1343,19 @@ class InterviewInsightService {
       ]
     );
 
+    await this.recordInsightContextLineage({
+      insightId: id,
+      organizationId: input.organizationId,
+      userId: input.createdBy,
+      eventType: 'interview_insight_context_selected',
+      contextDocumentPack,
+      metadata: {
+        promptType: input.promptType,
+        analysisMode: analysisScope.analysis_mode,
+        contextMode: analysisScope.context_mode,
+      },
+    });
+
     // Start async generation
     void this.generateInsight(
       id,
@@ -687,7 +1364,10 @@ class InterviewInsightService {
       input.promptType,
       input.customPrompt,
       analysisScope,
-      approvedOrgKnowledgePack
+      approvedOrgKnowledgePack,
+      contextDocumentPack,
+      input.createdBy,
+      generationPreferences
     );
 
     return this.getById(id) as Promise<Insight>;
@@ -756,13 +1436,22 @@ class InterviewInsightService {
       typeof (insight.filters as any)?.customPrompt === 'string'
         ? String((insight.filters as any).customPrompt)
         : undefined;
+    const generationPreferences = buildInsightGenerationPreferences({
+      promptType: insight.promptType,
+      filters: insight.filters as Record<string, unknown> | undefined,
+      analysisScope: insight.analysisScope,
+    });
     void this.generateInsight(
       id,
       insight.sourceSessionIds,
       insight.organizationId,
       insight.promptType,
       customPrompt,
-      insight.analysisScope
+      insight.analysisScope,
+      undefined,
+      undefined,
+      insight.createdBy,
+      generationPreferences
     );
 
     return this.getById(id);
@@ -791,7 +1480,9 @@ class InterviewInsightService {
     customPrompt?: string,
     sessionCount = 1,
     analysisScope?: InsightAnalysisScope,
-    approvedOrgKnowledgePack?: ApprovedOrgKnowledgePack
+    approvedOrgKnowledgePack?: ApprovedOrgKnowledgePack,
+    contextDocumentPack?: ContextDocumentPack,
+    generationPreferences?: InsightGenerationPreferences
   ): string {
     const focusHint = PROMPT_TEMPLATES[promptType]?.split('\n')[0] || '';
     const isMultiSession = sessionCount > 1;
@@ -804,6 +1495,14 @@ class InterviewInsightService {
         leading_question: scope.leading_question,
         consultant_note: scope.consultant_note,
         source_scope_status: scope.source_scope_status,
+      },
+      null,
+      2
+    );
+    const preferenceBlock = JSON.stringify(
+      generationPreferences || {
+        outputTypes: [promptType],
+        analysisModes: [scope.analysis_mode],
       },
       null,
       2
@@ -845,20 +1544,53 @@ CROSS-SESSION ANALYSIS (${sessionCount} respondents):
         2
       )}`;
     })();
+    const contextDocumentBlock = (() => {
+      if (!contextDocumentPack || contextDocumentPack.requestedIds.length === 0) {
+        return 'Organization/Project documents: none selected.';
+      }
+      const documentsWithChunks = contextDocumentPack.documents.filter(
+        (doc) => doc.usedChunks.length > 0
+      );
+      if (documentsWithChunks.length === 0) {
+        return `Organization/Project documents selected but unavailable for retrieval.\nReasons: ${
+          contextDocumentPack.degradedReasons.join(', ') || 'unknown'
+        }`;
+      }
+      const chunksText = documentsWithChunks
+        .flatMap((doc) =>
+          doc.usedChunks.slice(0, 4).map((chunk, index) => ({
+            code: `[D:${doc.id}:${index + 1}]`,
+            source: doc.filename,
+            content: chunk.content,
+          }))
+        )
+        .slice(0, 12)
+        .map((item) => `${item.code} ${item.source}\n${item.content}`)
+        .join('\n\n');
+      return `Organization/Project documents retrieved as RAG chunks (use only these fragments; do not assume full document access):\n${chunksText}`;
+    })();
 
     let prompt = `You are analyzing interview data. Your analysis focus: ${focusHint}
 
 Insight Scope:
 ${scopeBlock}
 
+Requested Output And Analysis Lenses:
+${preferenceBlock}
+
 ${orgKnowledgeContext}
+
+${contextDocumentBlock}
 
 Context mode rules:
 - If context_mode is "selected_interview_material_only", use only the interview material below.
 - If context_mode is "selected_material_plus_approved_org_knowledge", you may use approved organizational knowledge only when it is explicitly available in the provided context; otherwise say that broader organizational knowledge was not available.
+- Organization/project documents are optional and user-selected. Use only provided RAG chunks; never invent content outside retrieved fragments.
 - Never hide uncertainty. If the material is thin, contradictory, or single-perspective, say so in limits and material_quality.
 - A leading_question is optional. If absent, identify the highest-value consulting observations yourself.
 - Topic focus may be empty. If empty, create a general consulting synthesis.
+- Requested output and analysis lenses shape emphasis inside this insight only. Do not create downstream documents or application objects during insight generation.
+- If recommendations or opportunities are requested, express them as evidence-bounded opportunity/recommendation hypotheses with confidence limits, not as approved decisions or execution plans.
 
 Each answer in the data below is tagged with an [answer_id: ...]. Use these IDs in evidence_refs and evidence_map.
 
@@ -925,7 +1657,7 @@ Rules:
 - "signals" capture tensions, gaps, contradictions, or emerging patterns that don't fit neatly into themes/issues.
 - Include at least one entry in evidence_map for each answer that contributed to a theme or issue.
 - Preserve perspective nuance: if executives, managers, frontline users, or departments see a topic differently, encode that in perspective_labels and divergence_note instead of flattening it into one claim.
-- Do NOT provide recommendations, action plans, next steps, roadmaps, timelines, owners, or mitigation plans.
+- Do NOT provide final approved action plans, roadmaps, timelines, owners, or mitigation plans. Recommendation-like content must stay clearly labeled as a hypothesis/opportunity with evidence limits.
 - If evidence is weak or incomplete, note it in missing_data.
 - Material Quality is not a blocking gate. It is an honest assessment of how far the generated insight can be trusted.
 - Aim for 3-7 themes, 2-5 issues, 2-5 opportunities, 1-4 signals (scale with data volume).
@@ -942,16 +1674,7 @@ Rules:
   /**
    * Parse the AI JSON response, tolerating markdown fences and minor formatting issues.
    */
-  private parseV6Response(raw: string): {
-    executive_summary: string;
-    themes: InsightTheme[];
-    issues: InsightIssue[];
-    opportunities: InsightOpportunity[];
-    signals: InsightSignal[];
-    evidence_map: InsightEvidenceMapEntry[];
-    missing_data: string[];
-    material_quality?: Partial<InsightMaterialQuality>;
-  } {
+  private parseV6Response(raw: string): ParsedInsightGenerationData {
     let cleaned = raw.trim();
     // Strip markdown code fences if present
     if (cleaned.startsWith('```')) {
@@ -1002,9 +1725,7 @@ Rules:
   /**
    * Build a markdown rendering of the structured V6 data for the legacy `content` column.
    */
-  private renderV6ContentAsMarkdown(
-    data: ReturnType<typeof InterviewInsightService.prototype.parseV6Response>
-  ): string {
+  private renderV6ContentAsMarkdown(data: ParsedInsightGenerationData): string {
     const lines: string[] = [];
 
     lines.push('## Executive Summary', '', data.executive_summary, '');
@@ -1153,19 +1874,27 @@ Rules:
     promptType: InsightPromptType,
     customPrompt?: string,
     analysisScope?: InsightAnalysisScope,
-    approvedOrgKnowledgePack?: ApprovedOrgKnowledgePack
+    approvedOrgKnowledgePack?: ApprovedOrgKnowledgePack,
+    contextDocumentPack?: ContextDocumentPack,
+    userId?: string,
+    generationPreferences?: InsightGenerationPreferences
   ): Promise<void> {
     const db = await this.getDb();
     const startTime = Date.now();
 
     try {
-      const sessionData = await this.fetchSessionData(sessionIds, organizationId);
+      const scope = analysisScope || buildDefaultAnalysisScope({ sessionIds, filters: {} });
+      const sessionData = await this.fetchSessionData(sessionIds, organizationId, scope);
 
       if (sessionData.length === 0) {
-        throw new Error('No session data available for analysis');
+        throw new Error('No scoped session data available for analysis');
       }
 
-      const scope = analysisScope || buildDefaultAnalysisScope({ sessionIds, filters: {} });
+      const sourceMaterialSummary = buildInsightSourceMaterialSummary({
+        requestedSessionIds: sessionIds,
+        sessionData,
+        analysisScope: scope,
+      });
       const orgKnowledgePack =
         approvedOrgKnowledgePack ||
         (await this.buildApprovedOrgKnowledgePack(organizationId, scope.context_mode));
@@ -1176,14 +1905,17 @@ Rules:
         customPrompt,
         sessionData.length,
         scope,
-        orgKnowledgePack
+        orgKnowledgePack,
+        contextDocumentPack,
+        generationPreferences
       );
 
       const systemPrompt =
         'You are a senior management consultant performing structured interview analysis. ' +
         'Return ONLY valid JSON matching the requested schema. ' +
         'Ground all findings in the provided interview data. ' +
-        'Do NOT provide recommendations, action plans, next steps, roadmaps, timelines, owners, or mitigation plans.';
+        'Do NOT provide final approved action plans, roadmaps, timelines, owners, or mitigation plans. ' +
+        'When recommendations are requested, keep them as evidence-bounded hypotheses or opportunities with clear limits.';
 
       const response = await llmService.generateResponse({
         prompt,
@@ -1202,8 +1934,17 @@ Rules:
       );
       const generationTime = Date.now() - startTime;
 
-      // Parse structured V6 response
-      const v6Data = this.parseV6Response(rawContent);
+      // Parse structured V6 response and make evidence refs match scoped answer IDs.
+      const parsedV6Data = this.parseV6Response(rawContent);
+      const availableAnswerIds = sessionData.flatMap((session) =>
+        Array.isArray(session.answers)
+          ? session.answers.map((answer: any) => String(answer.id || '').trim()).filter(Boolean)
+          : []
+      );
+      const { data: v6Data, result: evidenceValidation } = validateInsightEvidenceRefs(
+        parsedV6Data,
+        availableAnswerIds
+      );
 
       // Render markdown for the legacy `content` column (backward compat)
       const markdownContent = this.renderV6ContentAsMarkdown(v6Data);
@@ -1240,7 +1981,19 @@ Rules:
             this.buildGenerationContext({
               createdAt: new Date(startTime).toISOString(),
               analysisScope: scope,
+              generationPreferences,
               approvedOrgKnowledgePack: orgKnowledgePack,
+              contextDocumentPack:
+                contextDocumentPack ||
+                ({
+                  requestedIds: [],
+                  selectedIds: [],
+                  degraded: false,
+                  degradedReasons: [],
+                  documents: [],
+                } as ContextDocumentPack),
+              sourceMaterialSummary,
+              evidenceValidation,
             })
           ),
           tokensUsed,
@@ -1249,6 +2002,30 @@ Rules:
           insightId,
         ]
       );
+
+      await this.recordInsightContextLineage({
+        insightId,
+        organizationId,
+        userId: userId || 'system',
+        eventType: 'interview_insight_completed',
+        contextDocumentPack:
+          contextDocumentPack ||
+          ({
+            requestedIds: [],
+            selectedIds: [],
+            degraded: false,
+            degradedReasons: [],
+            documents: [],
+          } as ContextDocumentPack),
+        metadata: {
+          promptType,
+          generationTimeMs: generationTime,
+          tokensUsed,
+          status: 'completed',
+          sourceMaterialSummary,
+          evidenceValidation,
+        },
+      });
 
       logger.info(
         `[InterviewInsightService] Generated V6 insight ${insightId} in ${generationTime}ms ` +
@@ -1296,9 +2073,16 @@ Rules:
     return new Set((sessions || []).map((session) => String(session.id)));
   }
 
-  private async fetchSessionData(sessionIds: string[], organizationId: string): Promise<any[]> {
+  private async fetchSessionData(
+    sessionIds: string[],
+    organizationId: string,
+    analysisScope?: InsightAnalysisScope
+  ): Promise<any[]> {
     const db = await this.getDb();
+    if (sessionIds.length === 0) return [];
+
     const placeholders = sessionIds.map(() => '?').join(',');
+    const scopeWhere = buildInsightScopeSessionWhereClause(analysisScope);
 
     const sessions = await db.all<any>(
       `SELECT 
@@ -1319,8 +2103,9 @@ Rules:
            OR (s.project_id IS NULL AND s.organization_id = ?)
          )
          AND s.status = 'completed'
-         AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
-      [organizationId, ...sessionIds, organizationId, organizationId]
+         AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))
+         ${scopeWhere.whereSql}`,
+      [organizationId, ...sessionIds, organizationId, organizationId, ...scopeWhere.params]
     );
 
     // Fetch answers for each session
@@ -1484,5 +2269,7 @@ export const create = (input: CreateInsightInput) => interviewInsightService.cre
 export const getById = (id: string) => interviewInsightService.getById(id);
 export const list = (organizationId: string, options?: { limit?: number; offset?: number }) =>
   interviewInsightService.list(organizationId, options);
+export const listContextLineage = (organizationId: string, insightId: string) =>
+  interviewInsightService.listContextLineage(organizationId, insightId);
 export const regenerate = (id: string) => interviewInsightService.regenerate(id);
 export const deleteInsight = (id: string) => interviewInsightService.delete(id);

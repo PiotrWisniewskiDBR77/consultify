@@ -244,8 +244,8 @@ const DraggableTaskCard: React.FC<DraggableTaskCardProps> = ({ task, isPastDue }
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-cyan-500/40 transition-colors cursor-grab active:cursor-grabbing ${
-        isDragging ? 'shadow-lg ring-2 ring-cyan-500/50' : ''
+      className={`p-3 bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-lg hover:border-primary-500/40 transition-colors cursor-grab active:cursor-grabbing ${
+        isDragging ? 'shadow-lg ring-2 ring-primary-500/50' : ''
       }`}
       {...attributes}
       {...listeners}
@@ -309,7 +309,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
     <div
       ref={setNodeRef}
       className={`flex-1 min-w-[260px] bg-white/80 dark:bg-navy-900/50 rounded-xl border transition-colors ${
-        isOver ? 'border-cyan-500 bg-cyan-500/5' : 'border-slate-200 dark:border-navy-700'
+        isOver ? 'border-primary-500 bg-primary-500/5' : 'border-slate-200 dark:border-navy-700'
       }`}
       data-testid={`kanban-column-${id}`}
     >
@@ -334,7 +334,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
           <div
             className={`text-center text-xs py-6 border-2 border-dashed rounded-lg transition-colors ${
               isOver
-                ? 'border-cyan-500/50 text-cyan-400'
+                ? 'border-primary-500/50 text-primary-400'
                 : 'border-slate-300 dark:border-navy-700 text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -553,6 +553,9 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   const [scope, setScope] = useState<'active' | 'all'>('active');
   const [selectedInitiative, setSelectedInitiative] = useState<FullInitiative | null>(null);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
+  const [managerCommandRowContent, setManagerCommandRowContent] = useState<React.ReactNode>(null);
+  const [managerCommandRowRightContent, setManagerCommandRowRightContent] =
+    useState<React.ReactNode>(null);
   // Zestawienie (Table+Preview) filters + preview selection
   const [summaryFilters, setSummaryFilters] = useState<FilterChip[]>([]);
   const [summaryPreviewInitiativeId, setSummaryPreviewInitiativeId] = useState<string | null>(null);
@@ -1545,7 +1548,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const code = getTypeCode(row.axis);
           return (
             <div className="flex items-center gap-2">
-              <Target size={14} className="text-cyan-400" />
+              <Target size={14} className="text-blue-400" />
               <span className="font-mono text-xs font-bold text-slate-700 dark:text-slate-300">
                 {code}
               </span>
@@ -1646,12 +1649,12 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             new Date(row.plannedEndDate) < new Date() &&
             row.status !== InitiativeStatus.DONE;
           const color = isBlocked
-            ? 'bg-red-500'
+            ? 'bg-rose-500'
             : isOverdue
               ? 'bg-amber-500'
               : progress >= 100
                 ? 'bg-emerald-500'
-                : 'bg-cyan-500';
+                : 'bg-blue-500';
           return (
             <div className="flex items-center gap-2">
               <div className="flex-1 h-2 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
@@ -1748,7 +1751,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             badges.push(
               <span
                 key="blocked"
-                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-red-500/20 text-red-400"
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-rose-500/20 text-rose-400"
               >
                 <AlertTriangle size={10} />
                 {t('execution.badges.blocked')}
@@ -1837,7 +1840,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           const isOverdue = new Date(deadline) < new Date() && row.status !== InitiativeStatus.DONE;
           return (
             <span
-              className={`text-sm ${isOverdue ? 'text-red-400' : 'text-slate-700 dark:text-slate-300'}`}
+              className={`text-sm ${isOverdue ? 'text-rose-400' : 'text-slate-700 dark:text-slate-300'}`}
             >
               {new Date(deadline).toLocaleDateString()}
             </span>
@@ -2249,7 +2252,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -2265,7 +2268,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {
           id: 'in_progress',
           label: t('execution.kanban.inProgress'),
-          accent: 'text-cyan-300',
+          accent: 'text-blue-300',
           icon: <Target size={14} />,
         },
         {
@@ -2315,10 +2318,10 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         {/* Drag overlay for smooth dragging experience */}
         <DragOverlay>
           {activeTask ? (
-            <div className="p-3 bg-white dark:bg-navy-800 border-2 border-cyan-500 rounded-lg shadow-xl w-[240px]">
+            <div className="p-3 bg-white dark:bg-navy-800 border-2 border-primary-500 rounded-lg shadow-xl w-[240px]">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="flex items-center gap-2">
-                  <GripVertical size={14} className="text-cyan-400" />
+                  <GripVertical size={14} className="text-primary-400" />
                   <h4 className="text-sm font-medium text-slate-900 dark:text-white line-clamp-2">
                     {activeTask.title}
                   </h4>
@@ -2577,7 +2580,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 {portfolioMetrics.avgProgress}%
               </p>
             </div>
-            <Target className="text-cyan-400" />
+            <Target className="text-blue-400" />
           </div>
         </div>
         <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
@@ -2718,7 +2721,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingTasks) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -2738,7 +2741,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }
             toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
-          className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
+          className="w-full text-left flex items-start justify-between gap-4 p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
           title={t('execution.tasks.openInitiative', 'Open related initiative')}
         >
           <div className="min-w-0">
@@ -2832,7 +2835,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           />
           <BucketColumn
             title={t('execution.tasks.upcoming', 'Upcoming (8–30d)')}
-            accent="text-cyan-400"
+            accent="text-blue-400"
             tasks={taskBuckets.upcoming}
           />
         </div>
@@ -2894,7 +2897,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     if (isLoadingDecisions) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -2916,7 +2919,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
             }
             toast.error(t('execution.toast.initiativeNotFound', 'Related initiative not found'));
           }}
-          className="w-full text-left p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
+          className="w-full text-left p-3 rounded-lg bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:bg-white/60 dark:hover:bg-navy-900/40 transition-colors"
           title={t('execution.decisionsBuckets.openInitiative', 'Open related initiative')}
         >
           <div className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
@@ -2989,7 +2992,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           />
           <Bucket
             title={t('execution.decisionsBuckets.due30', 'Due 15–30d')}
-            accent="text-cyan-400"
+            accent="text-blue-400"
             items={decisionBuckets.due30}
           />
           <Bucket
@@ -3035,7 +3038,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
               : attention === 'overdue_decisions'
                 ? 'text-rose-500'
                 : attention === 'due_soon_tasks'
-                  ? 'text-cyan-500'
+                  ? 'text-blue-500'
                   : 'text-slate-500',
         },
       ]);
@@ -3067,7 +3070,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 {preset.id === 'all' ? (
                   <span className={MENU_3_ALL_DOT_CLASS} />
                 ) : (
-                  <FileText size={14} className="text-cyan-400" />
+                  <FileText size={14} className="text-blue-400" />
                 )}
                 <span>{preset.label}</span>
                 <span className={active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
@@ -3154,7 +3157,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         count: dueSoonTasksCount,
         active: isAttentionActive('due_soon_tasks'),
         disabled: dueSoonTasksCount === 0,
-        icon: <Clock size={14} className="text-cyan-400" />,
+        icon: <Clock size={14} className="text-blue-400" />,
         onClick: () => {
           if (isAttentionActive('due_soon_tasks')) {
             resetExecutionCommandRow();
@@ -3251,7 +3254,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Update missing dates',
           'Reassign stale tasks',
         ],
-        icon: <CalendarDays size={18} className="text-cyan-500" />,
+        icon: <CalendarDays size={18} className="text-blue-500" />,
         highlights: [
           { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
@@ -3504,7 +3507,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'Approve recovery plans',
           'Communicate revised timelines',
         ],
-        icon: <Sparkles size={18} className="text-cyan-500" />,
+        icon: <Sparkles size={18} className="text-blue-500" />,
         highlights: [
           { label: 'Progress', value: progressPct !== null ? `${progressPct}%` : '—' },
           { label: 'Blocked', value: blocked, variant: blocked > 0 ? 'critical' : 'default' },
@@ -3731,7 +3734,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
           'execution.manager.suggestions.replanExpected',
           'Timeline becomes credible; slippage detection activates.'
         ),
-        icon: <Clock size={14} className="text-cyan-500" />,
+        icon: <Clock size={14} className="text-blue-500" />,
         severity: 'medium',
       });
     }
@@ -4032,7 +4035,7 @@ Please return:
             {report.followUpActions.map((a) => (
               <span
                 key={a}
-                className="inline-block px-2 py-0.5 rounded-full bg-cyan-50 dark:bg-cyan-900/20 text-[10px] font-medium text-cyan-700 dark:text-cyan-300"
+                className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
               >
                 {a}
               </span>
@@ -4051,7 +4054,7 @@ Please return:
             {report.degradedFlags.map((flag) => (
               <span
                 key={flag}
-                className="inline-block px-2 py-0.5 rounded-full bg-violet-50 dark:bg-violet-900/20 text-[10px] text-violet-700 dark:text-violet-300"
+                className="inline-block rounded-full border border-slate-200/70 bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.05] dark:text-slate-300"
               >
                 {flag}
               </span>
@@ -4077,7 +4080,7 @@ Please return:
           <button
             type="button"
             onClick={() => handleGenerateReport(report)}
-            className="h-8 px-4 rounded-lg text-xs font-medium bg-cyan-600 text-white hover:bg-cyan-700 transition-colors"
+            className="h-8 px-4 rounded-lg text-xs font-medium bg-primary-600 text-white hover:bg-primary-500 transition-colors"
           >
             {t('execution.reportPanel.generateAI', 'Generate with AI')}
           </button>
@@ -4211,12 +4214,12 @@ Please return:
                 key={report.id}
                 type="button"
                 onClick={() => handleOpenReport(report)}
-                className="group rounded-xl border bg-white dark:bg-navy-900 transition-all text-left border-slate-200 dark:border-navy-700 hover:border-cyan-500/40 hover:shadow-sm dark:hover:border-cyan-400/30"
+                className="group rounded-xl border bg-white dark:bg-navy-900 transition-all text-left border-slate-200 dark:border-navy-700 hover:border-primary-500/40 hover:shadow-sm dark:hover:border-primary-400/30"
               >
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="flex items-center gap-2.5">
-                      <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-cyan-50 dark:group-hover:bg-cyan-900/20 transition-colors">
+                      <div className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-slate-100 dark:bg-navy-800 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/20 transition-colors">
                         {report.icon}
                       </div>
                       <div>
@@ -4236,7 +4239,7 @@ Please return:
                     </div>
                     <ChevronRight
                       size={14}
-                      className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-cyan-500"
+                      className="text-slate-300 dark:text-slate-600 transition-transform group-hover:text-primary-500"
                     />
                   </div>
 
@@ -4277,7 +4280,7 @@ Please return:
     if (isLoading) {
       return (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="w-8 h-8 text-cyan-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -4289,6 +4292,8 @@ Please return:
           projectId={currentProjectId || undefined}
           searchQuery={searchQuery}
           hasExecutingInitiatives={dashboardBaseInitiatives.length > 0}
+          onRegisterCommandRowContent={setManagerCommandRowContent}
+          onRegisterCommandRowRightContent={setManagerCommandRowRightContent}
           onOpenEntity={
             handleOpenSidePanel
               ? (type, id) => handleOpenSidePanel({ id, name: id } as any)
@@ -4491,7 +4496,14 @@ Please return:
         onStatusFilterChange={setActiveStatusFilter}
         rightControls={rightControls}
         availableViewModes={availableViewModes}
-        commandRowContent={activeTab === ('people_change' as ModuleTab) ? null : commandRowContent}
+        commandRowContent={
+          activeTab === ('people_change' as ModuleTab)
+            ? managerCommandRowContent
+            : commandRowContent
+        }
+        commandRowRightContent={
+          activeTab === ('people_change' as ModuleTab) ? managerCommandRowRightContent : undefined
+        }
       >
         {renderContent()}
       </ModuleHub>

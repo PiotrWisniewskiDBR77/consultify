@@ -113,9 +113,9 @@ function hasVerifiedConnectorResult(context: unknown): boolean {
   const external = (context as any)?.external || {};
   return Boolean(
     external?.connectorToolResult?.verified === true ||
-      external?.connectorToolResult?.fresh === true ||
-      external?.connectorQuery?.executed === true ||
-      external?.toolResult?.connector === true
+    external?.connectorToolResult?.fresh === true ||
+    external?.connectorQuery?.executed === true ||
+    external?.toolResult?.connector === true
   );
 }
 
@@ -137,12 +137,10 @@ async function getConnectorStatusSummary(organizationId?: string | null): Promis
         [row.connector_id, row.connector_type, row.provider, row.id].filter(Boolean).join(' ')
       )
     );
-    const sample = (relevantRows.length > 0 ? relevantRows : rows || [])
-      .slice(0, 8)
-      .map((row) => {
-        const name = row.connector_id || row.connector_type || row.provider || row.id || 'unknown';
-        return `${name}: status=${row.status || 'unknown'}, lastSync=${row.last_sync_at || 'unknown'}`;
-      });
+    const sample = (relevantRows.length > 0 ? relevantRows : rows || []).slice(0, 8).map((row) => {
+      const name = row.connector_id || row.connector_type || row.provider || row.id || 'unknown';
+      return `${name}: status=${row.status || 'unknown'}, lastSync=${row.last_sync_at || 'unknown'}`;
+    });
     if (sample.length > 0) statusSummary = sample.join('; ');
   } catch (err: any) {
     logger.warn('[AI Stream] Connector honesty status lookup failed:', err?.message || err);
@@ -228,10 +226,9 @@ async function getAIOpsHealthSnapshot(): Promise<{ hardBlock: boolean; statusSum
     const healthMonitor = (await import('../services/ai/healthMonitor.js')).default as any;
     const status = healthMonitor.getStatus?.() || {};
     const overall =
-      (status?.lastCheck as { overall?: string } | null)?.overall ||
-      status?.status ||
-      'error';
-    const providers = status?.providers && typeof status.providers === 'object' ? status.providers : {};
+      (status?.lastCheck as { overall?: string } | null)?.overall || status?.status || 'error';
+    const providers =
+      status?.providers && typeof status.providers === 'object' ? status.providers : {};
     const providerCount = Object.keys(providers).length;
     const isRunning = Boolean(status?.isRunning);
     hardBlock = overall !== 'healthy' || providerCount === 0 || !isRunning;
@@ -1706,6 +1703,69 @@ router.post(
     const isPolish = langCode === 'pl';
     const startTime = Date.now();
     const languageInstruction = `\n\n[LANGUAGE INSTRUCTION: You MUST always respond in ${langName}. This is the user's chosen application language and takes absolute priority. Even if the user writes their message in a different language, your response must be in ${langName}. This is non-negotiable.]\n`;
+    const canvasContextPacket =
+      (context as any)?.canvasContextPacket &&
+      typeof (context as any).canvasContextPacket === 'object'
+        ? ((context as any).canvasContextPacket as Record<string, any>)
+        : null;
+    const canvasContextInstruction = canvasContextPacket
+      ? [
+          '## ACTIVE WORK CANVAS CONTEXT',
+          `Schema: ${String(canvasContextPacket.schemaVersion || 'unknown')}`,
+          `Draft: ${String(canvasContextPacket.activeDraft?.title || 'Untitled')} (${String(canvasContextPacket.activeDraft?.draftId || 'unsaved')})`,
+          `Kind: ${String(canvasContextPacket.activeDraft?.kind || 'document')}`,
+          `Lifecycle: ${String(canvasContextPacket.activeDraft?.lifecycleState || 'draft')}`,
+          canvasContextPacket.selection?.selectedText
+            ? `Selected text: ${String(canvasContextPacket.selection.selectedText).slice(0, 2000)}`
+            : '',
+          canvasContextPacket.memorySnapshot?.summary
+            ? `Memory snapshot: ${String(canvasContextPacket.memorySnapshot.summary)}`
+            : '',
+          Array.isArray(canvasContextPacket.blockSummaries) &&
+          canvasContextPacket.blockSummaries.length > 0
+            ? `Block summaries:\n${canvasContextPacket.blockSummaries
+                .slice(0, 8)
+                .map(
+                  (block: any) =>
+                    `- ${String(block.kind)} ${String(block.blockId)}: ${String(block.title)} (${String(block.projectionStatus)})`
+                )
+                .join('\n')}`
+            : '',
+          Array.isArray(canvasContextPacket.workflowRuns) &&
+          canvasContextPacket.workflowRuns.length > 0
+            ? `Workflow runs:\n${canvasContextPacket.workflowRuns
+                .slice(0, 5)
+                .map(
+                  (run: any) => `- ${String(run.id)}: ${String(run.title)} (${String(run.status)})`
+                )
+                .join('\n')}`
+            : '',
+          Array.isArray(canvasContextPacket.workflowEventSummaries) &&
+          canvasContextPacket.workflowEventSummaries.length > 0
+            ? `Recent workflow timeline:\n${canvasContextPacket.workflowEventSummaries
+                .slice(-10)
+                .map(
+                  (event: any) =>
+                    `- ${String(event.workflowTitle)} ${String(event.eventType)} by ${String(event.actorId)}: ${String(event.summary)}`
+                )
+                .join('\n')}`
+            : '',
+          Array.isArray(canvasContextPacket.workflowOutputSummaries) &&
+          canvasContextPacket.workflowOutputSummaries.length > 0
+            ? `Workflow outputs:\n${canvasContextPacket.workflowOutputSummaries
+                .slice(-10)
+                .map(
+                  (output: any) =>
+                    `- ${String(output.workflowTitle)} -> ${String(output.type)} ${String(output.id)}: ${String(output.title)}${output.url ? ` (${String(output.url)})` : ''}`
+                )
+                .join('\n')}`
+            : '',
+          'Use this Canvas context as working memory. Prefer Markdown projection and summaries; do not assume access to raw native block JSON.',
+          'For state-changing work, propose the next workflow step and wait for approval.',
+        ]
+          .filter(Boolean)
+          .join('\n')
+      : '';
 
     const teresaWorkspaceInstruction = [
       '## ASSISTANT SURFACE: workspace_copilot',
@@ -1718,7 +1778,9 @@ router.post(
     ].join('\n');
 
     let enhancedSystemInstruction =
-      `${teresaWorkspaceInstruction}\n\n${systemInstruction || ''}` + languageInstruction;
+      [teresaWorkspaceInstruction, canvasContextInstruction, systemInstruction || '']
+        .filter((part) => String(part || '').trim().length > 0)
+        .join('\n\n') + languageInstruction;
 
     // Co-Thinker mode: inject persona-specific system prompt
     if (aiModes?.coThinkerMode && typeof aiModes.coThinkerMode === 'string') {
@@ -2154,6 +2216,21 @@ router.post(
               conversationId: conversationId || null,
               focusMode,
               hasScreenContext: Boolean(screenContext),
+              canvasDraftId: canvasContextPacket?.activeDraft?.draftId || null,
+              canvasTitle: canvasContextPacket?.activeDraft?.title || null,
+              canvasWorkflowRunIds:
+                canvasContextPacket?.memorySnapshot?.anchors?.workflowRunIds || [],
+              canvasWorkflowEventTypes: Array.isArray(canvasContextPacket?.workflowEventSummaries)
+                ? canvasContextPacket.workflowEventSummaries
+                    .slice(-10)
+                    .map((event: any) => String(event.eventType || 'unknown'))
+                : [],
+              canvasWorkflowOutputIds: Array.isArray(canvasContextPacket?.workflowOutputSummaries)
+                ? canvasContextPacket.workflowOutputSummaries
+                    .slice(-10)
+                    .map((output: any) => String(output.id || 'unknown'))
+                : [],
+              canvasBlockIds: canvasContextPacket?.memorySnapshot?.anchors?.blockIds || [],
               userWorkProfilePreferences: workProfile.preferences.length,
             },
             sourceRefs: [
@@ -3470,15 +3547,21 @@ router.post(
         // load raw chunks directly from DB to ensure the AI always sees attachment content.
         if (!attachmentChunksInjected) {
           try {
+            const organizationIdForAttachmentFallback = req.organizationId || '';
+            if (!organizationIdForAttachmentFallback) {
+              throw new Error('organization_id_required_for_attachment_fallback');
+            }
             const placeholders = attachmentDocIds.map(() => '?').join(',');
             const rows = await dbAll(
               `SELECT c.content, d.filename
                FROM knowledge_chunks c
                JOIN knowledge_docs d ON c.doc_id = d.id
                WHERE d.id IN (${placeholders})
+                 AND d.organization_id = ?
+                 AND (d.status IS NULL OR d.status IN ('ready', 'indexed'))
                ORDER BY c.chunk_index ASC
                LIMIT 10`,
-              attachmentDocIds,
+              [...attachmentDocIds, organizationIdForAttachmentFallback],
               { fallback: true } as any
             );
 

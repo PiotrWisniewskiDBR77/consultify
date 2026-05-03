@@ -25,6 +25,17 @@ Current machine-readable pre-manual checkpoint:
 3. Keep `CP-10` rollback thresholds in mind while testing
 4. Do not promote another org during this manual pass
 
+### DBR77 test accounts (manual QA)
+
+Use only these accounts for `dbr77` manual retests unless the test plan says otherwise.
+
+| Konto | Rola usera | Primary org | DBR77 membership |
+| --- | --- | --- | --- |
+| `admin@dbr77.com` | `SUPERADMIN` | `dbr77` | `ADMIN` |
+| `piotr.wisniewski@dbr77.com` | `OWNER` | `dbr77` | `OWNER` |
+| `justyna.laskowska@dbr77.com` | `ADMIN` | `dbr77` | `ADMIN` |
+| `jan.kowalski@dbr77.com` | `USER` | `dbr77` | `USER / MEMBER` |
+
 ---
 
 ## Core manual path per org

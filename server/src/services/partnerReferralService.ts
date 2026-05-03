@@ -569,7 +569,7 @@ export async function validateReferralCode(code: string): Promise<ValidateReferr
  */
 export async function getReferralTools(partnerOrgId: string): Promise<PartnerReferralTools | null> {
   try {
-    await ensurePartnerReferralIdentity(partnerOrgId);
+    const ensuredIdentity = await ensurePartnerReferralIdentity(partnerOrgId);
     // Get partner org details
     const partner = await DbPromise.get<PartnerOrgRow>(
       db,
@@ -582,6 +582,10 @@ export async function getReferralTools(partnerOrgId: string): Promise<PartnerRef
       return null;
     }
 
+    const referralCode = String(partner.referral_code || '').trim() || ensuredIdentity.referralCode;
+    const referralLinkSlug =
+      String(partner.referral_link_slug || '').trim() || ensuredIdentity.referralLinkSlug;
+
     // Get campaign links
     const campaigns = await DbPromise.all<CampaignLinkRow>(
       db,
@@ -592,18 +596,18 @@ export async function getReferralTools(partnerOrgId: string): Promise<PartnerRef
       { fallback: false }
     );
 
-    const referralLink = `${BASE_URL}/r/${partner.referral_link_slug}`;
+    const referralLink = `${BASE_URL}/r/${referralLinkSlug}`;
 
     return {
-      referralCode: partner.referral_code,
+      referralCode,
       referralLink,
-      referralLinkSlug: partner.referral_link_slug,
-      qrCodeUrl: `${BASE_URL}/api/partner/qr/${partner.referral_link_slug}`,
+      referralLinkSlug,
+      qrCodeUrl: `${BASE_URL}/api/partner/qr/${referralLinkSlug}`,
       campaignLinks: campaigns.map((c) => ({
         id: c.id,
         name: c.name,
         slug: c.slug,
-        fullUrl: buildCampaignUrl(partner.referral_link_slug, c),
+        fullUrl: buildCampaignUrl(referralLinkSlug, c),
         utmSource: c.utm_source || undefined,
         utmMedium: c.utm_medium || undefined,
         utmCampaign: c.utm_campaign || undefined,
@@ -1649,6 +1653,7 @@ const PartnerReferralService = {
   ATTRIBUTION_TYPES,
   ATTRIBUTION_STATUS,
   setDependencies,
+  ensurePartnerReferralIdentity,
   validateReferralCode,
   getReferralTools,
   createCampaignLink,

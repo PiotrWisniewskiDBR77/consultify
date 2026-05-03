@@ -589,6 +589,28 @@ Definition of done:
 - No one-off toolbar, card, button, table or badge remains unless justified.
 ```
 
+### 9.4 Obowiązkowy plan migracji kolorów tabel (DBR77 2027)
+
+Każda migracja tabeli przechodzi ten sam plan. Pominięcie kroku oznacza, że migracja nie jest zamknięta.
+
+1. Inwentaryzacja:
+   - Spisać wszystkie kolumny i typy informacji w tabeli (`status`, `priority`, `due`, `meta`, `tool`, `owner`, `risk`).
+   - Wykryć wszystkie użyte mapy kolorów i lokalne klasy chipów.
+2. Mapowanie semantyczne:
+   - Przypisać każdą wartość statusu do mapy z `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md` (`slate/blue/amber/emerald/rose` + `primary` tylko dla selection/focus/CTA).
+   - Ustalić jeden kontrakt dla `MetaChip`, `StatusChip`, `PriorityChip`, `ToolChip`, `DueChip`.
+3. Implementacja:
+   - Usunąć lokalne, równoległe mapy kolorów dla tej samej semantyki.
+   - Ujednolicić kolory między table/list/card/preview tego samego modułu.
+   - Potwierdzić, że chrome (toolbar/topbar/modal shell) pozostaje monochromatyczny.
+4. Weryfikacja:
+   - Sprawdzić light mode i dark mode pod kątem kontrastu i czytelności.
+   - Potwierdzić, że `primary/violet` nie jest używany jako dekoracyjny kolor metadata.
+   - Potwierdzić, że selected/focused/checked row używa wyłącznie brandowego stanu row (`primary` + lewy akcent).
+5. Dowód audytowy:
+   - W opisie migracji wpisać finalną mapę statusów i wyjątki.
+   - Jeśli wyjątek jest potrzebny, najpierw dopisać go do standardu, dopiero potem do kodu.
+
 ## 10. Audyt istniejących ekranów
 
 Każdy ekran powinien zostać wpisany do audytu w formacie:
@@ -624,6 +646,9 @@ Ekran jest zgodny ze standardem tylko jeśli:
 - AI actions są w kontekście i nie wykonują mutacji po cichu,
 - nie ma drugiego/third toolbara między topbarem a treścią,
 - tabela spełnia App Table Standard, jeśli ekran jest tabelaryczny,
+- tabela spełnia DBR77 2027 App Table Color Contract z Golden Standard,
+- `MetaChip`/`ToolChip` są neutralne i nie udają CTA,
+- `StatusChip`/`DueChip`/`PriorityChip` używają jednej mapy semantycznej dla całego modułu,
 - preview pane spełnia Table Preview Pane Standard, jeśli ekran używa preview,
 - light mode jest czytelny,
 - dark mode nie używa czystej czerni/bieli,

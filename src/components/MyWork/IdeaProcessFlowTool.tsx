@@ -1965,7 +1965,7 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
             {coachInsights.map((insight: any, idx: number) => (
               <li key={idx} className="flex items-start gap-2 text-[11px]">
                 <span
-                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-red-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}
+                  className={`mt-0.5 flex-shrink-0 ${insight.type === 'bottleneck' ? 'text-rose-500' : insight.type === 'improvement' ? 'text-emerald-500' : 'text-indigo-500'}`}
                 >
                   {insight.type === 'bottleneck' ? (
                     <AlertTriangle size={12} />
@@ -1995,8 +1995,8 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
       )}
 
       {processBriefData && (
-        <div className="mx-3 mb-2 rounded-xl border border-violet-200/60 dark:border-violet-800/40 bg-violet-50/50 dark:bg-violet-950/20 p-3">
-          <div className="text-[11px] font-bold text-violet-700 dark:text-violet-300">
+        <div className="mx-3 mb-2 rounded-xl border border-primary-200/60 dark:border-primary-800/40 bg-primary-50/50 dark:bg-primary-950/20 p-3">
+          <div className="text-[11px] font-bold text-primary-700 dark:text-primary-300">
             {isPl ? 'Structured brief' : 'Structured brief'}
           </div>
           <div className="mt-1 text-[10px] text-slate-700 dark:text-slate-300">
@@ -2130,14 +2130,14 @@ export const IdeaProcessFlowTool: React.FC<IdeaProcessFlowToolProps> = ({
           )}
           {summaryData.risks?.length > 0 && (
             <div className="mt-1.5">
-              <div className="text-[9px] font-bold text-red-600 dark:text-red-400 mb-0.5">
+              <div className="text-[9px] font-bold text-rose-600 dark:text-rose-400 mb-0.5">
                 {isPl ? 'Ryzyka:' : 'Risks:'}
               </div>
               <ul className="space-y-0.5">
                 {summaryData.risks.map((r: string, i: number) => (
                   <li
                     key={i}
-                    className="text-[9px] text-red-600/80 dark:text-red-400/80 flex items-start gap-1"
+                    className="text-[9px] text-rose-600/80 dark:text-rose-400/80 flex items-start gap-1"
                   >
                     <AlertTriangle size={10} className="mt-0.5 flex-shrink-0" /> {r}
                   </li>

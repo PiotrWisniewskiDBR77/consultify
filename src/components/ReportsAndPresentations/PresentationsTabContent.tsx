@@ -107,7 +107,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
         filterable: true,
         filterOptions: [
           { value: 'tool', label: isPolish ? 'Narzędzie' : 'Tool', color: 'bg-emerald-400' },
-          { value: 'assessment', label: isPolish ? 'Ocena' : 'Assessment', color: 'bg-purple-400' },
+          { value: 'assessment', label: isPolish ? 'Ocena' : 'Assessment', color: 'bg-blue-400' },
           { value: 'finance', label: isPolish ? 'Finanse' : 'Finance', color: 'bg-blue-400' },
           { value: 'upload', label: isPolish ? 'Przesłane' : 'Upload', color: 'bg-amber-400' },
         ],
@@ -139,7 +139,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           },
           { value: 'editing', label: isPolish ? 'Edycja' : 'Editing', color: 'bg-amber-400' },
           { value: 'ready', label: isPolish ? 'Gotowa' : 'Ready', color: 'bg-emerald-400' },
-          { value: 'shared', label: isPolish ? 'Udostępniona' : 'Shared', color: 'bg-purple-400' },
+          { value: 'shared', label: isPolish ? 'Udostępniona' : 'Shared', color: 'bg-blue-400' },
           {
             value: 'archived',
             label: isPolish ? 'Zarchiwizowana' : 'Archived',
@@ -167,7 +167,7 @@ export const PresentationsTabContent: React.FC<PresentationsTabContentProps> = (
           { value: 'show', label: 'Show', color: 'bg-blue-400' },
           { value: 'document', label: 'Document', color: 'bg-emerald-400' },
           { value: 'briefing', label: 'Briefing', color: 'bg-amber-400' },
-          { value: 'workshop', label: 'Workshop', color: 'bg-purple-400' },
+          { value: 'workshop', label: 'Workshop', color: 'bg-blue-400' },
         ],
         render: (row: PresentationItem) => (
           <span className="text-xs font-medium text-slate-600 dark:text-slate-300 capitalize">

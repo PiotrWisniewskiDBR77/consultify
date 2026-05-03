@@ -382,3 +382,119 @@ Audyt modułu jest kompletny, gdy:
 Szczegółową kolejność działań i fale refactoru opisuje:
 
 - `docs/ui-standards/UI_UX_MIGRATION_PLAN.md`
+- `docs/ui-standards/UI_UX_AUDIT_EXECUTION_BOARD.md`
+
+## 11. Plan audytu wszystkich kart (DBR77 2027)
+
+Status: `ACTIVE / EXECUTION BASELINE`
+Date: 2026-05-03
+
+### 11.1 Cel
+
+Wykonać pełny audyt wszystkich kart i ekranów modułowych w Consultify według jednego procesu, tak aby dla każdej karty było jednoznacznie wiadomo:
+
+- czy jest zgodna ze standardem,
+- gdzie są odchylenia,
+- jaki jest priorytet napraw,
+- w jakiej fali migracji karta zostanie poprawiona.
+
+### 11.2 Procedura audytu dla każdej karty (obowiązkowa)
+
+1. **Inwentaryzacja karty**
+   - plik główny i pliki pomocnicze,
+   - typ ekranu: `ModuleHub` / `App Table` / `Workspace` / `N-mode` / `Control Plane`.
+2. **Kontrola shella i menu**
+   - zgodność `Menu 2` i `Menu 3`,
+   - brak ad-hoc pasków między topbarem i treścią,
+   - CTA bez `+` i bez gradientów w operacyjnym chrome.
+3. **Kontrola tabel i list**
+   - zgodność z App Table standardem,
+   - kontrola column settings / resizer / actions column,
+   - checkbox reveal, row description i stany selected/focused/checked.
+4. **Kontrola kolorystyki (DBR77 2027 Color Contract)**
+   - jedna mapa semantyczna statusów (`slate/blue/amber/emerald/rose`),
+   - `primary/violet` tylko dla selection/focus/CTA,
+   - neutralne `MetaChip` i `ToolChip`,
+   - spójność table/list/card/preview w tym samym module.
+5. **Kontrola stanów UX**
+   - loading/empty/error/degraded,
+   - read-back po mutacjach,
+   - brak fake success i raw backend internals.
+6. **Wynik audytu**
+   - `REFERENCE` / `REFINE_REFERENCE` / `REFACTOR` / `STANDARD_NEEDED` / `DO_NOT_TOUCH`,
+   - priorytet `P0_REFERENCE` / `P1_HIGH` / `P2_MEDIUM` / `P3_LOW`,
+   - lista konkretnych zmian do wdrożenia.
+
+### 11.3 Dowody wymagane przy audycie
+
+- screenshot light mode,
+- screenshot dark mode,
+- screenshot z aktywnym `Menu 3`,
+- screenshot tabeli z zaznaczeniem i checkbox reveal,
+- screenshot stanów empty/error/degraded (gdy dotyczy),
+- krótki diff/fragment kodu miejsca, gdzie występuje odchylenie.
+
+## 12. Raport: gdzie musimy dokonać zmian
+
+Legenda:
+
+- `Decision`: decyzja migracyjna.
+- `Priority`: kolejność wykonania.
+- `Wymagane zmiany`: skrót najważniejszych poprawek UI/UX.
+
+| Obszar | Karta / ekran | Decision | Priority | Wymagane zmiany |
+|---|---|---|---|---|
+| `My Work` | `Home/Radar` | `REFINE_REFERENCE` | `P1_HIGH` | Potwierdzić brak lokalnych ad-hoc pasków, dopiąć spójną rodzinę kontrolek i gęstość dashboardu. |
+| `My Work` | `Pomysły` | `REFINE_REFERENCE` | `P0_REFERENCE` | Utrzymać jako referencję tabeli; audyt regresji Menu 3, checkbox reveal i Color Contract przy każdej zmianie. |
+| `My Work` | `Notebook` | `REFINE_REFERENCE` | `P1_HIGH` | Upewnić się, że `WorkspacePanelStrip` nie dubluje akcji z `Menu 3`; spójne CTA i kontrolki. |
+| `My Work` | `Inbox` | `REFACTOR` | `P1_HIGH` | Pełna zgodność App Table + Menu 3 + Color Contract + bulk/select UX. |
+| `My Work` | `Calendar` | `STANDARD_NEEDED` | `P2_MEDIUM` | Dookreślić standard `View-local Toolbar` dla kalendarza bez łamania zasad Menu 2/3. |
+| `My Work` | `Tasks` | `REFACTOR` | `P1_HIGH` | Ujednolicić list/kanban/calendar pod jedną semantyką kolorów i jedną logiką command row. |
+| `My Work` | `Decisions` | `REFINE_REFERENCE` | `P0_REFERENCE` | Dotrzymać roli referencji dla Menu 3; usunąć pozostałe lokalne odstępstwa wizualne. |
+| `My Work` | `Manager` | `REFACTOR` | `P2_MEDIUM` | Audyt dashboard cards i kolorystyki semantycznej, bez dekoracyjnych akcentów. |
+| `Interview` | `My Assignments` | `REFINE_REFERENCE` | `P1_HIGH` | Potwierdzenie po migracji: chips/statusy/due/progress zgodnie z Color Contract. |
+| `Interview` | `Sessions` | `REFINE_REFERENCE` | `P1_HIGH` | Walidacja status map i menu akcji; brak lokalnych map równoległych. |
+| `Interview` | `Managed` | `REFINE_REFERENCE` | `P1_HIGH` | Spójność z Assignments (ta sama semantyka i anatomia tabeli). |
+| `Interview` | `Templates` | `REFINE_REFERENCE` | `P1_HIGH` | Utrzymać neutralne meta/tool chips, spójne settings i row behavior. |
+| `Interview` | `Insights` | `REFINE_REFERENCE` | `P1_HIGH` | Kontrola modal + tabela: monochromatyczny chrome i semantyczne statusy. |
+| `Interview` | `Initiatives` | `REFINE_REFERENCE` | `P1_HIGH` | Potwierdzić status/priority/source zgodnie z mapą globalną. |
+| `Discovery Tools` | `Library/Sessions/Outputs/Initiatives` | `REFACTOR` | `P1_HIGH` | Usunąć lokalne mapy statusów/chipów; pełna zgodność command row i tabel. |
+| `Discovery` | `Consultant View` | `STANDARD_NEEDED` | `P2_MEDIUM` | Ustalić docelowy shell i zasady toolbarów dla widoku discovery spoza ModuleHub. |
+| `Assessment` | `Assessment/Reports/Initiatives` | `REFACTOR` | `P1_HIGH` | Zastąpić dynamiczne lokalne klasy kolorów stabilną mapą semantyczną DBR77. |
+| `Initiatives` | `List/Portfolio Analysis` | `REFACTOR` | `P1_HIGH` | Dopiąć jedną implementację command row i spójną semantykę statusów między widokami. |
+| `Execution` | `List/Reports/People & Change` | `REFACTOR` | `P1_HIGH` | Skontrolować brakujące/wyłączane command row i spójność akcji kontekstowych. |
+| `Results` | `Initiatives/KPI/ROI/Reports` | `REFACTOR` | `P1_HIGH` | Uprościć rozgałęzione local patterns; jedna rodzina toolbar/table/chip semantics. |
+| `Economics` | `Catalog/Results/Compare` | `REFACTOR` | `P1_HIGH` | Usunąć lokalne mapy statusów i progów kolorystycznych niespójnych z kontraktem. |
+| `Finance` | `Statements/Models/Analysis/...` | `REFACTOR` | `P1_HIGH` | Potwierdzić App Table controls i semantic colors na wszystkich tabach finansowych. |
+| `Reports & Presentations` | `Outputs/Documents/Decks/Sheets/Templates` | `REFACTOR` | `P1_HIGH` | Ujednolicić zachowanie kart list i stanów UX między tabami. |
+| `Presentations` | `All/Recent` | `REFACTOR` | `P2_MEDIUM` | Zmigrować lokalne source-type color maps do canonical chip semantics. |
+| `Meeting` | `Meetings` | `REFACTOR` | `P1_HIGH` | Zastąpić lokalne status pills wspólną mapą statusów i chip contract. |
+| `Benefits` | `Completed/KPI/ROI/...` | `REFACTOR` | `P2_MEDIUM` | Spiąć wielotabowy moduł jedną semantyką kolorów i zasadami command row. |
+| `Report Builder` | `My Reports/R1-R4/Templates/Schedules` | `REFACTOR` | `P2_MEDIUM` | Usunąć lokalne report-type palettes, podpiąć pod globalny kontrakt. |
+| `Decisions (standalone)` | `DecisionsHub` | `REFACTOR` | `P2_MEDIUM` | Dociągnąć do pełnego ModuleHub/App Table standardu lub formalnie oznaczyć jako interim. |
+| `AI OS` | `AIOSHub` | `DO_NOT_TOUCH` | `P3_LOW` | Landing cards poza zakresem App Table; tylko sanity-check zgodności bazowej. |
+| `Megatrends` | `MegatrendsWorkspace` | `STANDARD_NEEDED` | `P2_MEDIUM` | Ustalić standard workspace toolbarów i semantyki akcji. |
+| `Admin` | `UnifiedSync/Admin surfaces` | `REFACTOR` | `P1_HIGH` | Kontrola control-plane UX: tabele, mutacje, potwierdzenia, degraded states. |
+| `SuperAdmin` | `ModelRegistry/Integrations/...` | `REFACTOR` | `P1_HIGH` | Audyt bezpieczeństwa i spójności UI, eliminacja lokalnych wzorców driftujących od kanonu. |
+
+## 13. Kolejność wykonania audytu (fale operacyjne)
+
+1. **Fala A (P0/P1 krytyczne):**
+   - `My Work` (`Pomysły`, `Decisions`, `Inbox`, `Tasks`),
+   - cały `Interview`,
+   - `Discovery Tools`,
+   - `Assessment`.
+2. **Fala B (P1 systemowe):**
+   - `Execution`, `Results`, `Economics`, `Finance`, `Meeting`,
+   - `Reports & Presentations`.
+3. **Fala C (P2/P3 + standard needed):**
+   - `Benefits`, `Report Builder`, `Decisions standalone`,
+   - `Megatrends`, `Discovery legacy`, wybrane powierzchnie `AI OS`.
+4. **Fala D (Control plane governance):**
+   - `Admin` i `SuperAdmin` w cięciach ryzyka (`security`, `api`, `support`, potem reszta).
+
+Warunek zamknięcia fali:
+
+- wszystkie karty z fali mają wpis `Decision + Priority + Required changes`,
+- wszystkie P1 z fali mają gotowe taski migracyjne,
+- brak nieopisanych wyjątków od Color Contract i Menu 3 standardu.

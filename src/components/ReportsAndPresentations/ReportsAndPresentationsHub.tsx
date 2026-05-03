@@ -12,6 +12,7 @@ import {
   Filter,
   Inbox,
   LayoutGrid,
+  MessageSquare,
   Presentation,
   Table2,
   User,
@@ -21,9 +22,11 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { useHelpSidePanel } from '@/contexts/HelpContext';
+import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { useConversationStore } from '@/store/useConversationStore';
 
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
+import { getMenu3AiButtonClass } from '../shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
@@ -60,6 +63,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
+  const openChatWithContext = useOpenChatWithContext();
   const isPolish = i18n.language?.startsWith('pl');
   const {
     setOpen: setHelpOpen,
@@ -173,13 +177,13 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
   const ctaLabels: Record<RapTab, string> = useMemo(
     () => ({
-      outputs_all: `+ ${t('rap.outputs.cta.new', 'New output')}`,
-      outputs_mine: `+ ${t('rap.outputs.cta.new', 'New output')}`,
-      outputs_review: `+ ${t('rap.outputs.cta.new', 'New output')}`,
-      outputs_documents: `+ ${t('rap.actions.newReport', 'Nowy raport')}`,
-      presentations: `+ ${t('rap.actions.newPresentation', 'Nowa prezentacja')}`,
+      outputs_all: t('rap.outputs.cta.new', 'New output'),
+      outputs_mine: t('rap.outputs.cta.new', 'New output'),
+      outputs_review: t('rap.outputs.cta.new', 'New output'),
+      outputs_documents: t('rap.actions.newReport', 'Nowy raport'),
+      presentations: t('rap.actions.newPresentation', 'Nowa prezentacja'),
       outputs_sheets: '',
-      templates: `+ ${t('rap.actions.newTemplate', 'Nowy wzorzec')}`,
+      templates: t('rap.actions.newTemplate', 'Nowy wzorzec'),
     }),
     [t]
   );
@@ -330,7 +334,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                   {
                     value: 'shared',
                     label: t('rap.filters.status.shared', 'Shared'),
-                    dotColor: 'bg-purple-400',
+                    dotColor: 'bg-blue-400',
                   },
                   {
                     value: 'archived',
@@ -359,7 +363,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
           {
             value: 'presentation',
             label: t('rap.outputs.kind.presentation', 'Presentation'),
-            color: 'text-purple-400',
+            color: 'text-blue-400',
           },
           {
             value: 'sheet',
@@ -605,7 +609,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                             key={o.value}
                             type="button"
                             onClick={() =>
-                              toggleFilter('publishState', o.value, o.label, 'bg-purple-400')
+                              toggleFilter('publishState', o.value, o.label, 'bg-blue-400')
                             }
                             className={`h-8 rounded-full px-3 text-[11px] font-medium border inline-flex items-center gap-2 transition-colors ${
                               checked
@@ -705,7 +709,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         {
           value: 'presentation',
           label: t('rap.outputs.kind.presentation', 'Presentation'),
-          dot: 'bg-purple-400',
+          dot: 'bg-blue-400',
         },
         {
           value: 'sheet',
@@ -881,6 +885,33 @@ export const ReportsAndPresentationsHub: React.FC = () => {
     templates,
   ]);
 
+  const commandRowRightContent = useMemo(
+    () => (
+      <button
+        type="button"
+        onClick={() =>
+          openChatWithContext({
+            entityType: 'outputs_module',
+            entityId: activeTab,
+            entityName: t('rap.hub.entityName', 'Reports & Presentations'),
+            contextData: {
+              activeTab,
+              viewMode,
+              activeFiltersCount: activeFilters.length,
+              openDocumentsCount: openDocuments.length,
+            },
+          })
+        }
+        className={getMenu3AiButtonClass(false)}
+        title={t('rap.actions.discuss', 'Discuss')}
+      >
+        <MessageSquare size={12} />
+        <span>{t('rap.actions.discuss', 'Discuss')}</span>
+      </button>
+    ),
+    [activeFilters.length, activeTab, openChatWithContext, openDocuments.length, t, viewMode]
+  );
+
   const handleShowList = useCallback(() => {
     setActiveDocumentId(null);
   }, [setActiveDocumentId]);
@@ -1018,6 +1049,7 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         }
         rightControls={rightControls}
         commandRowContent={commandRowContent}
+        commandRowRightContent={commandRowRightContent}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderTabContent()}</div>
       </ModuleHub>

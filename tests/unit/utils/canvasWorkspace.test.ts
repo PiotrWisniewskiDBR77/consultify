@@ -3,6 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { CanvasDocumentState } from '../../../src/types/canvasWorkspace';
 import { getCanvasActionAvailability } from '../../../src/utils/canvas/canvasActionAvailability';
 import {
+  normalizeCanvasArtifactBlocks,
+  projectCanvasArtifactBlockToMarkdown,
+} from '../../../src/utils/canvas/canvasArtifactBlocks';
+import {
   mapDraftResponseToCanvasDocumentState,
   starterIdToCanvasKind,
 } from '../../../src/utils/canvas/canvasDraftAdapter';
@@ -69,6 +73,117 @@ describe('canvas workspace front-end contract helpers', () => {
     expect(mapped.markdownProjectionStatus).toBe('synced');
   });
 
+  it('maps optional artifact blocks without changing Markdown-only drafts', () => {
+    const mappedWithoutBlocks = mapDraftResponseToCanvasDocumentState(
+      {
+        draftId: 'draft-markdown',
+        contentMd: '# Markdown only',
+      },
+      baseDocument
+    );
+
+    expect(mappedWithoutBlocks.blocks).toEqual([]);
+
+    const mappedWithBlocks = mapDraftResponseToCanvasDocumentState(
+      {
+        draftId: 'draft-blocks',
+        contentMd: '# Business Review',
+        blocks: [
+          {
+            id: 'block-1',
+            kind: 'table',
+            schemaVersion: 'canvas-block/v1',
+            title: 'Risks',
+            status: 'ready',
+            capabilities: ['view', 'sort', 'export'],
+            data: {
+              columns: ['Risk', 'Owner'],
+              rows: [{ Risk: 'Delayed supplier decision', Owner: 'Ops' }],
+            },
+            provenance: { source: 'assistant', conversationId: 'conv-1' },
+            markdownProjectionStatus: 'synced',
+          },
+        ],
+      },
+      baseDocument
+    );
+
+    expect(mappedWithBlocks.blocks).toHaveLength(1);
+    expect(mappedWithBlocks.blocks?.[0].markdownProjection).toContain('| Risk | Owner |');
+    expect(mappedWithBlocks.contentMd).toBe('# Business Review');
+  });
+
+  it('maps Canvas workflow runs from draft provenance for context packets', () => {
+    const mapped = mapDraftResponseToCanvasDocumentState(
+      {
+        draftId: 'draft-workflow',
+        contentMd: '# Workflow',
+        provenance: {
+          workflowRuns: [
+            {
+              id: 'workflow-1',
+              draftId: 'draft-workflow',
+              conversationId: 'conv-1',
+              template: 'market_research_to_report',
+              title: 'Market research to report',
+              status: 'active',
+              steps: [
+                {
+                  id: 'step-1',
+                  kind: 'user_approval',
+                  title: 'Approval checkpoint',
+                  summary: 'Approve before durable output',
+                  status: 'pending',
+                  approvalRequired: true,
+                  createdAt: '2026-05-03T00:00:00.000Z',
+                },
+              ],
+              approvals: [{ stepId: 'step-1', status: 'pending', requiredCapability: 'approve' }],
+              outputs: [],
+              createdBy: 'user-1',
+              createdAt: '2026-05-03T00:00:00.000Z',
+              updatedAt: '2026-05-03T00:00:00.000Z',
+            },
+          ],
+        },
+      },
+      baseDocument
+    );
+
+    expect(mapped.workflowRuns).toHaveLength(1);
+    expect(mapped.workflowRuns?.[0]).toMatchObject({
+      id: 'workflow-1',
+      draftId: 'draft-workflow',
+      conversationId: 'conv-1',
+      steps: [expect.objectContaining({ approvalRequired: true })],
+    });
+  });
+
+  it('projects business artifact blocks to readable Markdown without leaking raw JSON', () => {
+    const [decisionBlock] = normalizeCanvasArtifactBlocks([
+      {
+        id: 'decision-1',
+        kind: 'decision',
+        schemaVersion: 'canvas-block/v1',
+        title: 'Go-to-market decision',
+        status: 'ready',
+        capabilities: ['view', 'convert'],
+        data: {
+          recommendation: 'Launch with Partner A',
+          options: [{ label: 'Partner A' }, { label: 'Partner B' }],
+        },
+        provenance: { source: 'assistant' },
+        markdownProjectionStatus: 'synced',
+      },
+    ]);
+
+    const markdown = projectCanvasArtifactBlockToMarkdown(decisionBlock);
+
+    expect(markdown).toContain('Recommendation: Launch with Partner A');
+    expect(markdown).toContain('- Partner A');
+    expect(markdown).not.toContain('"recommendation"');
+  });
+
   it('maps starter templates to Canvas document kinds', () => {
     expect(starterIdToCanvasKind('research')).toBe('research');
     expect(starterIdToCanvasKind('decision')).toBe('decision');
@@ -103,20 +218,22 @@ describe('canvas workspace front-end contract helpers', () => {
       canSendToIdea: true,
       canSaveAsNote: true,
       canCreateInitiative: true,
+      canShare: true,
     };
 
+    expect(getCanvasActionAvailability('share', baseDocument, capabilities).status).toBe('enabled');
     expect(getCanvasActionAvailability('send-to-idea', baseDocument, capabilities).status).toBe(
       'enabled'
     );
     expect(getCanvasActionAvailability('save-as-note', baseDocument, capabilities).status).toBe(
       'enabled'
     );
-    expect(getCanvasActionAvailability('create-initiative', baseDocument, capabilities).status).toBe(
-      'enabled'
-    );
-    expect(getCanvasActionAvailability('create-presentation', baseDocument, capabilities).status).toBe(
-      'enabled'
-    );
+    expect(
+      getCanvasActionAvailability('create-initiative', baseDocument, capabilities).status
+    ).toBe('enabled');
+    expect(
+      getCanvasActionAvailability('create-presentation', baseDocument, capabilities).status
+    ).toBe('enabled');
     expect(getCanvasActionAvailability('create-table', baseDocument, capabilities).status).toBe(
       'enabled'
     );

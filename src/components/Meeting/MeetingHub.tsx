@@ -4,7 +4,6 @@ import {
   ClipboardList,
   FileText,
   Loader2,
-  Plus,
   Sparkles,
   Users,
   X,
@@ -21,6 +20,7 @@ import {
   type ViewMode,
 } from '@/components/shared/ModuleHub';
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
+import { getMenu3AiButtonClass } from '@/components/shared/ModuleHub/menu3ActionButtonStyles';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
 import {
   MENU_3_ALL_DOT_CLASS,
@@ -352,6 +352,24 @@ export const MeetingHub: React.FC = () => {
     );
   }, [activeFilters, counts, t]);
 
+  const commandRowRightContent = useMemo(
+    () => (
+      <button
+        type="button"
+        disabled={!briefingMeeting}
+        onClick={() => {
+          if (briefingMeeting) openMeetingDocument(briefingMeeting);
+        }}
+        className={getMenu3AiButtonClass(Boolean(briefingMeeting && activeDocumentId))}
+        title={t('meeting.actions.operatorBrief', 'Open operator brief')}
+      >
+        <Sparkles size={12} />
+        <span>{t('meeting.actions.operatorBrief', 'Operator brief')}</span>
+      </button>
+    ),
+    [activeDocumentId, briefingMeeting, t]
+  );
+
   const handleCreateMeeting = async () => {
     if (!draft.title.trim() || !draft.startAt) return;
     try {
@@ -487,7 +505,6 @@ export const MeetingHub: React.FC = () => {
             onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors"
           >
-            <Plus size={16} />
             <span>{t('meeting.actions.new', 'New meeting')}</span>
           </button>
         }
@@ -504,8 +521,8 @@ export const MeetingHub: React.FC = () => {
           </div>
         }
         commandRowContent={commandRowContent}
+        commandRowRightContent={commandRowRightContent}
         availableViewModes={['table', 'calendar']}
-        showTabCounts
       >
         {loading ? (
           <div className="flex h-full items-center justify-center">
@@ -554,6 +571,18 @@ export const MeetingHub: React.FC = () => {
                 selectedRowId={selectedId}
                 onRowClick={(row) => setSelectedId(row.id)}
                 onRowDoubleClick={(row) => openMeetingDocument(row as MeetingItem)}
+                getRowActions={(row) => [
+                  {
+                    id: 'preview',
+                    label: t('common.preview', 'Preview'),
+                    onClick: () => setSelectedId(String(row.id)),
+                  },
+                  {
+                    id: 'edit',
+                    label: t('common.open', 'Open'),
+                    onClick: () => openMeetingDocument(row as MeetingItem),
+                  },
+                ]}
                 activeFilters={activeFilters}
                 onFilterChange={setActiveFilters}
                 emptyMessage={t('meeting.empty', 'No meetings yet')}

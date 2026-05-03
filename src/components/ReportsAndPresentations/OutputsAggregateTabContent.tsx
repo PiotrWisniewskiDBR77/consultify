@@ -285,7 +285,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             {row.kind === 'document' ? (
               <FileText size={16} className="shrink-0 text-blue-400" />
             ) : row.kind === 'presentation' ? (
-              <Presentation size={16} className="shrink-0 text-purple-400" />
+              <Presentation size={16} className="shrink-0 text-blue-400" />
             ) : (
               <FileSpreadsheet size={16} className="shrink-0 text-emerald-400" />
             )}
@@ -309,7 +309,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
           {
             value: 'presentation',
             label: t('rap.outputs.kind.presentation', 'Presentation'),
-            color: 'bg-purple-400',
+            color: 'bg-blue-400',
           },
           {
             value: 'sheet',
@@ -346,7 +346,7 @@ export const OutputsAggregateTabContent: React.FC<OutputsAggregateTabContentProp
             label: isPolish ? 'Wyeksportowany' : 'Exported',
             color: 'bg-blue-400',
           },
-          { value: 'shared', label: isPolish ? 'Udostępniony' : 'Shared', color: 'bg-purple-400' },
+          { value: 'shared', label: isPolish ? 'Udostępniony' : 'Shared', color: 'bg-blue-400' },
           {
             value: 'archived',
             label: isPolish ? 'Zarchiwizowany' : 'Archived',

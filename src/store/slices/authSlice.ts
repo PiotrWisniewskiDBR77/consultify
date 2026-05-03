@@ -36,7 +36,7 @@ export interface AuthSlice {
 export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) => ({
   currentUser: null,
   sessionMode: SessionMode.FREE,
-  authInitialStep: AuthStep.REGISTER,
+  authInitialStep: AuthStep.LOGIN,
   currentOrganization: null,
   isAuthInitializing: true, // Start as true, will be set to false after initial auth check
 
@@ -87,6 +87,7 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
       currentUser: null,
       currentOrganization: null,
       sessionMode: SessionMode.FREE,
+      authInitialStep: AuthStep.LOGIN,
 
       // UI Reset
       currentView: AppView.WELCOME,

@@ -69,6 +69,7 @@ const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) 
   toast.error(getSafeInterviewErrorMessage(error, defaultMessage));
 };
 
+import { InitiativeWizardModal } from '@/components/Initiatives/Wizard/InitiativeWizardModal';
 import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';
 import {
   MENU_3_ACTION_NEUTRAL,
@@ -85,7 +86,6 @@ import {
   MENU_3_ROW_CLASS,
 } from '@/components/shared/ModuleMenu3';
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
-import { Modal } from '@/components/ui/primitives/Modal';
 import {
   type ColumnDef,
   ColumnResizer,
@@ -149,6 +149,8 @@ const INTERVIEW_INSIGHTS_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-insights
 const INTERVIEW_INSIGHTS_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-insights-show-row-description';
 const INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-templates-table-view';
+const INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY =
+  'consultify-interview-templates-show-row-description';
 const INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY = 'consultify-interview-initiatives-table-view';
 const INTERVIEW_INITIATIVES_ROW_DESCRIPTION_STORAGE_KEY =
   'consultify-interview-initiatives-show-row-description';
@@ -216,6 +218,25 @@ const INTERVIEW_INSIGHTS_TABLE_RESIZE_BOUNDS: Record<
   status: { minWidth: 120, maxWidth: 220 },
   source: { minWidth: 110, maxWidth: 220 },
   date: { minWidth: 120, maxWidth: 220 },
+  actions: { minWidth: 52, maxWidth: 72 },
+};
+const INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
+  select: 44,
+  name: 430,
+  category: 170,
+  questions: 120,
+  status: 150,
+  actions: 56,
+};
+const INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS: Record<
+  string,
+  { minWidth: number; maxWidth: number }
+> = {
+  select: { minWidth: 44, maxWidth: 44 },
+  name: { minWidth: 300, maxWidth: 700 },
+  category: { minWidth: 120, maxWidth: 280 },
+  questions: { minWidth: 90, maxWidth: 180 },
+  status: { minWidth: 120, maxWidth: 220 },
   actions: { minWidth: 52, maxWidth: 72 },
 };
 const INTERVIEW_INITIATIVES_TABLE_DEFAULT_WIDTHS: ColumnWidths = {
@@ -542,40 +563,20 @@ function normalizeInterviewSessionRecord(session: InterviewSession): InterviewSe
 
 type OpenDocument = SharedOpenDocument;
 
-// Dynamic document tabs are Menu 3 chips with an optional left accent.
-const TAB_INACTIVE = MENU_3_CHIP_INACTIVE;
-const TAB_ACTIVE = MENU_3_CHIP_ACTIVE;
-
-// Type colors
-const TYPE_COLORS: Record<string, string> = {
-  interview_session: 'border-l-purple-500',
-  interview_insight: 'border-l-amber-500',
-  interview_template: 'border-l-blue-500',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'bg-slate-400',
-  DRAFT: 'bg-slate-400',
-  drafting: 'bg-slate-400',
-  in_review: 'bg-amber-400',
-  PENDING_REVIEW: 'bg-amber-400',
-  review: 'bg-amber-400',
-  REVIEW: 'bg-amber-400',
-  approved: 'bg-emerald-400',
-  APPROVED: 'bg-emerald-400',
-  accepted: 'bg-emerald-400',
-  rejected: 'bg-red-400',
-  completed: 'bg-emerald-400',
-  DONE: 'bg-emerald-400',
-  active: 'bg-purple-400',
-  EXECUTING: 'bg-purple-400',
-  archived: 'bg-slate-500',
-  ARCHIVED: 'bg-slate-500',
-  assigned: 'bg-blue-400',
-  in_progress: 'bg-purple-400',
-  submitted: 'bg-amber-400',
-  sent_back: 'bg-red-400',
-};
+const INTERVIEW_TABLE_SELECTED_ROW_CLASS =
+  'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset';
+const INTERVIEW_TABLE_HOVER_ROW_CLASS = 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]';
+const INTERVIEW_TABLE_ICON_SURFACE_CLASS =
+  'flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-slate-300/80 bg-slate-100 text-slate-500 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-300';
+const INTERVIEW_META_CHIP_CLASS =
+  'inline-flex items-center rounded-full border border-slate-300/80 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200';
+const INTERVIEW_STATUS_CHIP_BASE_CLASS =
+  'inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs font-medium';
+const INTERVIEW_DUE_CHIP_BASE_CLASS =
+  'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium';
+const INTERVIEW_PROGRESS_TRACK_CLASS =
+  'h-1.5 max-w-[100px] flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-navy-700';
+const INTERVIEW_PROGRESS_FILL_CLASS = 'h-full rounded-full bg-primary-500 transition-all';
 
 export const InterviewHub: React.FC = () => {
   const { t, i18n } = useTranslation();
@@ -635,16 +636,16 @@ export const InterviewHub: React.FC = () => {
     loadHiddenColumns(INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY, [], ['name', 'actions'])
   );
   const [templatesColumnWidths, setTemplatesColumnWidths] = useState<ColumnWidths>({
-    name: 420,
-    category: 180,
-    questions: 100,
-    status: 140,
-    actions: 90,
+    ...INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS,
   });
+  const [showTemplateRowDescription, setShowTemplateRowDescription] = useState(() =>
+    loadBooleanSetting(INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY, true)
+  );
   const [templatePreviewDetailsMenuOpen, setTemplatePreviewDetailsMenuOpen] = useState(false);
   const [templatePreviewAiMenuOpen, setTemplatePreviewAiMenuOpen] = useState(false);
   const [isTemplatesViewSettingsOpen, setIsTemplatesViewSettingsOpen] = useState(false);
-  const [templatesViewMode, setTemplatesViewMode] = useState<'cards' | 'table'>('cards');
+  const templatesViewSettingsRef = useRef<HTMLDivElement | null>(null);
+  const [templatesViewMode, setTemplatesViewMode] = useState<'cards' | 'table'>('table');
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
   const [selectedTemplateForAssign, setSelectedTemplateForAssign] =
     useState<InterviewTemplate | null>(null);
@@ -660,7 +661,7 @@ export const InterviewHub: React.FC = () => {
   const [isInsightsViewSettingsOpen, setIsInsightsViewSettingsOpen] = useState(false);
   const insightsViewSettingsRef = useRef<HTMLDivElement | null>(null);
   const [initiativeStatusFilter, setInitiativeStatusFilter] = useState<
-    'all' | 'draft' | 'pending_review' | 'promoted'
+    'all' | 'draft' | 'promoted'
   >('all');
   const [initiativesHiddenColumns, setInitiativesHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY, [], ['title', 'actions'])
@@ -673,6 +674,7 @@ export const InterviewHub: React.FC = () => {
   });
   const [isInitiativesViewSettingsOpen, setIsInitiativesViewSettingsOpen] = useState(false);
   const initiativesViewSettingsRef = useRef<HTMLDivElement | null>(null);
+  const [showInterviewInitiativeWizard, setShowInterviewInitiativeWizard] = useState(false);
   const [assignmentStatusFilter, setAssignmentStatusFilter] = useState<string>('all');
   const [selectedInsightId, setSelectedInsightId] = useState<string | null>(null);
   const [insightPreviewDetailsExpanded, setInsightPreviewDetailsExpanded] = useState(false);
@@ -734,6 +736,26 @@ export const InterviewHub: React.FC = () => {
   }, [isSessionsViewSettingsOpen]);
 
   useEffect(() => {
+    if (!isTemplatesViewSettingsOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (templatesViewSettingsRef.current?.contains(event.target as Node)) return;
+      setIsTemplatesViewSettingsOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsTemplatesViewSettingsOpen(false);
+    };
+
+    window.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isTemplatesViewSettingsOpen]);
+
+  useEffect(() => {
     if (!isInsightsViewSettingsOpen) return;
 
     const handlePointerDown = (event: PointerEvent) => {
@@ -769,6 +791,7 @@ export const InterviewHub: React.FC = () => {
   const [selectedInterviewInitiativeId, setSelectedInterviewInitiativeId] = useState<string | null>(
     null
   );
+  const [showInitiativeWizard, setShowInitiativeWizard] = useState(false);
   const [templates, setTemplates] = useState<InterviewTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUsingDemoData, setIsUsingDemoData] = useState(false);
@@ -790,6 +813,7 @@ export const InterviewHub: React.FC = () => {
   const [selectedAssignment, setSelectedAssignment] = useState<InterviewAssignment | null>(null);
   const [selectedAssignmentIds, setSelectedAssignmentIds] = useState<Set<string>>(new Set());
   const [selectedSessionIds, setSelectedSessionIds] = useState<Set<string>>(new Set());
+  const [selectedTemplateIds, setSelectedTemplateIds] = useState<Set<string>>(new Set());
   const [selectedInsightIds, setSelectedInsightIds] = useState<Set<string>>(new Set());
   const [selectedInitiativeIds, setSelectedInitiativeIds] = useState<Set<string>>(new Set());
   const [selectedSessionsForInsight, setSelectedSessionsForInsight] = useState<string[]>([]);
@@ -961,6 +985,7 @@ export const InterviewHub: React.FC = () => {
     // Templates: selection exists only in list mode (no document open)
     if (activeTab !== 'templates' || activeDocumentId) {
       setSelectedTemplateId(null);
+      setSelectedTemplateIds(new Set());
     }
   }, [activeTab, activeDocumentId]);
 
@@ -1419,7 +1444,6 @@ export const InterviewHub: React.FC = () => {
       result = result.filter((initiative) => {
         const status = String(initiative.status || 'DRAFT').toUpperCase();
         if (initiativeStatusFilter === 'draft') return status === 'DRAFT';
-        if (initiativeStatusFilter === 'pending_review') return status === 'PENDING_REVIEW';
         return ['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(status);
       });
     }
@@ -1451,6 +1475,53 @@ export const InterviewHub: React.FC = () => {
       ).length,
     }),
     [interviewInitiatives]
+  );
+
+  const initiativeWizardSourceBasket = useMemo(
+    () => [
+      ...insights.slice(0, 10).map((insight) => ({
+        type: 'interview_insight',
+        id: insight.id,
+        title: insight.title,
+        status: insight.status,
+        confidence: insight.confidence,
+        sourceSessionIds: insight.sourceSessionIds || [],
+      })),
+      ...sessions.slice(0, 10).map((session) => ({
+        type: 'interview_session',
+        id: session.id,
+        title: session.title || session.name,
+        status: session.status,
+      })),
+    ],
+    [insights, sessions]
+  );
+
+  const initiativeWizardManualNotes = useMemo(() => {
+    const insightLines = insights
+      .slice(0, 5)
+      .map((insight, index) => `${index + 1}. ${insight.title}: ${insight.description || ''}`)
+      .join('\n');
+    return [
+      isPolish
+        ? 'Stworz inicjatywy transformacyjne na podstawie materialu z modulu Wywiad. Zachowaj evidence, confidence, limits i governance proposal -> approval -> execution -> audit.'
+        : 'Create transformation initiatives from Interview material. Preserve evidence, confidence, limits and proposal -> approval -> execution -> audit governance.',
+      insightLines ? `\nTop insights:\n${insightLines}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n');
+  }, [insights, isPolish]);
+
+  const interviewWizardManualNotes = useMemo(
+    () =>
+      [
+        isPolish
+          ? 'Start z modułu Wywiad: przekształć insighty i obserwacje w zarządzalną listę inicjatyw transformacyjnych.'
+          : 'Started from Interview module: transform insights and observations into a governed initiative shortlist.',
+        `${isPolish ? 'Insightów' : 'Insights'}: ${insights.length}`,
+        `${isPolish ? 'Istniejących inicjatyw interview' : 'Existing interview initiatives'}: ${interviewInitiatives.length}`,
+      ].join('\n'),
+    [insights.length, interviewInitiatives.length, isPolish]
   );
 
   // Filter templates
@@ -1600,14 +1671,7 @@ export const InterviewHub: React.FC = () => {
       });
     }
 
-    if (canReviewInsights) {
-      baseTabs.push({
-        id: 'pending_review' as ModuleTab,
-        label: isPolish ? 'Do przeglądu' : 'Pending Review',
-        icon: <AlertTriangle size={16} />,
-        count: pendingReviewInsights.length,
-      });
-    }
+    // "Pending review" top tab intentionally hidden before client delivery.
 
     return baseTabs;
   }, [
@@ -1622,7 +1686,6 @@ export const InterviewHub: React.FC = () => {
     canViewManaged,
     canViewTemplates,
     canReviewInsights,
-    pendingReviewInsights.length,
   ]);
 
   const ensureProjectId = useCallback(async (): Promise<string | null> => {
@@ -1985,6 +2048,7 @@ export const InterviewHub: React.FC = () => {
 
   type InsightPromptType =
     | 'summary'
+    | 'general_analysis'
     | 'trends'
     | 'problems'
     | 'recommendations'
@@ -1993,7 +2057,8 @@ export const InterviewHub: React.FC = () => {
     | 'risk_assessment'
     | 'opportunity_scan'
     | 'maturity'
-    | 'stakeholder_map';
+    | 'stakeholder_map'
+    | 'between_the_lines';
 
   // Generate insight from session
   const handleGenerateInsight = useCallback(
@@ -2046,65 +2111,6 @@ export const InterviewHub: React.FC = () => {
     },
     [isPolish, loadInterviewInitiatives]
   );
-
-  // Render Dynamic Tabs
-  const renderDynamicTabs = () => {
-    if (openDocuments.length === 0) return null;
-
-    const isListActive = activeDocumentId === null;
-
-    return (
-      <div className={MENU_3_ROW_CLASS}>
-        <div className="flex min-h-8 items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
-          {/* List button */}
-          <button onClick={handleShowList} className={isListActive ? TAB_ACTIVE : TAB_INACTIVE}>
-            <List size={14} />
-            <span>List</span>
-          </button>
-
-          {/* Separator */}
-          <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06]" />
-
-          {/* Document Tabs */}
-          {openDocuments.map((doc) => {
-            const isActive = doc.id === activeDocumentId;
-            const leftBorderColor = TYPE_COLORS[doc.type];
-            const statusColor = STATUS_COLORS[doc.status];
-
-            return (
-              <div
-                key={doc.id}
-                className={`group ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
-                onClick={() => setActiveDocumentId(doc.id)}
-              >
-                {/* Type Icon */}
-                {doc.type === 'interview_session' && <MessageSquare size={14} />}
-                {doc.type === 'interview_insight' && <Lightbulb size={14} />}
-                {doc.type === 'interview_template' && <FileText size={14} />}
-
-                {/* Name (truncated) */}
-                <span className="max-w-[120px] truncate">{doc.name}</span>
-
-                {/* Status Dot */}
-                <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
-
-                {/* Close Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCloseDocument(doc.id);
-                  }}
-                  className="p-0.5 rounded opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-navy-600 transition-all"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
 
   const renderCommandRow = () => {
     // Search and dynamic tabs are now handled by ModuleHub
@@ -2428,12 +2434,15 @@ export const InterviewHub: React.FC = () => {
 
     // Templates counters/status chips — Command Row (single line)
     if (activeTab === 'templates') {
+      const selectedCount = selectedTemplateIds.size;
       const chipBase = MENU_3_CHIP_BASE;
       const chipInactive = MENU_3_CHIP_INACTIVE;
       const chipActive = MENU_3_CHIP_ACTIVE;
       const badgeBase = MENU_3_BADGE_BASE;
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
+      const bulkGhostPill =
+        'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
         id: 'all' | 'default' | 'active';
@@ -2461,6 +2470,59 @@ export const InterviewHub: React.FC = () => {
         },
       ];
 
+      if (selectedCount > 0) {
+        return (
+          <div className={MENU_3_ROW_CLASS}>
+            <div className={MENU_3_INNER_CLASS}>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTemplateIds(new Set())}
+                  className={bulkGhostPill}
+                >
+                  {isPolish ? 'Odznacz' : 'Clear'}
+                </button>
+              </div>
+              <div className={MENU_3_RIGHT_CLASS}>
+                <button
+                  type="button"
+                  onClick={() =>
+                    toast(
+                      isPolish
+                        ? 'Zbiorcze klonowanie szablonów w przygotowaniu'
+                        : 'Bulk template cloning coming soon'
+                    )
+                  }
+                  className={MENU_3_ACTION_NEUTRAL}
+                >
+                  <Copy size={14} />
+                  {isPolish ? 'Klonuj' : 'Clone'}
+                </button>
+                {canAssign ? (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      toast(
+                        isPolish
+                          ? 'Zbiorcze przydzielanie szablonów w przygotowaniu'
+                          : 'Bulk template assignment coming soon'
+                      )
+                    }
+                    className={MENU_3_ACTION_NEUTRAL}
+                  >
+                    <UserPlus size={14} />
+                    {isPolish ? 'Przydziel' : 'Assign'}
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className={MENU_3_ROW_CLASS}>
           <div className={MENU_3_INNER_CLASS}>
@@ -2483,6 +2545,7 @@ export const InterviewHub: React.FC = () => {
                 </button>
               ))}
             </div>
+            <div className="shrink-0" />
           </div>
         </div>
       );
@@ -2639,7 +2702,7 @@ export const InterviewHub: React.FC = () => {
         'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
-        id: 'all' | 'draft' | 'pending_review' | 'promoted';
+        id: 'all' | 'draft' | 'promoted';
         label: string;
         count: number;
         icon?: React.ElementType;
@@ -2654,12 +2717,6 @@ export const InterviewHub: React.FC = () => {
           label: isPolish ? 'Szkice' : 'Drafts',
           count: interviewInitiativeStats.draft,
           icon: Edit3,
-        },
-        {
-          id: 'pending_review',
-          label: isPolish ? 'Do przeglądu' : 'Pending review',
-          count: interviewInitiativeStats.pendingReview,
-          icon: AlertTriangle,
         },
         {
           id: 'promoted',
@@ -2733,7 +2790,16 @@ export const InterviewHub: React.FC = () => {
                 );
               })}
             </div>
-            <div className="shrink-0" />
+            <div className={MENU_3_RIGHT_CLASS}>
+              <button
+                type="button"
+                onClick={() => setShowInitiativeWizard(true)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-cyan-300/70 bg-cyan-500/10 px-3 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-500/15 dark:border-cyan-400/25 dark:text-cyan-200"
+              >
+                <Sparkles size={14} />
+                {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+              </button>
+            </div>
           </div>
         </div>
       );
@@ -2751,43 +2817,44 @@ export const InterviewHub: React.FC = () => {
       in_progress: {
         label: { en: 'In Progress', pl: 'W trakcie' },
         bgColor:
-          'bg-blue-100 border border-blue-200 dark:bg-purple-500/20 dark:border-purple-500/30',
-        textColor: 'text-blue-700 dark:text-purple-300',
-        dotColor: 'bg-blue-500 dark:bg-purple-400',
+          'border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
+        textColor: 'text-blue-800 dark:text-blue-100',
+        dotColor: 'bg-blue-500 dark:bg-blue-300',
       },
       submitted: {
         label: { en: 'Submitted', pl: 'Wysłany' },
         bgColor:
-          'bg-amber-100 border border-amber-200 dark:bg-amber-500/20 dark:border-amber-500/30',
-        textColor: 'text-amber-800 dark:text-amber-300',
-        dotColor: 'bg-amber-500 dark:bg-amber-400',
+          'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
+        textColor: 'text-amber-800 dark:text-amber-100',
+        dotColor: 'bg-amber-500 dark:bg-amber-300',
       },
       sent_back: {
         label: { en: 'Sent Back', pl: 'Do poprawy' },
-        bgColor: 'bg-red-100 border border-red-200 dark:bg-rose-500/20 dark:border-rose-500/30',
-        textColor: 'text-red-800 dark:text-rose-300',
-        dotColor: 'bg-red-500 dark:bg-rose-400',
+        bgColor:
+          'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
+        textColor: 'text-rose-800 dark:text-rose-100',
+        dotColor: 'bg-rose-500 dark:bg-rose-300',
       },
       approved: {
         label: { en: 'Approved', pl: 'Zatwierdzony' },
         bgColor:
-          'bg-emerald-100 border border-emerald-200 dark:bg-emerald-500/20 dark:border-emerald-500/30',
-        textColor: 'text-emerald-800 dark:text-emerald-300',
-        dotColor: 'bg-emerald-500 dark:bg-emerald-400',
+          'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
+        textColor: 'text-emerald-800 dark:text-emerald-100',
+        dotColor: 'bg-emerald-500 dark:bg-emerald-300',
       },
       in_review: {
         label: { en: 'In Review', pl: 'Do przeglądu' },
         bgColor:
-          'bg-amber-100 border border-amber-200 dark:bg-amber-500/20 dark:border-amber-500/30',
-        textColor: 'text-amber-800 dark:text-amber-300',
-        dotColor: 'bg-amber-500 dark:bg-amber-400',
+          'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
+        textColor: 'text-amber-800 dark:text-amber-100',
+        dotColor: 'bg-amber-500 dark:bg-amber-300',
       },
       completed: {
         label: { en: 'Completed', pl: 'Zakończony' },
         bgColor:
-          'bg-emerald-100 border border-emerald-200 dark:bg-emerald-500/20 dark:border-emerald-500/30',
-        textColor: 'text-emerald-800 dark:text-emerald-300',
-        dotColor: 'bg-emerald-500 dark:bg-emerald-400',
+          'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
+        textColor: 'text-emerald-800 dark:text-emerald-100',
+        dotColor: 'bg-emerald-500 dark:bg-emerald-300',
       },
       paused: {
         label: { en: 'Paused', pl: 'Wstrzymany' },
@@ -2966,12 +3033,12 @@ export const InterviewHub: React.FC = () => {
                       event.stopPropagation();
                       setIsSessionsViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isSessionsViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
                   >
-                    <Settings2 size={14} />
+                    <Settings2 size={15} />
                   </button>
                   {isSessionsViewSettingsOpen ? (
                     <div
@@ -3074,8 +3141,8 @@ export const InterviewHub: React.FC = () => {
                   className={[
                     'group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0',
                     isSelected || isSessionSelected
-                      ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
-                      : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]',
+                      ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
+                      : INTERVIEW_TABLE_HOVER_ROW_CLASS,
                   ].join(' ')}
                 >
                   <td className="px-3 py-3" style={{ width: sessionsColumnWidths.select }}>
@@ -3104,10 +3171,8 @@ export const InterviewHub: React.FC = () => {
                   </td>
                   <td className="px-3 py-3" style={{ width: sessionsColumnWidths.name }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <div
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${statusConfig.bgColor}`}
-                      >
-                        <Brain size={15} className={statusConfig.textColor} />
+                      <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
+                        <Brain size={15} />
                       </div>
                       <div className="min-w-0">
                         <span className="text-sm text-slate-900 dark:text-white font-medium block truncate">
@@ -3130,7 +3195,7 @@ export const InterviewHub: React.FC = () => {
                       style={{ width: sessionsColumnWidths.status }}
                     >
                       <div
-                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusConfig.bgColor}`}
+                        className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} ${statusConfig.bgColor}`}
                       >
                         <span className={`w-2 h-2 rounded-full ${statusConfig.dotColor}`} />
                         <span
@@ -3148,11 +3213,9 @@ export const InterviewHub: React.FC = () => {
                       style={{ width: sessionsColumnWidths.progress }}
                     >
                       <div className="flex items-center justify-center gap-2">
-                        <div className="flex-1 max-w-[100px] h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                        <div className={INTERVIEW_PROGRESS_TRACK_CLASS}>
                           <div
-                            className={`h-full rounded-full transition-all ${
-                              progress === 100 ? 'bg-emerald-500' : 'bg-purple-500'
-                            }`}
+                            className={INTERVIEW_PROGRESS_FILL_CLASS}
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -3282,11 +3345,11 @@ export const InterviewHub: React.FC = () => {
           workflowStatus === 'approved' || workflowStatus === 'completed'
             ? 'from-emerald-50 via-white to-white border-emerald-200 dark:from-emerald-500/20 dark:to-emerald-600/10 dark:border-emerald-500/30'
             : workflowStatus === 'in_progress'
-              ? 'from-blue-50 via-white to-white border-blue-200 dark:from-purple-500/20 dark:to-purple-600/10 dark:border-purple-500/30'
+              ? 'from-blue-50 via-white to-white border-blue-200 dark:from-blue-500/20 dark:to-blue-600/10 dark:border-blue-500/30'
               : workflowStatus === 'submitted'
                 ? 'from-amber-50 via-white to-white border-amber-200 dark:from-amber-500/15 dark:to-amber-600/10 dark:border-amber-500/30'
                 : workflowStatus === 'sent_back'
-                  ? 'from-red-50 via-white to-white border-red-200 dark:from-rose-500/15 dark:to-rose-600/10 dark:border-rose-500/30'
+                  ? 'from-rose-50 via-white to-white border-rose-200 dark:from-rose-500/15 dark:to-rose-600/10 dark:border-rose-500/30'
                   : 'from-slate-50 via-white to-white border-slate-200 dark:from-slate-500/20 dark:to-slate-600/10 dark:border-slate-500/30';
 
         return (
@@ -3305,11 +3368,11 @@ export const InterviewHub: React.FC = () => {
                       workflowStatus === 'approved' || workflowStatus === 'completed'
                         ? 'text-emerald-600 dark:text-emerald-400'
                         : workflowStatus === 'in_progress'
-                          ? 'text-blue-600 dark:text-purple-400'
+                          ? 'text-blue-600 dark:text-blue-400'
                           : workflowStatus === 'submitted'
                             ? 'text-amber-600 dark:text-amber-400'
                             : workflowStatus === 'sent_back'
-                              ? 'text-red-600 dark:text-rose-400'
+                              ? 'text-rose-600 dark:text-rose-400'
                               : 'text-slate-500 dark:text-slate-400'
                     }
                   />
@@ -3346,7 +3409,7 @@ export const InterviewHub: React.FC = () => {
                 <div className="flex-1 h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
                   <div
                     className={`h-full rounded-full transition-all ${
-                      progress === 100 ? 'bg-emerald-500' : 'bg-purple-500'
+                      progress === 100 ? 'bg-emerald-500' : 'bg-primary-500'
                     }`}
                     style={{ width: `${progress}%` }}
                   />
@@ -3455,59 +3518,82 @@ export const InterviewHub: React.FC = () => {
       { label: { en: string; pl: string }; bgColor: string; textColor: string }
     > = {
       summary: {
-        label: { en: 'Executive Summary', pl: 'Executive Summary' },
-        bgColor: 'bg-amber-500/20',
-        textColor: 'text-amber-400',
+        label: { en: 'Executive Summary', pl: 'Podsumowanie Wykonawcze' },
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
+      },
+      general_analysis: {
+        label: { en: 'General Analysis', pl: 'Analiza Ogólna' },
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       trends: {
         label: { en: 'Trend Analysis', pl: 'Analiza trendów' },
-        bgColor: 'bg-blue-500/20',
-        textColor: 'text-blue-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       problems: {
         label: { en: 'Problem Discovery', pl: 'Problemy' },
-        bgColor: 'bg-red-500/20',
-        textColor: 'text-red-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       recommendations: {
         label: { en: 'Recommendations', pl: 'Rekomendacje' },
-        bgColor: 'bg-emerald-500/20',
-        textColor: 'text-emerald-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       comparison: {
         label: { en: 'Comparison', pl: 'Porównanie' },
-        bgColor: 'bg-purple-500/20',
-        textColor: 'text-purple-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       gaps: {
         label: { en: 'Gap Analysis', pl: 'Luki' },
-        bgColor: 'bg-orange-500/20',
-        textColor: 'text-orange-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       risk_assessment: {
         label: { en: 'Risk Assessment', pl: 'Ryzyka' },
-        bgColor: 'bg-red-500/20',
-        textColor: 'text-red-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       opportunity_scan: {
         label: { en: 'Opportunity Scan', pl: 'Szanse' },
-        bgColor: 'bg-emerald-500/20',
-        textColor: 'text-emerald-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       maturity: {
         label: { en: 'Maturity', pl: 'Dojrzałość' },
-        bgColor: 'bg-indigo-500/20',
-        textColor: 'text-indigo-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       stakeholder_map: {
         label: { en: 'Stakeholder Map', pl: 'Interesariusze' },
-        bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
+      },
+      between_the_lines: {
+        label: { en: 'Between the Lines', pl: 'Między Wierszami' },
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
       general: {
         label: { en: 'General', pl: 'Ogólny' },
-        bgColor: 'bg-slate-500/20',
-        textColor: 'text-slate-400',
+        bgColor:
+          'border border-slate-200 bg-slate-100 text-slate-700 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300',
+        textColor: 'text-slate-500 dark:text-slate-400',
       },
     };
     return configs[type || 'summary'] || configs.summary;
@@ -3806,12 +3892,12 @@ export const InterviewHub: React.FC = () => {
                       event.stopPropagation();
                       setIsInsightsViewSettingsOpen((open) => !open);
                     }}
-                    className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                     aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                     aria-expanded={isInsightsViewSettingsOpen}
                     title={isPolish ? 'Ustawienia widoku' : 'View settings'}
                   >
-                    <Settings2 size={14} />
+                    <Settings2 size={15} />
                   </button>
                   {isInsightsViewSettingsOpen ? (
                     <div
@@ -3913,33 +3999,33 @@ export const InterviewHub: React.FC = () => {
               > = {
                 draft: {
                   label: { en: 'Draft', pl: 'Szkic' },
-                  bg: 'bg-slate-500/20',
-                  text: 'text-slate-400',
+                  bg: 'border border-slate-200 bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06]',
+                  text: 'text-slate-600 dark:text-slate-300',
                 },
                 generating: {
                   label: { en: 'Generating', pl: 'Generowanie' },
-                  bg: 'bg-amber-500/20',
-                  text: 'text-amber-400',
+                  bg: 'border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10',
+                  text: 'text-amber-700 dark:text-amber-300',
                 },
                 completed: {
                   label: { en: 'Completed', pl: 'Gotowe' },
-                  bg: 'bg-emerald-500/20',
-                  text: 'text-emerald-400',
+                  bg: 'border border-slate-200 bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06]',
+                  text: 'text-slate-600 dark:text-slate-300',
                 },
                 in_review: {
                   label: { en: 'In Review', pl: 'W recenzji' },
-                  bg: 'bg-blue-500/20',
-                  text: 'text-blue-400',
+                  bg: 'border border-amber-200 bg-amber-50 dark:border-amber-500/20 dark:bg-amber-500/10',
+                  text: 'text-amber-700 dark:text-amber-300',
                 },
                 published: {
                   label: { en: 'Published', pl: 'Opublikowane' },
-                  bg: 'bg-violet-500/20',
-                  text: 'text-violet-400',
+                  bg: 'border border-slate-200 bg-slate-100 dark:border-white/[0.08] dark:bg-white/[0.06]',
+                  text: 'text-slate-600 dark:text-slate-300',
                 },
                 failed: {
                   label: { en: 'Failed', pl: 'Błąd' },
-                  bg: 'bg-red-500/20',
-                  text: 'text-red-400',
+                  bg: 'border border-rose-200 bg-rose-50 dark:border-rose-500/20 dark:bg-rose-500/10',
+                  text: 'text-rose-700 dark:text-rose-300',
                 },
               };
               const sc = statusConfig[status] || statusConfig.completed;
@@ -4016,13 +4102,13 @@ export const InterviewHub: React.FC = () => {
                         {(crossPerspectiveCount > 0 || divergenceCount > 0) && (
                           <div className="mt-1 flex flex-wrap gap-1.5">
                             {crossPerspectiveCount > 0 && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-500/10 text-blue-600 dark:text-blue-300">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
                                 <Users size={10} />
                                 {crossPerspectiveCount} {isPolish ? 'cross-role' : 'cross-role'}
                               </span>
                             )}
                             {divergenceCount > 0 && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                              <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-white/[0.08] dark:bg-white/[0.06] dark:text-slate-300">
                                 <AlertTriangle size={10} />
                                 {divergenceCount} {isPolish ? 'rozjazdów' : 'divergences'}
                               </span>
@@ -4038,7 +4124,7 @@ export const InterviewHub: React.FC = () => {
                       style={{ width: insightColumnWidths.type }}
                     >
                       <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${typeConfig.bgColor} ${typeConfig.textColor}`}
+                        className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${typeConfig.bgColor}`}
                       >
                         {isPolish ? typeConfig.label.pl : typeConfig.label.en}
                       </span>
@@ -4177,7 +4263,7 @@ export const InterviewHub: React.FC = () => {
                         setShowInsightModal(true);
                       }}
                       disabled={!canCreateInsights}
-                      className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                      className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                     >
                       <Sparkles size={16} />
                       {isPolish ? 'Generuj wnioski AI' : 'Generate AI Insights'}
@@ -4198,104 +4284,262 @@ export const InterviewHub: React.FC = () => {
     onOpenFull?: (id: string) => void;
   }) => {
     const hiddenSet = new Set(templatesHiddenColumns);
-    const colSpan =
-      1 +
-      (!hiddenSet.has('category') ? 1 : 0) +
-      (!hiddenSet.has('questions') ? 1 : 0) +
-      (!hiddenSet.has('status') ? 1 : 0) +
-      1;
+    const visibleTemplateIds = filteredTemplates.map((template) => template.id);
+    const selectedVisibleCount = visibleTemplateIds.filter((id) =>
+      selectedTemplateIds.has(id)
+    ).length;
+    const allVisibleSelected =
+      visibleTemplateIds.length > 0 && selectedVisibleCount === visibleTemplateIds.length;
+    const someVisibleSelected = selectedVisibleCount > 0 && !allVisibleSelected;
+    const visibleColumns = [
+      'select',
+      'name',
+      ...(!hiddenSet.has('category') ? ['category'] : []),
+      ...(!hiddenSet.has('questions') ? ['questions'] : []),
+      ...(!hiddenSet.has('status') ? ['status'] : []),
+      'actions',
+    ];
+    const colSpan = visibleColumns.length;
+    const tableMinWidth = visibleColumns.reduce(
+      (sum, columnId) => sum + (templatesColumnWidths[columnId] ?? 120),
+      0
+    );
 
+    const toggleTemplateSelection = (templateId: string) => {
+      setSelectedTemplateIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(templateId)) next.delete(templateId);
+        else next.add(templateId);
+        return next;
+      });
+    };
+    const toggleAllVisibleTemplates = () => {
+      setSelectedTemplateIds((prev) => {
+        const next = new Set(prev);
+        if (allVisibleSelected) {
+          visibleTemplateIds.forEach((id) => next.delete(id));
+        } else {
+          visibleTemplateIds.forEach((id) => next.add(id));
+        }
+        return next;
+      });
+    };
     const handleResize = (columnId: string, newWidth: number) => {
-      setTemplatesColumnWidths((prev: ColumnWidths) => ({ ...prev, [columnId]: newWidth }));
+      setTemplatesColumnWidths((prev) => {
+        const currentIndex = visibleColumns.indexOf(columnId);
+        const nextColumnId = visibleColumns[currentIndex + 1];
+        if (currentIndex < 0 || !nextColumnId) return prev;
+
+        const current = prev[columnId] ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS[columnId];
+        const next = prev[nextColumnId] ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS[nextColumnId];
+        const currentBounds = INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS[columnId];
+        const nextBounds = INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS[nextColumnId];
+        const requestedDelta = newWidth - current;
+        const minDelta = Math.max(currentBounds.minWidth - current, next - nextBounds.maxWidth);
+        const maxDelta = Math.min(currentBounds.maxWidth - current, next - nextBounds.minWidth);
+        const delta = Math.max(minDelta, Math.min(maxDelta, requestedDelta));
+        if (delta === 0) return prev;
+
+        return {
+          ...prev,
+          [columnId]: current + delta,
+          [nextColumnId]: next - delta,
+        };
+      });
+    };
+    const renderTemplateResizer = (columnId: string) => {
+      if (visibleColumns[visibleColumns.indexOf(columnId) + 1] == null) return null;
+      const bounds = INTERVIEW_TEMPLATES_TABLE_RESIZE_BOUNDS[columnId];
+      return (
+        <ColumnResizer
+          columnId={columnId}
+          currentWidth={
+            templatesColumnWidths[columnId] ?? INTERVIEW_TEMPLATES_TABLE_DEFAULT_WIDTHS[columnId]
+          }
+          minWidth={bounds.minWidth}
+          maxWidth={bounds.maxWidth}
+          onResize={handleResize}
+        />
+      );
     };
 
     return (
       <div className="bg-white/70 dark:bg-navy-900/70 border border-slate-200/70 dark:border-white/[0.06] rounded-xl backdrop-blur overflow-hidden">
-        <table className="w-full table-fixed" style={{ minWidth: 820 }}>
+        <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
           <thead>
             <tr className="border-b border-slate-200/70 dark:border-white/[0.06] bg-slate-50/70 dark:bg-navy-900/40 sticky top-0 z-10">
+              <th className="px-3 py-2 text-left" style={{ width: templatesColumnWidths.select }}>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleAllVisibleTemplates();
+                  }}
+                  className={[
+                    'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                    'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                    allVisibleSelected || someVisibleSelected
+                      ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                      : 'opacity-70',
+                  ].join(' ')}
+                  aria-label={isPolish ? 'Zaznacz widoczne szablony' : 'Select visible templates'}
+                  aria-pressed={allVisibleSelected}
+                >
+                  {allVisibleSelected ? <Check size={10} strokeWidth={3} /> : null}
+                  {someVisibleSelected ? <Minus size={10} strokeWidth={3} /> : null}
+                </button>
+              </th>
               <th
-                className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header w-full"
+                className="px-3 py-2 text-left text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header w-full"
                 style={{ width: templatesColumnWidths.name }}
               >
                 <div className="flex items-center gap-1">
                   <span>{isPolish ? 'Nazwa' : 'Name'}</span>
                 </div>
-                <ColumnResizer
-                  columnId="name"
-                  currentWidth={templatesColumnWidths.name}
-                  minWidth={260}
-                  maxWidth={900}
-                  onResize={handleResize}
-                />
+                {renderTemplateResizer('name')}
               </th>
 
               {!hiddenSet.has('category') && (
                 <th
-                  className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.category }}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     <span>{isPolish ? 'Kategoria' : 'Category'}</span>
                   </div>
-                  <ColumnResizer
-                    columnId="category"
-                    currentWidth={templatesColumnWidths.category}
-                    minWidth={120}
-                    maxWidth={360}
-                    onResize={handleResize}
-                  />
+                  {renderTemplateResizer('category')}
                 </th>
               )}
 
               {!hiddenSet.has('questions') && (
                 <th
-                  className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.questions }}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     <span>{isPolish ? 'Pytania' : 'Questions'}</span>
                   </div>
-                  <ColumnResizer
-                    columnId="questions"
-                    currentWidth={templatesColumnWidths.questions}
-                    minWidth={70}
-                    maxWidth={140}
-                    onResize={handleResize}
-                  />
+                  {renderTemplateResizer('questions')}
                 </th>
               )}
 
               {!hiddenSet.has('status') && (
                 <th
-                  className="px-4 py-3 text-left text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider relative group/header"
+                  className="px-3 py-2 text-center text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider relative group/header"
                   style={{ width: templatesColumnWidths.status }}
                 >
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     <span>{isPolish ? 'Status' : 'Status'}</span>
                   </div>
-                  <ColumnResizer
-                    columnId="status"
-                    currentWidth={templatesColumnWidths.status}
-                    minWidth={110}
-                    maxWidth={220}
-                    onResize={handleResize}
-                  />
+                  {renderTemplateResizer('status')}
                 </th>
               )}
 
               <th
-                className="px-4 py-3 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                className="relative px-3 py-2 text-right text-[11px] font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: templatesColumnWidths.actions }}
               >
-                <button
-                  onClick={() => setIsTemplatesViewSettingsOpen(true)}
-                  className="inline-flex items-center justify-center h-8 w-8 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
-                  aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                  title={isPolish ? 'Ustawienia widoku' : 'View settings'}
-                >
-                  <Settings2 size={14} />
-                </button>
+                <div ref={templatesViewSettingsRef} className="flex items-center justify-end">
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setIsTemplatesViewSettingsOpen((open) => !open);
+                    }}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+                    aria-expanded={isTemplatesViewSettingsOpen}
+                    title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                  >
+                    <Settings2 size={15} />
+                  </button>
+                  {isTemplatesViewSettingsOpen ? (
+                    <div
+                      className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                      role="menu"
+                    >
+                      <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Kolumny' : 'Columns'}
+                      </div>
+                      <div className="space-y-1">
+                        {(
+                          [
+                            { id: 'name', label: isPolish ? 'Nazwa' : 'Name', alwaysVisible: true },
+                            { id: 'category', label: isPolish ? 'Kategoria' : 'Category' },
+                            { id: 'questions', label: isPolish ? 'Pytania' : 'Questions' },
+                            { id: 'status', label: isPolish ? 'Status' : 'Status' },
+                            {
+                              id: 'actions',
+                              label: isPolish ? 'Akcje' : 'Actions',
+                              alwaysVisible: true,
+                            },
+                          ] as Array<{ id: string; label: string; alwaysVisible?: boolean }>
+                        ).map((col) => {
+                          const alwaysVisible = !!col.alwaysVisible;
+                          const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
+                          return (
+                            <label
+                              key={col.id}
+                              className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06] ${
+                                alwaysVisible ? 'opacity-60' : 'cursor-pointer'
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                disabled={alwaysVisible}
+                                onChange={() => {
+                                  if (alwaysVisible) return;
+                                  setTemplatesHiddenColumns((prev) => {
+                                    const set = new Set(prev);
+                                    if (set.has(col.id)) set.delete(col.id);
+                                    else set.add(col.id);
+                                    set.delete('name');
+                                    set.delete('actions');
+                                    const next = Array.from(set);
+                                    saveHiddenColumns(
+                                      INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY,
+                                      next
+                                    );
+                                    return next;
+                                  });
+                                }}
+                                className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                              />
+                              <span className="flex-1 text-slate-700 dark:text-slate-200">
+                                {col.label}
+                              </span>
+                              {alwaysVisible ? (
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                  {isPolish ? 'Wymagane' : 'Required'}
+                                </span>
+                              ) : null}
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <div className="my-2 h-px bg-slate-200/70 dark:bg-white/[0.08]" />
+                      <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06]">
+                        <input
+                          type="checkbox"
+                          checked={showTemplateRowDescription}
+                          onChange={(event) => {
+                            setShowTemplateRowDescription(event.target.checked);
+                            saveBooleanSetting(
+                              INTERVIEW_TEMPLATES_ROW_DESCRIPTION_STORAGE_KEY,
+                              event.target.checked
+                            );
+                          }}
+                          className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="text-slate-700 dark:text-slate-200">
+                          {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+                        </span>
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
               </th>
             </tr>
           </thead>
@@ -4303,6 +4547,19 @@ export const InterviewHub: React.FC = () => {
           <tbody>
             {filteredTemplates.map((template) => {
               const isSelected = selectedTemplateId === template.id;
+              const isTemplateSelected = selectedTemplateIds.has(template.id);
+              const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
+              const rowDescription =
+                template.description ||
+                [
+                  template.scope ? getTemplateSourceLabel(template.scope, isPolish) : null,
+                  areaTags
+                    .slice(0, 2)
+                    .map((tag) => getTemplateAreaTagLabel(tag, isPolish))
+                    .join(' · '),
+                ]
+                  .filter(Boolean)
+                  .join(' · ');
               const select = () => {
                 setSelectedTemplateId(template.id);
                 opts?.onSelectRow?.(template.id);
@@ -4315,8 +4572,8 @@ export const InterviewHub: React.FC = () => {
                   onClick={select}
                   onDoubleClick={openFull}
                   className={`group cursor-pointer transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 ${
-                    isSelected
-                      ? 'bg-primary-50 dark:bg-primary-500/10'
+                    isSelected || isTemplateSelected
+                      ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
                       : 'hover:bg-slate-50 dark:hover:bg-navy-800/50'
                   }`}
                   role="button"
@@ -4343,12 +4600,36 @@ export const InterviewHub: React.FC = () => {
                     }
                   }}
                 >
+                  <td className="px-3 py-3" style={{ width: templatesColumnWidths.select }}>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleTemplateSelection(template.id);
+                      }}
+                      className={[
+                        'inline-flex h-3.5 w-3.5 items-center justify-center rounded-[4px] border transition-all duration-150',
+                        'border-slate-300 bg-white/80 text-white hover:border-primary-400 hover:bg-white dark:border-white/[0.14] dark:bg-white/[0.035]',
+                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35',
+                        isTemplateSelected
+                          ? 'border-primary-500 bg-primary-500 opacity-100 dark:border-primary-400 dark:bg-primary-500'
+                          : isSelected
+                            ? 'opacity-100'
+                            : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+                      ].join(' ')}
+                      aria-label={isPolish ? 'Zaznacz szablon' : 'Select template'}
+                      aria-pressed={isTemplateSelected}
+                    >
+                      {isTemplateSelected ? <Check size={10} strokeWidth={3} /> : null}
+                    </button>
+                  </td>
                   {/* Name (title only) */}
-                  <td className="px-4 py-3" style={{ width: templatesColumnWidths.name }}>
+                  <td className="px-3 py-3" style={{ width: templatesColumnWidths.name }}>
                     <div className="min-w-0">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/20">
-                          <FileText size={16} className="text-blue-400" />
+                        <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
+                          <FileText size={16} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <span
@@ -4357,42 +4638,31 @@ export const InterviewHub: React.FC = () => {
                           >
                             {template.name}
                           </span>
-                          <div className="hidden group-hover:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
-                            {template.description ? (
-                              <span className="truncate" title={template.description}>
-                                {template.description}
-                              </span>
-                            ) : null}
-                            {template.scope ? (
-                              <span className="px-1.5 py-0.5 rounded-full border border-slate-200/70 dark:border-white/[0.08]">
-                                {getTemplateSourceLabel(template.scope, isPolish)}
-                              </span>
-                            ) : null}
-                            {(template.areaTags || []).slice(0, 2).map((tag) => (
-                              <span
-                                key={tag}
-                                className="px-1.5 py-0.5 rounded-full border border-slate-200/70 dark:border-white/[0.08]"
-                              >
-                                {getTemplateAreaTagLabel(tag, isPolish)}
-                              </span>
-                            ))}
-                          </div>
+                          {showTemplateRowDescription && rowDescription ? (
+                            <span
+                              className="mt-0.5 block truncate text-[11px] font-normal leading-4 text-slate-950/65 dark:text-slate-100/55"
+                              title={rowDescription}
+                            >
+                              {rowDescription}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                     </div>
                   </td>
 
                   {!hiddenSet.has('category') && (
-                    <td className="px-4 py-3" style={{ width: templatesColumnWidths.category }}>
-                      <span className="px-2 py-1 bg-slate-200 dark:bg-navy-700 text-slate-700 dark:text-slate-300 text-xs rounded-full">
-                        {template.category}
-                      </span>
+                    <td
+                      className="px-3 py-3 text-center"
+                      style={{ width: templatesColumnWidths.category }}
+                    >
+                      <span className={INTERVIEW_META_CHIP_CLASS}>{template.category}</span>
                     </td>
                   )}
 
                   {!hiddenSet.has('questions') && (
                     <td
-                      className="px-4 py-3 text-sm text-slate-500 dark:text-slate-400"
+                      className="px-3 py-3 text-center text-sm text-slate-500 dark:text-slate-400"
                       style={{ width: templatesColumnWidths.questions }}
                     >
                       {template.questionCount}
@@ -4400,13 +4670,20 @@ export const InterviewHub: React.FC = () => {
                   )}
 
                   {!hiddenSet.has('status') && (
-                    <td className="px-4 py-3" style={{ width: templatesColumnWidths.status }}>
+                    <td
+                      className="px-3 py-3 text-center"
+                      style={{ width: templatesColumnWidths.status }}
+                    >
                       {template.isDefault ? (
-                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 text-xs rounded-full">
+                        <span
+                          className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100`}
+                        >
                           {isPolish ? 'Domyślny' : 'Default'}
                         </span>
                       ) : (
-                        <span className="px-2 py-1 bg-emerald-500/20 text-emerald-400 text-xs rounded-full">
+                        <span
+                          className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100`}
+                        >
                           {isPolish ? 'Aktywny' : 'Active'}
                         </span>
                       )}
@@ -4415,7 +4692,7 @@ export const InterviewHub: React.FC = () => {
 
                   {/* Actions */}
                   <td
-                    className="px-4 py-3 text-right"
+                    className="px-3 py-3 text-right"
                     style={{ width: templatesColumnWidths.actions }}
                     onClick={(e) => e.stopPropagation()}
                   >
@@ -4530,7 +4807,7 @@ export const InterviewHub: React.FC = () => {
                     {canAssign && (
                       <button
                         onClick={handleNewTemplate}
-                        className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+                        className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
                       >
                         <FilePlus size={16} />
                         {isPolish ? 'Nowy szablon' : 'New template'}
@@ -4560,7 +4837,7 @@ export const InterviewHub: React.FC = () => {
           {canAssign && (
             <button
               onClick={handleNewTemplate}
-              className="mt-4 inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 transition-colors active:scale-[0.98]"
+              className="mt-4 inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98]"
             >
               <FilePlus size={16} />
               {isPolish ? 'Nowy szablon' : 'New template'}
@@ -4587,10 +4864,10 @@ export const InterviewHub: React.FC = () => {
                 ? 'Prywatny'
                 : 'Private';
           const scopeColor = isSystem
-            ? 'bg-violet-500/10 text-violet-600 dark:text-violet-400'
+            ? 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200'
             : isOrg
-              ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
-              : 'bg-slate-500/10 text-slate-600 dark:text-slate-400';
+              ? 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200'
+              : 'border border-slate-300/80 bg-slate-100 text-slate-700 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200';
           const statusLabel =
             template.status === 'approved'
               ? isPolish
@@ -4601,8 +4878,8 @@ export const InterviewHub: React.FC = () => {
                 : 'Draft';
           const statusColor =
             template.status === 'approved'
-              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
-              : 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+              ? 'border border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100'
+              : 'border border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100';
           const areaTags = normalizeInterviewTemplateAreaTags(template.areaTags);
 
           return (
@@ -4912,23 +5189,23 @@ export const InterviewHub: React.FC = () => {
   const getAssignmentStatusColor = useCallback((status: string) => {
     switch (status) {
       case 'assigned':
-        return 'border border-blue-200 bg-blue-100 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/20 dark:text-blue-300';
+        return 'border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100';
       case 'drafting':
-        return 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/20 dark:text-slate-300';
+        return 'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200';
       case 'in_progress':
-        return 'border border-primary-200 bg-primary-50 text-primary-700 dark:border-primary-500/30 dark:bg-primary-500/20 dark:text-primary-300';
+        return 'border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100';
       case 'review':
       case 'submitted':
-        return 'border border-amber-200 bg-amber-100 text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/20 dark:text-amber-300';
+        return 'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100';
       case 'sent_back':
       case 'rejected':
-        return 'border border-red-200 bg-red-100 text-red-800 dark:border-red-500/30 dark:bg-red-500/20 dark:text-red-300';
+        return 'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100';
       case 'accepted':
       case 'approved':
       case 'completed':
-        return 'border border-emerald-200 bg-emerald-100 text-emerald-800 dark:border-emerald-500/30 dark:bg-emerald-500/20 dark:text-emerald-300';
+        return 'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100';
       default:
-        return 'border border-slate-200 bg-slate-100 text-slate-700 dark:border-slate-500/30 dark:bg-slate-500/20 dark:text-slate-300';
+        return 'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200';
     }
   }, []);
 
@@ -4969,27 +5246,31 @@ export const InterviewHub: React.FC = () => {
           label: isPolish
             ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
             : `${absDays}d overdue`,
-          colorClass: 'text-red-400 bg-red-500/10',
+          colorClass:
+            'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
         };
       }
       if (days === 0) {
         return {
           days,
           label: isPolish ? 'Dziś!' : 'Today!',
-          colorClass: 'text-red-400 bg-red-500/10',
+          colorClass:
+            'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
         };
       }
       if (days <= 3) {
         return {
           days,
           label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
-          colorClass: 'text-amber-400 bg-amber-500/10',
+          colorClass:
+            'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
         };
       }
       return {
         days,
         label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
-        colorClass: 'text-emerald-400 bg-emerald-500/10',
+        colorClass:
+          'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
       };
     },
     [isPolish]
@@ -5310,9 +5591,9 @@ Return ONLY the answer text (no markdown fences).`;
     const getPriorityColor = (priority: string) => {
       switch (priority) {
         case 'urgent':
-          return 'text-red-400';
+          return 'text-rose-400';
         case 'high':
-          return 'text-orange-400';
+          return 'text-amber-400';
         case 'medium':
           return 'text-amber-400';
         case 'low':
@@ -5346,27 +5627,31 @@ Return ONLY the answer text (no markdown fences).`;
           label: isPolish
             ? `${absDays} ${absDays === 1 ? 'dzień' : 'dni'} po terminie`
             : `${absDays}d overdue`,
-          colorClass: 'text-red-400 bg-red-500/10',
+          colorClass:
+            'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
         };
       }
       if (days === 0) {
         return {
           days,
           label: isPolish ? 'Dziś!' : 'Today!',
-          colorClass: 'text-red-400 bg-red-500/10',
+          colorClass:
+            'border-rose-300/80 bg-rose-50 text-rose-900 dark:border-rose-300/[0.25] dark:bg-rose-300/[0.12] dark:text-rose-100',
         };
       }
       if (days <= 3) {
         return {
           days,
           label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
-          colorClass: 'text-amber-400 bg-amber-500/10',
+          colorClass:
+            'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
         };
       }
       return {
         days,
         label: isPolish ? `${days} ${days === 1 ? 'dzień' : 'dni'} do terminu` : `${days}d left`,
-        colorClass: 'text-emerald-400 bg-emerald-500/10',
+        colorClass:
+          'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
       };
     };
 
@@ -5616,17 +5901,125 @@ Return ONLY the answer text (no markdown fences).`;
                 className="px-3 py-2 text-right text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider"
                 style={{ width: columnWidths.actions }}
               >
-                <button
-                  onClick={() => {
-                    setAssignmentsViewSettingsShowAssignee(showAssignee);
-                    setIsAssignmentsViewSettingsOpen(true);
-                  }}
-                  className="inline-flex items-center justify-center h-7 w-7 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98]"
-                  aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-                  title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                <div
+                  ref={assignmentsViewSettingsRef}
+                  className="relative flex items-center justify-end"
                 >
-                  <Settings2 size={14} />
-                </button>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setAssignmentsViewSettingsShowAssignee(showAssignee);
+                      setIsAssignmentsViewSettingsOpen((open) => !open);
+                    }}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
+                    aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
+                    aria-expanded={isAssignmentsViewSettingsOpen}
+                    title={isPolish ? 'Ustawienia widoku' : 'View settings'}
+                  >
+                    <Settings2 size={15} />
+                  </button>
+                  {isAssignmentsViewSettingsOpen ? (
+                    <div
+                      className="absolute right-3 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-slate-200/80 bg-white p-2 text-left normal-case tracking-normal shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900 dark:shadow-black/35"
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      <div className="px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500 dark:text-slate-400">
+                        {isPolish ? 'Widoczne kolumny' : 'Visible columns'}
+                      </div>
+                      {(
+                        [
+                          {
+                            id: 'template',
+                            label: isPolish ? 'Szablon' : 'Template',
+                            alwaysVisible: true,
+                          },
+                          {
+                            id: 'assignee',
+                            label: isPolish ? 'Przydzielony do' : 'Assignee',
+                            disabled: !assignmentsViewSettingsShowAssignee,
+                          },
+                          { id: 'status', label: isPolish ? 'Status' : 'Status' },
+                          { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
+                          { id: 'due', label: isPolish ? 'Do terminu' : 'Days to Due' },
+                          {
+                            id: 'actions',
+                            label: isPolish ? 'Akcje' : 'Actions',
+                            alwaysVisible: true,
+                          },
+                        ] as Array<{
+                          id: string;
+                          label: string;
+                          alwaysVisible?: boolean;
+                          disabled?: boolean;
+                        }>
+                      ).map((col) => {
+                        const alwaysVisible = !!col.alwaysVisible;
+                        const checked = alwaysVisible
+                          ? true
+                          : !assignmentsViewHiddenSet.has(col.id);
+                        return (
+                          <label
+                            key={col.id}
+                            className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04] ${
+                              alwaysVisible || col.disabled
+                                ? 'cursor-default text-slate-400 dark:text-slate-500'
+                                : 'cursor-pointer text-slate-700 dark:text-slate-200'
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={alwaysVisible || col.disabled}
+                              onChange={() => {
+                                if (alwaysVisible || col.disabled) return;
+                                updateAssignmentsViewHiddenColumns((prev) => {
+                                  const set = new Set(prev);
+                                  if (set.has(col.id)) set.delete(col.id);
+                                  else set.add(col.id);
+
+                                  set.delete('template');
+                                  set.delete('actions');
+
+                                  const next = Array.from(set);
+                                  try {
+                                    localStorage.setItem(
+                                      assignmentsViewStorageKey,
+                                      JSON.stringify(next)
+                                    );
+                                  } catch {
+                                    /* ignore */
+                                  }
+                                  return next;
+                                });
+                              }}
+                              className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                            />
+                            <span className="flex-1">{col.label}</span>
+                            {alwaysVisible ? (
+                              <span className="text-[10px]">
+                                {isPolish ? 'Wymagane' : 'Required'}
+                              </span>
+                            ) : null}
+                          </label>
+                        );
+                      })}
+                      <div className="my-2 border-t border-slate-200/70 dark:border-white/[0.08]" />
+                      <label className="flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/[0.04]">
+                        <input
+                          type="checkbox"
+                          checked={assignmentsViewShowRowDescription}
+                          onChange={(event) =>
+                            updateAssignmentsViewShowRowDescription(event.target.checked)
+                          }
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-white/[0.04]"
+                        />
+                        <span>
+                          {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
+                        </span>
+                      </label>
+                    </div>
+                  ) : null}
+                </div>
               </th>
             </tr>
           </thead>
@@ -5653,10 +6046,10 @@ Return ONLY the answer text (no markdown fences).`;
                   }}
                   className={[
                     'group transition-colors border-b border-slate-200/50 dark:border-navy-700/50 last:border-0 cursor-pointer',
-                    'hover:bg-slate-50/70 dark:hover:bg-white/[0.04]',
+                    INTERVIEW_TABLE_HOVER_ROW_CLASS,
                     'active:bg-slate-100 dark:active:bg-navy-700/50',
                     previewAssignmentId === assignment.id || isAssignmentSelected
-                      ? 'bg-primary-50 dark:bg-primary-500/[0.14] shadow-[inset_4px_0_0_theme(colors.primary.500)] ring-1 ring-primary-500/25 ring-inset'
+                      ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
                       : '',
                   ].join(' ')}
                   role="button"
@@ -5702,8 +6095,8 @@ Return ONLY the answer text (no markdown fences).`;
                   </td>
                   <td className="px-4 py-3" style={{ width: columnWidths.template }}>
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 bg-blue-500/15 dark:bg-blue-500/20">
-                        <ClipboardList size={16} className="text-blue-400" />
+                      <div className={INTERVIEW_TABLE_ICON_SURFACE_CLASS}>
+                        <ClipboardList size={16} />
                       </div>
                       <div className="min-w-0 flex flex-col">
                         <div className="flex items-center gap-2 min-w-0">
@@ -5759,7 +6152,9 @@ Return ONLY the answer text (no markdown fences).`;
                       style={{ width: columnWidths.status }}
                     >
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-medium ${getAssignmentStatusColor(assignment.status)}`}
+                        className={`${INTERVIEW_STATUS_CHIP_BASE_CLASS} ${getAssignmentStatusColor(
+                          assignment.status
+                        )}`}
                       >
                         <span className="w-1.5 h-1.5 rounded-full bg-current" />
                         {getAssignmentStatusLabel(assignment.status)}
@@ -5772,9 +6167,9 @@ Return ONLY the answer text (no markdown fences).`;
                       style={{ width: columnWidths.progress }}
                     >
                       <div className="flex items-center justify-center gap-2">
-                        <div className="flex-1 max-w-[100px] h-1.5 bg-slate-200 dark:bg-navy-700 rounded-full overflow-hidden">
+                        <div className={INTERVIEW_PROGRESS_TRACK_CLASS}>
                           <div
-                            className={`h-full rounded-full transition-all ${progress === 100 ? 'bg-emerald-500' : 'bg-purple-500'}`}
+                            className={INTERVIEW_PROGRESS_FILL_CLASS}
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -5796,7 +6191,7 @@ Return ONLY the answer text (no markdown fences).`;
                         return (
                           <div className="flex items-center justify-center gap-1.5">
                             <span
-                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${dtd.colorClass}`}
+                              className={`${INTERVIEW_DUE_CHIP_BASE_CLASS} ${dtd.colorClass}`}
                               title={
                                 assignment.dueAt
                                   ? new Date(assignment.dueAt).toLocaleDateString()
@@ -5962,7 +6357,7 @@ Return ONLY the answer text (no markdown fences).`;
     if (isLoading || assignmentsLoading) {
       return (
         <div className="flex items-center justify-center h-64">
-          <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
         </div>
       );
     }
@@ -6238,8 +6633,8 @@ Return ONLY the answer text (no markdown fences).`;
               },
               failed: {
                 label: { en: 'Failed', pl: 'Błąd' },
-                bg: 'bg-red-500/20',
-                text: 'text-red-700 dark:text-red-300',
+                bg: 'bg-rose-500/20',
+                text: 'text-rose-700 dark:text-rose-300',
               },
             };
             const sc = statusConfig[status] || statusConfig.completed;
@@ -6361,18 +6756,18 @@ Return ONLY the answer text (no markdown fences).`;
         if (status === 'PENDING_REVIEW') {
           return {
             label: isPolish ? 'Do przeglądu' : 'Pending review',
-            cls: 'bg-amber-500/15 text-amber-700 dark:text-amber-300',
+            cls: 'border-amber-300/80 bg-amber-50 text-amber-900 dark:border-amber-300/[0.25] dark:bg-amber-300/[0.12] dark:text-amber-100',
           };
         }
         if (['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(status)) {
           return {
             label: isPolish ? 'Przekazane dalej' : 'Moved forward',
-            cls: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300',
+            cls: 'border-emerald-300/80 bg-emerald-50 text-emerald-900 dark:border-emerald-300/[0.25] dark:bg-emerald-300/[0.12] dark:text-emerald-100',
           };
         }
         return {
           label: isPolish ? 'Szkic' : 'Draft',
-          cls: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
+          cls: 'border-slate-300/80 bg-slate-100 text-slate-800 dark:border-white/[0.10] dark:bg-white/[0.065] dark:text-slate-200',
         };
       };
 
@@ -6544,12 +6939,12 @@ Return ONLY the answer text (no markdown fences).`;
                           event.stopPropagation();
                           setIsInitiativesViewSettingsOpen((open) => !open);
                         }}
-                        className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-500 transition-colors hover:bg-slate-100/70 dark:text-slate-400 dark:hover:bg-white/[0.06]"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-600 transition-colors hover:bg-slate-100/70 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:text-slate-300 dark:hover:bg-white/[0.06] dark:ring-offset-navy-900"
                         aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
                         aria-expanded={isInitiativesViewSettingsOpen}
                         title={isPolish ? 'Ustawienia widoku' : 'View settings'}
                       >
-                        <Settings2 size={14} />
+                        <Settings2 size={15} />
                       </button>
                       {isInitiativesViewSettingsOpen ? (
                         <div
@@ -6660,8 +7055,8 @@ Return ONLY the answer text (no markdown fences).`;
                       key={initiative.id}
                       className={`group cursor-pointer border-b border-slate-200/70 transition-colors last:border-0 dark:border-white/[0.06] ${
                         isSelected || isInitiativeSelected
-                          ? 'bg-primary-100/85 shadow-[inset_0_0_0_1px_rgba(124,58,237,0.18),inset_4px_0_0_rgba(124,58,237,0.75)] dark:bg-primary-500/[0.13] dark:shadow-[inset_0_0_0_1px_rgba(196,181,253,0.20),inset_4px_0_0_rgba(196,181,253,0.70)]'
-                          : 'hover:bg-slate-50/70 dark:hover:bg-white/[0.03]'
+                          ? INTERVIEW_TABLE_SELECTED_ROW_CLASS
+                          : INTERVIEW_TABLE_HOVER_ROW_CLASS
                       }`}
                       onClick={() => setSelectedInterviewInitiativeId(initiative.id)}
                     >
@@ -6708,7 +7103,7 @@ Return ONLY the answer text (no markdown fences).`;
                           style={{ width: initiativesColumnWidths.status }}
                         >
                           <span
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium leading-none ${meta.cls}`}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium leading-none ${meta.cls}`}
                           >
                             {meta.label}
                           </span>
@@ -6720,8 +7115,8 @@ Return ONLY the answer text (no markdown fences).`;
                           style={{ width: initiativesColumnWidths.priority }}
                         >
                           {initiative.priority ? (
-                            <span className="inline-flex items-center rounded-full bg-purple-500/10 px-2 py-0.5 text-[11px] font-medium text-purple-700 dark:text-purple-300">
-                              {initiative.priority}
+                            <span className={INTERVIEW_META_CHIP_CLASS}>
+                              {String(initiative.priority).toLowerCase()}
                             </span>
                           ) : (
                             <span className="text-[11px] text-slate-400">—</span>
@@ -6740,7 +7135,7 @@ Return ONLY the answer text (no markdown fences).`;
                                 event.stopPropagation();
                                 handleViewInsight(sourceInsight);
                               }}
-                              className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 hover:bg-amber-500/15 dark:text-amber-300"
+                              className={`${INTERVIEW_META_CHIP_CLASS} gap-1 hover:border-slate-400/80 dark:hover:border-white/[0.18]`}
                             >
                               <Lightbulb size={12} />
                               {isPolish ? 'Insight' : 'Insight'}
@@ -7534,6 +7929,14 @@ Return ONLY the answer text (no markdown fences).`;
   const rightControls = useMemo(() => {
     if (activeDocumentId) return null;
     const controls: React.ReactNode[] = [];
+    const viewSegmentClass =
+      'inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5';
+    const viewButtonClass = (active: boolean) =>
+      `inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-150 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 ${
+        active
+          ? 'border border-slate-200/70 bg-white/80 text-slate-900 dark:border-white/[0.06] dark:bg-navy-800 dark:text-slate-100'
+          : 'text-slate-600 hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]'
+      }`;
 
     if (activeTab === 'templates') {
       controls.push(
@@ -7611,29 +8014,29 @@ Return ONLY the answer text (no markdown fences).`;
         </div>,
         <div
           key="templates-view"
-          className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+          className={viewSegmentClass}
           role="radiogroup"
           aria-label={isPolish ? 'Tryb widoku szablonów' : 'Templates view mode'}
         >
           <button
             type="button"
-            onClick={() => setTemplatesViewMode('cards')}
-            className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${templatesViewMode === 'cards' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
-            title={isPolish ? 'Karty' : 'Cards'}
-            role="radio"
-            aria-checked={templatesViewMode === 'cards'}
-          >
-            <LayoutGrid size={15} />
-          </button>
-          <button
-            type="button"
             onClick={() => setTemplatesViewMode('table')}
-            className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${templatesViewMode === 'table' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            className={viewButtonClass(templatesViewMode === 'table')}
             title={isPolish ? 'Tabela' : 'Table'}
             role="radio"
             aria-checked={templatesViewMode === 'table'}
           >
             <List size={15} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setTemplatesViewMode('cards')}
+            className={viewButtonClass(templatesViewMode === 'cards')}
+            title={isPolish ? 'Karty' : 'Cards'}
+            role="radio"
+            aria-checked={templatesViewMode === 'cards'}
+          >
+            <LayoutGrid size={15} />
           </button>
         </div>
       );
@@ -7643,13 +8046,13 @@ Return ONLY the answer text (no markdown fences).`;
       controls.push(
         <div
           key="insights-view"
-          className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+          className={viewSegmentClass}
           role="radiogroup"
           aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
         >
           <button
             onClick={() => setInsightsViewMode('flat')}
-            className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${insightsViewMode === 'flat' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            className={viewButtonClass(insightsViewMode === 'flat')}
             title={isPolish ? 'Lista' : 'List'}
             role="radio"
             aria-checked={insightsViewMode === 'flat'}
@@ -7658,7 +8061,7 @@ Return ONLY the answer text (no markdown fences).`;
           </button>
           <button
             onClick={() => setInsightsViewMode('report')}
-            className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${insightsViewMode === 'report' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            className={viewButtonClass(insightsViewMode === 'report')}
             title={isPolish ? 'Wg raportu' : 'By report'}
             role="radio"
             aria-checked={insightsViewMode === 'report'}
@@ -7673,18 +8076,14 @@ Return ONLY the answer text (no markdown fences).`;
       controls.push(
         <div
           key="sessions-view"
-          className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+          className={viewSegmentClass}
           role="radiogroup"
           aria-label={isPolish ? 'Tryb widoku sesji' : 'Sessions view mode'}
         >
           <button
             type="button"
             onClick={() => setViewMode('table')}
-            className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${
-              viewMode === 'table'
-                ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-            }`}
+            className={viewButtonClass(viewMode === 'table')}
             title={isPolish ? 'Lista' : 'List'}
             role="radio"
             aria-checked={viewMode === 'table'}
@@ -7694,11 +8093,7 @@ Return ONLY the answer text (no markdown fences).`;
           <button
             type="button"
             onClick={() => setViewMode('grid')}
-            className={`inline-flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-150 ${
-              viewMode === 'grid'
-                ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'
-            }`}
+            className={viewButtonClass(viewMode === 'grid')}
             title={isPolish ? 'Karty' : 'Cards'}
             role="radio"
             aria-checked={viewMode === 'grid'}
@@ -7713,13 +8108,13 @@ Return ONLY the answer text (no markdown fences).`;
       controls.push(
         <div
           key="assignments-view"
-          className="inline-flex items-center rounded-full border border-slate-200/70 dark:border-white/[0.08] bg-slate-100/70 dark:bg-navy-900/60 p-0.5"
+          className={viewSegmentClass}
           role="radiogroup"
           aria-label={isPolish ? 'Tryb widoku' : 'View mode'}
         >
           <button
             onClick={() => setAssignmentsViewMode('list')}
-            className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${assignmentsViewMode === 'list' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            className={viewButtonClass(assignmentsViewMode === 'list')}
             title={isPolish ? 'Lista' : 'List'}
             role="radio"
             aria-checked={assignmentsViewMode === 'list'}
@@ -7728,7 +8123,7 @@ Return ONLY the answer text (no markdown fences).`;
           </button>
           <button
             onClick={() => setAssignmentsViewMode('cards')}
-            className={`inline-flex items-center justify-center h-9 w-9 rounded-full transition-colors duration-150 ${assignmentsViewMode === 'cards' ? 'bg-white/80 dark:bg-navy-800 text-primary-700 dark:text-primary-300 shadow-sm border border-slate-200/70 dark:border-white/[0.06]' : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-white/[0.06]'}`}
+            className={viewButtonClass(assignmentsViewMode === 'cards')}
             title={isPolish ? 'Karty' : 'Cards'}
             role="radio"
             aria-checked={assignmentsViewMode === 'cards'}
@@ -7761,7 +8156,7 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <button
           onClick={handleNewSession}
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-purple-500/40 bg-purple-600 px-4 text-sm font-medium text-white transition-colors hover:bg-purple-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Nowa sesja' : 'New session'}</span>
         </button>
@@ -7771,7 +8166,7 @@ Return ONLY the answer text (no markdown fences).`;
       return (
         <button
           onClick={handleNewTemplate}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-amber-500 to-amber-600 text-white border border-amber-400/30 hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/20 transition-colors"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Nowy szablon' : 'New template'}</span>
         </button>
@@ -7786,7 +8181,7 @@ Return ONLY the answer text (no markdown fences).`;
             setShowInsightModal(true);
           }}
           disabled={!canCreateInsights}
-          className="inline-flex h-9 items-center gap-2 rounded-full border border-amber-500/40 bg-amber-600 px-4 text-sm font-medium text-white transition-colors hover:bg-amber-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Nowy insight' : 'New insight'}</span>
         </button>
@@ -7799,20 +8194,44 @@ Return ONLY the answer text (no markdown fences).`;
             setSelectedTemplateForAssign(null);
             setShowAssignModal(true);
           }}
-          className="inline-flex items-center gap-2 h-9 px-4 rounded-full text-sm font-medium bg-gradient-to-r from-blue-500 to-blue-600 text-white border border-blue-400/30 hover:from-blue-400 hover:to-blue-500 shadow-lg shadow-blue-500/20 transition-colors"
+          className="inline-flex h-9 items-center gap-2 rounded-full border border-primary-500/40 bg-primary-600 px-4 text-sm font-medium text-white transition-colors hover:bg-primary-500 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
         >
           <span>{isPolish ? 'Przydziel' : 'Assign'}</span>
         </button>
       );
     }
     return null;
-  }, [activeDocumentId, activeTab, isPolish, canAssign, handleNewSession, handleNewTemplate]);
+  }, [
+    activeDocumentId,
+    activeTab,
+    isPolish,
+    canAssign,
+    canCreateInsights,
+    handleNewSession,
+    handleNewTemplate,
+  ]);
 
   // Command row content (from renderCommandRow, minus search/dynamic tabs which ModuleHub handles)
   const commandRowContent = useMemo(() => {
     if (activeDocumentId) return null;
     return renderCommandRow();
   }, [activeDocumentId, activeTab, renderCommandRow]);
+
+  const hasBulkSelection = useMemo(
+    () =>
+      selectedAssignmentIds.size > 0 ||
+      selectedSessionIds.size > 0 ||
+      selectedTemplateIds.size > 0 ||
+      selectedInsightIds.size > 0 ||
+      selectedInitiativeIds.size > 0,
+    [
+      selectedAssignmentIds,
+      selectedSessionIds,
+      selectedTemplateIds,
+      selectedInsightIds,
+      selectedInitiativeIds,
+    ]
+  );
 
   return (
     <div className="h-full" data-testid="interview-hub">
@@ -7836,183 +8255,41 @@ Return ONLY the answer text (no markdown fences).`;
         primaryCta={primaryCta}
         toolControl={null}
         commandRowContent={commandRowContent}
+        forceCommandRow={hasBulkSelection}
         availableViewModes={['table']}
         showTabCounts={false}
       >
         <div className="h-full min-h-0 overflow-hidden">{renderContent()}</div>
       </ModuleHub>
 
-      {/* Table View Settings (standard) — Templates */}
-      <Modal
-        open={isTemplatesViewSettingsOpen}
-        onClose={() => setIsTemplatesViewSettingsOpen(false)}
-        title={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-        description={
-          isPolish
-            ? 'Wybierz, które kolumny są widoczne w tabeli.'
-            : 'Choose which columns are visible in the table.'
-        }
-        size="sm"
-        footer={
-          <>
-            <button
-              onClick={() => {
-                setTemplatesHiddenColumns([...INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS]);
-                saveHiddenColumns(
-                  INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY,
-                  INTERVIEW_TEMPLATES_TABLE_DEFAULT_HIDDEN_COLUMNS
-                );
-              }}
-              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-slate-200/70 dark:border-white/[0.06] bg-white/70 dark:bg-white/[0.04] text-slate-700 dark:text-slate-200 hover:bg-slate-100/70 dark:hover:bg-white/[0.06] transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            >
-              {isPolish ? 'Reset' : 'Reset'}
-            </button>
-            <button
-              onClick={() => setIsTemplatesViewSettingsOpen(false)}
-              className="inline-flex items-center justify-center h-9 px-4 rounded-full text-sm font-medium border border-primary-500/40 dark:border-primary-500/30 bg-primary-600 text-white hover:bg-primary-700 transition-colors active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900"
-            >
-              {isPolish ? 'Gotowe' : 'Done'}
-            </button>
-          </>
-        }
-      >
-        {(() => {
-          const hiddenSet = new Set(templatesHiddenColumns);
-          const cols: Array<{
-            id: 'name' | 'category' | 'questions' | 'status' | 'actions';
-            label: string;
-          }> = [
-            { id: 'name', label: isPolish ? 'Nazwa' : 'Name' },
-            { id: 'category', label: isPolish ? 'Kategoria' : 'Category' },
-            { id: 'questions', label: isPolish ? 'Pytania' : 'Questions' },
-            { id: 'status', label: isPolish ? 'Status' : 'Status' },
-            { id: 'actions', label: isPolish ? 'Akcje' : 'Actions' },
-          ];
-
-          return (
-            <div className="space-y-2">
-              {cols.map((col) => {
-                const alwaysVisible = col.id === 'name' || col.id === 'actions';
-                const checked = alwaysVisible ? true : !hiddenSet.has(col.id);
-                return (
-                  <label
-                    key={col.id}
-                    className={`flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-navy-800 ${
-                      alwaysVisible ? 'opacity-60' : 'cursor-pointer'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      disabled={alwaysVisible}
-                      onChange={() => {
-                        if (alwaysVisible) return;
-                        setTemplatesHiddenColumns((prev) => {
-                          const set = new Set(prev);
-                          if (set.has(col.id)) set.delete(col.id);
-                          else set.add(col.id);
-                          const next = Array.from(set);
-                          saveHiddenColumns(INTERVIEW_TEMPLATES_TABLE_VIEW_STORAGE_KEY, next);
-                          return next;
-                        });
-                      }}
-                      className="w-4 h-4 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
-                    />
-                    <span className="text-sm text-slate-800 dark:text-slate-200 flex-1">
-                      {col.label}
-                    </span>
-                    {alwaysVisible ? (
-                      <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                        {isPolish ? 'Wymagane' : 'Required'}
-                      </span>
-                    ) : null}
-                  </label>
-                );
-              })}
-            </div>
-          );
-        })()}
-      </Modal>
-
-      {isAssignmentsViewSettingsOpen ? (
-        <div
-          ref={assignmentsViewSettingsRef}
-          className="fixed right-6 top-28 z-50 w-72 rounded-xl border border-slate-200/80 dark:border-white/[0.08] bg-white/95 dark:bg-navy-950/95 p-2 shadow-xl shadow-slate-900/10 dark:shadow-black/30 backdrop-blur"
-          role="menu"
-          aria-label={isPolish ? 'Ustawienia widoku tabeli' : 'Table view settings'}
-        >
-          <div className="px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Kolumny' : 'Columns'}
-          </div>
-          <div className="space-y-1">
-            {(
-              [
-                { id: 'template', label: isPolish ? 'Szablon' : 'Template', alwaysVisible: true },
-                { id: 'assignee', label: isPolish ? 'Przydzielony do' : 'Assignee' },
-                { id: 'status', label: isPolish ? 'Status' : 'Status' },
-                { id: 'progress', label: isPolish ? 'Postęp' : 'Progress' },
-                { id: 'due', label: isPolish ? 'Do terminu' : 'Days to Due' },
-                { id: 'actions', label: isPolish ? 'Akcje' : 'Actions', alwaysVisible: true },
-              ] as Array<{ id: string; label: string; alwaysVisible?: boolean }>
-            ).map((col) => {
-              const alwaysVisible = !!col.alwaysVisible;
-              const checked = alwaysVisible ? true : !assignmentsViewHiddenSet.has(col.id);
-              return (
-                <label
-                  key={col.id}
-                  className={`flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06] ${
-                    alwaysVisible ? 'opacity-60' : 'cursor-pointer'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    disabled={alwaysVisible}
-                    onChange={() => {
-                      if (alwaysVisible) return;
-                      updateAssignmentsViewHiddenColumns((prev) => {
-                        const set = new Set(prev);
-                        if (set.has(col.id)) set.delete(col.id);
-                        else set.add(col.id);
-
-                        set.delete('template');
-                        set.delete('actions');
-
-                        const next = Array.from(set);
-                        try {
-                          localStorage.setItem(assignmentsViewStorageKey, JSON.stringify(next));
-                        } catch {
-                          /* ignore */
-                        }
-                        return next;
-                      });
-                    }}
-                    className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="flex-1 text-slate-700 dark:text-slate-200">{col.label}</span>
-                  {alwaysVisible ? (
-                    <span className="text-[10px] text-slate-400 dark:text-slate-500">
-                      {isPolish ? 'Wymagane' : 'Required'}
-                    </span>
-                  ) : null}
-                </label>
-              );
-            })}
-          </div>
-          <div className="my-2 h-px bg-slate-200/70 dark:bg-white/[0.08]" />
-          <label className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs hover:bg-slate-100/70 dark:hover:bg-white/[0.06]">
-            <input
-              type="checkbox"
-              checked={assignmentsViewShowRowDescription}
-              onChange={(event) => updateAssignmentsViewShowRowDescription(event.target.checked)}
-              className="h-3.5 w-3.5 rounded border-slate-300 dark:border-navy-700 text-primary-600 focus:ring-primary-500"
-            />
-            <span className="text-slate-700 dark:text-slate-200">
-              {isPolish ? 'Pokaż opis / uzasadnienie' : 'Show row description'}
-            </span>
-          </label>
-        </div>
-      ) : null}
+      <InitiativeWizardModal
+        isOpen={showInitiativeWizard}
+        projectId={currentProjectId || undefined}
+        existingInitiatives={interviewInitiatives.map((initiative) => ({
+          id: initiative.id,
+          name: initiative.name || initiative.title || initiative.id,
+          title: initiative.title || initiative.name,
+          status: String(initiative.status || 'DRAFT') as any,
+        }))}
+        initialMode="generate_from_evidence"
+        initialBusinessPriorities={['quality', 'automation', 'governance']}
+        initialTargetCount={5}
+        initialTimeHorizon="90_days"
+        initialRiskAppetite="balanced"
+        initialManualNotes={initiativeWizardManualNotes}
+        initialSourceBasket={initiativeWizardSourceBasket}
+        creationSourceType="interview_insight"
+        creationSourceId={insights[0]?.id || 'interview_module'}
+        onClose={() => setShowInitiativeWizard(false)}
+        onCreated={async (created) => {
+          setShowInitiativeWizard(false);
+          if (created.length > 0) {
+            setActiveTab('initiatives');
+            setSelectedInterviewInitiativeId(created[0].id);
+          }
+          await loadInterviewInitiatives();
+        }}
+      />
 
       {/* Assign Interview Modal */}
       <AssignInterviewModal
@@ -8169,7 +8446,7 @@ Return ONLY the answer text (no markdown fences).`;
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-medium transition-colors"
+                  className="flex-1 px-4 py-2 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-medium transition-colors"
                 >
                   <RotateCcw size={16} className="inline mr-2" />
                   {isPolish ? 'Zwróć' : 'Send Back'}
@@ -8218,7 +8495,7 @@ Return ONLY the answer text (no markdown fences).`;
                   </div>
                 </div>
                 <div className="bg-slate-50 dark:bg-navy-800 border border-slate-200 dark:border-navy-700 rounded-xl p-4">
-                  <div className="text-2xl font-bold text-purple-400">
+                  <div className="text-2xl font-bold text-blue-400">
                     {sessions.filter((s) => getSessionWorkflowStatus(s) === 'in_progress').length}
                   </div>
                   <div className="text-sm text-slate-500 dark:text-slate-400">
@@ -8248,7 +8525,7 @@ Return ONLY the answer text (no markdown fences).`;
                     </div>
                   </div>
                   <div>
-                    <div className="text-xl font-bold text-red-400">
+                    <div className="text-xl font-bold text-rose-400">
                       {overdueAssignments.length}
                     </div>
                     <div className="text-xs text-slate-500">

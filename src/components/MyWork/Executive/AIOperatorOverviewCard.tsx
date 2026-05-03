@@ -87,8 +87,8 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-violet-500/10 flex items-center justify-center">
-                <Activity size={16} className="text-violet-500" />
+              <div className="w-8 h-8 rounded-lg bg-primary-500/10 flex items-center justify-center">
+                <Activity size={16} className="text-primary-500" />
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-slate-900 dark:text-white">
@@ -297,7 +297,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                           onClick={() =>
                             onProposeIntervention?.(String(node.interventionTemplateKey))
                           }
-                          className="inline-flex items-center h-7 px-2.5 rounded-full bg-violet-600 text-white text-[11px] font-medium disabled:opacity-60"
+                          className="inline-flex items-center h-7 px-2.5 rounded-full bg-primary-600 text-white text-[11px] font-medium disabled:opacity-60"
                         >
                           {t('executive.aiOperator.intervene', 'Intervene')}
                         </button>
@@ -390,7 +390,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                         type="button"
                         disabled={busyActionId === item.templateKey}
                         onClick={() => onProposeIntervention?.(String(item.templateKey))}
-                        className="inline-flex items-center h-8 px-3 rounded-full bg-violet-600 text-white text-xs font-medium disabled:opacity-60"
+                        className="inline-flex items-center h-8 px-3 rounded-full bg-primary-600 text-white text-xs font-medium disabled:opacity-60"
                       >
                         {busyActionId === item.templateKey
                           ? t('executive.aiOperator.working', 'Working...')
@@ -476,7 +476,7 @@ export const AIOperatorOverviewCard: React.FC<Props> = ({
                             onClick={() =>
                               item.actionId && onExecuteIntervention?.(String(item.actionId))
                             }
-                            className="inline-flex items-center h-8 px-3 rounded-full bg-violet-600 text-white text-xs font-medium disabled:opacity-60"
+                            className="inline-flex items-center h-8 px-3 rounded-full bg-primary-600 text-white text-xs font-medium disabled:opacity-60"
                           >
                             {t('executive.aiOperator.execute', 'Execute')}
                           </button>

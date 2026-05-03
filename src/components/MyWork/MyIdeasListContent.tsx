@@ -116,12 +116,11 @@ const STAGE_CONFIG: Record<
   },
   ready: {
     icon: CheckCircle2,
-    color: 'text-purple-500',
-    bgColor: 'bg-purple-500/10 dark:bg-purple-500/15',
-    borderColor: 'border-purple-400/30 dark:border-purple-500/20',
-    badgeBg:
-      'border border-violet-200/70 bg-violet-50 dark:border-violet-300/15 dark:bg-violet-300/10',
-    badgeText: 'text-violet-800 dark:text-violet-200',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10 dark:bg-blue-500/15',
+    borderColor: 'border-blue-400/30 dark:border-blue-500/20',
+    badgeBg: 'border border-blue-200/70 bg-blue-50 dark:border-blue-300/15 dark:bg-blue-300/10',
+    badgeText: 'text-blue-800 dark:text-blue-200',
   },
   promoted: {
     icon: Rocket,
@@ -148,9 +147,9 @@ const TOOL_CONFIG: Record<
 > = {
   mindmap: {
     icon: Network,
-    color: 'text-violet-500',
-    bgColor: 'bg-violet-500/10 dark:bg-violet-500/15',
-    borderColor: 'border-violet-400/30',
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500/10 dark:bg-blue-500/15',
+    borderColor: 'border-blue-400/30',
     label: 'Recommendation map',
     labelPl: 'Mapa rekomendacji',
     badgeClass:
@@ -995,7 +994,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200/60 dark:border-white/[0.06]">
           <div className="flex items-center gap-2">
-            <Sparkles size={16} className="text-purple-500" />
+            <Sparkles size={16} className="text-primary-500" />
             <div className="text-sm font-semibold text-slate-900 dark:text-white">
               {isPolish ? 'Konwertuj pomysł' : 'Convert idea'}
             </div>
@@ -1036,7 +1035,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
               {
                 target: 'team_chat' as const,
                 icon: MessageSquarePlus,
-                color: 'text-purple-500',
+                color: 'text-blue-500',
                 label: isPolish ? 'Team Chat' : 'Team Chat',
                 desc: isPolish ? 'Wątek do omówienia' : 'Discussion thread',
               },
@@ -1154,7 +1153,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
       </p>
       <button
         onClick={onCreateIdea}
-        className="inline-flex h-9 items-center justify-center rounded-full border border-violet-500/30 bg-violet-600 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-violet-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-violet-400/20 dark:bg-violet-500/80 dark:hover:bg-violet-500"
+        className="inline-flex h-9 items-center justify-center rounded-full border border-primary-500/30 bg-primary-600 px-4 text-sm font-semibold text-white transition-colors duration-150 hover:bg-primary-700 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900 dark:border-primary-400/20 dark:bg-primary-500/80 dark:hover:bg-primary-500"
       >
         {isPolish ? 'Zasiej pomysł' : 'Plant an idea'}
       </button>
@@ -1345,7 +1344,7 @@ export const MyIdeasListContent: React.FC<MyIdeasListContentProps> = ({
                   <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                     <button
                       onClick={() => setConvertIdea(idea)}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[11px] font-semibold hover:bg-purple-500/15 transition-colors"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-primary-500/10 text-primary-600 dark:text-primary-400 text-[11px] font-semibold hover:bg-primary-500/15 transition-colors"
                     >
                       <Sparkles size={12} />
                       {isPolish ? 'Konwertuj' : 'Convert'}

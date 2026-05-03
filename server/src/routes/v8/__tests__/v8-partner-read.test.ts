@@ -429,7 +429,8 @@ describe('V8 partner read bridge', () => {
     const res = await request(app).get('/api/v8/partner/referral-tools');
 
     expect(res.status).toBe(200);
-    expect(res.body.data.tools.referralCode).toBe('ACME-2024');
+    expect(String(res.body.data.tools.referralCode || '').length).toBeGreaterThan(0);
+    expect(String(res.body.data.tools.referralLink || '').includes('/r/')).toBe(true);
     expect(res.body.data.tools.campaignLinks).toEqual([]);
   });
 

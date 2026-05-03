@@ -19,6 +19,13 @@ import { requireOrgRole } from '../../middleware/rbac.middleware.js';
 import { validateBody } from '../../middleware/validation.middleware.js';
 import blueprintService from '../../services/blueprintService.js';
 import { upsertInitiativeKpiAssignment } from '../../services/initiative/initiativeKpiAssignmentService.js';
+import {
+  createWizardSession,
+  generateCandidates as generateWizardCandidates,
+  getWizardSession,
+  listCandidates as listWizardCandidates,
+  triageCandidate as triageWizardCandidate,
+} from '../../services/initiative/initiativeWizardService.js';
 import initiativeGenerationService from '../../services/initiativeGenerationService.js';
 import initiativeSectionTypeService from '../../services/initiativeSectionTypeService.js';
 import initiativeTemplateService from '../../services/initiativeTemplateService.js';
@@ -56,6 +63,99 @@ router.use(demoContextMiddleware);
 // ==========================================
 // INITIATIVE CRUD
 // ==========================================
+
+const WizardSessionSchema = z.object({
+  projectId: z.string().optional().nullable(),
+  mode: z
+    .enum([
+      'create_first_portfolio',
+      'generate_from_evidence',
+      'prioritize_by_goal',
+      'match_existing',
+      'refresh_portfolio',
+      'build_waves',
+      'improve_portfolio',
+    ])
+    .optional(),
+  businessPriorities: z.array(z.string()).optional(),
+  targetCount: z.number().int().min(1).max(10).optional().nullable(),
+  timeHorizon: z.string().max(50).optional().nullable(),
+  riskAppetite: z.string().max(50).optional().nullable(),
+  sourceBasket: z.array(z.unknown()).optional(),
+  manualNotes: z.string().max(20000).optional().nullable(),
+});
+
+const WizardCandidateTriageSchema = z.object({
+  triageStatus: z.enum([
+    'new_candidate',
+    'accepted_for_shortlist',
+    'rejected',
+    'needs_evidence',
+    'needs_split',
+    'needs_merge',
+    'needs_rewrite',
+    'already_covered',
+    'ready_for_charter',
+  ]),
+  triageReason: z.string().max(2000).optional().nullable(),
+  linkedInitiativeId: z.string().max(255).optional().nullable(),
+});
+
+router.post('/wizard/sessions', validateBody(WizardSessionSchema), async (req: any, res: any) => {
+  const orgId = req.user?.organizationId;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const session = await createWizardSession({
+    organizationId: String(orgId),
+    userId: req.user?.id || null,
+    input: req.body,
+  });
+  return res.status(201).json({ session });
+});
+
+router.get('/wizard/sessions/:sessionId', async (req: any, res: any) => {
+  const orgId = req.user?.organizationId;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const session = await getWizardSession(String(orgId), String(req.params.sessionId));
+  if (!session) return res.status(404).json({ error: 'Wizard session not found' });
+  return res.json({ session });
+});
+
+router.post('/wizard/sessions/:sessionId/candidates/generate', async (req: any, res: any) => {
+  const orgId = req.user?.organizationId;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const candidates = await generateWizardCandidates({
+    organizationId: String(orgId),
+    sessionId: String(req.params.sessionId),
+    userId: req.user?.id || null,
+  });
+  return res.status(201).json({ candidates });
+});
+
+router.get('/wizard/sessions/:sessionId/candidates', async (req: any, res: any) => {
+  const orgId = req.user?.organizationId;
+  if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+  const candidates = await listWizardCandidates(String(orgId), String(req.params.sessionId));
+  return res.json({ candidates });
+});
+
+router.patch(
+  '/wizard/candidates/:candidateId/triage',
+  validateBody(WizardCandidateTriageSchema),
+  async (req: any, res: any) => {
+    const orgId = req.user?.organizationId;
+    if (!orgId) return res.status(401).json({ error: 'Unauthorized' });
+    const candidate = await triageWizardCandidate({
+      organizationId: String(orgId),
+      candidateId: String(req.params.candidateId),
+      userId: req.user?.id || null,
+      triageStatus: req.body.triageStatus,
+      triageReason: req.body.triageReason || null,
+      linkedInitiativeId: req.body.linkedInitiativeId || null,
+    });
+    if (!candidate) return res.status(404).json({ error: 'Candidate not found' });
+    return res.json({ candidate });
+  }
+);
 
 /**
  * GET /api/initiatives/portfolio

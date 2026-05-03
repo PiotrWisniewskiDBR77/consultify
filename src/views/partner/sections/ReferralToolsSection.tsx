@@ -23,7 +23,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
@@ -80,6 +80,15 @@ interface ReferralToolsSectionProps {
   subsection?: 'referral-tools' | 'referral-analytics' | 'referred-organizations';
 }
 
+const unwrapApiData = (response: any) => {
+  const descriptor = response ? Object.getOwnPropertyDescriptor(response, 'data') : undefined;
+  return descriptor?.value ?? response?.data ?? response;
+};
+
+const REFERRAL_TOOLS_RETRY_DELAY_MS = 700;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   subsection = 'referral-tools',
 }) => {
@@ -100,6 +109,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const campaignNameInputRef = useRef<HTMLInputElement | null>(null);
 
   const normalizeTools = useCallback(
     (payload: any): ReferralTools => ({
@@ -126,6 +136,12 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     }),
     []
   );
+
+  const hasUsableReferralIdentity = useCallback((payload: ReferralTools | null | undefined) => {
+    const referralCode = String(payload?.referralCode || '').trim();
+    const referralLink = String(payload?.referralLink || '').trim();
+    return Boolean(referralCode && referralLink);
+  }, []);
 
   const normalizeAttribution = useCallback(
     (payload: any): ReferredCustomer => ({
@@ -203,25 +219,61 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     try {
       setLoading(true);
       setError(null);
-      try {
-        const response = await V8PartnerApi.getReferralTools();
-        if (response?.tools) {
-          setTools(normalizeTools(response.tools as V8PartnerReferralTools));
-          return;
-        }
-      } catch (error) {
-        if (!shouldFallbackToLegacyPartner(error)) {
-          setError(t('partner.referrals.loadError', 'Failed to load referral tools'));
-          return;
-        }
-      }
 
-      const response = await Api.get('/api/partners/referral-tools');
-      if (response?.success && response?.data) {
-        setTools(normalizeTools(response.data));
+      const loadUsableTools = async (): Promise<ReferralTools | null> => {
+        try {
+          const response = await Api.get('/api/partners/referral-tools');
+          const legacyTools = unwrapApiData(response);
+          if (response?.success && legacyTools) {
+            const normalized = normalizeTools(legacyTools);
+            if (hasUsableReferralIdentity(normalized)) {
+              return normalized;
+            }
+          }
+        } catch (legacyError) {
+          if (!shouldFallbackToLegacyPartner(legacyError)) {
+            throw legacyError;
+          }
+        }
+
+        try {
+          const response = await V8PartnerApi.getReferralTools();
+          if (response?.tools) {
+            const normalized = normalizeTools(response.tools as V8PartnerReferralTools);
+            if (hasUsableReferralIdentity(normalized)) {
+              return normalized;
+            }
+          }
+        } catch (error) {
+          if (!shouldFallbackToLegacyPartner(error)) {
+            throw error;
+          }
+        }
+
+        return null;
+      };
+
+      const immediateTools = await loadUsableTools();
+      if (immediateTools) {
+        setTools(immediateTools);
         return;
       }
-      setError(t('partner.referrals.loadError', 'Failed to load referral tools'));
+
+      await wait(REFERRAL_TOOLS_RETRY_DELAY_MS);
+      const retriedTools = await loadUsableTools();
+      if (retriedTools) {
+        setTools(retriedTools);
+        return;
+      }
+
+      setTools((prev) => (hasUsableReferralIdentity(prev) ? prev : null));
+
+      setError(
+        t(
+          'partner.referrals.identityMissingError',
+          'Referral identity is being initialized. Refresh in a moment.'
+        )
+      );
     } catch (err: any) {
       console.error('Error fetching referral tools:', err);
       setError(
@@ -231,7 +283,7 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [normalizeTools, t]);
+  }, [hasUsableReferralIdentity, normalizeTools, t]);
 
   const fetchV8Analytics = useCallback(async () => {
     try {
@@ -261,10 +313,11 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         return;
       }
       const response = await Api.get('/api/partners/attributions');
-      const legacyItems = Array.isArray(response?.data?.items)
-        ? response.data.items
-        : Array.isArray(response?.data)
-          ? response.data
+      const legacyData = unwrapApiData(response);
+      const legacyItems = Array.isArray(legacyData?.items)
+        ? legacyData.items
+        : Array.isArray(legacyData)
+          ? legacyData
           : [];
       setReferredCustomers(legacyItems.map((item: ReferredCustomer) => normalizeAttribution(item)));
     }
@@ -293,7 +346,10 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
 
   // Create new campaign link via API
   const handleCreateCampaign = async () => {
-    if (!newCampaign.name) {
+    const candidateName = String(
+      newCampaign.name || campaignNameInputRef.current?.value || ''
+    ).trim();
+    if (!candidateName) {
       toast.error(t('partner.referrals.nameRequired', 'Campaign name is required'));
       return;
     }
@@ -302,8 +358,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       setCreating(true);
       let response: any;
       try {
-        response = await V8PartnerApi.createCampaignLink({
-          name: newCampaign.name,
+        response = await Api.post('/api/partners/campaign-links', {
+          name: candidateName,
           utmSource: newCampaign.utmSource || undefined,
           utmMedium: newCampaign.utmMedium || undefined,
           utmCampaign: newCampaign.utmCampaign || undefined,
@@ -312,8 +368,8 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
         if (!shouldFallbackToLegacyPartner(error)) {
           throw error;
         }
-        response = await Api.post('/api/partners/campaign-links', {
-          name: newCampaign.name,
+        response = await V8PartnerApi.createCampaignLink({
+          name: candidateName,
           utmSource: newCampaign.utmSource || undefined,
           utmMedium: newCampaign.utmMedium || undefined,
           utmCampaign: newCampaign.utmCampaign || undefined,
@@ -356,12 +412,12 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
       setDeleting(campaignId);
       let response: any;
       try {
-        response = await V8PartnerApi.deleteCampaignLink(campaignId);
+        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
       } catch (error) {
         if (!shouldFallbackToLegacyPartner(error)) {
           throw error;
         }
-        response = await Api.delete(`/api/partners/campaign-links/${campaignId}`);
+        response = await V8PartnerApi.deleteCampaignLink(campaignId);
       }
 
       if (response?.success || response?.deleted) {
@@ -703,9 +759,10 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                   Campaign Name*
                 </label>
                 <input
+                  ref={campaignNameInputRef}
                   type="text"
                   value={newCampaign.name}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, name: e.target.value })}
+                  onChange={(e) => setNewCampaign((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="e.g., LinkedIn Q1"
                   className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
@@ -717,7 +774,9 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 <input
                   type="text"
                   value={newCampaign.utmSource}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, utmSource: e.target.value })}
+                  onChange={(e) =>
+                    setNewCampaign((prev) => ({ ...prev, utmSource: e.target.value }))
+                  }
                   placeholder="e.g., linkedin"
                   className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
@@ -729,7 +788,9 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 <input
                   type="text"
                   value={newCampaign.utmMedium}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, utmMedium: e.target.value })}
+                  onChange={(e) =>
+                    setNewCampaign((prev) => ({ ...prev, utmMedium: e.target.value }))
+                  }
                   placeholder="e.g., social"
                   className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
@@ -741,7 +802,9 @@ export const ReferralToolsSection: React.FC<ReferralToolsSectionProps> = ({
                 <input
                   type="text"
                   value={newCampaign.utmCampaign}
-                  onChange={(e) => setNewCampaign({ ...newCampaign, utmCampaign: e.target.value })}
+                  onChange={(e) =>
+                    setNewCampaign((prev) => ({ ...prev, utmCampaign: e.target.value }))
+                  }
                   placeholder="e.g., partner-q1-2026"
                   className="w-full px-3 py-2 bg-white dark:bg-navy-800 border border-white/10 rounded-lg text-sm text-slate-900 dark:text-white focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />

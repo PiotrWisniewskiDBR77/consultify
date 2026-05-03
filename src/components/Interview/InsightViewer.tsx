@@ -10,10 +10,12 @@ import {
   AlertTriangle,
   BarChart3,
   BookOpen,
+  Brain,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   Clock,
+  Compass,
   Copy,
   Download,
   ExternalLink,
@@ -78,6 +80,9 @@ import {
   type V8InsightMaterialQuality,
   type V8InsightSourcePack,
   V8InterviewApi,
+  type V8InterviewReportPack,
+  type V8InterviewReportReadiness,
+  type V8InterviewReportWorksheetStatus,
 } from '@/services/api/v8/interview';
 import { useAppStore } from '@/store/useAppStore';
 import { type ArtifactType, buildArtifactCode } from '@/utils/artifactLinks';
@@ -88,6 +93,7 @@ import { createInterviewDemoDataset, isInterviewDemoId } from './interviewDemoDa
 
 type InsightPromptType =
   | 'summary'
+  | 'general_analysis'
   | 'trends'
   | 'problems'
   | 'recommendations'
@@ -96,7 +102,8 @@ type InsightPromptType =
   | 'risk_assessment'
   | 'opportunity_scan'
   | 'maturity'
-  | 'stakeholder_map';
+  | 'stakeholder_map'
+  | 'between_the_lines';
 
 type InsightStatus = 'generating' | 'completed' | 'failed' | 'draft' | 'in_review' | 'published';
 
@@ -299,8 +306,14 @@ const TYPE_METADATA: Record<
     label: 'Executive Summary',
     labelPl: 'Podsumowanie Wykonawcze',
   },
+  general_analysis: {
+    icon: <Compass size={16} />,
+    color: 'slate',
+    label: 'General Analysis',
+    labelPl: 'Analiza Ogólna',
+  },
   trends: {
-    icon: <Star size={16} />,
+    icon: <TrendingUp size={16} />,
     color: 'purple',
     label: 'Trend Analysis',
     labelPl: 'Analiza Trendów',
@@ -336,22 +349,28 @@ const TYPE_METADATA: Record<
     labelPl: 'Ocena Ryzyk',
   },
   opportunity_scan: {
-    icon: <Sparkles size={16} />,
+    icon: <Zap size={16} />,
     color: 'emerald',
     label: 'Opportunity Scan',
     labelPl: 'Skan Szans',
   },
   maturity: {
-    icon: <BarChart3 size={16} />,
+    icon: <Brain size={16} />,
     color: 'indigo',
     label: 'Maturity Assessment',
     labelPl: 'Ocena Dojrzałości',
   },
   stakeholder_map: {
-    icon: <MessageSquare size={16} />,
+    icon: <Users size={16} />,
     color: 'violet',
     label: 'Stakeholder Mapping',
     labelPl: 'Mapa Interesariuszy',
+  },
+  between_the_lines: {
+    icon: <Brain size={16} />,
+    color: 'rose',
+    label: 'Between the Lines',
+    labelPl: 'Czytanie Między Wierszami',
   },
 };
 
@@ -407,6 +426,7 @@ const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
     icon: AlertCircle,
     label: { en: 'Material Quality', pl: 'Jakość materiału' },
   },
+  { id: 'report-pack', icon: FileText, label: { en: 'Report Pack', pl: 'Pakiet raportu' } },
   { id: 'candidate-triage', icon: Eye, label: { en: 'Candidate Triage', pl: 'Triage kandydatów' } },
   { id: 'people', icon: Users, label: { en: 'People', pl: 'Perspektywy' } },
   {
@@ -523,6 +543,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [candidates, setCandidates] = useState<V8InsightCandidate[]>([]);
   const [analysis, setAnalysis] = useState<V8InsightAnalysis | null>(null);
   const [sourcePack, setSourcePack] = useState<V8InsightSourcePack | null>(null);
+  const [reportPack, setReportPack] = useState<V8InterviewReportPack | null>(null);
+  const [reportReadiness, setReportReadiness] = useState<V8InterviewReportReadiness | null>(null);
   const [analysisLensMode, setAnalysisLensMode] = useState<'stakeholder' | 'session'>(
     'stakeholder'
   );
@@ -530,6 +552,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
   const [analysisDepartmentFilter, setAnalysisDepartmentFilter] = useState('all');
   const [candidateActionLoadingId, setCandidateActionLoadingId] = useState<string | null>(null);
   const [readbackLoadingId, setReadbackLoadingId] = useState<string | null>(null);
+  const [worksheetActionLoadingKey, setWorksheetActionLoadingKey] = useState<string | null>(null);
+  const [reportReviewSubmitting, setReportReviewSubmitting] = useState(false);
+  const [reportPublishing, setReportPublishing] = useState(false);
+  const [reportExporting, setReportExporting] = useState(false);
+  const [reportRevisionCreating, setReportRevisionCreating] = useState(false);
 
   // NMode shared section state — Comments
   const [nComments, setNComments] = useState<CommentItem[]>([]);
@@ -582,6 +609,184 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }
   }, []);
 
+  const loadReportPack = useCallback(async (currentInsightId: string) => {
+    try {
+      const reportPackRes = await V8InterviewApi.getInsightReportPack(currentInsightId)
+        .then((r) => r.reportPack)
+        .catch(() => null);
+      setReportPack(reportPackRes || null);
+    } catch {
+      setReportPack(null);
+    }
+  }, []);
+
+  const loadReportReadiness = useCallback(async (currentInsightId: string) => {
+    try {
+      const readinessRes = await V8InterviewApi.getInsightReportReadiness(currentInsightId)
+        .then((r) => r.readiness)
+        .catch(() => null);
+      setReportReadiness(readinessRes || null);
+    } catch {
+      setReportReadiness(null);
+    }
+  }, []);
+
+  const handleWorksheetStatusUpdate = useCallback(
+    async (
+      worksheetKey: string,
+      status: V8InterviewReportWorksheetStatus,
+      completenessScore: number,
+      warnings: string[] = []
+    ) => {
+      if (!insight?.id) return;
+      setWorksheetActionLoadingKey(`${worksheetKey}:${status}`);
+      try {
+        const response = await V8InterviewApi.updateInsightReportWorksheet(
+          insight.id,
+          worksheetKey,
+          {
+            status,
+            completenessScore,
+            warnings,
+          }
+        );
+        setReportPack(response.reportPack);
+        await loadReportReadiness(insight.id);
+        toast.success(isPolish ? 'Arkusz raportu zaktualizowany.' : 'Report worksheet updated.');
+      } catch (error) {
+        console.error('[InsightViewer] Failed to update report worksheet:', error);
+        toast.error(
+          isPolish ? 'Nie udało się zapisać statusu arkusza.' : 'Failed to save worksheet status.'
+        );
+      } finally {
+        setWorksheetActionLoadingKey(null);
+      }
+    },
+    [insight?.id, isPolish, loadReportReadiness]
+  );
+
+  const handleSubmitReportForReview = useCallback(async () => {
+    if (!insight?.id) return;
+    setReportReviewSubmitting(true);
+    try {
+      const response = await V8InterviewApi.submitInsightReportForReview(insight.id);
+      setReportPack(response.result.reportPack);
+      setReportReadiness(response.result.readiness);
+      if (response.result.blocked) {
+        toast.error(
+          isPolish
+            ? 'Gate gotowości blokuje wysłanie raportu do review.'
+            : 'The readiness gate blocks review submission.'
+        );
+        return;
+      }
+      toast.success(
+        response.result.alreadyInReview
+          ? isPolish
+            ? 'Raport jest już w review.'
+            : 'Report pack is already in review.'
+          : isPolish
+            ? 'Raport wysłany do review.'
+            : 'Report pack submitted for review.'
+      );
+    } catch (error) {
+      console.error('[InsightViewer] Failed to submit report pack for review:', error);
+      toast.error(
+        isPolish
+          ? 'Nie udało się wysłać raportu do review.'
+          : 'Failed to submit report pack for review.'
+      );
+    } finally {
+      setReportReviewSubmitting(false);
+    }
+  }, [insight?.id, isPolish]);
+
+  const handlePublishReportPack = useCallback(async () => {
+    if (!insight?.id) return;
+    setReportPublishing(true);
+    try {
+      const response = await V8InterviewApi.publishInsightReportPack(insight.id);
+      setReportPack(response.result.reportPack);
+      setReportReadiness(response.result.readiness);
+      if (response.result.blocked) {
+        toast.error(
+          isPolish
+            ? 'Gate publikacji blokuje opublikowanie raportu.'
+            : 'The publish gate blocks report publication.'
+        );
+        return;
+      }
+      toast.success(
+        response.result.alreadyPublished
+          ? isPolish
+            ? 'Raport jest już opublikowany.'
+            : 'Report pack is already published.'
+          : isPolish
+            ? 'Raport opublikowany.'
+            : 'Report pack published.'
+      );
+    } catch (error) {
+      console.error('[InsightViewer] Failed to publish report pack:', error);
+      toast.error(
+        isPolish ? 'Nie udało się opublikować raportu.' : 'Failed to publish report pack.'
+      );
+    } finally {
+      setReportPublishing(false);
+    }
+  }, [insight?.id, isPolish]);
+
+  const handleExportReportManifest = useCallback(async () => {
+    if (!insight?.id) return;
+    setReportExporting(true);
+    try {
+      const response = await V8InterviewApi.getInsightReportExportManifest(insight.id);
+      const payload = JSON.stringify(response.exportManifest, null, 2);
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${response.exportManifest.reportPackId}-manifest.json`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(isPolish ? 'Manifest raportu pobrany.' : 'Report manifest downloaded.');
+    } catch (error) {
+      console.error('[InsightViewer] Failed to export report manifest:', error);
+      toast.error(
+        isPolish
+          ? 'Nie udało się pobrać manifestu. Raport musi być opublikowany.'
+          : 'Failed to download manifest. The report must be published.'
+      );
+    } finally {
+      setReportExporting(false);
+    }
+  }, [insight?.id, isPolish]);
+
+  const handleCreateReportRevision = useCallback(async () => {
+    if (!insight?.id) return;
+    setReportRevisionCreating(true);
+    try {
+      const response = await V8InterviewApi.createInsightReportRevision(insight.id);
+      setReportPack(response.result.reportPack);
+      await loadReportReadiness(insight.id);
+      toast.success(
+        isPolish
+          ? `Utworzono nowy draft z opublikowanej wersji v${response.result.revision.version}.`
+          : `Created a new draft from published version v${response.result.revision.version}.`
+      );
+    } catch (error) {
+      console.error('[InsightViewer] Failed to create report pack revision:', error);
+      toast.error(
+        isPolish
+          ? 'Nie udało się utworzyć nowego draftu. Raport musi być opublikowany.'
+          : 'Failed to create a new draft. The report must be published.'
+      );
+    } finally {
+      setReportRevisionCreating(false);
+    }
+  }, [insight?.id, isPolish, loadReportReadiness]);
+
   // ── Load data ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -615,6 +820,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         setCandidates([]);
         setAnalysis(null);
         setSourcePack(null);
+        setReportPack(null);
         return true;
       };
 
@@ -636,6 +842,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         await loadCandidates(insightId);
         await loadInsightAnalysis(insightId);
         await loadSourcePack(insightId);
+        await loadReportPack(insightId);
+        await loadReportReadiness(insightId);
 
         if (data.sourceSessionIds?.length > 0) {
           try {
@@ -718,6 +926,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
         await loadCandidates(insightId);
         await loadInsightAnalysis(insightId);
         await loadSourcePack(insightId);
+        await loadReportPack(insightId);
+        await loadReportReadiness(insightId);
         const nextStatus = data?.status as InsightStatus | undefined;
         if (lastStatus === null) lastStatus = nextStatus ?? null;
 
@@ -743,6 +953,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     loadCandidates,
     loadInsightAnalysis,
     loadSourcePack,
+    loadReportPack,
+    loadReportReadiness,
     loadPersistedFindings,
   ]);
 
@@ -2525,6 +2737,380 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                     isPolish
                       ? 'Jakość materiału pojawi się po zakończeniu generowania insightu.'
                       : 'Material quality will appear after insight generation completes.'
+                  }
+                />
+              )}
+            </div>
+          );
+          break;
+        }
+
+        case 'report-pack': {
+          const worksheets = reportPack?.worksheets || [];
+          const generatedCount = worksheets.filter(
+            (worksheet) => worksheet.status === 'generated'
+          ).length;
+          const degradedCount = worksheets.filter(
+            (worksheet) => worksheet.status === 'degraded'
+          ).length;
+          const partialCount = worksheets.filter(
+            (worksheet) => worksheet.status === 'partial'
+          ).length;
+          const readinessStatus = reportReadiness?.status || 'blocked';
+          const readinessLabel =
+            readinessStatus === 'ready_for_review'
+              ? isPolish
+                ? 'PASS: gotowy do review'
+                : 'PASS: ready for review'
+              : readinessStatus === 'ready_with_warnings'
+                ? isPolish
+                  ? 'PASS_WITH_P2: wymaga przeglądu'
+                  : 'PASS_WITH_P2: review warnings'
+                : isPolish
+                  ? 'BLOCKED_P1: blokery gotowości'
+                  : 'BLOCKED_P1: readiness blockers';
+          component = (
+            <div className="space-y-5">
+              <Callout
+                variant={reportPack?.degraded ? 'warning' : 'info'}
+                title={isPolish ? 'Pakiet raportu' : 'Report Pack'}
+              >
+                {isPolish
+                  ? 'To jest kontrolowana projekcja insightu do kompletnego pakietu arkuszy raportowych. Arkusze puste lub zdegradowane są pokazane jawnie.'
+                  : 'This is the controlled projection from insight into the full report worksheet pack. Empty or degraded worksheets are shown explicitly.'}
+              </Callout>
+
+              {reportPack ? (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Kompletność' : 'Completeness'}
+                      </div>
+                      <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                        {reportPack.completenessScore}%
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Arkusze' : 'Worksheets'}
+                      </div>
+                      <div className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
+                        {worksheets.length}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Gotowe / częściowe' : 'Generated / partial'}
+                      </div>
+                      <div className="mt-1 text-lg font-semibold text-emerald-600 dark:text-emerald-300">
+                        {generatedCount} / {partialCount}
+                      </div>
+                    </div>
+                    <div className="rounded-2xl bg-slate-50 dark:bg-navy-900/50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                        {isPolish ? 'Zdegradowane' : 'Degraded'}
+                      </div>
+                      <div
+                        className={`mt-1 text-lg font-semibold ${
+                          degradedCount > 0
+                            ? 'text-amber-600 dark:text-amber-300'
+                            : 'text-emerald-600 dark:text-emerald-300'
+                        }`}
+                      >
+                        {degradedCount}
+                      </div>
+                    </div>
+                  </div>
+
+                  <Callout
+                    variant={
+                      readinessStatus === 'blocked'
+                        ? 'warning'
+                        : readinessStatus === 'ready_with_warnings'
+                          ? 'info'
+                          : 'success'
+                    }
+                    title={isPolish ? 'Gate gotowości raportu' : 'Report readiness gate'}
+                    compact
+                  >
+                    <div className="space-y-2">
+                      <div className="text-sm font-semibold">{readinessLabel}</div>
+                      <div className="text-sm">
+                        {isPolish
+                          ? `Kompletność według gate'u: ${reportReadiness?.completenessScore ?? reportPack.completenessScore}%. Blokery: ${
+                              reportReadiness?.blockers.length ?? 0
+                            }, ostrzeżenia: ${reportReadiness?.warnings.length ?? 0}.`
+                          : `Gate completeness: ${reportReadiness?.completenessScore ?? reportPack.completenessScore}%. Blockers: ${
+                              reportReadiness?.blockers.length ?? 0
+                            }, warnings: ${reportReadiness?.warnings.length ?? 0}.`}
+                      </div>
+                      {reportReadiness?.blockers.length ? (
+                        <ul className="list-disc list-inside space-y-1 text-sm">
+                          {reportReadiness.blockers.slice(0, 4).map((issue) => (
+                            <li key={`${issue.worksheetKey || 'pack'}:${issue.message}`}>
+                              {issue.message}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={handleSubmitReportForReview}
+                          disabled={
+                            reportReviewSubmitting ||
+                            !reportReadiness ||
+                            reportPack.status === 'in_review' ||
+                            reportPack.status === 'published'
+                          }
+                          className="rounded-xl bg-navy-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-navy-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-navy-900"
+                        >
+                          {reportReviewSubmitting
+                            ? isPolish
+                              ? 'Wysyłanie...'
+                              : 'Submitting...'
+                            : reportPack.status === 'in_review'
+                              ? isPolish
+                                ? 'W review'
+                                : 'In review'
+                              : reportPack.status === 'published'
+                                ? isPolish
+                                  ? 'Opublikowany'
+                                  : 'Published'
+                                : isPolish
+                                  ? 'Wyślij do review'
+                                  : 'Submit for review'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handlePublishReportPack}
+                          disabled={
+                            reportPublishing ||
+                            !reportReadiness ||
+                            reportPack.status !== 'in_review' ||
+                            reportReadiness.status !== 'ready_for_review'
+                          }
+                          className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-50 dark:text-emerald-300"
+                        >
+                          {reportPublishing
+                            ? isPolish
+                              ? 'Publikowanie...'
+                              : 'Publishing...'
+                            : reportPack.status === 'published'
+                              ? isPolish
+                                ? 'Opublikowany'
+                                : 'Published'
+                              : isPolish
+                                ? 'Publikuj'
+                                : 'Publish'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleExportReportManifest}
+                          disabled={reportExporting || reportPack.status !== 'published'}
+                          className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-primary-400 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/[0.12] dark:bg-navy-900 dark:text-slate-200"
+                        >
+                          {reportExporting
+                            ? isPolish
+                              ? 'Pobieranie...'
+                              : 'Downloading...'
+                            : isPolish
+                              ? 'Pobierz manifest'
+                              : 'Download manifest'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleCreateReportRevision}
+                          disabled={reportRevisionCreating || reportPack.status !== 'published'}
+                          className="rounded-xl border border-blue-500/30 bg-blue-500/10 px-3 py-2 text-xs font-semibold text-blue-700 transition hover:bg-blue-500/15 disabled:cursor-not-allowed disabled:opacity-50 dark:text-blue-300"
+                        >
+                          {reportRevisionCreating
+                            ? isPolish
+                              ? 'Tworzenie draftu...'
+                              : 'Creating draft...'
+                            : isPolish
+                              ? 'Nowy draft z publikacji'
+                              : 'New draft from published'}
+                        </button>
+                        {reportReadiness?.status === 'blocked' && (
+                          <span className="text-xs text-amber-700 dark:text-amber-300">
+                            {isPolish
+                              ? 'Backend zablokuje przejście, dopóki blockery nie znikną.'
+                              : 'Backend will block the transition until blockers are resolved.'}
+                          </span>
+                        )}
+                        {reportPack.status === 'draft' &&
+                          reportReadiness?.status === 'ready_for_review' && (
+                            <span className="text-xs text-slate-500 dark:text-slate-400">
+                              {isPolish
+                                ? 'Publikacja wymaga najpierw review.'
+                                : 'Publish requires review first.'}
+                            </span>
+                          )}
+                        {reportPack.status === 'in_review' &&
+                          reportReadiness?.status !== 'ready_for_review' && (
+                            <span className="text-xs text-amber-700 dark:text-amber-300">
+                              {isPolish
+                                ? 'Publikacja wymaga pełnego PASS bez ostrzeżeń.'
+                                : 'Publish requires full PASS with no warnings.'}
+                            </span>
+                          )}
+                      </div>
+                      {!reportReadiness && (
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
+                          {isPolish
+                            ? 'Gate jest chwilowo niedostępny; nie traktuj pakietu jako gotowego bez ponownego odświeżenia.'
+                            : 'The gate is temporarily unavailable; do not treat this pack as ready until refreshed.'}
+                        </div>
+                      )}
+                    </div>
+                  </Callout>
+
+                  {reportPack.degradedReasons.length > 0 && (
+                    <Callout
+                      variant="warning"
+                      title={isPolish ? 'Ograniczenia raportu' : 'Report limitations'}
+                      compact
+                    >
+                      <ul className="list-disc list-inside space-y-1">
+                        {reportPack.degradedReasons.map((reason) => (
+                          <li key={reason} className="text-sm">
+                            {reason}
+                          </li>
+                        ))}
+                      </ul>
+                    </Callout>
+                  )}
+
+                  {reportPack.status === 'published' && (
+                    <Callout
+                      variant="success"
+                      title={isPolish ? 'Raport opublikowany' : 'Report published'}
+                      compact
+                    >
+                      {isPolish
+                        ? 'Pakiet jest opublikowany i zablokowany do edycji. Zmiany wymagają nowej wersji/draftu, aby zachować audytowalność.'
+                        : 'This pack is published and locked for editing. Changes require a new version/draft to preserve auditability.'}
+                    </Callout>
+                  )}
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                    {worksheets.map((worksheet) => (
+                      <div
+                        key={worksheet.key}
+                        className="rounded-2xl border border-slate-200/70 bg-white/80 px-4 py-3 dark:border-white/[0.08] dark:bg-navy-900/50"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                              {worksheet.title}
+                            </div>
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {worksheet.rows.length} {isPolish ? 'wierszy' : 'rows'} ·{' '}
+                              {worksheet.completenessScore}%
+                            </div>
+                          </div>
+                          <span
+                            className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+                              worksheet.status === 'generated'
+                                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300'
+                                : worksheet.status === 'degraded'
+                                  ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300'
+                                  : worksheet.status === 'partial'
+                                    ? 'bg-blue-500/10 text-blue-700 dark:text-blue-300'
+                                    : 'bg-slate-500/10 text-slate-600 dark:text-slate-300'
+                            }`}
+                          >
+                            {worksheet.status}
+                          </span>
+                        </div>
+                        {worksheet.warnings.length > 0 && (
+                          <div className="mt-2 space-y-1 text-xs text-amber-700 dark:text-amber-300">
+                            {worksheet.warnings.slice(0, 2).map((warning) => (
+                              <div key={warning}>{warning}</div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="mt-3 flex flex-wrap gap-1.5">
+                          {(
+                            [
+                              {
+                                status: 'generated' as const,
+                                label: isPolish ? 'Gotowy' : 'Generated',
+                                score: 100,
+                                warnings: [],
+                              },
+                              {
+                                status: 'partial' as const,
+                                label: isPolish ? 'Częściowy' : 'Partial',
+                                score: Math.max(worksheet.completenessScore || 70, 70),
+                                warnings:
+                                  worksheet.warnings.length > 0
+                                    ? worksheet.warnings
+                                    : [
+                                        isPolish
+                                          ? 'Arkusz wymaga uzupełnienia operatora.'
+                                          : 'Worksheet needs operator completion.',
+                                      ],
+                              },
+                              {
+                                status: 'degraded' as const,
+                                label: isPolish ? 'Zdegradowany' : 'Degraded',
+                                score: Math.min(worksheet.completenessScore || 40, 40),
+                                warnings:
+                                  worksheet.warnings.length > 0
+                                    ? worksheet.warnings
+                                    : [
+                                        isPolish
+                                          ? 'Arkusz oznaczony jako zdegradowany przez operatora.'
+                                          : 'Worksheet marked degraded by operator.',
+                                      ],
+                              },
+                            ] satisfies Array<{
+                              status: V8InterviewReportWorksheetStatus;
+                              label: string;
+                              score: number;
+                              warnings: string[];
+                            }>
+                          ).map((action) => {
+                            const loading =
+                              worksheetActionLoadingKey === `${worksheet.key}:${action.status}`;
+                            return (
+                              <button
+                                key={action.status}
+                                type="button"
+                                disabled={
+                                  loading ||
+                                  reportPack.status === 'published' ||
+                                  worksheet.status === action.status
+                                }
+                                onClick={() =>
+                                  handleWorksheetStatusUpdate(
+                                    worksheet.key,
+                                    action.status,
+                                    action.score,
+                                    action.warnings
+                                  )
+                                }
+                                className="rounded-md border border-slate-200 px-2 py-1 text-[10px] font-semibold text-slate-600 transition-colors hover:border-primary-400 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-45 dark:border-white/[0.08] dark:text-slate-300"
+                              >
+                                {loading ? (isPolish ? 'Zapis...' : 'Saving...') : action.label}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <EmptyStateInline
+                  icon={FileText}
+                  message={
+                    isPolish
+                      ? 'Pakiet raportu nie jest jeszcze dostępny dla tego insightu.'
+                      : 'Report pack is not available for this insight yet.'
                   }
                 />
               )}
@@ -4938,6 +5524,9 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
 
       const badgeMap: Record<string, number | undefined> = {
         'truth-review-summary': truthReviewSummary.publishBlockers.length || undefined,
+        'report-pack': reportPack?.degraded
+          ? reportPack.degradedReasons.length || 1
+          : reportPack?.worksheets.length,
         'candidate-triage': candidates.length || undefined,
         comments: nComments.length,
         'source-sessions': sourceSessions.length,
@@ -4970,6 +5559,13 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     sourceSessions,
     sourceSessionSummaries,
     sourcePack,
+    reportPack,
+    reportReadiness,
+    reportExporting,
+    reportPublishing,
+    reportRevisionCreating,
+    reportReviewSubmitting,
+    worksheetActionLoadingKey,
     analysis,
     findings,
     findingsSummary.activeEvidence,
@@ -5004,6 +5600,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     expandedLimits,
     toggleLimitsExpand,
     handleOpenHandoff,
+    handleCreateReportRevision,
+    handleExportReportManifest,
+    handlePublishReportPack,
+    handleSubmitReportForReview,
+    handleWorksheetStatusUpdate,
   ]);
 
   // ── Render ─────────────────────────────────────────────────────────────────

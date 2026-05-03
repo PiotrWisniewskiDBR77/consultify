@@ -149,8 +149,8 @@ const STAGE_META: Record<
     labelPl: 'Gotowy',
     icon: CheckCircle2,
     badge:
-      'border border-violet-300/80 bg-violet-50 text-violet-900 dark:border-violet-300/[0.25] dark:bg-violet-300/[0.12] dark:text-violet-100',
-    iconClass: 'text-violet-600 dark:text-violet-300',
+      'border border-blue-300/80 bg-blue-50 text-blue-900 dark:border-blue-300/[0.25] dark:bg-blue-300/[0.12] dark:text-blue-100',
+    iconClass: 'text-blue-600 dark:text-blue-300',
   },
   promoted: {
     label: 'Promoted',

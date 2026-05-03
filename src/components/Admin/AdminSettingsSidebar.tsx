@@ -1,9 +1,9 @@
-import { ArrowLeft, CreditCard, Users } from 'lucide-react';
+import { ArrowLeft, CreditCard, RefreshCw, Users } from 'lucide-react';
 import React from 'react';
 
 import { cn } from '../../utils/cn';
 
-export type AdminSettingsSection = 'people' | 'billing';
+export type AdminSettingsSection = 'people' | 'billing' | 'operations';
 
 interface AdminSettingsSidebarProps {
   activeSection: AdminSettingsSection;
@@ -29,6 +29,12 @@ const NAV_ITEMS: Array<{
     label: 'Billing & FinOps',
     description: 'Plans, invoices, payment methods, and spend controls',
     icon: CreditCard,
+  },
+  {
+    id: 'operations',
+    label: 'Operations',
+    description: 'Context worker queue, processing jobs, and explicit runs',
+    icon: RefreshCw,
   },
 ];
 

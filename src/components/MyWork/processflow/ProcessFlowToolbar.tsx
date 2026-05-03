@@ -202,7 +202,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
             <span className="inline-flex items-center rounded-full bg-slate-200/70 dark:bg-white/[0.06] px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:text-slate-300">
               {isPl ? guidance.stagePl : guidance.stageEn}
             </span>
-            <span className="inline-flex items-center rounded-full bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 dark:text-violet-300">
+            <span className="inline-flex items-center rounded-full bg-primary-500/10 px-2 py-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-300">
               Kit {semanticKit}
             </span>
           </div>
@@ -356,8 +356,8 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               disabled={locked || coachLoading}
               className={`inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium transition-colors disabled:opacity-40 ${
                 showCoach
-                  ? 'text-violet-700 bg-violet-50 dark:bg-violet-900/20 dark:text-violet-300'
-                  : 'text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20'
+                  ? 'text-primary-700 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-300'
+                  : 'text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'
               }`}
               title="AI Coach"
             >
@@ -433,7 +433,7 @@ export const ProcessFlowToolbar: React.FC<ProcessFlowToolbarProps> = ({
               type="button"
               onClick={deleteSelected}
               disabled={locked}
-              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-1 rounded-lg px-2 py-1.5 text-[11px] font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors disabled:opacity-40"
               title={isPl ? 'Usuń zaznaczone' : 'Delete selected'}
             >
               <Trash2 size={14} />
