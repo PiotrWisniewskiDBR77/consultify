@@ -201,6 +201,11 @@ interface PayoutRow {
 
 let db: IDatabase = getDatabase();
 
+function toNumber(value: unknown): number {
+  const num = Number(value ?? 0);
+  return Number.isFinite(num) ? num : 0;
+}
+
 function toIsoDateString(value: unknown): string {
   if (value instanceof Date) {
     return value.toISOString().slice(0, 10);
@@ -518,18 +523,24 @@ export async function getEarningsSummary(partnerOrgId: string): Promise<Earnings
       [thisMonthStart, thisMonthStart, lastMonthStart, lastMonthEnd, partnerOrgId]
     );
 
-    const totalEarned =
-      (stats?.total_pending || 0) + (stats?.total_approved || 0) + (stats?.total_paid || 0);
+    const totalPending = toNumber(stats?.total_pending);
+    const totalApproved = toNumber(stats?.total_approved);
+    const totalPaid = toNumber(stats?.total_paid);
+    const thisMonth = toNumber(stats?.this_month);
+    const thisMonthCount = toNumber(stats?.this_month_count);
+    const lastMonth = toNumber(stats?.last_month);
+    const readyForPayout = toNumber(stats?.ready_for_payout);
+    const totalEarned = totalPending + totalApproved + totalPaid;
 
     return {
       totalEarned,
-      totalPending: stats?.total_pending || 0,
-      totalApproved: stats?.total_approved || 0,
-      totalPaid: stats?.total_paid || 0,
-      thisMonth: stats?.this_month || 0,
-      thisMonthCount: stats?.this_month_count || 0,
-      lastMonth: stats?.last_month || 0,
-      readyForPayout: stats?.ready_for_payout || 0,
+      totalPending,
+      totalApproved,
+      totalPaid,
+      thisMonth,
+      thisMonthCount,
+      lastMonth,
+      readyForPayout,
       currency: 'EUR',
     };
   } catch (err: any) {

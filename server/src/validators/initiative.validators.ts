@@ -58,6 +58,7 @@ export const CreateInitiativeSchema = z
   .object({
     projectId: z.string().optional(),
     title: z.string().min(1).max(255),
+    category: z.string().max(255).optional(),
     axis: InitiativeAxisEnum.optional(),
     area: z.string().max(255).optional(),
     summary: z.string().max(5000).optional(),
@@ -69,6 +70,8 @@ export const CreateInitiativeSchema = z
     hypothesis: z.string().max(2000).optional(),
     status: InitiativeStatusEnum.optional().default('DRAFT'),
     priority: InitiativePriorityEnum.optional(),
+    impact: z.string().max(50).optional(),
+    effort: z.string().max(50).optional(),
     businessValue: z.number().optional(),
     costCapex: z.number().optional(),
     costOpex: z.number().optional(),
@@ -104,6 +107,10 @@ export const CreateInitiativeSchema = z
     // V3-A01: Traceability — every output must have a canonical source
     sourceType: SourceTypeEnum.optional().default('manual'),
     sourceId: z.string().max(255).optional().nullable(),
+    sourcePack: z.record(z.string(), z.unknown()).optional(),
+    actionContract: z.record(z.string(), z.unknown()).optional(),
+    evidenceRefs: z.array(z.string()).optional(),
+    reportName: z.string().max(500).optional(),
     // V4-INIT-02: Program hierarchy
     programId: z.string().max(255).optional().nullable(),
   })

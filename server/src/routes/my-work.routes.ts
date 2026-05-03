@@ -298,6 +298,26 @@ const parseTagsArray = (input: unknown): string[] => {
   return [];
 };
 
+const parseJsonField = <T>(input: unknown, fallback: T): T => {
+  if (input == null) return fallback;
+  if (typeof input !== 'string') return input as T;
+  try {
+    return JSON.parse(input) as T;
+  } catch {
+    return fallback;
+  }
+};
+
+const decorateIdeaLineage = (row: any) => ({
+  ...row,
+  actionContract: parseJsonField(row?.action_contract_json, {}),
+  sourcePack: parseJsonField(row?.source_pack_json, {}),
+  evidenceRefs: parseJsonField(row?.evidence_refs_json, []),
+  action_contract_json: undefined,
+  source_pack_json: undefined,
+  evidence_refs_json: undefined,
+});
+
 const normalizeDecisionStatus = (status?: string | null) => String(status || '').toLowerCase();
 const isDecisionPending = (status?: string | null) => {
   const s = normalizeDecisionStatus(status);
@@ -2250,6 +2270,14 @@ router.get(
     const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 500) : 200;
     const q = req.query.q ? String(req.query.q).trim().toLowerCase() : '';
     const tag = req.query.tag ? String(req.query.tag).trim().toLowerCase() : '';
+    const ideaColumns = await getTableColumns('my_ideas');
+    const lineageSelect = [
+      ideaColumns.has('action_contract_json')
+        ? 'action_contract_json'
+        : "'{}' as action_contract_json",
+      ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
+      ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+    ].join(',\n          ');
 
     const params: any[] = [userId, orgId];
     let whereExtra = '';
@@ -2281,6 +2309,7 @@ router.get(
           priority,
           branch,
           promoted_to as "promotedTo",
+          ${lineageSelect},
           created_at as "createdAt",
           updated_at as "updatedAt"
         FROM my_ideas
@@ -2292,7 +2321,7 @@ router.get(
         params
       )) || [];
 
-    res.json(rows.map((r: any) => ({ ...r, tags: parseTagsArray(r?.tags) })));
+    res.json(rows.map((r: any) => decorateIdeaLineage({ ...r, tags: parseTagsArray(r?.tags) })));
   })
 );
 
@@ -2360,25 +2389,66 @@ router.post(
       ? String(req.body.sourceConversationId)
       : null;
     const sourceMessageId = req.body?.sourceMessageId ? String(req.body.sourceMessageId) : null;
+    const sourcePack =
+      req.body?.sourcePack &&
+      typeof req.body.sourcePack === 'object' &&
+      !Array.isArray(req.body.sourcePack)
+        ? req.body.sourcePack
+        : {};
+    const actionContract =
+      req.body?.actionContract &&
+      typeof req.body.actionContract === 'object' &&
+      !Array.isArray(req.body.actionContract)
+        ? req.body.actionContract
+        : {};
+    const evidenceRefs = Array.isArray(req.body?.evidenceRefs)
+      ? req.body.evidenceRefs.map((ref: unknown) => String(ref || '').trim()).filter(Boolean)
+      : [];
 
     const id = uuidv4();
+    const ideaColumns = await getTableColumns('my_ideas');
+    const hasIdeaColumn = (column: string) => ideaColumns.has(column);
+    const insertColumns = [
+      'id',
+      'user_id',
+      'organization_id',
+      'title',
+      'body',
+      'tags',
+      'source_type',
+      'source_conversation_id',
+      'source_message_id',
+    ];
+    const insertValues: unknown[] = [
+      id,
+      userId,
+      orgId,
+      title,
+      body,
+      JSON.stringify(tags),
+      sourceType,
+      sourceConversationId,
+      sourceMessageId,
+    ];
+    if (hasIdeaColumn('action_contract_json')) {
+      insertColumns.push('action_contract_json');
+      insertValues.push(JSON.stringify(actionContract));
+    }
+    if (hasIdeaColumn('source_pack_json')) {
+      insertColumns.push('source_pack_json');
+      insertValues.push(JSON.stringify(sourcePack));
+    }
+    if (hasIdeaColumn('evidence_refs_json')) {
+      insertColumns.push('evidence_refs_json');
+      insertValues.push(JSON.stringify(evidenceRefs));
+    }
+
     await queryHelpers.queryRun(
       `
-      INSERT INTO my_ideas (
-        id, user_id, organization_id, title, body, tags, source_type, source_conversation_id, source_message_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO my_ideas (${insertColumns.join(', ')})
+      VALUES (${insertColumns.map(() => '?').join(', ')})
     `,
-      [
-        id,
-        userId,
-        orgId,
-        title,
-        body,
-        JSON.stringify(tags),
-        sourceType,
-        sourceConversationId,
-        sourceMessageId,
-      ]
+      insertValues
     );
 
     const row = await queryHelpers.queryOne<any>(
@@ -2391,6 +2461,9 @@ router.post(
         source_type as "sourceType",
         source_conversation_id as "sourceConversationId",
         source_message_id as "sourceMessageId",
+        ${hasIdeaColumn('action_contract_json') ? 'action_contract_json' : "'{}' as action_contract_json"},
+        ${hasIdeaColumn('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json"},
+        ${hasIdeaColumn('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json"},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -2407,7 +2480,7 @@ router.post(
         resourceType: 'idea',
         resourceId: id,
         after: { title, body, tags, sourceType },
-        metadata: { fromAI: Boolean(req.body?.fromAI) },
+        metadata: { fromAI: Boolean(req.body?.fromAI), actionContract, evidenceRefs },
       })
       .catch((err: any) => logger.warn('[MyIdeas] Audit log failed:', err?.message));
 
@@ -2422,10 +2495,13 @@ router.post(
         sourceType,
         sourceConversationId,
         sourceMessageId,
+        sourcePack,
+        actionContract,
+        evidenceRefs,
       },
     });
 
-    res.status(201).json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+    res.status(201).json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags) }));
   })
 );
 
@@ -2438,6 +2514,14 @@ router.get(
     if (!(await requireTables(res, ['my_ideas']))) return;
 
     const id = String(req.params.id || '').trim();
+    const ideaColumns = await getTableColumns('my_ideas');
+    const lineageSelect = [
+      ideaColumns.has('action_contract_json')
+        ? 'action_contract_json'
+        : "'{}' as action_contract_json",
+      ideaColumns.has('source_pack_json') ? 'source_pack_json' : "'{}' as source_pack_json",
+      ideaColumns.has('evidence_refs_json') ? 'evidence_refs_json' : "'[]' as evidence_refs_json",
+    ].join(',\n        ');
     const row = await queryHelpers.queryOne<any>(
       `
       SELECT
@@ -2461,6 +2545,7 @@ router.get(
         branch,
         promoted_to as "promotedTo",
         promoted_entity_id as "promotedEntityId",
+        ${lineageSelect},
         created_at as "createdAt",
         updated_at as "updatedAt"
       FROM my_ideas
@@ -2475,7 +2560,7 @@ router.get(
       return;
     }
 
-    res.json({ ...row, tags: parseTagsArray((row as any)?.tags) });
+    res.json(decorateIdeaLineage({ ...row, tags: parseTagsArray((row as any)?.tags) }));
   })
 );
 

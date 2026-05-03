@@ -114,6 +114,7 @@ App Table color grid:
 App Table column mechanics:
 
 - New and migrated App Tables MUST follow the approved `My Work > Pomysły` golden reference in `docs/ui-standards/03-modules/app-table-standard.md`.
+- Any work on tables, operational record lists, ModuleHub cards, or table-like screens MUST run the professional UI/UX test procedure in `docs/ui-standards/03-modules/module-hub-standard.md` section `2.3 Profesjonalna Procedura Testowania UI/UX Karty I Tabeli`.
 - New operational record lists in `My Work`, `Wywiad`, queues, sessions, templates, insights and initiatives MUST start from the App Table canon; do not create local card-list/table hybrids unless a compliant App Table view already exists.
 - Column resize MUST behave like Excel boundaries: dragging a separator moves that separator; one adjacent column grows by the same amount the other adjacent column shrinks.
 - Do not implement table resize as changing only one column and letting the browser recalculate the rest.
@@ -125,6 +126,14 @@ App Table column mechanics:
 - Row description/justification is visible by default under the primary title, uses the same neutral text family with lighter opacity/weight, and must not appear only on hover.
 - Table settings popovers include a persisted `Pokaż opis / uzasadnienie` / `Show row description` checkbox at the bottom instead of a simple reset button in lightweight tables.
 - If row descriptions are hidden, keep calm row padding; do not collapse rows into cramped spreadsheet density.
+
+Mandatory table migration/testing gate:
+
+- Before editing a table/card: audit and report Menu 2, Menu 3, table surface, column contracts, resize, header, settings popover, row anatomy, checkbox/selection, row actions, chips, empty/loading/error states, visual comparison, and technical verification.
+- During implementation: fix every critical `FAIL`; do not stop after only removing topbar issues.
+- Use the required report format from `module-hub-standard.md` section `2.3 S. Wymagany Format Raportu Audytu I Migracji` for table/card migrations.
+- Before final response: state which critical checklist blocks passed and explicitly call out any remaining `FAIL` or `N/A`.
+- A table screen is not accepted if any critical block from the procedure has `FAIL`.
 
 Detailed rules are in `.cursor/rules/nmode-shared-components.mdc` and `.cursor/rules/ui-standards-documentation.mdc`.
 

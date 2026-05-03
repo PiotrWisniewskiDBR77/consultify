@@ -216,7 +216,7 @@ export const AuditsShowcasePage: React.FC = () => {
   const [demoModalMode, setDemoModalMode] = React.useState<'demo' | 'trial'>('trial');
 
   const handleModalSuccess = (user: any, mode: 'demo' | 'trial') => {
-    setCurrentUser({ ...user, hasWorkspace: true } as any);
+    setCurrentUser({ ...user, hasWorkspace: true, isAuthenticated: true } as any);
     setIsDemoModalOpen(false);
     setSessionMode(mode === 'demo' ? SessionMode.DEMO : SessionMode.FULL);
     if (mode === 'demo') setDemoMode(true);

@@ -514,13 +514,17 @@ const buildFallbackMetricsData = (
   referralAnalytics: V8PartnerReferralAnalytics,
   earningsSummary: V8PartnerEarningsSummary
 ): MetricsData => {
+  const toNumber = (value: unknown): number => {
+    const parsed = Number(value ?? 0);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+  const totalEarned = toNumber(earningsSummary.totalEarned);
+  const thisMonth = toNumber(earningsSummary.thisMonth);
+  const lastMonth = toNumber(earningsSummary.lastMonth);
   const revenueChange =
-    earningsSummary.lastMonth > 0
-      ? Math.round(
-          ((earningsSummary.thisMonth - earningsSummary.lastMonth) / earningsSummary.lastMonth) *
-            100
-        )
-      : earningsSummary.thisMonth > 0
+    lastMonth > 0
+      ? Math.round(((thisMonth - lastMonth) / lastMonth) * 100)
+      : thisMonth > 0
         ? 100
         : 0;
 
@@ -534,9 +538,9 @@ const buildFallbackMetricsData = (
 
   return {
     revenue: {
-      totalYTD: earningsSummary.totalEarned || 0,
+      totalYTD: totalEarned,
       change: revenueChange,
-      byMonth: [0, 0, 0, 0, earningsSummary.lastMonth || 0, earningsSummary.thisMonth || 0],
+      byMonth: [0, 0, 0, 0, lastMonth, thisMonth],
     },
     clients: {
       retention:
@@ -566,10 +570,76 @@ const buildFallbackMetricsData = (
 };
 
 const normalizeMetricsPayload = (payload: any): MetricsData | null => {
+  const asNumber = (value: unknown): number => {
+    if (typeof value === 'number') {
+      return Number.isFinite(value) ? value : 0;
+    }
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return 0;
+      const parsed = Number(trimmed.replace(/,/g, '.'));
+      if (Number.isFinite(parsed)) return parsed;
+      const tokens = trimmed.match(/-?\d+(?:[.,]\d+)?/g);
+      if (!tokens?.length) return 0;
+      const summed = tokens.reduce((sum, token) => {
+        const tokenNumber = Number(token.replace(/,/g, '.'));
+        return Number.isFinite(tokenNumber) ? sum + tokenNumber : sum;
+      }, 0);
+      return Number.isFinite(summed) ? summed : 0;
+    }
+    if (Array.isArray(value)) {
+      return value.reduce((sum, item) => sum + asNumber(item), 0);
+    }
+    return 0;
+  };
+
+  const asNumberArray = (value: unknown): number[] => {
+    if (!Array.isArray(value)) return [];
+    return value.map((item) => asNumber(item)).filter((item) => Number.isFinite(item));
+  };
+
   const data = payload?.data && payload?.data !== payload ? payload.data : payload;
   if (!data) return null;
   if (data.revenue && data.clients && data.performance && data.satisfaction) {
-    return data as MetricsData;
+    const monthlyRevenue = asNumberArray(data.revenue.byMonth);
+    const totalYTD = asNumber(data.revenue.totalYTD);
+    const sanitizedTotalYTD =
+      totalYTD > 0 ? totalYTD : monthlyRevenue.reduce((sum, monthValue) => sum + monthValue, 0);
+
+    return {
+      revenue: {
+        totalYTD: sanitizedTotalYTD,
+        change: asNumber(data.revenue.change),
+        byMonth: monthlyRevenue,
+      },
+      clients: {
+        retention: asNumber(data.clients.retention),
+        newThisQuarter: asNumber(data.clients.newThisQuarter),
+        churned: asNumber(data.clients.churned),
+        avgProjectDuration: asNumber(data.clients.avgProjectDuration),
+      },
+      performance: {
+        score: asNumber(data.performance.score),
+        breakdown: {
+          clientAcquisition: asNumber(data.performance.breakdown?.clientAcquisition),
+          projectDelivery: asNumber(data.performance.breakdown?.projectDelivery),
+          customerSatisfaction: asNumber(data.performance.breakdown?.customerSatisfaction),
+          certificationProgress: asNumber(data.performance.breakdown?.certificationProgress),
+        },
+        ranking:
+          typeof data.performance.ranking === 'string' && data.performance.ranking.trim()
+            ? data.performance.ranking
+            : 'Governed runtime snapshot',
+      },
+      satisfaction: {
+        score: asNumber(data.satisfaction.score),
+        responses: asNumber(data.satisfaction.responses),
+        trend:
+          typeof data.satisfaction.trend === 'string' && data.satisfaction.trend.trim()
+            ? data.satisfaction.trend
+            : 'stable',
+      },
+    };
   }
   if (data.referralAnalytics && data.earningsSummary) {
     return buildFallbackMetricsData(data.referralAnalytics, data.earningsSummary);
@@ -579,6 +649,15 @@ const normalizeMetricsPayload = (payload: any): MetricsData | null => {
 
 const MetricsSection: React.FC = () => {
   const { t } = useTranslation();
+  const formatEuro = useCallback((value: number) => {
+    return new Intl.NumberFormat('en-IE', {
+      style: 'currency',
+      currency: 'EUR',
+      currencyDisplay: 'code',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(Number.isFinite(value) ? value : 0);
+  }, []);
   const [metricsData, setMetricsData] = useState<MetricsData | null>(null);
   const [v8RuntimeSummary, setV8RuntimeSummary] = useState<PartnerRuntimeSummary | null>(null);
   const [loading, setLoading] = useState(true);
@@ -658,7 +737,7 @@ const MetricsSection: React.FC = () => {
     ? [
         {
           label: t('partner.metrics.totalRevenue', 'Total Revenue'),
-          value: `€${(metricsData.revenue.totalYTD || 0).toLocaleString()}`,
+          value: formatEuro(metricsData.revenue.totalYTD || 0),
           change: `${metricsData.revenue.change > 0 ? '+' : ''}${metricsData.revenue.change}%`,
           period: 'vs last quarter',
           isPositive: metricsData.revenue.change >= 0,

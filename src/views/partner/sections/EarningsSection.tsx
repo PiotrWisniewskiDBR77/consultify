@@ -932,64 +932,79 @@ export const EarningsSection: React.FC<EarningsSectionProps> = ({ subsection = '
         </div>
 
         {/* Payout List */}
-        <div className="space-y-4">
-          {payouts.map((payout) => (
-            <div
-              key={payout.id}
-              className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div
-                    className={cn(
-                      'w-12 h-12 rounded-xl flex items-center justify-center',
-                      payout.status === 'COMPLETED' && 'bg-emerald-500/20',
-                      payout.status === 'PROCESSING' && 'bg-blue-500/20',
-                      payout.status === 'PENDING' && 'bg-amber-500/20'
+        {payouts.length > 0 ? (
+          <div className="space-y-4">
+            {payouts.map((payout) => (
+              <div
+                key={payout.id}
+                className="bg-slate-50 dark:bg-navy-800/50 rounded-xl border border-white/5 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={cn(
+                        'w-12 h-12 rounded-xl flex items-center justify-center',
+                        payout.status === 'COMPLETED' && 'bg-emerald-500/20',
+                        payout.status === 'PROCESSING' && 'bg-blue-500/20',
+                        payout.status === 'PENDING' && 'bg-amber-500/20'
+                      )}
+                    >
+                      {payout.status === 'COMPLETED' ? (
+                        <Check className="w-6 h-6 text-emerald-400" />
+                      ) : (
+                        <Clock className="w-6 h-6 text-amber-400" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-medium text-slate-900 dark:text-white">
+                        €{(payout.netAmount ?? 0).toLocaleString()}
+                      </p>
+                      <p className="text-sm text-slate-400 dark:text-slate-500">
+                        {payout.transactionCount} transactions • {payout.periodStart} to{' '}
+                        {payout.periodEnd}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span
+                      className={cn(
+                        'px-2 py-1 text-xs font-medium rounded-full',
+                        payout.status === 'COMPLETED' && 'bg-emerald-500/20 text-emerald-400',
+                        payout.status === 'PROCESSING' && 'bg-blue-500/20 text-blue-400',
+                        payout.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
+                      )}
+                    >
+                      {payout.status.toLowerCase()}
+                    </span>
+                    {payout.completedAt && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Completed {payout.completedAt}
+                      </p>
                     )}
-                  >
-                    {payout.status === 'COMPLETED' ? (
-                      <Check className="w-6 h-6 text-emerald-400" />
-                    ) : (
-                      <Clock className="w-6 h-6 text-amber-400" />
+                    {payout.payoutReference && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Ref: {payout.payoutReference}
+                      </p>
                     )}
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-900 dark:text-white">
-                      €{(payout.netAmount ?? 0).toLocaleString()}
-                    </p>
-                    <p className="text-sm text-slate-400 dark:text-slate-500">
-                      {payout.transactionCount} transactions • {payout.periodStart} to{' '}
-                      {payout.periodEnd}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span
-                    className={cn(
-                      'px-2 py-1 text-xs font-medium rounded-full',
-                      payout.status === 'COMPLETED' && 'bg-emerald-500/20 text-emerald-400',
-                      payout.status === 'PROCESSING' && 'bg-blue-500/20 text-blue-400',
-                      payout.status === 'PENDING' && 'bg-amber-500/20 text-amber-400'
-                    )}
-                  >
-                    {payout.status.toLowerCase()}
-                  </span>
-                  {payout.completedAt && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                      Completed {payout.completedAt}
-                    </p>
-                  )}
-                  {payout.payoutReference && (
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      Ref: {payout.payoutReference}
-                    </p>
-                  )}
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <Banknote className="w-12 h-12 text-slate-600 dark:text-slate-400 mx-auto mb-3" />
+            <p className="text-slate-400 dark:text-slate-500">
+              {t('partner.payouts.empty', 'No payouts yet')}
+            </p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {t(
+                'partner.payouts.emptyDesc',
+                'Your payout history will appear here after payout processing.'
+              )}
+            </p>
+          </div>
+        )}
       </div>
     );
   }

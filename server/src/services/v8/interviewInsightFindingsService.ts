@@ -1171,10 +1171,11 @@ async function loadAnswerSourceMetadata(
        q.session_id,
        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') AS respondent_label,
        u.job_title,
-       u.department
+       upe.department
      FROM interview_questions q
      LEFT JOIN interview_sessions s ON s.id = q.session_id
      LEFT JOIN users u ON u.id = s.owner_id
+     LEFT JOIN user_profile_extended upe ON upe.user_id = u.id
      WHERE q.id IN (${placeholders})`,
     answerIds
   );

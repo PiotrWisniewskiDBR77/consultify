@@ -375,6 +375,7 @@ describe('UnifiedChatPanel (L2)', () => {
     });
 
     localStorage.removeItem('consultinity-preferred-chat-lang');
+    localStorage.removeItem('workCanvas.splitWidthPercent');
 
     pendingActionsCountState = 0;
     voiceStateState = { isSpeaking: false, isListening: false };
@@ -510,7 +511,8 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.queryByText('Work panel')).not.toBeInTheDocument();
     expect(screen.queryByText('Empty workspace for documents and canvas')).not.toBeInTheDocument();
     expect(screen.getByText('Canvas work area')).toBeInTheDocument();
-    expect(screen.getByText('Working on:')).toBeInTheDocument();
+    expect(screen.getByText('Active document:')).toBeInTheDocument();
+    expect(screen.getAllByText('Company Work Note').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Document' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'MD' })).toBeInTheDocument();
     expect(screen.getByText('Markdown canonical')).toBeInTheDocument();
@@ -518,6 +520,40 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('chat-work-panel-empty-state')).toBeInTheDocument();
     expect(screen.queryByTestId('chat-compact-empty-state')).not.toBeInTheDocument();
     expect(screen.getByTestId('enhanced-chat-input')).toBeInTheDocument();
+  });
+
+  it('lets users resize the chat and Canvas split with the divider', () => {
+    const rectSpy = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      x: 0,
+      y: 0,
+      left: 0,
+      top: 0,
+      right: 1000,
+      bottom: 800,
+      width: 1000,
+      height: 800,
+      toJSON: () => ({}),
+    });
+
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+    fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+
+    const resizer = screen.getByTestId('chat-work-panel-resizer');
+    expect(resizer).toHaveAttribute('role', 'separator');
+
+    fireEvent.mouseDown(resizer, { clientX: 420 });
+    fireEvent.mouseMove(window, { clientX: 360 });
+    fireEvent.mouseUp(window);
+
+    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('64');
+
+    fireEvent.keyDown(resizer, { key: 'ArrowLeft' });
+    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('66');
+
+    fireEvent.doubleClick(resizer);
+    expect(localStorage.getItem('workCanvas.splitWidthPercent')).toBe('56');
+
+    rectSpy.mockRestore();
   });
 
   it('new chat clears state and creates/selects a conversation', async () => {

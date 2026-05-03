@@ -538,9 +538,10 @@ const TaskTableRow: React.FC<{
             ${
               isSelected
                 ? 'bg-primary-500 border-primary-500 text-white opacity-100'
-                : 'border-slate-400/70 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035] dark:group-hover:bg-white/[0.08]'
+                : 'border-slate-400/75 bg-white/80 text-transparent opacity-0 hover:border-primary-400 group-hover:opacity-100 group-hover:border-slate-300 dark:group-hover:border-white/[0.22] group-hover:bg-white/90 dark:group-hover:bg-white/[0.08] group-focus-within:opacity-100 group-focus-within:border-primary-400 group-focus-within:bg-white/90 dark:group-focus-within:bg-white/[0.08] focus:opacity-100 dark:border-white/[0.14] dark:bg-white/[0.035]'
             }
           `}
+          aria-label={isPolish ? 'Zaznacz zadanie' : 'Select task'}
         >
           {isSelected && <CheckSquare size={12} />}
         </button>

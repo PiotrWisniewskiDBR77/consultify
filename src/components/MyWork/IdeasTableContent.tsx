@@ -983,7 +983,7 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                 const selectionCheckboxVisibility =
                   isChecked || isPreviewSelected || isFocused
                     ? 'opacity-100'
-                    : 'opacity-0 group-hover:opacity-100 focus:opacity-100';
+                    : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100';
 
                 const rowActionSections: RowActionSection[] = [
                   {
@@ -1137,16 +1137,21 @@ export const IdeasTableContent: React.FC<IdeasTableContentProps> = ({
                           className={`absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full ${rowAccentClass}`}
                         />
                       ) : null}
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={(event) => {
-                          event.stopPropagation();
-                          onToggleSelect(idea.id);
-                        }}
-                        onClick={(event) => event.stopPropagation()}
-                        className={`h-3.5 w-3.5 rounded-[4px] border-slate-400/70 bg-white/80 text-primary-500 shadow-none transition-all checked:border-primary-500 checked:bg-primary-500 checked:opacity-100 focus:ring-2 focus:ring-primary-500/25 focus:ring-offset-0 dark:border-white/[0.14] dark:bg-white/[0.035] dark:checked:bg-primary-500 dark:group-hover:bg-white/[0.08] ${selectionCheckboxVisibility}`}
-                      />
+                      <label
+                        className={`inline-flex h-6 w-6 items-center justify-center rounded-md transition-all ${selectionCheckboxVisibility} hover:bg-slate-200/55 dark:hover:bg-white/[0.06]`}
+                        aria-label={isPolish ? 'Zaznacz pomysł' : 'Select idea'}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(event) => {
+                            event.stopPropagation();
+                            onToggleSelect(idea.id);
+                          }}
+                          onClick={(event) => event.stopPropagation()}
+                          className="h-3.5 w-3.5 rounded-[4px] border-slate-400/70 bg-transparent text-primary-500 shadow-none transition-all checked:border-primary-500 checked:bg-primary-500 checked:opacity-100 focus:ring-2 focus:ring-primary-500/25 focus:ring-offset-0 dark:border-white/[0.18] dark:bg-transparent dark:checked:bg-primary-500"
+                        />
+                      </label>
                     </td>
                     <td className="px-3 py-3 align-middle" style={{ width: columnWidths.title }}>
                       <div className="truncate pr-4 text-[13.5px] font-semibold leading-5 tracking-[-0.01em] text-slate-950 dark:text-slate-100">

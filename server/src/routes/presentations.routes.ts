@@ -127,6 +127,18 @@ function getDeckCards(row: any): any[] {
       : [];
 }
 
+async function ensureDeckLineageSchema(): Promise<void> {
+  try {
+    await dbRun(
+      `ALTER TABLE presentation_decks ADD COLUMN IF NOT EXISTS source_refs_json TEXT DEFAULT '{}'`
+    );
+  } catch (error) {
+    if (!isSchemaMissingError(error)) {
+      logger.warn('[Presentations] Could not ensure source_refs_json column', error);
+    }
+  }
+}
+
 async function syncArtifactRegistryForDeck(params: {
   deckId: string;
   organizationId: string;
@@ -553,7 +565,16 @@ router.post(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
-    const { title, theme, slides, source } = req.body || {};
+    const {
+      title,
+      theme,
+      slides,
+      source,
+      actionComposer,
+      actionContract,
+      sourcePack,
+      evidenceRefs,
+    } = req.body || {};
 
     if (!title) return res.status(400).json({ success: false, error: 'Title is required' });
 
@@ -561,6 +582,7 @@ router.post(
     const slideCount = Array.isArray(slides) ? slides.length : 0;
 
     try {
+      await ensureDeckLineageSchema();
       await dbRun(
         `INSERT INTO presentation_decks (id, organization_id, title, deck_type, theme, slide_count, status, source_refs_json, created_at, updated_at)
          VALUES (?, ?, ?, 'custom', ?, ?, 'draft', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
@@ -570,7 +592,13 @@ router.post(
           title,
           theme || 'modern',
           slideCount,
-          JSON.stringify({ source: source || 'idea_table' }),
+          JSON.stringify({
+            source: source || 'idea_table',
+            actionComposer: actionComposer || null,
+            actionContract: actionContract || null,
+            sourcePack: sourcePack || {},
+            evidenceRefs: Array.isArray(evidenceRefs) ? evidenceRefs : [],
+          }),
         ]
       );
 
@@ -591,7 +619,7 @@ router.post(
         action: 'create',
         resourceType: 'presentation_deck',
         resourceId: deckId,
-        after: { title, theme, slideCount, source },
+        after: { title, theme, slideCount, source, actionContract: actionContract || null },
         metadata: { organizationId: orgId },
       });
 
@@ -628,6 +656,7 @@ router.get(
   asyncHandler(async (req, res) => {
     const orgId = getOrgId(req);
     try {
+      await ensureDeckLineageSchema();
       const rows = await dbAll(
         `SELECT id, title, description, deck_type, audience, goal, language, theme, presentation_mode, slide_count, status, export_format, exported_at, created_at, updated_at, source_id, thumbnail_url, source_refs_json FROM presentation_decks WHERE organization_id = ? ORDER BY updated_at DESC`,
         [orgId]

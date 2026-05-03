@@ -6460,13 +6460,14 @@ ${JSON.stringify(questions || [], null, 2)}
         s.answered_questions, s.total_questions,
         a.status as assignment_status,
         t.name as template_name, t.category as template_category,
-        u.job_title, u.department,
+        u.job_title, upe.department,
         COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
        FROM interview_sessions s
        LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
        LEFT JOIN projects p ON p.id = s.project_id
        LEFT JOIN interview_library_templates t ON t.id = s.template_id
        LEFT JOIN users u ON u.id = s.owner_id
+       LEFT JOIN user_profile_extended upe ON upe.user_id = u.id
        WHERE (
          p.organization_id = ?
          OR (s.project_id IS NULL AND s.organization_id = ?)

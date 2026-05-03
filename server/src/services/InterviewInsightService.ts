@@ -11,6 +11,7 @@ import { getDatabase } from '../database/Database.js';
 import type { IDatabase } from '../database/IDatabase.js';
 import logger from '../utils/Logger.js';
 import { llmService } from './ai/llmService.js';
+import organizationContextService from './organizationContext/OrganizationContextService.js';
 
 // ==========================================
 // TYPES
@@ -81,6 +82,26 @@ export interface InsightMaterialQuality {
   contradiction_count: number;
   limitations: string[];
   recommended_followups: string[];
+}
+
+export interface ApprovedOrgKnowledgePack {
+  requested: boolean;
+  available: boolean;
+  included: boolean;
+  degraded: boolean;
+  degradedReasons: string[];
+  policy: 'accepted_or_approved_context_claims_only';
+  sourceCount: number;
+  builtAt: string;
+  entries: Array<{
+    claimPath: string;
+    value: unknown;
+    confidence: number;
+    reviewStatus: string;
+    sourceType: string;
+    sourceLabel: string | null;
+    createdAt: string;
+  }>;
 }
 
 export interface CreateInsightInput {
@@ -363,9 +384,7 @@ const DEFAULT_ANALYSIS_MODE: InsightAnalysisMode = 'general_consulting_synthesis
 const DEFAULT_CONTEXT_MODE: InsightContextMode = 'selected_interview_material_only';
 
 function safeStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.map((item) => String(item || '').trim()).filter(Boolean)
-    : [];
+  return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
 }
 
 function safeJsonObject<T extends Record<string, any>>(raw: unknown, fallback: T): T {
@@ -470,6 +489,101 @@ class InterviewInsightService {
     return this.db;
   }
 
+  private buildGenerationContext(params: {
+    createdAt: string;
+    analysisScope: InsightAnalysisScope;
+    approvedOrgKnowledgePack: ApprovedOrgKnowledgePack;
+  }): Record<string, any> {
+    return {
+      contract: 'interview_insight_scope_builder_v1',
+      contextMode: params.analysisScope.context_mode,
+      analysisMode: params.analysisScope.analysis_mode,
+      topicFocus: params.analysisScope.topic_focus,
+      createdAt: params.createdAt,
+      approvedOrgKnowledgePack: {
+        requested: params.approvedOrgKnowledgePack.requested,
+        available: params.approvedOrgKnowledgePack.available,
+        included: params.approvedOrgKnowledgePack.included,
+        degraded: params.approvedOrgKnowledgePack.degraded,
+        degradedReasons: params.approvedOrgKnowledgePack.degradedReasons,
+        policy: params.approvedOrgKnowledgePack.policy,
+        sourceCount: params.approvedOrgKnowledgePack.sourceCount,
+        builtAt: params.approvedOrgKnowledgePack.builtAt,
+        sources: params.approvedOrgKnowledgePack.entries.map((entry) => ({
+          claimPath: entry.claimPath,
+          sourceType: entry.sourceType,
+          sourceLabel: entry.sourceLabel,
+          confidence: entry.confidence,
+          reviewStatus: entry.reviewStatus,
+          createdAt: entry.createdAt,
+        })),
+      },
+    };
+  }
+
+  private async buildApprovedOrgKnowledgePack(
+    organizationId: string,
+    contextMode: InsightContextMode
+  ): Promise<ApprovedOrgKnowledgePack> {
+    const builtAt = new Date().toISOString();
+    const base = {
+      requested: contextMode === 'selected_material_plus_approved_org_knowledge',
+      available: false,
+      included: false,
+      degraded: false,
+      degradedReasons: [] as string[],
+      policy: 'accepted_or_approved_context_claims_only' as const,
+      sourceCount: 0,
+      builtAt,
+      entries: [] as ApprovedOrgKnowledgePack['entries'],
+    };
+
+    if (!base.requested) {
+      return base;
+    }
+
+    try {
+      const claims = await organizationContextService.listClaims(organizationId, 60);
+      const approvedStatuses = new Set(['accepted', 'approved', 'verified', 'confirmed']);
+      const entries = (claims || [])
+        .filter((claim) => approvedStatuses.has(String(claim.reviewStatus || '').toLowerCase()))
+        .filter((claim) => claim.value !== null && claim.value !== undefined && claim.value !== '')
+        .slice(0, 25)
+        .map((claim) => ({
+          claimPath: claim.claimPath,
+          value: claim.value,
+          confidence: Number(claim.confidence || 0),
+          reviewStatus: claim.reviewStatus,
+          sourceType: claim.sourceType,
+          sourceLabel: claim.sourceLabel,
+          createdAt: claim.createdAt,
+        }));
+
+      if (entries.length === 0) {
+        return {
+          ...base,
+          degraded: true,
+          degradedReasons: ['no_approved_organization_knowledge_available'],
+        };
+      }
+
+      return {
+        ...base,
+        available: true,
+        included: true,
+        sourceCount: entries.length,
+        entries,
+      };
+    } catch (error) {
+      logger.warn('[InterviewInsightService] Approved org knowledge pack unavailable:', error);
+      return {
+        ...base,
+        degraded: true,
+        degradedReasons: ['approved_organization_knowledge_lookup_failed'],
+      };
+    }
+  }
+
   // ==========================================
   // CRUD OPERATIONS
   // ==========================================
@@ -481,6 +595,34 @@ class InterviewInsightService {
     const db = await this.getDb();
     const now = new Date().toISOString();
     const id = `ii_${uuidv4()}`;
+    const normalizedSessionIds = safeStringArray(input.sessionIds);
+
+    if (normalizedSessionIds.length === 0) {
+      throw Object.assign(new Error('sessionId or sessionIds is required'), {
+        code: 'INTERVIEW_INSIGHT_SESSION_REQUIRED',
+        status: 400,
+      });
+    }
+
+    const eligibleSessionIds = await this.loadEligibleSessionIds(
+      input.organizationId,
+      normalizedSessionIds
+    );
+    const rejectedSessionIds = normalizedSessionIds.filter(
+      (sessionId) => !eligibleSessionIds.has(sessionId)
+    );
+    if (rejectedSessionIds.length > 0) {
+      throw Object.assign(
+        new Error(
+          'Interview Insight can only be generated from approved/completed interview sessions'
+        ),
+        {
+          code: 'INTERVIEW_INSIGHT_SOURCE_NOT_APPROVED',
+          status: 409,
+          rejectedSessionIds,
+        }
+      );
+    }
 
     const storedFilters: Record<string, any> | undefined = (() => {
       const base: Record<string, any> = input.filters ? { ...(input.filters as any) } : {};
@@ -489,7 +631,7 @@ class InterviewInsightService {
       return Object.keys(base).length > 0 ? base : undefined;
     })();
     const analysisScope = buildDefaultAnalysisScope({
-      sessionIds: input.sessionIds,
+      sessionIds: normalizedSessionIds,
       filters: input.filters,
       analysisScope: input.analysisScope,
       analysisMode: input.analysisMode,
@@ -498,13 +640,15 @@ class InterviewInsightService {
       consultantNote: input.consultantNote,
       leadingQuestion: input.leadingQuestion,
     });
-    const generationContext = {
-      contract: 'interview_insight_scope_builder_v1',
-      contextMode: analysisScope.context_mode,
-      analysisMode: analysisScope.analysis_mode,
-      topicFocus: analysisScope.topic_focus,
+    const approvedOrgKnowledgePack = await this.buildApprovedOrgKnowledgePack(
+      input.organizationId,
+      analysisScope.context_mode
+    );
+    const generationContext = this.buildGenerationContext({
       createdAt: now,
-    };
+      analysisScope,
+      approvedOrgKnowledgePack,
+    });
 
     // Create insight record
     await db.run(
@@ -515,15 +659,15 @@ class InterviewInsightService {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
-        input.sessionIds?.[0] || null,
+        normalizedSessionIds?.[0] || null,
         input.organizationId,
         'general',
         input.title,
         input.promptType,
-        JSON.stringify(input.sessionIds),
+        JSON.stringify(normalizedSessionIds),
         storedFilters ? JSON.stringify(storedFilters) : null,
         'generating',
-        input.sessionIds.length,
+        normalizedSessionIds.length,
         JSON.stringify(analysisScope),
         analysisScope.context_mode,
         analysisScope.analysis_mode,
@@ -536,7 +680,15 @@ class InterviewInsightService {
     );
 
     // Start async generation
-    void this.generateInsight(id, input.sessionIds, input.promptType, input.customPrompt, analysisScope);
+    void this.generateInsight(
+      id,
+      normalizedSessionIds,
+      input.organizationId,
+      input.promptType,
+      input.customPrompt,
+      analysisScope,
+      approvedOrgKnowledgePack
+    );
 
     return this.getById(id) as Promise<Insight>;
   }
@@ -607,6 +759,7 @@ class InterviewInsightService {
     void this.generateInsight(
       id,
       insight.sourceSessionIds,
+      insight.organizationId,
       insight.promptType,
       customPrompt,
       insight.analysisScope
@@ -637,7 +790,8 @@ class InterviewInsightService {
     formattedData: string,
     customPrompt?: string,
     sessionCount = 1,
-    analysisScope?: InsightAnalysisScope
+    analysisScope?: InsightAnalysisScope,
+    approvedOrgKnowledgePack?: ApprovedOrgKnowledgePack
   ): string {
     const focusHint = PROMPT_TEMPLATES[promptType]?.split('\n')[0] || '';
     const isMultiSession = sessionCount > 1;
@@ -676,11 +830,28 @@ CROSS-SESSION ANALYSIS (${sessionCount} respondents):
 - Use "divergence_note" when the same topic looks different across roles, departments, or respondents
 `
       : '';
+    const orgKnowledgeContext = (() => {
+      if (!approvedOrgKnowledgePack?.requested) {
+        return 'Approved Organization Knowledge: not requested for this insight.';
+      }
+      if (!approvedOrgKnowledgePack.included || approvedOrgKnowledgePack.entries.length === 0) {
+        return `Approved Organization Knowledge: requested but unavailable or degraded.\nReasons: ${
+          approvedOrgKnowledgePack.degradedReasons.join(', ') || 'unknown'
+        }`;
+      }
+      return `Approved Organization Knowledge Pack (approved/attributed context only; do not override interview material limitations):\n${JSON.stringify(
+        approvedOrgKnowledgePack.entries,
+        null,
+        2
+      )}`;
+    })();
 
     let prompt = `You are analyzing interview data. Your analysis focus: ${focusHint}
 
 Insight Scope:
 ${scopeBlock}
+
+${orgKnowledgeContext}
 
 Context mode rules:
 - If context_mode is "selected_interview_material_only", use only the interview material below.
@@ -978,27 +1149,34 @@ Rules:
   private async generateInsight(
     insightId: string,
     sessionIds: string[],
+    organizationId: string,
     promptType: InsightPromptType,
     customPrompt?: string,
-    analysisScope?: InsightAnalysisScope
+    analysisScope?: InsightAnalysisScope,
+    approvedOrgKnowledgePack?: ApprovedOrgKnowledgePack
   ): Promise<void> {
     const db = await this.getDb();
     const startTime = Date.now();
 
     try {
-      const sessionData = await this.fetchSessionData(sessionIds);
+      const sessionData = await this.fetchSessionData(sessionIds, organizationId);
 
       if (sessionData.length === 0) {
         throw new Error('No session data available for analysis');
       }
 
+      const scope = analysisScope || buildDefaultAnalysisScope({ sessionIds, filters: {} });
+      const orgKnowledgePack =
+        approvedOrgKnowledgePack ||
+        (await this.buildApprovedOrgKnowledgePack(organizationId, scope.context_mode));
       const formattedData = this.formatSessionDataForPrompt(sessionData);
       const prompt = this.buildV6Prompt(
         promptType,
         formattedData,
         customPrompt,
         sessionData.length,
-        analysisScope
+        scope,
+        orgKnowledgePack
       );
 
       const systemPrompt =
@@ -1043,6 +1221,7 @@ Rules:
              evidence_map_json = ?,
              missing_data_json = ?,
              material_quality_json = ?,
+             generation_context_json = ?,
              tokens_used = ?,
              generation_time_ms = ?,
              updated_at = ?
@@ -1057,6 +1236,13 @@ Rules:
           JSON.stringify(v6Data.evidence_map),
           JSON.stringify(v6Data.missing_data),
           JSON.stringify(materialQuality),
+          JSON.stringify(
+            this.buildGenerationContext({
+              createdAt: new Date(startTime).toISOString(),
+              analysisScope: scope,
+              approvedOrgKnowledgePack: orgKnowledgePack,
+            })
+          ),
           tokensUsed,
           generationTime,
           new Date().toISOString(),
@@ -1084,7 +1270,33 @@ Rules:
   /**
    * Fetch interview session data with answers
    */
-  private async fetchSessionData(sessionIds: string[]): Promise<any[]> {
+  private async loadEligibleSessionIds(
+    organizationId: string,
+    sessionIds: string[]
+  ): Promise<Set<string>> {
+    const db = await this.getDb();
+    const placeholders = sessionIds.map(() => '?').join(',');
+    if (!placeholders) return new Set();
+
+    const sessions = await db.all<any>(
+      `SELECT s.id
+       FROM interview_sessions s
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id IN (${placeholders})
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )
+         AND s.status = 'completed'
+         AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
+      [organizationId, ...sessionIds, organizationId, organizationId]
+    );
+
+    return new Set((sessions || []).map((session) => String(session.id)));
+  }
+
+  private async fetchSessionData(sessionIds: string[], organizationId: string): Promise<any[]> {
     const db = await this.getDb();
     const placeholders = sessionIds.map(() => '?').join(',');
 
@@ -1093,16 +1305,22 @@ Rules:
         s.id, s.name, s.status, s.completed_at, s.owner_id,
         s.answered_questions, s.total_questions,
         t.name as template_name, t.category as template_category,
-        u.job_title, u.department,
+        u.job_title, upe.department,
         COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') as respondent_name
        FROM interview_sessions s
-       LEFT JOIN interview_assignments a ON a.id = s.assignment_id
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
+       LEFT JOIN projects p ON p.id = s.project_id
        LEFT JOIN interview_library_templates t ON t.id = s.template_id
        LEFT JOIN users u ON u.id = s.owner_id
+       LEFT JOIN user_profile_extended upe ON upe.user_id = u.id
        WHERE s.id IN (${placeholders})
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )
          AND s.status = 'completed'
          AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
-      sessionIds
+      [organizationId, ...sessionIds, organizationId, organizationId]
     );
 
     // Fetch answers for each session

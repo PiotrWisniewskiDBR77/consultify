@@ -383,7 +383,20 @@ router.post(
   requirePermission('INTERVIEW_INSIGHTS_CREATE'),
   asyncHandler(async (req: AuthRequest, res: Response) => {
     const { organizationId, userId } = getV8Context(req);
-    const { title, sessionIds, sessionId, promptType, filters, customPrompt } = req.body || {};
+    const {
+      title,
+      sessionIds,
+      sessionId,
+      promptType,
+      filters,
+      analysisScope,
+      analysisMode,
+      contextMode,
+      topicFocus,
+      consultantNote,
+      leadingQuestion,
+      customPrompt,
+    } = req.body || {};
 
     const normalizedSessionIds: string[] = Array.isArray(sessionIds)
       ? sessionIds.map(String).filter(Boolean)
@@ -395,6 +408,31 @@ router.post(
       return res.status(400).json({
         error: 'sessionId or sessionIds is required',
         code: 'INTERVIEW_INSIGHT_SESSION_REQUIRED',
+      });
+    }
+
+    const placeholders = normalizedSessionIds.map(() => '?').join(',');
+    const approvedRows = await queryHelpers.queryAll<{ id: string }>(
+      `SELECT s.id
+       FROM interview_sessions s
+       LEFT JOIN interview_assignments a ON a.id = s.assignment_id AND a.organization_id = ?
+       LEFT JOIN projects p ON p.id = s.project_id
+       WHERE s.id IN (${placeholders})
+         AND (
+           p.organization_id = ?
+           OR (s.project_id IS NULL AND s.organization_id = ?)
+         )
+         AND s.status = 'completed'
+         AND (s.assignment_id IS NULL OR a.status IN ('approved', 'completed'))`,
+      [organizationId, ...normalizedSessionIds, organizationId, organizationId]
+    );
+    const approvedIds = new Set((approvedRows || []).map((row) => String(row.id)));
+    const rejectedIds = normalizedSessionIds.filter((id) => !approvedIds.has(id));
+    if (rejectedIds.length > 0) {
+      return res.status(409).json({
+        error: 'Interview Insight can only be generated from approved/completed interview sessions',
+        code: 'INTERVIEW_INSIGHT_SOURCE_NOT_APPROVED',
+        rejectedSessionIds: rejectedIds,
       });
     }
 
@@ -425,6 +463,12 @@ router.post(
       sessionIds: normalizedSessionIds,
       promptType: normalizedPromptType,
       filters,
+      analysisScope,
+      analysisMode,
+      contextMode,
+      topicFocus,
+      consultantNote,
+      leadingQuestion,
       customPrompt,
       createdBy: userId,
     });

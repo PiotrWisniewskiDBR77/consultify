@@ -479,6 +479,7 @@ describe('V8 Interview insight routes', () => {
     vi.clearAllMocks();
     mockUser = { id: UID, role: 'ADMIN', organizationId: ORG, isSuperAdmin: false };
     mockQueryRun.mockResolvedValue(undefined);
+    mockQueryAll.mockResolvedValue([{ id: 'sess-1' }]);
   });
 
   it('GET /api/v8/interview/insights returns list in V8 envelope', async () => {
@@ -549,6 +550,86 @@ describe('V8 Interview insight routes', () => {
     expect(res.body.meta?.contract).toBe(V8_INTERVIEW_INSIGHT_MUTATION_CONTRACT);
     expect(res.body.data?.insight?.id).toBe('ins-new');
     expect(mockInsightCreate).toHaveBeenCalled();
+  });
+
+  it('POST /api/v8/interview/insights forwards full scope builder payload', async () => {
+    mockInsightCreate.mockResolvedValue({
+      id: 'ins-scoped',
+      organizationId: ORG,
+      title: 'Scoped insight',
+      status: 'generating',
+    });
+
+    const scopePayload = {
+      source_session_ids: ['sess-1'],
+      source_scope_status: 'approved_only',
+      respondent_filters: ['user-respondent'],
+      role_filters: ['Operations Lead'],
+      department_filters: ['Operations'],
+      template_filters: ['tpl-1'],
+      date_range: { from: '2026-05-01', to: '2026-05-03' },
+      topic_focus: ['handoffs'],
+      analysis_mode: 'focused_topic_synthesis',
+      context_mode: 'selected_material_plus_approved_org_knowledge',
+      consultant_note: 'Look for cross-functional blockers.',
+      leading_question: 'Where do handoffs fail?',
+    };
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights')
+      .set('Authorization', 'Bearer x')
+      .send({
+        title: 'Scoped insight',
+        sessionIds: ['sess-1'],
+        promptType: 'summary',
+        filters: {
+          templateId: 'tpl-1',
+          respondentId: 'user-respondent',
+          roles: ['Operations Lead'],
+          departments: ['Operations'],
+          dateFrom: '2026-05-01',
+          dateTo: '2026-05-03',
+          topicFocus: ['handoffs'],
+        },
+        analysisScope: scopePayload,
+        analysisMode: 'focused_topic_synthesis',
+        contextMode: 'selected_material_plus_approved_org_knowledge',
+        topicFocus: ['handoffs'],
+        consultantNote: 'Look for cross-functional blockers.',
+        leadingQuestion: 'Where do handoffs fail?',
+        customPrompt: 'Stay within the selected material.',
+      });
+
+    expect(res.status).toBe(201);
+    expect(mockInsightCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: ORG,
+        title: 'Scoped insight',
+        sessionIds: ['sess-1'],
+        analysisScope: scopePayload,
+        analysisMode: 'focused_topic_synthesis',
+        contextMode: 'selected_material_plus_approved_org_knowledge',
+        topicFocus: ['handoffs'],
+        consultantNote: 'Look for cross-functional blockers.',
+        leadingQuestion: 'Where do handoffs fail?',
+        customPrompt: 'Stay within the selected material.',
+        createdBy: UID,
+      })
+    );
+  });
+
+  it('POST /api/v8/interview/insights blocks unapproved or incomplete source sessions', async () => {
+    mockQueryAll.mockResolvedValueOnce([{ id: 'sess-1' }]);
+
+    const res = await request(createApp())
+      .post('/api/v8/interview/insights')
+      .set('Authorization', 'Bearer x')
+      .send({ sessionIds: ['sess-1', 'sess-draft'], promptType: 'summary' });
+
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('INTERVIEW_INSIGHT_SOURCE_NOT_APPROVED');
+    expect(res.body.rejectedSessionIds).toEqual(['sess-draft']);
+    expect(mockInsightCreate).not.toHaveBeenCalled();
   });
 
   it('POST /api/v8/interview/insights returns 400 without sessionIds', async () => {

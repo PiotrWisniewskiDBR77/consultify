@@ -193,9 +193,10 @@ async function loadSourceSessions(sessionIds: string[]): Promise<SourceSessionRo
        s.owner_id,
        COALESCE(u.first_name, '') || ' ' || COALESCE(u.last_name, '') AS respondent_name,
        u.job_title,
-       u.department
+       upe.department
      FROM interview_sessions s
      LEFT JOIN users u ON u.id = s.owner_id
+     LEFT JOIN user_profile_extended upe ON upe.user_id = u.id
      WHERE s.id IN (${placeholders})`,
     sessionIds
   );

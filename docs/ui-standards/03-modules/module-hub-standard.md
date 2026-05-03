@@ -121,6 +121,8 @@ Każda karta/funkcjonalność migrowana do standardu musi przejść tę checklis
 
 3. **Menu 3 / Command Row**
    - Jest dokładnie jeden rząd pod Menu 2.
+   - Kanoniczny wzorzec wizualny: `My Work > Decyzje`.
+   - Kanoniczna implementacja: `src/components/shared/ModuleMenu3.tsx`.
    - Używa `h-8` chips/buttons, jednego rozmiaru fontu i spójnych odstępów.
    - Liczniki/statusy/presety są po lewej; akcje kontekstowe/AI po prawej.
    - Nie dodajemy dodatkowego help/info stripu między Menu 3 a tabelą.
@@ -151,6 +153,302 @@ Każda karta/funkcjonalność migrowana do standardu musi przejść tę checklis
    - Sprawdź Menu 2, Menu 3, table header, row anatomy, selected row, hover row, settings popover i row actions.
    - Uruchom `prettier`, targeted `eslint`, `ReadLints`, `git diff --check`.
    - Po restarcie dev servera potwierdź, że Vite serwuje zmieniony moduł.
+
+### 2.3 Profesjonalna Procedura Testowania UI/UX Karty I Tabeli
+
+Ta procedura jest obowiązkowa przy każdej migracji, refaktorze albo naprawie karty, która zawiera tabelę lub listę rekordów operacyjnych. Wynik testu musi być raportowany blokami jako `PASS`, `FAIL` albo `N/A`. Karta nie może zostać uznana za zgodną, jeśli którykolwiek blok krytyczny ma `FAIL`.
+
+Referencje porównawcze:
+
+- dobry wzorzec: `My Work > Pomysły` jako zatwierdzony App Table,
+- zły wzorzec: lokalne tabele/listy w modułach, które mają przypadkowy topbar, brak opisu wiersza, brak fixed column contract, brak settings popover albo card-list/table hybrid,
+- źródła prawdy: `CONSULTIFY_UI_UX_GOLDEN_STANDARD.md`, `03-modules/app-table-standard.md`, `03-modules/module-hub-standard.md`, `00-foundation/color-system.md`.
+
+#### A. Klasyfikacja Ekranu
+
+- Czy ekran pokazuje rekordy operacyjne do skanowania, sortowania, filtrowania albo otwierania?
+- Czy podstawowym widokiem jest kanoniczna App Table?
+- Czy karta/grid jest tylko dodatkowym view mode, a nie zastępstwem dla tabeli?
+- Czy ekran nie tworzy lokalnego card-list/table hybrid?
+- Czy funkcja nie próbuje definiować własnego standardu tabeli, row chrome, chips, checkboxów albo metadata alignment?
+
+#### B. Menu 2 / Module Topbar
+
+- Lewa strona ma kolejność: search toggle -> główne taby.
+- Główne taby nie pokazują liczników; liczniki są w Menu 3.
+- Prawy klaster trzyma kanoniczny porządek wizualny: Area -> Primary CTA -> Tool -> View -> Filters.
+- `Help` nie występuje w Menu 2.
+- Primary CTA ma `h-9`, tekstowy label, bez leading `+`.
+- Primary CTA nie używa gradientu ani ciężkiego shadow w operational chrome.
+- View switcher jest widocznym segmented icon control, nie dropdownem.
+- Dla pary widoków `Lista` jest po lewej, `Karty/Grid` po prawej.
+- Filtry mają konkretne domenowe triggery, nie generyczne `Wszystkie`.
+- Dwa sąsiednie filtry nie wyglądają jak ten sam wymiar filtrowania.
+
+#### C. Menu 3 / Command Row
+
+- Istnieje dokładnie jeden rząd Menu 3 pod Module Topbar.
+- Referencją produktową jest `My Work > Decyzje`: ten sam rytm, aktywny fioletowy chip, spokojny slate/navy chip nieaktywny, badge licznika w chipie, jeden separator i brak drugiego rzędu.
+- `My Work > Decyzje` jest wzorcem obowiązującym dla całej aplikacji, także poza modułem `My Work`; karty `Wywiad`, `Assessment`, `Finance`, `Results`, `Initiatives`, `Discovery Tools`, `Reports/Presentations`, `Meeting` itd. nie mogą definiować lokalnego wariantu Menu 3.
+- W kodzie używamy `src/components/shared/ModuleMenu3.tsx`; lokalne klasy chipów/topbarów są długiem migracyjnym i muszą być zastąpione przy każdej pracy na ekranie.
+- Niedozwolony antywzorzec: lokalne rzędy `bg-slate-50 dark:bg-navy-900/50`, ręcznie składane badge `rounded-full bg-slate-100/dark:bg-navy-700 px-2 py-0.5`, chipy `h-9`, gradienty, `shadow-sm/shadow-lg`, osobny selection bar albo drugi pasek nad tabelą.
+- Controls w Menu 3 używają `h-8`, spójnego font-size, radiusu i odstępów.
+- Lewa strona zawiera statusy, presety, liczniki albo aktywne filtry.
+- Prawa strona zawiera akcje kontekstowe i AI actions.
+- Nie ma drugiego rzędu chipów, jeśli lista się nie mieści; nadmiar trafia do overflow/filter.
+- Nie ma dodatkowego help/info/selection/AI stripu między Menu 3 a tabelą.
+- Statusy z zerem nie zajmują stałego miejsca, jeśli wypychają ważniejsze akcje.
+- Menu 3 dziedziczy tło Module Topbar (`bg-white dark:bg-navy-900`), a chipy/przyciski mają warstwę `bg-slate-100 dark:bg-navy-800`.
+- Pod Menu 2 + Menu 3 jest jeden spokojny separator (`border-slate-200/60 dark:border-white/5`), bez dodatkowych lokalnych borderów pod chipami.
+- Menu 3 ma układ `flex items-center justify-between`: presety/liczniki po lewej, akcje funkcjonalne po prawej.
+- Wszystkie chipy presetów używają jednego formatu: `h-8`, `rounded-full`, `px-2.5`, `gap-1.5`, `text-[11px] font-medium`, border i transition.
+- Counter badge ma format `px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none`.
+- Ikony chipów status/preset mają stały rozmiar `14px`; wyjątkiem jest neutralna kropka `ALL/Wszystkie` (`~6px`), która zastępuje losowe ikony.
+- Chip `ALL/Wszystkie` ma małą neutralną kropkę zamiast pustego miejsca; inne chipy mają semantyczne kolorowe ikony `14px`.
+- Aktywny preset jest fioletowy (`bg-purple-500/10`, `border-purple-500/40`, `text-purple-700 dark:text-purple-200`).
+- Przyciski funkcjonalne po prawej mają ten sam rozmiar co chipy (`h-8`, `rounded-full`, `text-[11px]`), jeden wspólny styl i nie używają gradientów ani shadow.
+- Aktywny toggle/panel button po prawej używa cyan/blue, nie violet; akcja jednorazowa wraca do stanu bazowego po zakończeniu.
+- Bulk mode zastępuje zawartość tego samego Menu 3, nie dodaje drugiego selection bar; licznik zaznaczenia jest po lewej, bulk actions po prawej.
+- Overflow poziomy jest dozwolony tylko w ramach jednego rzędu i nie może wypchnąć prawego slotu akcji poza viewport.
+- Jeśli prawy slot akcji jest pusty, layout dalej zachowuje `justify-between` i rezerwuje mentalny slot (nie ściska wszystkich chipów do lewej bez kontroli rytmu).
+
+#### D. Przejście Menu 3 -> Content
+
+- Odstęp między Menu 3 a tabelą jest stały i spokojny.
+- Nie ma lokalnego opisu workflow nad tabelą.
+- Nie ma lokalnych mini-toolbarów typu `Smart sort`, `Columns`, `Views`.
+- View-local toolbar występuje tylko wewnątrz powierzchni konkretnego widoku i nie dubluje filtrów, CTA, AI ani view switchera.
+
+#### E. Powierzchnia Tabeli
+
+- Tabela wypełnia dostępną szerokość ekranu.
+- Surface, border i separatory są zgodne z Accepted App Table Color Grid.
+- Dark mode ma realne, cienkie separatory.
+- Light mode ma czytelny kontrast i nie jest wyprany.
+- Scrollbar ma zarezerwowany gutter i nie przykrywa row actions ani floating controls.
+- Prawa krawędź tabeli nie koliduje z `Help`, `Zgłoś błąd`, panelem bocznym ani floating controls.
+
+#### F. Kolumny I Szerokości
+
+- Tabela używa `table-fixed` albo równoważnego fixed column contract.
+- Każda kolumna ma jawny width contract.
+- Primary/title column ma własną szerokość, nie jest bezbarierową resztą.
+- Metadata columns startują z szerokości dopasowanej do realnej treści.
+- Metadata headers i metadata cells są optycznie centrowane.
+- `Title` / primary object pozostaje wyrównany do lewej.
+- Chipy, daty, statusy, progress i owner nie zawijają się bez potrzeby.
+- Overflow jest obsługiwany przez truncate, nowrap albo `+N`, nie przez przypadkowe łamanie komórki.
+- Stare widthy z `localStorage` są normalizowane do aktualnej wersji standardu.
+
+#### G. Resize Kolumn
+
+- Każda logiczna granica między kolumnami ma uchwyt.
+- Granica `Title -> pierwsza metadata column` też ma uchwyt.
+- Resize działa jak Excel: separator przesuwa się z kursorem.
+- Jedna sąsiednia kolumna rośnie dokładnie o tyle, o ile druga maleje.
+- Cała tabela nie oddycha, nie zwęża się i nie przelicza losowo po resize.
+- Grip jest dokładnie na granicy kolumn.
+- Hit area jest mały i przewidywalny.
+- Min/max width są jawne per kolumna.
+- Ostatnia widoczna kolumna nie rozszerza samotnie całej tabeli.
+
+#### H. Header Tabeli
+
+- Header primary/title column jest lewostronny.
+- Metadata headers są centrowane.
+- Header ma czytelny, spokojny font i nie konkuruje z danymi.
+- Sort/filter w headerze istnieją tylko tam, gdzie mają sens.
+- `Actions` header nie pokazuje tekstu `Actions/Akcje`, jeśli róg zajmuje settings icon.
+- Prawy róg headera zawiera `Settings2` / table view settings dla konfigurowalnych tabel.
+- Settings icon ma neutralny surface i wzmacnia się dopiero na hover/open.
+
+#### I. Ustawienia Widoku Tabeli
+
+- Proste ustawienia widoku otwierają mały anchored popover, nie modal.
+- Popover pokazuje kolumny z checkboxami.
+- Wymagane kolumny są disabled i oznaczone jako wymagane.
+- Na dole popovera jest `Pokaż opis / uzasadnienie` / `Show row description`.
+- Toggle opisu jest domyślnie włączony.
+- Ustawienie jest zapisywane per tabela.
+- Wyłączenie opisu nie ściska wierszy do agresywnej spreadsheet density.
+- Lekka tabela nie zastępuje tego toggle'a przyciskiem `Reset`.
+
+#### J. Anatomia Wiersza
+
+- Wiersz wygląda jak kompaktowy rekord operacyjny, nie jak Excel grid.
+- Primary title jest głównym obiektem wiersza.
+- Opis/uzasadnienie jest drugą linią i jest domyślnie widoczne.
+- Opis używa tej samej neutralnej rodziny koloru co title, tylko lżejszej opacity/weight.
+- Opis nie ma lokalnego akcentowego koloru.
+- Opis nie pojawia się dopiero na hoverze.
+- Hover nie zmienia wysokości wiersza.
+- Ukrycie opisu zachowuje spokojny padding wiersza.
+- Druga linia nie duplikuje danych, które należą do osobnej kolumny.
+- Typ, kategoria albo slug są osobną kolumną, jeśli mają być filtrowalne.
+
+#### K. Gęstość I Rytm Wierszy
+
+- Wiersze nie są za ciasne.
+- Wiersze nie są osobnymi kartami z nadmiernym oddechem.
+- Title ma wyraźny weight i leading.
+- Secondary text ma około `11px`, normal/lżejszy weight i stabilny leading.
+- Metadata cells są pionowo centrowane względem całego rekordu.
+- Progress, due date, status i owner nie przyklejają się do górnej krawędzi opisu.
+
+#### L. Checkboxy I Selekcja
+
+- Row checkbox jest mały i quiet, zwykle `h-3.5 w-3.5`.
+- Header select-all nie przekracza zwykle `h-4 w-4`.
+- Checkbox w spoczynku jest neutralny.
+- Unchecked row checkbox reveal-on-hover/focus w premium App Tables.
+- Checked, selected i focused rows pokazują checkbox stale.
+- Checkbox nie jest dużą jasną plamą w dark mode.
+- Selected/focused/checked row używa brand `primary/violet-blue` tint.
+- Selected/focused/checked row ma `4px` lewy accent i widoczny inset/ring.
+- Stan zaznaczenia jest natychmiast widoczny w dark i light mode.
+- Hit area checkboxa może mieć spokojne `h-6 w-6`, ale sam checkbox pozostaje mały (`h-3.5 w-3.5`) i neutralny.
+- Niezaznaczony checkbox nie zajmuje uwagi w spoczynku: `opacity-0` albo prawie niewidoczny, z reveal na `row hover`, `focus-within` i keyboard focus.
+- Klik w checkbox nie może otwierać preview ani pełnego dokumentu; event musi zatrzymać propagację do row click.
+- Header select-all wzmacnia się przy hover albo aktywnej selekcji, ale w spoczynku pozostaje quiet.
+- Selected/focused/checked row nie może zmieniać wysokości, paddingu ani układu komórek.
+- W tabelach z hover-reveal obowiązuje obserwowalny efekt: po wejściu kursora w wiersz checkbox musi być wyraźnie widoczny (border + tło), a nie tylko technicznie obecny.
+
+#### M. Row Actions
+
+- Ostatnia kolumna zawiera jedno wejście do akcji: vertical kebab `⋮`.
+- Nie używamy horizontal dots.
+- Row actions używają shared `RowActionsMenu`.
+- Kebab jest quiet w spoczynku i wzmacnia się na hover/open.
+- Menu zachowuje kolejność: Open -> Tool Shortcut -> Context Actions -> AI -> Convert To -> Create Output -> Manage -> Danger.
+- Pierwsza akcja to zawsze `Otwórz` / `Open`.
+- Każda pozycja menu ma ikonę po lewej.
+- Destructive action jest ostatnia, danger-styled i po separatorze.
+- Nie tworzymy lokalnych dropdownów, jeśli `RowActionsMenu` wystarcza.
+
+#### N. Chipy, Badge I Metadata
+
+- Używane są kanoniczne typy: `StatusChip`, `PriorityChip`, `MetaChip`, `ToolChip`, `SlaChip` / `DueChip`.
+- Metadata chipy są neutralne.
+- Kolor jest sygnałem, nie dekoracją.
+- `primary/violet` nie dominuje stale w metadata.
+- Status/priority mogą mieć kolor tylko jako kompaktowy, czytelny sygnał.
+- Tool/artifact chip może mieć kolorową ikonę, ale neutralne tło.
+- Chipy tego samego typu mają ten sam radius, padding, font-size i weight.
+- Overdue/due używa koloru tylko dla ryzyka albo przekroczenia terminu.
+
+#### O. Empty, Loading, Error I Placeholder
+
+- Brak danych ma spokojny empty state.
+- Loading nie rozbija layoutu ani wysokości tabeli.
+- Błędy nie pokazują raw internals.
+- Brak wartości pokazuje `—`, nie `undefined`, `null` ani pusty string.
+- Pola używane w `.toLowerCase()` / `.toUpperCase()` są zabezpieczone.
+- Demo/fallback data nie zmienia anatomii UI.
+
+#### P. Interakcje I Stabilność
+
+- Hover row jest subtelny i nie powoduje layout shift.
+- Active/open state jest mocniejszy niż hover, ale nadal spokojny.
+- Keyboard focus jest widoczny.
+- Klik w wiersz i klik w row actions nie konfliktują.
+- Resize, sort, filter, settings popover i row menu nie nachodzą na siebie.
+- Popovery zamykają się po outside click i Escape.
+- Ustawienia per table nie przeciekają między kartami.
+
+#### Q. Porównanie Wizualne
+
+- Karta jest porównana screenshot-do-screenshot z `My Work > Pomysły`.
+- Porównanie obejmuje dark mode i light mode.
+- Tabela ma podobny ciężar wizualny do referencji.
+- Wiersz ma podobną anatomię i rytm.
+- Opis jest widoczny, czytelny i neutralny.
+- Metadata jest centrowana i skanowalna.
+- Kolumny nie są przypadkowo rozstrzelone.
+- Actions/settings są w tym samym mentalnym miejscu.
+
+#### R. Techniczna Weryfikacja
+
+- Uruchomiono `prettier` dla zmienionych plików.
+- Uruchomiono targeted `eslint` dla zmienionych komponentów.
+- Uruchomiono `ReadLints` dla zmienionych plików.
+- Uruchomiono `git diff --check`.
+- Po restarcie albo HMR potwierdzono, że dev server serwuje zmieniony moduł.
+- W raporcie końcowym wskazano nie tylko co zmieniono, ale które bloki checklisty przeszły.
+
+Bloki krytyczne dla tabel: `B`, `C`, `D`, `E`, `F`, `G`, `H`, `I`, `J`, `L`, `M`, `N`, `Q`, `R`. Każdy `FAIL` w tych blokach blokuje uznanie karty za zgodną.
+
+#### S. Wymagany Format Raportu Audytu I Migracji
+
+Każda migracja karty/tabeli musi użyć tego formatu w odpowiedzi roboczej albo w dokumencie audytu. Nie wolno raportować ogólnie „poprawiono tabelę” bez statusu bloków.
+
+```markdown
+## UI/UX Table Migration Audit - <Module > Card>
+
+Reference:
+
+- Good: My Work > Pomysły
+- Target standard: Golden Standard + App Table Standard + ModuleHub Standard 2.3
+
+### Initial Audit
+
+| Block | Area                         | Status        | Evidence / Deviation | Required Fix |
+| ----- | ---------------------------- | ------------- | -------------------- | ------------ |
+| A     | Screen classification        | PASS/FAIL/N/A | ...                  | ...          |
+| B     | Menu 2 / Module Topbar       | PASS/FAIL/N/A | ...                  | ...          |
+| C     | Menu 3 / Command Row         | PASS/FAIL/N/A | ...                  | ...          |
+| D     | Menu 3 -> Content transition | PASS/FAIL/N/A | ...                  | ...          |
+| E     | Table surface                | PASS/FAIL/N/A | ...                  | ...          |
+| F     | Columns and widths           | PASS/FAIL/N/A | ...                  | ...          |
+| G     | Column resize                | PASS/FAIL/N/A | ...                  | ...          |
+| H     | Table header                 | PASS/FAIL/N/A | ...                  | ...          |
+| I     | Table view settings          | PASS/FAIL/N/A | ...                  | ...          |
+| J     | Row anatomy                  | PASS/FAIL/N/A | ...                  | ...          |
+| K     | Row density and rhythm       | PASS/FAIL/N/A | ...                  | ...          |
+| L     | Checkbox and selection       | PASS/FAIL/N/A | ...                  | ...          |
+| M     | Row actions                  | PASS/FAIL/N/A | ...                  | ...          |
+| N     | Chips and metadata           | PASS/FAIL/N/A | ...                  | ...          |
+| O     | Empty/loading/error          | PASS/FAIL/N/A | ...                  | ...          |
+| P     | Interactions and stability   | PASS/FAIL/N/A | ...                  | ...          |
+| Q     | Visual comparison            | PASS/FAIL/N/A | ...                  | ...          |
+| R     | Technical verification       | PASS/FAIL/N/A | ...                  | ...          |
+
+### Migration Scope
+
+- Keep business logic/API/routing unchanged unless explicitly requested.
+- Fix all critical FAIL blocks before calling the card compliant.
+- List any N/A blocks and why they are not applicable.
+
+### Final Acceptance
+
+| Critical Block | Final Status  | Notes |
+| -------------- | ------------- | ----- |
+| B              | PASS/FAIL/N/A | ...   |
+| C              | PASS/FAIL/N/A | ...   |
+| D              | PASS/FAIL/N/A | ...   |
+| E              | PASS/FAIL/N/A | ...   |
+| F              | PASS/FAIL/N/A | ...   |
+| G              | PASS/FAIL/N/A | ...   |
+| H              | PASS/FAIL/N/A | ...   |
+| I              | PASS/FAIL/N/A | ...   |
+| J              | PASS/FAIL/N/A | ...   |
+| L              | PASS/FAIL/N/A | ...   |
+| M              | PASS/FAIL/N/A | ...   |
+| N              | PASS/FAIL/N/A | ...   |
+| Q              | PASS/FAIL/N/A | ...   |
+| R              | PASS/FAIL/N/A | ...   |
+
+Decision: PASS / FAIL
+Residual risks:
+
+- ...
+```
+
+Minimalny raport końcowy po implementacji musi zawierać:
+
+- listę krytycznych bloków, które przeszły,
+- listę bloków `N/A` z uzasadnieniem,
+- wszystkie pozostałe `FAIL`, jeśli istnieją,
+- informację, czy karta jest gotowa do kolejnej pary migracji.
 
 ### Kolejność elementów topbara (KANON v3)
 

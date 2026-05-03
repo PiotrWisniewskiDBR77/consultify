@@ -15,7 +15,13 @@ import { useNavigate } from 'react-router-dom';
 
 import { Api } from '@/services/api';
 
-export type ArtifactActionTarget = 'report' | 'presentation' | 'table' | 'idea' | 'note' | 'initiative';
+export type ArtifactActionTarget =
+  | 'report'
+  | 'presentation'
+  | 'table'
+  | 'idea'
+  | 'note'
+  | 'initiative';
 
 interface ArtifactActionSource {
   type: 'interview_insight';
@@ -148,6 +154,74 @@ function buildInitiativeDraftDescription(source: ArtifactActionSource): string {
   ].join('\n');
 }
 
+function extractEvidenceRefs(source: ArtifactActionSource): string[] {
+  const entries = Array.isArray((source.sourcePack as any)?.entries)
+    ? ((source.sourcePack as any).entries as Array<Record<string, any>>)
+    : [];
+  const refs = entries.flatMap((entry) => [
+    entry.answerId,
+    ...(Array.isArray(entry.capturedPointers)
+      ? entry.capturedPointers.map((pointer: Record<string, any>) => pointer.pointerId)
+      : []),
+  ]);
+  return Array.from(new Set(refs.map((ref) => String(ref || '').trim()).filter(Boolean)));
+}
+
+function buildActionContract(
+  source: ArtifactActionSource,
+  target: ArtifactActionTarget,
+  composer?: { templateMode: string; contextMode: string },
+  governanceProposal?: Record<string, unknown>
+): Record<string, unknown> {
+  return {
+    contract: 'interview_insight_downstream_action_v1',
+    target,
+    source: {
+      type: source.type,
+      id: source.id,
+      title: source.title,
+      confidence: source.confidence || null,
+      evidenceCount: source.evidenceCount ?? 0,
+      sourceSessionCount: source.sourceSessionCount ?? 0,
+    },
+    composer: composer || null,
+    lineage: {
+      sourcePack: source.sourcePack || {},
+      evidenceRefs: extractEvidenceRefs(source),
+    },
+    governance: {
+      proposalRequired: ['idea', 'note', 'initiative'].includes(target),
+      confirmationRequired: ['idea', 'note', 'initiative'].includes(target),
+      proposal: governanceProposal || null,
+      auditIntent: `Create ${target} from interview insight`,
+    },
+  };
+}
+
+function buildGovernanceProposal(
+  source: ArtifactActionSource,
+  target: ArtifactActionTarget,
+  isPolish: boolean
+): Record<string, unknown> {
+  const targetLabel = isPolish ? TARGET_META[target].labelPl : TARGET_META[target].labelEn;
+  return {
+    sourceInsight: {
+      id: source.id,
+      title: source.title,
+      confidence: source.confidence || null,
+      evidenceCount: source.evidenceCount ?? 0,
+      sourceSessionCount: source.sourceSessionCount ?? 0,
+    },
+    target,
+    targetLabel,
+    readBackText: isPolish
+      ? `Potwierdzam utworzenie artefaktu "${targetLabel}" z insightu "${source.title}". Widziałem/am ograniczenia, liczbę dowodów (${source.evidenceCount ?? 0}) oraz poziom pewności (${source.confidence || 'brak'}).`
+      : `I confirm creating "${targetLabel}" from insight "${source.title}". I reviewed the limits, evidence count (${source.evidenceCount ?? 0}), and confidence (${source.confidence || 'none'}).`,
+    limits: source.limits || null,
+    evidenceRefs: extractEvidenceRefs(source),
+  };
+}
+
 export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
   source,
   isPolish,
@@ -155,15 +229,20 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
 }) => {
   const navigate = useNavigate();
   const [loadingTarget, setLoadingTarget] = useState<ArtifactActionTarget | null>(null);
-  const [createdTargets, setCreatedTargets] = useState<Partial<Record<ArtifactActionTarget, CreatedTarget>>>({});
+  const [createdTargets, setCreatedTargets] = useState<
+    Partial<Record<ArtifactActionTarget, CreatedTarget>>
+  >({});
   const [composerTarget, setComposerTarget] = useState<ArtifactActionTarget | null>(null);
   const [composerTemplate, setComposerTemplate] = useState('ai_freeform');
+  const [proposalTarget, setProposalTarget] = useState<ArtifactActionTarget | null>(null);
+  const [proposalConfirmed, setProposalConfirmed] = useState(false);
 
   const isCompact = variant === 'compact';
   const sourceMarkdown = useMemo(() => buildInsightMarkdown(source), [source]);
   const isActionDisabled = source.status === 'generating' || source.status === 'failed';
 
   const recordConversion = async (target: CreatedTarget, payload: Record<string, unknown>) => {
+    const actionContract = payload.actionContract as Record<string, unknown> | undefined;
     await Api.post('/artifact-conversions/record', {
       sourceArtifactType: source.type,
       sourceArtifactId: source.id,
@@ -174,15 +253,19 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
       conversionIntent: `Create ${target.type} from interview insight`,
       confidenceLevel: source.confidence || null,
       limits: source.limits || null,
-      evidenceRefs: [],
+      evidenceRefs: extractEvidenceRefs(source),
       sourcePack: source.sourcePack || {},
-      payload,
+      payload: {
+        ...payload,
+        actionContract,
+      },
     });
   };
 
   const createTarget = async (
     target: ArtifactActionTarget,
-    composer?: { templateMode: string; contextMode: string }
+    composer?: { templateMode: string; contextMode: string },
+    governanceProposal?: Record<string, unknown>
   ) => {
     setLoadingTarget(target);
     try {
@@ -197,6 +280,8 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
       const title = `${titlePrefix[target]}: ${source.title}`;
       let created: CreatedTarget | null = null;
       let rawPayload: Record<string, unknown> = {};
+      const evidenceRefs = extractEvidenceRefs(source);
+      const actionContract = buildActionContract(source, target, composer, governanceProposal);
 
       if (target === 'report') {
         const res = unwrapPayload(
@@ -210,6 +295,9 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               sourceSubType: 'interview_insight',
               artifactActionSource: { type: source.type, id: source.id },
               actionComposer: composer || null,
+              actionContract,
+              sourcePack: source.sourcePack || {},
+              evidenceRefs,
               sourcesLedger: [
                 {
                   sourceType: source.type,
@@ -224,7 +312,12 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         );
         const id = firstString(res?.report?.id, res?.id, res?.reportId);
         if (!id) throw new Error('Report id missing');
-        created = { id, type: target, label: isPolish ? 'Otwórz raport' : 'Open report', path: `/reports/builder/${id}` };
+        created = {
+          id,
+          type: target,
+          label: isPolish ? 'Otwórz raport' : 'Open report',
+          path: `/reports/builder/${id}`,
+        };
         rawPayload = res;
       }
 
@@ -235,25 +328,47 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             theme: 'modern',
             source: { type: source.type, id: source.id, title: source.title },
             actionComposer: composer || null,
+            actionContract,
+            sourcePack: source.sourcePack || {},
+            evidenceRefs,
             slides: [
               {
                 type: 'title',
-                content: { title, subtitle: isPolish ? 'Wygenerowane z Interview Insight' : 'Generated from Interview Insight' },
+                content: {
+                  title,
+                  subtitle: isPolish
+                    ? 'Wygenerowane z Interview Insight'
+                    : 'Generated from Interview Insight',
+                },
               },
               {
                 type: 'executive_summary',
-                content: { title: isPolish ? 'Kluczowy wniosek' : 'Key insight', body: source.content || source.title },
+                content: {
+                  title: isPolish ? 'Kluczowy wniosek' : 'Key insight',
+                  body: source.content || source.title,
+                },
               },
               {
                 type: 'next_steps',
-                content: { title: isPolish ? 'Dalsze działania' : 'Next actions', bullets: [isPolish ? 'Omów z zespołem' : 'Discuss with the team', isPolish ? 'Zdecyduj o inicjatywie' : 'Decide on initiative intake'] },
+                content: {
+                  title: isPolish ? 'Dalsze działania' : 'Next actions',
+                  bullets: [
+                    isPolish ? 'Omów z zespołem' : 'Discuss with the team',
+                    isPolish ? 'Zdecyduj o inicjatywie' : 'Decide on initiative intake',
+                  ],
+                },
               },
             ],
           })
         );
         const id = firstString(res?.data?.id, res?.id, res?.deckId);
         if (!id) throw new Error('Presentation id missing');
-        created = { id, type: target, label: isPolish ? 'Otwórz prezentację' : 'Open deck', path: `/presentations/builder/${id}` };
+        created = {
+          id,
+          type: target,
+          label: isPolish ? 'Otwórz prezentację' : 'Open deck',
+          path: `/presentations/builder/${id}`,
+        };
         rawPayload = res;
       }
 
@@ -267,13 +382,23 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               title: source.title,
               sourcePack: source.sourcePack || {},
               actionComposer: composer || null,
+              actionContract,
+              evidenceRefs,
             },
+            sourcePack: source.sourcePack || {},
+            actionContract,
+            evidenceRefs,
             language: isPolish ? 'pl' : 'en',
           })
         );
         const id = firstString(res?.id, res?.workbook?.id, res?.data?.id);
         if (!id) throw new Error('Workbook id missing');
-        created = { id, type: target, label: isPolish ? 'Otwórz tabelę' : 'Open table', path: `/excele?artifactId=${id}` };
+        created = {
+          id,
+          type: target,
+          label: isPolish ? 'Otwórz tabelę' : 'Open table',
+          path: `/excele?artifactId=${id}`,
+        };
         rawPayload = res;
       }
 
@@ -285,11 +410,19 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             tags: ['interview-insight'],
             sourceType: source.type,
             sourceConversationId: source.id,
+            sourcePack: source.sourcePack || {},
+            actionContract,
+            evidenceRefs,
           })
         );
         const id = firstString(res?.id, res?.idea?.id);
         if (!id) throw new Error('Idea id missing');
-        created = { id, type: target, label: isPolish ? 'Otwórz ideę' : 'Open idea', path: `/my-work/ideas/${id}` };
+        created = {
+          id,
+          type: target,
+          label: isPolish ? 'Otwórz ideę' : 'Open idea',
+          path: `/my-work/ideas/${id}`,
+        };
         rawPayload = res;
       }
 
@@ -302,10 +435,18 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
               type: 'doc',
               content: [
                 { type: 'heading', attrs: { level: 1 }, content: [{ type: 'text', text: title }] },
-                { type: 'paragraph', content: [{ type: 'text', text: source.content || source.title }] },
+                {
+                  type: 'paragraph',
+                  content: [{ type: 'text', text: source.content || source.title }],
+                },
               ],
             },
             tags: ['interview-insight'],
+            sourceType: source.type,
+            sourceId: source.id,
+            sourcePack: source.sourcePack || {},
+            actionContract,
+            evidenceRefs,
             icon: 'Lightbulb',
             maturity: 'seed',
             status: 'active',
@@ -313,17 +454,24 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
         );
         const id = firstString(res?.id, res?.page?.id);
         if (!id) throw new Error('Note id missing');
-        created = { id, type: target, label: isPolish ? 'Otwórz notatkę' : 'Open note', path: `/my-work/notebook` };
+        created = {
+          id,
+          type: target,
+          label: isPolish ? 'Otwórz notatkę' : 'Open note',
+          path: `/my-work/notebook`,
+        };
         rawPayload = res;
       }
 
       if (target === 'initiative') {
+        const initiativeDraftDescription = buildInitiativeDraftDescription(source);
         const res = unwrapPayload(
           await Api.post('/initiatives', {
             name: title,
             title,
-            description: buildInitiativeDraftDescription(source),
+            description: initiativeDraftDescription,
             summary: source.content || source.title,
+            problemStatement: source.limits || source.content || source.title,
             status: 'DRAFT',
             priority: 'medium',
             impact: 'medium',
@@ -331,6 +479,9 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
             category: 'interview-initiative-draft',
             sourceType: source.type,
             sourceId: source.id,
+            sourcePack: source.sourcePack || {},
+            actionContract,
+            evidenceRefs,
             reportName: isPolish
               ? 'Draft z Interview Insight - użyj pełnej zatwierdzonej wiedzy organizacji'
               : 'Draft from Interview Insight - use full approved organizational knowledge',
@@ -351,6 +502,8 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
       await recordConversion(created, {
         ...rawPayload,
         actionComposer: composer || null,
+        actionContract,
+        governanceProposal: governanceProposal || null,
       });
       setCreatedTargets((prev) => ({ ...prev, [target]: created }));
       toast.success(isPolish ? 'Artefakt utworzony' : 'Artifact created');
@@ -392,12 +545,18 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
                 ? navigate(created.path)
                 : isDocumentTarget
                   ? setComposerTarget(target)
-                  : createTarget(target)
+                  : setProposalTarget(target)
             }
             disabled={loading || isActionDisabled}
             className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-white/80 px-3 py-2 text-xs font-semibold shadow-sm transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/[0.08] dark:hover:bg-white/[0.12]"
           >
-            {loading ? <Loader2 size={14} className="animate-spin" /> : created ? <ExternalLink size={14} /> : <Icon size={14} />}
+            {loading ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : created ? (
+              <ExternalLink size={14} />
+            ) : (
+              <Icon size={14} />
+            )}
             {created
               ? created.label
               : isDocumentTarget
@@ -415,140 +574,276 @@ export const ArtifactActionPanel: React.FC<ArtifactActionPanelProps> = ({
 
   return (
     <>
-    <div className={`rounded-3xl border border-slate-200/70 bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/70 ${isCompact ? 'p-3' : 'p-5'}`}>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-purple-700 dark:text-purple-200">
-            <BookOpen size={12} />
-            {isPolish ? 'Co dalej z tym insightem?' : 'What next with this insight?'}
+      <div
+        className={`rounded-3xl border border-slate-200/70 bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-navy-900/70 ${isCompact ? 'p-3' : 'p-5'}`}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-purple-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-purple-700 dark:text-purple-200">
+              <BookOpen size={12} />
+              {isPolish ? 'Co dalej z tym insightem?' : 'What next with this insight?'}
+            </div>
+            {!isCompact && (
+              <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
+                {isPolish
+                  ? 'Insight jest artefaktem źródłowym. Z tego miejsca tworzysz dokumenty albo działania w aplikacji, a system zapisuje pełny backlink i lineage.'
+                  : 'This insight is the source artifact. Create documents or app actions here while the system keeps backlink and lineage.'}
+              </p>
+            )}
           </div>
           {!isCompact && (
-            <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-              {isPolish
-                ? 'Insight jest artefaktem źródłowym. Z tego miejsca tworzysz dokumenty albo działania w aplikacji, a system zapisuje pełny backlink i lineage.'
-                : 'This insight is the source artifact. Create documents or app actions here while the system keeps backlink and lineage.'}
-            </p>
+            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+              <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
+                <div className="text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Pewność' : 'Confidence'}
+                </div>
+                <div className="font-semibold text-slate-900 dark:text-slate-100">
+                  {source.confidence || '-'}
+                </div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
+                <div className="text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Dowody' : 'Evidence'}
+                </div>
+                <div className="font-semibold text-slate-900 dark:text-slate-100">
+                  {source.evidenceCount ?? 0}
+                </div>
+              </div>
+              <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
+                <div className="text-slate-500 dark:text-slate-400">
+                  {isPolish ? 'Sesje' : 'Sessions'}
+                </div>
+                <div className="font-semibold text-slate-900 dark:text-slate-100">
+                  {source.sourceSessionCount ?? 0}
+                </div>
+              </div>
+            </div>
           )}
         </div>
-        {!isCompact && (
-          <div className="grid grid-cols-3 gap-2 text-center text-xs">
-            <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-              <div className="text-slate-500 dark:text-slate-400">{isPolish ? 'Pewność' : 'Confidence'}</div>
-              <div className="font-semibold text-slate-900 dark:text-slate-100">{source.confidence || '-'}</div>
-            </div>
-            <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-              <div className="text-slate-500 dark:text-slate-400">{isPolish ? 'Dowody' : 'Evidence'}</div>
-              <div className="font-semibold text-slate-900 dark:text-slate-100">{source.evidenceCount ?? 0}</div>
-            </div>
-            <div className="rounded-2xl bg-slate-50 px-3 py-2 dark:bg-white/[0.04]">
-              <div className="text-slate-500 dark:text-slate-400">{isPolish ? 'Sesje' : 'Sessions'}</div>
-              <div className="font-semibold text-slate-900 dark:text-slate-100">{source.sourceSessionCount ?? 0}</div>
-            </div>
-          </div>
-        )}
-      </div>
 
-      <div className={`mt-4 grid gap-3 ${isCompact ? 'grid-cols-1' : 'lg:grid-cols-2'}`}>
-        <div className="space-y-2">
-          {!isCompact && <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{isPolish ? 'Dokumenty' : 'Documents'}</div>}
-          <div className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}>
-            {DOC_TARGETS.map(renderAction)}
-          </div>
-        </div>
-        <div className="space-y-2">
-          {!isCompact && <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{isPolish ? 'Działania w aplikacji' : 'App actions'}</div>}
-          <div className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}>
-            {APP_TARGETS.map(renderAction)}
-          </div>
-        </div>
-      </div>
-    </div>
-    {composerTarget && (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-        <div className="w-full max-w-xl rounded-3xl border border-white/[0.08] bg-navy-900 p-5 shadow-2xl">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="text-sm font-semibold text-white">
-                {isPolish ? 'Generator dokumentu' : 'Document generator'}
+        <div className={`mt-4 grid gap-3 ${isCompact ? 'grid-cols-1' : 'lg:grid-cols-2'}`}>
+          <div className="space-y-2">
+            {!isCompact && (
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {isPolish ? 'Dokumenty' : 'Documents'}
               </div>
-              <p className="mt-1 text-xs text-slate-400">
-                {isPolish
-                  ? 'Wybierz, czy AI ma użyć template, czy ułożyć dokument od zera. Kontekst insightu zostanie przekazany dalej.'
-                  : 'Choose whether AI should use a template or compose from scratch. The insight context will be passed forward.'}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setComposerTarget(null)}
-              className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08]"
+            )}
+            <div
+              className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}
             >
-              {isPolish ? 'Zamknij' : 'Close'}
-            </button>
-          </div>
-
-          <div className="mt-4 rounded-2xl bg-white/[0.04] p-4">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-              {isPolish ? 'Kontekst' : 'Context'}
-            </div>
-            <div className="mt-2 text-sm font-medium text-white">{source.title}</div>
-            <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-400">
-              <div>{isPolish ? 'Dowody' : 'Evidence'}: {source.evidenceCount ?? 0}</div>
-              <div>{isPolish ? 'Sesje' : 'Sessions'}: {source.sourceSessionCount ?? 0}</div>
-              <div>{isPolish ? 'Pewność' : 'Confidence'}: {source.confidence || '-'}</div>
+              {DOC_TARGETS.map(renderAction)}
             </div>
           </div>
-
-          <div className="mt-4">
-            <label className="block text-xs font-semibold text-slate-400">
-              {isPolish ? 'Template' : 'Template'}
-            </label>
-            <select
-              value={composerTemplate}
-              onChange={(event) => setComposerTemplate(event.target.value)}
-              className="mt-1 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white"
+          <div className="space-y-2">
+            {!isCompact && (
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                {isPolish ? 'Działania w aplikacji' : 'App actions'}
+              </div>
+            )}
+            <div
+              className={`grid gap-3 ${isCompact ? 'grid-cols-1' : 'md:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3'}`}
             >
-              <option value="ai_freeform">
-                {isPolish ? 'Bez template - AI układa strukturę' : 'No template - AI composes structure'}
-              </option>
-              <option value="executive_readout">
-                {isPolish ? 'Executive readout' : 'Executive readout'}
-              </option>
-              <option value="consulting_workpaper">
-                {isPolish ? 'Workpaper konsultingowy' : 'Consulting workpaper'}
-              </option>
-              <option value="decision_pack">
-                {isPolish ? 'Decision pack' : 'Decision pack'}
-              </option>
-            </select>
-          </div>
-
-          <div className="mt-5 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setComposerTarget(null)}
-              className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
-            >
-              {isPolish ? 'Anuluj' : 'Cancel'}
-            </button>
-            <button
-              type="button"
-              disabled={Boolean(loadingTarget)}
-              onClick={() => {
-                const target = composerTarget;
-                setComposerTarget(null);
-                createTarget(target, {
-                  templateMode: composerTemplate,
-                  contextMode: 'insight_with_source_pack',
-                });
-              }}
-              className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-400 disabled:opacity-50"
-            >
-              {isPolish ? 'Uruchom generator' : 'Run generator'}
-            </button>
+              {APP_TARGETS.map(renderAction)}
+            </div>
           </div>
         </div>
       </div>
-    )}
+      {composerTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-3xl border border-white/[0.08] bg-navy-900 p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-white">
+                  {isPolish ? 'Generator dokumentu' : 'Document generator'}
+                </div>
+                <p className="mt-1 text-xs text-slate-400">
+                  {isPolish
+                    ? 'Wybierz, czy AI ma użyć template, czy ułożyć dokument od zera. Kontekst insightu zostanie przekazany dalej.'
+                    : 'Choose whether AI should use a template or compose from scratch. The insight context will be passed forward.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setComposerTarget(null)}
+                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08]"
+              >
+                {isPolish ? 'Zamknij' : 'Close'}
+              </button>
+            </div>
+
+            <div className="mt-4 rounded-2xl bg-white/[0.04] p-4">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                {isPolish ? 'Kontekst' : 'Context'}
+              </div>
+              <div className="mt-2 text-sm font-medium text-white">{source.title}</div>
+              <div className="mt-2 grid grid-cols-3 gap-2 text-xs text-slate-400">
+                <div>
+                  {isPolish ? 'Dowody' : 'Evidence'}: {source.evidenceCount ?? 0}
+                </div>
+                <div>
+                  {isPolish ? 'Sesje' : 'Sessions'}: {source.sourceSessionCount ?? 0}
+                </div>
+                <div>
+                  {isPolish ? 'Pewność' : 'Confidence'}: {source.confidence || '-'}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <label className="block text-xs font-semibold text-slate-400">
+                {isPolish ? 'Template' : 'Template'}
+              </label>
+              <select
+                value={composerTemplate}
+                onChange={(event) => setComposerTemplate(event.target.value)}
+                className="mt-1 w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white"
+              >
+                <option value="ai_freeform">
+                  {isPolish
+                    ? 'Bez template - AI układa strukturę'
+                    : 'No template - AI composes structure'}
+                </option>
+                <option value="executive_readout">
+                  {isPolish ? 'Executive readout' : 'Executive readout'}
+                </option>
+                <option value="consulting_workpaper">
+                  {isPolish ? 'Workpaper konsultingowy' : 'Consulting workpaper'}
+                </option>
+                <option value="decision_pack">
+                  {isPolish ? 'Decision pack' : 'Decision pack'}
+                </option>
+              </select>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setComposerTarget(null)}
+                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={Boolean(loadingTarget)}
+                onClick={() => {
+                  const target = composerTarget;
+                  if (!target) return;
+                  setComposerTarget(null);
+                  createTarget(target, {
+                    templateMode: composerTemplate,
+                    contextMode: 'insight_with_source_pack',
+                  });
+                }}
+                className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-400 disabled:opacity-50"
+              >
+                {isPolish ? 'Uruchom generator' : 'Run generator'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {proposalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-xl rounded-3xl border border-white/[0.08] bg-navy-900 p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-white">
+                  {isPolish ? 'Potwierdzenie działania' : 'Action confirmation'}
+                </div>
+                <p className="mt-1 text-xs text-slate-400">
+                  {isPolish
+                    ? 'To jest mutacja biznesowa. Sprawdź proposal i read-back przed utworzeniem artefaktu.'
+                    : 'This is a business mutation. Review the proposal and read-back before creating the artifact.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setProposalTarget(null);
+                  setProposalConfirmed(false);
+                }}
+                className="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/[0.08]"
+              >
+                {isPolish ? 'Zamknij' : 'Close'}
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3 rounded-2xl bg-white/[0.04] p-4 text-sm text-slate-200">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  {isPolish ? 'Źródło' : 'Source'}
+                </div>
+                <div className="mt-1 font-medium text-white">{source.title}</div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs text-slate-400">
+                <div>
+                  {isPolish ? 'Cel' : 'Target'}:{' '}
+                  {isPolish
+                    ? TARGET_META[proposalTarget].labelPl
+                    : TARGET_META[proposalTarget].labelEn}
+                </div>
+                <div>
+                  {isPolish ? 'Dowody' : 'Evidence'}: {source.evidenceCount ?? 0}
+                </div>
+                <div>
+                  {isPolish ? 'Pewność' : 'Confidence'}: {source.confidence || '-'}
+                </div>
+              </div>
+              {source.limits && (
+                <div className="rounded-xl border border-amber-400/20 bg-amber-400/10 p-3 text-xs text-amber-100">
+                  <span className="font-semibold">{isPolish ? 'Ograniczenia:' : 'Limits:'}</span>{' '}
+                  {source.limits}
+                </div>
+              )}
+              <div className="rounded-xl border border-white/[0.08] bg-black/20 p-3 text-xs text-slate-300">
+                {buildGovernanceProposal(source, proposalTarget, isPolish).readBackText as string}
+              </div>
+              <label className="flex items-start gap-2 text-xs text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={proposalConfirmed}
+                  onChange={(event) => setProposalConfirmed(event.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  {isPolish
+                    ? 'Potwierdzam, że read-back jest zgodny z intencją i artefakt ma zostać utworzony.'
+                    : 'I confirm the read-back matches the intent and the artifact should be created.'}
+                </span>
+              </label>
+            </div>
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setProposalTarget(null);
+                  setProposalConfirmed(false);
+                }}
+                className="rounded-xl border border-white/[0.08] px-4 py-2 text-sm font-semibold text-slate-300 hover:bg-white/[0.06]"
+              >
+                {isPolish ? 'Anuluj' : 'Cancel'}
+              </button>
+              <button
+                type="button"
+                disabled={!proposalConfirmed || Boolean(loadingTarget)}
+                onClick={() => {
+                  const target = proposalTarget;
+                  if (!target) return;
+                  const proposal = buildGovernanceProposal(source, target, isPolish);
+                  setProposalTarget(null);
+                  setProposalConfirmed(false);
+                  createTarget(target, undefined, proposal);
+                }}
+                className="rounded-xl bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-400 disabled:opacity-50"
+              >
+                {isPolish ? 'Potwierdź i utwórz' : 'Confirm and create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

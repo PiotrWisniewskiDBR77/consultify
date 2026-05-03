@@ -180,8 +180,10 @@ Consultify module screens use:
 3. `Menu 3` / Command Row - one contextual row below `Menu 2`.
 4. Content surface - table, cards, kanban, timeline, preview, workspace or N-mode canvas.
 
-Every migrated module card must be checked against the operational migration checklist in
-`03-modules/module-hub-standard.md` (`Instrukcja Przerabiania Karty Modułu`) before it is accepted.
+Every migrated module card must be checked against the operational migration checklist and the
+professional UI/UX test procedure in `03-modules/module-hub-standard.md`
+(`Instrukcja Przerabiania Karty Modułu` and
+`Profesjonalna Procedura Testowania UI/UX Karty I Tabeli`) before it is accepted.
 
 ### 6.1 App Topbar
 
@@ -251,6 +253,12 @@ Bad labels:
 
 There is exactly one `Menu 3` row below Module Topbar.
 
+Canonical reference:
+
+- `My Work > Decyzje` is the accepted product reference for `Menu 3` dynamic chips.
+- The implementation source of truth is `src/components/shared/ModuleMenu3.tsx`.
+- Any module card that needs dynamic tabs, counter chips, status presets, bulk mode or contextual actions must use this visual family rather than local chip/button classes.
+
 It may be:
 
 - dynamic tabs,
@@ -264,6 +272,13 @@ It must not create two or three rows. It must not be followed by another ad-hoc 
 
 Rules:
 
+- row surface: `bg-white dark:bg-navy-900` with one calm bottom separator,
+- row layout: `flex min-h-8 items-center justify-between gap-3 overflow-x-auto whitespace-nowrap`,
+- chip shape: `h-8`, `rounded-full`, `px-2.5`, `gap-1.5`, `text-[11px] font-medium`,
+- active chip: purple tint (`border-purple-500/40`, `bg-purple-500/10`, `text-purple-700`, `dark:text-purple-200`),
+- inactive chip: quiet slate/navy surface (`bg-slate-100 dark:bg-navy-800`), not white-on-white,
+- counter badge: `px-1.5 py-0.5`, `rounded-full`, `text-[10px] font-semibold`, `tabular-nums`,
+- the `ALL` / `Wszystkie` chip uses a tiny neutral dot when no semantic icon exists,
 - left side starts with `ALL`,
 - chips are active filters, not decorative counters,
 - only active/useful statuses are shown by default,

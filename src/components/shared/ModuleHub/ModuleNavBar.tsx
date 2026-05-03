@@ -22,6 +22,13 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
+import {
+  MENU_2_TAB_ACTIVE,
+  MENU_2_TAB_INACTIVE,
+  MENU_3_INNER_CLASS,
+  MENU_3_ROW_CLASS,
+} from '@/components/shared/ModuleMenu3';
+
 import { ActiveFilters, type FilterChip } from './ActiveFilters';
 import { DynamicTabs } from './DynamicTabs';
 import { StatusDropdown } from './StatusDropdown';
@@ -116,23 +123,8 @@ interface ModuleNavBarProps {
  * Level B — Pill / Soft: helper actions, view toggles
  * Level C — Ghost / Text: link-like, per-row actions
  */
-const TAB_BASE = `
-  inline-flex items-center gap-2 h-9 px-3.5 rounded-full text-sm font-medium
-  transition-colors duration-150
-`;
-
-const TAB_INACTIVE = `
-  ${TAB_BASE}
-  border border-slate-200 dark:border-navy-700
-  text-slate-700 dark:text-slate-300
-  hover:bg-slate-100/70 dark:hover:bg-white/[0.05]
-`;
-
-const TAB_ACTIVE = `
-  ${TAB_BASE}
-  border border-primary-500/40
-  bg-primary-500/10 text-slate-900 dark:text-slate-100
-`;
+const TAB_INACTIVE = MENU_2_TAB_INACTIVE;
+const TAB_ACTIVE = MENU_2_TAB_ACTIVE;
 
 const BUTTON_BASE = `
   inline-flex items-center gap-2 h-9 px-3 rounded-full text-sm font-medium
@@ -241,13 +233,14 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   const commandRow = (() => {
     // 0) Bulk / forced row — overrides search and tabs
     if (forceCommandRow && commandRowContent) {
-      return <div className="shrink-0">{commandRowContent}</div>;
+      return commandRowContent;
     }
 
     if (showSearch) {
       return (
-        <div className="px-4 pb-3">
-          <div className="relative">
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>
+            <div className="relative min-w-[280px] flex-1">
             <Search
               size={16}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
@@ -260,7 +253,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
               placeholder="Search..."
               className="
                 w-full pl-10 pr-10 py-2 rounded-lg
-                bg-slate-50 dark:bg-navy-800 border border-slate-300 dark:border-navy-600
+                bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60
                 text-slate-900 dark:text-white placeholder-slate-500
                 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50
                 transition-all
@@ -274,6 +267,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
                 <X size={16} />
               </button>
             )}
+            </div>
           </div>
         </div>
       );
@@ -294,9 +288,13 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
     if (!commandRowContent && !commandRowRightContent && activeFilters.length === 0) return null;
 
+    if (commandRowContent && !commandRowRightContent && activeFilters.length === 0) {
+      return commandRowContent;
+    }
+
     return (
-      <div className="px-4 pb-3">
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+      <div className={MENU_3_ROW_CLASS}>
+        <div className={MENU_3_INNER_CLASS}>
           {commandRowContent ? <div className="flex-1 min-w-0">{commandRowContent}</div> : null}
           {activeFilters.length > 0 ? (
             <ActiveFilters
@@ -306,7 +304,7 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
             />
           ) : null}
           {commandRowRightContent ? (
-            <div className="ml-auto flex shrink-0 items-center justify-end gap-1.5">
+            <div className="ml-auto flex shrink-0 items-center justify-end gap-2">
               {commandRowRightContent}
             </div>
           ) : null}

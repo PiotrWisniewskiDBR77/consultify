@@ -91,7 +91,10 @@ import { getTeresaEmptyResponseMessage, getTeresaStartFailureMessage } from './t
 import { V8ArtifactRunControl } from './V8ArtifactRunControl';
 import { V8ContextIndicator } from './V8ContextIndicator';
 import { detectWhiteboardIntent } from './whiteboardIntentDetector';
-import { WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
+import {
+  type ActiveCanvasDocument,
+  WorkCanvasDocumentPanel,
+} from './WorkCanvasDocumentPanel';
 
 // ============================================================================
 // Types
@@ -99,9 +102,26 @@ import { WorkCanvasDocumentPanel } from './WorkCanvasDocumentPanel';
 
 type ChatSaveTarget = 'idea' | 'note';
 
+const WORK_CANVAS_SPLIT_STORAGE_KEY = 'workCanvas.splitWidthPercent';
+const DEFAULT_WORK_CANVAS_WIDTH_PERCENT = 56;
+const MIN_WORK_CANVAS_WIDTH_PERCENT = 45;
+const MAX_WORK_CANVAS_WIDTH_PERCENT = 70;
+
 interface ChatSaveIntent {
   target: ChatSaveTarget;
   cleanPrompt: string;
+}
+
+function clampWorkCanvasWidth(value: number): number {
+  return Math.min(MAX_WORK_CANVAS_WIDTH_PERCENT, Math.max(MIN_WORK_CANVAS_WIDTH_PERCENT, value));
+}
+
+function getInitialWorkCanvasWidth(): number {
+  if (typeof window === 'undefined') return DEFAULT_WORK_CANVAS_WIDTH_PERCENT;
+  const stored = Number(window.localStorage.getItem(WORK_CANVAS_SPLIT_STORAGE_KEY));
+  return Number.isFinite(stored)
+    ? clampWorkCanvasWidth(stored)
+    : DEFAULT_WORK_CANVAS_WIDTH_PERCENT;
 }
 
 function mapChatArtifactToWave5Type(artifact: Artifact): string {
@@ -386,9 +406,16 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
   const [isWorkPanelOpen, setIsWorkPanelOpen] = useState(false);
+  const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
+    null
+  );
+  const [workCanvasWidthPercent, setWorkCanvasWidthPercent] = useState(
+    getInitialWorkCanvasWidth
+  );
   const [tableBuilderOpen, setTableBuilderOpen] = useState(false);
   const [tableBuilderInitialMsg, setTableBuilderInitialMsg] = useState<string | undefined>();
   const lastKickoffSentRef = useRef<string | null>(null);
+  const splitShellRef = useRef<HTMLDivElement | null>(null);
   const pendingChatSaveIntentRef = useRef<{
     target: ChatSaveTarget;
     originalUserMessage: string;
@@ -3489,20 +3516,89 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const showFullWelcomeEmptyState = isWelcomeEmptyState && mode === 'full' && !isCompact;
   const showWorkPanelEmptyState = isWelcomeEmptyState && showWorkPanel;
   const showCompactEmptyState = isWelcomeEmptyState && mode !== 'full';
+  const rootStyle = {
+    maxHeight: maxHeight || '100%',
+    ...(showWorkPanel ? { '--work-canvas-width': `${workCanvasWidthPercent}%` } : {}),
+  } as React.CSSProperties;
+
+  const setPersistedWorkCanvasWidth = useCallback((nextWidth: number) => {
+    const clamped = clampWorkCanvasWidth(nextWidth);
+    setWorkCanvasWidthPercent(clamped);
+    window.localStorage.setItem(WORK_CANVAS_SPLIT_STORAGE_KEY, String(clamped));
+  }, []);
+
+  const updateWorkCanvasWidthFromClientX = useCallback(
+    (clientX: number) => {
+      const rect = splitShellRef.current?.getBoundingClientRect();
+      if (!rect?.width) return;
+      const leftPercent = ((clientX - rect.left) / rect.width) * 100;
+      setPersistedWorkCanvasWidth(100 - leftPercent);
+    },
+    [setPersistedWorkCanvasWidth]
+  );
+
+  const handleWorkCanvasDividerMouseDown = useCallback(
+    (event: React.MouseEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      updateWorkCanvasWidthFromClientX(event.clientX);
+
+      const previousCursor = document.body.style.cursor;
+      const previousUserSelect = document.body.style.userSelect;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        updateWorkCanvasWidthFromClientX(moveEvent.clientX);
+      };
+      const handleMouseUp = () => {
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousUserSelect;
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    },
+    [updateWorkCanvasWidthFromClientX]
+  );
+
+  const handleWorkCanvasDividerKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setPersistedWorkCanvasWidth(workCanvasWidthPercent + 2);
+      }
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setPersistedWorkCanvasWidth(workCanvasWidthPercent - 2);
+      }
+      if (event.key === 'Home') {
+        event.preventDefault();
+        setPersistedWorkCanvasWidth(MIN_WORK_CANVAS_WIDTH_PERCENT);
+      }
+      if (event.key === 'End') {
+        event.preventDefault();
+        setPersistedWorkCanvasWidth(MAX_WORK_CANVAS_WIDTH_PERCENT);
+      }
+    },
+    [setPersistedWorkCanvasWidth, workCanvasWidthPercent]
+  );
 
   return (
     <div
+      ref={splitShellRef}
       className={`relative flex h-full overflow-hidden bg-slate-50 dark:bg-navy-950 ${
         isPrivateMode
           ? 'ring-1 ring-violet-200/70 dark:ring-violet-800/45'
           : 'ring-1 ring-transparent'
       } ${className}`}
-      style={{ maxHeight: maxHeight || '100%' }}
+      style={rootStyle}
     >
       <div
         className={`flex min-w-0 flex-col h-full transition-[width] duration-200 ${
           showWorkPanel
-            ? 'w-full lg:w-[44%] lg:max-w-[680px] lg:border-r lg:border-slate-200/60 lg:dark:border-white/[0.06]'
+            ? 'w-full lg:w-[calc(100%_-_var(--work-canvas-width))]'
             : 'w-full'
         }`}
       >
@@ -3671,14 +3767,17 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
 
       {/* Context Badge - shows what AI "sees" */}
       <div className={`${isCompact ? 'px-2' : 'px-3'}`}>
-        <ContextBadge
-          workspaceContext={workspaceContext}
-          focusMode={focusMode}
-          compact={isCompact}
-        />
+        {!showWorkPanel && (
+          <ContextBadge
+            workspaceContext={workspaceContext}
+            focusMode={focusMode}
+            compact={isCompact}
+          />
+        )}
         {showWorkPanel && (
-          <div className="mx-1 mt-2 rounded-xl border border-primary-200/60 bg-primary-50/70 px-3 py-2 text-[11px] text-primary-800 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-200">
-            <span className="font-semibold">Working on:</span> Company Work Note
+          <div className="mx-1 mt-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] text-slate-300">
+            <span className="font-semibold text-slate-100">Active document:</span>{' '}
+            <span>{activeCanvasDocument?.title || 'Company Work Note'}</span>
           </div>
         )}
       </div>
@@ -4143,13 +4242,36 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       </div>
 
       {showWorkPanel && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t('aiChat.workPanel.resizeDivider', 'Resize Canvas panel')}
+          aria-valuemin={MIN_WORK_CANVAS_WIDTH_PERCENT}
+          aria-valuemax={MAX_WORK_CANVAS_WIDTH_PERCENT}
+          aria-valuenow={Math.round(workCanvasWidthPercent)}
+          tabIndex={0}
+          data-testid="chat-work-panel-resizer"
+          onMouseDown={handleWorkCanvasDividerMouseDown}
+          onDoubleClick={() => setPersistedWorkCanvasWidth(DEFAULT_WORK_CANVAS_WIDTH_PERCENT)}
+          onKeyDown={handleWorkCanvasDividerKeyDown}
+          className="group relative z-40 hidden w-2 shrink-0 cursor-col-resize touch-none items-stretch justify-center bg-slate-100 outline-none transition-colors hover:bg-slate-200 focus:bg-primary-100 dark:bg-[#101217] dark:hover:bg-white/[0.06] dark:focus:bg-primary-500/15 lg:flex"
+        >
+          <span className="my-4 w-px rounded-full bg-slate-300 transition-colors group-hover:bg-primary-400 group-focus:bg-primary-500 dark:bg-white/10 dark:group-hover:bg-primary-400" />
+        </div>
+      )}
+
+      {showWorkPanel && (
         <aside
           data-testid="chat-work-panel"
-          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-slate-100 shadow-2xl dark:bg-[#111319] lg:relative lg:z-auto lg:w-[56%] lg:shadow-none"
+          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-slate-100 shadow-2xl dark:bg-[#111319] lg:relative lg:z-auto lg:w-[var(--work-canvas-width)] lg:shadow-none"
           aria-label={t('aiChat.workPanel.title', 'Canvas work area')}
         >
           <div className="min-h-0 flex-1">
-            <WorkCanvasDocumentPanel onClose={() => setIsWorkPanelOpen(false)} />
+            <WorkCanvasDocumentPanel
+              conversationId={activeConversationId}
+              onActiveDocumentChange={setActiveCanvasDocument}
+              onClose={() => setIsWorkPanelOpen(false)}
+            />
           </div>
         </aside>
       )}

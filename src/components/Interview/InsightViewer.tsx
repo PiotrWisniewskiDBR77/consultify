@@ -48,6 +48,7 @@ import ReactMarkdown from 'react-markdown';
 import { useNavigate } from 'react-router-dom';
 import remarkGfm from 'remark-gfm';
 
+import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import type { InlineTableColumn } from '@/components/shared/NModeBlocks';
 import { Callout, EmptyStateInline, InlineTable } from '@/components/shared/NModeBlocks';
 import { NModeShell } from '@/components/shared/NModeLayout/NModeShell';
@@ -69,7 +70,6 @@ import { useOpenChatWithContext } from '@/hooks/useOpenChatWithContext';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { ROUTES } from '@/routes/routeConfig';
 import { Api } from '@/services/api';
-import { ArtifactActionPanel } from '@/components/shared/artifact-actions/ArtifactActionPanel';
 import {
   type V8InsightAnalysis,
   type V8InsightAnalysisMatrixCell,
@@ -391,6 +391,11 @@ const STATUS_CONFIG: Record<
 
 const INSIGHT_SECTIONS: Omit<NModeSection, 'component'>[] = [
   { id: 'artifact-actions', icon: Rocket, label: { en: 'Next Actions', pl: 'Dalsze akcje' } },
+  {
+    id: 'truth-review-summary',
+    icon: ShieldAlert,
+    label: { en: 'Truth & Review', pl: 'Prawda i review' },
+  },
   { id: 'executive-summary', icon: Star, label: { en: 'Executive Summary', pl: 'Podsumowanie' } },
   {
     id: 'consulting-readout',
@@ -937,6 +942,87 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     }),
     [findings]
   );
+
+  const truthReviewSummary = useMemo(() => {
+    const contradictionSignals = v6Signals.filter((signal) => signal.type === 'contradiction');
+    const publishBlockers = uniqueNonEmpty([
+      ...(findingsSummary.total === 0
+        ? [
+            isPolish
+              ? 'Brak persisted P10 findings do publikacji lub handoffu.'
+              : 'No persisted P10 findings are available for publish or handoff.',
+          ]
+        : []),
+      ...(findingsSummary.activeEvidence === 0
+        ? [
+            isPolish
+              ? 'Brak aktywnych evidence pointers przy findingach.'
+              : 'No active evidence pointers are attached to findings.',
+          ]
+        : []),
+      ...(candidateSummary.needsEvidence > 0
+        ? [
+            isPolish
+              ? `${candidateSummary.needsEvidence} kandydatów wymaga dowodów.`
+              : `${candidateSummary.needsEvidence} candidates need more evidence.`,
+          ]
+        : []),
+      ...(candidateSummary.needsSplit > 0
+        ? [
+            isPolish
+              ? `${candidateSummary.needsSplit} kandydatów wymaga splitu sprzeczności.`
+              : `${candidateSummary.needsSplit} candidates need contradiction split.`,
+          ]
+        : []),
+      ...(readbackSummary.unresolved > 0
+        ? [
+            isPolish
+              ? `${readbackSummary.unresolved} findingów nie ma potwierdzonego readbacku.`
+              : `${readbackSummary.unresolved} findings do not have confirmed readback.`,
+          ]
+        : []),
+      ...(readbackSummary.challenged > 0
+        ? [
+            isPolish
+              ? `${readbackSummary.challenged} findingów zakwestionowano w readbacku.`
+              : `${readbackSummary.challenged} findings were challenged in readback.`,
+          ]
+        : []),
+    ]);
+
+    const safeClaims = findings
+      .filter(
+        (finding) =>
+          finding.confidence_level !== 'contradicted' &&
+          finding.evidence_pointers.some((pointer) => !pointer.isTombstone)
+      )
+      .slice(0, 4);
+
+    const posture: 'ready' | 'review_needed' | 'weak' =
+      publishBlockers.length === 0
+        ? 'ready'
+        : findingsSummary.activeEvidence > 0 || candidateSummary.ready > 0
+          ? 'review_needed'
+          : 'weak';
+
+    return {
+      contradictionSignals,
+      publishBlockers,
+      safeClaims,
+      posture,
+    };
+  }, [
+    candidateSummary.needsEvidence,
+    candidateSummary.needsSplit,
+    candidateSummary.ready,
+    findings,
+    findingsSummary.activeEvidence,
+    findingsSummary.total,
+    isPolish,
+    readbackSummary.challenged,
+    readbackSummary.unresolved,
+    v6Signals,
+  ]);
 
   const analysisTopicsById = useMemo(
     () =>
@@ -1956,10 +2042,168 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                 confidence: primaryConfidence,
                 limits: limits || null,
                 evidenceCount: sourcePack?.activePointerCount ?? findingsSummary.activeEvidence,
-                sourceSessionCount: sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0,
+                sourceSessionCount:
+                  sourcePack?.sourceSessionIds.length || insight?.sourceSessionIds?.length || 0,
                 sourcePack: sourcePack ? (sourcePack as unknown as Record<string, unknown>) : null,
               }}
             />
+          );
+          break;
+        }
+
+        case 'truth-review-summary': {
+          const postureMeta = {
+            ready: {
+              label: isPolish ? 'Gotowe do governed publish' : 'Ready for governed publish',
+              className:
+                'border-emerald-500/20 bg-emerald-500/[0.06] text-emerald-700 dark:text-emerald-200',
+            },
+            review_needed: {
+              label: isPolish ? 'Wymaga review operatora' : 'Operator review needed',
+              className:
+                'border-amber-500/20 bg-amber-500/[0.08] text-amber-700 dark:text-amber-200',
+            },
+            weak: {
+              label: isPolish ? 'Słaby materiał decyzyjny' : 'Weak decision material',
+              className: 'border-red-500/20 bg-red-500/[0.08] text-red-700 dark:text-red-200',
+            },
+          }[truthReviewSummary.posture];
+
+          component = (
+            <div className="space-y-5">
+              <div className={`rounded-2xl border px-4 py-3 ${postureMeta.className}`}>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] opacity-70">
+                      {isPolish ? 'Truth & Review Summary' : 'Truth & Review Summary'}
+                    </div>
+                    <div className="mt-1 text-sm font-semibold">{postureMeta.label}</div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-[11px] font-semibold">
+                    <span className="rounded-full bg-white/60 px-2 py-1 dark:bg-white/[0.08]">
+                      P10 {findingsSummary.total}
+                    </span>
+                    <span className="rounded-full bg-white/60 px-2 py-1 dark:bg-white/[0.08]">
+                      {isPolish ? 'Dowody' : 'Evidence'} {findingsSummary.activeEvidence}
+                    </span>
+                    <span className="rounded-full bg-white/60 px-2 py-1 dark:bg-white/[0.08]">
+                      Readback {readbackSummary.confirmed}/{findingsSummary.total}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                    {isPolish ? 'Co można twierdzić' : 'Safe claims'}
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {truthReviewSummary.safeClaims.length > 0 ? (
+                      truthReviewSummary.safeClaims.map((finding) => (
+                        <div
+                          key={finding.id}
+                          className="text-sm text-slate-700 dark:text-slate-300"
+                        >
+                          <div className="font-medium text-slate-900 dark:text-slate-100">
+                            {finding.finding_statement}
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {finding.confidence_level} ·{' '}
+                            {
+                              finding.evidence_pointers.filter((pointer) => !pointer.isTombstone)
+                                .length
+                            }{' '}
+                            {isPolish ? 'dow.' : 'ev.'}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <EmptyStateInline
+                        icon={ShieldAlert}
+                        message={
+                          isPolish
+                            ? 'Brak findingów z aktywną evidencją.'
+                            : 'No findings with active evidence yet.'
+                        }
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Blokery publish/handoff' : 'Publish/handoff blockers'}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveNSection('candidate-triage')}
+                      className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300"
+                    >
+                      {isPolish ? 'Triage' : 'Triage'}
+                    </button>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {truthReviewSummary.publishBlockers.length > 0 ? (
+                      truthReviewSummary.publishBlockers.map((blocker) => (
+                        <div
+                          key={blocker}
+                          className="rounded-xl bg-amber-500/[0.08] px-3 py-2 text-sm text-amber-800 dark:text-amber-200"
+                        >
+                          {blocker}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl bg-emerald-500/[0.08] px-3 py-2 text-sm text-emerald-700 dark:text-emerald-200">
+                        {isPolish
+                          ? 'Brak blokad w evidence/readback dla persisted findings.'
+                          : 'No evidence/readback blockers for persisted findings.'}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-4 dark:border-white/[0.08] dark:bg-navy-900/50">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400 dark:text-slate-500">
+                      {isPolish ? 'Sprzeczności' : 'Contradictions'}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveNSection('signals')}
+                      className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 dark:text-primary-300"
+                    >
+                      {isPolish ? 'Sygnały' : 'Signals'}
+                    </button>
+                  </div>
+                  <div className="mt-3 space-y-2">
+                    {truthReviewSummary.contradictionSignals.length > 0 ? (
+                      truthReviewSummary.contradictionSignals.slice(0, 4).map((signal) => (
+                        <div
+                          key={`${signal.title}-${signal.description}`}
+                          className="rounded-xl bg-red-500/[0.07] px-3 py-2 text-sm text-red-800 dark:text-red-200"
+                        >
+                          <div className="font-medium">{signal.title}</div>
+                          {signal.description && (
+                            <div className="mt-1 text-xs opacity-80">{signal.description}</div>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <EmptyStateInline
+                        icon={Radio}
+                        message={
+                          isPolish
+                            ? 'Brak jawnych contradiction signals.'
+                            : 'No explicit contradiction signals.'
+                        }
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
           );
           break;
         }
@@ -2141,7 +2385,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
             <div className="space-y-5">
               <Callout
                 variant={score >= 60 ? 'info' : 'warning'}
-                title={isPolish ? 'Material Quality nie blokuje insightu' : 'Material Quality is not a gate'}
+                title={
+                  isPolish
+                    ? 'Material Quality nie blokuje insightu'
+                    : 'Material Quality is not a gate'
+                }
               >
                 {isPolish
                   ? 'Ta karta mówi, jak daleko można bezpiecznie ufać analizie. Słabszy materiał nie zatrzymuje pracy, ale musi jawnie pokazać ograniczenia.'
@@ -2380,7 +2628,11 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
               </div>
 
               {(sourcePack?.degradedReasons || []).length > 0 && (
-                <Callout variant="warning" title={isPolish ? 'Braki źródeł' : 'Source gaps'} compact>
+                <Callout
+                  variant="warning"
+                  title={isPolish ? 'Braki źródeł' : 'Source gaps'}
+                  compact
+                >
                   <ul className="list-disc list-inside space-y-1">
                     {(sourcePack?.degradedReasons || []).map((reason) => (
                       <li key={reason} className="text-sm">
@@ -2411,7 +2663,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                               entry.sourceSessionId,
                             ]
                               .filter(Boolean)
-                              .join(' · ') || (isPolish ? 'Brak metadanych respondenta' : 'No respondent metadata')}
+                              .join(' · ') ||
+                              (isPolish ? 'Brak metadanych respondenta' : 'No respondent metadata')}
                           </div>
                         </div>
                         {entry.degradedReason ? (
@@ -2430,16 +2683,18 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         "{entry.answerSnippet}"
                       </div>
                       <div className="flex flex-wrap gap-1.5">
-                        {[...entry.linkedThemes, ...entry.linkedIssues, ...entry.linkedOpportunities].map(
-                          (label) => (
-                            <span
-                              key={label}
-                              className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium"
-                            >
-                              {label}
-                            </span>
-                          )
-                        )}
+                        {[
+                          ...entry.linkedThemes,
+                          ...entry.linkedIssues,
+                          ...entry.linkedOpportunities,
+                        ].map((label) => (
+                          <span
+                            key={label}
+                            className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 text-[10px] font-medium"
+                          >
+                            {label}
+                          </span>
+                        ))}
                       </div>
                     </div>
                   ))}
@@ -3769,8 +4024,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                         render: (row) => {
                           const hasPointers =
                             (row.evidence_pointers && row.evidence_pointers.length > 0) ||
-                            (sourcePackByAnswerId[row.answer_id]?.capturedPointers.length || 0) >
-                              0;
+                            (sourcePackByAnswerId[row.answer_id]?.capturedPointers.length || 0) > 0;
                           return (
                             <div className="space-y-1">
                               <div className="flex flex-wrap gap-1">
@@ -4114,9 +4368,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
                                 onClick={() =>
                                   handleCandidateAction(candidate, 'promote_to_finding')
                                 }
-                                disabled={
-                                  isBusy || candidate.triage_status !== 'ready_for_review'
-                                }
+                                disabled={isBusy || candidate.triage_status !== 'ready_for_review'}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-500/10 text-violet-700 dark:text-violet-300 hover:bg-violet-500/20 text-xs font-medium disabled:opacity-50"
                               >
                                 {isBusy ? (
@@ -4685,6 +4937,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
       }
 
       const badgeMap: Record<string, number | undefined> = {
+        'truth-review-summary': truthReviewSummary.publishBlockers.length || undefined,
         'candidate-triage': candidates.length || undefined,
         comments: nComments.length,
         'source-sessions': sourceSessions.length,
@@ -4720,6 +4973,7 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     analysis,
     findings,
     findingsSummary.activeEvidence,
+    findingsSummary.total,
     candidates,
     candidateSummary,
     candidateActionLoadingId,
@@ -4742,6 +4996,8 @@ export const InsightViewer: React.FC<InsightViewerProps> = ({
     v6Signals,
     v6EvidenceMap,
     v6MissingData,
+    truthReviewSummary,
+    readbackSummary.confirmed,
     expandedEvidenceRef,
     toggleEvidenceRef,
     findEvidenceForRef,

@@ -357,8 +357,9 @@ export class InitiativeController {
         params.push(like, like, like);
       }
 
+      const normalizedSourceFilter = source ? source.toString().trim().toLowerCase() : '';
       // Assessment module support: show initiatives derived from assessments/reports
-      if (source && source.toString().toLowerCase() === 'assessment') {
+      if (normalizedSourceFilter === 'assessment') {
         // Canonical source tracking (preferred): source_type/source_id
         // Backward compatible (legacy): source_assessment_id/source_report_id/created_from
         sql += ` AND (
@@ -367,6 +368,13 @@ export class InitiativeController {
           OR i.source_report_id IS NOT NULL
           OR i.created_from IN ('assessment','ASSESSMENT')
         )`;
+      } else if (normalizedSourceFilter) {
+        sql += ` AND (
+          LOWER(COALESCE(i.source_type, '')) = ?
+          OR LOWER(COALESCE(i.created_from, '')) = ?
+          OR LOWER(COALESCE(i.category, '')) = ?
+        )`;
+        params.push(normalizedSourceFilter, normalizedSourceFilter, normalizedSourceFilter);
       }
       if (sourceAssessmentId) {
         // Match both canonical and legacy assessment linkage
@@ -401,6 +409,9 @@ export class InitiativeController {
         currentStage: i.current_stage,
         sourceType: i.source_framework || i.source_type,
         sourceId: i.source_id,
+        actionContract: safeJsonParseObject(i.action_contract_json as string, {}),
+        sourcePack: safeJsonParseObject(i.source_pack_json as string, {}),
+        evidenceRefs: safeJsonParse(i.evidence_refs_json as string, []),
         sourceAssessmentId: i.source_assessment_id,
         sourceFramework: i.source_framework,
         businessValue: i.business_value,
@@ -515,6 +526,14 @@ export class InitiativeController {
         keyRisks,
         sourceType,
         sourceId,
+        category,
+        priority,
+        impact,
+        effort,
+        description,
+        sourcePack,
+        actionContract,
+        evidenceRefs,
         programId,
       } = req.body;
 
@@ -538,15 +557,16 @@ export class InitiativeController {
 
       const sql = `
             INSERT INTO initiatives (
-                id, organization_id, project_id, program_id, title, axis, area, summary, hypothesis, status,
+                id, organization_id, project_id, program_id, title, category, priority, impact, effort,
+                axis, area, summary, hypothesis, status,
                 business_value, cost_capex, cost_opex, expected_roi,
                 value_driver, confidence_level, value_timing,
                 planned_start_date, planned_end_date,
                 owner_business_id, owner_execution_id,
                 problem_statement, deliverables, success_criteria, scope_in, scope_out, key_risks,
-                source_type, source_id,
+                source_type, source_id, action_contract_json, source_pack_json, evidence_refs_json,
                 created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
       try {
@@ -556,10 +576,14 @@ export class InitiativeController {
           projectId ?? null,
           programId ?? null,
           title,
+          category ?? null,
+          priority ?? 'medium',
+          impact ?? 'medium',
+          effort ?? 'medium',
           axis ?? null,
           area ?? null,
           summary ?? null,
-          hypothesis ?? null,
+          hypothesis ?? description ?? null,
           status ?? null,
           businessValue ?? null,
           costCapex ?? null,
@@ -580,6 +604,11 @@ export class InitiativeController {
           JSON.stringify(keyRisks || []),
           normalizedSourceType,
           normalizedSourceId || null,
+          JSON.stringify(
+            actionContract && typeof actionContract === 'object' ? actionContract : {}
+          ),
+          JSON.stringify(sourcePack && typeof sourcePack === 'object' ? sourcePack : {}),
+          JSON.stringify(Array.isArray(evidenceRefs) ? evidenceRefs : []),
           now,
           now,
         ]);
@@ -633,7 +662,14 @@ export class InitiativeController {
           action: 'initiative.created',
           resourceType: 'initiative',
           resourceId: id,
-          after: { id, title, projectId: projectId ?? null, status: status ?? null },
+          after: {
+            id,
+            title,
+            projectId: projectId ?? null,
+            status: status ?? null,
+            sourceType: normalizedSourceType,
+            sourceId: normalizedSourceId || null,
+          },
           organizationId: orgId,
           ip: (req as any).ip,
           userAgent: (req as any).get?.('user-agent'),
