@@ -7,10 +7,8 @@ import {
   AlertTriangle,
   BarChart3,
   Brain,
-  ChevronDown,
   Compass,
   FileText,
-  Filter,
   Lightbulb,
   Loader2,
   MessageSquare,
@@ -22,13 +20,13 @@ import {
   X,
   Zap,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useTranslation } from 'react-i18next';
 
 import { EmptyStateInline } from '@/components/shared/NModeBlocks';
 import { Api } from '@/services/api';
-import { V8InterviewApi } from '@/services/api/v8/interview';
+import { type V8ContextDocument, V8InterviewApi } from '@/services/api/v8/interview';
 
 // ==========================================
 // TYPES
@@ -65,6 +63,7 @@ type CreatorStepId = 'goal' | 'people' | 'source' | 'analysis' | 'context';
 interface CompletedSession {
   id: string;
   name: string;
+  projectId?: string;
   templateId?: string;
   templateName?: string;
   templateCategory?: string;
@@ -86,20 +85,8 @@ interface InsightCreatorModalProps {
   onSuccess: () => void;
 }
 
-interface InsightContextAttachment {
-  id: string;
-  name: string;
-  mimeType: string;
-  size: number;
-  excerpt: string;
-  truncated: boolean;
-}
-
 const MAX_CONTEXT_FILES = 5;
 const MAX_CONTEXT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_CONTEXT_CHARS_PER_FILE = 5000;
-const TEXT_CONTEXT_EXTENSIONS = ['.txt', '.md', '.markdown', '.csv', '.json', '.log'];
-const REFERENCE_CONTEXT_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'];
 const CONTEXT_FILE_ACCEPT =
   '.txt,.md,.markdown,.csv,.json,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,text/plain,text/markdown,text/csv,application/json,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
@@ -444,7 +431,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       return normalized;
     });
   };
-  const [showFilters, setShowFilters] = useState(false);
   const [filterTemplate, setFilterTemplate] = useState<string>('');
   const [filterRespondent, setFilterRespondent] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
@@ -453,59 +439,43 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [useRespondentFilter, setUseRespondentFilter] = useState(false);
   const [useDateFilter, setUseDateFilter] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [contextAttachments, setContextAttachments] = useState<InsightContextAttachment[]>([]);
+  const [contextDocuments, setContextDocuments] = useState<V8ContextDocument[]>([]);
+  const [selectedContextDocumentIds, setSelectedContextDocumentIds] = useState<string[]>([]);
+  const [isLoadingContextDocuments, setIsLoadingContextDocuments] = useState(false);
+  const [isUploadingContextDocument, setIsUploadingContextDocument] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Data
   const [completedSessions, setCompletedSessions] = useState<CompletedSession[]>([]);
-  const [templates, setTemplates] = useState<{ id: string; name: string }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const isTextBasedFile = (file: File): boolean => {
-    const fileName = file.name.toLowerCase();
-    return (
-      file.type.startsWith('text/') ||
-      TEXT_CONTEXT_EXTENSIONS.some((extension) => fileName.endsWith(extension))
-    );
-  };
-
-  const isReferenceContextFile = (file: File): boolean => {
-    const fileName = file.name.toLowerCase();
-    return REFERENCE_CONTEXT_EXTENSIONS.some((extension) => fileName.endsWith(extension));
-  };
-
-  const normalizeAttachmentText = (raw: string): { excerpt: string; truncated: boolean } => {
-    const compact = raw.split('\u0000').join('').trim();
-    if (!compact) {
-      return { excerpt: '', truncated: false };
+  const fetchContextDocuments = useCallback(async () => {
+    setIsLoadingContextDocuments(true);
+    try {
+      const response = await V8InterviewApi.listContextDocuments({ scope: 'all' });
+      const documents = response?.documents || [];
+      setContextDocuments(documents);
+      setSelectedContextDocumentIds((prev) =>
+        prev.filter((id) => documents.some((doc) => doc.id === id && doc.status === 'ready'))
+      );
+    } catch (error) {
+      console.error('[InsightCreatorModal] Failed to load context documents:', error);
+      toast.error(
+        isPolish
+          ? 'Nie udało się wczytać dokumentów kontekstowych.'
+          : 'Failed to load context documents.'
+      );
+    } finally {
+      setIsLoadingContextDocuments(false);
     }
-    const truncated = compact.length > MAX_CONTEXT_CHARS_PER_FILE;
-    return {
-      excerpt: truncated
-        ? `${compact.slice(0, MAX_CONTEXT_CHARS_PER_FILE)}\n...[truncated]`
-        : compact,
-      truncated,
-    };
-  };
+  }, [isPolish]);
 
   const handleContextFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
     if (files.length === 0) return;
-
-    if (contextAttachments.length >= MAX_CONTEXT_FILES) {
-      toast.error(
-        isPolish
-          ? `Możesz dodać maksymalnie ${MAX_CONTEXT_FILES} plików kontekstowych`
-          : `You can attach up to ${MAX_CONTEXT_FILES} context files`
-      );
-      event.target.value = '';
-      return;
-    }
-
-    const remainingSlots = Math.max(0, MAX_CONTEXT_FILES - contextAttachments.length);
-    const toProcess = files.slice(0, remainingSlots);
-
+    const remainingSlots = MAX_CONTEXT_FILES;
+    const toUpload = files.slice(0, remainingSlots);
     if (files.length > remainingSlots) {
       toast(
         isPolish
@@ -514,87 +484,56 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       );
     }
 
-    const nextAttachments: InsightContextAttachment[] = [];
-    for (const file of toProcess) {
-      const isTextFile = isTextBasedFile(file);
-      const isReferenceFile = isReferenceContextFile(file);
-
-      if (!isTextFile && !isReferenceFile) {
-        toast.error(
-          isPolish
-            ? `Plik ${file.name} pominięty: wspierane są TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT`
-            : `Skipped ${file.name}: supported formats are TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT`
-        );
-        continue;
-      }
-      if (file.size > MAX_CONTEXT_FILE_SIZE_BYTES) {
-        toast.error(
-          isPolish
-            ? `Plik ${file.name} jest za duży (max 10 MB)`
-            : `File ${file.name} is too large (max 10 MB)`
-        );
-        continue;
-      }
-
-      if (isReferenceFile && !isTextFile) {
-        nextAttachments.push({
-          id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
-          name: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          size: file.size,
-          excerpt: isPolish
-            ? `[Załącznik referencyjny: ${file.name}. Obecny kreator zapisuje metadane tego formatu, ale nie ekstrahuje jeszcze jego treści do kontekstu AI.]`
-            : `[Reference attachment: ${file.name}. The current creator stores metadata for this format but does not extract its content into AI context yet.]`,
-          truncated: false,
-        });
-        toast(
-          isPolish
-            ? `${file.name}: dodano jako referencję, bez odczytu treści`
-            : `${file.name}: added as a reference, without content extraction`
-        );
-        continue;
-      }
-
-      try {
-        const raw = await file.text();
-        const normalized = normalizeAttachmentText(raw);
-        if (!normalized.excerpt) {
+    setIsUploadingContextDocument(true);
+    try {
+      const selectedProjects = Array.from(
+        new Set(
+          completedSessions
+            .filter((session) => selectedSessions.includes(session.id) && session.projectId)
+            .map((session) => String(session.projectId))
+        )
+      );
+      const uploadScope: 'project' | 'user' = selectedProjects.length === 1 ? 'project' : 'user';
+      const uploadProjectId = selectedProjects.length === 1 ? selectedProjects[0] : undefined;
+      for (const file of toUpload) {
+        if (file.size > MAX_CONTEXT_FILE_SIZE_BYTES) {
           toast.error(
             isPolish
-              ? `Plik ${file.name} jest pusty lub nieczytelny`
-              : `File ${file.name} is empty or unreadable`
+              ? `Plik ${file.name} jest za duży (max 10 MB)`
+              : `File ${file.name} is too large (max 10 MB)`
           );
           continue;
         }
-        nextAttachments.push({
-          id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
-          name: file.name,
-          mimeType: file.type || 'text/plain',
-          size: file.size,
-          excerpt: normalized.excerpt,
-          truncated: normalized.truncated,
+        await V8InterviewApi.uploadContextDocument({
+          file,
+          scope: uploadScope,
+          projectId: uploadProjectId,
         });
-      } catch (error) {
-        console.error('[InsightCreatorModal] Failed to read context file:', error);
-        toast.error(
-          isPolish
-            ? `Nie udało się odczytać pliku ${file.name}`
-            : `Failed to read file ${file.name}`
-        );
       }
+      await fetchContextDocuments();
+      toast.success(
+        isPolish
+          ? 'Dokumenty zostały wysłane do przetwarzania.'
+          : 'Documents uploaded and sent for processing.'
+      );
+    } catch (error) {
+      console.error('[InsightCreatorModal] Upload context document failed:', error);
+      toast.error(
+        isPolish
+          ? 'Nie udało się wysłać dokumentu kontekstowego.'
+          : 'Failed to upload context document.'
+      );
+    } finally {
+      setIsUploadingContextDocument(false);
+      event.target.value = '';
     }
-
-    if (nextAttachments.length > 0) {
-      setContextAttachments((prev) => [...prev, ...nextAttachments]);
-    }
-    event.target.value = '';
   };
 
-  const removeContextAttachment = (attachmentId: string) => {
-    setContextAttachments((prev) => prev.filter((item) => item.id !== attachmentId));
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  const toggleContextDocument = (doc: V8ContextDocument) => {
+    if (doc.status !== 'ready') return;
+    setSelectedContextDocumentIds((prev) =>
+      prev.includes(doc.id) ? prev.filter((id) => id !== doc.id) : [...prev, doc.id]
+    );
   };
 
   const getInternalArtifactLinks = (): string[] =>
@@ -628,16 +567,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             .join('\n')
         : '';
 
-    if (contextAttachments.length === 0 && artifactLinks.length === 0 && !selectionContext) {
+    if (artifactLinks.length === 0 && !selectionContext) {
       return manualPrompt || undefined;
     }
-
-    const attachmentContext = contextAttachments
-      .map(
-        (item, index) =>
-          `[Attachment ${index + 1}: ${item.name}]\n${item.excerpt}${item.truncated ? '\n[Content truncated due to size limit]' : ''}`
-      )
-      .join('\n\n');
     const artifactLinkContext =
       artifactLinks.length > 0
         ? `Internal artifact links / workspace references:\n${artifactLinks
@@ -649,9 +581,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       manualPrompt,
       selectionContext
         ? `${isPolish ? 'Dodatkowe instrukcje wyboru' : 'Additional selection instructions'}:\n${selectionContext}`
-        : '',
-      attachmentContext
-        ? `Context from attached files (treat as additional evidence):\n${attachmentContext}`
         : '',
       artifactLinkContext,
     ]
@@ -678,13 +607,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value)
             ? sessionsRes.value
             : [];
-        const nextTemplates =
-          templatesRes.status === 'fulfilled' && Array.isArray(templatesRes.value)
-            ? templatesRes.value
-            : [];
 
         setCompletedSessions(nextSessions);
-        setTemplates(nextTemplates);
 
         if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
           setLoadError(
@@ -693,6 +617,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               : 'Failed to load insight generator data.'
           );
         }
+        await fetchContextDocuments();
       } catch (error) {
         console.error('[InsightCreatorModal] Failed to load data:', error);
         setLoadError(
@@ -706,7 +631,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     };
 
     loadData();
-  }, [isOpen]);
+  }, [fetchContextDocuments, isOpen, isPolish]);
 
   // Reset on close
   useEffect(() => {
@@ -722,7 +647,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setCustomPrompt('');
       setCurrentStep(0);
       setInternalArtifactLinks('');
-      setShowFilters(false);
       setFilterTemplate('');
       setFilterRespondent('');
       setFilterDateFrom('');
@@ -730,7 +654,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       setUseTemplateFilter(false);
       setUseRespondentFilter(false);
       setUseDateFilter(false);
-      setContextAttachments([]);
+      setContextDocuments([]);
+      setSelectedContextDocumentIds([]);
       setLoadError(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -836,15 +761,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     );
     const customPromptWithAttachments = buildPromptWithAttachmentContext();
     const artifactLinks = getInternalArtifactLinks();
-    const attachmentMetadata =
-      contextAttachments.length > 0
-        ? contextAttachments.map((item) => ({
-            name: item.name,
-            mimeType: item.mimeType,
-            size: item.size,
-            truncated: item.truncated,
-          }))
-        : undefined;
 
     try {
       await V8InterviewApi.createInsight({
@@ -862,7 +778,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           respondentIds: selectedRespondents.length > 0 ? selectedRespondents : undefined,
           dateFrom: useDateFilter ? filterDateFrom || undefined : undefined,
           dateTo: useDateFilter ? filterDateTo || undefined : undefined,
-          contextFiles: attachmentMetadata,
           internalArtifactLinks: artifactLinks.length > 0 ? artifactLinks : undefined,
           outputTypes: selectedTypes,
           analysisModes: selectedAnalysisModes,
@@ -891,6 +806,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         contextMode,
         topicFocus: [],
         customPrompt: customPromptWithAttachments,
+        selectedContextDocumentIds,
       }).catch(() =>
         Api.post('/interview/insights', {
           title: title.trim(),
@@ -907,7 +823,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             respondentIds: selectedRespondents.length > 0 ? selectedRespondents : undefined,
             dateFrom: useDateFilter ? filterDateFrom || undefined : undefined,
             dateTo: useDateFilter ? filterDateTo || undefined : undefined,
-            contextFiles: attachmentMetadata,
             internalArtifactLinks: artifactLinks.length > 0 ? artifactLinks : undefined,
             outputTypes: selectedTypes,
             analysisModes: selectedAnalysisModes,
@@ -936,6 +851,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           contextMode,
           topicFocus: [],
           customPrompt: customPromptWithAttachments,
+          selectedContextDocumentIds,
         })
       );
 
@@ -998,13 +914,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value)
             ? sessionsRes.value
             : [];
-        const nextTemplates =
-          templatesRes.status === 'fulfilled' && Array.isArray(templatesRes.value)
-            ? templatesRes.value
-            : [];
 
         setCompletedSessions(nextSessions);
-        setTemplates(nextTemplates);
 
         if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
           setLoadError(
@@ -1013,6 +924,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               : 'Failed to load insight generator data.'
           );
         }
+        await fetchContextDocuments();
       } finally {
         setIsLoading(false);
       }
@@ -1068,6 +980,37 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const canGenerate = Boolean(
     title.trim() && selectedTypes.length > 0 && selectedSessions.length > 0 && !isGenerating
   );
+  const getContextDocStatusMeta = (status: V8ContextDocument['status']) => {
+    switch (status) {
+      case 'ready':
+        return {
+          label: isPolish ? 'Gotowe' : 'Ready',
+          className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+        };
+      case 'processing':
+      case 'uploaded':
+        return {
+          label: isPolish ? 'Przetwarzanie' : 'Processing',
+          className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+        };
+      case 'ocr_required':
+        return {
+          label: isPolish ? 'Wymaga OCR' : 'OCR required',
+          className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+        };
+      case 'unreadable':
+      case 'failed':
+        return {
+          label: isPolish ? 'Błąd odczytu' : 'Unreadable',
+          className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+        };
+      default:
+        return {
+          label: status,
+          className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+        };
+    }
+  };
 
   const renderStepper = () => (
     <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
@@ -1156,51 +1099,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
-        <div className="mb-1.5 flex items-center justify-between">
-          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
-            {isPolish ? 'Zakres dat ankiet' : 'Survey date range'}
-          </label>
-          {(filterDateFrom || filterDateTo) && (
-            <button
-              type="button"
-              onClick={() => {
-                setUseDateFilter(false);
-                setFilterDateFrom('');
-                setFilterDateTo('');
-              }}
-              className="text-xs text-primary-400 transition-colors hover:text-primary-300"
-            >
-              {isPolish ? 'Cały okres' : 'All dates'}
-            </button>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <input
-            type="date"
-            value={filterDateFrom}
-            onChange={(event) => {
-              const nextFrom = event.target.value;
-              setFilterDateFrom(nextFrom);
-              setUseDateFilter(Boolean(nextFrom || filterDateTo));
-            }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-            aria-label={isPolish ? 'Data od' : 'Date from'}
-          />
-          <input
-            type="date"
-            value={filterDateTo}
-            onChange={(event) => {
-              const nextTo = event.target.value;
-              setFilterDateTo(nextTo);
-              setUseDateFilter(Boolean(filterDateFrom || nextTo));
-            }}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-            aria-label={isPolish ? 'Data do' : 'Date to'}
-          />
-        </div>
-      </div>
-
-      <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           {isPolish ? 'Typ wyniku' : 'Output type'} *
         </label>
@@ -1250,18 +1148,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const renderPeopleStep = () => (
     <div className="space-y-3">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-white/[0.08] dark:bg-navy-900/50">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-          <Users size={16} />
-          {isPolish ? 'Osoby w zakresie analizy' : 'People in analysis scope'}
-        </div>
-        <p className="mt-1 text-xs text-slate-500">
-          {isPolish
-            ? 'Wybierz konkretne osoby z organizacji albo zostaw wszystkie. Materiał w kolejnym kroku zostanie zawężony do tego wyboru.'
-            : 'Choose specific people from the organization or leave all. Source material in the next step will be narrowed to this choice.'}
-        </p>
-      </div>
-
       <div>
         <div className="mb-1.5 flex items-center justify-between">
           <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
@@ -1306,11 +1192,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                   {isPolish ? 'Wszystkie osoby' : 'All people'}
                 </div>
-                <div className="text-xs text-slate-500">
-                  {isPolish
-                    ? 'AI może korzystać z materiału wszystkich respondentów.'
-                    : 'AI can use material from all respondents.'}
-                </div>
               </div>
             </button>
 
@@ -1335,26 +1216,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     <div className="min-w-0 flex-1">
                       <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                         {respondent.name}
-                      </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500">
-                        {respondent.role && <span>{respondent.role}</span>}
-                        {respondent.department && (
-                          <>
-                            {respondent.role && <span>•</span>}
-                            <span>{respondent.department}</span>
-                          </>
+                        {(respondent.role || respondent.department) && (
+                          <span className="ml-2 font-normal text-slate-500">
+                            {[respondent.role, respondent.department].filter(Boolean).join(' • ')}
+                          </span>
                         )}
-                        <span>•</span>
-                        <span>
-                          {respondent.sessionCount}{' '}
-                          {isPolish
-                            ? respondent.sessionCount === 1
-                              ? 'sesja'
-                              : 'sesje'
-                            : respondent.sessionCount === 1
-                              ? 'session'
-                              : 'sessions'}
-                        </span>
                       </div>
                     </div>
                   </label>
@@ -1371,64 +1237,49 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const renderSourceStep = () => (
     <div className="space-y-3">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-white/[0.08] dark:bg-navy-900/50">
-        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-          <MessageSquare size={16} />
-          {isPolish ? 'Materiał źródłowy' : 'Source material'}
-        </div>
-        <p className="mt-1 text-xs text-slate-500">
-          {isPolish
-            ? 'AI użyje tylko zatwierdzonych i zakończonych wywiadów. Filtry zawężają koszyk materiału, a nie wybierają pojedynczych odpowiedzi.'
-            : 'AI will use only approved completed interviews. Filters narrow the source basket, not individual answers.'}
-        </p>
-      </div>
-
       <div>
-        <button
-          type="button"
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-        >
-          <Filter size={16} />
-          <span>{isPolish ? 'Filtry materiału' : 'Source filters'}</span>
-          <ChevronDown
-            size={14}
-            className={`transition-transform ${showFilters ? 'rotate-180' : ''}`}
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Zakres dat materiału' : 'Material date range'}
+          </label>
+          {(filterDateFrom || filterDateTo) && (
+            <button
+              type="button"
+              onClick={() => {
+                setUseDateFilter(false);
+                setFilterDateFrom('');
+                setFilterDateTo('');
+              }}
+              className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+            >
+              {isPolish ? 'Cały okres' : 'All dates'}
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={(event) => {
+              const nextFrom = event.target.value;
+              setFilterDateFrom(nextFrom);
+              setUseDateFilter(Boolean(nextFrom || filterDateTo));
+            }}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+            aria-label={isPolish ? 'Data od' : 'Date from'}
           />
-        </button>
-
-        {showFilters && (
-          <div className="mt-2 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-white/[0.08] dark:bg-navy-900/50">
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-100">
-                <input
-                  type="checkbox"
-                  checked={useTemplateFilter}
-                  onChange={(e) => {
-                    setUseTemplateFilter(e.target.checked);
-                    if (!e.target.checked) setFilterTemplate('');
-                  }}
-                  className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-navy-900"
-                />
-                {isPolish ? 'Filtruj po ankietach' : 'Filter by surveys'}
-              </label>
-              {useTemplateFilter && (
-                <select
-                  value={filterTemplate}
-                  onChange={(e) => setFilterTemplate(e.target.value)}
-                  className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
-                >
-                  <option value="">{isPolish ? 'Wszystkie ankiety' : 'All surveys'}</option>
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-          </div>
-        )}
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={(event) => {
+              const nextTo = event.target.value;
+              setFilterDateTo(nextTo);
+              setUseDateFilter(Boolean(filterDateFrom || nextTo));
+            }}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+            aria-label={isPolish ? 'Data do' : 'Date to'}
+          />
+        </div>
       </div>
 
       <div>
@@ -1487,13 +1338,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       sessionsRes.status === 'fulfilled' && Array.isArray(sessionsRes.value)
                         ? sessionsRes.value
                         : [];
-                    const nextTemplates =
-                      templatesRes.status === 'fulfilled' && Array.isArray(templatesRes.value)
-                        ? templatesRes.value
-                        : [];
 
                     setCompletedSessions(nextSessions);
-                    setTemplates(nextTemplates);
 
                     if (sessionsRes.status === 'rejected' || templatesRes.status === 'rejected') {
                       setLoadError(
@@ -1546,43 +1392,21 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   <div className="flex-1 min-w-0">
                     <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                       {session.name || 'Interview Session'}
-                    </div>
-                    <div className="text-xs text-slate-500 flex items-center gap-2">
-                      <span>
+                      <span className="ml-2 font-normal text-slate-500">
                         {session.answeredQuestions}/{session.totalQuestions}{' '}
                         {isPolish ? 'pytań' : 'questions'}
                       </span>
                       {session.templateName && (
-                        <>
-                          <span>•</span>
-                          <span>{session.templateName}</span>
-                        </>
-                      )}
-                      {session.respondentRole && (
-                        <>
-                          <span>•</span>
-                          <span>{session.respondentRole}</span>
-                        </>
-                      )}
-                      {session.department && (
-                        <>
-                          <span>•</span>
-                          <span>{session.department}</span>
-                        </>
+                        <span className="ml-2 font-normal text-slate-500">
+                          • {session.templateName}
+                        </span>
                       )}
                       {session.completedAt && (
-                        <>
-                          <span>•</span>
-                          <span>{new Date(session.completedAt).toLocaleDateString()}</span>
-                        </>
+                        <span className="ml-2 font-normal text-slate-500">
+                          • {new Date(session.completedAt).toLocaleDateString()}
+                        </span>
                       )}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                    <span className="text-xs text-emerald-400">
-                      {isPolish ? 'Zatwierdzona' : 'Approved'}
-                    </span>
                   </div>
                 </label>
               );
@@ -1597,17 +1421,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const renderAnalysisStep = () => (
     <div className="space-y-3">
-      <div>
-        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Jak AI ma przeczytać materiał?' : 'How should AI read the material?'}
-        </div>
-        <p className="mt-1 text-xs text-slate-500">
-          {isPolish
-            ? 'Tryb analizy nie zmienia materiału źródłowego. Zmienia soczewkę interpretacji: ogólnie, przez sprzeczności, inicjatywy, jakość materiału albo hipotezę.'
-            : 'Analysis mode does not change the source material. It changes the interpretation lens: general, contradictions, initiatives, material quality, or hypothesis.'}
-        </p>
-      </div>
-
       <div>
         <label className="block text-xs font-medium text-slate-500 mb-1">
           {isPolish ? 'Tryb analizy' : 'Analysis mode'}
@@ -1631,12 +1444,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
                 />
                 <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                     {isPolish ? mode.labelPl : mode.labelEn}
                   </div>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {isPolish ? mode.hintPl : mode.hintEn}
-                  </p>
                 </div>
               </label>
             );
@@ -1653,7 +1463,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <div className="mb-2 text-xs font-medium text-slate-500">
           {isPolish ? 'Zakres kontekstu AI' : 'AI context boundary'}
         </div>
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
           {[
             {
               value: 'selected_interview_material_only' as InsightContextMode,
@@ -1676,18 +1486,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 key={option.value}
                 type="button"
                 onClick={() => setContextMode(option.value)}
-                className={`rounded-xl border p-2.5 text-left transition-all ${
+                className={`rounded-lg border px-2.5 py-2 text-left transition-all ${
                   selected
                     ? 'border-primary-500/50 bg-primary-50 ring-1 ring-primary-500/20 dark:bg-primary-500/15'
                     : 'border-slate-200 bg-white hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70'
                 }`}
               >
-                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {isPolish ? option.titlePl : option.titleEn}
                 </div>
-                <p className="mt-1 text-xs text-slate-500">
-                  {isPolish ? option.hintPl : option.hintEn}
-                </p>
               </button>
             );
           })}
@@ -1697,13 +1504,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   );
 
   const renderContextStep = () => (
-    <div className="space-y-5">
-      <div>
-        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-          {isPolish ? 'Uwagi i dodatkowy kontekst' : 'Notes and extra context'}
-        </div>
-      </div>
-
+    <div className="space-y-3">
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           {isPolish ? 'Uwagi' : 'Notes'}
@@ -1721,38 +1522,25 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          {isPolish
-            ? 'Linki do artefaktów lub materiałów wewnętrznych (opcjonalnie)'
-            : 'Artifact or internal material links (optional)'}
-        </label>
-        <textarea
-          value={internalArtifactLinks}
-          onChange={(e) => setInternalArtifactLinks(e.target.value)}
-          rows={3}
-          placeholder={
-            isPolish
-              ? 'Wklej po jednym linku lub identyfikatorze artefaktu w linii.'
-              : 'Paste one link or artifact identifier per line.'
-          }
-          className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
-        />
-      </div>
-
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
             <Paperclip size={14} className="text-slate-400" />
             <span>
               {isPolish
-                ? 'Dokumenty zewnętrzne (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 plików po 10 MB)'
-                : 'External documents (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 files, 10 MB each)'}
+                ? 'Dokumenty (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 plików po 10 MB)'
+                : 'Documents (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 files, 10 MB each)'}
             </span>
           </div>
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 transition-colors hover:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-200">
             <Paperclip size={12} />
-            {isPolish ? 'Dodaj pliki' : 'Add files'}
+            {isUploadingContextDocument
+              ? isPolish
+                ? 'Wysyłanie...'
+                : 'Uploading...'
+              : isPolish
+                ? 'Dodaj pliki'
+                : 'Add files'}
             <input
               ref={fileInputRef}
               type="file"
@@ -1760,38 +1548,94 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               accept={CONTEXT_FILE_ACCEPT}
               onChange={handleContextFileUpload}
               className="hidden"
+              disabled={isUploadingContextDocument}
             />
           </label>
         </div>
-
-        {contextAttachments.length > 0 && (
-          <div className="mt-3 space-y-1.5">
-            {contextAttachments.map((attachment) => (
-              <div
-                key={attachment.id}
-                className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 dark:border-white/[0.08] dark:bg-navy-900/70"
-              >
-                <div className="min-w-0">
-                  <div className="truncate text-xs text-slate-900 dark:text-slate-100">
-                    {attachment.name}
-                  </div>
-                  <div className="text-[11px] text-slate-400">
-                    {Math.max(1, Math.round(attachment.size / 1024))} KB
-                    {attachment.truncated ? ` • ${isPolish ? 'przycięty' : 'truncated'}` : ''}
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => removeContextAttachment(attachment.id)}
-                  className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-500 dark:hover:bg-navy-800 dark:hover:text-red-400"
-                  aria-label={isPolish ? 'Usuń plik kontekstowy' : 'Remove context file'}
+        {isLoadingContextDocuments ? (
+          <div className="mt-3 flex items-center justify-center py-6">
+            <Loader2 size={18} className="animate-spin text-slate-400" />
+          </div>
+        ) : contextDocuments.length === 0 ? (
+          <div className="mt-3 rounded-md border border-dashed border-slate-300 bg-white px-3 py-4 text-xs text-slate-500 dark:border-white/[0.15] dark:bg-navy-900/60">
+            {isPolish
+              ? 'Brak dokumentów kontekstowych. Dodaj pliki, aby zbudować kontekst organizacji/projektu.'
+              : 'No context documents yet. Upload files to build organization/project context.'}
+          </div>
+        ) : (
+          <div className="mt-3 max-h-44 space-y-1.5 overflow-auto pr-1">
+            {contextDocuments.map((doc) => {
+              const selected = selectedContextDocumentIds.includes(doc.id);
+              const statusMeta = getContextDocStatusMeta(doc.status);
+              const disabled = doc.status !== 'ready';
+              return (
+                <label
+                  key={doc.id}
+                  className={`flex items-center gap-2 rounded-md border px-2.5 py-2 transition-all ${
+                    selected
+                      ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                      : 'border-slate-200 bg-white dark:border-white/[0.08] dark:bg-navy-900/70'
+                  } ${disabled ? 'opacity-80' : 'cursor-pointer hover:border-slate-300 dark:hover:border-white/[0.16]'}`}
                 >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+                  <input
+                    type="checkbox"
+                    checked={selected}
+                    disabled={disabled}
+                    onChange={() => toggleContextDocument(doc)}
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/[0.18] dark:bg-navy-900"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-xs font-medium text-slate-900 dark:text-slate-100">
+                      {doc.filename}
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-slate-500">
+                      <span
+                        className={`inline-flex items-center rounded-full px-1.5 py-0.5 font-medium ${statusMeta.className}`}
+                      >
+                        {statusMeta.label}
+                      </span>
+                      {doc.chunkCount ? <span>{doc.chunkCount} chunks</span> : null}
+                    </div>
+                    {doc.processingError ? (
+                      <p className="mt-0.5 text-[11px] text-rose-500">{doc.processingError}</p>
+                    ) : null}
+                  </div>
+                </label>
+              );
+            })}
           </div>
         )}
+        <div className="mt-2 flex items-center justify-between text-[11px] text-slate-500">
+          <span>
+            {isPolish
+              ? `Wybrane dokumenty: ${selectedContextDocumentIds.length}`
+              : `Selected documents: ${selectedContextDocumentIds.length}`}
+          </span>
+          <button
+            type="button"
+            onClick={() => void fetchContextDocuments()}
+            className="text-primary-500 hover:text-primary-400"
+          >
+            {isPolish ? 'Odśwież' : 'Refresh'}
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
+          {isPolish ? 'Linki do artefaktów wewnętrznych' : 'Internal artifact links'}
+        </label>
+        <textarea
+          value={internalArtifactLinks}
+          onChange={(e) => setInternalArtifactLinks(e.target.value)}
+          rows={2}
+          placeholder={
+            isPolish
+              ? 'Wklej po jednym linku lub identyfikatorze artefaktu w linii.'
+              : 'Paste one link or artifact identifier per line.'
+          }
+          className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+        />
       </div>
     </div>
   );
