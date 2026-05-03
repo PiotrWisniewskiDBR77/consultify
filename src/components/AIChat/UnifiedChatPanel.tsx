@@ -32,7 +32,6 @@ import {
   Volume2,
   VolumeX,
   Wrench,
-  X,
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -3503,7 +3502,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       <div
         className={`flex min-w-0 flex-col h-full transition-[width] duration-200 ${
           showWorkPanel
-            ? 'w-full lg:w-[48%] lg:max-w-[720px] lg:border-r lg:border-slate-200/60 lg:dark:border-white/[0.06]'
+            ? 'w-full lg:w-[44%] lg:max-w-[680px] lg:border-r lg:border-slate-200/60 lg:dark:border-white/[0.06]'
             : 'w-full'
         }`}
       >
@@ -3677,6 +3676,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           focusMode={focusMode}
           compact={isCompact}
         />
+        {showWorkPanel && (
+          <div className="mx-1 mt-2 rounded-xl border border-primary-200/60 bg-primary-50/70 px-3 py-2 text-[11px] text-primary-800 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-200">
+            <span className="font-semibold">Working on:</span> Company Work Note
+          </div>
+        )}
       </div>
 
       {/* Organization Memory panel removed — unused / WIP feature */}
@@ -4141,31 +4145,11 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       {showWorkPanel && (
         <aside
           data-testid="chat-work-panel"
-          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col border-l border-slate-200/70 bg-white shadow-2xl dark:border-white/[0.08] dark:bg-navy-950 lg:relative lg:z-auto lg:w-[52%] lg:shadow-none"
-          aria-label={t('aiChat.workPanel.title', 'Work panel')}
+          className="absolute inset-y-0 right-0 z-30 flex w-full flex-col bg-slate-100 shadow-2xl dark:bg-[#111319] lg:relative lg:z-auto lg:w-[56%] lg:shadow-none"
+          aria-label={t('aiChat.workPanel.title', 'Canvas work area')}
         >
-          <div className="flex items-center justify-between border-b border-slate-200/70 px-4 py-3 dark:border-white/[0.08]">
-            <div>
-              <div className="text-sm font-semibold text-navy-900 dark:text-white">
-                {t('aiChat.workPanel.title', 'Work panel')}
-              </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">
-                {t('aiChat.workPanel.subtitle', 'Empty workspace for documents and canvas')}
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsWorkPanelOpen(false)}
-              className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-200"
-              title={t('common.close', 'Close')}
-              aria-label={t('common.close', 'Close')}
-            >
-              <X size={18} strokeWidth={1.75} />
-            </button>
-          </div>
-
           <div className="min-h-0 flex-1">
-            <WorkCanvasDocumentPanel />
+            <WorkCanvasDocumentPanel onClose={() => setIsWorkPanelOpen(false)} />
           </div>
         </aside>
       )}

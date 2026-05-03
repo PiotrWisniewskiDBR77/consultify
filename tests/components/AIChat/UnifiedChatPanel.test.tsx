@@ -507,7 +507,10 @@ describe('UnifiedChatPanel (L2)', () => {
     fireEvent.click(screen.getByTestId('chat-work-panel-button'));
 
     expect(screen.getByTestId('chat-work-panel')).toBeInTheDocument();
-    expect(screen.getByText('Canvas document')).toBeInTheDocument();
+    expect(screen.queryByText('Work panel')).not.toBeInTheDocument();
+    expect(screen.queryByText('Empty workspace for documents and canvas')).not.toBeInTheDocument();
+    expect(screen.getByText('Canvas work area')).toBeInTheDocument();
+    expect(screen.getByText('Working on:')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Document' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'MD' })).toBeInTheDocument();
     expect(screen.getByText('Markdown canonical')).toBeInTheDocument();

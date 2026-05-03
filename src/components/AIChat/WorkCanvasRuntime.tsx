@@ -7,6 +7,7 @@ import { AppView } from '@/types';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { envelopeToMarkdown, projectToMarkdown } from '@/utils/artifacts/projectToMarkdown';
 
+import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
 import { UnifiedChatPanel } from './UnifiedChatPanel';
 
 type CanvasKind =
@@ -214,12 +215,12 @@ function WorkCanvasPreview({ draft }: { draft: Draft }) {
             preview.
           </p>
         </div>
-        <RenderedMarkdown text={canvasText(draft)} />
+        <CanvasMarkdownRenderer text={canvasText(draft)} />
       </div>
     );
   }
 
-  return <RenderedMarkdown text={canvasText(draft)} />;
+  return <CanvasMarkdownRenderer text={canvasText(draft)} />;
 }
 
 export function WorkCanvasDocumentPanel() {
@@ -278,39 +279,10 @@ export function WorkCanvasDocumentPanel() {
           />
         ) : (
           <div data-testid="canvas-document-view" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <RenderedMarkdown text={canvasText(draft)} />
+            <CanvasMarkdownRenderer text={canvasText(draft)} />
           </div>
         )}
       </div>
-    </div>
-  );
-}
-
-function RenderedMarkdown({ text }: { text: string }) {
-  const lines = text.split('\n').filter(Boolean);
-  return (
-    <div className="space-y-3 text-slate-800">
-      {lines.map((line, index) => {
-        if (line.startsWith('# ')) {
-          return (
-            <h1 key={`${line}-${index}`} className="text-2xl font-semibold text-slate-950">
-              {line.replace(/^# /, '')}
-            </h1>
-          );
-        }
-        if (line.startsWith('## ')) {
-          return (
-            <h2 key={`${line}-${index}`} className="text-lg font-semibold text-slate-900">
-              {line.replace(/^## /, '')}
-            </h2>
-          );
-        }
-        return (
-          <p key={`${line}-${index}`} className="text-sm leading-6 text-slate-700">
-            {line}
-          </p>
-        );
-      })}
     </div>
   );
 }
