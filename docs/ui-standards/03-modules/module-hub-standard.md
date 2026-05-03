@@ -57,13 +57,13 @@ Liczniki i presety filtrów żyją w **Command Row** (linia 3) jako “counter c
 
 ### Prawa strona:
 
-| Element              | Opis                                                           |
-| -------------------- | -------------------------------------------------------------- |
-| **Area (toggle panelu lewego)** | Kanoniczny toggle lewego panelu “obszaru pracy” dla danego ekranu. **Domyślnie:** to jest split panel (AI/chat/kontekst), który można otworzyć i zamknąć. Nie dotyczy globalnego sidebara modułów. |
-| **Primary CTA (Add)** | `Dodaj` / `New ...` (kontekstowy). Jeśli ekran pozwala tworzyć/uruchamiać obiekt lub akcję startową — user zawsze szuka tego przycisku w tym slocie. **Menu 2 rule:** nie dodajemy ikony `+` przed tekstem CTA; funkcję tworzenia komunikuje pozycja, label, kolor i ewentualny chevron. **Kolor CTA:** kolor narzędzia/artefaktu, który tworzymy; jeśli ekran nie ma przypisanego koloru narzędzia → **purple** (fallback). Jeśli moduł nie ma własnego flow create, CTA **może prowadzić do kanonicznego flow tworzenia** innego modułu zamiast duplikować modal (np. `Execution → New Initiative` otwiera `Initiatives`). |
-| **Tool (opcjonalny)** | Przycisk narzędzi specyficznych dla ekranu — tylko tam, gdzie istnieje dodatkowy panel narzędziowy (np. Notebook / IDE / prezentacje / report builder / workspace’y). |
-| **View Toggle**      | Przełącznik trybu prezentacji kolekcji jako segmented icon buttons, nie dropdown. Zawsze ten sam porządek ikon (z `view-modes-standard.md`), pokazujemy tylko dostępne tryby. |
-| **Filters**          | Filtry kolekcji. **MUST:** w topbarze utrzymujemy **maksymalnie jedno** “okno wyboru” (dropdown/select), żeby nie robić bałaganu. Pozostałe presety/liczniki/filtry pokazujemy w **Command Row** jako chipy. Dla tabel: filtry i sortowanie w nagłówkach kolumn (KANON). Dla pozostałych view modes: “Filters…” może zawierać też sekcję **Sort** (bez dokładania osobnego przycisku w topbarze). **MUST NOT:** umieszczać tu lokalnych przełączników wizualizacji typu `prev/next`, `W/M`, `3M/6M/12M` - to są kontrolki konkretnego widoku i należą do jego wewnętrznego toolbara. |
+| Element                         | Opis                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Area (toggle panelu lewego)** | Kanoniczny toggle lewego panelu “obszaru pracy” dla danego ekranu. **Domyślnie:** to jest split panel (AI/chat/kontekst), który można otworzyć i zamknąć. Nie dotyczy globalnego sidebara modułów.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| **Primary CTA (Add)**           | `Dodaj` / `New ...` (kontekstowy). Jeśli ekran pozwala tworzyć/uruchamiać obiekt lub akcję startową — user zawsze szuka tego przycisku w tym slocie. **Menu 2 rule:** nie dodajemy ikony `+` przed tekstem CTA; funkcję tworzenia komunikuje pozycja, label, kolor i ewentualny chevron. **Kolor CTA:** kolor narzędzia/artefaktu, który tworzymy; jeśli ekran nie ma przypisanego koloru narzędzia → **purple** (fallback). Jeśli moduł nie ma własnego flow create, CTA **może prowadzić do kanonicznego flow tworzenia** innego modułu zamiast duplikować modal (np. `Execution → New Initiative` otwiera `Initiatives`). |
+| **Tool (opcjonalny)**           | Przycisk narzędzi specyficznych dla ekranu — tylko tam, gdzie istnieje dodatkowy panel narzędziowy (np. Notebook / IDE / prezentacje / report builder / workspace’y).                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **View Toggle**                 | Przełącznik trybu prezentacji kolekcji jako segmented icon buttons, nie dropdown. Zawsze ten sam porządek ikon (z `view-modes-standard.md`), pokazujemy tylko dostępne tryby.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **Filters**                     | Filtry kolekcji. **MUST:** w topbarze utrzymujemy **maksymalnie jedno** “okno wyboru” (dropdown/select), żeby nie robić bałaganu. Pozostałe presety/liczniki/filtry pokazujemy w **Command Row** jako chipy. Dla tabel: filtry i sortowanie w nagłówkach kolumn (KANON). Dla pozostałych view modes: “Filters…” może zawierać też sekcję **Sort** (bez dokładania osobnego przycisku w topbarze). **MUST NOT:** umieszczać tu lokalnych przełączników wizualizacji typu `prev/next`, `W/M`, `3M/6M/12M` - to są kontrolki konkretnego widoku i należą do jego wewnętrznego toolbara.                                         |
 
 ### 2.1 Prawy klaster Menu 2 - korekty 2026-05-01
 
@@ -102,6 +102,56 @@ Filtry:
 - W bardzo ciasnych controls można skracać trigger do wartości, ale pełny kontekst musi być w tooltip/aria label i w menu.
 - Dwa filtry obok siebie nie mogą wyglądać jak ten sam filtr z inną ikoną.
 
+### 2.2 Instrukcja Przerabiania Karty Modułu
+
+Każda karta/funkcjonalność migrowana do standardu musi przejść tę checklistę przed uznaniem za gotową. Nie wystarczy „podobna tabela”; sprawdzamy całe UI od Menu 2 do wiersza tabeli.
+
+1. **Rozpoznaj typ karty**
+   - Czy karta jest listą rekordów operacyjnych? Jeśli tak, startuje od `App Table Standard`.
+   - Jeśli karta ma alternatywny widok kart/grid, table view nadal musi istnieć i być kanoniczny.
+   - Nie tworzymy lokalnych card-list/table hybrid jako podstawowego widoku rekordów.
+
+2. **Menu 2 / Module Topbar**
+   - Lewa strona: search toggle → główne taby, bez liczników w tabach.
+   - Prawy klaster wizualnie od prawej: Area → Primary CTA → Tool → View → Filters.
+   - `Help` jest zakazany w Menu 2; należy do globalnego shell/sidebar.
+   - Primary CTA ma `h-9`, label tekstowy i nie ma leading `+`.
+   - View mode jest widocznym segmented icon control. Dla dwóch widoków: `Lista` po lewej, `Karty/Grid` po prawej. Nie używamy dropdownu `Lista v`.
+   - Filtry w Menu 2 mają konkretne domenowe triggery (`Status: aktywne`, `Źródło szablonu`, `Obszar pytań`), nie generyczne powtórzenia typu `Wszystkie`.
+
+3. **Menu 3 / Command Row**
+   - Jest dokładnie jeden rząd pod Menu 2.
+   - Używa `h-8` chips/buttons, jednego rozmiaru fontu i spójnych odstępów.
+   - Liczniki/statusy/presety są po lewej; akcje kontekstowe/AI po prawej.
+   - Nie dodajemy dodatkowego help/info stripu między Menu 3 a tabelą.
+   - Jeśli chipów jest za dużo, mniej istotne trafiają do overflow/filter, nie do drugiego rzędu.
+
+4. **Tabela**
+   - `table-fixed` albo równoważny fixed column contract, pełna szerokość ekranu.
+   - Primary/title column po lewej, metadata headers/cells centrowane.
+   - Kolumny mają jawne szerokości startowe dopasowane do treści.
+   - Metadata nie zawija się w dwie linie bez realnej potrzeby; używamy nowrap/truncate/`+N`.
+   - `Actions` header jest ikoną ustawień widoku, bez tekstu `Actions/Akcje`.
+   - Ustawienia widoku to mały popover pod ikoną, nie modal dla prostego wyboru kolumn.
+
+5. **Wiersz**
+   - Wiersz ma stałą, spokojną wysokość i nie skacze na hover.
+   - Primary title: mocniejszy weight; opis/uzasadnienie: druga linia domyślnie widoczna, neutralna, lżejsza.
+   - Opis nie może pojawiać się dopiero na hoverze.
+   - Checkboxy są małe i quiet, najlepiej reveal-on-hover; checked/selected/focused zostają widoczne.
+   - Kebab/row actions są quiet w spoczynku i wzmacniają się na hover.
+
+6. **Kolory i stany**
+   - Selected/focused/checked używają zatwierdzonego `primary/violet-blue` tint + lewy akcent/inset ring.
+   - Chipy metadata są neutralne; status/priority mogą mieć kolor tylko jako sygnał.
+   - Dark mode ma cienkie, realne separatory. Light mode nie może być wyprany.
+
+7. **Weryfikacja**
+   - Porównaj kartę z referencją `My Work > Pomysły` w dark mode i light mode.
+   - Sprawdź Menu 2, Menu 3, table header, row anatomy, selected row, hover row, settings popover i row actions.
+   - Uruchom `prettier`, targeted `eslint`, `ReadLints`, `git diff --check`.
+   - Po restarcie dev servera potwierdź, że Vite serwuje zmieniony moduł.
+
 ### Kolejność elementów topbara (KANON v3)
 
 W module hub (w tym samym rzędzie), zawsze trzymamy kolejność:
@@ -113,9 +163,9 @@ W module hub (w tym samym rzędzie), zawsze trzymamy kolejność:
 
 **Przykłady category buttons:**
 
-| Moduł               | Przyciski                                       |
-| ------------------- | ----------------------------------------------- |
-| **Discovery Tools** | Strategy, Operations, Digital, Process Auto     |
+| Moduł               | Przyciski                                     |
+| ------------------- | --------------------------------------------- |
+| **Discovery Tools** | Strategy, Operations, Digital, Process Auto   |
 | **Assessment**      | New Assessment (otwiera modal z frameworkami) |
 | **Initiatives**     | AI Generate, New Initiative                   |
 
@@ -238,10 +288,10 @@ Ten widok jest dobrym kandydatem na standard timeline po zagęszczeniu headera o
 
 Pod Module Topbar zawsze istnieje **jeden stały rząd**, który pełni 1 z 3 ról (zawsze w tej samej wysokości i stylu):
 
-1) **Bulk actions row (multi-select)** — gdy user zaznaczy checkboxy na liście i pracuje na wielu pozycjach naraz.  
-2) **Search row** — gdy user włączy lupę (expandable search bar).  
-3) **Dynamic tabs row** — gdy są otwarte dokumenty (tabs).  
-4) **Context counters row** — gdy jesteśmy w list view i chcemy pokazać najważniejsze presety/liczniki “na twarz” (np. Overdue, This week, Wymaga akcji).
+1. **Bulk actions row (multi-select)** — gdy user zaznaczy checkboxy na liście i pracuje na wielu pozycjach naraz.
+2. **Search row** — gdy user włączy lupę (expandable search bar).
+3. **Dynamic tabs row** — gdy są otwarte dokumenty (tabs).
+4. **Context counters row** — gdy jesteśmy w list view i chcemy pokazać najważniejsze presety/liczniki “na twarz” (np. Overdue, This week, Wymaga akcji).
 
 **Reguły:**
 
@@ -262,6 +312,7 @@ Pod Module Topbar zawsze istnieje **jeden stały rząd**, który pełni 1 z 3 r�
 Jeżeli dany tab modułu otwiera **specjalistyczny workspace / analysis view / management view**, Menu 3 może być renderowane **lokalnie przez ten widok**, zamiast przez globalny `ModuleHub`.
 
 **Przykłady kanoniczne:**
+
 - `Initiatives → Analysis`
 - `Execution / Implementation → Management`
 
@@ -311,12 +362,12 @@ border-b border-slate-200/60 dark:border-white/5
 
 **Hierarchia warstw (ciemny motyw):**
 
-| Warstwa         | Tło              | Opis                                |
-| --------------- | ---------------- | ----------------------------------- |
-| Menu 2 (tabs)   | `dark:bg-navy-900` | Tło tab baru                       |
-| Menu 3 (chips)  | `dark:bg-navy-900` + chipy `dark:bg-navy-800` | Chipy wyróżnione ciemniejszym tłem |
-| Separator        | `dark:border-white/5` | Subtelna biała linia 5% opacity   |
-| Obszar roboczy  | `dark:bg-navy-950` | Ciemniejsze tło contentu           |
+| Warstwa        | Tło                                           | Opis                               |
+| -------------- | --------------------------------------------- | ---------------------------------- |
+| Menu 2 (tabs)  | `dark:bg-navy-900`                            | Tło tab baru                       |
+| Menu 3 (chips) | `dark:bg-navy-900` + chipy `dark:bg-navy-800` | Chipy wyróżnione ciemniejszym tłem |
+| Separator      | `dark:border-white/5`                         | Subtelna biała linia 5% opacity    |
+| Obszar roboczy | `dark:bg-navy-950`                            | Ciemniejsze tło contentu           |
 
 **SSOT implementacji:** `src/components/shared/ModuleHub/ModuleNavBar.tsx`
 
@@ -334,49 +385,49 @@ Trzy elementy w jednym wierszu: kolorowa ikona (14px), tekst etykiety, okrągły
 
 **Kształt i rozmiar:**
 
-| Właściwość  | Wartość                                                  |
-| ----------- | -------------------------------------------------------- |
-| Wysokość    | `h-8` (32px)                                             |
-| Zaokrąglenie | `rounded-full` (pill shape)                             |
-| Padding     | `px-2.5`                                                 |
-| Gap wewnętrzny | `gap-1.5`                                             |
-| Tekst       | `text-[11px] font-medium`                                |
-| Kontener    | `inline-flex items-center`                               |
-| Przejście   | `transition-colors`                                      |
-| Odstęp między chipami | `gap-2` (8px)                                  |
+| Właściwość            | Wartość                     |
+| --------------------- | --------------------------- |
+| Wysokość              | `h-8` (32px)                |
+| Zaokrąglenie          | `rounded-full` (pill shape) |
+| Padding               | `px-2.5`                    |
+| Gap wewnętrzny        | `gap-1.5`                   |
+| Tekst                 | `text-[11px] font-medium`   |
+| Kontener              | `inline-flex items-center`  |
+| Przejście             | `transition-colors`         |
+| Odstęp między chipami | `gap-2` (8px)               |
 
 **Stan nieaktywny (default):**
 
-| Element | Light                          | Dark                                  |
-| ------- | ------------------------------ | ------------------------------------- |
-| Tło     | `bg-slate-100`                 | `dark:bg-navy-800`                    |
-| Tekst   | `text-slate-600`               | `dark:text-slate-300`                 |
-| Ramka   | `border-slate-200/60`          | `dark:border-navy-700/60`             |
-| Hover   | `hover:bg-white/60`            | `dark:hover:bg-navy-900/50`           |
+| Element | Light                 | Dark                        |
+| ------- | --------------------- | --------------------------- |
+| Tło     | `bg-slate-100`        | `dark:bg-navy-800`          |
+| Tekst   | `text-slate-600`      | `dark:text-slate-300`       |
+| Ramka   | `border-slate-200/60` | `dark:border-navy-700/60`   |
+| Hover   | `hover:bg-white/60`   | `dark:hover:bg-navy-900/50` |
 
 **Stan aktywny (selected) — fiolet:**
 
-| Element | Light                          | Dark                                  |
-| ------- | ------------------------------ | ------------------------------------- |
-| Tło     | `bg-purple-500/10`             | `bg-purple-500/10`                    |
-| Tekst   | `text-purple-700`              | `dark:text-purple-200`                |
-| Ramka   | `border-purple-500/40`         | `border-purple-500/40`                |
+| Element | Light                  | Dark                   |
+| ------- | ---------------------- | ---------------------- |
+| Tło     | `bg-purple-500/10`     | `bg-purple-500/10`     |
+| Tekst   | `text-purple-700`      | `dark:text-purple-200` |
+| Ramka   | `border-purple-500/40` | `border-purple-500/40` |
 
 **Stan disabled:**
 
-| Element | Light                          | Dark                                  |
-| ------- | ------------------------------ | ------------------------------------- |
-| Tło     | `bg-slate-100/60`              | `dark:bg-navy-800/40`                 |
-| Tekst   | `text-slate-400`               | `dark:text-slate-500`                 |
-| Ramka   | `border-slate-200/40`          | `dark:border-navy-700/40`             |
-| Kursor  | `cursor-not-allowed`           | `cursor-not-allowed`                  |
+| Element | Light                 | Dark                      |
+| ------- | --------------------- | ------------------------- |
+| Tło     | `bg-slate-100/60`     | `dark:bg-navy-800/40`     |
+| Tekst   | `text-slate-400`      | `dark:text-slate-500`     |
+| Ramka   | `border-slate-200/40` | `dark:border-navy-700/40` |
+| Kursor  | `cursor-not-allowed`  | `cursor-not-allowed`      |
 
 **Badge (counter):**
 
-| Stan       | Light                                       | Dark                                        |
-| ---------- | ------------------------------------------- | ------------------------------------------- |
-| Nieaktywny | `bg-slate-200 text-slate-600`               | `dark:bg-navy-700 dark:text-slate-300`      |
-| Aktywny    | `bg-purple-500/30 text-purple-700`          | `bg-purple-500/30 dark:text-purple-200`     |
+| Stan       | Light                              | Dark                                    |
+| ---------- | ---------------------------------- | --------------------------------------- |
+| Nieaktywny | `bg-slate-200 text-slate-600`      | `dark:bg-navy-700 dark:text-slate-300`  |
+| Aktywny    | `bg-purple-500/30 text-purple-700` | `bg-purple-500/30 dark:text-purple-200` |
 
 Format badge: `px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none`
 
@@ -386,17 +437,17 @@ Każdy chip ma kolorową ikonę (14px) z palety semantycznej. Chip `ALL` zamiast
 
 Przykłady kolorów ikon:
 
-| Chip             | Ikona            | Kolor ikony         |
-| ---------------- | ---------------- | -------------------- |
-| ALL              | kropka 2×2       | `bg-slate-400`       |
-| Action Queue     | `ClipboardList`  | `text-cyan-400`      |
-| Decisions        | `Scale`          | `text-amber-400`     |
-| Blockers/Blocked | `AlertTriangle`  | `text-rose-400`      |
-| Risk             | `Shield`         | `text-rose-400`      |
-| Workload         | `Users`          | `text-violet-400`    |
-| Missing dates    | `Calendar`       | `text-yellow-400`    |
-| Due soon         | `Clock`          | `text-cyan-400`      |
-| Reports          | `FileText`       | `text-cyan-400`      |
+| Chip             | Ikona           | Kolor ikony       |
+| ---------------- | --------------- | ----------------- |
+| ALL              | kropka 2×2      | `bg-slate-400`    |
+| Action Queue     | `ClipboardList` | `text-cyan-400`   |
+| Decisions        | `Scale`         | `text-amber-400`  |
+| Blockers/Blocked | `AlertTriangle` | `text-rose-400`   |
+| Risk             | `Shield`        | `text-rose-400`   |
+| Workload         | `Users`         | `text-violet-400` |
+| Missing dates    | `Calendar`      | `text-yellow-400` |
+| Due soon         | `Clock`         | `text-cyan-400`   |
+| Reports          | `FileText`      | `text-cyan-400`   |
 
 **Tailwind class strings (copy-paste ready):**
 
@@ -404,23 +455,22 @@ Przykłady kolorów ikon:
 const chipBase =
   'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
 
-const badgeBase =
-  'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+const badgeBase = 'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
 
 // Nieaktywny chip:
-'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+('bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50');
 
 // Aktywny chip:
-'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
+('bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40');
 
 // Disabled chip:
-'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40 cursor-not-allowed'
+('bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40 cursor-not-allowed');
 
 // Nieaktywny badge:
-'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+('bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300');
 
 // Aktywny badge:
-'bg-purple-500/30 text-purple-700 dark:text-purple-200'
+('bg-purple-500/30 text-purple-700 dark:text-purple-200');
 ```
 
 **SSOT implementacji:** `src/components/Execution/ExecutionHub.tsx` → `commandRowContent` (referencyjny wzorzec dla wszystkich modułów).
@@ -455,29 +505,29 @@ Jest **jeden bazowy format** i **jeden stan aktywny**.
 
 **Baza (default):**
 
-| Właściwość  | Wartość                                                  |
-| ----------- | -------------------------------------------------------- |
-| Kształt     | `h-8 rounded-full px-3` (identyczny z chipami)           |
-| Tekst       | `text-[11px] font-semibold`                              |
-| Ikona       | `Sparkles` lub kontekstowa (12–14px), po lewej           |
-| Gap         | `gap-1.5`                                                |
-| Ramka       | zawsze obecna                                            |
-| Disabled    | `disabled:opacity-40`                                    |
+| Właściwość | Wartość                                        |
+| ---------- | ---------------------------------------------- |
+| Kształt    | `h-8 rounded-full px-3` (identyczny z chipami) |
+| Tekst      | `text-[11px] font-semibold`                    |
+| Ikona      | `Sparkles` lub kontekstowa (12–14px), po lewej |
+| Gap        | `gap-1.5`                                      |
+| Ramka      | zawsze obecna                                  |
+| Disabled   | `disabled:opacity-40`                          |
 
-| Element | Light                          | Dark                                  |
-| ------- | ------------------------------ | ------------------------------------- |
-| Tło     | `bg-slate-100`                 | `dark:bg-navy-800`                    |
-| Tekst   | `text-slate-600`               | `dark:text-slate-300`                 |
-| Ramka   | `border-slate-200/60`          | `dark:border-navy-700/60`             |
-| Hover   | `hover:bg-white/60`            | `dark:hover:bg-navy-900/50`           |
+| Element | Light                 | Dark                        |
+| ------- | --------------------- | --------------------------- |
+| Tło     | `bg-slate-100`        | `dark:bg-navy-800`          |
+| Tekst   | `text-slate-600`      | `dark:text-slate-300`       |
+| Ramka   | `border-slate-200/60` | `dark:border-navy-700/60`   |
+| Hover   | `hover:bg-white/60`   | `dark:hover:bg-navy-900/50` |
 
 **Stan aktywny (toggle open / panel open):**
 
-| Element | Light                          | Dark                                  |
-| ------- | ------------------------------ | ------------------------------------- |
-| Tło     | `bg-cyan-500/10`               | `bg-cyan-500/10`                      |
-| Tekst   | `text-cyan-700`                | `dark:text-cyan-200`                  |
-| Ramka   | `border-cyan-500/40`           | `border-cyan-500/40`                  |
+| Element | Light                | Dark                 |
+| ------- | -------------------- | -------------------- |
+| Tło     | `bg-cyan-500/10`     | `bg-cyan-500/10`     |
+| Tekst   | `text-cyan-700`      | `dark:text-cyan-200` |
+| Ramka   | `border-cyan-500/40` | `border-cyan-500/40` |
 
 > **Uwaga:** Aktywny stan przycisku funkcjonalnego Menu 3 jest **zawsze cyan / blue**, nie violet.
 
@@ -513,14 +563,14 @@ const getMenu3AiButtonClass = (active = false) =>
 
 **Przykłady:**
 
-| Ekran / Tab                     | Przyciski AI                                |
-| ------------------------------- | ------------------------------------------- |
-| Initiatives → Portfolio         | `AI Analizuj zaznaczenie` jako prawy przycisk Menu 3; disabled przy 0 zaznaczonych |
-| Initiatives → Analysis → Completeness | `AI Auto-Fill`, `Bulk Fix`, `AI Priority Triage` |
-| Initiatives → Analysis → Timeline | `AI Auto-Schedule`, `Conflicts`, `AI Optimizer` |
-| Initiatives → Analysis → Logic | `AI Discover Dependencies`, `Detect Cycles`, `Critical Path`, `AI Sequencer` |
-| Initiatives → Analysis → Resources | `AI Balance workload` |
-| Execution → Summary             | _(brak — ekran nie ma dedykowanych akcji kontekstowych)_ |
+| Ekran / Tab                           | Przyciski AI                                                                       |
+| ------------------------------------- | ---------------------------------------------------------------------------------- |
+| Initiatives → Portfolio               | `AI Analizuj zaznaczenie` jako prawy przycisk Menu 3; disabled przy 0 zaznaczonych |
+| Initiatives → Analysis → Completeness | `AI Auto-Fill`, `Bulk Fix`, `AI Priority Triage`                                   |
+| Initiatives → Analysis → Timeline     | `AI Auto-Schedule`, `Conflicts`, `AI Optimizer`                                    |
+| Initiatives → Analysis → Logic        | `AI Discover Dependencies`, `Detect Cycles`, `Critical Path`, `AI Sequencer`       |
+| Initiatives → Analysis → Resources    | `AI Balance workload`                                                              |
+| Execution → Summary                   | _(brak — ekran nie ma dedykowanych akcji kontekstowych)_                           |
 
 **SSOT implementacji:** `src/components/Initiatives/Analysis/menu3ActionButtonStyles.ts` oraz przyciski rejestrowane przez `onRegisterActions(...)` w podwidokach Analysis.
 
@@ -530,12 +580,12 @@ const getMenu3AiButtonClass = (active = false) =>
 
 W tym wzorcu prawa strona ekranu ma **2 różne tryby pracy**:
 
-1. **Preview pane**  
+1. **Preview pane**
    - otwierany kliknięciem w pojedynczy wiersz tabeli
    - służy do szybkiego zrozumienia jednego problemu i wykonania pojedynczych działań
    - jest węższy (Outlook style preview)
 
-2. **Workspace panel**  
+2. **Workspace panel**
    - otwierany przyciskami funkcyjnymi z prawej strony Menu 3
    - służy do pracy na grupie problemów / planie działania / priorytetyzacji
    - jest szerszy niż preview, ale **pozostaje wewnątrz content area**
@@ -556,14 +606,14 @@ W tym wzorcu prawa strona ekranu ma **2 różne tryby pracy**:
 
 **Macierz lane → trzeci przycisk:**
 
-| Lane | Trzeci przycisk | Cel |
-| ---- | --------------- | --- |
-| `Action Queue` | `Due Soon` | pokazać rzeczy, które za chwilę staną się problemem operacyjnym |
-| `Decisions` | `Decision Pack` | przygotować szybki pakiet decyzji do zatwierdzenia / odroczenia / eskalacji |
-| `Blockers` | `Recovery Plan` | zaproponować sposób odzyskania przepływu (unblock / workaround / escalate / scope reduction) |
-| `Risk` | `Watchlist` | wyłapać ryzyka i sygnały, które jeszcze nie są krytyczne, ale wymagają obserwacji |
-| `Workload` | `Rebalance` | rozłożyć przeciążenia, braki ownerów i luki estymacyjne |
-| `People & Change` | `Ownership Fix` | domknąć braki ownera, sponsora, dat oraz bus-factor risks |
+| Lane              | Trzeci przycisk | Cel                                                                                          |
+| ----------------- | --------------- | -------------------------------------------------------------------------------------------- |
+| `Action Queue`    | `Due Soon`      | pokazać rzeczy, które za chwilę staną się problemem operacyjnym                              |
+| `Decisions`       | `Decision Pack` | przygotować szybki pakiet decyzji do zatwierdzenia / odroczenia / eskalacji                  |
+| `Blockers`        | `Recovery Plan` | zaproponować sposób odzyskania przepływu (unblock / workaround / escalate / scope reduction) |
+| `Risk`            | `Watchlist`     | wyłapać ryzyka i sygnały, które jeszcze nie są krytyczne, ale wymagają obserwacji            |
+| `Workload`        | `Rebalance`     | rozłożyć przeciążenia, braki ownerów i luki estymacyjne                                      |
+| `People & Change` | `Ownership Fix` | domknąć braki ownera, sponsora, dat oraz bus-factor risks                                    |
 
 **Semantyka paneli w `Implementation / Management`:**
 
@@ -686,18 +736,18 @@ Jeśli ekran jest “hubem tabelarycznym” (listy, zarządzanie, admin tools), 
 
 Jeśli z jakiegoś powodu brakuje miejsca w Module Topbar:
 
-- **MUST:** nie łamiemy topbara do 2 linii (poza Command Row).  
+- **MUST:** nie łamiemy topbara do 2 linii (poza Command Row).
 - **MUST:** utrzymujemy czytelny “anchor” dla użytkownika:
   - **Area** (toggle panelu) + **Add** zostają widoczne najdłużej.
   - pozostałe elementy mogą trafić do overflow (`…`) zachowując kolejność logiczną.
 
 Rekomendowany porządek kolapsu (pierwsze idzie do overflow):
 
-1) **Filters** (jako menu/panel nadal dostępne z overflow)
-2) **View**
-3) **Tool**
-4) **Add**
-5) **Area** (ostatnie do schowania; najlepiej nigdy)
+1. **Filters** (jako menu/panel nadal dostępne z overflow)
+2. **View**
+3. **Tool**
+4. **Add**
+5. **Area** (ostatnie do schowania; najlepiej nigdy)
 
 ---
 

@@ -180,6 +180,9 @@ Consultify module screens use:
 3. `Menu 3` / Command Row - one contextual row below `Menu 2`.
 4. Content surface - table, cards, kanban, timeline, preview, workspace or N-mode canvas.
 
+Every migrated module card must be checked against the operational migration checklist in
+`03-modules/module-hub-standard.md` (`Instrukcja Przerabiania Karty Modułu`) before it is accepted.
+
 ### 6.1 App Topbar
 
 App Topbar is global and stable.

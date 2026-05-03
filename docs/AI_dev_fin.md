@@ -76,6 +76,13 @@ flowchart TD
   businessOutput --> roi["KPI, ROI, measurable results"]
 ```
 
+Content contract for these entities follows `docs/architecture/adr/0001-markdown-first-json-native-markdown-projection.md`:
+
+- natural documents store Markdown as canonical content;
+- native structures such as tables, decks, diagrams and boards store JSON as canonical content;
+- every durable artifact exposes a Markdown projection for chat, Canvas preview, MCP, review, search and lightweight export;
+- raw JSON is not the default business-facing readout.
+
 ### 1B. Finalny zakres AI OS
 
 Finalny Consultify AI OS musi obejmowac siedem domen produktowych, zeby aplikacja spelnila obietnice "od rozmowy do wyniku":

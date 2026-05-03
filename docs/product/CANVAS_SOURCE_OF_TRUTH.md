@@ -48,6 +48,8 @@ Jeśli dokumenty są sprzeczne, obowiązuje kolejność:
 5. Starsze dokumenty Workstation Canvas / Idea Workspace jako inspiracja i backlog funkcji.
 6. Aktualny kod jako stan implementacji, nie jako prawda produktowa.
 
+Decyzja formatu treści jest zamrożona w `docs/architecture/adr/0001-markdown-first-json-native-markdown-projection.md`.
+
 ## 3. Definicja Canvas
 
 Canvas to prawy obszar pracy w doświadczeniu `chat + work area`.
@@ -67,6 +69,50 @@ Canvas nie jest:
 - tylko whiteboardem,
 - skrótem do KIMI / Wordy / Excele / Prezentacje,
 - kolejnym miejscem do pokazywania raw JSON albo technicznych payloadów.
+
+## 3A. Content Storage Contract
+
+Canvas używa kontraktu `Markdown-first, JSON-when-native, always Markdown projection`.
+
+Każdy zasób Canvas ma warstwę Markdown. Nie każdy zasób Canvas ma Markdown jako jedyne źródło prawdy.
+
+Naturalne dokumenty używają Markdown jako canonical source:
+
+- notes,
+- brief,
+- decision memo,
+- research report,
+- implementation plan,
+- presentation outline,
+- meeting note,
+- market analysis.
+
+Struktury natywne używają JSON jako canonical source, ale utrzymują Markdown projection:
+
+- table,
+- deck/slides,
+- mind map,
+- whiteboard,
+- process flow,
+- form,
+- KPI model.
+
+Minimalny envelope:
+
+```ts
+{
+  canonicalFormat: 'markdown' | 'json',
+  artifactType: string,
+  contentMd: string,
+  contentJson?: unknown,
+  contentSchemaVersion?: string,
+  markdownProjectionStatus: 'synced' | 'stale' | 'failed' | 'missing',
+  markdownProjectedAt?: string,
+  projectionError?: string
+}
+```
+
+Domyślny widok biznesowy używa `contentMd`. Natywne edytory używają `contentJson`. Chat, MCP, search/RAG, review i Canvas preview używają Markdown projection. Raw JSON może być dostępny tylko jako jawny source/export/admin/dev view.
 
 ## 4. Główna obietnica produktu
 
