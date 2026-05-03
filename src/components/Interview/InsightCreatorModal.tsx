@@ -96,8 +96,12 @@ interface InsightContextAttachment {
 }
 
 const MAX_CONTEXT_FILES = 5;
-const MAX_CONTEXT_FILE_SIZE_BYTES = 1024 * 1024;
+const MAX_CONTEXT_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_CONTEXT_CHARS_PER_FILE = 5000;
+const TEXT_CONTEXT_EXTENSIONS = ['.txt', '.md', '.markdown', '.csv', '.json', '.log'];
+const REFERENCE_CONTEXT_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx'];
+const CONTEXT_FILE_ACCEPT =
+  '.txt,.md,.markdown,.csv,.json,.log,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,text/plain,text/markdown,text/csv,application/json,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
 // ==========================================
 // ANALYSIS TYPE DEFINITIONS
@@ -460,8 +464,15 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const isTextBasedFile = (file: File): boolean => {
     const fileName = file.name.toLowerCase();
-    const allowedExtensions = ['.txt', '.md', '.markdown', '.csv', '.json', '.log'];
-    return file.type.startsWith('text/') || allowedExtensions.some((ext) => fileName.endsWith(ext));
+    return (
+      file.type.startsWith('text/') ||
+      TEXT_CONTEXT_EXTENSIONS.some((extension) => fileName.endsWith(extension))
+    );
+  };
+
+  const isReferenceContextFile = (file: File): boolean => {
+    const fileName = file.name.toLowerCase();
+    return REFERENCE_CONTEXT_EXTENSIONS.some((extension) => fileName.endsWith(extension));
   };
 
   const normalizeAttachmentText = (raw: string): { excerpt: string; truncated: boolean } => {
@@ -505,19 +516,41 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
     const nextAttachments: InsightContextAttachment[] = [];
     for (const file of toProcess) {
-      if (!isTextBasedFile(file)) {
+      const isTextFile = isTextBasedFile(file);
+      const isReferenceFile = isReferenceContextFile(file);
+
+      if (!isTextFile && !isReferenceFile) {
         toast.error(
           isPolish
-            ? `Plik ${file.name} pominięty: wspierane są tylko formaty tekstowe (TXT/MD/CSV/JSON)`
-            : `Skipped ${file.name}: only text-like formats are supported (TXT/MD/CSV/JSON)`
+            ? `Plik ${file.name} pominięty: wspierane są TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT`
+            : `Skipped ${file.name}: supported formats are TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT`
         );
         continue;
       }
       if (file.size > MAX_CONTEXT_FILE_SIZE_BYTES) {
         toast.error(
           isPolish
-            ? `Plik ${file.name} jest za duży (max 1 MB)`
-            : `File ${file.name} is too large (max 1 MB)`
+            ? `Plik ${file.name} jest za duży (max 10 MB)`
+            : `File ${file.name} is too large (max 10 MB)`
+        );
+        continue;
+      }
+
+      if (isReferenceFile && !isTextFile) {
+        nextAttachments.push({
+          id: `${file.name}-${file.lastModified}-${Math.random().toString(36).slice(2, 8)}`,
+          name: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          size: file.size,
+          excerpt: isPolish
+            ? `[Załącznik referencyjny: ${file.name}. Obecny kreator zapisuje metadane tego formatu, ale nie ekstrahuje jeszcze jego treści do kontekstu AI.]`
+            : `[Reference attachment: ${file.name}. The current creator stores metadata for this format but does not extract its content into AI context yet.]`,
+          truncated: false,
+        });
+        toast(
+          isPolish
+            ? `${file.name}: dodano jako referencję, bez odczytu treści`
+            : `${file.name}: added as a reference, without content extraction`
         );
         continue;
       }
@@ -1037,7 +1070,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   );
 
   const renderStepper = () => (
-    <div className="border-b border-slate-200 bg-slate-50/70 px-4 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
+    <div className="border-b border-slate-200 bg-slate-50/70 px-3 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
       <div className="grid grid-cols-5 gap-1.5">
         {CREATOR_STEPS.map((step, index) => {
           const isActive = index === currentStep;
@@ -1047,7 +1080,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               key={step.id}
               type="button"
               onClick={() => setCurrentStep(index)}
-              className={`rounded-lg border px-2.5 py-1.5 text-left transition-all ${
+              className={`rounded-lg border px-2 py-1.5 text-left transition-all ${
                 isActive
                   ? 'border-primary-500/40 bg-primary-50 text-primary-700 ring-1 ring-primary-500/20 dark:bg-primary-500/15 dark:text-primary-200'
                   : isComplete
@@ -1104,7 +1137,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   };
 
   const renderGoalStep = () => (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           {isPolish ? 'Tytuł wniosków' : 'Insight Title'} *
@@ -1123,17 +1156,62 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       </div>
 
       <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Zakres dat ankiet' : 'Survey date range'}
+          </label>
+          {(filterDateFrom || filterDateTo) && (
+            <button
+              type="button"
+              onClick={() => {
+                setUseDateFilter(false);
+                setFilterDateFrom('');
+                setFilterDateTo('');
+              }}
+              className="text-xs text-primary-400 transition-colors hover:text-primary-300"
+            >
+              {isPolish ? 'Cały okres' : 'All dates'}
+            </button>
+          )}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="date"
+            value={filterDateFrom}
+            onChange={(event) => {
+              const nextFrom = event.target.value;
+              setFilterDateFrom(nextFrom);
+              setUseDateFilter(Boolean(nextFrom || filterDateTo));
+            }}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+            aria-label={isPolish ? 'Data od' : 'Date from'}
+          />
+          <input
+            type="date"
+            value={filterDateTo}
+            onChange={(event) => {
+              const nextTo = event.target.value;
+              setFilterDateTo(nextTo);
+              setUseDateFilter(Boolean(filterDateFrom || nextTo));
+            }}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
+            aria-label={isPolish ? 'Data do' : 'Date to'}
+          />
+        </div>
+      </div>
+
+      <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           {isPolish ? 'Typ wyniku' : 'Output type'} *
         </label>
-        <div className="space-y-2">
-          <div className="max-h-56 space-y-2 overflow-auto pr-1">
+        <div className="space-y-1.5">
+          <div className="max-h-64 space-y-1.5 overflow-auto pr-1">
             {ANALYSIS_TYPES.map((type) => {
               const isSelected = selectedTypes.includes(type.id);
               return (
                 <label
                   key={type.id}
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
                     isSelected
                       ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                       : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -1146,7 +1224,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
                   />
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${getColorClasses(
+                    className={`flex h-7 w-7 items-center justify-center rounded-md ${getColorClasses(
                       type.color,
                       'bg'
                     )} ${getColorClasses(type.color, 'text')}`}
@@ -1171,8 +1249,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   );
 
   const renderPeopleStep = () => (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
+    <div className="space-y-3">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-white/[0.08] dark:bg-navy-900/50">
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <Users size={16} />
           {isPolish ? 'Osoby w zakresie analizy' : 'People in analysis scope'}
@@ -1208,11 +1286,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <button
               type="button"
               onClick={selectAllRespondents}
-              className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all ${
+              className={`flex w-full items-center gap-2 rounded-lg border px-2.5 py-2 text-left transition-all ${
                 selectedRespondents.length === 0
                   ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                   : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -1236,13 +1314,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               </div>
             </button>
 
-            <div className="max-h-64 space-y-2 overflow-auto pr-1">
+            <div className="max-h-72 space-y-1.5 overflow-auto pr-1">
               {respondentOptions.map((respondent) => {
                 const isSelected = selectedRespondents.includes(respondent.id);
                 return (
                   <label
                     key={respondent.id}
-                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
+                    className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
                       isSelected
                         ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                         : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -1292,8 +1370,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   );
 
   const renderSourceStep = () => (
-    <div className="space-y-5">
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
+    <div className="space-y-3">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5 dark:border-white/[0.08] dark:bg-navy-900/50">
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <MessageSquare size={16} />
           {isPolish ? 'Materiał źródłowy' : 'Source material'}
@@ -1320,7 +1398,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </button>
 
         {showFilters && (
-          <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
+          <div className="mt-2 space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-white/[0.08] dark:bg-navy-900/50">
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-100">
                 <input
@@ -1347,50 +1425,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     </option>
                   ))}
                 </select>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-100">
-                <input
-                  type="checkbox"
-                  checked={useDateFilter}
-                  onChange={(e) => {
-                    setUseDateFilter(e.target.checked);
-                    if (!e.target.checked) {
-                      setFilterDateFrom('');
-                      setFilterDateTo('');
-                    }
-                  }}
-                  className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-navy-900"
-                />
-                {isPolish ? 'Filtruj po zakresie dat odpowiedzi' : 'Filter by answer date range'}
-              </label>
-              {useDateFilter && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">
-                      {isPolish ? 'Data od' : 'Date from'}
-                    </label>
-                    <input
-                      type="date"
-                      value={filterDateFrom}
-                      onChange={(e) => setFilterDateFrom(e.target.value)}
-                      className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-slate-500 mb-1">
-                      {isPolish ? 'Data do' : 'Date to'}
-                    </label>
-                    <input
-                      type="date"
-                      value={filterDateTo}
-                      onChange={(e) => setFilterDateTo(e.target.value)}
-                      className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
-                    />
-                  </div>
-                </div>
               )}
             </div>
           </div>
@@ -1491,13 +1525,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             )}
           </div>
         ) : (
-          <div className="space-y-2 max-h-72 overflow-auto pr-1">
+          <div className="max-h-80 space-y-1.5 overflow-auto pr-1">
             {filteredSessions.map((session) => {
               const isSelected = selectedSessions.includes(session.id);
               return (
                 <label
                   key={session.id}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                  className={`flex cursor-pointer items-center gap-2 rounded-lg border px-2.5 py-2 transition-all ${
                     isSelected
                       ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                       : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -1562,7 +1596,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   );
 
   const renderAnalysisStep = () => (
-    <div className="space-y-5">
+    <div className="space-y-3">
       <div>
         <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {isPolish ? 'Jak AI ma przeczytać materiał?' : 'How should AI read the material?'}
@@ -1578,13 +1612,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <label className="block text-xs font-medium text-slate-500 mb-1">
           {isPolish ? 'Tryb analizy' : 'Analysis mode'}
         </label>
-        <div className="max-h-44 space-y-2 overflow-auto pr-1">
+        <div className="max-h-56 space-y-1.5 overflow-auto pr-1">
           {ANALYSIS_MODE_OPTIONS.map((mode) => {
             const isSelected = selectedAnalysisModes.includes(mode.id);
             return (
               <label
                 key={mode.id}
-                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-all ${
+                className={`flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-2 transition-all ${
                   isSelected
                     ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
                     : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
@@ -1619,7 +1653,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <div className="mb-2 text-xs font-medium text-slate-500">
           {isPolish ? 'Zakres kontekstu AI' : 'AI context boundary'}
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {[
             {
               value: 'selected_interview_material_only' as InsightContextMode,
@@ -1642,7 +1676,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 key={option.value}
                 type="button"
                 onClick={() => setContextMode(option.value)}
-                className={`rounded-xl border p-3 text-left transition-all ${
+                className={`rounded-xl border p-2.5 text-left transition-all ${
                   selected
                     ? 'border-primary-500/50 bg-primary-50 ring-1 ring-primary-500/20 dark:bg-primary-500/15'
                     : 'border-slate-200 bg-white hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70'
@@ -1668,18 +1702,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {isPolish ? 'Uwagi i dodatkowy kontekst' : 'Notes and extra context'}
         </div>
-        <p className="mt-1 text-xs text-slate-500">
-          {isPolish
-            ? 'To ostatnie miejsce na instrukcje konsultanta, dokumenty zewnętrzne i linki do wewnętrznych artefaktów.'
-            : 'This is the final place for consultant notes, external documents, and internal artifact links.'}
-        </p>
       </div>
 
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
-          {isPolish
-            ? 'Dodatkowe uwagi dla AI (opcjonalnie)'
-            : 'Additional AI instructions (optional)'}
+          {isPolish ? 'Uwagi' : 'Notes'}
         </label>
         <textarea
           value={customPrompt}
@@ -1692,11 +1719,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           }
           className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
-        <p className="text-xs text-slate-500 mt-1">
-          {isPolish
-            ? 'Te instrukcje zostaną dodane do promptu AI'
-            : 'These instructions will be added to the AI prompt'}
-        </p>
       </div>
 
       <div>
@@ -1716,11 +1738,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           }
           className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
-        <p className="text-xs text-slate-500 mt-1">
-          {isPolish
-            ? 'Na razie to lekki kontekst tekstowy, bez ciężkiego selektora artefaktów.'
-            : 'For now this is lightweight text context, without a heavy artifact picker.'}
-        </p>
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
@@ -1729,8 +1746,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             <Paperclip size={14} className="text-slate-400" />
             <span>
               {isPolish
-                ? 'Dokumenty zewnętrzne (TXT/MD/CSV/JSON, max 5 plików po 1 MB)'
-                : 'External documents (TXT/MD/CSV/JSON, max 5 files, 1 MB each)'}
+                ? 'Dokumenty zewnętrzne (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 plików po 10 MB)'
+                : 'External documents (TXT/MD/CSV/JSON/PDF/DOC/XLS/PPT, max 5 files, 10 MB each)'}
             </span>
           </div>
           <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 transition-colors hover:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-200">
@@ -1740,7 +1757,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ref={fileInputRef}
               type="file"
               multiple
-              accept=".txt,.md,.markdown,.csv,.json,.log,text/plain,text/markdown,text/csv,application/json"
+              accept={CONTEXT_FILE_ACCEPT}
               onChange={handleContextFileUpload}
               className="hidden"
             />
@@ -1792,9 +1809,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm">
-      <div className="mx-4 flex h-[520px] w-[680px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900">
+      <div className="mx-4 flex h-[560px] w-[720px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900">
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 p-4 dark:border-white/[0.08]">
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-white/[0.08]">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
             <Sparkles size={20} className="text-slate-500 dark:text-slate-400" />
             {isPolish ? 'Kreator Wniosków AI' : 'AI Insight Creator'}
@@ -1810,13 +1827,13 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         {renderStepper()}
 
         {/* Content */}
-        <form onSubmit={handleFormSubmit} className="flex-1 overflow-auto p-4 space-y-5">
+        <form onSubmit={handleFormSubmit} className="flex-1 space-y-4 overflow-auto p-3">
           {renderGlobalLoadError()}
           {renderCurrentStep()}
         </form>
 
         {/* Footer */}
-        <div className="flex shrink-0 gap-3 border-t border-slate-200 p-4 dark:border-white/[0.08]">
+        <div className="flex shrink-0 gap-3 border-t border-slate-200 p-3 dark:border-white/[0.08]">
           <button
             type="button"
             onClick={onClose}
