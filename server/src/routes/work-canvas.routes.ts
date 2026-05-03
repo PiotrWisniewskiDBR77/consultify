@@ -3,6 +3,12 @@ import { randomUUID } from 'node:crypto';
 import { Router } from 'express';
 
 import { type AuthRequest, verifyToken } from '../middleware/auth.middleware.js';
+import {
+  createArtifactContentEnvelope,
+  type ArtifactContentEnvelope,
+  type CanonicalFormat,
+  type MarkdownProjectionStatus,
+} from '../services/artifacts/contentProjectionService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 const router = Router();
@@ -26,6 +32,14 @@ interface WorkCanvasDraft {
   kind: DraftKind;
   title: string;
   content: unknown;
+  contentEnvelope: ArtifactContentEnvelope;
+  canonicalFormat: CanonicalFormat;
+  contentMd: string;
+  contentJson: unknown;
+  contentSchemaVersion: string | null;
+  markdownProjectionStatus: MarkdownProjectionStatus;
+  markdownProjectedAt: string | null;
+  projectionError: string | null;
   sources: unknown[];
   provenance: Record<string, unknown>;
   projectId: string | null;
@@ -69,6 +83,13 @@ type DraftRow = {
   kind: DraftKind;
   title: string;
   content_json: string | null;
+  canonical_format: CanonicalFormat | null;
+  content_md: string | null;
+  content_json_native: string | null;
+  content_schema_version: string | null;
+  markdown_projection_status: MarkdownProjectionStatus | null;
+  markdown_projected_at: string | null;
+  projection_error: string | null;
   sources_json: string | null;
   provenance_json: string | null;
   project_id: string | null;
@@ -137,6 +158,16 @@ function parseJson(value: string | null, fallback: unknown): unknown {
 }
 
 function toDraft(row: DraftRow): WorkCanvasDraft {
+  const legacyContent = parseJson(row.content_json, '');
+  const contentJson = parseJson(row.content_json_native, undefined);
+  const contentEnvelope = createArtifactContentEnvelope({
+    artifactType: row.kind,
+    canonicalFormat: row.canonical_format || undefined,
+    contentMd: row.content_md || (typeof legacyContent === 'string' ? legacyContent : ''),
+    contentJson: contentJson ?? (row.canonical_format === 'json' ? legacyContent : undefined),
+    contentSchemaVersion: row.content_schema_version || undefined,
+  });
+  const projectionStatus = row.markdown_projection_status || contentEnvelope.markdownProjectionStatus;
   return {
     id: row.id,
     organizationId: row.organization_id,
@@ -145,6 +176,19 @@ function toDraft(row: DraftRow): WorkCanvasDraft {
     kind: row.kind,
     title: row.title,
     content: parseJson(row.content_json, ''),
+    contentEnvelope: {
+      ...contentEnvelope,
+      markdownProjectionStatus: projectionStatus,
+      markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt,
+      projectionError: row.projection_error || contentEnvelope.projectionError,
+    },
+    canonicalFormat: contentEnvelope.canonicalFormat,
+    contentMd: contentEnvelope.contentMd,
+    contentJson: contentEnvelope.contentJson,
+    contentSchemaVersion: row.content_schema_version,
+    markdownProjectionStatus: projectionStatus,
+    markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
+    projectionError: row.projection_error || contentEnvelope.projectionError || null,
     sources: parseJson(row.sources_json, []) as unknown[],
     provenance: parseJson(row.provenance_json, {}) as Record<string, unknown>,
     projectId: row.project_id,
@@ -195,6 +239,14 @@ async function ensureStorage(): Promise<void> {
           kind TEXT NOT NULL,
           title TEXT NOT NULL,
           content_json TEXT NOT NULL,
+          canonical_format TEXT NOT NULL DEFAULT 'markdown',
+          content_md TEXT,
+          content_json_native TEXT,
+          content_schema_version TEXT,
+          markdown_projection_status TEXT NOT NULL DEFAULT 'synced',
+          markdown_projected_at TEXT,
+          markdown_projection_stale_at TEXT,
+          projection_error TEXT,
           sources_json TEXT NOT NULL DEFAULT '[]',
           provenance_json TEXT NOT NULL DEFAULT '{}',
           project_id TEXT,
@@ -214,6 +266,19 @@ async function ensureStorage(): Promise<void> {
         [],
         { fallback: false }
       );
+      const contentContractColumns = [
+        "ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS canonical_format TEXT NOT NULL DEFAULT 'markdown'",
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_md TEXT',
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_json_native TEXT',
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS content_schema_version TEXT',
+        "ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT NOT NULL DEFAULT 'synced'",
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT',
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS markdown_projection_stale_at TEXT',
+        'ALTER TABLE work_canvas_drafts ADD COLUMN IF NOT EXISTS projection_error TEXT',
+      ];
+      for (const statement of contentContractColumns) {
+        await dbRun(statement, [], { fallback: false });
+      }
       await dbRun(
         `CREATE INDEX IF NOT EXISTS idx_work_canvas_drafts_org_updated
          ON work_canvas_drafts (organization_id, updated_at DESC)`,
@@ -316,6 +381,20 @@ router.post('/drafts', async (req: AuthRequest, res) => {
     kind: (req.body?.kind || 'markdown') as DraftKind,
     title: String(req.body?.title || 'Untitled work canvas'),
     content: req.body?.content ?? '',
+    contentEnvelope: createArtifactContentEnvelope({
+      artifactType: String(req.body?.kind || 'markdown'),
+      canonicalFormat: req.body?.canonicalFormat,
+      contentMd: req.body?.contentMd ?? (typeof req.body?.content === 'string' ? req.body.content : ''),
+      contentJson: req.body?.contentJson,
+      contentSchemaVersion: req.body?.contentSchemaVersion,
+    }),
+    canonicalFormat: 'markdown',
+    contentMd: '',
+    contentJson: undefined,
+    contentSchemaVersion: req.body?.contentSchemaVersion || null,
+    markdownProjectionStatus: 'synced',
+    markdownProjectedAt: null,
+    projectionError: null,
     sources: Array.isArray(req.body?.sources) ? req.body.sources : [],
     provenance:
       req.body?.provenance && typeof req.body.provenance === 'object' ? req.body.provenance : {},
@@ -333,13 +412,21 @@ router.post('/drafts', async (req: AuthRequest, res) => {
     createdAt: now,
     updatedAt: now,
   };
+  draft.canonicalFormat = draft.contentEnvelope.canonicalFormat;
+  draft.contentMd = draft.contentEnvelope.contentMd;
+  draft.contentJson = draft.contentEnvelope.contentJson;
+  draft.markdownProjectionStatus = draft.contentEnvelope.markdownProjectionStatus;
+  draft.markdownProjectedAt = draft.contentEnvelope.markdownProjectedAt || null;
+  draft.projectionError = draft.contentEnvelope.projectionError || null;
   await dbRun(
     `INSERT INTO work_canvas_drafts (
       id, organization_id, created_by, conversation_id, kind, title, content_json,
+      canonical_format, content_md, content_json_native, content_schema_version,
+      markdown_projection_status, markdown_projected_at, projection_error,
       sources_json, provenance_json, project_id, owner_id, research_session_id,
       artifact_id, artifact_run_id, artifact_version, save_state, lifecycle_state,
       dirty_state, visibility, audit_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       draft.id,
       draft.organizationId,
@@ -348,6 +435,13 @@ router.post('/drafts', async (req: AuthRequest, res) => {
       draft.kind,
       draft.title,
       JSON.stringify(draft.content),
+      draft.canonicalFormat,
+      draft.contentMd,
+      draft.contentJson === undefined ? null : JSON.stringify(draft.contentJson),
+      draft.contentSchemaVersion,
+      draft.markdownProjectionStatus,
+      draft.markdownProjectedAt,
+      draft.projectionError,
       JSON.stringify(draft.sources),
       JSON.stringify(draft.provenance),
       draft.projectId,
@@ -386,12 +480,28 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
     createdBy: draft.createdBy,
     updatedAt: new Date().toISOString(),
   };
+  updated.contentEnvelope = createArtifactContentEnvelope({
+    artifactType: updated.kind,
+    canonicalFormat: req.body?.canonicalFormat || updated.canonicalFormat,
+    contentMd: req.body?.contentMd ?? (typeof updated.content === 'string' ? updated.content : updated.contentMd),
+    contentJson: req.body?.contentJson ?? updated.contentJson,
+    contentSchemaVersion: req.body?.contentSchemaVersion || updated.contentSchemaVersion || undefined,
+  });
+  updated.canonicalFormat = updated.contentEnvelope.canonicalFormat;
+  updated.contentMd = updated.contentEnvelope.contentMd;
+  updated.contentJson = updated.contentEnvelope.contentJson;
+  updated.contentSchemaVersion = updated.contentEnvelope.contentSchemaVersion || null;
+  updated.markdownProjectionStatus = updated.contentEnvelope.markdownProjectionStatus;
+  updated.markdownProjectedAt = updated.contentEnvelope.markdownProjectedAt || null;
+  updated.projectionError = updated.contentEnvelope.projectionError || null;
   await dbRun(
     `UPDATE work_canvas_drafts
      SET conversation_id = ?, kind = ?, title = ?, content_json = ?, sources_json = ?,
          provenance_json = ?, project_id = ?, owner_id = ?, research_session_id = ?,
          artifact_id = ?, artifact_run_id = ?, artifact_version = ?, save_state = ?,
-         lifecycle_state = ?, dirty_state = ?, visibility = ?, audit_status = ?, updated_at = ?
+         lifecycle_state = ?, dirty_state = ?, visibility = ?, audit_status = ?,
+         canonical_format = ?, content_md = ?, content_json_native = ?, content_schema_version = ?,
+         markdown_projection_status = ?, markdown_projected_at = ?, projection_error = ?, updated_at = ?
      WHERE id = ? AND organization_id = ?`,
     [
       updated.conversationId,
@@ -411,6 +521,13 @@ router.put('/drafts/:draftId', async (req: AuthRequest, res) => {
       updated.dirtyState,
       updated.visibility,
       updated.auditStatus,
+      updated.canonicalFormat,
+      updated.contentMd,
+      updated.contentJson === undefined ? null : JSON.stringify(updated.contentJson),
+      updated.contentSchemaVersion,
+      updated.markdownProjectionStatus,
+      updated.markdownProjectedAt,
+      updated.projectionError,
       updated.updatedAt,
       updated.id,
       updated.organizationId,

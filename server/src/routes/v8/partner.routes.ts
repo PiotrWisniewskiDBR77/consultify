@@ -20,6 +20,7 @@ import type { AuthRequest } from '../../middleware/auth.middleware.js';
 import { getV8Context } from '../../middleware/v8Auth.middleware.js';
 import legalService from '../../services/legalService.js';
 import PartnerCommissionService from '../../services/partnerCommissionService.js';
+import { ensurePartnerDemoDataset } from '../../services/partnerDemoSeedService.js';
 import { getActivePartnerOrgIdForUser } from '../../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
@@ -37,6 +38,19 @@ const router = Router();
 
 export const V8_PARTNER_READ_CONTRACT = 'partner_runtime_read_v1';
 export const V8_PARTNER_PROGRAM_CONTRACT = 'partner_program_p29_v1';
+
+router.use(
+  asyncHandler(async (req: AuthRequest, _res: Response, next) => {
+    const userId = req.userId || req.user?.id;
+    if (userId) {
+      const partnerOrgId = await getActivePartnerOrgIdForUser(userId);
+      if (partnerOrgId) {
+        await ensurePartnerDemoDataset(partnerOrgId);
+      }
+    }
+    next();
+  })
+);
 
 function partnerReadMeta(req: AuthRequest, partnerOrgId: string) {
   const { organizationId } = getV8Context(req);
@@ -666,7 +680,7 @@ router.get(
       thisMonth: legacySummary.thisMonth,
       thisMonthCount: legacySummary.thisMonthCount,
       lastMonth: legacySummary.lastMonth,
-      readyForPayout: detail.balances.availableToPayout,
+      readyForPayout: legacySummary.readyForPayout,
       currency: detail.balances.currency || legacySummary.currency || 'EUR',
       lifecyclePhase: detail.runtime.lifecycle_phase,
       whatNext: detail.whatNext,

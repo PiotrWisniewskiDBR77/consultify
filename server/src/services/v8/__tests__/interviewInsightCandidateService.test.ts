@@ -304,4 +304,49 @@ describe('interviewInsightCandidateService', () => {
     expect(result.candidate?.triage_status).toBe('promoted');
     expect(result.candidate?.linked_finding_id).toBe('finding_theme');
   });
+
+  it('blocks promotion until an operator marks the candidate ready for review', async () => {
+    const { listCandidates, promoteCandidateToFinding } =
+      await import('../interviewInsightCandidateService.js');
+
+    const candidates = await listCandidates('insight_1');
+    const target = candidates.find((candidate) => candidate.source_key === 'issue:0');
+    expect(target?.triage_status).toBe('needs_evidence');
+
+    const result = await promoteCandidateToFinding(
+      'insight_1',
+      target!.id,
+      {
+        finding_statement: 'Tooling gaps need follow-up.',
+        confidence_level: 'insufficient',
+      },
+      {
+        actorUserId: 'reviewer_1',
+        organizationId: 'org_1',
+      }
+    );
+
+    expect(result.error).toContain('ready for review');
+    expect(state.updateFindingMock).not.toHaveBeenCalled();
+  });
+
+  it('blocks ready-for-review when evidence is missing', async () => {
+    const { listCandidates, triageCandidate } =
+      await import('../interviewInsightCandidateService.js');
+
+    const candidates = await listCandidates('insight_1');
+    const target = candidates.find((candidate) => candidate.source_key === 'issue:0');
+
+    const result = await triageCandidate(
+      'insight_1',
+      target!.id,
+      {
+        action: 'mark_ready_for_review',
+        followup_recommendation: 'Ready for operator review.',
+      },
+      'reviewer_1'
+    );
+
+    expect(result.error).toContain('without persisted evidence pointers');
+  });
 });

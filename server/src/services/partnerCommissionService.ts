@@ -201,6 +201,15 @@ interface PayoutRow {
 
 let db: IDatabase = getDatabase();
 
+function toIsoDateString(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toISOString().slice(0, 10);
+  }
+  const raw = String(value || '').trim();
+  if (!raw) return new Date().toISOString().slice(0, 10);
+  return raw.includes('T') ? raw.split('T')[0] : raw.slice(0, 10);
+}
+
 async function getPayoutRowById(payoutId: string): Promise<PayoutRow | null> {
   const row = await DbPromise.get<PayoutRow>(
     db,
@@ -327,7 +336,7 @@ export async function getCommissions(
 
   let query = `SELECT pct.*, o.name as org_name
                  FROM partner_commission_transactions pct
-                 LEFT JOIN organizations o ON o.id = pct.organization_id
+                 LEFT JOIN organizations o ON o.id = pct.organization_id::text
                  WHERE pct.partner_org_id = ?`;
   const params: any[] = [partnerOrgId];
 
@@ -490,6 +499,7 @@ export async function getEarningsSummary(partnerOrgId: string): Promise<Earnings
       total_pending: number;
       total_approved: number;
       total_paid: number;
+      ready_for_payout: number;
       this_month: number;
       this_month_count: number;
       last_month: number;
@@ -499,6 +509,7 @@ export async function getEarningsSummary(partnerOrgId: string): Promise<Earnings
                 COALESCE(SUM(commission_amount) FILTER (WHERE status = 'PENDING'), 0) as total_pending,
                 COALESCE(SUM(commission_amount) FILTER (WHERE status = 'APPROVED'), 0) as total_approved,
                 COALESCE(SUM(commission_amount) FILTER (WHERE status = 'PAID'), 0) as total_paid,
+                COALESCE(SUM(commission_amount) FILTER (WHERE status = 'APPROVED' AND payout_id IS NULL), 0) as ready_for_payout,
                 COALESCE(SUM(commission_amount) FILTER (WHERE transaction_date >= ? AND status != 'CANCELLED'), 0) as this_month,
                 COUNT(*) FILTER (WHERE transaction_date >= ? AND status != 'CANCELLED') as this_month_count,
                 COALESCE(SUM(commission_amount) FILTER (WHERE transaction_date >= ? AND transaction_date <= ? AND status != 'CANCELLED'), 0) as last_month
@@ -518,7 +529,7 @@ export async function getEarningsSummary(partnerOrgId: string): Promise<Earnings
       thisMonth: stats?.this_month || 0,
       thisMonthCount: stats?.this_month_count || 0,
       lastMonth: stats?.last_month || 0,
-      readyForPayout: stats?.total_approved || 0, // Approved but not yet paid
+      readyForPayout: stats?.ready_for_payout || 0,
       currency: 'EUR',
     };
   } catch (err: any) {
@@ -569,7 +580,10 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
     }
 
     // Calculate totals
-    const grossAmount = approvedCommissions.reduce((sum, c) => sum + c.commission_amount, 0);
+    const grossAmount = approvedCommissions.reduce(
+      (sum, c) => sum + Number(c.commission_amount || 0),
+      0
+    );
     const fees = Math.max(grossAmount * 0.01, 0); // 1% fee, minimum €0
     const netAmount = grossAmount - fees;
 
@@ -589,9 +603,10 @@ export async function requestPayout(params: PayoutRequest): Promise<Payout | nul
     }
 
     // Determine period
-    const periodStart = approvedCommissions[0].transaction_date.split('T')[0];
-    const periodEnd =
-      approvedCommissions[approvedCommissions.length - 1].transaction_date.split('T')[0];
+    const periodStart = toIsoDateString(approvedCommissions[0].transaction_date);
+    const periodEnd = toIsoDateString(
+      approvedCommissions[approvedCommissions.length - 1].transaction_date
+    );
 
     // Create payout record
     const payoutId = uuidv4();

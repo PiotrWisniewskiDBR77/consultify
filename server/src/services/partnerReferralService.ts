@@ -342,6 +342,139 @@ async function ensurePartnerReferralSchema(): Promise<void> {
   await DbPromise.exec(`
     ALTER TABLE partner_organizations ADD COLUMN IF NOT EXISTS referral_code VARCHAR(100);
     ALTER TABLE partner_organizations ADD COLUMN IF NOT EXISTS referral_link_slug VARCHAR(255);
+
+    CREATE TABLE IF NOT EXISTS partner_attributions (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      organization_id UUID NOT NULL,
+      attribution_type VARCHAR(30) NOT NULL,
+      referral_code_used VARCHAR(50),
+      referral_link_clicked_at TIMESTAMP WITH TIME ZONE,
+      signup_completed_at TIMESTAMP WITH TIME ZONE,
+      first_payment_at TIMESTAMP WITH TIME ZONE,
+      lifetime_value DECIMAL(12,2) DEFAULT 0.00,
+      total_commission_earned DECIMAL(12,2) DEFAULT 0.00,
+      commission_rate_percent DECIMAL(5,2) NOT NULL,
+      commission_duration_months INTEGER DEFAULT 12,
+      status VARCHAR(20) DEFAULT 'PENDING',
+      utm_source VARCHAR(100),
+      utm_medium VARCHAR(100),
+      utm_campaign VARCHAR(100),
+      landing_page VARCHAR(500),
+      ip_hash VARCHAR(64),
+      user_agent TEXT,
+      attributed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_commission_transactions (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      attribution_id UUID,
+      organization_id UUID NOT NULL,
+      transaction_type VARCHAR(30) NOT NULL,
+      transaction_date TIMESTAMP WITH TIME ZONE NOT NULL,
+      billing_period_start DATE,
+      billing_period_end DATE,
+      gross_amount DECIMAL(12,2) NOT NULL,
+      commission_rate DECIMAL(5,2) NOT NULL,
+      commission_amount DECIMAL(12,2) NOT NULL,
+      currency VARCHAR(3) DEFAULT 'EUR',
+      invoice_id VARCHAR(100),
+      stripe_payment_id VARCHAR(100),
+      stripe_invoice_id VARCHAR(100),
+      status VARCHAR(20) DEFAULT 'PENDING',
+      approved_at TIMESTAMP WITH TIME ZONE,
+      approved_by UUID,
+      payout_id UUID,
+      notes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_payouts (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      payout_account_id TEXT,
+      payout_period_start DATE NOT NULL,
+      payout_period_end DATE NOT NULL,
+      gross_amount DECIMAL(12,2) NOT NULL,
+      fees DECIMAL(10,2) DEFAULT 0.00,
+      tax_withheld DECIMAL(10,2) DEFAULT 0.00,
+      net_amount DECIMAL(12,2) NOT NULL,
+      currency VARCHAR(3) DEFAULT 'EUR',
+      transaction_count INTEGER DEFAULT 0,
+      status VARCHAR(20) DEFAULT 'PENDING',
+      payout_method VARCHAR(30),
+      payout_reference VARCHAR(100),
+      external_payout_id VARCHAR(100),
+      requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      requested_by UUID,
+      processed_at TIMESTAMP WITH TIME ZONE,
+      processed_by UUID,
+      completed_at TIMESTAMP WITH TIME ZONE,
+      failure_reason TEXT,
+      notes TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_referral_clicks (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      referral_code VARCHAR(50) NOT NULL,
+      clicked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      ip_hash VARCHAR(64),
+      user_agent TEXT,
+      referer VARCHAR(500),
+      landing_page VARCHAR(500),
+      utm_source VARCHAR(100),
+      utm_medium VARCHAR(100),
+      utm_campaign VARCHAR(100),
+      utm_content VARCHAR(100),
+      utm_term VARCHAR(100),
+      converted BOOLEAN DEFAULT false,
+      converted_at TIMESTAMP WITH TIME ZONE,
+      converted_organization_id UUID,
+      conversion_type VARCHAR(30),
+      session_id VARCHAR(100),
+      cookie_id VARCHAR(100)
+    );
+
+    CREATE TABLE IF NOT EXISTS partner_campaign_links (
+      id UUID PRIMARY KEY,
+      partner_org_id UUID NOT NULL,
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      slug VARCHAR(100) NOT NULL,
+      destination_url VARCHAR(500) DEFAULT '/',
+      utm_source VARCHAR(100),
+      utm_medium VARCHAR(100),
+      utm_campaign VARCHAR(100),
+      utm_content VARCHAR(100),
+      click_count INTEGER DEFAULT 0,
+      signup_count INTEGER DEFAULT 0,
+      conversion_count INTEGER DEFAULT 0,
+      is_active BOOLEAN DEFAULT true,
+      expires_at TIMESTAMP WITH TIME ZONE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT unique_partner_campaign_slug UNIQUE (partner_org_id, slug)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_partner_attributions_partner ON partner_attributions(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_attributions_status ON partner_attributions(status);
+    CREATE INDEX IF NOT EXISTS idx_partner_commissions_partner ON partner_commission_transactions(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_commissions_status ON partner_commission_transactions(status);
+    CREATE INDEX IF NOT EXISTS idx_partner_commissions_date ON partner_commission_transactions(transaction_date);
+    CREATE INDEX IF NOT EXISTS idx_partner_commissions_payout ON partner_commission_transactions(payout_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_payouts_partner ON partner_payouts(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_payouts_status ON partner_payouts(status);
+    CREATE INDEX IF NOT EXISTS idx_partner_clicks_partner ON partner_referral_clicks(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_clicks_date ON partner_referral_clicks(clicked_at);
+    CREATE INDEX IF NOT EXISTS idx_partner_campaigns_partner ON partner_campaign_links(partner_org_id);
+    CREATE INDEX IF NOT EXISTS idx_partner_campaigns_active ON partner_campaign_links(is_active) WHERE is_active = true;
   `);
   referralSchemaEnsured = true;
 }
@@ -896,7 +1029,7 @@ export async function getPartnerAttributions(
 
   let query = `SELECT pa.*, o.name as org_name 
                  FROM partner_attributions pa
-                 LEFT JOIN organizations o ON o.id = pa.organization_id
+                 LEFT JOIN organizations o ON o.id = pa.organization_id::text
                  WHERE pa.partner_org_id = ?`;
   const params: any[] = [partnerOrgId];
 

@@ -2,6 +2,11 @@ import crypto from 'node:crypto';
 
 import { v4 as uuidv4 } from 'uuid';
 
+import {
+  createArtifactContentEnvelope,
+  type ArtifactContentEnvelope,
+  type CanonicalFormat,
+} from './artifacts/contentProjectionService.js';
 import { all as dbAll, get as dbGet, run as dbRun } from '../utils/DbPromise.js';
 
 export const WAVE5_ARTIFACT_TYPES = [
@@ -39,6 +44,10 @@ export interface CreateWave5ArtifactInput {
   artifactType: Wave5ArtifactType;
   title: string;
   content: string;
+  canonicalFormat?: CanonicalFormat;
+  contentMd?: string;
+  contentJson?: unknown;
+  contentSchemaVersion?: string;
   projectId?: string | null;
   conversationId?: string | null;
   researchSessionId?: string | null;
@@ -288,6 +297,13 @@ function contentForGeneratedKind(input: GenerateWave5ArtifactInput): string {
 function mapArtifact(row: any, versions: any[] = [], mutations: any[] = []): any {
   if (!row) return null;
   const provenance = safeJsonParse<Record<string, unknown>>(row.provenance_json, {});
+  const contentEnvelope: ArtifactContentEnvelope = createArtifactContentEnvelope({
+    artifactType: row.artifact_type,
+    canonicalFormat: row.canonical_format || undefined,
+    contentMd: row.content_md || row.content,
+    contentJson: safeJsonParse(row.content_json_native, undefined),
+    contentSchemaVersion: row.content_schema_version || undefined,
+  });
   return {
     artifactId: row.artifact_id,
     organizationId: row.organization_id,
@@ -295,6 +311,13 @@ function mapArtifact(row: any, versions: any[] = [], mutations: any[] = []): any
     status: row.status,
     title: row.title,
     content: row.content,
+    contentEnvelope,
+    canonicalFormat: contentEnvelope.canonicalFormat,
+    contentMd: contentEnvelope.contentMd,
+    contentJson: contentEnvelope.contentJson,
+    markdownProjectionStatus: row.markdown_projection_status || contentEnvelope.markdownProjectionStatus,
+    markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
+    projectionError: row.projection_error || contentEnvelope.projectionError || null,
     version: Number(row.current_version || 1),
     projectId: row.project_id || null,
     conversationId: row.conversation_id || null,
@@ -361,6 +384,18 @@ export async function ensureWave5ArtifactRuntimeSchema(): Promise<void> {
         committed_at TEXT
       )
     `);
+    const artifactContentColumns = [
+      "ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS canonical_format TEXT DEFAULT 'markdown'",
+      'ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS content_md TEXT',
+      'ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS content_json_native TEXT',
+      'ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS content_schema_version TEXT',
+      "ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT DEFAULT 'synced'",
+      'ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT',
+      'ALTER TABLE wave5_artifacts ADD COLUMN IF NOT EXISTS projection_error TEXT',
+    ];
+    for (const statement of artifactContentColumns) {
+      await dbRun(statement);
+    }
     await dbRun(`
       CREATE TABLE IF NOT EXISTS wave5_artifact_versions (
         version_id TEXT PRIMARY KEY,
@@ -374,6 +409,18 @@ export async function ensureWave5ArtifactRuntimeSchema(): Promise<void> {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    const versionContentColumns = [
+      "ALTER TABLE wave5_artifact_versions ADD COLUMN IF NOT EXISTS canonical_format TEXT DEFAULT 'markdown'",
+      'ALTER TABLE wave5_artifact_versions ADD COLUMN IF NOT EXISTS content_md TEXT',
+      'ALTER TABLE wave5_artifact_versions ADD COLUMN IF NOT EXISTS content_json_native TEXT',
+      'ALTER TABLE wave5_artifact_versions ADD COLUMN IF NOT EXISTS content_schema_version TEXT',
+      "ALTER TABLE wave5_artifact_versions ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT DEFAULT 'synced'",
+      'ALTER TABLE wave5_artifact_versions ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT',
+      'ALTER TABLE wave5_artifact_versions ADD COLUMN IF NOT EXISTS projection_error TEXT',
+    ];
+    for (const statement of versionContentColumns) {
+      await dbRun(statement);
+    }
     await dbRun(`
       CREATE TABLE IF NOT EXISTS wave5_mutation_proposals (
         mutation_id TEXT PRIMARY KEY,
@@ -426,18 +473,34 @@ export async function createWave5Artifact(input: CreateWave5ArtifactInput): Prom
     metadata: input.metadata || {},
   };
   const content = appendProvenanceFooter(input.content, provenance);
+  const contentEnvelope = createArtifactContentEnvelope({
+    artifactType,
+    canonicalFormat: input.canonicalFormat,
+    contentMd: input.contentMd || content,
+    contentJson: input.contentJson,
+    contentSchemaVersion: input.contentSchemaVersion,
+  });
   await dbRun(
     `INSERT INTO wave5_artifacts (
       artifact_id, organization_id, artifact_type, status, title, content, current_version,
+      canonical_format, content_md, content_json_native, content_schema_version,
+      markdown_projection_status, markdown_projected_at, projection_error,
       project_id, conversation_id, research_session_id, ai_run_id, trust_bundle_id,
       citations_json, source_refs_json, provenance_json, created_by
-    ) VALUES (?, ?, ?, 'draft', ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, 'draft', ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       artifactId,
       input.organizationId,
       artifactType,
       input.title,
       content,
+      contentEnvelope.canonicalFormat,
+      contentEnvelope.contentMd,
+      contentEnvelope.contentJson === undefined ? null : safeJsonStringify(contentEnvelope.contentJson),
+      contentEnvelope.contentSchemaVersion || null,
+      contentEnvelope.markdownProjectionStatus,
+      contentEnvelope.markdownProjectedAt || null,
+      contentEnvelope.projectionError || null,
       input.projectId || null,
       input.conversationId || null,
       input.researchSessionId || null,
@@ -451,13 +514,22 @@ export async function createWave5Artifact(input: CreateWave5ArtifactInput): Prom
   );
   await dbRun(
     `INSERT INTO wave5_artifact_versions (
-      version_id, artifact_id, organization_id, version, content, mutation_id, provenance_json, created_by
-    ) VALUES (?, ?, ?, 1, ?, NULL, ?, ?)`,
+      version_id, artifact_id, organization_id, version, content, canonical_format, content_md,
+      content_json_native, content_schema_version, markdown_projection_status, markdown_projected_at,
+      projection_error, mutation_id, provenance_json, created_by
+    ) VALUES (?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?)`,
     [
       uuidv4(),
       artifactId,
       input.organizationId,
       content,
+      contentEnvelope.canonicalFormat,
+      contentEnvelope.contentMd,
+      contentEnvelope.contentJson === undefined ? null : safeJsonStringify(contentEnvelope.contentJson),
+      contentEnvelope.contentSchemaVersion || null,
+      contentEnvelope.markdownProjectionStatus,
+      contentEnvelope.markdownProjectedAt || null,
+      contentEnvelope.projectionError || null,
       safeJsonStringify(provenance),
       input.userId,
     ]
@@ -514,24 +586,41 @@ export async function listWave5ArtifactVersions(
 ): Promise<any[]> {
   await ensureWave5ArtifactRuntimeSchema();
   const rows = await dbAll(
-    `SELECT version_id, artifact_id, organization_id, version, content, mutation_id,
-            provenance_json, created_by, created_at
+    `SELECT version_id, artifact_id, organization_id, version, content, canonical_format,
+            content_md, content_json_native, content_schema_version, markdown_projection_status,
+            markdown_projected_at, projection_error, mutation_id, provenance_json, created_by, created_at
      FROM wave5_artifact_versions
      WHERE artifact_id = ? AND organization_id = ?
      ORDER BY version ASC`,
     [artifactId, organizationId]
   );
-  return (rows || []).map((row: any) => ({
-    versionId: row.version_id,
-    artifactId: row.artifact_id,
-    organizationId: row.organization_id,
-    version: Number(row.version),
-    content: row.content,
-    mutationId: row.mutation_id || null,
-    provenance: safeJsonParse(row.provenance_json, {}),
-    createdBy: row.created_by,
-    createdAt: row.created_at,
-  }));
+  return (rows || []).map((row: any) => {
+    const contentEnvelope = createArtifactContentEnvelope({
+      artifactType: 'version',
+      canonicalFormat: row.canonical_format || undefined,
+      contentMd: row.content_md || row.content,
+      contentJson: safeJsonParse(row.content_json_native, undefined),
+      contentSchemaVersion: row.content_schema_version || undefined,
+    });
+    return {
+      versionId: row.version_id,
+      artifactId: row.artifact_id,
+      organizationId: row.organization_id,
+      version: Number(row.version),
+      content: row.content,
+      contentEnvelope,
+      canonicalFormat: contentEnvelope.canonicalFormat,
+      contentMd: contentEnvelope.contentMd,
+      contentJson: contentEnvelope.contentJson,
+      markdownProjectionStatus: row.markdown_projection_status || contentEnvelope.markdownProjectionStatus,
+      markdownProjectedAt: row.markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
+      projectionError: row.projection_error || contentEnvelope.projectionError || null,
+      mutationId: row.mutation_id || null,
+      provenance: safeJsonParse(row.provenance_json, {}),
+      createdBy: row.created_by,
+      createdAt: row.created_at,
+    };
+  });
 }
 
 export async function proposeWave5Mutation(input: ProposeWave5MutationInput): Promise<any> {

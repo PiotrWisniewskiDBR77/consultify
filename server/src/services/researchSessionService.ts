@@ -8,6 +8,7 @@ import {
   buildQaWebSearchResults,
   isQaAiMode,
 } from './ai/qaAiRuntime.js';
+import { createArtifactContentEnvelope } from './artifacts/contentProjectionService.js';
 import { createWave5Artifact } from './wave5ArtifactRuntimeService.js';
 
 export type ResearchSessionStatus =
@@ -294,6 +295,17 @@ export async function ensureResearchSessionSchema(): Promise<void> {
     await dbRun(`ALTER TABLE research_report_artifacts ADD COLUMN wave5_artifact_id TEXT`).catch(
       () => undefined
     );
+    const contentContractColumns = [
+      "ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS canonical_format TEXT DEFAULT 'markdown'",
+      'ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS content_json_native TEXT',
+      'ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS content_schema_version TEXT',
+      "ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS markdown_projection_status TEXT DEFAULT 'synced'",
+      'ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS markdown_projected_at TEXT',
+      'ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS projection_error TEXT',
+    ];
+    for (const statement of contentContractColumns) {
+      await dbRun(statement).catch(() => undefined);
+    }
     await dbRun(
       `CREATE INDEX IF NOT EXISTS idx_research_sessions_org_status ON research_sessions(organization_id, status)`
     );
@@ -928,17 +940,28 @@ export async function createFinalResearchArtifact(params: {
   const artifactId = `research-artifact-${uuidv4()}`;
   const title = `Research Report: ${params.session.mission}`.slice(0, 240);
   const content = buildResearchReportMarkdown(params);
+  const contentEnvelope = createArtifactContentEnvelope({
+    artifactType: 'research_report',
+    canonicalFormat: 'markdown',
+    contentMd: content,
+  });
   await dbRun(
     `INSERT INTO research_report_artifacts (
       artifact_id, session_id, organization_id, artifact_type, title,
-      content_markdown, citations_json, evidence_node_ids_json, created_by
-    ) VALUES (?, ?, ?, 'research_report', ?, ?, ?, ?, ?)`,
+      content_markdown, canonical_format, content_schema_version, markdown_projection_status,
+      markdown_projected_at, projection_error, citations_json, evidence_node_ids_json, created_by
+    ) VALUES (?, ?, ?, 'research_report', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       artifactId,
       params.session.sessionId,
       params.session.organizationId,
       title,
       content,
+      contentEnvelope.canonicalFormat,
+      contentEnvelope.contentSchemaVersion || null,
+      contentEnvelope.markdownProjectionStatus,
+      contentEnvelope.markdownProjectedAt || null,
+      contentEnvelope.projectionError || null,
       safeJsonStringify(params.output.citations || []),
       safeJsonStringify(params.evidenceGraph.map((node) => node.nodeId)),
       params.actorUserId,
@@ -950,6 +973,8 @@ export async function createFinalResearchArtifact(params: {
     artifactType: 'research_report',
     title,
     content,
+    canonicalFormat: 'markdown',
+    contentMd: content,
     researchSessionId: params.session.sessionId,
     citations: params.output.citations || [],
     sourceRefs: params.evidenceGraph.map((node) => ({
@@ -975,6 +1000,7 @@ export async function createFinalResearchArtifact(params: {
     artifactType: 'research_report',
     title,
     contentMarkdown: content,
+    contentEnvelope,
     citations: params.output.citations || [],
     evidenceNodeIds: params.evidenceGraph.map((node) => node.nodeId),
   };
@@ -1007,7 +1033,9 @@ export async function getResearchSession(
   );
   const artifact = row.final_artifact_id
     ? await dbGet(
-        `SELECT artifact_id, artifact_type, title, content_markdown, citations_json,
+        `SELECT artifact_id, artifact_type, title, content_markdown, canonical_format,
+                content_json_native, content_schema_version, markdown_projection_status,
+                markdown_projected_at, projection_error, citations_json,
                 evidence_node_ids_json, wave5_artifact_id, created_at
          FROM research_report_artifacts
          WHERE artifact_id = ? AND organization_id = ?`,
@@ -1038,16 +1066,34 @@ export async function getResearchSession(
       createdAt: node.created_at,
     })),
     artifact
-      ? {
+      ? (() => {
+          const contentEnvelope = createArtifactContentEnvelope({
+            artifactType: (artifact as any).artifact_type,
+            canonicalFormat: (artifact as any).canonical_format || 'markdown',
+            contentMd: (artifact as any).content_markdown,
+            contentJson: safeJsonParse((artifact as any).content_json_native, undefined),
+            contentSchemaVersion: (artifact as any).content_schema_version || undefined,
+          });
+          return {
           artifactId: (artifact as any).artifact_id,
           artifactType: (artifact as any).artifact_type,
           title: (artifact as any).title,
           contentMarkdown: (artifact as any).content_markdown,
+          contentEnvelope,
+          canonicalFormat: contentEnvelope.canonicalFormat,
+          contentMd: contentEnvelope.contentMd,
+          contentJson: contentEnvelope.contentJson,
+          markdownProjectionStatus:
+            (artifact as any).markdown_projection_status || contentEnvelope.markdownProjectionStatus,
+          markdownProjectedAt:
+            (artifact as any).markdown_projected_at || contentEnvelope.markdownProjectedAt || null,
+          projectionError: (artifact as any).projection_error || contentEnvelope.projectionError || null,
           citations: safeJsonParse((artifact as any).citations_json, []),
           evidenceNodeIds: safeJsonParse((artifact as any).evidence_node_ids_json, []),
           wave5ArtifactId: (artifact as any).wave5_artifact_id || null,
           createdAt: (artifact as any).created_at,
-        }
+          };
+        })()
       : null
   );
 }

@@ -40,6 +40,7 @@ import {
   updateCertificationReviewState,
 } from '../services/partnerCertificationService.js';
 import PartnerCommissionService from '../services/partnerCommissionService.js';
+import { ensurePartnerDemoDataset } from '../services/partnerDemoSeedService.js';
 import { getActivePartnerOrgIdForUser } from '../services/partnerOrgResolution.js';
 import {
   getPartnerPayoutSettings,
@@ -149,6 +150,7 @@ async function requirePartnerOrgId(req: Request, res: Response): Promise<string 
     res.status(403).json({ success: false, error: 'Partner organization required' });
     return null;
   }
+  await ensurePartnerDemoDataset(partnerOrgId);
   return partnerOrgId;
 }
 
@@ -247,6 +249,7 @@ router.post('/connect', async (req: Request, res: Response, next: NextFunction) 
 
     const existingPartnerOrgId = await getActivePartnerOrgIdForUser(userId);
     if (existingPartnerOrgId) {
+      await ensurePartnerDemoDataset(existingPartnerOrgId);
       const db = getDatabase();
       const org = await DbPromise.get<any>(
         db,
@@ -333,6 +336,7 @@ router.post('/connect', async (req: Request, res: Response, next: NextFunction) 
     }
 
     const referralIdentity = await ensurePartnerReferralIdentity(partnerOrgId, name);
+    await ensurePartnerDemoDataset(partnerOrgId);
 
     // Return connection info (connected: true)
     const org = await DbPromise.get<any>(
