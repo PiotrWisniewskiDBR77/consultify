@@ -25,6 +25,14 @@ import { useConversationStore } from '@/store/useConversationStore';
 
 import { type FilterChip, ModuleHub, type ModuleTab, type ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { OutputsAggregateTabContent } from './OutputsAggregateTabContent';
 import { parseRapTabFromQuery, RAP_TAB_TO_QUERY } from './outputsLibraryTabQuery';
 import { PresentationsTabContent } from './PresentationsTabContent';
@@ -669,10 +677,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
   }, [activeFilters, activeTab, filtersOpen, setSinglePreset, t, toggleFilter]);
 
   const commandRowContent = useMemo(() => {
-    const chipBase =
-      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
-    const badgeBase =
-      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
+    const chipBase = '';
+    const chipActive = MENU_3_CHIP_ACTIVE;
+    const chipInactive = MENU_3_CHIP_INACTIVE;
+    const badgeBase = '';
+    const badgeActive = MENU_3_BADGE_ACTIVE;
+    const badgeInactive = MENU_3_BADGE_INACTIVE;
 
     if (
       activeTab === 'outputs_all' ||
@@ -707,24 +717,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
         activeFilters.some((f) => f.column === 'outputKind' && f.value === v);
 
       return (
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className={MENU_3_LEFT_CLASS}>
           <button
             type="button"
             onClick={() => setSinglePreset('outputKind', null)}
             className={`${chipBase} ${
-              !activeFilters.some((f) => f.column === 'outputKind')
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+              !activeFilters.some((f) => f.column === 'outputKind') ? chipActive : chipInactive
             }`}
             title={t('common.all', 'All')}
           >
-            <span className="w-2 h-2 rounded-full bg-gradient-to-br from-blue-400 via-purple-400 to-emerald-400" />
+            <span className={MENU_3_ALL_DOT_CLASS} />
             <span>{t('common.all', 'All')}</span>
             <span
               className={`${badgeBase} ${
-                !activeFilters.some((f) => f.column === 'outputKind')
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+                !activeFilters.some((f) => f.column === 'outputKind') ? badgeActive : badgeInactive
               }`}
             >
               {artifactOutputRows.length}
@@ -740,22 +746,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
                 onClick={() =>
                   setSinglePreset('outputKind', active ? null : c.value, c.label, c.dot)
                 }
-                className={`${chipBase} ${
-                  active
-                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-                }`}
+                className={`${chipBase} ${active ? chipActive : chipInactive}`}
                 title={c.label}
               >
                 <span className={`w-2 h-2 rounded-full ${c.dot}`} />
                 <span>{c.label}</span>
-                <span
-                  className={`${badgeBase} ${
-                    active
-                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
+                <span className={`${badgeBase} ${active ? badgeActive : badgeInactive}`}>
                   {count}
                 </span>
               </button>
@@ -767,17 +763,11 @@ export const ReportsAndPresentationsHub: React.FC = () => {
 
     if (activeTab === 'outputs_sheets') {
       return (
-        <div className="flex items-center gap-2">
-          <span
-            className={`${chipBase} bg-emerald-500/10 text-emerald-700 dark:text-emerald-200 border-emerald-500/40`}
-          >
+        <div className={MENU_3_LEFT_CLASS}>
+          <span className={MENU_3_CHIP_ACTIVE}>
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
             <span>{t('rap.outputs.kind.sheet', 'Sheets')}</span>
-            <span
-              className={`${badgeBase} bg-emerald-500/30 text-emerald-700 dark:text-emerald-200`}
-            >
-              {sheetRows.length}
-            </span>
+            <span className={MENU_3_BADGE_ACTIVE}>{sheetRows.length}</span>
           </span>
         </div>
       );
@@ -838,23 +828,20 @@ export const ReportsAndPresentationsHub: React.FC = () => {
       activeFilters.some((f) => f.column === 'status' && String(f.value).toLowerCase() === value);
 
     return (
-      <div className="flex items-center gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
         <button
           type="button"
           onClick={() => setSinglePreset('status', null)}
           className={`${chipBase} ${
-            !activeFilters.some((f) => f.column === 'status')
-              ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-              : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            !activeFilters.some((f) => f.column === 'status') ? chipActive : chipInactive
           }`}
           title={t('common.all', 'All')}
         >
+          <span className={MENU_3_ALL_DOT_CLASS} />
           <span>{t('common.all', 'All')}</span>
           <span
             className={`${badgeBase} ${
-              !activeFilters.some((f) => f.column === 'status')
-                ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
+              !activeFilters.some((f) => f.column === 'status') ? badgeActive : badgeInactive
             }`}
           >
             {items.length}
@@ -870,22 +857,12 @@ export const ReportsAndPresentationsHub: React.FC = () => {
               key={key}
               type="button"
               onClick={() => setSinglePreset('status', active ? null : key, c.label, c.dot)}
-              className={`${chipBase} ${
-                active
-                  ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-              }`}
+              className={`${chipBase} ${active ? chipActive : chipInactive}`}
               title={c.label}
             >
               <span className={`w-2 h-2 rounded-full ${c.dot}`} />
               <span>{c.label}</span>
-              <span
-                className={`${badgeBase} ${
-                  active
-                    ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                    : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                }`}
-              >
+              <span className={`${badgeBase} ${active ? badgeActive : badgeInactive}`}>
                 {count}
               </span>
             </button>

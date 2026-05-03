@@ -4172,6 +4172,110 @@ export const Api = {
     return handleResponse(res, 'Failed to create idea from chat');
   },
 
+  workCanvasSaveToWorkspace: async (
+    draftId: string,
+    payload: { target: 'idea' | 'note' | 'initiative' }
+  ): Promise<{
+    success: boolean;
+    data: {
+      draft: any;
+      linkedResource: { type: 'idea' | 'note' | 'initiative'; id: string; title: string; url?: string };
+      readBack: Record<string, unknown>;
+      version?: any;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/save-to-workspace`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to save Canvas to workspace');
+  },
+
+  workCanvasCreateOutput: async (
+    draftId: string,
+    payload: { outputType: 'presentation' | 'table' | 'report' }
+  ): Promise<{
+    success: boolean;
+    data: {
+      draft: any;
+      outputResource: {
+        type: 'presentation' | 'table' | 'report';
+        id: string;
+        title: string;
+        url?: string;
+      };
+      readBack: Record<string, unknown>;
+      version?: any;
+    };
+  }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/create-output`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to create Canvas output');
+  },
+
+  workCanvasGetVersions: async (draftId: string): Promise<any[]> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/versions`,
+      { headers: getHeaders() }
+    );
+    const result = await handleResponse(res, 'Failed to fetch Canvas versions');
+    return Array.isArray(result?.data) ? result.data : Array.isArray(result) ? result : [];
+  },
+
+  workCanvasApplyOperation: async (
+    draftId: string,
+    payload: {
+      operation:
+        | { type: 'replace_selection'; selectedText: string; replacementMd: string; reason?: string }
+        | { type: 'append_section'; heading: string; contentMd: string; reason?: string }
+        | { type: 'update_document'; contentMd: string; reason?: string };
+    }
+  ): Promise<{ success: boolean; data: { draft: any; version?: any; diff?: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/operations`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+        body: JSON.stringify(payload),
+      }
+    );
+    return handleResponse(res, 'Failed to apply Canvas operation');
+  },
+
+  workCanvasShare: async (
+    draftId: string
+  ): Promise<{ success: boolean; data: { draft: any; share: { token: string; url: string; title: string } } }> => {
+    const res = await fetch(`${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/share`, {
+      method: 'POST',
+      headers: getHeaders(),
+    });
+    return handleResponse(res, 'Failed to share Canvas draft');
+  },
+
+  workCanvasRestoreVersion: async (
+    draftId: string,
+    versionId: string
+  ): Promise<{ success: boolean; data: { draft: any; restoredVersion: any } }> => {
+    const res = await fetch(
+      `${API_URL}/work-canvas/drafts/${encodeURIComponent(draftId)}/versions/${encodeURIComponent(versionId)}/restore`,
+      {
+        method: 'POST',
+        headers: getHeaders(),
+      }
+    );
+    return handleResponse(res, 'Failed to restore Canvas version');
+  },
+
   getTaskComments: async (taskId: string): Promise<any[]> => {
     const res = await fetch(`${API_URL}/tasks/${taskId}/comments`, { headers: getHeaders() });
     if (!res.ok) throw new Error('Failed to fetch comments');

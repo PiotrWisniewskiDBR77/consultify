@@ -17,6 +17,13 @@ import { FilterChip } from '../shared/ModuleHub/ActiveFilters';
 import { ModuleHub } from '../shared/ModuleHub/ModuleHub';
 import { ModuleTab, type OpenDocument, TabConfig, ViewMode } from '../shared/ModuleHub/types';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ACTION_NEUTRAL,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { KPICreateModal } from './KPICreateModal';
 import {
   filterKpisByLifecycle,
@@ -63,12 +70,10 @@ interface ResultsRuntimeChipProps {
 }
 
 const ResultsRuntimeChip: React.FC<ResultsRuntimeChipProps> = ({ label, value, dotClassName }) => (
-  <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+  <div className={MENU_3_CHIP_INACTIVE}>
     <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotClassName}`} />
     <span>{label}</span>
-    <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
-      {value}
-    </span>
+    <span className={MENU_3_BADGE_INACTIVE}>{value}</span>
   </div>
 );
 
@@ -83,12 +88,10 @@ const ResultsInfoChip: React.FC<ResultsInfoChipProps> = ({
   value,
   dotClassName = 'bg-slate-400',
 }) => (
-  <div className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60">
+  <div className={MENU_3_CHIP_INACTIVE}>
     <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotClassName}`} />
     <span>{label}</span>
-    <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-200">
-      {value}
-    </span>
+    <span className={MENU_3_BADGE_INACTIVE}>{value}</span>
   </div>
 );
 
@@ -1023,17 +1026,11 @@ export const ResultsHub: React.FC = () => {
   ]);
 
   const commandRowContent = useMemo(() => {
-    const chipBase =
-      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
     const actionButton = (label: string, onClick: () => void, active = false) => (
       <button
         type="button"
         onClick={onClick}
-        className={`${chipBase} ${
-          active
-            ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-            : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-        }`}
+        className={active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
       >
         {label}
       </button>
@@ -1041,14 +1038,14 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'results_initiatives') {
       return governedRuntimeStrip ? (
-        <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
+        <div className={MENU_3_LEFT_CLASS}>{governedRuntimeStrip}</div>
       ) : null;
     }
 
     if (activeTab === 'results_kpi') {
       return (
         <div className="flex w-full items-center justify-between gap-3">
-          <div className="flex items-center gap-2 overflow-x-auto">
+          <div className={MENU_3_LEFT_CLASS}>
             {actionButton(
               t('results.kpi.workspace.catalog', 'KPI List'),
               () => setKpiWorkspaceMode('catalog'),
@@ -1078,7 +1075,7 @@ export const ResultsHub: React.FC = () => {
             <button
               type="button"
               onClick={() => setSignalSheetCreateNonce(Date.now())}
-              className="inline-flex shrink-0 items-center gap-2 rounded-full bg-primary-500 px-4 py-2 text-sm font-medium text-white hover:bg-primary-400 transition-colors"
+              className={MENU_3_ACTION_NEUTRAL}
             >
               <Plus size={14} />
               <span>{t('results.kpi.signals.addSheet', '+ Add sheet')}</span>
@@ -1090,11 +1087,11 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'roi') {
       return (
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className={MENU_3_LEFT_CLASS}>
           <button
             type="button"
             onClick={openRoiPicker}
-            className={`${chipBase} bg-primary-500/15 text-primary-300 border-primary-500/30 hover:bg-primary-500/20`}
+            className={MENU_3_ACTION_NEUTRAL}
             title={t('results.roi.actions.recordActual', 'Record actual')}
           >
             <Plus size={14} />
@@ -1103,7 +1100,7 @@ export const ResultsHub: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('roi_analysis')}
-            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            className={MENU_3_CHIP_INACTIVE}
             title={t('results.tabs.roiAnalysis', 'ROI Analysis')}
           >
             <DollarSign size={14} className="text-amber-400" />
@@ -1116,11 +1113,11 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'roi_analysis') {
       return (
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className={MENU_3_LEFT_CLASS}>
           <button
             type="button"
             onClick={() => setActiveTab('roi')}
-            className={`${chipBase} bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50`}
+            className={MENU_3_CHIP_INACTIVE}
             title={t('results.tabs.roi', 'ROI')}
           >
             <DollarSign size={14} className="text-amber-400" />
@@ -1133,7 +1130,7 @@ export const ResultsHub: React.FC = () => {
 
     if (activeTab === 'results_reports') {
       return (
-        <div className="flex items-center gap-2 overflow-x-auto">
+        <div className={MENU_3_LEFT_CLASS}>
           {actionButton(
             t('results.reporting.workspace.trackedKpis', 'Tracked KPI'),
             () => {
@@ -1180,7 +1177,7 @@ export const ResultsHub: React.FC = () => {
     }
 
     return governedRuntimeStrip ? (
-      <div className="flex items-center gap-2 overflow-x-auto">{governedRuntimeStrip}</div>
+      <div className={MENU_3_LEFT_CLASS}>{governedRuntimeStrip}</div>
     ) : null;
   }, [
     activeTab,

@@ -35,10 +35,7 @@ function asSaveState(value: unknown, fallback: CanvasSaveState): CanvasSaveState
     : fallback;
 }
 
-function asLifecycleState(
-  value: unknown,
-  fallback: CanvasLifecycleState
-): CanvasLifecycleState {
+function asLifecycleState(value: unknown, fallback: CanvasLifecycleState): CanvasLifecycleState {
   return value === 'in_review' || value === 'approved' || value === 'draft' ? value : fallback;
 }
 

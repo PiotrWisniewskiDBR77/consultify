@@ -48,6 +48,53 @@ export interface CanvasSelection {
   headingPath?: string[];
 }
 
+export interface CanvasVersionSummary {
+  id: string;
+  draftId: string;
+  operationType: string;
+  summary: string;
+  contentMd: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface CanvasDiffSummary {
+  addedLines: number;
+  removedLines: number;
+  summary: string;
+}
+
+export type CanvasEditOperation =
+  | {
+      type: 'replace_selection';
+      selectedText: string;
+      replacementMd: string;
+      reason?: string;
+    }
+  | {
+      type: 'append_section';
+      heading: string;
+      contentMd: string;
+      reason?: string;
+    }
+  | {
+      type: 'update_document';
+      contentMd: string;
+      reason?: string;
+    };
+
+export interface CanvasOperationResponse {
+  draft: CanvasDocumentState;
+  version?: CanvasVersionSummary;
+  diff?: CanvasDiffSummary;
+}
+
+export interface CanvasShareResult {
+  token: string;
+  url: string;
+  title: string;
+}
+
 export type CanvasOperation =
   | {
       type: 'copy';

@@ -63,12 +63,12 @@ import { presentationsTabQueryForHomeBridge } from '@/components/ReportsAndPrese
 import {
   MENU_2_TAB_ACTIVE,
   MENU_2_TAB_INACTIVE,
-  MENU_3_BADGE_ACTIVE,
-  MENU_3_BADGE_BASE,
-  MENU_3_BADGE_INACTIVE,
   MENU_3_ACTION_DANGER,
   MENU_3_ACTION_NEUTRAL,
   MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_BASE,
+  MENU_3_BADGE_INACTIVE,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_BASE,
   MENU_3_CHIP_INACTIVE,
@@ -2101,60 +2101,60 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
     return (
       <div className={MENU_3_ROW_CLASS}>
         <div className="flex min-h-8 items-center gap-2 overflow-x-auto whitespace-nowrap no-scrollbar">
-        {/* List button */}
-        <button
-          onClick={handleShowList}
-          className={
-            isListActive
-              ? TAB_ACTIVE.replace('border-l-2', '')
-              : TAB_INACTIVE.replace('border-l-2', '')
-          }
-          style={{ flexShrink: 0 }}
-        >
-          <List size={14} />
-          <span>{isPolish ? 'Lista' : 'List'}</span>
-        </button>
+          {/* List button */}
+          <button
+            onClick={handleShowList}
+            className={
+              isListActive
+                ? TAB_ACTIVE.replace('border-l-2', '')
+                : TAB_INACTIVE.replace('border-l-2', '')
+            }
+            style={{ flexShrink: 0 }}
+          >
+            <List size={14} />
+            <span>{isPolish ? 'Lista' : 'List'}</span>
+          </button>
 
-        {/* Separator */}
-        <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
+          {/* Separator */}
+          <div className="w-px h-6 bg-slate-200/70 dark:bg-white/[0.06] shrink-0" />
 
-        {/* Document Tabs */}
-        {openDocuments.map((doc) => {
-          const isActive = doc.id === activeDocumentId;
-          const leftBorderColor = TYPE_COLORS[doc.type];
-          const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
+          {/* Document Tabs */}
+          {openDocuments.map((doc) => {
+            const isActive = doc.id === activeDocumentId;
+            const leftBorderColor = TYPE_COLORS[doc.type];
+            const statusColor = STATUS_COLORS[doc.status] || 'bg-slate-400';
 
-          return (
-            <div
-              key={doc.id}
-              className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
-              onClick={() => setActiveDocumentId(doc.id)}
-            >
-              {/* Type Icon */}
-              {doc.type === 'task' && <CheckSquare size={14} />}
-              {doc.type === 'idea' && <Lightbulb size={14} />}
-              {doc.type === 'decision' && <Scale size={14} />}
-              {doc.type === 'notification' && <Bell size={14} />}
-
-              {/* Name (truncated) */}
-              <span className="max-w-[150px] truncate">{doc.name}</span>
-
-              {/* Status Dot */}
-              <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
-
-              {/* Close Button */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCloseDocument(doc.id);
-                }}
-                className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+            return (
+              <div
+                key={doc.id}
+                className={`group shrink-0 ${isActive ? TAB_ACTIVE : TAB_INACTIVE} ${leftBorderColor} border-l-2`}
+                onClick={() => setActiveDocumentId(doc.id)}
               >
-                <X size={14} />
-              </button>
-            </div>
-          );
-        })}
+                {/* Type Icon */}
+                {doc.type === 'task' && <CheckSquare size={14} />}
+                {doc.type === 'idea' && <Lightbulb size={14} />}
+                {doc.type === 'decision' && <Scale size={14} />}
+                {doc.type === 'notification' && <Bell size={14} />}
+
+                {/* Name (truncated) */}
+                <span className="max-w-[150px] truncate">{doc.name}</span>
+
+                {/* Status Dot */}
+                <span className={`w-2 h-2 rounded-full ${statusColor}`} title={doc.status} />
+
+                {/* Close Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCloseDocument(doc.id);
+                  }}
+                  className="p-1 rounded-md opacity-0 group-hover:opacity-100 text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-white/[0.06] transition-all"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -2259,31 +2259,19 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
               </div>
 
               <div className={MENU_3_RIGHT_CLASS}>
-                <button
-                  onClick={() => bulk?.changePriority()}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
+                <button onClick={() => bulk?.changePriority()} className={MENU_3_ACTION_NEUTRAL}>
                   <Flag size={14} />
                   {isPolish ? 'Priorytet' : 'Priority'}
                 </button>
-                <button
-                  onClick={() => bulk?.changeDueDate()}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
+                <button onClick={() => bulk?.changeDueDate()} className={MENU_3_ACTION_NEUTRAL}>
                   <Calendar size={14} />
                   {isPolish ? 'Termin' : 'Due date'}
                 </button>
-                <button
-                  onClick={() => bulk?.complete()}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
+                <button onClick={() => bulk?.complete()} className={MENU_3_ACTION_NEUTRAL}>
                   <CheckSquare size={14} />
                   {isPolish ? 'Gotowe' : 'Done'}
                 </button>
-                <button
-                  onClick={() => bulk?.deleteSelected()}
-                  className={MENU_3_ACTION_DANGER}
-                >
+                <button onClick={() => bulk?.deleteSelected()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
                   {isPolish ? 'Usuń' : 'Delete'}
                 </button>
@@ -2365,12 +2353,6 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
       const badgeBase = MENU_3_BADGE_BASE;
       const badgeInactive = MENU_3_BADGE_INACTIVE;
       const badgeActive = MENU_3_BADGE_ACTIVE;
-      const menu3ActionBase =
-        'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
-      const menu3ActionNeutral =
-        'border-slate-200/60 bg-slate-100 text-slate-600 hover:bg-white/60 dark:border-navy-700/60 dark:bg-navy-800 dark:text-slate-300 dark:hover:bg-navy-900/50';
-      const menu3ActionDanger =
-        'border-red-300/40 bg-red-50/70 text-red-700 hover:bg-red-100/80 dark:border-red-500/20 dark:bg-red-500/[0.08] dark:text-red-300 dark:hover:bg-red-500/[0.14]';
 
       // V3-A03: bulk selection is a *mode* of the same command row (no extra line).
       if (inboxBulkUi?.selectedCount) {
@@ -2529,64 +2511,43 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
             <div className={MENU_3_RIGHT_CLASS}>
               {bulk?.approve ? (
-                <button
-                  onClick={() => bulk?.approve?.()}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
+                <button onClick={() => bulk?.approve?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Check size={14} />
                   {isPolish ? 'Przyjęta' : 'Approve'}
                 </button>
               ) : null}
               {bulk?.reject ? (
-                <button
-                  onClick={() => bulk?.reject?.()}
-                  className={MENU_3_ACTION_DANGER}
-                >
+                <button onClick={() => bulk?.reject?.()} className={MENU_3_ACTION_DANGER}>
                   <X size={14} />
                   {isPolish ? 'Odrzuć' : 'Reject'}
                 </button>
               ) : null}
               {bulk?.remind ? (
-                <button
-                  onClick={() => bulk?.remind?.()}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
+                <button onClick={() => bulk?.remind?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Bell size={14} />
                   {isPolish ? 'Przypomnij' : 'Remind'}
                 </button>
               ) : null}
               {bulk?.escalate ? (
-                <button
-                  onClick={() => bulk?.escalate?.()}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
+                <button onClick={() => bulk?.escalate?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <TrendingUp size={14} />
                   {isPolish ? 'Eskaluj' : 'Escalate'}
                 </button>
               ) : null}
               {bulk?.snoozeTomorrow ? (
-                <button
-                  onClick={() => bulk?.snoozeTomorrow?.()}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
+                <button onClick={() => bulk?.snoozeTomorrow?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Clock size={14} />
                   {isPolish ? 'Odłóż (jutro)' : 'Snooze (tomorrow)'}
                 </button>
               ) : null}
               {bulk?.changePriority ? (
-                <button
-                  onClick={() => bulk?.changePriority?.()}
-                  className={MENU_3_ACTION_NEUTRAL}
-                >
+                <button onClick={() => bulk?.changePriority?.()} className={MENU_3_ACTION_NEUTRAL}>
                   <Flag size={14} />
                   {isPolish ? 'Priorytet' : 'Priority'}
                 </button>
               ) : null}
               {bulk?.deleteSelected ? (
-                <button
-                  onClick={() => bulk?.deleteSelected?.()}
-                  className={MENU_3_ACTION_DANGER}
-                >
+                <button onClick={() => bulk?.deleteSelected?.()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
                   {isPolish ? 'Usuń' : 'Delete'}
                 </button>
@@ -2627,25 +2588,16 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
                   {isPolish ? 'Odznacz' : 'Clear'}
                 </button>
               </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => bulk?.convert()}
-                  className={`${menu3ActionBase} ${menu3ActionNeutral}`}
-                >
+              <div className={MENU_3_RIGHT_CLASS}>
+                <button onClick={() => bulk?.convert()} className={MENU_3_ACTION_NEUTRAL}>
                   <Sparkles size={14} />
                   {isPolish ? 'Konwertuj' : 'Convert'}
                 </button>
-                <button
-                  onClick={() => bulk?.tag()}
-                  className={`${menu3ActionBase} ${menu3ActionNeutral}`}
-                >
+                <button onClick={() => bulk?.tag()} className={MENU_3_ACTION_NEUTRAL}>
                   <Tag size={14} />
                   {isPolish ? 'Taguj' : 'Tag'}
                 </button>
-                <button
-                  onClick={() => bulk?.deleteSelected()}
-                  className={`${menu3ActionBase} ${menu3ActionDanger}`}
-                >
+                <button onClick={() => bulk?.deleteSelected()} className={MENU_3_ACTION_DANGER}>
                   <Trash2 size={14} />
                   {isPolish ? 'Usuń' : 'Delete'}
                 </button>

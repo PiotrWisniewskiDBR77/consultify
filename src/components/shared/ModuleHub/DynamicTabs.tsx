@@ -264,10 +264,7 @@ export const DynamicTabs: React.FC<DynamicTabsProps> = ({
           )}
         </div>
 
-        <div
-          id="module-command-row-right-actions"
-          className={MENU_3_RIGHT_CLASS}
-        >
+        <div id="module-command-row-right-actions" className={MENU_3_RIGHT_CLASS}>
           {rightContent}
         </div>
       </div>

@@ -71,27 +71,27 @@ export function getCanvasActionAvailability(
   }
 
   if (actionId === 'create-presentation' && !capabilities.canCreatePresentation) {
-    return availability(actionId, 'coming_soon', 'Presentation output runtime is not wired yet.');
+    return availability(actionId, 'disabled_missing_runtime', 'Presentation output runtime is unavailable.');
   }
 
   if (actionId === 'create-table' && !capabilities.canCreateTable) {
-    return availability(actionId, 'coming_soon', 'Table output runtime is not wired yet.');
+    return availability(actionId, 'disabled_missing_runtime', 'Table output runtime is unavailable.');
   }
 
   if (actionId === 'create-report' && !capabilities.canCreateReport) {
-    return availability(actionId, 'coming_soon', 'Report output runtime is not wired yet.');
+    return availability(actionId, 'disabled_missing_runtime', 'Report output runtime is unavailable.');
   }
 
   if (actionId === 'send-to-idea' && !capabilities.canSendToIdea) {
-    return availability(actionId, 'coming_soon', 'Idea handoff is not wired to this panel yet.');
+    return availability(actionId, 'disabled_missing_runtime', 'Idea handoff runtime is unavailable.');
   }
 
   if (actionId === 'save-as-note' && !capabilities.canSaveAsNote) {
-    return availability(actionId, 'coming_soon', 'Notes need a dedicated save endpoint.');
+    return availability(actionId, 'disabled_missing_runtime', 'Note save runtime is unavailable.');
   }
 
   if (actionId === 'create-initiative' && !capabilities.canCreateInitiative) {
-    return availability(actionId, 'coming_soon', 'Initiative creation needs payload mapping.');
+    return availability(actionId, 'disabled_missing_runtime', 'Initiative creation runtime is unavailable.');
   }
 
   return availability(actionId, 'enabled');

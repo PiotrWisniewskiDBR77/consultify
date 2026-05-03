@@ -86,13 +86,43 @@ describe('canvas workspace front-end contract helpers', () => {
     });
 
     expect(getCanvasActionAvailability('create-presentation', baseDocument)).toMatchObject({
-      status: 'coming_soon',
-      reason: 'Presentation output runtime is not wired yet.',
+      status: 'disabled_missing_runtime',
+      reason: 'Presentation output runtime is unavailable.',
     });
 
     expect(
       getCanvasActionAvailability('send-to-idea', baseDocument, { canSendToIdea: true }).status
     ).toBe('enabled');
+  });
+
+  it('enables all Canvas business actions when runtime capabilities are present', () => {
+    const capabilities = {
+      canCreatePresentation: true,
+      canCreateTable: true,
+      canCreateReport: true,
+      canSendToIdea: true,
+      canSaveAsNote: true,
+      canCreateInitiative: true,
+    };
+
+    expect(getCanvasActionAvailability('send-to-idea', baseDocument, capabilities).status).toBe(
+      'enabled'
+    );
+    expect(getCanvasActionAvailability('save-as-note', baseDocument, capabilities).status).toBe(
+      'enabled'
+    );
+    expect(getCanvasActionAvailability('create-initiative', baseDocument, capabilities).status).toBe(
+      'enabled'
+    );
+    expect(getCanvasActionAvailability('create-presentation', baseDocument, capabilities).status).toBe(
+      'enabled'
+    );
+    expect(getCanvasActionAvailability('create-table', baseDocument, capabilities).status).toBe(
+      'enabled'
+    );
+    expect(getCanvasActionAvailability('create-report', baseDocument, capabilities).status).toBe(
+      'enabled'
+    );
   });
 
   it('disables document actions when there is no active Canvas document', () => {

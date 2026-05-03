@@ -107,6 +107,14 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { type RowAction, RowActionsMenu } from '../shared/RowActionsMenu';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 
@@ -4426,7 +4434,7 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
   );
 
   const CommandRowContent = (
-    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+    <div className={MENU_3_LEFT_CLASS}>
       {activeTab === 'library' ? (
         <>
           {(
@@ -4481,16 +4489,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => setLibraryCategoryFilter(isActive ? 'all' : opt.id)}
-                className={[
-                  'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
-                  isActive
-                    ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-                    : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
-                ].join(' ')}
+                className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
               >
-                <span className={`w-2 h-2 rounded-full ${opt.dot}`} />
+                <span
+                  className={
+                    opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.dot}`
+                  }
+                />
                 <span>{opt.label}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                   {opt.count}
                 </span>
               </button>
@@ -4508,16 +4515,15 @@ export const DiscoveryToolsHub: React.FC<DiscoveryToolsHubProps> = ({
                 key={opt.id}
                 type="button"
                 onClick={() => setStatusFilter(isActive ? 'all' : opt.id)}
-                className={[
-                  'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
-                  isActive
-                    ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-                    : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
-                ].join(' ')}
+                className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
               >
-                <span className={`w-2 h-2 rounded-full ${opt.bgColor}`} />
+                <span
+                  className={
+                    opt.id === 'all' ? MENU_3_ALL_DOT_CLASS : `w-2 h-2 rounded-full ${opt.bgColor}`
+                  }
+                />
                 <span>{label}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                   {count}
                 </span>
               </button>

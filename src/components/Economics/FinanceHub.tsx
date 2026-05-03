@@ -67,6 +67,14 @@ import {
   ViewMode,
 } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { EmptyStateInline } from '../shared/NModeBlocks/EmptyStateInline';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { FinanceDegradedBanner } from './FinanceDegradedBanner';
@@ -1580,7 +1588,7 @@ export const FinanceHub: React.FC = () => {
       },
     ];
     return (
-      <div className="flex items-center gap-1.5 overflow-x-auto">
+      <div className={MENU_3_LEFT_CLASS}>
         {chips.map((chip) => (
           <button
             key={chip.id}
@@ -1606,54 +1614,43 @@ export const FinanceHub: React.FC = () => {
                 },
               ]);
             }}
-            className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-all duration-150 whitespace-nowrap ${
-              chip.active
-                ? 'bg-violet-50/80 text-violet-700 border-violet-300/60 shadow-sm dark:bg-violet-500/10 dark:text-violet-200 dark:border-violet-400/30'
-                : 'bg-white/60 text-slate-600 border-slate-200/60 hover:bg-slate-50 hover:border-slate-300/60 dark:bg-white/[0.02] dark:text-slate-400 dark:border-white/[0.06] dark:hover:bg-white/[0.04]'
-            }`}
+            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
           >
             <span
-              className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotColors[chip.id] || dotColors.all}`}
+              className={
+                chip.id === 'all'
+                  ? MENU_3_ALL_DOT_CLASS
+                  : `h-1.5 w-1.5 rounded-full flex-shrink-0 ${dotColors[chip.id] || dotColors.all}`
+              }
             />
             <span>{chip.label}</span>
-            <span
-              className={`ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none ${
-                chip.active
-                  ? 'bg-violet-200/60 text-violet-800 dark:bg-violet-500/20 dark:text-violet-200'
-                  : 'bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-400'
-              }`}
-            >
+            <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
               {chip.count}
             </span>
           </button>
         ))}
         <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
         {runtimeChips.map((chip) => (
-          <div
-            key={chip.label}
-            className="h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]"
-          >
+          <div key={chip.label} className={MENU_3_CHIP_INACTIVE}>
             <span className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${chip.dotClassName}`} />
             <span>{chip.label}</span>
-            <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
-              {chip.value}
-            </span>
+            <span className={MENU_3_BADGE_INACTIVE}>{chip.value}</span>
           </div>
         ))}
         {isFinanceRuntimeV8 && v8Dashboard && (
           <>
             <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-            <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+            <div className={MENU_3_CHIP_INACTIVE}>
               <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-rose-400" />
               <span>{t('finance.v8.unlinked', 'Unlinked')}</span>
-              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+              <span className={MENU_3_BADGE_INACTIVE}>
                 {v8Dashboard.linkageHealth?.unlinkedInitiativesCount ?? 0}
               </span>
             </div>
-            <div className="h-8 inline-flex items-center gap-1.5 rounded-lg px-2.5 text-[11px] font-medium border whitespace-nowrap bg-white/60 text-slate-600 border-slate-200/60 dark:bg-white/[0.02] dark:text-slate-300 dark:border-white/[0.06]">
+            <div className={MENU_3_CHIP_INACTIVE}>
               <span className="h-1.5 w-1.5 rounded-full flex-shrink-0 bg-orange-400" />
               <span>{t('finance.v8.staleRefreshes', 'Stale')}</span>
-              <span className="ml-0.5 px-1.5 py-0.5 text-[10px] rounded-md font-semibold tabular-nums leading-none bg-slate-100 text-slate-500 dark:bg-white/[0.06] dark:text-slate-300">
+              <span className={MENU_3_BADGE_INACTIVE}>
                 {v8Dashboard.staleSourceRefreshesCount ?? 0}
               </span>
             </div>

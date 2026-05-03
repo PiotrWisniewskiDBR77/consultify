@@ -284,17 +284,21 @@ export async function ensureResearchSessionSchema(): Promise<void> {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `);
-    await dbRun(`ALTER TABLE research_sessions ADD COLUMN final_artifact_id TEXT`).catch(
+    await dbRun(
+      `ALTER TABLE research_sessions ADD COLUMN IF NOT EXISTS final_artifact_id TEXT`
+    ).catch(() => undefined);
+    await dbRun(`ALTER TABLE research_sessions ADD COLUMN IF NOT EXISTS error TEXT`).catch(
       () => undefined
     );
-    await dbRun(`ALTER TABLE research_sessions ADD COLUMN error TEXT`).catch(() => undefined);
-    await dbRun(`ALTER TABLE research_sessions ADD COLUMN completed_at TEXT`).catch(
+    await dbRun(`ALTER TABLE research_sessions ADD COLUMN IF NOT EXISTS completed_at TEXT`).catch(
       () => undefined
     );
-    await dbRun(`ALTER TABLE research_sessions ADD COLUMN archived_at TEXT`).catch(() => undefined);
-    await dbRun(`ALTER TABLE research_report_artifacts ADD COLUMN wave5_artifact_id TEXT`).catch(
+    await dbRun(`ALTER TABLE research_sessions ADD COLUMN IF NOT EXISTS archived_at TEXT`).catch(
       () => undefined
     );
+    await dbRun(
+      `ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS wave5_artifact_id TEXT`
+    ).catch(() => undefined);
     const contentContractColumns = [
       "ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS canonical_format TEXT DEFAULT 'markdown'",
       'ALTER TABLE research_report_artifacts ADD COLUMN IF NOT EXISTS content_json_native TEXT',

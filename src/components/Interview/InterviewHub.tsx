@@ -71,12 +71,11 @@ const safeToastError = (error: any, defaultMessage: string, _isPolish: boolean) 
 
 import { type GridItem, GridView } from '@/components/shared/ModuleHub/GridView';
 import {
+  MENU_3_ACTION_NEUTRAL,
+  MENU_3_ALL_DOT_CLASS,
   MENU_3_BADGE_ACTIVE,
   MENU_3_BADGE_BASE,
   MENU_3_BADGE_INACTIVE,
-  MENU_3_ACTION_DANGER,
-  MENU_3_ACTION_NEUTRAL,
-  MENU_3_ALL_DOT_CLASS,
   MENU_3_CHIP_ACTIVE,
   MENU_3_CHIP_BASE,
   MENU_3_CHIP_INACTIVE,
@@ -2256,9 +2255,7 @@ export const InterviewHub: React.FC = () => {
                       : chipInactive
                   } ${b.disabled ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
-                  {b.id === 'all' ? (
-                    <span className={MENU_3_ALL_DOT_CLASS} />
-                  ) : null}
+                  {b.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
                   <span>{b.label}</span>
                   <span
                     className={`${badgeBase} ${
@@ -2434,6 +2431,9 @@ export const InterviewHub: React.FC = () => {
       const chipBase = MENU_3_CHIP_BASE;
       const chipInactive = MENU_3_CHIP_INACTIVE;
       const chipActive = MENU_3_CHIP_ACTIVE;
+      const badgeBase = MENU_3_BADGE_BASE;
+      const badgeInactive = MENU_3_BADGE_INACTIVE;
+      const badgeActive = MENU_3_BADGE_ACTIVE;
 
       const buttons: Array<{
         id: 'all' | 'default' | 'active';
@@ -2471,8 +2471,13 @@ export const InterviewHub: React.FC = () => {
                   onClick={b.onClick}
                   className={`${chipBase} ${templateStatusFilter === b.id ? chipActive : chipInactive}`}
                 >
+                  {b.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
                   <span>{b.label}</span>
-                  <span className="rounded-full bg-slate-100 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                  <span
+                    className={`${badgeBase} ${
+                      templateStatusFilter === b.id ? badgeActive : badgeInactive
+                    }`}
+                  >
                     {b.count}
                   </span>
                 </button>
@@ -2490,11 +2495,9 @@ export const InterviewHub: React.FC = () => {
       const chipActive = MENU_3_CHIP_ACTIVE;
       const badgeBase = MENU_3_BADGE_BASE;
       const badgeInactive = MENU_3_BADGE_INACTIVE;
-      const badgeActive = 'bg-purple-500/30 text-purple-700 dark:text-purple-200';
+      const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
         'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
-      const bulkAction =
-        'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
       const buttons: Array<{
         id: 'all' | 'completed' | 'failed' | 'published';
@@ -2544,7 +2547,7 @@ export const InterviewHub: React.FC = () => {
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
-              <div className="flex items-center gap-2">
+              <div className={MENU_3_RIGHT_CLASS}>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
@@ -2566,7 +2569,7 @@ export const InterviewHub: React.FC = () => {
                         : 'Bulk insight export coming soon'
                     )
                   }
-                  className={`${bulkAction} ${chipInactive}`}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Download size={14} />
                   {isPolish ? 'Eksport' : 'Export'}
@@ -2580,7 +2583,7 @@ export const InterviewHub: React.FC = () => {
                         : 'Bulk Tools export coming soon'
                     )
                   }
-                  className={`${bulkAction} ${chipInactive}`}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Send size={14} />
                   Tools
@@ -2606,7 +2609,7 @@ export const InterviewHub: React.FC = () => {
                     className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
                   >
                     {button.id === 'all' ? (
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
+                      <span className={MENU_3_ALL_DOT_CLASS} />
                     ) : Icon ? (
                       <Icon size={14} />
                     ) : null}
@@ -2631,11 +2634,9 @@ export const InterviewHub: React.FC = () => {
       const chipActive = MENU_3_CHIP_ACTIVE;
       const badgeBase = MENU_3_BADGE_BASE;
       const badgeInactive = MENU_3_BADGE_INACTIVE;
-      const badgeActive = 'bg-purple-500/30 text-purple-700 dark:text-purple-200';
+      const badgeActive = MENU_3_BADGE_ACTIVE;
       const bulkGhostPill =
         'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
-      const bulkAction =
-        'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-[11px] font-semibold transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/35 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900';
 
       const buttons: Array<{
         id: 'all' | 'draft' | 'pending_review' | 'promoted';
@@ -2672,7 +2673,7 @@ export const InterviewHub: React.FC = () => {
         return (
           <div className={MENU_3_ROW_CLASS}>
             <div className={MENU_3_INNER_CLASS}>
-              <div className="flex items-center gap-2">
+              <div className={MENU_3_RIGHT_CLASS}>
                 <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {selectedCount} {isPolish ? 'zaznaczonych' : 'selected'}
                 </span>
@@ -2694,7 +2695,7 @@ export const InterviewHub: React.FC = () => {
                         : 'Bulk initiative promotion coming soon'
                     )
                   }
-                  className={`${bulkAction} ${chipInactive}`}
+                  className={MENU_3_ACTION_NEUTRAL}
                 >
                   <Rocket size={14} />
                   {isPolish ? 'Przekaż dalej' : 'Move forward'}
@@ -2720,7 +2721,7 @@ export const InterviewHub: React.FC = () => {
                     className={`${chipBase} ${isActive ? chipActive : chipInactive}`}
                   >
                     {button.id === 'all' ? (
-                      <span className="h-1.5 w-1.5 rounded-full bg-slate-400 dark:bg-slate-500" />
+                      <span className={MENU_3_ALL_DOT_CLASS} />
                     ) : Icon ? (
                       <Icon size={14} />
                     ) : null}

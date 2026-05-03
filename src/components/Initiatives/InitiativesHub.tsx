@@ -59,6 +59,15 @@ import { PortfolioListView } from '../Portfolio/PortfolioListView';
 // ModuleHub components
 import { FilterChip, ModuleHub, ModuleTab, OpenDocument, ViewMode } from '../shared/ModuleHub';
 import { useModuleOpenDocuments } from '../shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+  MENU_3_RIGHT_CLASS,
+} from '../shared/ModuleMenu3';
 import { TableWithPreviewLayout } from '../shared/TableWithPreviewLayout';
 import { PortfolioAnalysisView } from './Analysis';
 import type { AnalysisSubview } from './Analysis/types';
@@ -1445,45 +1454,33 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
 
   const analysisCommandRow = (
     <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
         {ANALYSIS_SUBVIEWS.map((sv) => (
           <button
             key={sv.id}
             type="button"
             onClick={() => setAnalysisSubview(sv.id)}
-            className={[
-              'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap',
-              analysisSubview === sv.id
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50',
-            ].join(' ')}
+            className={analysisSubview === sv.id ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
           >
             {sv.icon}
             {t(sv.labelKey, sv.id.charAt(0).toUpperCase() + sv.id.slice(1))}
           </button>
         ))}
       </div>
-      {analysisActionButtons && (
-        <div className="flex items-center gap-1.5 shrink-0">{analysisActionButtons}</div>
-      )}
+      {analysisActionButtons && <div className={MENU_3_RIGHT_CLASS}>{analysisActionButtons}</div>}
     </div>
   );
 
   const commandRowContent = (
-    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+    <div className={MENU_3_LEFT_CLASS}>
       <button
         type="button"
         onClick={() => setActiveStatusFilter(null)}
-        className={[
-          'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
-          !activeStatusFilter
-            ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-            : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
-        ].join(' ')}
+        className={!activeStatusFilter ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
       >
-        <span className="w-2 h-2 rounded-full bg-slate-500" />
+        <span className={MENU_3_ALL_DOT_CLASS} />
         <span>ALL</span>
-        <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+        <span className={!activeStatusFilter ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
           {statusCounts.all ?? 0}
         </span>
       </button>
@@ -1496,37 +1493,26 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
             key={s}
             type="button"
             onClick={() => setActiveStatusFilter(isActive ? null : s)}
-            className={[
-              'inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border transition-colors duration-150 whitespace-nowrap active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 ring-offset-white dark:ring-offset-navy-900',
-              isActive
-                ? 'border-purple-500/40 bg-purple-500/10 text-purple-700 dark:text-purple-200'
-                : 'border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 hover:bg-slate-100/70 dark:hover:bg-white/[0.05]',
-            ].join(' ')}
+            className={isActive ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
           >
             <span className={`w-2 h-2 rounded-full ${meta?.dotColor || 'bg-slate-400'}`} />
             <span>{meta?.label || s}</span>
-            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-              {count}
-            </span>
+            <span className={isActive ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>{count}</span>
           </button>
         );
       })}
       {v8PendingDecisionChains.length > 0 && (
         <>
           <div className="mx-1 h-5 w-px shrink-0 bg-slate-200/70 dark:bg-white/[0.08]" />
-          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+          <div className={MENU_3_CHIP_INACTIVE}>
             <span className="w-2 h-2 rounded-full bg-violet-400" />
             <span>{t('initiatives.v8.pendingChains', 'V8 pending chains')}</span>
-            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-              {v8PendingDecisionChains.length}
-            </span>
+            <span className={MENU_3_BADGE_INACTIVE}>{v8PendingDecisionChains.length}</span>
           </div>
-          <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+          <div className={MENU_3_CHIP_INACTIVE}>
             <span className="w-2 h-2 rounded-full bg-amber-400" />
             <span>{t('initiatives.v8.pendingDecisions', 'V8 pending decisions')}</span>
-            <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-              {totalPendingDecisionEntries}
-            </span>
+            <span className={MENU_3_BADGE_INACTIVE}>{totalPendingDecisionEntries}</span>
           </div>
         </>
       )}
@@ -1544,7 +1530,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
           </div>
           {hasActiveV8Snapshot && (
             <>
-              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+              <div className={MENU_3_CHIP_INACTIVE}>
                 <span
                   className={`w-2 h-2 rounded-full ${
                     v8InitiativeSnapshot.wbsCompleteness.complete
@@ -1553,7 +1539,7 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                   }`}
                 />
                 <span>{t('initiatives.v8.wbs', 'V8 WBS')}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                <span className={MENU_3_BADGE_INACTIVE}>
                   {v8InitiativeSnapshot.wbsCompleteness.complete
                     ? t('initiatives.v8.complete', 'complete')
                     : t('initiatives.v8.gaps', {
@@ -1562,26 +1548,24 @@ export const InitiativesHub: React.FC<InitiativesHubProps> = ({ initialTab = 'li
                       })}
                 </span>
               </div>
-              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+              <div className={MENU_3_CHIP_INACTIVE}>
                 <span className="w-2 h-2 rounded-full bg-sky-400" />
                 <span>{t('initiatives.v8.criticalPath', 'V8 critical path')}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                <span className={MENU_3_BADGE_INACTIVE}>
                   {v8InitiativeSnapshot.criticalPath.length}
                 </span>
               </div>
-              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+              <div className={MENU_3_CHIP_INACTIVE}>
                 <span className="w-2 h-2 rounded-full bg-fuchsia-400" />
                 <span>{t('initiatives.v8.dependencies', 'V8 dependencies')}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
+                <span className={MENU_3_BADGE_INACTIVE}>
                   {v8InitiativeSnapshot.crossInitiativeDependencies.length}
                 </span>
               </div>
-              <div className="inline-flex items-center gap-1.5 h-8 px-2.5 rounded-full text-[11px] font-medium border whitespace-nowrap border-slate-200/70 dark:border-white/[0.06] text-slate-700 dark:text-slate-300 bg-white/60 dark:bg-white/[0.02]">
+              <div className={MENU_3_CHIP_INACTIVE}>
                 <span className="w-2 h-2 rounded-full bg-amber-400" />
                 <span>{t('initiatives.v8.snapshotDecisions', 'V8 initiative decisions')}</span>
-                <span className="rounded-full bg-slate-200 dark:bg-navy-700 px-2 py-0.5 text-[10px] text-slate-700 dark:text-slate-200">
-                  {v8SnapshotPendingDecisionEntries}
-                </span>
+                <span className={MENU_3_BADGE_INACTIVE}>{v8SnapshotPendingDecisionEntries}</span>
               </div>
             </>
           )}

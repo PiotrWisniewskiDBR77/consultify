@@ -19,18 +19,24 @@ import type {
   ActiveCanvasDocument,
   CanvasActionAvailability,
   CanvasActionId,
+  CanvasRuntimeCapabilities,
   CanvasDocumentState,
+  CanvasDiffSummary,
+  CanvasEditOperation,
   CanvasLifecycleState,
   CanvasMode,
   CanvasProjectionStatus,
   CanvasSaveState,
+  CanvasSelection,
   CanvasStarterId,
+  CanvasVersionSummary,
 } from '@/types/canvasWorkspace';
 import {
   mapDraftResponseToCanvasDocumentState,
   starterIdToCanvasKind,
 } from '@/utils/canvas/canvasDraftAdapter';
 import { getCanvasActionAvailability } from '@/utils/canvas/canvasActionAvailability';
+import { Api } from '@/services/api';
 
 import { CanvasMarkdownRenderer } from './CanvasMarkdownRenderer';
 
@@ -48,6 +54,8 @@ interface WorkCanvasDocumentPanelProps {
   conversationId?: string | null;
   initialProjectionStatus?: CanvasProjectionStatus;
   onActiveDocumentChange?: (document: ActiveCanvasDocument) => void;
+  onAskTeresaSelection?: (selection: CanvasSelection, document: ActiveCanvasDocument) => void;
+  onCanvasSelectionChange?: (selection: CanvasSelection | null) => void;
   onClose?: () => void;
 }
 
@@ -204,6 +212,28 @@ const outputActionIds: CanvasActionId[] = [
 
 const fileActionIds: CanvasActionId[] = ['copy', 'share', 'save', 'close'];
 
+const canvasRuntimeCapabilities: CanvasRuntimeCapabilities = {
+  canCreatePresentation: true,
+  canCreateTable: true,
+  canCreateReport: true,
+  canSendToIdea: true,
+  canSaveAsNote: true,
+  canCreateInitiative: true,
+  canShare: true,
+};
+
+const workspaceTargets: Partial<Record<CanvasActionId, 'idea' | 'note' | 'initiative'>> = {
+  'send-to-idea': 'idea',
+  'save-as-note': 'note',
+  'create-initiative': 'initiative',
+};
+
+const outputTargets: Partial<Record<CanvasActionId, 'presentation' | 'table' | 'report'>> = {
+  'create-presentation': 'presentation',
+  'create-table': 'table',
+  'create-report': 'report',
+};
+
 const actionIcons: Record<CanvasActionId, React.ComponentType<{ size?: number }>> = {
   copy: Copy,
   share: Share2,
@@ -269,10 +299,31 @@ function statusClass(saveState: CanvasSaveState): string {
   return 'bg-amber-500/10 text-amber-300';
 }
 
+function previewText(text: string, max = 96): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  return normalized.length > max ? `${normalized.slice(0, max - 1)}…` : normalized;
+}
+
+function buildLineDiff(before: string, after: string): CanvasDiffSummary {
+  const beforeLines = String(before || '').split('\n');
+  const afterLines = String(after || '').split('\n');
+  const beforeSet = new Set(beforeLines);
+  const afterSet = new Set(afterLines);
+  const addedLines = afterLines.filter((line) => !beforeSet.has(line)).length;
+  const removedLines = beforeLines.filter((line) => !afterSet.has(line)).length;
+  return {
+    addedLines,
+    removedLines,
+    summary: `${addedLines} lines added, ${removedLines} lines removed`,
+  };
+}
+
 export function WorkCanvasDocumentPanel({
   conversationId,
   initialProjectionStatus = 'synced',
   onActiveDocumentChange,
+  onAskTeresaSelection,
+  onCanvasSelectionChange,
   onClose,
 }: WorkCanvasDocumentPanelProps) {
   const [mode, setMode] = React.useState<CanvasMode>(() => getInitialMode());
@@ -284,6 +335,16 @@ export function WorkCanvasDocumentPanel({
   const [isTemplatesOpen, setIsTemplatesOpen] = React.useState(false);
   const [isDiagnosticsOpen, setIsDiagnosticsOpen] = React.useState(false);
   const [actionFeedback, setActionFeedback] = React.useState<string | null>(null);
+  const [activeActionId, setActiveActionId] = React.useState<CanvasActionId | null>(null);
+  const [canvasSelection, setCanvasSelection] = React.useState<CanvasSelection | null>(null);
+  const [versions, setVersions] = React.useState<CanvasVersionSummary[]>([]);
+  const [isVersionsOpen, setIsVersionsOpen] = React.useState(false);
+  const [isVersionsLoading, setIsVersionsLoading] = React.useState(false);
+  const [latestDiff, setLatestDiff] = React.useState<CanvasDiffSummary | null>(null);
+  const documentViewRef = React.useRef<HTMLElement | null>(null);
+  const lastSavedContentRef = React.useRef(documentState.contentMd);
+  const latestContentRef = React.useRef(documentState.contentMd);
+  const autosaveTimerRef = React.useRef<number | null>(null);
 
   const activeTemplate =
     starterTemplates.find((template) => template.id === documentState.activeStarterId) ||
@@ -308,12 +369,17 @@ export function WorkCanvasDocumentPanel({
     });
   }, [documentState, onActiveDocumentChange]);
 
+  React.useEffect(() => {
+    latestContentRef.current = documentState.contentMd;
+  }, [documentState.contentMd]);
+
+  React.useEffect(() => {
+    onCanvasSelectionChange?.(canvasSelection);
+  }, [canvasSelection, onCanvasSelectionChange]);
+
   const persistDraft = React.useCallback(
     async (draft: CanvasDocumentState = documentState) => {
-      if (!conversationId) {
-        setDocumentState((current) => ({ ...current, saveState: 'unsaved' }));
-        return;
-      }
+      const effectiveConversationId = conversationId || `canvas-${Date.now()}`;
 
       setDocumentState((current) => ({ ...current, saveState: 'saving' }));
       try {
@@ -329,7 +395,7 @@ export function WorkCanvasDocumentPanel({
               ...(token ? { Authorization: `Bearer ${token}` } : {}),
             },
             body: JSON.stringify({
-              conversationId,
+              conversationId: effectiveConversationId,
               kind: 'document',
               title: draft.title,
               content: draft.contentMd,
@@ -344,20 +410,38 @@ export function WorkCanvasDocumentPanel({
         const json = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(json?.error || 'Failed to save Canvas draft');
         const savedDraft = json?.data;
-        setDocumentState((current) =>
-          mapDraftResponseToCanvasDocumentState(savedDraft, {
+        const nextState = mapDraftResponseToCanvasDocumentState(savedDraft, {
+          ...draft,
+          draftId: draft.draftId,
+          saveState: 'saved',
+          projectionError: null,
+        });
+        setDocumentState((current) => {
+          if (current.contentMd !== draft.contentMd) {
+            return {
+              ...current,
+              draftId: savedDraft?.id || current.draftId || draft.draftId,
+              saveState: 'unsaved',
+            };
+          }
+          return mapDraftResponseToCanvasDocumentState(savedDraft, {
             ...current,
             draftId: current.draftId || draft.draftId,
             saveState: 'saved',
             projectionError: null,
-          })
-        );
+          });
+        });
+        if (latestContentRef.current === draft.contentMd) {
+          lastSavedContentRef.current = nextState.contentMd;
+        }
+        return nextState;
       } catch (error) {
         setDocumentState((current) => ({
           ...current,
           saveState: 'failed',
           projectionError: error instanceof Error ? error.message : 'Save failed',
         }));
+        return null;
       }
     },
     [conversationId, documentState]
@@ -385,6 +469,112 @@ export function WorkCanvasDocumentPanel({
     }));
   };
 
+  React.useEffect(() => {
+    if (autosaveTimerRef.current) {
+      window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    }
+    if (
+      !documentState.draftId ||
+      documentState.saveState !== 'unsaved' ||
+      documentState.contentMd === lastSavedContentRef.current
+    ) {
+      return undefined;
+    }
+    const snapshot = documentState;
+    autosaveTimerRef.current = window.setTimeout(() => {
+      void persistDraft(snapshot);
+    }, 1400);
+    return () => {
+      if (autosaveTimerRef.current) window.clearTimeout(autosaveTimerRef.current);
+      autosaveTimerRef.current = null;
+    };
+  }, [documentState, persistDraft]);
+
+  const captureMarkdownSelection = (event: React.SyntheticEvent<HTMLTextAreaElement>) => {
+    const target = event.currentTarget;
+    const selectedText = target.value.slice(target.selectionStart, target.selectionEnd);
+    if (!selectedText.trim()) {
+      setCanvasSelection(null);
+      return;
+    }
+    setCanvasSelection({
+      draftId: documentState.draftId,
+      mode: 'md',
+      selectedText,
+      startOffset: target.selectionStart,
+      endOffset: target.selectionEnd,
+    });
+  };
+
+  const captureDocumentSelection = () => {
+    const selection = window.getSelection();
+    const selectedText = selection?.toString() || '';
+    const root = documentViewRef.current;
+    if (!selection || !root || !selectedText.trim()) {
+      setCanvasSelection(null);
+      return;
+    }
+    const anchorNode = selection.anchorNode;
+    if (!anchorNode || !root.contains(anchorNode)) return;
+    setCanvasSelection({
+      draftId: documentState.draftId,
+      mode: 'document',
+      selectedText,
+    });
+  };
+
+  const clearCanvasSelection = () => {
+    window.getSelection()?.removeAllRanges();
+    setCanvasSelection(null);
+  };
+
+  const askTeresaAboutSelection = () => {
+    if (!canvasSelection) return;
+    onAskTeresaSelection?.(canvasSelection, {
+      draftId: documentState.draftId,
+      title: documentState.title,
+      saveState: documentState.saveState,
+      lifecycleState: documentState.lifecycleState,
+      activeStarterId: documentState.activeStarterId,
+    });
+    setActionFeedback(`Selected context sent to Teresa: "${previewText(canvasSelection.selectedText, 72)}"`);
+  };
+
+  const applyCanvasOperation = async (operation: CanvasEditOperation) => {
+    setActiveActionId('save');
+    try {
+      const draft = await ensurePersistedDraft();
+      if (!draft?.draftId) throw new Error('Canvas draft could not be saved before operation.');
+      const result = await Api.workCanvasApplyOperation(draft.draftId, { operation });
+      setDocumentState((current) =>
+        mapDraftResponseToCanvasDocumentState(result.data.draft, {
+          ...current,
+          saveState: 'saved',
+        })
+      );
+      if (result.data.diff) setLatestDiff(result.data.diff);
+      setActionFeedback(result.data.diff?.summary || 'Canvas operation applied.');
+      clearCanvasSelection();
+    } catch (error) {
+      setActionFeedback(error instanceof Error ? error.message : 'Failed to apply Canvas operation.');
+    } finally {
+      setActiveActionId(null);
+    }
+  };
+
+  const replaceSelectedText = () => {
+    if (!canvasSelection) return;
+    const replacementMd = window.prompt('Replace selected Canvas text with:', canvasSelection.selectedText);
+    if (replacementMd === null) return;
+    void applyCanvasOperation({
+      type: 'replace_selection',
+      selectedText: canvasSelection.selectedText,
+      replacementMd,
+      reason: 'Manual selected-context replacement',
+    });
+  };
+
   const resetToTemplate = () => {
     const next = createDocumentState(activeTemplate);
     setDocumentState(next);
@@ -408,8 +598,135 @@ export function WorkCanvasDocumentPanel({
     setActionFeedback(availability.reason || `${availability.label} is not available yet.`);
   };
 
+  const ensurePersistedDraft = async (): Promise<CanvasDocumentState | null> => {
+    if (documentState.draftId) return documentState;
+    const saved = await persistDraft(documentState);
+    return saved;
+  };
+
+  const runWorkspaceAction = async (
+    actionId: CanvasActionId,
+    target: 'idea' | 'note' | 'initiative'
+  ) => {
+    setActiveActionId(actionId);
+    setActionFeedback(`Saving Canvas to ${target}...`);
+    try {
+      const draft = await ensurePersistedDraft();
+      if (!draft?.draftId) throw new Error('Canvas draft could not be saved before handoff.');
+      const result = await Api.workCanvasSaveToWorkspace(draft.draftId, { target });
+      const linked = result.data.linkedResource;
+      setDocumentState((current) =>
+        mapDraftResponseToCanvasDocumentState(result.data.draft, {
+          ...current,
+          saveState: 'saved',
+        })
+      );
+      setActionFeedback(`${linked.title} saved to ${linked.type}. ${linked.id}`);
+    } catch (error) {
+      setActionFeedback(error instanceof Error ? error.message : `Failed to save Canvas to ${target}.`);
+    } finally {
+      setActiveActionId(null);
+    }
+  };
+
+  const runOutputAction = async (
+    actionId: CanvasActionId,
+    outputType: 'presentation' | 'table' | 'report'
+  ) => {
+    setActiveActionId(actionId);
+    setActionFeedback(`Creating ${outputType} from Canvas...`);
+    try {
+      const draft = await ensurePersistedDraft();
+      if (!draft?.draftId) throw new Error('Canvas draft could not be saved before output creation.');
+      const result = await Api.workCanvasCreateOutput(draft.draftId, { outputType });
+      const output = result.data.outputResource;
+      setDocumentState((current) =>
+        mapDraftResponseToCanvasDocumentState(result.data.draft, {
+          ...current,
+          saveState: 'saved',
+        })
+      );
+      setActionFeedback(`${output.title} created. ${output.id}`);
+    } catch (error) {
+      setActionFeedback(error instanceof Error ? error.message : `Failed to create ${outputType}.`);
+    } finally {
+      setActiveActionId(null);
+    }
+  };
+
+  const runShareAction = async () => {
+    setActiveActionId('share');
+    setActionFeedback('Preparing Canvas share link...');
+    try {
+      const draft = await ensurePersistedDraft();
+      if (!draft?.draftId) throw new Error('Canvas draft could not be saved before sharing.');
+      const result = await Api.workCanvasShare(draft.draftId);
+      const shareUrl = result.data.share.url;
+      setDocumentState((current) =>
+        mapDraftResponseToCanvasDocumentState(result.data.draft, {
+          ...current,
+          saveState: 'saved',
+        })
+      );
+      await navigator.clipboard?.writeText(shareUrl);
+      setActionFeedback(`Share link ready and copied: ${shareUrl}`);
+    } catch (error) {
+      setActionFeedback(error instanceof Error ? error.message : 'Failed to share Canvas draft.');
+    } finally {
+      setActiveActionId(null);
+    }
+  };
+
+  const loadVersions = async () => {
+    const draft = await ensurePersistedDraft();
+    if (!draft?.draftId) return;
+    setIsVersionsLoading(true);
+    setIsVersionsOpen(true);
+    try {
+      const result = await Api.workCanvasGetVersions(draft.draftId);
+      setVersions(result);
+    } catch (error) {
+      setActionFeedback(error instanceof Error ? error.message : 'Failed to load Canvas versions.');
+    } finally {
+      setIsVersionsLoading(false);
+    }
+  };
+
+  const restoreVersion = async (version: CanvasVersionSummary) => {
+    if (!documentState.draftId) return;
+    try {
+      const result = await Api.workCanvasRestoreVersion(documentState.draftId, version.id);
+      setDocumentState((current) =>
+        mapDraftResponseToCanvasDocumentState(result.data.draft, {
+          ...current,
+          saveState: 'saved',
+        })
+      );
+      setLatestDiff(buildLineDiff(documentState.contentMd, version.contentMd));
+      setActionFeedback(`Restored Canvas version from ${new Date(version.createdAt).toLocaleString()}.`);
+      await loadVersions();
+    } catch (error) {
+      setActionFeedback(error instanceof Error ? error.message : 'Failed to restore Canvas version.');
+    }
+  };
+
+  const showChangesFromLatestVersion = () => {
+    const latest = versions[0];
+    if (!latest) {
+      setActionFeedback('No Canvas versions available yet.');
+      return;
+    }
+    const diff = buildLineDiff(latest.contentMd, documentState.contentMd);
+    setLatestDiff(diff);
+    setActionFeedback(`Show changes: ${diff.summary}.`);
+  };
+
   const handleCommandAction = (actionId: CanvasActionId) => {
-    const availability = getCanvasActionAvailability(actionId, documentState);
+    const availability = getCanvasActionAvailability(
+      actionId,
+      documentState,
+      canvasRuntimeCapabilities
+    );
     if (availability.status !== 'enabled') {
       handleUnavailableAction(availability);
       return;
@@ -425,6 +742,23 @@ export function WorkCanvasDocumentPanel({
       return;
     }
 
+    if (actionId === 'share') {
+      void runShareAction();
+      return;
+    }
+
+    const workspaceTarget = workspaceTargets[actionId];
+    if (workspaceTarget) {
+      void runWorkspaceAction(actionId, workspaceTarget);
+      return;
+    }
+
+    const outputTarget = outputTargets[actionId];
+    if (outputTarget) {
+      void runOutputAction(actionId, outputTarget);
+      return;
+    }
+
     if (actionId === 'close') {
       if (onClose) {
         onClose();
@@ -435,9 +769,14 @@ export function WorkCanvasDocumentPanel({
   };
 
   const renderCommandButton = (actionId: CanvasActionId) => {
-    const availability = getCanvasActionAvailability(actionId, documentState);
+    const availability = getCanvasActionAvailability(
+      actionId,
+      documentState,
+      canvasRuntimeCapabilities
+    );
     const Icon = actionIcons[actionId];
     const isUnavailable = availability.status !== 'enabled';
+    const isLoading = activeActionId === actionId;
     const title =
       availability.status === 'enabled'
         ? availability.label
@@ -456,9 +795,9 @@ export function WorkCanvasDocumentPanel({
             ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:text-slate-500 dark:hover:bg-white/10 dark:hover:text-slate-300'
             : 'text-slate-500 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
-        data-action-status={availability.status}
+        data-action-status={isLoading ? 'loading' : availability.status}
       >
-        <Icon size={15} />
+        {isLoading ? <RefreshCw size={15} className="animate-spin" /> : <Icon size={15} />}
         {availability.status === 'coming_soon' ? (
           <span className="sr-only">Coming soon</span>
         ) : null}
@@ -616,6 +955,12 @@ export function WorkCanvasDocumentPanel({
                         : projectionLabel(documentState.markdownProjectionStatus)}
                     </strong>
                   </div>
+                  {latestDiff ? (
+                    <div className="rounded-xl bg-slate-100 p-2 text-[11px] dark:bg-white/10">
+                      <div className="font-semibold text-slate-700 dark:text-slate-100">Show changes</div>
+                      <div className="mt-1 text-slate-500 dark:text-slate-300">{latestDiff.summary}</div>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {documentState.markdownProjectionStatus === 'failed' ? (
@@ -636,7 +981,51 @@ export function WorkCanvasDocumentPanel({
                     <RefreshCw size={12} />
                     Reset
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => void loadVersions()}
+                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
+                  >
+                    Versions
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showChangesFromLatestVersion}
+                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
+                  >
+                    Show changes
+                  </button>
                 </div>
+                {isVersionsOpen ? (
+                  <div className="mt-3 max-h-56 space-y-2 overflow-auto border-t border-slate-200 pt-3 dark:border-white/10">
+                    {isVersionsLoading ? (
+                      <div className="text-slate-500 dark:text-slate-400">Loading versions...</div>
+                    ) : versions.length === 0 ? (
+                      <div className="text-slate-500 dark:text-slate-400">No versions yet.</div>
+                    ) : (
+                      versions.map((version) => (
+                        <div
+                          key={version.id}
+                          className="rounded-xl bg-slate-50 p-2 text-[11px] dark:bg-white/[0.06]"
+                        >
+                          <div className="font-semibold text-slate-700 dark:text-slate-100">
+                            {version.operationType}
+                          </div>
+                          <div className="mt-0.5 text-slate-500 dark:text-slate-300">
+                            {new Date(version.createdAt).toLocaleString()} · {version.summary}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => void restoreVersion(version)}
+                            className="mt-2 rounded-full bg-white px-2 py-0.5 font-semibold text-slate-600 hover:text-slate-950 dark:bg-white/10 dark:text-slate-300 dark:hover:text-white"
+                          >
+                            Restore
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -649,6 +1038,37 @@ export function WorkCanvasDocumentPanel({
           role="status"
         >
           {actionFeedback}
+        </div>
+      ) : null}
+
+      {canvasSelection ? (
+        <div
+          className="flex shrink-0 flex-wrap items-center gap-2 border-b border-primary-200/70 bg-primary-50 px-4 py-2 text-xs text-primary-900 dark:border-primary-500/20 dark:bg-primary-500/10 dark:text-primary-100"
+          data-testid="canvas-selection-bar"
+        >
+          <span className="font-semibold">Selected context</span>
+          <span className="max-w-[520px] truncate">"{previewText(canvasSelection.selectedText)}"</span>
+          <button
+            type="button"
+            onClick={askTeresaAboutSelection}
+            className="rounded-full bg-primary-600 px-2.5 py-1 font-semibold text-white hover:bg-primary-700"
+          >
+            Ask Teresa
+          </button>
+          <button
+            type="button"
+            onClick={replaceSelectedText}
+            className="rounded-full bg-white px-2.5 py-1 font-semibold text-primary-700 hover:text-primary-950 dark:bg-white/10 dark:text-primary-100"
+          >
+            Replace selection
+          </button>
+          <button
+            type="button"
+            onClick={clearCanvasSelection}
+            className="rounded-full px-2.5 py-1 font-semibold text-primary-700 hover:bg-primary-100 dark:text-primary-100 dark:hover:bg-white/10"
+          >
+            Clear
+          </button>
         </div>
       ) : null}
 
@@ -666,99 +1086,19 @@ export function WorkCanvasDocumentPanel({
               <textarea
                 value={documentState.contentMd}
                 onChange={(event) => updateMarkdown(event.target.value)}
+                onSelect={captureMarkdownSelection}
+                onKeyUp={captureMarkdownSelection}
                 data-testid="canvas-md-view"
                 className="min-h-[680px] w-full resize-y rounded-[1.35rem] border border-slate-200 bg-white p-6 font-mono text-sm leading-6 text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.08)] outline-none transition-colors focus:border-primary-300 dark:border-white/10 dark:bg-[#0f1117] dark:text-slate-100"
                 spellCheck={false}
               />
             ) : (
               <article
+                ref={documentViewRef}
                 data-testid="canvas-document-view"
+                onMouseUp={captureDocumentSelection}
+                onKeyUp={captureDocumentSelection}
                 className="min-h-[680px] rounded-[1.35rem] border border-slate-200 bg-white px-8 py-10 shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-[#1a1d25] dark:shadow-none md:px-12"
-              >
-                <CanvasMarkdownRenderer text={documentState.contentMd} />
-              </article>
-            )}
-          </div>
-        </main>
-      </div>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="flex min-h-0 flex-1">
-        <aside className="hidden w-52 shrink-0 border-r border-slate-200/60 bg-slate-50/70 p-3 dark:border-white/10 dark:bg-black/5 xl:block">
-          <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-            Start pracy
-          </div>
-          <div className="space-y-1.5">
-            {starterTemplates.map((template) => (
-              <button
-                key={template.id}
-                type="button"
-                onClick={() => selectTemplate(template)}
-                className={`w-full rounded-xl px-3 py-2 text-left text-xs transition-colors ${
-                  documentState.activeStarterId === template.id
-                    ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200 dark:bg-white/10 dark:text-white dark:ring-white/10'
-                    : 'text-slate-600 hover:bg-white/70 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/5 dark:hover:text-white'
-                }`}
-              >
-                <div className="font-semibold">{template.label}</div>
-                <div className="mt-0.5 line-clamp-2 text-[11px] leading-4 opacity-75">
-                  {template.description}
-                </div>
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <main className="min-w-0 flex-1 overflow-auto">
-          <div className="mx-auto max-w-[820px] px-5 py-8 lg:px-8">
-            <div className="mb-4 flex flex-wrap items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-              <span>Markdown canonical</span>
-              <span aria-hidden="true">/</span>
-              <span data-testid="canvas-projection-status">
-                {isProjectionRefreshing
-                  ? 'Projection refreshing'
-                  : projectionLabel(documentState.markdownProjectionStatus)}
-              </span>
-              {documentState.markdownProjectionStatus === 'failed' ? (
-                <button
-                  type="button"
-                  onClick={retryProjection}
-                  className="rounded-full px-2 py-0.5 text-amber-300 hover:bg-amber-500/10"
-                >
-                  Retry projection
-                </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={resetToTemplate}
-                className="ml-auto inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-slate-500 transition-colors hover:bg-slate-200 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
-              >
-                <RefreshCw size={12} />
-                Reset
-              </button>
-            </div>
-
-            {isHydrating ? (
-              <div data-testid="canvas-loading-skeleton" className="min-h-[640px] animate-pulse rounded-[1.35rem] border border-white/10 bg-[#1a1d25] p-10">
-                <div className="h-8 w-2/3 rounded bg-white/10" />
-                <div className="mt-8 h-4 w-full rounded bg-white/10" />
-                <div className="mt-3 h-4 w-5/6 rounded bg-white/10" />
-                <div className="mt-8 h-32 rounded bg-white/10" />
-              </div>
-            ) : mode === 'md' ? (
-              <textarea
-                value={documentState.contentMd}
-                onChange={(event) => updateMarkdown(event.target.value)}
-                data-testid="canvas-md-view"
-                className="min-h-[640px] w-full resize-y rounded-[1.35rem] border border-slate-200 bg-white p-6 font-mono text-sm leading-6 text-slate-800 shadow-[0_24px_80px_rgba(15,23,42,0.08)] outline-none transition-colors focus:border-primary-300 dark:border-white/10 dark:bg-[#0f1117] dark:text-slate-100"
-                spellCheck={false}
-              />
-            ) : (
-              <article
-                data-testid="canvas-document-view"
-                className="min-h-[640px] rounded-[1.35rem] border border-slate-200 bg-white px-8 py-10 shadow-[0_24px_80px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-[#1a1d25] dark:shadow-none md:px-12"
               >
                 <CanvasMarkdownRenderer text={documentState.contentMd} />
               </article>

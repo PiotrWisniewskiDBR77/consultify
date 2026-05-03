@@ -22,6 +22,14 @@ import {
 } from '@/components/shared/ModuleHub';
 import { FilterableTable, type TableColumn } from '@/components/shared/ModuleHub';
 import { useModuleOpenDocuments } from '@/components/shared/ModuleHub/useModuleOpenDocuments';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '@/components/shared/ModuleMenu3';
 import { type MetaPill, PreviewMetaCard } from '@/components/shared/PreviewPane';
 import { TableWithPreviewLayout } from '@/components/shared/TableWithPreviewLayout';
 import { Api } from '@/services/api';
@@ -325,20 +333,17 @@ export const MeetingHub: React.FC = () => {
     ];
 
     return (
-      <div className="flex items-center gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
         {chips.map((chip) => (
           <button
             key={chip.id}
             type="button"
             onClick={chip.onClick}
-            className={`h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap ${
-              chip.active
-                ? 'bg-primary-500/10 text-slate-900 dark:text-slate-100 border-primary-500/40'
-                : 'bg-slate-50 dark:bg-navy-950/40 text-slate-600 dark:text-slate-400 border-slate-200/70 dark:border-white/[0.06]'
-            }`}
+            className={chip.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
           >
+            {chip.id === 'all' ? <span className={MENU_3_ALL_DOT_CLASS} /> : null}
             <span>{chip.label}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-200 dark:bg-navy-700">
+            <span className={chip.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
               {chip.count}
             </span>
           </button>

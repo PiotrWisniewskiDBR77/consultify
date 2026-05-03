@@ -510,16 +510,36 @@ describe('UnifiedChatPanel (L2)', () => {
     expect(screen.getByTestId('chat-work-panel')).toBeInTheDocument();
     expect(screen.queryByText('Work panel')).not.toBeInTheDocument();
     expect(screen.queryByText('Empty workspace for documents and canvas')).not.toBeInTheDocument();
-    expect(screen.getByText('Canvas work area')).toBeInTheDocument();
+    expect(screen.getByTestId('chat-work-panel')).toHaveAttribute('aria-label', 'Canvas work area');
     expect(screen.getByText('Active document:')).toBeInTheDocument();
     expect(screen.getAllByText('Company Work Note').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: 'Document' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'MD' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Document view' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Markdown view' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Canvas diagnostics/i }));
     expect(screen.getByText('Markdown canonical')).toBeInTheDocument();
     expect(screen.queryByTestId('chat-full-welcome')).not.toBeInTheDocument();
     expect(screen.getByTestId('chat-work-panel-empty-state')).toBeInTheDocument();
     expect(screen.queryByTestId('chat-compact-empty-state')).not.toBeInTheDocument();
     expect(screen.getByTestId('enhanced-chat-input')).toBeInTheDocument();
+  });
+
+  it('shows selected Canvas context in the chat side', async () => {
+    renderWithRouter(<UnifiedChatPanel mode="full" />);
+
+    fireEvent.click(screen.getByTestId('chat-work-panel-button'));
+    fireEvent.click(screen.getByRole('button', { name: 'Markdown view' }));
+    const mdView = await screen.findByTestId('canvas-md-view');
+    const textarea = mdView as HTMLTextAreaElement;
+    const selected = 'Operating workspace';
+    const start = textarea.value.indexOf(selected);
+    textarea.setSelectionRange(start, start + selected.length);
+    fireEvent.select(textarea);
+    fireEvent.click(await screen.findByRole('button', { name: /Ask Teresa/i }));
+
+    expect(screen.getByTestId('chat-canvas-selection-context')).toHaveTextContent(
+      'Selected from Canvas'
+    );
+    expect(screen.getByTestId('chat-canvas-selection-context')).toHaveTextContent(selected);
   });
 
   it('lets users resize the chat and Canvas split with the divider', () => {

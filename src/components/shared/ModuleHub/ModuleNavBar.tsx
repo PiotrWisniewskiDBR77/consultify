@@ -142,6 +142,12 @@ const BUTTON_ACTIVE = `
   bg-primary-500/10 text-slate-900 dark:text-slate-100
 `;
 
+function isFullMenu3Row(node: React.ReactNode): boolean {
+  if (!React.isValidElement<{ className?: string }>(node)) return false;
+  const className = node.props.className || '';
+  return className.includes('px-4') && className.includes('py-2') && className.includes('border-b');
+}
+
 export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   tabs,
   activeTab,
@@ -233,7 +239,13 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
   const commandRow = (() => {
     // 0) Bulk / forced row — overrides search and tabs
     if (forceCommandRow && commandRowContent) {
-      return commandRowContent;
+      return isFullMenu3Row(commandRowContent) ? (
+        commandRowContent
+      ) : (
+        <div className={MENU_3_ROW_CLASS}>
+          <div className={MENU_3_INNER_CLASS}>{commandRowContent}</div>
+        </div>
+      );
     }
 
     if (showSearch) {
@@ -241,32 +253,32 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
         <div className={MENU_3_ROW_CLASS}>
           <div className={MENU_3_INNER_CLASS}>
             <div className="relative min-w-[280px] flex-1">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
-            />
-            <input
-              ref={searchInputRef}
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder="Search..."
-              className="
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400"
+              />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchQuery}
+                onChange={handleSearchChange}
+                placeholder="Search..."
+                className="
                 w-full pl-10 pr-10 py-2 rounded-lg
                 bg-slate-100 dark:bg-navy-800 border border-slate-200/60 dark:border-navy-700/60
                 text-slate-900 dark:text-white placeholder-slate-500
                 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50
                 transition-all
               "
-            />
-            {searchQuery && (
-              <button
-                onClick={handleCloseSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-              >
-                <X size={16} />
-              </button>
-            )}
+              />
+              {searchQuery && (
+                <button
+                  onClick={handleCloseSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  <X size={16} />
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -288,7 +300,12 @@ export const ModuleNavBar: React.FC<ModuleNavBarProps> = ({
 
     if (!commandRowContent && !commandRowRightContent && activeFilters.length === 0) return null;
 
-    if (commandRowContent && !commandRowRightContent && activeFilters.length === 0) {
+    if (
+      commandRowContent &&
+      !commandRowRightContent &&
+      activeFilters.length === 0 &&
+      isFullMenu3Row(commandRowContent)
+    ) {
       return commandRowContent;
     }
 

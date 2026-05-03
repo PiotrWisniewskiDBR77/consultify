@@ -67,6 +67,7 @@ import {
   ResponseFeedback,
   ThinkingStep,
 } from '../../types';
+import type { CanvasSelection } from '../../types/canvasWorkspace';
 import { ChatDisplayMode, WorkspaceContext } from '../../types/workspace';
 import { notifyBargeIn } from '../../utils/bargeInToast';
 import { buildPersistedAiResponseMetadata } from '../../utils/chatPersistence';
@@ -114,6 +115,11 @@ interface ChatSaveIntent {
 
 function clampWorkCanvasWidth(value: number): number {
   return Math.min(MAX_WORK_CANVAS_WIDTH_PERCENT, Math.max(MIN_WORK_CANVAS_WIDTH_PERCENT, value));
+}
+
+function previewCanvasContext(text: string, max = 120): string {
+  const normalized = text.replace(/\s+/g, ' ').trim();
+  return normalized.length > max ? `${normalized.slice(0, max - 1)}…` : normalized;
 }
 
 function getInitialWorkCanvasWidth(): number {
@@ -409,6 +415,7 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
     null
   );
+  const [activeCanvasSelection, setActiveCanvasSelection] = useState<CanvasSelection | null>(null);
   const [workCanvasWidthPercent, setWorkCanvasWidthPercent] = useState(
     getInitialWorkCanvasWidth
   );
@@ -2137,6 +2144,19 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           page: (workspaceContext as any)?.entityData || null,
         },
         workspaceContext,
+        canvasContext: activeCanvasSelection
+          ? {
+              draftId: activeCanvasSelection.draftId || activeCanvasDocument?.draftId || null,
+              title: activeCanvasDocument?.title || null,
+              mode: activeCanvasSelection.mode,
+              selectedText: activeCanvasSelection.selectedText,
+            }
+          : activeCanvasDocument
+            ? {
+                draftId: activeCanvasDocument.draftId || null,
+                title: activeCanvasDocument.title,
+              }
+            : null,
         conversationId,
         conversationLanguage: chatLanguage,
         virtualWorkerSlug: 'teresa',
@@ -2371,6 +2391,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
       focusMode,
       chatLanguage,
       workspaceContext,
+      activeCanvasDocument,
+      activeCanvasSelection,
       startStream,
       isDisabled,
       isDemo,
@@ -3778,6 +3800,12 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
           <div className="mx-1 mt-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[11px] text-slate-300">
             <span className="font-semibold text-slate-100">Active document:</span>{' '}
             <span>{activeCanvasDocument?.title || 'Company Work Note'}</span>
+            {activeCanvasSelection ? (
+              <div className="mt-1 rounded-md bg-primary-500/10 px-2 py-1 text-primary-100" data-testid="chat-canvas-selection-context">
+                <span className="font-semibold">Selected from Canvas:</span>{' '}
+                <span>{previewCanvasContext(activeCanvasSelection.selectedText)}</span>
+              </div>
+            ) : null}
           </div>
         )}
       </div>
@@ -4270,6 +4298,8 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
             <WorkCanvasDocumentPanel
               conversationId={activeConversationId}
               onActiveDocumentChange={setActiveCanvasDocument}
+              onCanvasSelectionChange={setActiveCanvasSelection}
+              onAskTeresaSelection={setActiveCanvasSelection}
               onClose={() => setIsWorkPanelOpen(false)}
             />
           </div>

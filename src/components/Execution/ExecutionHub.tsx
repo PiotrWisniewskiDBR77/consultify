@@ -84,6 +84,14 @@ import {
   TableColumn,
   ViewMode,
 } from '../shared/ModuleHub';
+import {
+  MENU_3_ALL_DOT_CLASS,
+  MENU_3_BADGE_ACTIVE,
+  MENU_3_BADGE_INACTIVE,
+  MENU_3_CHIP_ACTIVE,
+  MENU_3_CHIP_INACTIVE,
+  MENU_3_LEFT_CLASS,
+} from '../shared/ModuleMenu3';
 import { ExecutionInitiativesKanbanView } from './ExecutionInitiativesKanbanView';
 import { ExecutionManagementView } from './ExecutionManagementView';
 import { normalizeExecutionArrayEnvelope } from './executionPayloadGuards';
@@ -3036,11 +3044,6 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
   );
 
   const commandRowContent = useMemo(() => {
-    const chipBase =
-      'h-8 inline-flex items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium border transition-colors whitespace-nowrap';
-    const badgeBase =
-      'px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums leading-none';
-
     if (activeTab === 'reports') {
       const reportPresets = [
         { id: 'all' as const, label: t('common.all', 'ALL'), count: 11 },
@@ -3051,7 +3054,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         { id: 'sponsor' as const, label: 'Sponsor', count: 5 },
       ];
       return (
-        <div className="flex items-center gap-2">
+        <div className={MENU_3_LEFT_CLASS}>
           {reportPresets.map((preset) => {
             const active = reportPreset === preset.id;
             return (
@@ -3059,25 +3062,15 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
                 key={preset.id}
                 type="button"
                 onClick={() => setReportPreset((prev) => (prev === preset.id ? 'all' : preset.id))}
-                className={`${chipBase} ${
-                  active
-                    ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                    : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
-                }`}
+                className={active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE}
               >
                 {preset.id === 'all' ? (
-                  <span className="h-2 w-2 rounded-full bg-slate-400" />
+                  <span className={MENU_3_ALL_DOT_CLASS} />
                 ) : (
                   <FileText size={14} className="text-cyan-400" />
                 )}
                 <span>{preset.label}</span>
-                <span
-                  className={`${badgeBase} ${
-                    active
-                      ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                      : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
+                <span className={active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
                   {preset.count}
                 </span>
               </button>
@@ -3107,7 +3100,7 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
         count: allCount,
         active: allActive,
         disabled: false,
-        icon: <span className="w-2 h-2 rounded-full bg-slate-400" />,
+        icon: <span className={MENU_3_ALL_DOT_CLASS} />,
         onClick: resetExecutionCommandRow,
       },
       {
@@ -3173,31 +3166,21 @@ export const ExecutionHub: React.FC<ExecutionHubProps> = ({ initialTab = 'list' 
     ] as const;
 
     return (
-      <div className="flex items-center gap-2">
+      <div className={MENU_3_LEFT_CLASS}>
         {executionPresets.map((preset) => (
           <button
             key={preset.id}
             type="button"
             onClick={preset.onClick}
             disabled={preset.disabled}
-            className={`${chipBase} ${
-              preset.active
-                ? 'bg-purple-500/10 text-purple-700 dark:text-purple-200 border-purple-500/40'
-                : preset.disabled
-                  ? 'bg-slate-100/60 dark:bg-navy-800/40 text-slate-400 dark:text-slate-500 border-slate-200/40 dark:border-navy-700/40 cursor-not-allowed'
-                  : 'bg-slate-100 dark:bg-navy-800 text-slate-600 dark:text-slate-300 border-slate-200/60 dark:border-navy-700/60 hover:bg-white/60 dark:hover:bg-navy-900/50'
+            className={`${preset.active ? MENU_3_CHIP_ACTIVE : MENU_3_CHIP_INACTIVE} ${
+              preset.disabled ? 'cursor-not-allowed opacity-55' : ''
             }`}
             title={preset.label}
           >
             {preset.icon}
             <span>{preset.label}</span>
-            <span
-              className={`${badgeBase} ${
-                preset.active
-                  ? 'bg-purple-500/30 text-purple-700 dark:text-purple-200'
-                  : 'bg-slate-200 dark:bg-navy-700 text-slate-600 dark:text-slate-300'
-              }`}
-            >
+            <span className={preset.active ? MENU_3_BADGE_ACTIVE : MENU_3_BADGE_INACTIVE}>
               {preset.count}
             </span>
           </button>
