@@ -42,7 +42,7 @@ const CapacityIndicator: React.FC<{ capacity: number }> = ({ capacity }) => {
     if (capacity > 100) return 'bg-rose-500';
     if (capacity > 85) return 'bg-amber-500';
     if (capacity > 60) return 'bg-emerald-500';
-    return 'bg-cyan-500';
+    return 'bg-blue-500';
   };
 
   const getTextColor = () => {
@@ -174,8 +174,8 @@ export const TeamPerformancePreview: React.FC<TeamPerformancePreviewProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-            <Users size={16} className="text-cyan-500" />
+          <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+            <Users size={16} className="text-blue-500" />
           </div>
           <div>
             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">

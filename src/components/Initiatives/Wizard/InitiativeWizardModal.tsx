@@ -53,12 +53,14 @@ interface WizardCandidate {
   evidenceRefs: string[];
 }
 
+type ExistingInitiativeMatch = Pick<PortfolioInitiative, 'id' | 'name' | 'status'> & {
+  title?: string;
+};
+
 interface InitiativeWizardModalProps {
   isOpen: boolean;
   projectId?: string | null;
-  existingInitiatives: Array<
-    Pick<PortfolioInitiative, 'id' | 'name' | 'status'> & { title?: string }
-  >;
+  existingInitiatives: ExistingInitiativeMatch[];
   initialMode?: string;
   initialBusinessPriorities?: string[];
   initialTargetCount?: number;
@@ -93,7 +95,7 @@ const STATUS_LABELS: Record<CandidateStatus, string> = {
   ready_for_charter: 'Gotowy do charteru',
 };
 
-function findExistingMatch(candidate: WizardCandidate, existing: PortfolioInitiative[]) {
+function findExistingMatch(candidate: WizardCandidate, existing: ExistingInitiativeMatch[]) {
   const duplicateTitle = checkDuplicateInitiative(candidate.title, existing);
   if (!duplicateTitle) return null;
   return (
