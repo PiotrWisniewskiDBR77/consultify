@@ -60,7 +60,7 @@ type InsightAnalysisMode =
 type InsightContextMode =
   | 'selected_interview_material_only'
   | 'selected_material_plus_approved_org_knowledge';
-type CreatorStepId = 'goal' | 'source' | 'analysis' | 'context';
+type CreatorStepId = 'goal' | 'people' | 'source' | 'analysis' | 'context';
 
 interface CompletedSession {
   id: string;
@@ -316,6 +316,13 @@ const CREATOR_STEPS: Array<{
     hintEn: 'What should AI produce?',
   },
   {
+    id: 'people',
+    labelPl: 'Osoby',
+    labelEn: 'People',
+    hintPl: 'Kto ma wejść do analizy?',
+    hintEn: 'Whose answers are in scope?',
+  },
+  {
     id: 'source',
     labelPl: 'Materiał',
     labelEn: 'Source',
@@ -353,20 +360,24 @@ export const InsightCreatorModal: React.FC<InsightCreatorModalProps> = ({
   // State
   const [title, setTitle] = useState('');
   const [selectedType, setSelectedType] = useState<InsightPromptType>('summary');
+  const [selectedTypes, setSelectedTypes] = useState<InsightPromptType[]>(['summary']);
   const [analysisMode, setAnalysisMode] = useState<InsightAnalysisMode>(
     'general_consulting_synthesis'
   );
+  const [selectedAnalysisModes, setSelectedAnalysisModes] = useState<InsightAnalysisMode[]>([
+    'general_consulting_synthesis',
+  ]);
   const [contextMode, setContextMode] = useState<InsightContextMode>(
     'selected_material_plus_approved_org_knowledge'
   );
+  const [selectedRespondents, setSelectedRespondents] = useState<string[]>([]);
   const [selectedSessions, setSelectedSessions] = useState<string[]>([]);
   const [customPrompt, setCustomPrompt] = useState('');
   const [currentStep, setCurrentStep] = useState(0);
   const [internalArtifactLinks, setInternalArtifactLinks] = useState('');
 
   // E7.3 / E7.4: Auto-fill custom prompt for special analysis types
-  const handleTypeChange = (type: InsightPromptType) => {
-    setSelectedType(type);
+  const applyPromptPreset = (type: InsightPromptType) => {
     if (type === 'between_the_lines') {
       setCustomPrompt(
         isPolish
@@ -408,6 +419,27 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       );
     }
   };
+
+  const toggleAnalysisType = (type: InsightPromptType) => {
+    setSelectedTypes((prev) => {
+      const isSelected = prev.includes(type);
+      const next = isSelected ? prev.filter((item) => item !== type) : [...prev, type];
+      const normalized = next.length > 0 ? next : [type];
+      setSelectedType(normalized[0]);
+      if (!isSelected) applyPromptPreset(type);
+      return normalized;
+    });
+  };
+
+  const toggleAnalysisMode = (mode: InsightAnalysisMode) => {
+    setSelectedAnalysisModes((prev) => {
+      const isSelected = prev.includes(mode);
+      const next = isSelected ? prev.filter((item) => item !== mode) : [...prev, mode];
+      const normalized = next.length > 0 ? next : [mode];
+      setAnalysisMode(normalized[0]);
+      return normalized;
+    });
+  };
   const [showFilters, setShowFilters] = useState(false);
   const [filterTemplate, setFilterTemplate] = useState<string>('');
   const [filterRespondent, setFilterRespondent] = useState('');
@@ -416,7 +448,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const [useTemplateFilter, setUseTemplateFilter] = useState(false);
   const [useRespondentFilter, setUseRespondentFilter] = useState(false);
   const [useDateFilter, setUseDateFilter] = useState(false);
-  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [contextAttachments, setContextAttachments] = useState<InsightContextAttachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -542,7 +573,29 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const buildPromptWithAttachmentContext = (): string | undefined => {
     const manualPrompt = customPrompt.trim();
     const artifactLinks = getInternalArtifactLinks();
-    if (contextAttachments.length === 0 && artifactLinks.length === 0) {
+    const selectedOutputLabels = ANALYSIS_TYPES.filter((type) => selectedTypes.includes(type.id))
+      .map((type) => (isPolish ? type.namePl : type.name))
+      .join(', ');
+    const selectedAnalysisModeLabels = ANALYSIS_MODE_OPTIONS.filter((mode) =>
+      selectedAnalysisModes.includes(mode.id)
+    )
+      .map((mode) => (isPolish ? mode.labelPl : mode.labelEn))
+      .join(', ');
+    const selectionContext =
+      selectedTypes.length > 1 || selectedAnalysisModes.length > 1
+        ? [
+            selectedTypes.length > 1
+              ? `${isPolish ? 'Wybrane typy wyniku' : 'Selected output types'}: ${selectedOutputLabels}`
+              : '',
+            selectedAnalysisModes.length > 1
+              ? `${isPolish ? 'Wybrane soczewki analizy' : 'Selected analysis lenses'}: ${selectedAnalysisModeLabels}`
+              : '',
+          ]
+            .filter(Boolean)
+            .join('\n')
+        : '';
+
+    if (contextAttachments.length === 0 && artifactLinks.length === 0 && !selectionContext) {
       return manualPrompt || undefined;
     }
 
@@ -561,6 +614,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
     const composed = [
       manualPrompt,
+      selectionContext
+        ? `${isPolish ? 'Dodatkowe instrukcje wyboru' : 'Additional selection instructions'}:\n${selectionContext}`
+        : '',
       attachmentContext
         ? `Context from attached files (treat as additional evidence):\n${attachmentContext}`
         : '',
@@ -624,8 +680,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     if (!isOpen) {
       setTitle('');
       setSelectedType('summary');
+      setSelectedTypes(['summary']);
       setAnalysisMode('general_consulting_synthesis');
+      setSelectedAnalysisModes(['general_consulting_synthesis']);
       setContextMode('selected_material_plus_approved_org_knowledge');
+      setSelectedRespondents([]);
       setSelectedSessions([]);
       setCustomPrompt('');
       setCurrentStep(0);
@@ -649,6 +708,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   // Filtered sessions
   const filteredSessions = useMemo(() => {
     let sessions = completedSessions;
+
+    if (selectedRespondents.length > 0) {
+      sessions = sessions.filter(
+        (session) => session.respondentId && selectedRespondents.includes(session.respondentId)
+      );
+    }
 
     if (useTemplateFilter && filterTemplate) {
       sessions = sessions.filter((s) => s.templateId === filterTemplate);
@@ -676,26 +741,35 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     filterRespondent,
     filterDateFrom,
     filterDateTo,
+    selectedRespondents,
     useDateFilter,
     useRespondentFilter,
     useTemplateFilter,
   ]);
 
-  const respondentOptions = useMemo(
-    () =>
-      Array.from(
-        new Map(
-          completedSessions
-            .filter((s) => s.respondentId && s.respondentName)
-            .map((s) => [s.respondentId as string, s.respondentName as string])
-        ).entries()
-      ),
-    [completedSessions]
-  );
+  const respondentOptions = useMemo(() => {
+    const respondents = new Map<
+      string,
+      { id: string; name: string; role?: string; department?: string; sessionCount: number }
+    >();
+    completedSessions.forEach((session) => {
+      if (!session.respondentId || !session.respondentName) return;
+      const existing = respondents.get(session.respondentId);
+      respondents.set(session.respondentId, {
+        id: session.respondentId,
+        name: session.respondentName,
+        role: existing?.role || session.respondentRole,
+        department: existing?.department || session.department,
+        sessionCount: (existing?.sessionCount ?? 0) + 1,
+      });
+    });
+    return Array.from(respondents.values());
+  }, [completedSessions]);
 
-  // Get selected analysis type
-  const selectedAnalysisType = ANALYSIS_TYPES.find((t) => t.id === selectedType);
-  const selectedAnalysisMode = ANALYSIS_MODE_OPTIONS.find((mode) => mode.id === analysisMode);
+  useEffect(() => {
+    const visibleSessionIds = new Set(filteredSessions.map((session) => session.id));
+    setSelectedSessions((prev) => prev.filter((sessionId) => visibleSessionIds.has(sessionId)));
+  }, [filteredSessions]);
 
   // Modal chrome stays monochromatic; semantic colors belong to data/status badges only.
   const getColorClasses = (color: string, variant: 'bg' | 'border' | 'text' | 'ring') => {
@@ -746,16 +820,29 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         promptType: selectedType,
         filters: {
           templateId: useTemplateFilter ? filterTemplate || undefined : undefined,
-          respondentId: useRespondentFilter ? filterRespondent || undefined : undefined,
+          respondentId:
+            selectedRespondents.length === 1
+              ? selectedRespondents[0]
+              : useRespondentFilter
+                ? filterRespondent || undefined
+                : undefined,
+          respondentIds: selectedRespondents.length > 0 ? selectedRespondents : undefined,
           dateFrom: useDateFilter ? filterDateFrom || undefined : undefined,
           dateTo: useDateFilter ? filterDateTo || undefined : undefined,
           contextFiles: attachmentMetadata,
           internalArtifactLinks: artifactLinks.length > 0 ? artifactLinks : undefined,
+          outputTypes: selectedTypes,
+          analysisModes: selectedAnalysisModes,
         },
         analysisScope: {
           source_session_ids: selectedSessions,
           source_scope_status: 'approved_only',
-          respondent_filters: useRespondentFilter && filterRespondent ? [filterRespondent] : [],
+          respondent_filters:
+            selectedRespondents.length > 0
+              ? selectedRespondents
+              : useRespondentFilter && filterRespondent
+                ? [filterRespondent]
+                : [],
           role_filters: [],
           department_filters: [],
           template_filters: useTemplateFilter && filterTemplate ? [filterTemplate] : [],
@@ -778,16 +865,29 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
           promptType: selectedType,
           filters: {
             templateId: useTemplateFilter ? filterTemplate || undefined : undefined,
-            respondentId: useRespondentFilter ? filterRespondent || undefined : undefined,
+            respondentId:
+              selectedRespondents.length === 1
+                ? selectedRespondents[0]
+                : useRespondentFilter
+                  ? filterRespondent || undefined
+                  : undefined,
+            respondentIds: selectedRespondents.length > 0 ? selectedRespondents : undefined,
             dateFrom: useDateFilter ? filterDateFrom || undefined : undefined,
             dateTo: useDateFilter ? filterDateTo || undefined : undefined,
             contextFiles: attachmentMetadata,
             internalArtifactLinks: artifactLinks.length > 0 ? artifactLinks : undefined,
+            outputTypes: selectedTypes,
+            analysisModes: selectedAnalysisModes,
           },
           analysisScope: {
             source_session_ids: selectedSessions,
             source_scope_status: 'approved_only',
-            respondent_filters: useRespondentFilter && filterRespondent ? [filterRespondent] : [],
+            respondent_filters:
+              selectedRespondents.length > 0
+                ? selectedRespondents
+                : useRespondentFilter && filterRespondent
+                  ? [filterRespondent]
+                  : [],
             role_filters: [],
             department_filters: [],
             template_filters: useTemplateFilter && filterTemplate ? [filterTemplate] : [],
@@ -820,6 +920,18 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   };
 
   // Toggle session selection
+  const toggleRespondent = (respondentId: string) => {
+    setSelectedRespondents((prev) =>
+      prev.includes(respondentId)
+        ? prev.filter((id) => id !== respondentId)
+        : [...prev, respondentId]
+    );
+  };
+
+  const selectAllRespondents = () => {
+    setSelectedRespondents([]);
+  };
+
   const toggleSession = (sessionId: string) => {
     setSelectedSessions((prev) =>
       prev.includes(sessionId) ? prev.filter((id) => id !== sessionId) : [...prev, sessionId]
@@ -828,7 +940,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   // Select all / deselect all
   const toggleAllSessions = () => {
-    if (selectedSessions.length === filteredSessions.length) {
+    const allVisibleSelected =
+      filteredSessions.length > 0 &&
+      filteredSessions.every((session) => selectedSessions.includes(session.id));
+
+    if (allVisibleSelected) {
       setSelectedSessions([]);
     } else {
       setSelectedSessions(filteredSessions.map((s) => s.id));
@@ -872,7 +988,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
 
   const canCompleteStep = (stepIndex: number): boolean => {
     const stepId = CREATOR_STEPS[stepIndex]?.id;
-    if (stepId === 'goal') return Boolean(title.trim() && selectedType);
+    if (stepId === 'goal') return Boolean(title.trim() && selectedTypes.length > 0);
     if (stepId === 'source') return selectedSessions.length > 0;
     return true;
   };
@@ -898,15 +1014,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     void handleSubmit({ preventDefault: () => undefined } as React.FormEvent);
   };
 
-  const contextModeLabel =
-    contextMode === 'selected_material_plus_approved_org_knowledge'
-      ? isPolish
-        ? 'Wywiady + wiedza organizacji'
-        : 'Interviews + organization knowledge'
-      : isPolish
-        ? 'Tylko wybrane wywiady'
-        : 'Selected interviews only';
-
   const selectedSourceSummary =
     selectedSessions.length > 0
       ? isPolish
@@ -915,16 +1022,23 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
       : isPolish
         ? 'Nie wybrano sesji'
         : 'No sessions selected';
+  const selectedPeopleSummary =
+    selectedRespondents.length === 0
+      ? isPolish
+        ? 'Wszystkie osoby'
+        : 'All people'
+      : isPolish
+        ? `${selectedRespondents.length} wybranych osób`
+        : `${selectedRespondents.length} selected people`;
 
-  const artifactLinks = getInternalArtifactLinks();
   const isLastStep = currentStep === CREATOR_STEPS.length - 1;
   const canGenerate = Boolean(
-    title.trim() && selectedType && selectedSessions.length > 0 && !isGenerating
+    title.trim() && selectedTypes.length > 0 && selectedSessions.length > 0 && !isGenerating
   );
 
   const renderStepper = () => (
     <div className="border-b border-slate-200 bg-slate-50/70 px-4 py-2 dark:border-white/[0.08] dark:bg-navy-950/30">
-      <div className="grid grid-cols-4 gap-1.5">
+      <div className="grid grid-cols-5 gap-1.5">
         {CREATOR_STEPS.map((step, index) => {
           const isActive = index === currentStep;
           const isComplete = index < currentStep && canCompleteStep(index);
@@ -964,48 +1078,8 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
     </div>
   );
 
-  const renderSummaryCard = () => (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/60">
-      <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-        {isPolish ? 'Podsumowanie przed generowaniem' : 'Generation read-back'}
-      </div>
-      <div className="grid grid-cols-1 gap-2 text-xs text-slate-700 dark:text-slate-300 sm:grid-cols-2">
-        <div>
-          <span className="text-slate-500">{isPolish ? 'Cel:' : 'Goal:'}</span>{' '}
-          {selectedAnalysisType
-            ? isPolish
-              ? selectedAnalysisType.namePl
-              : selectedAnalysisType.name
-            : '—'}
-        </div>
-        <div>
-          <span className="text-slate-500">{isPolish ? 'Materiał:' : 'Source:'}</span>{' '}
-          {selectedSourceSummary}
-        </div>
-        <div>
-          <span className="text-slate-500">{isPolish ? 'Analiza:' : 'Analysis:'}</span>{' '}
-          {selectedAnalysisMode
-            ? isPolish
-              ? selectedAnalysisMode.labelPl
-              : selectedAnalysisMode.labelEn
-            : '—'}
-        </div>
-        <div>
-          <span className="text-slate-500">{isPolish ? 'Kontekst:' : 'Context:'}</span>{' '}
-          {contextModeLabel}
-        </div>
-        <div className="sm:col-span-2">
-          <span className="text-slate-500">{isPolish ? 'Dodatki:' : 'Extras:'}</span>{' '}
-          {isPolish
-            ? `${contextAttachments.length} plików, ${artifactLinks.length} linków`
-            : `${contextAttachments.length} file(s), ${artifactLinks.length} link(s)`}
-        </div>
-      </div>
-    </div>
-  );
-
   const renderGlobalLoadError = () => {
-    if (!loadError || currentStep === 1) return null;
+    if (!loadError || CREATOR_STEPS[currentStep]?.id === 'source') return null;
     return (
       <EmptyStateInline
         icon={AlertTriangle}
@@ -1052,152 +1126,175 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
           {isPolish ? 'Typ wyniku' : 'Output type'} *
         </label>
-        <div className="relative">
+        <div className="space-y-2">
+          <div className="max-h-56 space-y-2 overflow-auto pr-1">
+            {ANALYSIS_TYPES.map((type) => {
+              const isSelected = selectedTypes.includes(type.id);
+              return (
+                <label
+                  key={type.id}
+                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
+                    isSelected
+                      ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+                  }`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => toggleAnalysisType(type.id)}
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                  />
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${getColorClasses(
+                      type.color,
+                      'bg'
+                    )} ${getColorClasses(type.color, 'text')}`}
+                  >
+                    {type.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                      {isPolish ? type.namePl : type.name}
+                    </div>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-xs text-primary-400">
+            {isPolish ? `Wybrano: ${selectedTypes.length}` : `Selected: ${selectedTypes.length}`}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderPeopleStep = () => (
+    <div className="space-y-5">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
+          <Users size={16} />
+          {isPolish ? 'Osoby w zakresie analizy' : 'People in analysis scope'}
+        </div>
+        <p className="mt-1 text-xs text-slate-500">
+          {isPolish
+            ? 'Wybierz konkretne osoby z organizacji albo zostaw wszystkie. Materiał w kolejnym kroku zostanie zawężony do tego wyboru.'
+            : 'Choose specific people from the organization or leave all. Source material in the next step will be narrowed to this choice.'}
+        </p>
+      </div>
+
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            {isPolish ? 'Wybierz osoby' : 'Select people'}
+          </label>
           <button
             type="button"
-            onClick={() => setShowTypeDropdown(!showTypeDropdown)}
-            className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-white dark:bg-navy-900/70 border text-left transition-all ${
-              showTypeDropdown
-                ? 'border-primary-500 ring-1 ring-primary-500/30'
-                : 'border-slate-300 dark:border-white/[0.1]'
-            }`}
+            onClick={selectAllRespondents}
+            className="text-xs text-primary-400 transition-colors hover:text-primary-300"
           >
-            <div className="flex items-center gap-3">
-              {selectedAnalysisType && (
-                <>
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${getColorClasses(
-                      selectedAnalysisType.color,
-                      'bg'
-                    )} ${getColorClasses(selectedAnalysisType.color, 'text')}`}
-                  >
-                    {selectedAnalysisType.icon}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {isPolish ? selectedAnalysisType.namePl : selectedAnalysisType.name}
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-            <ChevronDown
-              size={18}
-              className={`text-slate-500 dark:text-slate-400 transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`}
-            />
+            {isPolish ? 'Wszystkie osoby' : 'All people'}
           </button>
-
-          {showTypeDropdown && (
-            <div className="absolute z-10 mt-2 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-xl shadow-slate-900/12 dark:border-white/[0.08] dark:bg-navy-900">
-              <div className="border-b border-slate-200 px-3 py-2 dark:border-white/[0.08]">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  {isPolish ? 'Podstawowe' : 'Basic'}
-                </span>
-              </div>
-              {ANALYSIS_TYPES.filter((t) => t.category === 'basic').map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => {
-                    handleTypeChange(type.id);
-                    setShowTypeDropdown(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors ${
-                    selectedType === type.id ? 'bg-primary-50 dark:bg-primary-500/12' : ''
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${getColorClasses(
-                      type.color,
-                      'bg'
-                    )} ${getColorClasses(type.color, 'text')}`}
-                  >
-                    {type.icon}
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {isPolish ? type.namePl : type.name}
-                    </div>
-                  </div>
-                </button>
-              ))}
-
-              <div className="border-y border-slate-200 px-3 py-2 dark:border-white/[0.08]">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  {isPolish ? 'Zaawansowane' : 'Advanced'}
-                </span>
-              </div>
-              {ANALYSIS_TYPES.filter((t) => t.category === 'advanced').map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => {
-                    handleTypeChange(type.id);
-                    setShowTypeDropdown(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors ${
-                    selectedType === type.id ? 'bg-primary-50 dark:bg-primary-500/12' : ''
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${getColorClasses(
-                      type.color,
-                      'bg'
-                    )} ${getColorClasses(type.color, 'text')}`}
-                  >
-                    {type.icon}
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {isPolish ? type.namePl : type.name}
-                    </div>
-                  </div>
-                </button>
-              ))}
-
-              <div className="border-y border-slate-200 px-3 py-2 dark:border-white/[0.08]">
-                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                  BCG Frameworks
-                </span>
-              </div>
-              {ANALYSIS_TYPES.filter((t) => t.category === 'bcg').map((type) => (
-                <button
-                  key={type.id}
-                  type="button"
-                  onClick={() => {
-                    handleTypeChange(type.id);
-                    setShowTypeDropdown(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2 hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors ${
-                    selectedType === type.id ? 'bg-primary-50 dark:bg-primary-500/12' : ''
-                  }`}
-                >
-                  <div
-                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${getColorClasses(
-                      type.color,
-                      'bg'
-                    )} ${getColorClasses(type.color, 'text')}`}
-                  >
-                    {type.icon}
-                  </div>
-                  <div className="text-left">
-                    <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                      {isPolish ? type.namePl : type.name}
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
         </div>
+
+        {respondentOptions.length === 0 ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
+            <Users size={32} className="mx-auto mb-2 opacity-50" />
+            <p className="text-sm">
+              {isPolish
+                ? 'Brak osób w zatwierdzonych wywiadach'
+                : 'No people in approved interviews'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={selectAllRespondents}
+              className={`flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-all ${
+                selectedRespondents.length === 0
+                  ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                  : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+              }`}
+            >
+              <input
+                type="checkbox"
+                checked={selectedRespondents.length === 0}
+                readOnly
+                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                  {isPolish ? 'Wszystkie osoby' : 'All people'}
+                </div>
+                <div className="text-xs text-slate-500">
+                  {isPolish
+                    ? 'AI może korzystać z materiału wszystkich respondentów.'
+                    : 'AI can use material from all respondents.'}
+                </div>
+              </div>
+            </button>
+
+            <div className="max-h-64 space-y-2 overflow-auto pr-1">
+              {respondentOptions.map((respondent) => {
+                const isSelected = selectedRespondents.includes(respondent.id);
+                return (
+                  <label
+                    key={respondent.id}
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all ${
+                      isSelected
+                        ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                        : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => toggleRespondent(respondent.id)}
+                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                        {respondent.name}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        {respondent.role && <span>{respondent.role}</span>}
+                        {respondent.department && (
+                          <>
+                            {respondent.role && <span>•</span>}
+                            <span>{respondent.department}</span>
+                          </>
+                        )}
+                        <span>•</span>
+                        <span>
+                          {respondent.sessionCount}{' '}
+                          {isPolish
+                            ? respondent.sessionCount === 1
+                              ? 'sesja'
+                              : 'sesje'
+                            : respondent.sessionCount === 1
+                              ? 'session'
+                              : 'sessions'}
+                        </span>
+                      </div>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        <p className="mt-2 text-xs text-primary-400">{selectedPeopleSummary}</p>
       </div>
     </div>
   );
 
   const renderSourceStep = () => (
     <div className="space-y-5">
-      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
-        <div className="flex items-center gap-2 text-sm font-semibold text-emerald-300">
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <MessageSquare size={16} />
           {isPolish ? 'Materiał źródłowy' : 'Source material'}
         </div>
@@ -1212,7 +1309,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <button
           type="button"
           onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+          className="flex items-center gap-2 text-sm text-slate-500 transition-colors hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
         >
           <Filter size={16} />
           <span>{isPolish ? 'Filtry materiału' : 'Source filters'}</span>
@@ -1223,38 +1320,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </button>
 
         {showFilters && (
-          <div className="mt-3 p-3 bg-navy-800/50 border border-navy-700 rounded-lg space-y-3">
+          <div className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-white">
-                <input
-                  type="checkbox"
-                  checked={useRespondentFilter}
-                  onChange={(e) => {
-                    setUseRespondentFilter(e.target.checked);
-                    if (!e.target.checked) setFilterRespondent('');
-                  }}
-                  className="h-4 w-4 rounded border-navy-500 bg-navy-900 text-primary-500 focus:ring-primary-500"
-                />
-                {isPolish ? 'Filtruj po osobach' : 'Filter by people'}
-              </label>
-              {useRespondentFilter && (
-                <select
-                  value={filterRespondent}
-                  onChange={(e) => setFilterRespondent(e.target.value)}
-                  className="w-full px-2 py-1.5 rounded bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
-                >
-                  <option value="">{isPolish ? 'Wszystkie osoby' : 'All people'}</option>
-                  {respondentOptions.map(([id, name]) => (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-white">
+              <label className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-100">
                 <input
                   type="checkbox"
                   checked={useTemplateFilter}
@@ -1262,7 +1330,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                     setUseTemplateFilter(e.target.checked);
                     if (!e.target.checked) setFilterTemplate('');
                   }}
-                  className="h-4 w-4 rounded border-navy-500 bg-navy-900 text-primary-500 focus:ring-primary-500"
+                  className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-navy-900"
                 />
                 {isPolish ? 'Filtruj po ankietach' : 'Filter by surveys'}
               </label>
@@ -1270,7 +1338,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 <select
                   value={filterTemplate}
                   onChange={(e) => setFilterTemplate(e.target.value)}
-                  className="w-full px-2 py-1.5 rounded bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
+                  className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
                 >
                   <option value="">{isPolish ? 'Wszystkie ankiety' : 'All surveys'}</option>
                   {templates.map((t) => (
@@ -1283,7 +1351,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             </div>
 
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm text-white">
+              <label className="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-100">
                 <input
                   type="checkbox"
                   checked={useDateFilter}
@@ -1294,7 +1362,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       setFilterDateTo('');
                     }
                   }}
-                  className="h-4 w-4 rounded border-navy-500 bg-navy-900 text-primary-500 focus:ring-primary-500"
+                  className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 dark:border-white/[0.18] dark:bg-navy-900"
                 />
                 {isPolish ? 'Filtruj po zakresie dat odpowiedzi' : 'Filter by answer date range'}
               </label>
@@ -1308,7 +1376,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       type="date"
                       value={filterDateFrom}
                       onChange={(e) => setFilterDateFrom(e.target.value)}
-                      className="w-full px-2 py-1.5 rounded bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
+                      className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
                     />
                   </div>
                   <div>
@@ -1319,7 +1387,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       type="date"
                       value={filterDateTo}
                       onChange={(e) => setFilterDateTo(e.target.value)}
-                      className="w-full px-2 py-1.5 rounded bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
+                      className="w-full rounded border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 transition-colors focus:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-100"
                     />
                   </div>
                 </div>
@@ -1340,7 +1408,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               onClick={toggleAllSessions}
               className="text-xs text-primary-400 hover:text-primary-300 transition-colors"
             >
-              {selectedSessions.length === filteredSessions.length
+              {filteredSessions.every((session) => selectedSessions.includes(session.id))
                 ? isPolish
                   ? 'Odznacz wszystkie'
                   : 'Deselect all'
@@ -1406,10 +1474,10 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 })();
               },
             }}
-            className="bg-navy-800/50 rounded-lg border border-navy-700"
+            className="rounded-lg border border-slate-200 bg-slate-50 dark:border-white/[0.08] dark:bg-navy-900/50"
           />
         ) : filteredSessions.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 bg-navy-800/50 rounded-lg border border-navy-700">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 py-8 text-center text-slate-500 dark:border-white/[0.08] dark:bg-navy-900/50">
             <MessageSquare size={32} className="mx-auto mb-2 opacity-50" />
             <p className="text-sm">
               {isPolish
@@ -1431,18 +1499,18 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                   key={session.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
                     isSelected
-                      ? 'bg-primary-500/15 border-primary-500'
-                      : 'bg-navy-800 border-navy-700 hover:border-slate-600'
+                      ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                      : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
                   }`}
                 >
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => toggleSession(session.id)}
-                    className="w-4 h-4 rounded border-navy-600 bg-navy-800 text-primary-500 focus:ring-primary-500/50"
+                    className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm text-white font-medium truncate">
+                    <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
                       {session.name || 'Interview Session'}
                     </div>
                     <div className="text-xs text-slate-500 flex items-center gap-2">
@@ -1476,7 +1544,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/20">
+                  <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                     <span className="text-xs text-emerald-400">
                       {isPolish ? 'Zatwierdzona' : 'Approved'}
@@ -1496,7 +1564,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const renderAnalysisStep = () => (
     <div className="space-y-5">
       <div>
-        <div className="text-sm font-semibold text-white">
+        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {isPolish ? 'Jak AI ma przeczytać materiał?' : 'How should AI read the material?'}
         </div>
         <p className="mt-1 text-xs text-slate-500">
@@ -1510,22 +1578,41 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         <label className="block text-xs font-medium text-slate-500 mb-1">
           {isPolish ? 'Tryb analizy' : 'Analysis mode'}
         </label>
-        <select
-          value={analysisMode}
-          onChange={(e) => setAnalysisMode(e.target.value as InsightAnalysisMode)}
-          className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-sm text-white focus:border-primary-500 transition-colors"
-        >
-          {ANALYSIS_MODE_OPTIONS.map((mode) => (
-            <option key={mode.id} value={mode.id}>
-              {isPolish ? mode.labelPl : mode.labelEn}
-            </option>
-          ))}
-        </select>
-        {selectedAnalysisMode && (
-          <p className="mt-1 text-xs text-slate-500">
-            {isPolish ? selectedAnalysisMode.hintPl : selectedAnalysisMode.hintEn}
-          </p>
-        )}
+        <div className="max-h-44 space-y-2 overflow-auto pr-1">
+          {ANALYSIS_MODE_OPTIONS.map((mode) => {
+            const isSelected = selectedAnalysisModes.includes(mode.id);
+            return (
+              <label
+                key={mode.id}
+                className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-all ${
+                  isSelected
+                    ? 'border-primary-500/50 bg-primary-50 dark:bg-primary-500/15'
+                    : 'border-slate-200 bg-white hover:border-slate-300 dark:border-white/[0.08] dark:bg-navy-900/70 dark:hover:border-white/[0.16]'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggleAnalysisMode(mode.id)}
+                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/50 dark:border-white/[0.18] dark:bg-navy-900"
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                    {isPolish ? mode.labelPl : mode.labelEn}
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {isPolish ? mode.hintPl : mode.hintEn}
+                  </p>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+        <p className="mt-2 text-xs text-primary-400">
+          {isPolish
+            ? `Wybrano: ${selectedAnalysisModes.length}`
+            : `Selected: ${selectedAnalysisModes.length}`}
+        </p>
       </div>
 
       <div>
@@ -1557,11 +1644,11 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 onClick={() => setContextMode(option.value)}
                 className={`rounded-xl border p-3 text-left transition-all ${
                   selected
-                    ? 'border-primary-500 bg-primary-500/15 ring-1 ring-primary-500/30'
-                    : 'border-navy-700 bg-navy-800/70 hover:border-primary-500/50'
+                    ? 'border-primary-500/50 bg-primary-50 ring-1 ring-primary-500/20 dark:bg-primary-500/15'
+                    : 'border-slate-200 bg-white hover:border-primary-500/40 dark:border-white/[0.08] dark:bg-navy-900/70'
                 }`}
               >
-                <div className="text-sm font-semibold text-white">
+                <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {isPolish ? option.titlePl : option.titleEn}
                 </div>
                 <p className="mt-1 text-xs text-slate-500">
@@ -1578,7 +1665,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const renderContextStep = () => (
     <div className="space-y-5">
       <div>
-        <div className="text-sm font-semibold text-white">
+        <div className="text-sm font-semibold text-slate-900 dark:text-slate-100">
           {isPolish ? 'Uwagi i dodatkowy kontekst' : 'Notes and extra context'}
         </div>
         <p className="mt-1 text-xs text-slate-500">
@@ -1587,8 +1674,6 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             : 'This is the final place for consultant notes, external documents, and internal artifact links.'}
         </p>
       </div>
-
-      {renderSummaryCard()}
 
       <div>
         <label className="block text-sm font-medium text-slate-500 dark:text-slate-400 mb-1.5">
@@ -1605,7 +1690,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'np. Skup się na różnicach między działem IT a biznesem. Użyj języka polskiego.'
               : 'e.g. Focus on differences between IT and business departments. Use formal language.'
           }
-          className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
+          className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
         <p className="text-xs text-slate-500 mt-1">
           {isPolish
@@ -1629,7 +1714,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               ? 'Wklej po jednym linku lub identyfikatorze artefaktu w linii.'
               : 'Paste one link or artifact identifier per line.'
           }
-          className="w-full px-3 py-2 rounded-lg bg-navy-800 border border-navy-600 text-white placeholder-slate-500 focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 transition-all resize-none"
+          className="w-full resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder-slate-500 transition-all focus:border-primary-500 focus:ring-1 focus:ring-primary-500/50 dark:border-white/[0.1] dark:bg-navy-900/70 dark:text-slate-100"
         />
         <p className="text-xs text-slate-500 mt-1">
           {isPolish
@@ -1638,9 +1723,9 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </p>
       </div>
 
-      <div className="rounded-lg border border-navy-700 bg-navy-800/40 p-3">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-white/[0.08] dark:bg-navy-900/50">
         <div className="flex items-center justify-between gap-3">
-          <div className="text-xs text-slate-300 flex items-center gap-2">
+          <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
             <Paperclip size={14} className="text-slate-400" />
             <span>
               {isPolish
@@ -1648,7 +1733,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 : 'External documents (TXT/MD/CSV/JSON, max 5 files, 1 MB each)'}
             </span>
           </div>
-          <label className="inline-flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-md border border-navy-600 bg-navy-900 text-slate-200 hover:border-primary-500 cursor-pointer transition-colors">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs text-slate-700 transition-colors hover:border-primary-500 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-200">
             <Paperclip size={12} />
             {isPolish ? 'Dodaj pliki' : 'Add files'}
             <input
@@ -1667,10 +1752,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
             {contextAttachments.map((attachment) => (
               <div
                 key={attachment.id}
-                className="flex items-center justify-between gap-2 rounded-md border border-navy-700 bg-navy-900/70 px-2.5 py-2"
+                className="flex items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-2 dark:border-white/[0.08] dark:bg-navy-900/70"
               >
                 <div className="min-w-0">
-                  <div className="text-xs text-white truncate">{attachment.name}</div>
+                  <div className="truncate text-xs text-slate-900 dark:text-slate-100">
+                    {attachment.name}
+                  </div>
                   <div className="text-[11px] text-slate-400">
                     {Math.max(1, Math.round(attachment.size / 1024))} KB
                     {attachment.truncated ? ` • ${isPolish ? 'przycięty' : 'truncated'}` : ''}
@@ -1679,7 +1766,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
                 <button
                   type="button"
                   onClick={() => removeContextAttachment(attachment.id)}
-                  className="p-1 rounded text-slate-400 hover:text-red-400 hover:bg-navy-800 transition-colors"
+                  className="rounded p-1 text-slate-400 transition-colors hover:bg-slate-100 hover:text-red-500 dark:hover:bg-navy-800 dark:hover:text-red-400"
                   aria-label={isPolish ? 'Usuń plik kontekstowy' : 'Remove context file'}
                 >
                   <X size={14} />
@@ -1695,6 +1782,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   const renderCurrentStep = () => {
     const stepId = CREATOR_STEPS[currentStep]?.id;
     if (stepId === 'goal') return renderGoalStep();
+    if (stepId === 'people') return renderPeopleStep();
     if (stepId === 'source') return renderSourceStep();
     if (stepId === 'analysis') return renderAnalysisStep();
     return renderContextStep();
@@ -1703,17 +1791,17 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="bg-white dark:bg-navy-900 border border-slate-200 dark:border-navy-700 rounded-xl shadow-2xl w-full max-w-3xl mx-4 max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 backdrop-blur-sm">
+      <div className="mx-4 flex h-[520px] w-[680px] max-h-[calc(100vh-2rem)] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl shadow-slate-900/20 dark:border-white/[0.08] dark:bg-navy-900">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-navy-700 shrink-0">
-          <h2 className="text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-            <Sparkles size={20} className="text-amber-400" />
+        <div className="flex shrink-0 items-center justify-between border-b border-slate-200 p-4 dark:border-white/[0.08]">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <Sparkles size={20} className="text-slate-500 dark:text-slate-400" />
             {isPolish ? 'Kreator Wniosków AI' : 'AI Insight Creator'}
           </h2>
           <button
             onClick={onClose}
-            className="p-1 rounded hover:bg-navy-700 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="rounded p-1 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100"
           >
             <X size={20} />
           </button>
@@ -1728,12 +1816,12 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
         </form>
 
         {/* Footer */}
-        <div className="flex gap-3 p-4 border-t border-navy-700 shrink-0">
+        <div className="flex shrink-0 gap-3 border-t border-slate-200 p-4 dark:border-white/[0.08]">
           <button
             type="button"
             onClick={onClose}
             disabled={isGenerating}
-            className="px-4 py-2 rounded-lg bg-navy-800 border border-navy-600 text-slate-300 hover:bg-navy-700 transition-colors disabled:opacity-50"
+            className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
           >
             {isPolish ? 'Anuluj' : 'Cancel'}
           </button>
@@ -1743,7 +1831,7 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="button"
               onClick={goToPreviousStep}
               disabled={isGenerating}
-              className="px-4 py-2 rounded-lg bg-navy-800 border border-navy-600 text-slate-300 hover:bg-navy-700 transition-colors disabled:opacity-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-white/[0.1] dark:bg-navy-900 dark:text-slate-300 dark:hover:bg-white/[0.06]"
             >
               {isPolish ? 'Wstecz' : 'Back'}
             </button>
@@ -1753,29 +1841,31 @@ For each finding provide: quote, interpretation, confidence level (high/medium/l
               type="button"
               onClick={goToNextStep}
               disabled={isGenerating}
-              className="min-w-[150px] px-4 py-2 rounded-lg bg-primary-600 text-white font-medium hover:bg-primary-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="min-w-[150px] rounded-lg bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isPolish ? 'Dalej' : 'Next'}
             </button>
           )}
-          <button
-            type="button"
-            onClick={submitInsight}
-            disabled={!canGenerate}
-            className="min-w-[150px] flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 text-white font-medium hover:from-amber-400 hover:to-amber-500 shadow-lg shadow-amber-500/25 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isGenerating ? (
-              <>
-                <Loader2 size={16} className="animate-spin" />
-                {isPolish ? 'Wykonywanie...' : 'Running...'}
-              </>
-            ) : (
-              <>
-                <Sparkles size={16} />
-                {isPolish ? 'Wykonaj' : 'Run'}
-              </>
-            )}
-          </button>
+          {isLastStep && (
+            <button
+              type="button"
+              onClick={submitInsight}
+              disabled={!canGenerate}
+              className="flex min-w-[150px] items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 font-medium text-white transition-colors hover:bg-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isGenerating ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  {isPolish ? 'Wykonywanie...' : 'Running...'}
+                </>
+              ) : (
+                <>
+                  <Sparkles size={16} />
+                  {isPolish ? 'Wykonaj' : 'Run'}
+                </>
+              )}
+            </button>
+          )}
         </div>
       </div>
     </div>
