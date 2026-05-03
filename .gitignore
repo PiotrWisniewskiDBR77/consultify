@@ -68,6 +68,9 @@ junit.xml
 junit-*.xml
 reports/junit*.xml
 
+# Local one-off migration reports (can include PII)
+server/role-migration-*.json
+
 # Garbage / Backup files
 node_modules_trash
 trash_node_modules_*
