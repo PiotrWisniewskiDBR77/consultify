@@ -1,5 +1,8 @@
 import { expect, type Page } from '@playwright/test';
 
+const API_BASE_URL = process.env.E2E_API_URL || 'http://127.0.0.1:3001';
+const TEST_SUPPORT_KEY = process.env.TEST_SUPPORT_KEY || 'local-test-support-key-change-me';
+
 function base64UrlEncode(obj: unknown): string {
   const json = JSON.stringify(obj);
   return Buffer.from(json, 'utf8')
@@ -27,9 +30,7 @@ function makeE2EToken(): string {
   return `${header}.${payload}.e2e`;
 }
 
-export async function seedE2EAuth(page: Page): Promise<void> {
-  const token = makeE2EToken();
-
+async function seedE2EAuthToken(page: Page, token: string): Promise<void> {
   await page.addInitScript((t: string) => {
     localStorage.setItem('token', t);
     localStorage.setItem('refreshToken', 'e2e-refresh');
@@ -63,6 +64,71 @@ export async function seedE2EAuth(page: Page): Promise<void> {
   }, token);
 }
 
+export function isStrictCanvasGate(): boolean {
+  return process.env.E2E_STRICT_CANVAS === 'true' || Boolean(process.env.CI);
+}
+
+export async function seedE2EAuth(page: Page): Promise<void> {
+  await seedE2EAuthToken(page, makeE2EToken());
+}
+
+export async function seedE2EAuthWithBootstrap(page: Page): Promise<void> {
+  const errors: string[] = [];
+
+  try {
+    const bootstrap = await page.request.post(`${API_BASE_URL}/api/test-support/bootstrap`, {
+      headers: { 'x-test-support-key': TEST_SUPPORT_KEY },
+      data: { runId: `canvas-ui-${Date.now().toString(36)}`, role: 'ADMIN' },
+    });
+    if (bootstrap.ok()) {
+      const payload = (await bootstrap.json()) as Record<string, unknown>;
+      if (typeof payload.token === 'string' && payload.token.trim()) {
+        await seedE2EAuthToken(page, payload.token);
+        return;
+      }
+    } else {
+      errors.push(
+        `test-support/bootstrap ${bootstrap.status()}: ${await bootstrap.text().catch(() => '<no-body>')}`
+      );
+    }
+  } catch (error) {
+    errors.push(
+      `test-support/bootstrap request failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  try {
+    const demoLogin = await page.request.post(`${API_BASE_URL}/api/auth/demo-login`, { data: {} });
+    if (demoLogin.ok()) {
+      const payload = (await demoLogin.json()) as Record<string, unknown>;
+      if (typeof payload.token === 'string' && payload.token.trim()) {
+        await seedE2EAuthToken(page, payload.token);
+        return;
+      }
+    } else {
+      errors.push(
+        `auth/demo-login ${demoLogin.status()}: ${await demoLogin.text().catch(() => '<no-body>')}`
+      );
+    }
+  } catch (error) {
+    errors.push(
+      `auth/demo-login request failed: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+
+  if (isStrictCanvasGate()) {
+    throw new Error(
+      [
+        'Strict Canvas gate: real auth bootstrap is required.',
+        'Enable test support (`ENABLE_TEST_SUPPORT=true`) or test gateway demo login (`ENABLE_TEST_GATEWAY=true`).',
+        ...errors.map((item) => `- ${item}`),
+      ].join('\n')
+    );
+  }
+
+  await seedE2EAuthToken(page, makeE2EToken());
+}
+
 export async function dismissTourModal(page: Page) {
   const skipTour = page.getByRole('button', { name: /Skip tour|Pomiń/i }).first();
   const consultantCard = page.getByRole('button', { name: /Consultant|Konsultant/i }).first();
@@ -87,7 +153,15 @@ export async function dismissTourModal(page: Page) {
 
 export async function expectAppMounted(page: Page) {
   await dismissTourModal(page);
-  await expect(page.locator('#root')).toContainText(/./, { timeout: 30000 });
+  await page.waitForFunction(
+    () => {
+      const root = document.querySelector('#root');
+      return Boolean(root && (root.childElementCount > 0 || root.textContent?.trim()));
+    },
+    null,
+    { timeout: 30000 }
+  );
+  await expect(page.getByRole('status', { name: /Loading|Ładowanie/i })).toHaveCount(0);
   await expect(page.getByText(/Coś poszło nie tak/i)).toHaveCount(0);
 }
 
@@ -113,8 +187,7 @@ function isIgnoredRuntimeGateApiFailure(url: string, statusOrError: string | num
   // Teresa voice config is a best-effort peripheral call. It may return 401 in
   // E2E/mock mode without blocking route rendering or chat persistence.
   if (
-    (url.includes('/api/v10/teresa/voice-config') ||
-      url.includes('/api/v10/teresa/voice-event')) &&
+    (url.includes('/api/v10/teresa/voice-config') || url.includes('/api/v10/teresa/voice-event')) &&
     normalized === '401'
   ) {
     return true;
@@ -154,10 +227,7 @@ export function collectRuntimeGateIssues(page: Page) {
   return { pageErrors, apiFailures };
 }
 
-export function expectNoRuntimeGateIssues(issues: {
-  pageErrors: string[];
-  apiFailures: string[];
-}) {
+export function expectNoRuntimeGateIssues(issues: { pageErrors: string[]; apiFailures: string[] }) {
   expect(issues.pageErrors, `Browser page errors:\n${issues.pageErrors.join('\n')}`).toEqual([]);
   expect(issues.apiFailures, `Blocking API failures:\n${issues.apiFailures.join('\n')}`).toEqual(
     []
