@@ -34,10 +34,13 @@
 
   <script>
     (function () {
-      var isProductionHost =
-        location.hostname === 'consultify.ai' ||
-        location.hostname === 'www.consultify.ai';
-      if (!isProductionHost) return;
+      var host = String(location.hostname || '').toLowerCase();
+      var isCacheSensitiveHost =
+        host === 'consultify.ai' ||
+        host === 'www.consultify.ai' ||
+        host === 'demo.consultify.ai' ||
+        host === 'stage.consultinity.ai';
+      if (!isCacheSensitiveHost) return;
 
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.getRegistrations().then(function (registrations) {
@@ -50,7 +53,12 @@
       if ('caches' in window) {
         caches.keys().then(function (keys) {
           keys.forEach(function (key) {
-            if (key.indexOf('consultify-') === 0) {
+            var isKnownAppCache =
+              key.indexOf('consultify-') === 0 ||
+              key.indexOf('workbox-') === 0 ||
+              key.indexOf('vite-') === 0 ||
+              key.indexOf('sw-precache-') === 0;
+            if (isKnownAppCache) {
               caches.delete(key).catch(function () {});
             }
           });

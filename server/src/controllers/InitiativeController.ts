@@ -320,6 +320,7 @@ export class InitiativeController {
         : priorityRaw
           ? [priorityRaw]
           : [];
+      const initiativeColumns = getColumnNameSet(await queryHelpers.getTableColumns('initiatives'));
       const params: Array<unknown> = [orgId];
       let sql = `
             SELECT i.*, 
@@ -362,19 +363,45 @@ export class InitiativeController {
       if (normalizedSourceFilter === 'assessment') {
         // Canonical source tracking (preferred): source_type/source_id
         // Backward compatible (legacy): source_assessment_id/source_report_id/created_from
-        sql += ` AND (
-          (i.source_type IN ('assessment','assessment_report','ASSESSMENT','ASSESSMENT_REPORT') AND i.source_id IS NOT NULL AND i.source_id <> '')
-          OR i.source_assessment_id IS NOT NULL
-          OR i.source_report_id IS NOT NULL
-          OR i.created_from IN ('assessment','ASSESSMENT')
-        )`;
+        const assessmentSourceClauses: string[] = [];
+        if (initiativeColumns.has('source_type') && initiativeColumns.has('source_id')) {
+          assessmentSourceClauses.push(
+            "(i.source_type IN ('assessment','assessment_report','ASSESSMENT','ASSESSMENT_REPORT') AND i.source_id IS NOT NULL AND i.source_id <> '')"
+          );
+        }
+        if (initiativeColumns.has('source_assessment_id')) {
+          assessmentSourceClauses.push('i.source_assessment_id IS NOT NULL');
+        }
+        if (initiativeColumns.has('source_report_id')) {
+          assessmentSourceClauses.push('i.source_report_id IS NOT NULL');
+        }
+        if (initiativeColumns.has('created_from')) {
+          assessmentSourceClauses.push("i.created_from IN ('assessment','ASSESSMENT')");
+        }
+        if (assessmentSourceClauses.length > 0) {
+          sql += ` AND (${assessmentSourceClauses.join(' OR ')})`;
+        } else {
+          sql += ` AND 1 = 0`;
+        }
       } else if (normalizedSourceFilter) {
-        sql += ` AND (
-          LOWER(COALESCE(i.source_type, '')) = ?
-          OR LOWER(COALESCE(i.created_from, '')) = ?
-          OR LOWER(COALESCE(i.category, '')) = ?
-        )`;
-        params.push(normalizedSourceFilter, normalizedSourceFilter, normalizedSourceFilter);
+        const sourceClauses: string[] = [];
+        if (initiativeColumns.has('source_type')) {
+          sourceClauses.push("LOWER(COALESCE(i.source_type, '')) = ?");
+          params.push(normalizedSourceFilter);
+        }
+        if (initiativeColumns.has('created_from')) {
+          sourceClauses.push("LOWER(COALESCE(i.created_from, '')) = ?");
+          params.push(normalizedSourceFilter);
+        }
+        if (initiativeColumns.has('category')) {
+          sourceClauses.push("LOWER(COALESCE(i.category, '')) = ?");
+          params.push(normalizedSourceFilter);
+        }
+        if (sourceClauses.length > 0) {
+          sql += ` AND (${sourceClauses.join(' OR ')})`;
+        } else {
+          sql += ` AND 1 = 0`;
+        }
       }
       if (sourceAssessmentId) {
         // Match both canonical and legacy assessment linkage

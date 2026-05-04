@@ -2,8 +2,8 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useConversationStore } from '@/store/useConversationStore';
-import type { ArtifactContentEnvelope, CanonicalFormat } from '@/types/artifactContent';
 import { AppView } from '@/types';
+import type { ArtifactContentEnvelope, CanonicalFormat } from '@/types/artifactContent';
 import { createWorkspaceContext, getDefaultWorkspaceType } from '@/types/workspace';
 import { envelopeToMarkdown, projectToMarkdown } from '@/utils/artifacts/projectToMarkdown';
 
@@ -110,7 +110,11 @@ function isJsonNativeKind(kind: CanvasKind): boolean {
   return ['table', 'sheet', 'deck', 'research'].includes(kind);
 }
 
-function createDraftEnvelope(kind: CanvasKind, title: string, content: unknown): ArtifactContentEnvelope {
+function createDraftEnvelope(
+  kind: CanvasKind,
+  title: string,
+  content: unknown
+): ArtifactContentEnvelope {
   const canonicalFormat: CanonicalFormat = isJsonNativeKind(kind) ? 'json' : 'markdown';
   const contentMd = typeof content === 'string' ? content : projectToMarkdown(kind, content);
   return {
@@ -171,7 +175,9 @@ function canvasText(draft: Draft): string {
   return (
     draft.contentMd ||
     envelopeToMarkdown(draft.contentEnvelope, '') ||
-    (typeof draft.content === 'string' ? draft.content : projectToMarkdown(draft.kind, draft.content))
+    (typeof draft.content === 'string'
+      ? draft.content
+      : projectToMarkdown(draft.kind, draft.content))
   );
 }
 
@@ -280,7 +286,10 @@ export function LegacyWorkCanvasPreviewPanel() {
             className="h-full min-h-[360px] w-full resize-none rounded-2xl border border-slate-200 bg-white p-4 font-mono text-sm leading-6 text-slate-800 shadow-sm outline-none"
           />
         ) : (
-          <div data-testid="canvas-document-view" className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div
+            data-testid="canvas-document-view"
+            className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+          >
             <CanvasMarkdownRenderer text={canvasText(draft)} />
           </div>
         )}
@@ -480,7 +489,7 @@ export function WorkCanvasRuntime() {
         await initialDraftPromiseRef.current;
       } catch (caught) {
         if (cancelled) return;
-        setIsConversationSynced(true);
+        setIsConversationSynced(false);
         setError(caught instanceof Error ? caught.message : 'Failed to hydrate Work Canvas');
       } finally {
         if (!cancelled) setIsHydrating(false);
@@ -677,11 +686,13 @@ export function WorkCanvasRuntime() {
   };
 
   const projectionStatus =
-    displayDraft.markdownProjectionStatus || displayDraft.contentEnvelope?.markdownProjectionStatus || 'synced';
+    displayDraft.markdownProjectionStatus ||
+    displayDraft.contentEnvelope?.markdownProjectionStatus ||
+    'synced';
   const canonicalFormat =
     displayDraft.canonicalFormat || displayDraft.contentEnvelope?.canonicalFormat || 'markdown';
 
-  const renderChatPanel = () => (
+  const renderChatPanel = () =>
     isConversationSynced ? (
       <UnifiedChatPanel
         mode="split"
@@ -696,8 +707,7 @@ export function WorkCanvasRuntime() {
       <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-500">
         Connecting Work Canvas to the current chat...
       </div>
-    )
-  );
+    );
 
   return (
     <div className="relative flex h-[calc(100vh-6rem)] min-h-[720px] overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
@@ -824,7 +834,9 @@ export function WorkCanvasRuntime() {
                     type="button"
                     onClick={() => setMode('document')}
                     className={`rounded-full px-3 py-1.5 text-xs font-semibold ${
-                      mode === 'document' ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-700'
+                      mode === 'document'
+                        ? 'bg-slate-900 text-white'
+                        : 'bg-slate-100 text-slate-700'
                     }`}
                   >
                     Document

@@ -105,6 +105,42 @@ function getChatRouteConversationId(): string | null {
   return match?.[1] ? decodeURIComponent(match[1]) : null;
 }
 
+function logConversationStabilityMarker(marker: string, details: Record<string, unknown> = {}) {
+  if (typeof console === 'undefined') return;
+  console.info('[stability:conversation]', { marker, ...details });
+}
+
+function replaceChatRoute() {
+  if (typeof window === 'undefined') return;
+  try {
+    window.history.replaceState(null, '', '/chat');
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    window.dispatchEvent(new CustomEvent('consultify:chat-route-replaced'));
+  } catch {
+    // ignore navigation failures
+  }
+}
+
+function quarantineMissingConversationPointer(conversationId: string, reason: string) {
+  const normalized = String(conversationId || '').trim();
+  if (!normalized) return;
+  markConversationAsMissing(normalized);
+  delete _conversationMessagesCache[normalized];
+  logConversationStabilityMarker('session_quarantine', {
+    conversationId: normalized,
+    reason,
+  });
+  replaceChatRoute();
+}
+
+function applyMissingConversationState(state: ConversationState) {
+  state.activeConversationId = null;
+  state.activeMessages = [];
+  state.isLoading = false;
+  state._activeConversationState = 'not_found';
+  state._activeConversationStateMessage = 'This conversation does not exist.';
+}
+
 function normalizePersistedMessages(
   rawMessages: any,
   conversationId: string
@@ -277,6 +313,10 @@ export interface ConversationMessage {
     // Interactive options
     options?: Array<{ id: string; label: string; value: string }>;
     multiSelect?: boolean;
+    canvasCommand?: {
+      starterId?: string;
+      cleanPrompt?: string;
+    };
     /**
      * Optional diagnostics for persisted AI/system messages.
      * Useful for debugging stream failures without polluting message content.
@@ -802,21 +842,32 @@ export const useConversationStore = create<ConversationState>()(
           } catch (err: any) {
             console.error('[ConversationStore] Fetch conversation error:', err);
             const status = err?.response?.status || err?.status;
-            if (status === 403) {
+            if (status === 401 || status === 403) {
               const reason = err?.response?.data?.reason || err?.data?.reason || '';
+              logConversationStabilityMarker('rehydrate_hard_stop', {
+                conversationId: id,
+                status,
+              });
               set({
-                activeConversationId: id,
+                activeConversationId: null,
                 activeMessages: [],
                 isLoading: false,
                 _activeConversationState: 'permission_denied',
                 _activeConversationStateMessage:
-                  reason || 'You do not have access to this conversation.',
+                  reason ||
+                  (status === 401
+                    ? 'Your session is no longer authorized for this conversation.'
+                    : 'You do not have access to this conversation.'),
               });
+              replaceChatRoute();
               return;
             }
             if (status === 404) {
-              markConversationAsMissing(id);
-              delete _conversationMessagesCache[id];
+              quarantineMissingConversationPointer(id, 'fetch_404');
+              logConversationStabilityMarker('rehydrate_hard_stop', {
+                conversationId: id,
+                status,
+              });
               set((state) => {
                 const nextConversations = state.conversations.filter(
                   (conversation) => conversation.id !== id
@@ -1151,6 +1202,7 @@ export const useConversationStore = create<ConversationState>()(
       setActiveConversation: (id) => {
         if (id) {
           if (isConversationMarkedMissing(id)) {
+            quarantineMissingConversationPointer(id, 'set_active_missing');
             set({
               activeConversationId: null,
               activeMessages: [],
@@ -1158,9 +1210,6 @@ export const useConversationStore = create<ConversationState>()(
               _activeConversationState: 'not_found',
               _activeConversationStateMessage: 'This conversation does not exist.',
             });
-            if (typeof window !== 'undefined' && window.location.pathname.startsWith('/chat/')) {
-              window.history.replaceState({}, '', '/chat');
-            }
             return;
           }
           const existing = get().chatLanguageByConversationId[id];
@@ -1687,6 +1736,18 @@ export const useConversationStore = create<ConversationState>()(
         const persisted = persistedState?.state || persistedState || {};
         const chatRouteConversationId = getChatRouteConversationId();
         if (chatRouteConversationId) {
+          if (isConversationMarkedMissing(chatRouteConversationId)) {
+            quarantineMissingConversationPointer(chatRouteConversationId, 'merge_missing_route');
+            return {
+              ...currentState,
+              ...persisted,
+              activeConversationId: null,
+              activeMessages: [],
+              _activeConversationState: 'not_found',
+              _activeConversationStateMessage: 'This conversation does not exist.',
+              isLoading: false,
+            };
+          }
           const activeMessages = normalizePersistedMessages(
             persisted.activeMessages,
             chatRouteConversationId
@@ -1742,21 +1803,25 @@ export const useConversationStore = create<ConversationState>()(
 
           if (chatRouteConversationId && state) {
             if (isConversationMarkedMissing(chatRouteConversationId)) {
-              state.clearActiveChat();
+              quarantineMissingConversationPointer(
+                chatRouteConversationId,
+                'rehydrate_missing_route'
+              );
+              applyMissingConversationState(state);
               return;
             }
             state.activeConversationId = chatRouteConversationId;
           }
 
           if (state?.activeConversationId) {
-            console.log(
-              '[ConversationStore] Rehydrating active conversation:',
-              state.activeConversationId
-            );
-
             // Wait for auth to be ready instead of using a magic timeout.
             // Poll every 200ms up to 5 seconds for auth token availability.
             const convId = state.activeConversationId;
+            if (isConversationMarkedMissing(convId)) {
+              quarantineMissingConversationPointer(convId, 'rehydrate_missing_active');
+              applyMissingConversationState(state);
+              return;
+            }
             const maxAttempts = 25;
             let attempt = 0;
 
@@ -1765,7 +1830,12 @@ export const useConversationStore = create<ConversationState>()(
               const token = localStorage.getItem('token');
 
               if (token) {
-                state.fetchConversation(convId);
+                if (isConversationMarkedMissing(convId)) {
+                  quarantineMissingConversationPointer(convId, 'rehydrate_missing_before_fetch');
+                  applyMissingConversationState(state);
+                  return;
+                }
+                void state.fetchConversation(convId);
               } else if (attempt < maxAttempts) {
                 setTimeout(tryFetch, 200);
               } else {

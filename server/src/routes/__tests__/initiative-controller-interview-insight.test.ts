@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mockQueryAll = vi.fn();
 const mockQueryRun = vi.fn();
 const mockAuditLog = vi.fn();
+const mockGetTableColumns = vi.fn();
 
 vi.mock('../../utils/queryHelpers.js', () => ({
   queryAll: (...args: unknown[]) => mockQueryAll(...args),
   queryRun: (...args: unknown[]) => mockQueryRun(...args),
   queryOne: vi.fn(),
+  getTableColumns: (...args: unknown[]) => mockGetTableColumns(...args),
 }));
 
 vi.mock('../../services/AuditEventsService.js', () => ({
@@ -38,8 +40,14 @@ describe('InitiativeController interview insight lineage', () => {
     mockQueryAll.mockReset();
     mockQueryRun.mockReset();
     mockAuditLog.mockReset();
+    mockGetTableColumns.mockReset();
     mockQueryRun.mockResolvedValue({ changes: 1 });
     mockAuditLog.mockResolvedValue(undefined);
+    mockGetTableColumns.mockResolvedValue([
+      { name: 'source_type' },
+      { name: 'created_from' },
+      { name: 'category' },
+    ]);
   });
 
   it('filters interview insight initiatives through source, created_from, or category', async () => {

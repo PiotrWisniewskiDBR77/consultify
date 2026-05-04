@@ -70,7 +70,7 @@ function projectTableBlock(block: CanvasArtifactBlock): string {
   ];
 
   rows.slice(0, 50).forEach((row) => {
-    const record = isRecord(row) ? row : { Item: row };
+    const record: Record<string, unknown> = isRecord(row) ? row : { Item: row };
     lines.push(`| ${columnNames.map((column) => escapeTableCell(record[column])).join(' | ')} |`);
   });
 

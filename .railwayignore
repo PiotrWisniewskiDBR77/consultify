@@ -7,10 +7,13 @@
 /_quarantine/
 /secure_backups/
 /_backup/
+/_local_production/
 /.tmp/
 /.claude/
 /.codex-worktrees/
 /_analysis/
+/assets/
+/test-drafts/
 
 # Blog content (heavy assets, not needed for API)
 /Blogs/
@@ -55,6 +58,14 @@
 /odpowiedzi/
 /public/videos/
 /public/videos/**
+/public/images/
+/public/images/**
+/public/assets/
+/public/assets/**
+/public/screenshots/
+/public/screenshots/**
+/public/demo/
+/public/demo/**
 
 # Local uploads / exports (not required for build)
 /uploads/
@@ -74,11 +85,26 @@
 /server/*.db-shm
 /server/*.sqlite
 /server/*.sqlite-*
+/server/consultinity.db
+/server/coverage/
+/server/coverage/**
+/server/test-results/
+/server/test-results/**
+/server/tests/
+/server/tests/**
+/server/seed/
+/server/seed/**
+/server/seeds/
+/server/seeds/**
+/server/migrations-v2/
+/server/migrations-v2/**
 
 # Build outputs
 /dist/
 /dist-ssr/
 server/dist/
+.nx/
+.vite/
 
 # Heavy directories excluded from upload (Railway builds from source)
 node_modules/
@@ -103,6 +129,10 @@ agent-transcripts/
 /test-*.mjs
 /test-rec-map-*.txt
 /validation-output*.txt
+/junit.xml
+/e2e-results.xml
+/reports/
+/reports/**
 
 # Local env files — NEVER upload secrets to Railway build context.
 # Railway env vars are injected at runtime via `railway variables`.
@@ -122,3 +152,5 @@ agent-transcripts/
 # TS incremental build caches (force fresh compile)
 **/*.tsbuildinfo
 server/dist-temp/
+.tmp/
+.tmp/**

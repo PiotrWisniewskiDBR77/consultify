@@ -108,32 +108,38 @@ const FRAMEWORK_META: Record<
     name: string;
     shortName: string;
     icon: React.ReactNode;
+    color: string;
   }
 > = {
   DRD: {
     name: 'Digital Readiness Diagnosis',
     shortName: 'DRD',
     icon: <Activity size={16} />,
+    color: 'blue',
   },
   SIRI: {
     name: 'Smart Industry Readiness Index',
     shortName: 'SIRI',
     icon: <Cpu size={16} />,
+    color: 'emerald',
   },
   ADMA: {
     name: 'Advanced Digital Maturity Assessment',
     shortName: 'ADMA',
     icon: <Database size={16} />,
+    color: 'violet',
   },
   CMMI: {
     name: 'Capability Maturity Model Integration',
     shortName: 'CMMI',
     icon: <Layers size={16} />,
+    color: 'amber',
   },
   LEAN: {
     name: 'Lean 4.0',
     shortName: 'LEAN',
     icon: <Workflow size={16} />,
+    color: 'rose',
   },
 };
 

@@ -12,7 +12,7 @@ import {
   Info,
   List,
   ListChecks,
-  ListOrderose,
+  ListOrdered,
   MessageSquare,
   Minus,
   Plus,
@@ -150,10 +150,10 @@ export const InsertMenu: React.FC<InsertMenuProps> = ({
                 <List size={14} className="text-slate-500" />
               )}
               {btn(
-                'Numberose list',
+                'Numbered list',
                 'Lista numerowana',
-                () => editor.chain().focus().toggleOrderoseList().run(),
-                <ListOrderose size={14} className="text-slate-500" />
+                () => editor.chain().focus().toggleOrderedList().run(),
+                <ListOrdered size={14} className="text-slate-500" />
               )}
               {btn(
                 'Checklist',

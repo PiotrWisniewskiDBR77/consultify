@@ -563,8 +563,9 @@ export const UnifiedChatPanel: React.FC<UnifiedChatPanelProps> = ({
   const [editBusy, setEditBusy] = useState(false);
   const [signalsOpen, setSignalsOpen] = useState(false);
   const [isWorkPanelOpen, setIsWorkPanelOpen] = useState(false);
-  const [requestedCanvasStarterId, setRequestedCanvasStarterId] =
-    useState<CanvasStarterId | null>(null);
+  const [requestedCanvasStarterId, setRequestedCanvasStarterId] = useState<CanvasStarterId | null>(
+    null
+  );
   const [activeCanvasDocument, setActiveCanvasDocument] = useState<ActiveCanvasDocument | null>(
     null
   );

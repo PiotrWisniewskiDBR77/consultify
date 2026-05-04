@@ -93,7 +93,7 @@ function diagramShape(block: CanvasArtifactBlock): {
           const to = text(record.to, text(record.target, ''));
           return from && to ? { from, to, label: text(record.label, '') } : null;
         })
-        .filter((edge): edge is { from: string; to: string; label?: string } => Boolean(edge))
+        .filter((edge): edge is { from: string; to: string; label: string } => edge !== null)
     : [];
   return { nodes, edges };
 }
@@ -213,8 +213,14 @@ export function CanvasArtifactBlockRenderer({
           columns.map((column) => escapeCsvCell(entry.row[column])).join(',')
         ),
       ].join('\n');
-      downloadTextFile(safeFilename(`${block.title}-${suffix}`, 'csv'), csv, 'text/csv;charset=utf-8');
-      onFeedback?.(`${block.title} ${suffix === 'selected' ? 'selected rows' : 'rows'} exported as CSV.`);
+      downloadTextFile(
+        safeFilename(`${block.title}-${suffix}`, 'csv'),
+        csv,
+        'text/csv;charset=utf-8'
+      );
+      onFeedback?.(
+        `${block.title} ${suffix === 'selected' ? 'selected rows' : 'rows'} exported as CSV.`
+      );
     };
 
     return (

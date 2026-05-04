@@ -20,25 +20,46 @@ export function projectToMarkdown(artifactType: string, content: unknown): strin
 
   if (type.includes('deck') || type.includes('presentation')) {
     const slides = Array.isArray(record.slides) ? record.slides : [];
-    return [`# ${getTitle(record, 'Presentation Deck')}`, '', ...slides.flatMap((slide, index) => {
-      const item = isRecord(slide) ? slide : {};
-      const body = cleanText(item.body, cleanText(item.content, ''));
-      return ['', `## Slide ${index + 1}: ${getTitle(item, `Untitled ${index + 1}`)}`, body].filter(Boolean);
-    })].join('\n');
+    return [
+      `# ${getTitle(record, 'Presentation Deck')}`,
+      '',
+      ...slides.flatMap((slide, index) => {
+        const item = isRecord(slide) ? slide : {};
+        const body = cleanText(item.body, cleanText(item.content, ''));
+        return [
+          '',
+          `## Slide ${index + 1}: ${getTitle(item, `Untitled ${index + 1}`)}`,
+          body,
+        ].filter(Boolean);
+      }),
+    ].join('\n');
   }
 
   if (type.includes('table') || type.includes('sheet')) {
-    const rows = Array.isArray(record.rows) ? record.rows : Array.isArray(record.data) ? record.data : [];
+    const rows = Array.isArray(record.rows)
+      ? record.rows
+      : Array.isArray(record.data)
+        ? record.data
+        : [];
     const columns = rows.length > 0 && isRecord(rows[0]) ? Object.keys(rows[0]) : ['Item'];
-    const lines = [`# ${getTitle(record, 'Table')}`, '', `| ${columns.join(' | ')} |`, `| ${columns.map(() => '---').join(' | ')} |`];
+    const lines = [
+      `# ${getTitle(record, 'Table')}`,
+      '',
+      `| ${columns.join(' | ')} |`,
+      `| ${columns.map(() => '---').join(' | ')} |`,
+    ];
     rows.slice(0, 50).forEach((row) => {
-      const rowRecord = isRecord(row) ? row : { Item: row };
+      const rowRecord: Record<string, unknown> = isRecord(row) ? row : { Item: row };
       lines.push(`| ${columns.map((column) => String(rowRecord[column] ?? '')).join(' | ')} |`);
     });
     return lines.join('\n');
   }
 
-  const nodes = Array.isArray(record.nodes) ? record.nodes : Array.isArray(record.items) ? record.items : [];
+  const nodes = Array.isArray(record.nodes)
+    ? record.nodes
+    : Array.isArray(record.items)
+      ? record.items
+      : [];
   const lines = [`# ${getTitle(record, 'Document')}`];
   nodes.forEach((node) => {
     const item = isRecord(node) ? node : {};
@@ -47,8 +68,12 @@ export function projectToMarkdown(artifactType: string, content: unknown): strin
   return lines.join('\n');
 }
 
-export function envelopeToMarkdown(envelope: ArtifactContentEnvelope | undefined, fallback = ''): string {
+export function envelopeToMarkdown(
+  envelope: ArtifactContentEnvelope | undefined,
+  fallback = ''
+): string {
   if (!envelope) return fallback;
-  return envelope.contentMd || projectToMarkdown(envelope.artifactType, envelope.contentJson) || fallback;
+  return (
+    envelope.contentMd || projectToMarkdown(envelope.artifactType, envelope.contentJson) || fallback
+  );
 }
-

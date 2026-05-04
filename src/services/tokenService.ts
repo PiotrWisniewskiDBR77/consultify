@@ -11,6 +11,8 @@
 import { clearPersonalTasksCache } from './personalTasksCache';
 
 const API_URL = '/api';
+const REFRESH_BACKOFF_STORAGE_KEY = 'consultify:authRefreshBackoff:v1';
+const AUTH_LOOP_GUARD_STORAGE_KEY = 'consultify:authLoopGuard:v1';
 
 interface TokenPayload {
   id: string;
@@ -32,6 +34,10 @@ class TokenService {
   private isInitialized = false;
   private refreshBackoffMs = 0;
   private refreshBlockedUntil = 0;
+  private lastAuthErrorAt = 0;
+  private lastImmediateRefreshAttemptAt = 0;
+  private readonly authErrorCooldownMs = 5000;
+  private readonly immediateRefreshCooldownMs = 10000;
   private readonly onAuthError = () => {
     this.handleAuthError();
   };
@@ -47,6 +53,11 @@ class TokenService {
   init() {
     if (this.isInitialized) return;
     this.isInitialized = true;
+    if (this.isAuthLoopGuardOpen()) {
+      this.logAuthStabilityMarker('auth_loop_guard_init_skip');
+      return;
+    }
+    this.hydrateRefreshBackoff();
 
     const token = this.getToken();
     if (token) {
@@ -95,6 +106,7 @@ class TokenService {
     clearPersonalTasksCache();
     this.refreshBackoffMs = 0;
     this.refreshBlockedUntil = 0;
+    this.clearRefreshBackoff();
     if (this.refreshTimer) {
       clearTimeout(this.refreshTimer);
       this.refreshTimer = null;
@@ -156,15 +168,16 @@ class TokenService {
     const refreshIn = Math.max(0, timeUntilExpiry - 5 * 60 * 1000);
 
     if (refreshIn > 0) {
-      console.log(
-        `[TokenService] Scheduling refresh in ${Math.round(refreshIn / 1000 / 60)} minutes`
-      );
       this.refreshTimer = setTimeout(() => {
-        this.refreshToken();
+        void this.refreshToken();
       }, refreshIn);
     } else if (timeUntilExpiry > 0) {
-      // Token expiring soon, refresh now
-      this.refreshToken();
+      // Token expiring soon. Guard with cooldown so we don't spam refresh
+      // when multiple listeners trigger around the same frame.
+      const now = Date.now();
+      if (now - this.lastImmediateRefreshAttemptAt < this.immediateRefreshCooldownMs) return;
+      this.lastImmediateRefreshAttemptAt = now;
+      void this.refreshToken();
     }
   }
 
@@ -186,8 +199,16 @@ class TokenService {
    * Refresh the access token using refresh token
    */
   async refreshToken(): Promise<string | null> {
+    if (this.isAuthLoopGuardOpen()) {
+      this.logAuthStabilityMarker('auth_loop_guard_refresh_skip');
+      return null;
+    }
+    this.hydrateRefreshBackoff();
     const now = Date.now();
     if (this.refreshBlockedUntil > now) {
+      this.logAuthStabilityMarker('auth_refresh_backoff_open', {
+        blockedForMs: this.refreshBlockedUntil - now,
+      });
       return null;
     }
 
@@ -213,17 +234,12 @@ class TokenService {
     try {
       // Prefer cookie-based refresh when available (httpOnly cookie set by backend).
       // Fallback to legacy localStorage refreshToken for older sessions.
-      if (!refreshToken) {
-        console.log('[TokenService] No refresh token in localStorage; trying cookie refresh...');
-      } else {
-        console.log('[TokenService] Refreshing token...');
-      }
-
       const res = await fetch(`${API_URL}/auth/refresh`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(refreshToken ? { refreshToken } : {}),
+        signal: AbortSignal.timeout(8000),
       });
 
       if (!res.ok) {
@@ -241,8 +257,9 @@ class TokenService {
       const data: RefreshResult = await res.json();
       this.refreshBackoffMs = 0;
       this.refreshBlockedUntil = 0;
+      this.clearRefreshBackoff();
       this.saveTokens(data.token, data.refreshToken);
-      console.log('[TokenService] Token refreshed successfully');
+      this.logAuthStabilityMarker('auth_refresh_backoff_close');
       return data.token;
     } catch (error) {
       console.error('[TokenService] Refresh error:', error);
@@ -255,8 +272,19 @@ class TokenService {
    * Handle authentication errors
    */
   private handleAuthError() {
+    if (this.isAuthLoopGuardOpen()) return;
     if (!this.getToken() && !this.getRefreshToken()) return;
-    console.log('[TokenService] Auth error detected, attempting recovery...');
+    const now = Date.now();
+    if (this.isRefreshing) return;
+    if (this.refreshBlockedUntil > now) return;
+    if (now - this.lastAuthErrorAt < this.authErrorCooldownMs) {
+      this.logAuthStabilityMarker('auth_error_debounced', {
+        suppressedForMs: this.authErrorCooldownMs - (now - this.lastAuthErrorAt),
+      });
+      return;
+    }
+    this.lastAuthErrorAt = now;
+    this.logAuthStabilityMarker('auth_error_recovery_attempt');
     void this.refreshToken();
   }
 
@@ -264,13 +292,77 @@ class TokenService {
     const next = this.refreshBackoffMs > 0 ? Math.min(this.refreshBackoffMs * 2, 60_000) : 1_000;
     this.refreshBackoffMs = next;
     this.refreshBlockedUntil = Date.now() + next;
+    this.persistRefreshBackoff();
+    this.logAuthStabilityMarker('auth_refresh_backoff_open', {
+      blockedForMs: next,
+    });
+  }
+
+  private hydrateRefreshBackoff() {
+    if (typeof window === 'undefined') return;
+    if (this.refreshBlockedUntil > Date.now()) return;
+    try {
+      const raw = sessionStorage.getItem(REFRESH_BACKOFF_STORAGE_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed.blockedUntil !== 'number') return;
+      if (parsed.blockedUntil <= Date.now()) {
+        sessionStorage.removeItem(REFRESH_BACKOFF_STORAGE_KEY);
+        return;
+      }
+      this.refreshBackoffMs = Number(parsed.backoffMs || 1_000);
+      this.refreshBlockedUntil = parsed.blockedUntil;
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  private persistRefreshBackoff() {
+    if (typeof window === 'undefined') return;
+    try {
+      sessionStorage.setItem(
+        REFRESH_BACKOFF_STORAGE_KEY,
+        JSON.stringify({
+          backoffMs: this.refreshBackoffMs,
+          blockedUntil: this.refreshBlockedUntil,
+        })
+      );
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  private clearRefreshBackoff() {
+    if (typeof window === 'undefined') return;
+    try {
+      sessionStorage.removeItem(REFRESH_BACKOFF_STORAGE_KEY);
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  private logAuthStabilityMarker(marker: string, details: Record<string, unknown> = {}) {
+    if (typeof console === 'undefined') return;
+    console.info('[stability:auth]', { marker, ...details });
+  }
+
+  private isAuthLoopGuardOpen(): boolean {
+    if (typeof window === 'undefined') return false;
+    try {
+      const raw = sessionStorage.getItem(AUTH_LOOP_GUARD_STORAGE_KEY);
+      if (!raw) return false;
+      const parsed = JSON.parse(raw);
+      const blockedUntil = Number(parsed?.blockedUntil || 0);
+      return blockedUntil > Date.now();
+    } catch {
+      return false;
+    }
   }
 
   /**
    * Notify app of auth error - uses same event name as App.tsx expects
    */
   private notifyAuthError() {
-    console.log('[TokenService] Notifying app of token expiration');
     window.dispatchEvent(new CustomEvent('auth:token-expired'));
   }
 
@@ -300,18 +392,37 @@ class TokenService {
   }
 }
 
-// Singleton instance
-export const tokenService = new TokenService();
+const TOKEN_SERVICE_SINGLETON_KEY = '__consultifyTokenServiceSingleton__';
 
-// Initialize on module load
-if (typeof window !== 'undefined') {
-  const tokenInitKey = '__consultifyTokenServiceInitialized__';
-  const scopedWindow = window as typeof window & { [key: string]: unknown };
-  if (!scopedWindow[tokenInitKey]) {
-    scopedWindow[tokenInitKey] = true;
-    // Delay init to ensure localStorage is available
-    setTimeout(() => tokenService.init(), 0);
+type GlobalTokenServiceWindow = Window & {
+  [TOKEN_SERVICE_SINGLETON_KEY]?: TokenService;
+  __consultifyTokenServiceInitialized__?: boolean;
+};
+
+const resolveTokenServiceSingleton = (): TokenService => {
+  if (typeof window === 'undefined') {
+    return new TokenService();
   }
+  const scopedWindow = window as GlobalTokenServiceWindow;
+  if (!scopedWindow[TOKEN_SERVICE_SINGLETON_KEY]) {
+    scopedWindow[TOKEN_SERVICE_SINGLETON_KEY] = new TokenService();
+  }
+  return scopedWindow[TOKEN_SERVICE_SINGLETON_KEY] as TokenService;
+};
+
+// Singleton instance (forced globally to avoid duplicate module copies in runtime)
+export const tokenService = resolveTokenServiceSingleton();
+
+export function initializeTokenServiceOnce() {
+  if (typeof window === 'undefined') return;
+  const scopedWindow = window as GlobalTokenServiceWindow;
+  if (scopedWindow.__consultifyTokenServiceInitialized__) return;
+  scopedWindow.__consultifyTokenServiceInitialized__ = true;
+
+  window.setTimeout(() => {
+    console.info('[stability:auth]', { marker: 'token_service_init_once' });
+    tokenService.init();
+  }, 0);
 }
 
 export default tokenService;

@@ -67,10 +67,13 @@ interface WorkCanvasDocumentPanelProps {
   onClose?: () => void;
 }
 
+type WorkCanvasApplyPayload = Parameters<typeof Api.workCanvasApplyOperation>[1];
+type WorkCanvasOperation = WorkCanvasApplyPayload['operation'];
+
 interface PendingCanvasOperation {
   draftId: string;
   baseUpdatedAt?: string | null;
-  operation: Record<string, unknown>;
+  operation: WorkCanvasOperation;
   preview: {
     proposedChange?: string;
     affectedBlocks?: string[];
@@ -105,6 +108,21 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
     binary += String.fromCharCode(...chunk);
   }
   return window.btoa(binary);
+}
+
+function approveCanvasOperation(operation: WorkCanvasOperation): WorkCanvasOperation {
+  switch (operation.type) {
+    case 'generate_block_from_selection':
+    case 'generate_artifact_from_dataset':
+    case 'insert_block':
+    case 'update_block':
+    case 'delete_block':
+    case 'convert_block':
+    case 'regenerate_projection':
+      return { ...operation, approved: true };
+    default:
+      return operation;
+  }
 }
 
 const starterTemplates: StarterTemplate[] = [
@@ -167,7 +185,8 @@ Write the situation, goal, constraints, and audience here.
     title: 'Market Research Brief',
     description: 'Start a structured research brief before turning on deep search.',
     capability: 'partial',
-    capabilityNote: 'Research brief creates a linked ResearchSession; evidence execution remains partial.',
+    capabilityNote:
+      'Research brief creates a linked ResearchSession; evidence execution remains partial.',
     markdown: `# Market Research Brief
 
 Area: Market research
@@ -199,7 +218,8 @@ What do we need to know, and what decision will this research support?
     title: 'Decision Memo',
     description: 'Frame options, trade-offs, risks, and the recommended choice.',
     capability: 'partial',
-    capabilityNote: 'Decision memo works; full DecisionCanvas lane and tracked approval remain partial.',
+    capabilityNote:
+      'Decision memo works; full DecisionCanvas lane and tracked approval remain partial.',
     markdown: `# Decision Memo
 
 Decision: TBD
@@ -343,7 +363,8 @@ const workflowTemplateOptions: Array<{
     label: 'Meeting note to initiatives',
     description: 'Decisions, owners, initiative shortlist and brief.',
     capability: 'partial',
-    capabilityNote: 'Workflow ledger is backed; initiative handoff is still a controlled Canvas output.',
+    capabilityNote:
+      'Workflow ledger is backed; initiative handoff is still a controlled Canvas output.',
   },
   {
     id: 'kpi_review_to_dashboard',
@@ -357,7 +378,8 @@ const workflowTemplateOptions: Array<{
     label: 'Client proposal to deck',
     description: 'Proposal storyline, deck outline and presentation output.',
     capability: 'partial',
-    capabilityNote: 'Presentation output is backed; full DeckCanvas editing lane is not complete yet.',
+    capabilityNote:
+      'Presentation output is backed; full DeckCanvas editing lane is not complete yet.',
   },
   {
     id: 'decision_memo_to_execution_plan',
@@ -474,7 +496,9 @@ function buildLineDiff(before: string, after: string): CanvasDiffSummary {
   const afterLines = String(after || '').split('\n');
   const beforeSet = new Set(beforeLines);
   const afterSet = new Set(afterLines);
-  const addedLineSamples = afterLines.filter((line) => !beforeSet.has(line) && line.trim()).slice(0, 3);
+  const addedLineSamples = afterLines
+    .filter((line) => !beforeSet.has(line) && line.trim())
+    .slice(0, 3);
   const removedLineSamples = beforeLines
     .filter((line) => !afterSet.has(line) && line.trim())
     .slice(0, 3);
@@ -566,7 +590,11 @@ export function WorkCanvasDocumentPanel({
 }: WorkCanvasDocumentPanelProps) {
   const [mode, setMode] = React.useState<CanvasMode>(() => getInitialMode());
   const [documentState, setDocumentState] = React.useState<CanvasDocumentState>(() =>
-    createDocumentState(starterTemplateById(initialStarterId), initialProjectionStatus, initialBlocks)
+    createDocumentState(
+      starterTemplateById(initialStarterId),
+      initialProjectionStatus,
+      initialBlocks
+    )
   );
   const [isHydrating, setIsHydrating] = React.useState(true);
   const [isProjectionRefreshing, setIsProjectionRefreshing] = React.useState(false);
@@ -647,7 +675,9 @@ export function WorkCanvasDocumentPanel({
         const drafts = Array.isArray(json?.data) ? json.data : [];
         const latestDraft = drafts[0];
         if (latestDraft) {
-          setDocumentState((current) => mapDraftResponseToCanvasDocumentState(latestDraft, current));
+          setDocumentState((current) =>
+            mapDraftResponseToCanvasDocumentState(latestDraft, current)
+          );
           lastSavedContentRef.current =
             typeof latestDraft.contentMd === 'string'
               ? latestDraft.contentMd
@@ -1127,7 +1157,7 @@ export function WorkCanvasDocumentPanel({
     }
     setActionFeedback('Preparing selection edit preview...');
     try {
-      const operation = {
+      const operation: WorkCanvasOperation = {
         type: 'replace_selection',
         selectedText,
         replacementMd,
@@ -1181,13 +1211,11 @@ export function WorkCanvasDocumentPanel({
     try {
       if (pendingOperation.draftId === '__local__') {
         if (pendingOperation.operation.type === 'replace_selection') {
+          const operation = pendingOperation.operation;
           setDocumentState((current) => ({
             ...current,
-            contentMd: current.contentMd.includes(pendingOperation.operation.selectedText)
-              ? current.contentMd.replace(
-                  pendingOperation.operation.selectedText,
-                  pendingOperation.operation.replacementMd
-                )
+            contentMd: current.contentMd.includes(operation.selectedText)
+              ? current.contentMd.replace(operation.selectedText, operation.replacementMd)
               : current.contentMd,
             saveState: 'unsaved',
           }));
@@ -1199,10 +1227,7 @@ export function WorkCanvasDocumentPanel({
       }
       const result = await Api.workCanvasApplyOperation(pendingOperation.draftId, {
         baseUpdatedAt: pendingOperation.baseUpdatedAt || null,
-        operation: {
-          ...pendingOperation.operation,
-          approved: true,
-        },
+        operation: approveCanvasOperation(pendingOperation.operation),
       });
       setDocumentState((current) =>
         mapDraftResponseToCanvasDocumentState(result.data.draft, {
@@ -1414,7 +1439,8 @@ export function WorkCanvasDocumentPanel({
     setIsFinalizingResearchReport(true);
     try {
       const draft = await ensurePersistedDraft();
-      if (!draft?.draftId) throw new Error('Canvas draft could not be saved before finalizing report.');
+      if (!draft?.draftId)
+        throw new Error('Canvas draft could not be saved before finalizing report.');
       const result = await Api.workCanvasFinalizeResearchReport(draft.draftId);
       setDocumentState((current) =>
         mapDraftResponseToCanvasDocumentState(result.data.draft, {
@@ -1657,11 +1683,7 @@ export function WorkCanvasDocumentPanel({
   };
 
   const handleCommandAction = (actionId: CanvasActionId) => {
-    const availability = getCanvasActionAvailability(
-      actionId,
-      documentState,
-      runtimeCapabilities
-    );
+    const availability = getCanvasActionAvailability(actionId, documentState, runtimeCapabilities);
     if (availability.status !== 'enabled') {
       handleUnavailableAction(availability);
       return;
@@ -1704,11 +1726,7 @@ export function WorkCanvasDocumentPanel({
   };
 
   const renderCommandButton = (actionId: CanvasActionId) => {
-    const availability = getCanvasActionAvailability(
-      actionId,
-      documentState,
-      runtimeCapabilities
-    );
+    const availability = getCanvasActionAvailability(actionId, documentState, runtimeCapabilities);
     const Icon = actionIcons[actionId];
     const isUnavailable = availability.status !== 'enabled';
     const isLoading = activeActionId === actionId;
@@ -1801,10 +1819,7 @@ export function WorkCanvasDocumentPanel({
         <div className="mt-1 line-clamp-2 text-xs text-primary-900/70 dark:text-primary-100/70">
           {canvasSelection.selectedText}
         </div>
-        <div
-          className="mt-3 flex flex-wrap gap-2"
-          data-testid="canvas-selection-writing-shortcuts"
-        >
+        <div className="mt-3 flex flex-wrap gap-2" data-testid="canvas-selection-writing-shortcuts">
           <button
             type="button"
             onClick={() => applySelectionEditShortcut('use_selection')}
@@ -2599,14 +2614,16 @@ export function WorkCanvasDocumentPanel({
                       <div className="mb-1 font-semibold text-rose-700 dark:text-rose-200">
                         Removed
                       </div>
-                      {pendingOperation.preview.markdownDiff.removedLineSamples.map((line, index) => (
-                        <div
-                          key={`removed-${index}-${line}`}
-                          className="truncate font-mono text-[11px] text-rose-800 dark:text-rose-100"
-                        >
-                          - {line}
-                        </div>
-                      ))}
+                      {pendingOperation.preview.markdownDiff.removedLineSamples.map(
+                        (line, index) => (
+                          <div
+                            key={`removed-${index}-${line}`}
+                            className="truncate font-mono text-[11px] text-rose-800 dark:text-rose-100"
+                          >
+                            - {line}
+                          </div>
+                        )
+                      )}
                     </div>
                   ) : null}
                   {pendingOperation.preview.markdownDiff?.addedLineSamples?.length ? (

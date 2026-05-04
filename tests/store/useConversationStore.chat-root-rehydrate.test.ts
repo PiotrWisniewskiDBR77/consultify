@@ -12,17 +12,21 @@ vi.mock('@/i18n', () => ({
   isValidLanguage: (lang: string) => ['pl', 'en', 'de'].includes(lang),
 }));
 
+const setTestPath = (path: string) => {
+  (window.location as Location & { pathname: string }).pathname = path;
+};
+
 describe('useConversationStore chat root rehydration', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
     vi.useRealTimers();
     localStorage.clear();
-    window.history.replaceState({}, '', '/');
+    setTestPath('/');
   });
 
   it('does not restore a stale active conversation on /chat', async () => {
-    (window.location as Location & { pathname: string }).pathname = '/chat';
+    setTestPath('/chat');
     expect(window.location.pathname).toBe('/chat');
     vi.useFakeTimers();
     localStorage.setItem('token', 'test-token');
@@ -50,7 +54,7 @@ describe('useConversationStore chat root rehydration', () => {
   });
 
   it('still restores a deep-linked conversation on /chat/:id', async () => {
-    (window.location as Location & { pathname: string }).pathname = '/chat/deep-linked-id';
+    setTestPath('/chat/deep-linked-id');
     vi.useFakeTimers();
     localStorage.setItem('token', 'test-token');
     localStorage.setItem(
@@ -75,8 +79,113 @@ describe('useConversationStore chat root rehydration', () => {
     expect(mockApi.getConversation).toHaveBeenCalledWith('deep-linked-id');
   });
 
+  it('quarantines a deep-linked conversation after a 404 and stops rehydration', async () => {
+    setTestPath('/chat/missing-id');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+    const dispatchEventSpy = vi.spyOn(window, 'dispatchEvent');
+    vi.useFakeTimers();
+    localStorage.setItem('token', 'test-token');
+    mockApi.getConversation.mockRejectedValueOnce({ status: 404 });
+    localStorage.setItem(
+      'consultify-conversations',
+      JSON.stringify({
+        state: {
+          activeConversationId: 'missing-id',
+          conversations: [
+            {
+              id: 'missing-id',
+              title: 'Missing',
+              titleSource: 'auto',
+              messageCount: 0,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+          displayMode: 'full',
+          draftChatLanguage: 'pl',
+          chatLanguageByConversationId: {},
+        },
+        version: 2,
+      })
+    );
+
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+
+    await vi.runAllTimersAsync();
+
+    expect(mockApi.getConversation).toHaveBeenCalledTimes(1);
+    expect(mockApi.getConversation).toHaveBeenCalledWith('missing-id');
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/chat');
+    expect(dispatchEventSpy).toHaveBeenCalledWith(expect.any(PopStateEvent));
+    expect(useConversationStore.getState().activeConversationId).toBeNull();
+    expect(useConversationStore.getState().isLoading).toBe(false);
+    expect(useConversationStore.getState()._activeConversationState).toBe('not_found');
+    expect(JSON.parse(localStorage.getItem('consultify-missing-conversations') || '[]')).toContain(
+      'missing-id'
+    );
+  });
+
+  it('hard-stops a deep-linked conversation after a 401 without keeping it active', async () => {
+    setTestPath('/chat/unauthorized-id');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+    vi.useFakeTimers();
+    localStorage.setItem('token', 'test-token');
+    mockApi.getConversation.mockRejectedValueOnce({ status: 401 });
+    localStorage.setItem(
+      'consultify-conversations',
+      JSON.stringify({
+        state: {
+          activeConversationId: 'unauthorized-id',
+          displayMode: 'full',
+          draftChatLanguage: 'pl',
+          chatLanguageByConversationId: {},
+        },
+        version: 2,
+      })
+    );
+
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+
+    await vi.runAllTimersAsync();
+
+    expect(mockApi.getConversation).toHaveBeenCalledTimes(1);
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/chat');
+    expect(useConversationStore.getState().activeConversationId).toBeNull();
+    expect(useConversationStore.getState().isLoading).toBe(false);
+    expect(useConversationStore.getState()._activeConversationState).toBe('permission_denied');
+  });
+
+  it('does not fetch a deep-linked conversation already marked missing', async () => {
+    setTestPath('/chat/already-missing');
+    const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+    vi.useFakeTimers();
+    localStorage.setItem('token', 'test-token');
+    localStorage.setItem('consultify-missing-conversations', JSON.stringify(['already-missing']));
+    localStorage.setItem(
+      'consultify-conversations',
+      JSON.stringify({
+        state: {
+          activeConversationId: 'already-missing',
+          displayMode: 'full',
+          draftChatLanguage: 'pl',
+          chatLanguageByConversationId: {},
+        },
+        version: 2,
+      })
+    );
+
+    const { useConversationStore } = await import('../../src/store/useConversationStore');
+
+    await vi.runAllTimersAsync();
+
+    expect(mockApi.getConversation).not.toHaveBeenCalled();
+    expect(replaceStateSpy).toHaveBeenCalledWith(null, '', '/chat');
+    expect(useConversationStore.getState().activeConversationId).toBeNull();
+    expect(useConversationStore.getState()._activeConversationState).toBe('not_found');
+  });
+
   it('restores persisted messages for the deep-linked conversation while backend hydration runs', async () => {
-    (window.location as Location & { pathname: string }).pathname = '/chat/deep-linked-id';
+    setTestPath('/chat/deep-linked-id');
     vi.useFakeTimers();
     localStorage.setItem('token', 'test-token');
     localStorage.setItem(
@@ -125,7 +234,7 @@ describe('useConversationStore chat root rehydration', () => {
   });
 
   it('does not restore a stale active conversation on non-chat routes', async () => {
-    (window.location as Location & { pathname: string }).pathname = '/ai/artifacts';
+    setTestPath('/ai/artifacts');
     vi.useFakeTimers();
     localStorage.setItem('token', 'test-token');
     localStorage.setItem(

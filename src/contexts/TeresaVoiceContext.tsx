@@ -14,6 +14,21 @@ interface TeresaVoiceContextValue extends UseTeresaVoiceReturn {
 
 const TeresaVoiceCtx = createContext<TeresaVoiceContextValue | null>(null);
 
+// Safe no-op context used when TeresaVoiceProvider is intentionally not mounted,
+// for example on guarded hosts like demo/staging where voice is disabled.
+const noopTeresaVoiceContext: TeresaVoiceContextValue = {
+  voiceStatus: 'idle',
+  voiceError: null,
+  voiceAvailable: false,
+  voiceUnavailableReason: 'Teresa voice runtime is disabled in this environment.',
+  isMuted: true,
+  toggleMute: () => {},
+  startVoiceConversation: async () => {},
+  stopVoiceConversation: async () => {},
+  sendTextHistory: () => {},
+  handleVoiceToggle: async () => {},
+};
+
 const VOICE_BACKOFF_BASE_MS = 1000;
 const VOICE_BACKOFF_MAX_MS = 60_000;
 const VOICE_BACKOFF_STORAGE_KEY = 'consultify-voice-backoff';
@@ -141,7 +156,17 @@ function postTeresaVoiceEvent(payload: Record<string, unknown>) {
 
 export function useTeresaVoiceContext(): TeresaVoiceContextValue {
   const ctx = useContext(TeresaVoiceCtx);
-  if (!ctx) throw new Error('useTeresaVoiceContext must be used inside <TeresaVoiceProvider>');
+  if (!ctx) {
+    if (typeof window !== 'undefined') {
+      // In production we prefer graceful degradation over a hard crash.
+      // This can happen on hosts where TeresaVoiceProvider is intentionally disabled.
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[TeresaVoice] useTeresaVoiceContext used without provider; falling back to no-op context.'
+      );
+    }
+    return noopTeresaVoiceContext;
+  }
   return ctx;
 }
 

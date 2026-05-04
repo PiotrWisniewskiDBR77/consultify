@@ -2117,25 +2117,38 @@ export const InterviewHub: React.FC = () => {
   );
 
   const handleUpdateInterviewInitiativeStatus = useCallback(
-    async (initiativeId: string, status: 'DRAFT' | 'PENDING_REVIEW') => {
+    async (
+      initiativeId: string,
+      status: 'DRAFT' | 'PENDING_REVIEW' | 'REVIEW',
+      options?: { openInInitiatives?: boolean }
+    ) => {
       try {
-        await Api.put(`/initiatives/${initiativeId}`, { status });
+        await Api.patch(`/initiatives/${initiativeId}/status`, { status });
         await loadInterviewInitiatives();
-        toast.success(
-          status === 'PENDING_REVIEW'
-            ? isPolish
-              ? 'Inicjatywa wysłana do przeglądu'
-              : 'Initiative sent to review'
-            : isPolish
-              ? 'Inicjatywa wróciła do szkicu'
-              : 'Initiative returned to draft'
-        );
+        if (status === 'PENDING_REVIEW') {
+          toast.success(
+            isPolish ? 'Inicjatywa wysłana do przeglądu' : 'Initiative sent to review'
+          );
+        } else if (status === 'REVIEW') {
+          toast.success(
+            isPolish
+              ? 'Inicjatywa zatwierdzona i przekazana do modułu Inicjatywy'
+              : 'Initiative approved and moved to Initiatives module'
+          );
+          if (options?.openInInitiatives) {
+            navigate(`/initiatives?open=${encodeURIComponent(initiativeId)}&mode=doc`);
+          }
+        } else {
+          toast.success(
+            isPolish ? 'Inicjatywa wróciła do szkicu' : 'Initiative returned to draft'
+          );
+        }
       } catch (error) {
         console.error('[InterviewHub] Failed to update interview initiative:', error);
         toast.error(isPolish ? 'Nie udało się zmienić statusu' : 'Failed to update status');
       }
     },
-    [isPolish, loadInterviewInitiatives]
+    [isPolish, loadInterviewInitiatives, navigate]
   );
 
   const renderCommandRow = () => {
@@ -7273,6 +7286,23 @@ Return ONLY the answer text (no markdown fences).`;
                               : []),
                             ...(status === 'PENDING_REVIEW'
                               ? [
+                                  ...(canReviewInsights
+                                    ? [
+                                        {
+                                          id: 'approve-to-initiatives',
+                                          label: isPolish
+                                            ? 'Zatwierdź i przekaż dalej'
+                                            : 'Approve and move forward',
+                                          icon: Rocket,
+                                          onClick: () =>
+                                            void handleUpdateInterviewInitiativeStatus(
+                                              initiative.id,
+                                              'REVIEW',
+                                              { openInInitiatives: true }
+                                            ),
+                                        },
+                                      ]
+                                    : []),
                                   {
                                     id: 'back-to-draft',
                                     label: isPolish ? 'Wróć do szkicu' : 'Back to draft',

@@ -30,7 +30,7 @@ export interface AuthSlice {
   setAuthInitialStep: (step: AuthStep) => void;
   setCurrentOrganization: (org: { id: string; name: string } | null) => void;
   setAuthInitializing: (value: boolean) => void;
-  logout: () => void;
+  logout: (options?: { reload?: boolean }) => void;
 }
 
 export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) => ({
@@ -49,7 +49,8 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
   setCurrentOrganization: (org) => set({ currentOrganization: org }),
   setAuthInitializing: (value) => set({ isAuthInitializing: value }),
 
-  logout: () => {
+  logout: (options) => {
+    const shouldReload = options?.reload ?? true;
     // Get token BEFORE removing it (for API logout call)
     const token = localStorage.getItem('token');
 
@@ -78,9 +79,6 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => {}); // Ignore errors
     }
-
-    // Force page refresh to clear all state
-    window.location.href = '/';
 
     set({
       // Auth Reset
@@ -157,5 +155,9 @@ export const createAuthSlice: StateCreator<AppState, [], [], AuthSlice> = (set) 
         step5Completed: false,
       },
     });
+
+    if (shouldReload) {
+      window.location.href = '/';
+    }
   },
 });

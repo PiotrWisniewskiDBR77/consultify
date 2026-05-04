@@ -1,5 +1,3 @@
-import './services/tokenService'; // Initialize token service
-
 import { Loader2 } from 'lucide-react';
 import React, { useEffect, useLayoutEffect } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +7,7 @@ import { usePageMeta } from '@/hooks/usePageMeta';
 // RouterSyncProvider removed - RouterSync is now single source of truth
 import { usePageTracking } from '@/hooks/usePageTracking';
 import { Api } from '@/services/api';
+import { initializeTokenServiceOnce } from '@/services/tokenService';
 
 import { ChatV9FlagsIndicator } from './components/Admin/ChatV9FlagsIndicator';
 import { ChatV9FlagsOverlay } from './components/Admin/ChatV9FlagsOverlay';
@@ -27,6 +26,42 @@ import { User } from './types';
 const AcceptInvitationView = React.lazy(() => import('./views/AcceptInvitationView'));
 const PublicReportView = React.lazy(() => import('./views/reports/PublicReportView'));
 const PublicReportBuilderView = React.lazy(() => import('./views/reports/PublicReportBuilderView'));
+
+type AuthBootState = {
+  inflightMeRequest: Promise<User | null> | null;
+  lastAttemptAt: number;
+  lastFailureAt: number;
+};
+
+const AUTH_BOOT_STATE_KEY = '__consultifyAuthBootState__';
+const AUTH_LOOP_GUARD_STORAGE_KEY = 'consultify:authLoopGuard:v1';
+
+const getAuthBootState = (): AuthBootState => {
+  if (typeof window === 'undefined') {
+    return { inflightMeRequest: null, lastAttemptAt: 0, lastFailureAt: 0 };
+  }
+  const scopedWindow = window as typeof window & { [AUTH_BOOT_STATE_KEY]?: AuthBootState };
+  if (!scopedWindow[AUTH_BOOT_STATE_KEY]) {
+    scopedWindow[AUTH_BOOT_STATE_KEY] = {
+      inflightMeRequest: null,
+      lastAttemptAt: 0,
+      lastFailureAt: 0,
+    };
+  }
+  return scopedWindow[AUTH_BOOT_STATE_KEY] as AuthBootState;
+};
+
+const isAuthLoopGuardOpen = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = sessionStorage.getItem(AUTH_LOOP_GUARD_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return Number(parsed?.blockedUntil || 0) > Date.now();
+  } catch {
+    return false;
+  }
+};
 
 const InviteRouteWrapper = () => {
   const { token } = useParams<{ token: string }>();
@@ -112,11 +147,21 @@ function AppContent() {
     }
   }, []);
 
+  useEffect(() => {
+    if (isAuthLoopGuardOpen()) return;
+    const hasAnyAuthToken = Boolean(
+      localStorage.getItem('token') || localStorage.getItem('refreshToken')
+    );
+    if (hasAnyAuthToken) {
+      initializeTokenServiceOnce();
+    }
+  }, []);
+
   // Listen for token expiry
   useEffect(() => {
     const handleTokenExpired = () => {
       console.log('[Auth] Token expired event received');
-      logout();
+      logout({ reload: false });
       // Optional: Redirect handled by state change in AppRoutes
     };
 
@@ -129,6 +174,10 @@ function AppContent() {
     let isMounted = true;
 
     const verifyAuth = async () => {
+      if (isAuthLoopGuardOpen()) {
+        if (isMounted) setAuthInitializing(false);
+        return;
+      }
       const token = localStorage.getItem('token');
       if (!token) {
         if (currentUser && isMounted) setCurrentUser(null);
@@ -154,9 +203,30 @@ function AppContent() {
         }
       }
 
-      // 2. Background sync (only update if different from restored user)
+      // 2. Background sync (only update if different from restored user).
+      // Singleflight + cooldown to avoid auth storms across remounts/retries.
       try {
-        const user = await Api.getMe();
+        const authBoot = getAuthBootState();
+        const now = Date.now();
+        if (authBoot.lastFailureAt && now - authBoot.lastFailureAt < 10000 && restoredUser) {
+          if (isMounted) setAuthInitializing(false);
+          return;
+        }
+
+        if (!authBoot.inflightMeRequest) {
+          authBoot.lastAttemptAt = now;
+          authBoot.inflightMeRequest = Api.getMe()
+            .then((u) => u)
+            .catch((error) => {
+              authBoot.lastFailureAt = Date.now();
+              throw error;
+            })
+            .finally(() => {
+              authBoot.inflightMeRequest = null;
+            });
+        }
+
+        const user = await authBoot.inflightMeRequest;
         if (!isMounted) return; // Component unmounted, don't update state
 
         if (user) {
@@ -191,7 +261,7 @@ function AppContent() {
         // If token is invalid/expired, treat as logged out (don't keep stale restored user).
         const statusCode = (error as any)?.status;
         if (statusCode === 401 || statusCode === 403) {
-          logout();
+          logout({ reload: false });
           if (isMounted) setCurrentUser(null);
         } else {
           // If API fails but we have stored user, keep it

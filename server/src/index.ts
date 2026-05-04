@@ -1043,12 +1043,108 @@ try {
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 logger.info(`[Server] Final frontend dist path: ${frontendDistPath}`);
 
+app.get(['/__build-info', '/api/build-info'], (_req: Request, res: Response) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
+  const indexPath = path.resolve(frontendDistPath, 'index.html');
+  if (!fs.existsSync(indexPath)) {
+    return res.status(500).json({
+      ok: false,
+      error: 'INDEX_NOT_FOUND',
+      indexPath,
+    });
+  }
+
+  let html = '';
+  try {
+    html = fs.readFileSync(indexPath, 'utf-8');
+  } catch (error: any) {
+    return res.status(500).json({
+      ok: false,
+      error: 'INDEX_READ_FAILED',
+      message: error?.message || String(error),
+      indexPath,
+    });
+  }
+
+  const bundleMatch = html.match(/\/assets\/index-[^"']+\.js/);
+  const bundlePublicPath = bundleMatch?.[0] || null;
+  const bundleFsPath = bundlePublicPath
+    ? path.resolve(frontendDistPath, bundlePublicPath.replace(/^\//, ''))
+    : null;
+
+  const markers = {
+    oldAppProvidersLog: false,
+    oldTokenServiceLog: false,
+    transportCircuitOpen: false,
+    globalTransportCircuitOpen: false,
+    tokenServiceInitGuard: false,
+    staleEntryBundleAliasGuard: true,
+    cacheSelfHealV4: html.includes('__consultify_hard_reset_done_v4'),
+  };
+
+  if (bundleFsPath && fs.existsSync(bundleFsPath)) {
+    try {
+      const js = fs.readFileSync(bundleFsPath, 'utf-8');
+      markers.oldAppProvidersLog = js.includes('[AppProviders] Initializing providers');
+      markers.oldTokenServiceLog = js.includes('[TokenService] Initialized');
+      markers.transportCircuitOpen = js.includes('CLIENT_TRANSPORT_CIRCUIT_OPEN');
+      markers.globalTransportCircuitOpen = js.includes('CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN');
+      markers.tokenServiceInitGuard = js.includes('__consultifyTokenServiceInitialized__');
+    } catch {
+      // Keep defaults when asset cannot be read.
+    }
+  }
+
+  return res.json({
+    ok: true,
+    frontendDistPath,
+    indexPath,
+    bundlePublicPath,
+    bundleFsPath,
+    bundleExists: !!(bundleFsPath && fs.existsSync(bundleFsPath)),
+    markers,
+    generatedAt: new Date().toISOString(),
+  });
+});
+
 const isStaticAssetRequest = (requestPath: string): boolean =>
   /\.[a-z0-9]+$/i.test(requestPath) ||
   requestPath.startsWith('/assets/') ||
   requestPath.startsWith('/icons/') ||
   requestPath.startsWith('/locales/') ||
   requestPath.startsWith('/manifest');
+
+const isStagingOrDemoHost = (req: Request): boolean => {
+  const hostHeader = String(req.get('host') || '')
+    .split(',')[0]
+    .trim()
+    .toLowerCase()
+    .split(':')[0];
+  return hostHeader === 'demo.consultify.ai' || hostHeader === 'stage.consultinity.ai';
+};
+
+const resolveCurrentIndexBundlePath = (): { publicPath: string; fsPath: string } | null => {
+  const htmlPath = path.resolve(frontendDistPath, 'index.html');
+  if (!fs.existsSync(htmlPath)) return null;
+
+  try {
+    const html = fs.readFileSync(htmlPath, 'utf-8');
+    const bundleMatch = html.match(/\/assets\/index-[^"']+\.js/);
+    const publicPath = bundleMatch?.[0];
+    if (!publicPath) return null;
+
+    const fsPath = path.resolve(frontendDistPath, publicPath.replace(/^\//, ''));
+    if (!fs.existsSync(fsPath)) return null;
+
+    return { publicPath, fsPath };
+  } catch (error: any) {
+    logger.warn(`[Server] Failed to resolve current frontend bundle: ${error?.message || error}`);
+    return null;
+  }
+};
 
 // Helper function to serve index.html
 const serveIndexHtml = (req: Request, res: Response): void => {
@@ -1097,6 +1193,12 @@ const serveIndexHtml = (req: Request, res: Response): void => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.setHeader('Pragma', 'no-cache');
   res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Consultify-Cache-Guard', 'staging-cache-kill-v3');
+  if (isStagingOrDemoHost(req)) {
+    // Emergency guard for stubborn stale-client incidents on staging/demo.
+    res.setHeader('Clear-Site-Data', '"cache"');
+  }
   res.sendFile(indexPath, (err: Error | null) => {
     if (err) {
       logger.error(`[Server] Error sending index.html: ${err.message}`);
@@ -1126,15 +1228,76 @@ app.get('/', (req: Request, res: Response) => {
   serveIndexHtml(req, res);
 });
 
+app.get('/sw.js', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Clear-Site-Data', '"cache"');
+  res.setHeader('X-Consultify-Service-Worker', 'kill-switch-v1');
+  res.status(200).send(`
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+  })());
+});
+self.addEventListener('fetch', (event) => {
+  event.respondWith(fetch(event.request));
+});
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+    await self.registration.unregister();
+    const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    await Promise.all(clients.map((client) => client.navigate(client.url)));
+  })());
+});
+`);
+});
+
+// Emergency stale-client guard: if a browser/CDN has old HTML that references
+// a historical Vite entry bundle, serve the current entry bundle under that
+// old URL. This keeps stale HTML from booting obsolete AppProviders/TokenService code.
+app.get(/^\/assets\/index-[^/]+\.js$/, (req: Request, res: Response, next: NextFunction) => {
+  const currentBundle = resolveCurrentIndexBundlePath();
+  if (!currentBundle) return next();
+
+  res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+  res.setHeader('X-Consultify-Asset-Alias', currentBundle.publicPath);
+  if (isStagingOrDemoHost(req)) {
+    res.setHeader('Clear-Site-Data', '"cache"');
+  }
+
+  if (req.path !== currentBundle.publicPath) {
+    logger.warn(
+      `[Server] Rewriting stale frontend entry ${req.path} to ${currentBundle.publicPath}`
+    );
+  }
+
+  return res.sendFile(currentBundle.fsPath);
+});
+
 // Serve static files from the React app
 // fallthrough: true means continue to next middleware if file not found
-app.use(
-  express.static(frontendDistPath, {
-    maxAge: '1y', // Cache static assets for 1 year
-    etag: true,
-    fallthrough: true, // Continue to next middleware if file not found
-  })
-);
+const staticFrontendNoStore = express.static(frontendDistPath, {
+  maxAge: 0,
+  etag: false,
+  setHeaders: (res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  },
+  fallthrough: true,
+});
+
+app.use(staticFrontendNoStore);
 
 // The "catchall" handler: for any request that doesn't match one above, send back React's index.html file.
 // Use app.use to catch all HTTP methods and routes
@@ -1181,7 +1344,29 @@ app.use((req: Request, res: Response) => {
   // Don't handle non-API routes here - they should be handled by catchall
   if (!req.path.startsWith('/api/')) {
     if (isStaticAssetRequest(req.path)) {
+      if (/^\/assets\/index-[^/]+\.js$/.test(req.path)) {
+        const currentBundle = resolveCurrentIndexBundlePath();
+        if (currentBundle) {
+          logger.warn(
+            `[Server] 404 fallback rewriting stale frontend entry ${req.path} to ${currentBundle.publicPath}`
+          );
+          res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+          res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+          res.setHeader('Pragma', 'no-cache');
+          res.setHeader('Expires', '0');
+          res.setHeader('Surrogate-Control', 'no-store');
+          res.setHeader('X-Consultify-Asset-Alias', currentBundle.publicPath);
+          if (isStagingOrDemoHost(req)) {
+            res.setHeader('Clear-Site-Data', '"cache"');
+          }
+          return res.sendFile(currentBundle.fsPath);
+        }
+      }
+
       logger.warn(`[Server] Missing static asset: ${req.path}`);
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       return res.status(404).json({
         error: {
           code: 'ASSET_NOT_FOUND',

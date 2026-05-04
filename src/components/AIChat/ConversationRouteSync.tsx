@@ -47,6 +47,8 @@ export const ConversationRouteSync: React.FC = () => {
     }
 
     if (isConversationMarkedMissing(conversationId)) {
+      ensuredConversationId.current = null;
+      syncingFromUrl.current = false;
       clearActiveChat();
       navigate('/chat', { replace: true });
       return;

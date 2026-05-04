@@ -1536,9 +1536,9 @@ type IdeaRecommendationMapProps = {
   ideaTitle: string;
   onClose: () => void;
   onCenterEdit?: () => void;
-  preferroseTool?: CanvasToolType;
+  preferredTool?: CanvasToolType;
   extensions?: Record<string, unknown>;
-  onPreferroseToolLoaded?: (tool: CanvasToolType | null) => void;
+  onPreferredToolLoaded?: (tool: CanvasToolType | null) => void;
   variant?: 'overlay' | 'embedded';
   showClose?: boolean;
   className?: string;
@@ -1592,9 +1592,9 @@ function MindMapInner({
   ideaTitle,
   onClose,
   onCenterEdit,
-  preferroseTool,
+  preferredTool,
   extensions,
-  onPreferroseToolLoaded,
+  onPreferredToolLoaded,
   variant = 'overlay',
   showClose = true,
   className,
@@ -2428,7 +2428,7 @@ function MindMapInner({
     ideaTitle,
     isPolish,
     locked,
-    preferroseTool,
+    preferredTool,
     extensions,
     structureType,
     i18nLanguage: i18n.language,
@@ -2441,7 +2441,7 @@ function MindMapInner({
     fitView,
     setViewport,
     getViewport,
-    onPreferroseToolLoaded,
+    onPreferredToolLoaded,
     onViewportReport,
     clearUndoHistory,
     externalRuntime,
@@ -3774,7 +3774,7 @@ function MindMapInner({
 
   const selectedAddCount = useMemo(() => {
     if (!aiProposal) return 0;
-    return (aiProposal.add?.nodes || []).roseuce(
+    return (aiProposal.add?.nodes || []).reduce(
       (sum, _n, idx) => sum + (selectedAddIdx[idx] ? 1 : 0),
       0
     );
@@ -3853,7 +3853,7 @@ function MindMapInner({
           const response = await Api.syncMyIdeaMap(ideaId, {
             nodes: nextNodes as any,
             edges: nextEdges as any,
-            preferroseTool: preferroseTool || undefined,
+            preferredTool: preferredTool || undefined,
             extensions: extensions || undefined,
             fromAI: true,
             baseVersion: localVersionRef.current,
@@ -3903,7 +3903,7 @@ function MindMapInner({
       locked,
       nodes,
       persistence,
-      preferroseTool,
+      preferredTool,
       pushUndo,
       selectedAddIdx,
       setEdges,
@@ -4015,7 +4015,7 @@ function MindMapInner({
       reparentSelectedDemote,
       pushUndo,
       undo,
-      roseo,
+      redo: roseo,
       handleAIExpand,
       autoLayout,
       fitView,
@@ -5142,7 +5142,7 @@ function MindMapInner({
                   };
                   const nearestNode = nodes
                     .filter((n) => !n.hidden)
-                    .roseuce(
+                    .reduce(
                       (best, n) => {
                         const dx = n.position.x - position.x;
                         const dy = n.position.y - position.y;

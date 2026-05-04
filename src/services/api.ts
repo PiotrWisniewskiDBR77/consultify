@@ -66,9 +66,25 @@ type TransportCircuitEntry = {
   status: number;
 };
 
+type GlobalTransportCircuit = {
+  failures: number;
+  windowStartedAt: number;
+  blockedUntil: number;
+  lastStatus: number;
+  lastPath: string;
+};
+
 const TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:transportCircuit:v1';
 const TRANSPORT_CIRCUIT_BASE_MS = 5000;
 const TRANSPORT_CIRCUIT_MAX_MS = 120000;
+const GLOBAL_TRANSPORT_CIRCUIT_STORAGE_KEY = 'consultify:globalTransportCircuit:v1';
+const GLOBAL_TRANSPORT_FAILURE_WINDOW_MS = 8000;
+const GLOBAL_TRANSPORT_FAILURE_THRESHOLD = 2;
+const GLOBAL_TRANSPORT_BLOCK_MS = 300000;
+const AUTH_LOOP_GUARD_STORAGE_KEY = 'consultify:authLoopGuard:v1';
+const AUTH_LOOP_GUARD_WINDOW_MS = 10000;
+const AUTH_LOOP_GUARD_THRESHOLD = 3;
+const AUTH_LOOP_GUARD_BLOCK_MS = 600000;
 
 let transportCircuitState: Record<string, TransportCircuitEntry> = (() => {
   try {
@@ -79,9 +95,86 @@ let transportCircuitState: Record<string, TransportCircuitEntry> = (() => {
   }
 })();
 
+let globalTransportCircuitState: GlobalTransportCircuit = (() => {
+  try {
+    const raw = sessionStorage.getItem(GLOBAL_TRANSPORT_CIRCUIT_STORAGE_KEY);
+    if (!raw) {
+      return {
+        failures: 0,
+        windowStartedAt: 0,
+        blockedUntil: 0,
+        lastStatus: 0,
+        lastPath: '',
+      };
+    }
+    const parsed = JSON.parse(raw || '{}');
+    return {
+      failures: Number(parsed.failures || 0),
+      windowStartedAt: Number(parsed.windowStartedAt || 0),
+      blockedUntil: Number(parsed.blockedUntil || 0),
+      lastStatus: Number(parsed.lastStatus || 0),
+      lastPath: String(parsed.lastPath || ''),
+    };
+  } catch {
+    return {
+      failures: 0,
+      windowStartedAt: 0,
+      blockedUntil: 0,
+      lastStatus: 0,
+      lastPath: '',
+    };
+  }
+})();
+
+type AuthLoopGuardState = {
+  failures: number;
+  windowStartedAt: number;
+  blockedUntil: number;
+  lastStatus: number;
+  lastPath: string;
+};
+
+let authLoopGuardState: AuthLoopGuardState = (() => {
+  try {
+    const raw = sessionStorage.getItem(AUTH_LOOP_GUARD_STORAGE_KEY);
+    if (!raw) {
+      return { failures: 0, windowStartedAt: 0, blockedUntil: 0, lastStatus: 0, lastPath: '' };
+    }
+    const parsed = JSON.parse(raw || '{}');
+    return {
+      failures: Number(parsed.failures || 0),
+      windowStartedAt: Number(parsed.windowStartedAt || 0),
+      blockedUntil: Number(parsed.blockedUntil || 0),
+      lastStatus: Number(parsed.lastStatus || 0),
+      lastPath: String(parsed.lastPath || ''),
+    };
+  } catch {
+    return { failures: 0, windowStartedAt: 0, blockedUntil: 0, lastStatus: 0, lastPath: '' };
+  }
+})();
+
 const persistTransportCircuit = () => {
   try {
     sessionStorage.setItem(TRANSPORT_CIRCUIT_STORAGE_KEY, JSON.stringify(transportCircuitState));
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const persistGlobalTransportCircuit = () => {
+  try {
+    sessionStorage.setItem(
+      GLOBAL_TRANSPORT_CIRCUIT_STORAGE_KEY,
+      JSON.stringify(globalTransportCircuitState)
+    );
+  } catch {
+    // ignore storage errors
+  }
+};
+
+const persistAuthLoopGuard = () => {
+  try {
+    sessionStorage.setItem(AUTH_LOOP_GUARD_STORAGE_KEY, JSON.stringify(authLoopGuardState));
   } catch {
     // ignore storage errors
   }
@@ -117,12 +210,94 @@ const buildBlockedResponse = (status: number, path: string): Response =>
     { status, headers: { 'Content-Type': 'application/json' } }
   );
 
+const buildGlobalBlockedResponse = (path: string): Response =>
+  new Response(
+    JSON.stringify({
+      error: 'Requests blocked by global transport safeguard',
+      code: 'CLIENT_TRANSPORT_GLOBAL_CIRCUIT_OPEN',
+      path,
+      blockedUntil: globalTransportCircuitState.blockedUntil,
+      lastStatus: globalTransportCircuitState.lastStatus,
+      lastPath: globalTransportCircuitState.lastPath,
+    }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } }
+  );
+
+const logTransportStabilityMarker = (marker: string, details: Record<string, unknown> = {}) => {
+  if (typeof console === 'undefined') return;
+  console.info('[stability:transport]', { marker, ...details });
+};
+
 const maybeGetBlockedTransportResponse = (path: string): Response | null => {
   const key = getTransportCircuitKey(path);
   if (!key) return null;
   const entry = transportCircuitState[key];
   if (entry && Date.now() < entry.blockedUntil) {
+    logTransportStabilityMarker('transport_circuit_open', {
+      key,
+      path,
+      status: entry.status,
+      blockedForMs: entry.blockedUntil - Date.now(),
+    });
     return buildBlockedResponse(entry.status || 429, path);
+  }
+  return null;
+};
+
+const shouldBypassGlobalCircuit = (path: string): boolean =>
+  path === '/api/ready' ||
+  path.startsWith('/api/health') ||
+  path.startsWith('/api/auth/login') ||
+  path.startsWith('/api/auth/refresh') ||
+  path.startsWith('/api/auth/logout');
+
+const maybeGetGlobalBlockedTransportResponse = (path: string): Response | null => {
+  if (shouldBypassGlobalCircuit(path)) return null;
+  if (Date.now() < globalTransportCircuitState.blockedUntil) {
+    logTransportStabilityMarker('global_transport_circuit_open', {
+      path,
+      blockedForMs: globalTransportCircuitState.blockedUntil - Date.now(),
+      failures: globalTransportCircuitState.failures,
+      lastStatus: globalTransportCircuitState.lastStatus,
+      lastPath: globalTransportCircuitState.lastPath,
+    });
+    return buildGlobalBlockedResponse(path);
+  }
+  return null;
+};
+
+const buildAuthLoopGuardResponse = (path: string): Response =>
+  new Response(
+    JSON.stringify({
+      error: 'Requests blocked by auth loop guard',
+      code: 'CLIENT_AUTH_LOOP_GUARD_OPEN',
+      path,
+      blockedUntil: authLoopGuardState.blockedUntil,
+      lastStatus: authLoopGuardState.lastStatus,
+      lastPath: authLoopGuardState.lastPath,
+    }),
+    { status: 429, headers: { 'Content-Type': 'application/json' } }
+  );
+
+const shouldBypassAuthLoopGuard = (path: string): boolean =>
+  path === '/api/ready' ||
+  path.startsWith('/api/health') ||
+  path.startsWith('/api/auth/login') ||
+  path.startsWith('/api/auth/refresh') ||
+  path.startsWith('/api/auth/logout') ||
+  path.startsWith('/api/build-info');
+
+const maybeGetAuthLoopGuardResponse = (path: string): Response | null => {
+  if (shouldBypassAuthLoopGuard(path)) return null;
+  if (Date.now() < authLoopGuardState.blockedUntil) {
+    logTransportStabilityMarker('auth_loop_guard_open', {
+      path,
+      blockedForMs: authLoopGuardState.blockedUntil - Date.now(),
+      failures: authLoopGuardState.failures,
+      lastStatus: authLoopGuardState.lastStatus,
+      lastPath: authLoopGuardState.lastPath,
+    });
+    return buildAuthLoopGuardResponse(path);
   }
   return null;
 };
@@ -140,6 +315,65 @@ const recordTransportFailure = (path: string, status: number) => {
     [key]: { failures, blockedUntil: Date.now() + blockedFor, status },
   };
   persistTransportCircuit();
+  logTransportStabilityMarker('transport_circuit_failure', {
+    key,
+    path,
+    status,
+    failures,
+    blockedForMs: blockedFor,
+  });
+};
+
+const recordGlobalTransportFailure = (path: string, status: number) => {
+  if (!path.startsWith('/api/')) return;
+  if (shouldBypassGlobalCircuit(path)) return;
+  if (![401, 403, 404, 429].includes(status)) return;
+
+  const now = Date.now();
+  const withinWindow =
+    globalTransportCircuitState.windowStartedAt > 0 &&
+    now - globalTransportCircuitState.windowStartedAt <= GLOBAL_TRANSPORT_FAILURE_WINDOW_MS;
+
+  const failures = withinWindow ? globalTransportCircuitState.failures + 1 : 1;
+  globalTransportCircuitState = {
+    failures,
+    windowStartedAt: withinWindow ? globalTransportCircuitState.windowStartedAt : now,
+    blockedUntil:
+      failures >= GLOBAL_TRANSPORT_FAILURE_THRESHOLD
+        ? Math.max(globalTransportCircuitState.blockedUntil, now + GLOBAL_TRANSPORT_BLOCK_MS)
+        : globalTransportCircuitState.blockedUntil,
+    lastStatus: status,
+    lastPath: path,
+  };
+  persistGlobalTransportCircuit();
+
+  if (failures >= GLOBAL_TRANSPORT_FAILURE_THRESHOLD) {
+    logTransportStabilityMarker('global_transport_circuit_failure', {
+      path,
+      status,
+      failures,
+      blockedForMs: globalTransportCircuitState.blockedUntil - now,
+    });
+  }
+};
+
+const clearGlobalTransportFailure = (path: string) => {
+  if (!path.startsWith('/api/')) return;
+  if (Date.now() < globalTransportCircuitState.blockedUntil) return;
+  if (
+    globalTransportCircuitState.failures === 0 &&
+    globalTransportCircuitState.windowStartedAt === 0
+  ) {
+    return;
+  }
+  globalTransportCircuitState = {
+    failures: 0,
+    windowStartedAt: 0,
+    blockedUntil: 0,
+    lastStatus: 0,
+    lastPath: '',
+  };
+  persistGlobalTransportCircuit();
 };
 
 const clearTransportFailure = (path: string) => {
@@ -149,10 +383,64 @@ const clearTransportFailure = (path: string) => {
   delete next[key];
   transportCircuitState = next;
   persistTransportCircuit();
+  logTransportStabilityMarker('transport_circuit_close', { key, path });
+};
+
+const recordAuthLoopSignal = (path: string, status: number) => {
+  if (!path.startsWith('/api/')) return;
+  if (shouldBypassAuthLoopGuard(path)) return;
+  if (![401, 429].includes(status)) return;
+
+  const now = Date.now();
+  const withinWindow =
+    authLoopGuardState.windowStartedAt > 0 &&
+    now - authLoopGuardState.windowStartedAt <= AUTH_LOOP_GUARD_WINDOW_MS;
+
+  const failures = withinWindow ? authLoopGuardState.failures + 1 : 1;
+  const nextBlockedUntil =
+    failures >= AUTH_LOOP_GUARD_THRESHOLD
+      ? Math.max(authLoopGuardState.blockedUntil, now + AUTH_LOOP_GUARD_BLOCK_MS)
+      : authLoopGuardState.blockedUntil;
+
+  authLoopGuardState = {
+    failures,
+    windowStartedAt: withinWindow ? authLoopGuardState.windowStartedAt : now,
+    blockedUntil: nextBlockedUntil,
+    lastStatus: status,
+    lastPath: path,
+  };
+  persistAuthLoopGuard();
+
+  if (failures >= AUTH_LOOP_GUARD_THRESHOLD) {
+    logTransportStabilityMarker('auth_loop_guard_trip', {
+      path,
+      status,
+      failures,
+      blockedForMs: nextBlockedUntil - now,
+    });
+  }
+};
+
+const clearAuthLoopSignal = (path: string) => {
+  if (!path.startsWith('/api/')) return;
+  if (Date.now() < authLoopGuardState.blockedUntil) return;
+  if (authLoopGuardState.failures === 0 && authLoopGuardState.windowStartedAt === 0) return;
+  authLoopGuardState = {
+    failures: 0,
+    windowStartedAt: 0,
+    blockedUntil: 0,
+    lastStatus: 0,
+    lastPath: '',
+  };
+  persistAuthLoopGuard();
 };
 
 const shouldSuppressAuthRetry = (path: string): boolean =>
+  path === '/api/demo/status' ||
+  path === '/api/notifications' ||
+  path.startsWith('/api/notifications/') ||
   path === '/api/notifications/unread-count' ||
+  path.startsWith('/api/llm/providers/health') ||
   path === '/api/v10/teresa/voice-config' ||
   path === '/api/v10/teresa/voice-event';
 
@@ -356,6 +644,10 @@ const fetchWithRetry = async (
   options: FetchWithRetryOptions = {}
 ): Promise<Response> => {
   const transportPath = getTransportPath(url);
+  const authLoopBlockedResponse = maybeGetAuthLoopGuardResponse(transportPath);
+  if (authLoopBlockedResponse) return authLoopBlockedResponse;
+  const globalBlockedResponse = maybeGetGlobalBlockedTransportResponse(transportPath);
+  if (globalBlockedResponse) return globalBlockedResponse;
   const blockedResponse = maybeGetBlockedTransportResponse(transportPath);
   if (blockedResponse) return blockedResponse;
 
@@ -391,8 +683,12 @@ const fetchWithRetry = async (
     });
     if (res.ok) {
       clearTransportFailure(transportPath);
+      clearGlobalTransportFailure(transportPath);
+      clearAuthLoopSignal(transportPath);
     } else {
       recordTransportFailure(transportPath, res.status);
+      recordGlobalTransportFailure(transportPath, res.status);
+      recordAuthLoopSignal(transportPath, res.status);
     }
   } catch (err: any) {
     if (controller && err?.name === 'AbortError') {
@@ -408,8 +704,12 @@ const fetchWithRetry = async (
   const hasStoredAuth = Boolean(tokenService.getToken() || tokenService.getRefreshToken());
 
   // If 401, try to refresh token and retry once
-  if (res.status === 401 && hasStoredAuth && !shouldSuppressAuthRetry(transportPath)) {
-    console.log('[Api] Got 401, attempting token refresh...');
+  if (
+    res.status === 401 &&
+    hasStoredAuth &&
+    !shouldSuppressAuthRetry(transportPath) &&
+    !maybeGetAuthLoopGuardResponse(transportPath)
+  ) {
     const newToken = await tokenService.refreshToken();
     if (newToken) {
       headers['Authorization'] = `Bearer ${newToken}`;
@@ -422,10 +722,15 @@ const fetchWithRetry = async (
       });
       if (res.ok) {
         clearTransportFailure(transportPath);
+        clearGlobalTransportFailure(transportPath);
+        clearAuthLoopSignal(transportPath);
       } else {
         recordTransportFailure(transportPath, res.status);
+        recordGlobalTransportFailure(transportPath, res.status);
+        recordAuthLoopSignal(transportPath, res.status);
       }
     } else {
+      recordAuthLoopSignal(transportPath, 401);
       // Token refresh failed, notify app
       window.dispatchEvent(new CustomEvent('auth:token-expired'));
     }
@@ -687,11 +992,19 @@ const bumpEndpointBackoff = (key: string): void => {
     blockedUntil: Date.now() + nextBackoff,
   });
   writeBackoffStorage();
+  logTransportStabilityMarker('endpoint_backoff_open', {
+    key,
+    blockedForMs: nextBackoff,
+  });
 };
 
 const resetEndpointBackoff = (key: string): void => {
+  const hadBackoff = endpointBackoffState.has(key);
   endpointBackoffState.delete(key);
   writeBackoffStorage();
+  if (hadBackoff) {
+    logTransportStabilityMarker('endpoint_backoff_close', { key });
+  }
 };
 
 const invalidateCachedApiByPrefix = (prefix: string): void => {
@@ -12450,8 +12763,9 @@ export const Api = {
       return { success: false, isDemoMode: false };
     }
 
-    const res = await fetch(`${API_URL}/demo/status`, {
+    const res = await fetchWithRetry(`${API_URL}/demo/status`, {
       headers: getHeaders(),
+      cache: 'no-store',
     });
     if (res.status === 401 || res.status === 403 || res.status === 429) {
       bumpEndpointBackoff(endpointKey);

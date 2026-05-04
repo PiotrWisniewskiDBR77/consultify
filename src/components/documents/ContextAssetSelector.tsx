@@ -33,10 +33,7 @@ export const CONTEXT_WORKFLOW_MODES: ContextWorkflowMode[] = [
   'org_context_research_mode',
 ];
 
-const WORKFLOW_MODE_LABELS: Record<
-  ContextWorkflowMode,
-  { label: string; description: string }
-> = {
+const WORKFLOW_MODE_LABELS: Record<ContextWorkflowMode, { label: string; description: string }> = {
   selected_material_only: {
     label: 'Selected material only',
     description:
@@ -117,10 +114,7 @@ export const ContextAssetSelector: React.FC<ContextAssetSelectorProps> = ({
   const selectedSet = new Set(selectedDocumentIds);
   const isModeWithoutSelection = workflowMode === 'org_context_research_mode';
   const documentSelectionDisabled =
-    disabled ||
-    workflowMode === 'selected_material_only' ||
-    isModeWithoutSelection ||
-    loading;
+    disabled || workflowMode === 'selected_material_only' || isModeWithoutSelection || loading;
 
   const toggleDocument = (doc: Document) => {
     if (documentSelectionDisabled) return;
@@ -228,7 +222,7 @@ export const ContextAssetSelector: React.FC<ContextAssetSelectorProps> = ({
                     <FileText className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
                     <div className="flex flex-1 flex-col">
                       <span className="text-sm font-medium text-gray-900">
-                        {doc.name || doc.filename || 'Untitled document'}
+                        {doc.originalName || doc.filename || 'Untitled document'}
                       </span>
                       {statusHint && (
                         <span className="flex items-center gap-1 text-xs text-amber-700">

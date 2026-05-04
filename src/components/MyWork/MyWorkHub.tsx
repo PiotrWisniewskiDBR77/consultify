@@ -2680,9 +2680,14 @@ export const MyWorkHub: React.FC<MyWorkHubProps> = ({ onNavigate }) => {
 
     // Ideas: stage presets in Command Row (same pattern as Inbox/Tasks)
     if (activeTab === 'ideas' && !activeDocumentId) {
+      const menu3RowClass = MENU_3_ROW_CLASS;
+      const menu3InnerClass = MENU_3_INNER_CLASS;
       const chipBase = MENU_3_CHIP_BASE;
       const chipInactive = MENU_3_CHIP_INACTIVE;
       const chipActive = MENU_3_CHIP_ACTIVE;
+      const badgeBase = MENU_3_BADGE_BASE;
+      const badgeInactive = MENU_3_BADGE_INACTIVE;
+      const badgeActive = MENU_3_BADGE_ACTIVE;
 
       if (ideasBulkUi?.selectedCount) {
         const bulk = ideasBulkActionsRef.current;

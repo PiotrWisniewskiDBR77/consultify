@@ -16,6 +16,7 @@ vi.mock('react-router-dom', () => ({
 describe('ConversationRouteSync', () => {
   beforeEach(async () => {
     vi.clearAllMocks();
+    localStorage.clear();
     routerState.params = {};
     routerState.pathname = '/chat';
     const { useConversationStore } = await import('../../../src/store/useConversationStore');
@@ -66,5 +67,30 @@ describe('ConversationRouteSync', () => {
     await waitFor(() => {
       expect(routerState.navigate).not.toHaveBeenCalled();
     });
+  });
+
+  it('redirects a known missing conversation route without fetching it again', async () => {
+    routerState.pathname = '/chat/missing-conversation';
+    routerState.params = { conversationId: 'missing-conversation' };
+    localStorage.setItem('consultify-missing-conversations', JSON.stringify(['missing-conversation']));
+    const { useConversationStore } = await import('../../../src/store/useConversationStore');
+    const fetchConversation = vi.fn();
+    useConversationStore.setState({
+      activeConversationId: 'missing-conversation',
+      activeMessages: [],
+      isLoading: false,
+      fetchConversation,
+    });
+    const { ConversationRouteSync } = await import(
+      '../../../src/components/AIChat/ConversationRouteSync'
+    );
+
+    render(<ConversationRouteSync />);
+
+    await waitFor(() => {
+      expect(routerState.navigate).toHaveBeenCalledWith('/chat', { replace: true });
+    });
+    expect(fetchConversation).not.toHaveBeenCalled();
+    expect(useConversationStore.getState().activeConversationId).toBeNull();
   });
 });
