@@ -420,42 +420,11 @@ interface InterviewTemplate {
   createdAt: string;
 }
 
-function buildInterviewInitiativesFromInsights(
-  sourceInsights: InterviewInsight[]
-): InterviewInitiativeDraft[] {
-  const statusCycle = ['DRAFT', 'PENDING_REVIEW', 'PROMOTED'] as const;
-  const priorityCycle = ['high', 'medium', 'low'] as const;
-
-  return sourceInsights.slice(0, 6).map((insight, index) => {
-    const insightText = String(insight.description || insight.content || '').trim();
-    const description =
-      insightText ||
-      `Derived initiative candidate from interview insight "${insight.title}". Validate scope, owner, and next decision before promotion.`;
-    const sourceType = String(
-      insight.promptType || insight.insightType || insight.type || 'insight'
-    );
-    const titleBase = insight.title
-      .replace(/^Executive Summary\s*[-:]\s*/i, '')
-      .replace(/^Risk assessment\s*[-:]\s*/i, '')
-      .trim();
-
-    return {
-      id: `derived-interview-initiative-${insight.id}`,
-      title: titleBase || insight.title,
-      name: titleBase || insight.title,
-      description,
-      status: statusCycle[index % statusCycle.length],
-      priority: priorityCycle[index % priorityCycle.length],
-      impact: index % 2 === 0 ? 'high' : 'medium',
-      effort: index % 3 === 0 ? 'medium' : 'low',
-      category: sourceType,
-      sourceType: 'interview_insight',
-      sourceId: insight.id,
-      createdAt: insight.createdAt,
-      updatedAt: insight.updatedAt || insight.createdAt,
-    };
-  });
-}
+// NOTE: Synthetic "derived initiatives" generator was intentionally removed.
+// The Interview > Initiatives tab MUST show only real persisted initiatives
+// returned from /initiatives?source=interview_insight. Honest empty state is
+// surfaced via the table empty row + the "Dodaj inicjatywy" wizard CTA.
+// Adding fake rows breaks traceability and parity with the Initiatives module.
 
 type InterviewTab =
   | 'my_assignments'
@@ -661,7 +630,7 @@ export const InterviewHub: React.FC = () => {
   const [isInsightsViewSettingsOpen, setIsInsightsViewSettingsOpen] = useState(false);
   const insightsViewSettingsRef = useRef<HTMLDivElement | null>(null);
   const [initiativeStatusFilter, setInitiativeStatusFilter] = useState<
-    'all' | 'draft' | 'promoted'
+    'all' | 'draft' | 'pending_review' | 'promoted'
   >('all');
   const [initiativesHiddenColumns, setInitiativesHiddenColumns] = useState<string[]>(() =>
     loadHiddenColumns(INTERVIEW_INITIATIVES_TABLE_VIEW_STORAGE_KEY, [], ['title', 'actions'])
@@ -796,6 +765,9 @@ export const InterviewHub: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUsingDemoData, setIsUsingDemoData] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [insightsLoadError, setInsightsLoadError] = useState<string | null>(null);
+  const [initiativesLoadError, setInitiativesLoadError] = useState<string | null>(null);
+  const [assignmentsLoadError, setAssignmentsLoadError] = useState<string | null>(null);
 
   // Assignments state
   const [myAssignments, setMyAssignments] = useState<InterviewAssignment[]>([]);
@@ -877,6 +849,19 @@ export const InterviewHub: React.FC = () => {
     }),
     []
   );
+
+  const unwrapApiList = useCallback((response: unknown, listKey?: string): any[] => {
+    if (Array.isArray(response)) return response;
+    const payload = (response as { data?: unknown })?.data;
+    if (Array.isArray(payload)) return payload;
+    if (listKey) {
+      const directList = (response as Record<string, unknown> | null)?.[listKey];
+      if (Array.isArray(directList)) return directList;
+      const nestedList = (payload as Record<string, unknown> | null)?.[listKey];
+      if (Array.isArray(nestedList)) return nestedList;
+    }
+    return [];
+  }, []);
 
   const loadManagedSessions = useCallback(async (): Promise<InterviewSession[]> => {
     const sessionsRes = await V8InterviewApi.getManagedSessions()
@@ -1039,80 +1024,106 @@ export const InterviewHub: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
-      try {
-        const [sessionsRes, insightsRes, initiativesRes, templatesRes] = await Promise.all([
-          // Sessions tab is the main manager cockpit for assignment-backed interview work.
-          loadManagedSessions(),
-          V8InterviewApi.listInsights()
-            .then((r) => r.insights)
-            .catch(() => Api.get('/interview/insights').catch(() => [])),
-          Api.get('/initiatives?source=interview_insight').catch(() => []),
-          Api.get('/interview/templates').catch(() => []),
-        ]);
+      const [sessionsRes, insightsRes, initiativesRes, templatesRes] = await Promise.allSettled([
+        loadManagedSessions(),
+        V8InterviewApi.listInsights()
+          .then((r) => r.insights)
+          .catch(() => Api.get('/interview/insights')),
+        Api.get('/initiatives?source=interview_insight'),
+        Api.get('/interview/templates'),
+      ]);
 
-        const apiSessions = Array.isArray(sessionsRes) ? sessionsRes : [];
-        const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
-        const apiInitiatives = Array.isArray(initiativesRes) ? initiativesRes : [];
-        const effectiveInitiatives =
-          apiInitiatives.length > 0
-            ? apiInitiatives
-            : buildInterviewInitiativesFromInsights(apiInsights);
-        const apiTemplates = (Array.isArray(templatesRes) ? templatesRes : []).map(
-          normalizeTemplateRecord
-        );
-        setIsUsingDemoData(false);
-        setLoadError(null);
-        setSessions(apiSessions);
-        setInsights(apiInsights);
-        setInterviewInitiatives(effectiveInitiatives);
-        setTemplates(apiTemplates);
-      } catch (error) {
-        console.error('[InterviewHub] Failed to load data:', error);
-        setIsUsingDemoData(false);
-        setLoadError('Failed to load real interview data from the active data source.');
+      setIsUsingDemoData(false);
+
+      if (sessionsRes.status === 'fulfilled') {
+        setSessions(Array.isArray(sessionsRes.value) ? sessionsRes.value : []);
+      } else {
+        console.error('[InterviewHub] Failed to load sessions:', sessionsRes.reason);
         setSessions([]);
-        setInsights([]);
-        setInterviewInitiatives([]);
-        setTemplates([]);
-      } finally {
-        setIsLoading(false);
       }
+
+      if (insightsRes.status === 'fulfilled') {
+        setInsights(unwrapApiList(insightsRes.value, 'insights'));
+        setInsightsLoadError(null);
+      } else {
+        console.error('[InterviewHub] Failed to load insights:', insightsRes.reason);
+        setInsights([]);
+        setInsightsLoadError(
+          isPolish
+            ? 'Nie udalo sie pobrac wnioskow. Sprobuj odswiezyc.'
+            : 'Failed to load insights. Try refreshing.'
+        );
+      }
+
+      if (initiativesRes.status === 'fulfilled') {
+        setInterviewInitiatives(unwrapApiList(initiativesRes.value, 'initiatives'));
+        setInitiativesLoadError(null);
+      } else {
+        console.error('[InterviewHub] Failed to load initiatives:', initiativesRes.reason);
+        setInterviewInitiatives([]);
+        setInitiativesLoadError(
+          isPolish
+            ? 'Nie udalo sie pobrac inicjatyw z wywiadu. Sprobuj odswiezyc.'
+            : 'Failed to load interview initiatives. Try refreshing.'
+        );
+      }
+
+      if (templatesRes.status === 'fulfilled') {
+        setTemplates(unwrapApiList(templatesRes.value, 'templates').map(normalizeTemplateRecord));
+      } else {
+        console.error('[InterviewHub] Failed to load templates:', templatesRes.reason);
+        setTemplates([]);
+      }
+
+      const allFailed =
+        sessionsRes.status === 'rejected' &&
+        insightsRes.status === 'rejected' &&
+        initiativesRes.status === 'rejected' &&
+        templatesRes.status === 'rejected';
+      setLoadError(
+        allFailed ? 'Failed to load real interview data from the active data source.' : null
+      );
+
+      setIsLoading(false);
     };
 
     loadData();
-  }, [loadManagedSessions, normalizeTemplateRecord]);
+  }, [isPolish, loadManagedSessions, normalizeTemplateRecord, unwrapApiList]);
 
   // Load insights function (for refresh)
   const loadInsights = useCallback(async () => {
     try {
       const insightsRes = await V8InterviewApi.listInsights()
         .then((r) => r.insights)
-        .catch(() => Api.get('/interview/insights').catch(() => []));
-      const apiInsights = Array.isArray(insightsRes) ? insightsRes : [];
+        .catch(() => Api.get('/interview/insights'));
+      const apiInsights = unwrapApiList(insightsRes, 'insights');
       setInsights(apiInsights);
+      setInsightsLoadError(null);
     } catch (error) {
       console.error('[InterviewHub] Failed to load insights:', error);
-      setInsights([]);
+      setInsightsLoadError(
+        isPolish
+          ? 'Nie udalo sie pobrac wnioskow. Sprobuj odswiezyc.'
+          : 'Failed to load insights. Try refreshing.'
+      );
     }
-  }, []);
+  }, [isPolish, unwrapApiList]);
 
   const loadInterviewInitiatives = useCallback(async () => {
     try {
-      const initiativesRes = await Api.get('/initiatives?source=interview_insight').catch(() => []);
-      const apiInitiatives = Array.isArray(initiativesRes) ? initiativesRes : [];
-      setInterviewInitiatives(
-        apiInitiatives.length > 0 ? apiInitiatives : buildInterviewInitiativesFromInsights(insights)
-      );
+      const initiativesRes = await Api.get('/initiatives?source=interview_insight');
+      const apiInitiatives = unwrapApiList(initiativesRes, 'initiatives');
+      setInterviewInitiatives(apiInitiatives);
+      setInitiativesLoadError(null);
     } catch (error) {
       console.error('[InterviewHub] Failed to load interview initiatives:', error);
-      setInterviewInitiatives(buildInterviewInitiativesFromInsights(insights));
+      setInitiativesLoadError(
+        isPolish
+          ? 'Nie udalo sie pobrac inicjatyw z wywiadu. Sprobuj odswiezyc.'
+          : 'Failed to load interview initiatives. Try refreshing.'
+      );
     }
-  }, [insights]);
-
-  useEffect(() => {
-    if (interviewInitiatives.length > 0 || insights.length === 0) return;
-    setInterviewInitiatives(buildInterviewInitiativesFromInsights(insights));
-  }, [insights, interviewInitiatives.length]);
+  }, [isPolish, unwrapApiList]);
 
   // Load assignments data
   useEffect(() => {
@@ -1121,11 +1132,9 @@ export const InterviewHub: React.FC = () => {
 
       setAssignmentsLoading(true);
       try {
-        // Always load my assignments
         const apiMyAssignments = await loadMyAssignments();
         setMyAssignments(apiMyAssignments);
 
-        // Load managed/overdue only if user has permission
         if (permissionsCanViewManaged || isUsingDemoData) {
           const [apiManagedAssignments, apiOverdueAssignments] = await Promise.all([
             loadManagedAssignments(),
@@ -1134,11 +1143,17 @@ export const InterviewHub: React.FC = () => {
           setManagedAssignments(apiManagedAssignments);
           setOverdueAssignments(apiOverdueAssignments);
         }
+        setAssignmentsLoadError(null);
       } catch (error) {
         console.error('[InterviewHub] Failed to load assignments:', error);
         setMyAssignments([]);
         setManagedAssignments([]);
         setOverdueAssignments([]);
+        setAssignmentsLoadError(
+          isPolish
+            ? 'Nie udalo sie pobrac przydzialow wywiadu. Sprobuj odswiezyc.'
+            : 'Failed to load interview assignments. Try refreshing.'
+        );
       } finally {
         setAssignmentsLoading(false);
       }
@@ -1146,6 +1161,7 @@ export const InterviewHub: React.FC = () => {
 
     loadAssignments();
   }, [
+    isPolish,
     isUsingDemoData,
     loadManagedAssignments,
     loadMyAssignments,
@@ -1444,7 +1460,15 @@ export const InterviewHub: React.FC = () => {
       result = result.filter((initiative) => {
         const status = String(initiative.status || 'DRAFT').toUpperCase();
         if (initiativeStatusFilter === 'draft') return status === 'DRAFT';
-        return ['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(status);
+        if (initiativeStatusFilter === 'pending_review') {
+          return ['PENDING_REVIEW', 'IN_REVIEW', 'REVIEW', 'SUBMITTED'].includes(status);
+        }
+        if (initiativeStatusFilter === 'promoted') {
+          return ['PROMOTED', 'PLANNING', 'APPROVED', 'IN_EXECUTION', 'IN_PROGRESS'].includes(
+            status
+          );
+        }
+        return false;
       });
     }
     if (searchQuery) {
@@ -1465,11 +1489,13 @@ export const InterviewHub: React.FC = () => {
       draft: interviewInitiatives.filter(
         (item) => String(item.status || 'DRAFT').toUpperCase() === 'DRAFT'
       ).length,
-      pendingReview: interviewInitiatives.filter(
-        (item) => String(item.status || '').toUpperCase() === 'PENDING_REVIEW'
+      pendingReview: interviewInitiatives.filter((item) =>
+        ['PENDING_REVIEW', 'IN_REVIEW', 'REVIEW', 'SUBMITTED'].includes(
+          String(item.status || '').toUpperCase()
+        )
       ).length,
       promoted: interviewInitiatives.filter((item) =>
-        ['REVIEW', 'PROMOTED', 'PLANNING', 'APPROVED'].includes(
+        ['PROMOTED', 'PLANNING', 'APPROVED', 'IN_EXECUTION', 'IN_PROGRESS'].includes(
           String(item.status || '').toUpperCase()
         )
       ).length,
@@ -1485,12 +1511,12 @@ export const InterviewHub: React.FC = () => {
         title: insight.title,
         status: insight.status,
         confidence: insight.confidence,
-        sourceSessionIds: insight.sourceSessionIds || [],
+        sourceSessionIds: insight.sessionId ? [insight.sessionId] : [],
       })),
       ...sessions.slice(0, 10).map((session) => ({
         type: 'interview_session',
         id: session.id,
-        title: session.title || session.name,
+        title: session.name,
         status: session.status,
       })),
     ],
@@ -2702,7 +2728,7 @@ export const InterviewHub: React.FC = () => {
         'inline-flex h-8 items-center rounded-full px-2.5 text-[11px] font-medium text-slate-600 transition-colors hover:bg-white/60 dark:text-slate-300 dark:hover:bg-white/[0.06]';
 
       const buttons: Array<{
-        id: 'all' | 'draft' | 'promoted';
+        id: 'all' | 'draft' | 'pending_review' | 'promoted';
         label: string;
         count: number;
         icon?: React.ElementType;
@@ -2717,6 +2743,12 @@ export const InterviewHub: React.FC = () => {
           label: isPolish ? 'Szkice' : 'Drafts',
           count: interviewInitiativeStats.draft,
           icon: Edit3,
+        },
+        {
+          id: 'pending_review',
+          label: isPolish ? 'Do przegladu' : 'Pending review',
+          count: interviewInitiativeStats.pendingReview,
+          icon: Clock,
         },
         {
           id: 'promoted',
@@ -2791,14 +2823,35 @@ export const InterviewHub: React.FC = () => {
               })}
             </div>
             <div className={MENU_3_RIGHT_CLASS}>
-              <button
-                type="button"
-                onClick={() => setShowInitiativeWizard(true)}
-                className="inline-flex h-8 items-center gap-1.5 rounded-full border border-cyan-300/70 bg-cyan-500/10 px-3 text-[11px] font-semibold text-cyan-700 transition hover:bg-cyan-500/15 dark:border-cyan-400/25 dark:text-cyan-200"
-              >
-                <Sparkles size={14} />
-                {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
-              </button>
+              {canCreateInsights ? (
+                <button
+                  type="button"
+                  data-testid="interview-add-initiatives-cta"
+                  onClick={() => setShowInitiativeWizard(true)}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-blue-300/70 bg-blue-500/10 px-3 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-500/15 dark:border-blue-400/25 dark:text-blue-200"
+                  title={
+                    isPolish
+                      ? 'Uruchom kreator inicjatyw z evidence z wywiadow'
+                      : 'Run initiative wizard with interview evidence'
+                  }
+                >
+                  <Sparkles size={14} />
+                  {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                </button>
+              ) : (
+                <span
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100/60 px-3 text-[11px] font-medium text-slate-400 dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-500"
+                  title={
+                    isPolish
+                      ? 'Brak uprawnien: poproś admina o capability initiative.create lub interview.insight.create.'
+                      : 'No permission: request initiative.create or interview.insight.create capability from admin.'
+                  }
+                  aria-disabled
+                >
+                  <Sparkles size={14} />
+                  {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -6382,6 +6435,29 @@ Return ONLY the answer text (no markdown fences).`;
       );
     }
 
+    const tabDegradedMessage = (() => {
+      if (activeTab === 'insights') return insightsLoadError;
+      if (activeTab === 'initiatives') return initiativesLoadError;
+      if (
+        activeTab === 'my_assignments' ||
+        activeTab === 'managed' ||
+        activeTab === 'pending_review'
+      )
+        return assignmentsLoadError;
+      return null;
+    })();
+
+    const renderDegradedBanner = () =>
+      tabDegradedMessage ? (
+        <div
+          role="alert"
+          className="mx-4 mt-3 rounded-xl border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-xs text-amber-900 dark:border-amber-400/25 dark:bg-amber-500/10 dark:text-amber-100"
+        >
+          <span className="font-semibold">{isPolish ? 'Tryb ograniczony' : 'Degraded mode'}:</span>{' '}
+          {tabDegradedMessage}
+        </div>
+      ) : null;
+
     if (activeTab === 'sessions') {
       const rows = filteredSessions || [];
       const selected = previewSessionId ? rows.find((s) => s.id === previewSessionId) : null;
@@ -6745,7 +6821,12 @@ Return ONLY the answer text (no markdown fences).`;
         </TableWithPreviewLayout>
       );
 
-      return <div className="h-full overflow-hidden">{insightsTableWithPreview}</div>;
+      return (
+        <div className="h-full overflow-hidden">
+          {renderDegradedBanner()}
+          {insightsTableWithPreview}
+        </div>
+      );
     }
 
     if (activeTab === 'initiatives') {
@@ -6854,6 +6935,7 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="h-full overflow-auto p-4">
+          {renderDegradedBanner()}
           <div className="overflow-hidden rounded-xl border border-slate-200/70 bg-white/70 backdrop-blur dark:border-white/[0.06] dark:bg-navy-900/70">
             <table className="w-full table-fixed" style={{ minWidth: tableMinWidth }}>
               <thead>
@@ -7212,11 +7294,40 @@ Return ONLY the answer text (no markdown fences).`;
                 {rows.length === 0 ? (
                   <tr>
                     <td colSpan={visibleColumns.length} className="px-4 py-12 text-center">
-                      <div className="flex flex-col items-center">
+                      <div className="mx-auto flex max-w-md flex-col items-center">
                         <Rocket className="mb-3 h-10 w-10 text-slate-500" />
-                        <p className="text-sm text-slate-600 dark:text-slate-400">
-                          {isPolish ? 'Brak inicjatyw dla tego filtra' : 'No initiatives here'}
+                        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                          {interviewInitiatives.length === 0
+                            ? isPolish
+                              ? 'Brak inicjatyw stworzonych z wywiadu'
+                              : 'No initiatives created from interview yet'
+                            : isPolish
+                              ? 'Brak inicjatyw dla tego filtra'
+                              : 'No initiatives here'}
                         </p>
+                        {interviewInitiatives.length === 0 ? (
+                          <>
+                            <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                              {canCreateInsights
+                                ? isPolish
+                                  ? 'Uzyj przycisku "Dodaj inicjatywy" w prawym gornym rogu, aby przeprowadzic kreator z evidence z wywiadow.'
+                                  : 'Use the "Add initiatives" button in the top right to run the wizard with interview evidence.'
+                                : isPolish
+                                  ? 'Brak uprawnien do uruchamiania kreatora inicjatyw. Skontaktuj sie z adminem lub PMO.'
+                                  : 'You do not have permission to run the initiative wizard. Contact your admin or PMO.'}
+                            </p>
+                            {canCreateInsights ? (
+                              <button
+                                type="button"
+                                onClick={() => setShowInitiativeWizard(true)}
+                                className="mt-4 inline-flex h-8 items-center gap-1.5 rounded-full border border-blue-300/70 bg-blue-500/10 px-3 text-[11px] font-semibold text-blue-700 transition hover:bg-blue-500/15 dark:border-blue-400/25 dark:text-blue-200"
+                              >
+                                <Sparkles size={14} />
+                                {isPolish ? 'Dodaj inicjatywy' : 'Add initiatives'}
+                              </button>
+                            ) : null}
+                          </>
+                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -7437,6 +7548,7 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="h-full flex flex-col">
+          {renderDegradedBanner()}
           <div className="flex-1 min-h-0 flex flex-col">
             <TableWithPreviewLayout<InterviewAssignment & { title: string }>
               selectedId={previewAssignmentId}
@@ -7649,6 +7761,7 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="h-full flex flex-col">
+          {renderDegradedBanner()}
           <div className="flex-1 min-h-0 flex flex-col">
             <TableWithPreviewLayout<InterviewAssignment & { title: string }>
               selectedId={previewAssignmentId}
@@ -7808,6 +7921,7 @@ Return ONLY the answer text (no markdown fences).`;
       if (reviewInsights.length === 0) {
         return (
           <div className="flex flex-col items-center justify-center py-20 text-center">
+            {renderDegradedBanner()}
             <AlertTriangle size={40} className="text-slate-300 dark:text-navy-600 mb-3" />
             <p className="text-lg font-medium text-slate-900 dark:text-white">
               {isPolish ? 'Brak wniosków do przeglądu' : 'No insights pending review'}
@@ -7823,6 +7937,7 @@ Return ONLY the answer text (no markdown fences).`;
 
       return (
         <div className="p-4 space-y-2">
+          {renderDegradedBanner()}
           {reviewInsights.map((insight) => {
             const findingsCount =
               (insight as any).findings?.length || (insight as any).findingsCount || 0;
@@ -8279,11 +8394,31 @@ Return ONLY the answer text (no markdown fences).`;
         initialManualNotes={initiativeWizardManualNotes}
         initialSourceBasket={initiativeWizardSourceBasket}
         creationSourceType="interview_insight"
-        creationSourceId={insights[0]?.id || 'interview_module'}
-        onClose={() => setShowInitiativeWizard(false)}
-        onCreated={async (created) => {
+        creationSourceId={null}
+        onClose={() => {
           setShowInitiativeWizard(false);
+          void loadInterviewInitiatives();
+        }}
+        onCreated={async (created) => {
           if (created.length > 0) {
+            setInterviewInitiatives((prev) => {
+              const byId = new Map(prev.map((initiative) => [initiative.id, initiative]));
+              created.forEach((initiative) => {
+                byId.set(initiative.id, {
+                  id: initiative.id,
+                  name: initiative.name,
+                  title: initiative.name,
+                  description: initiative.description || initiative.summary || '',
+                  status: initiative.status,
+                  priority: initiative.priority,
+                  sourceType: (initiative as any).sourceType || 'interview_insight',
+                  sourceId: (initiative as any).sourceId || initiative.id,
+                  createdAt: initiative.createdAt,
+                  updatedAt: initiative.updatedAt,
+                });
+              });
+              return Array.from(byId.values());
+            });
             setActiveTab('initiatives');
             setSelectedInterviewInitiativeId(created[0].id);
           }
